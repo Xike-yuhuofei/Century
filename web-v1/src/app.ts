@@ -241,6 +241,7 @@ function render() {
   root.innerHTML = `${game ? renderBoard(game) : renderSetup()}
     ${modal && game && !handoff && game.phase !== 'finished' ? `<div class="overlay" data-overlay="modal"><section class="dialog">${game.phase !== 'overflow' ? '<button class="close-modal" data-action="cancel">✕</button>' : ''}${modalBody()}</section></div>` : ''}
     ${showHelp ? renderRules() : ''}${toast ? `<div class="toast" role="alert">${esc(toast)}</div>` : ''}`;
+  scheduleBot();
 }
 function save() { try { if (game) localStorage.setItem(KEY, JSON.stringify(game)); else localStorage.removeItem(KEY); } catch { /* 可无存储运行 */ } }
 function notify(message: string) { toast = message; render(); }
@@ -249,29 +250,36 @@ function action(a: Action) {
   try {
     const previous = game.current;
     game = applyAction(game, a);
-    modal = game.phase === 'overflow' ? { kind:'discard', colors:[] } : null;
-    handoff = game.players.length > 2 && game.current !== previous && game.phase !== 'finished';
+    modal = game.phase === 'overflow' && !game.players[game.current].isAI ? {kind:'discard', colors:[]} : null;
+    handoff = game.players.length>2 && game.current!==previous && game.phase!=='finished' && !game.players[game.current].isAI && game.players.filter(p=>!p.isAI).length>1;
     toast = '';
     save(); render();
   } catch(e) { notify(e instanceof Error ? e.message : '行动无法执行'); }
 }
-function start() {
-  const inputs = [...root.querySelectorAll<HTMLInputElement>('#nameInputs input')];
-  try { game = createGame(inputs.map(x => x.value)); modal = null; handoff = false; showHelp = false; toast = ''; save(); render(); }
-  catch(e) { notify(e instanceof Error ? e.message : '无法开始游戏'); }
+function start(){
+  const inputs=[...root.querySelectorAll<HTMLInputElement>('#nameInputs input')];
+  try{
+    const humans=Number((root.querySelector('#humanCount') as HTMLSelectElement).value);
+    const bots=Number((root.querySelector('#botCount') as HTMLSelectElement).value);
+    if(inputs.length!==humans)throw Error('人类玩家人数无效');
+    const names=[...inputs.map(x=>x.value),...Array.from({length:bots},(_,i)=>`AI 工匠 ${i+1}`)];
+    game=createGame(names,undefined,Array.from({length:bots},(_,i)=>humans+i));
+    modal=null;handoff=false;botPaused=false;showHelp=false;toast='';save();render();
+  }catch(e){notify(e instanceof Error?e.message:'无法开始游戏');}
 }
 function control(target: HTMLElement) {
   const type = target.dataset.action || '';
   if (type === 'start') { start(); return; }
   if (type === 'reset') {
     if (game?.phase !== 'finished' && !confirm('确定结束当前对局并重新开始吗？当前存档将被覆盖。')) return;
-    game = null; handoff = false; showHelp = false; modal = null; toast = ''; save(); render(); return;
+    game = null; handoff = false; showHelp = false; modal = null; botPaused=false; toast = ''; save(); render(); return;
   }
   if (type === 'help') { showHelp = true; render(); return; }
   if (type === 'close-help') { showHelp = false; render(); return; }
   if (type === 'ready') { handoff = false; render(); return; }
+  if (type === 'ai-pause') { botPaused=!botPaused; render(); return; }
   if (type === 'cancel') { if (game?.phase === 'overflow') return; modal = null; toast = ''; render(); return; }
-  if (!game || game.phase === 'finished' || handoff || showHelp) return;
+  if (!game || game.phase==='finished'||handoff||showHelp||game.players[game.current].isAI) return;
   if (game.phase === 'overflow' && !modal) modal = {kind:'discard', colors:[]};
   const p = game.players[game.current];
   const idx = Number(target.dataset.index);
@@ -325,16 +333,24 @@ function control(target: HTMLElement) {
     if (type === 'confirm-discard') {action({type:'discard',colors:modal.colors});return;}
   }
 }
+function scheduleBot(){
+  if(botTimer!==null){clearTimeout(botTimer);botTimer=null;}
+  if(!game||game.phase==='finished'||handoff||showHelp||modal||botPaused||!game.players[game.current]?.isAI)return;
+  const player=game.current,turn=game.turnNumber;
+  botTimer=setTimeout(()=>{
+    botTimer=null;
+    if(!game||game.current!==player||game.turnNumber!==turn||game.phase==='finished'||handoff||showHelp||botPaused||!game.players[game.current]?.isAI)return;
+    try{action(chooseAIAction(game).action);}
+    catch(e){botPaused=true;notify('AI 行动异常，已暂停：'+(e instanceof Error?e.message:String(e)));}
+  },470);
+}
 root.addEventListener('click', event => {
   const element = event.target as HTMLElement;
   const target = element.closest<HTMLElement>('[data-action]');
   if (target && !target.hasAttribute('disabled')) control(target);
 });
-root.addEventListener('change', e => {
-  const element = e.target as HTMLSelectElement;
-  if (element.id !== 'playerCount') return;
-  const n = Number(element.value);
-  const slot = root.querySelector<HTMLElement>('#nameInputs')!;
-  slot.innerHTML = Array.from({length:n}, (_, i) => `<input maxlength="20" aria-label="玩家 ${i+1}" value="玩家 ${i+1}"/>`).join('');
+root.addEventListener('change',e=>{
+  const target=e.target as HTMLSelectElement;
+  if(target.id==='humanCount'||target.id==='botCount')syncSetup();
 });
 render();
