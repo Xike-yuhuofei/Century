@@ -30,6 +30,7 @@ let suppressPlayUntil = 0;
 const mobileMedia = window.matchMedia('(max-width: 800px)');
 let mobileTab: 'golems' | 'merchants' | 'opponents' = 'golems';
 let mobileHandExpanded = false;
+let mobilePlayedOpen = false;
 function pref(id:number): PlayerView {
   const key=String(id);
   const saved=viewState.players[key];
@@ -340,9 +341,9 @@ function renderMobileBoard(g: Game): string {
     '<button type="button" class="mobile-rest" data-action="rest" '+(!active?'disabled':'')+'>↶ 休息</button></div>'+
     '<div class="mobile-dock-cards" data-scroll-zone="mobile-hand-'+player.id+'">'+
     (hand.length?hand.map((id,i)=>handTile(player,id,active,i,hand)).join(''):'<span class="mobile-empty">无可用手牌 · 可休息收回</span>')+
-    '</div><div class="mobile-played '+(pref(player.id).folded?'mobile-played-closed':'')+'">'+
-    '<div class="mobile-played-label"><span>已打出 '+player.played.length+'</span>'+foldedPlayed(player)+'</div>'+
-    (pref(player.id).folded?'':'<div class="mobile-played-cards" data-scroll-zone="mobile-played-'+player.id+'">'+
+    '</div><div class="mobile-played '+(mobilePlayedOpen?'':'mobile-played-closed')+'">'+
+    '<div class="mobile-played-label"><span>已打出 '+player.played.length+'</span>+'<button type="button" class="fold-btn" data-action="mobile-toggle-played" aria-expanded="'+mobilePlayedOpen+'">'+(mobilePlayedOpen?'▾ 折叠':'▸ 展开')+'</button></div>'+
+    (mobilePlayedOpen?'<div class="mobile-played-cards" data-scroll-zone="mobile-played-'+player.id+'">'+
     player.played.map(id=>merchantCard(id,undefined,undefined,'played')).join('')+'</div>')+
     '</div></section>'+
     logPopover(g)+(finished?renderResult(g):'')+'</main>';
@@ -437,7 +438,7 @@ function start() {
     const names = [...inputs.map(x=>x.value),...Array.from({length:bots},(_,i)=>`AI 工匠 ${i+1}`)];
     if(humans!==inputs.length) throw new Error('人类玩家人数无效');
     game = createGame(names, undefined, Array.from({length:bots},(_,i)=>humans+i));
-    modal = null; handoff = false; botPaused = false; showHelp = false; showLog=false; inspectedAI=null; mobileTab='golems'; mobileHandExpanded=false; toast = ''; viewState.players={}; saveView(); save(); render();
+    modal = null; handoff = false; botPaused = false; showHelp = false; showLog=false; inspectedAI=null; mobileTab='golems'; mobileHandExpanded=false; mobilePlayedOpen=false; toast = ''; viewState.players={}; saveView(); save(); render();
   }
   catch(e) { notify(e instanceof Error ? e.message : '无法开始游戏'); }
 }
@@ -450,11 +451,12 @@ function control(target: HTMLElement) {
     return;
   }
   if (type === 'mobile-expand-hand') { mobileHandExpanded=!mobileHandExpanded; render(); return; }
+  if (type === 'mobile-toggle-played') { mobilePlayedOpen=!mobilePlayedOpen; render(); return; }
   if (type === 'inspect-ai') { const id=Number(target.dataset.player); inspectedAI = inspectedAI===id ? null : id; render(); return; }
   if (type === 'toggle-log') { showLog=!showLog; render(); return; }
   if (type === 'reset') {
     if (game?.phase !== 'finished' && !confirm('确定结束当前对局并重新开始吗？当前存档将被覆盖。')) return;
-    game = null; handoff = false; showHelp = false; showLog=false; inspectedAI=null; modal = null; botPaused = false; toast = ''; viewState.players={}; mobileTab='golems'; mobileHandExpanded=false; saveView(); save(); render(); return;
+    game = null; handoff = false; showHelp = false; showLog=false; inspectedAI=null; modal = null; botPaused = false; toast = ''; viewState.players={}; mobileTab='golems'; mobileHandExpanded=false; mobilePlayedOpen=false; saveView(); save(); render(); return;
   }
   if (type === 'help') { showHelp = true; render(); return; }
   if (type === 'close-help') { showHelp = false; render(); return; }
@@ -577,5 +579,5 @@ root.addEventListener('change', e => {
   if (element.id !== 'humanCount' && element.id !== 'botCount') return;
   syncSetup();
 });
-mobileMedia.addEventListener('change', () => { mobileTab='golems'; mobileHandExpanded=false; render(); });
+mobileMedia.addEventListener('change', () => { mobileTab='golems'; mobileHandExpanded=false; mobilePlayedOpen=false; render(); });
 render();
