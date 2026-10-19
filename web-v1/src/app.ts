@@ -1,5 +1,6 @@
 import { GOLEM_BY_ID, MERCHANT_BY_ID, type Merchant, type Stock } from './data.js';
 import { applyAction, count, createGame, has, ranking, readable, score, tradeLimit, type Action, type Color, type Game } from './engine.js';
+import { chooseAIAction } from './ai.js';
 
 const KEY = 'crystal-corridor-game-v1';
 const COLOR = ['黄','绿','蓝','粉'];
@@ -10,6 +11,8 @@ let modal: Modal | null = null;
 let handoff = false;
 let showHelp = false;
 let toast = '';
+let botPaused = false;
+let botTimer: ReturnType<typeof setTimeout> | null = null;
 
 type Modal =
   | { kind: 'upgrade'; id: string; steps: Color[]; draft: Stock }
@@ -61,10 +64,36 @@ function merchantCard(id: string, marketIndex?: number, bonus?: Stock, view: 'ha
   </${tag}>`;
 }
 function renderSetup(): string {
-  return `<main class="layout landing"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><span class="edition">V1 · 本地轮流对局</span></header>
-    <div class="landing-split"><section class="welcome-copy"><div class="eyebrow">桌游数字化 · 独立练习原型</div><h1>把每一颗晶石，<br>变成制胜的筹码。</h1><p>独立规则引擎、43 张商人牌库、36 张魔像卡，自动执行市场成本、水晶容量与终局计分。</p><div class="feature-row"><span>◇ 2–5 人</span><span>◇ 离线可玩</span><span>◇ 自动存档</span></div></section>
-    <section class="setup-box"><div class="eyebrow">NEW GAME</div><h2>创建本地对局</h2><p class="hint">玩家轮流使用同一设备。双人模式左右同屏、无需交接；3–5 人继续使用交接界面。</p><label for="playerCount">玩家人数</label><select id="playerCount"><option value="2">2 人</option><option value="3">3 人</option><option value="4">4 人</option><option value="5">5 人</option></select><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1"/><input maxlength="20" aria-label="玩家 2" value="玩家 2"/></div><button class="primary-btn big" data-action="start">开始游戏 <span>↗</span></button><p class="small-muted">私人学习与功能验证用途；非官方作品，未使用原版美术素材。</p></section></div>
-    <footer class="footer">资料基准：项目规则文档和独立卡牌数据复核 · <a href="https://github.com/Xike-yuhuofei/Century" target="_blank" rel="noopener">项目仓库</a></footer></main>`;
+  return `<main class="layout landing"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><span class="edition">V1.2 · AI 对战</span></header>
+    <div class="landing-split"><section class="welcome-copy"><div class="eyebrow">桌游数字化 · AI 实战训练</div><h1>与四位晶石工匠，<br>角逐最佳引擎。</h1><p>1–5 名人类与 0–4 名 AI 自由组合，总人数 2–5 人。AI 自动行动，无需联网。</p><div class="feature-row"><span>◇ 4 个 AI 席位</span><span>◇ 自动行动</span><span>◇ 离线可玩</span></div></section>
+    <section class="setup-box"><div class="eyebrow">NEW GAME</div><h2>创建对局</h2><p class="hint">默认 1 名人类 + 1 名 AI。单人对战多名 AI 时将在超宽屏上显示全部对手席位。</p>
+    <div class="setup-players"><div><label for="humanCount">人类玩家</label><select id="humanCount">${Array.from({length:5},(_,i)=>`<option value="${i+1}">${i+1} 名</option>`).join('')}</select></div>
+    <div><label for="botCount">AI 玩家</label><select id="botCount">${Array.from({length:5},(_,i)=>`<option value="${i}" ${i===1?'selected':''}>${i} 名</option>`).join('')}</select></div></div>
+    <label>人类玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1"/></div>
+    <div class="ai-seat-heading"><b>AI 玩家席位</b><span>最多 4 位</span></div><div class="ai-seat-picker">${Array.from({length:4},(_,i)=>`<div data-ai-slot="${i}" class="ai-slot ${i===0?'selected':''}"><b>✧ AI ${i+1}</b><span>${i===0?'已加入':'空席'}</span></div>`).join('')}</div>
+    <p id="setupValidation" class="setup-validation">合计 2 名参赛者</p>
+    <button class="primary-btn big" data-action="start">开始对局 <span>↗</span></button><p class="small-muted">独立学习原型，不使用原版插画。</p></section></div>
+    <footer class="footer"><a href="https://github.com/Xike-yuhuofei/Century" target="_blank" rel="noopener">项目仓库</a></footer></main>`;
+}
+function syncSetup(){
+  if(game)return;
+  const humans=Number((root.querySelector('#humanCount') as HTMLSelectElement)?.value||1);
+  const bots=Number((root.querySelector('#botCount') as HTMLSelectElement)?.value||0);
+  const container=root.querySelector<HTMLElement>('#nameInputs');
+  if(!container)return;
+  const values=[...container.querySelectorAll<HTMLInputElement>('input')].map(x=>x.value);
+  container.innerHTML=Array.from({length:humans},(_,i)=>`<input maxlength="20" aria-label="玩家 ${i+1}" value="${esc(values[i]??`玩家 ${i+1}`)}"/>`).join('');
+  for(const seat of root.querySelectorAll<HTMLElement>('[data-ai-slot]')){
+    const selected=Number(seat.dataset.aiSlot)<bots;
+    seat.classList.toggle('selected',selected);
+    const state=seat.querySelector('span');
+    if(state)state.textContent=selected?'已加入':'空席';
+  }
+  const valid=humans+bots>=2&&humans+bots<=5;
+  const status=root.querySelector<HTMLElement>('#setupValidation');
+  if(status){status.textContent=valid?`合计 ${humans+bots} 名参赛者`:'总人数须为 2–5 人';status.classList.toggle('invalid',!valid);}
+  const start=root.querySelector<HTMLButtonElement>('[data-action="start"]');
+  if(start)start.disabled=!valid;
 }
 function playerCard(p: Game['players'][number], active: boolean): string {
   return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${p.id + 1}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
