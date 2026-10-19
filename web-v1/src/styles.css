@@ -920,3 +920,28 @@
   .mobile-board .mobile-played {flex-basis:20px;}
   .mobile-board .mobile-played-label {min-height:20px;}
 }
+
+
+/* 电脑/手机页面的独立入口：链接不影响原有桌面网格。 */
+.page-version-link {
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:34px;padding:6px 11px;
+  border:1px solid #47616a;border-radius:8px;
+  background:#213b47;color:#e7d6b9;
+  font-size:12px;font-weight:650;text-decoration:none;white-space:nowrap;
+}
+.page-version-link:hover,.page-version-link:focus-visible {border-color:#cfb07c;color:#fff1cf;}
+.focus-setup-top .page-version-link {margin-left:auto;}
+.mobile-board .mobile-more-menu .page-version-link {
+  width:100%;justify-content:flex-start;min-height:43px;
+  border:0;border-radius:7px;background:transparent;
+  padding:8px 12px;color:#e3eeed;font-size:13px;
+}
+.mobile-board .mobile-more-menu .page-version-link:active {background:#35505d;}
+
+/* 专属 /mobile/ 页面在桌面浏览器也保持手机宽度，便于预览。 */
+html[data-century-mode="mobile"] body {background:#07131c;}
+html[data-century-mode="mobile"] .mobile-board {
+  max-width:640px;margin-inline:auto;
+  box-shadow:0 0 55px #0006;
+}
