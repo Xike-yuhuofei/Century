@@ -4,8 +4,8 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="theme-color" content="#0b1722"/>
-<meta name="description" content="晶石回廊：非官方的本地多人晶石策略桌游练习原型"/>
-<title>晶石回廊 · 本地策略桌游</title>
+<meta name="description" content="晶石回廊：非官方的支持 0–4 名 AI 的本地晶石策略桌游练习原型"/>
+<title>晶石回廊 V1.2 · 本地 AI 对战</title>
 <style>:root { color-scheme:dark; --bg:#0b1722; --surface:#142533; --surface2:#1b3140; --edge:#2e4754; --ink:#eaf1eb; --muted:#95abb4; --gold:#dab67b; --accent:#c8e6c8; --faint:#203542; font-family: system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
 * {box-sizing:border-box} body{margin:0; background:radial-gradient(ellipse at 50% -25%,#1a3540 0%,#0b1722 60%); color:var(--ink); min-height:100vh} button,select,input{font:inherit} button{cursor:pointer} button:disabled{cursor:not-allowed;opacity:.4} button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #e8c891; outline-offset:3px} a{color:#e9cf9c} .layout{max-width:1480px;margin:auto;padding:22px 30px 40px}.topbar{height:70px;display:flex;gap:13px;align-items:center;border-bottom:1px solid #2a4350;margin-bottom:25px}.brand-icon{font-family:Georgia,serif;width:44px;height:44px;border:1px solid #a99163;color:var(--gold);display:grid;place-items:center;font-size:40px;transform:rotate(-8deg);border-radius:10px}.brand-text{display:flex;flex-direction:column;line-height:1.2}.brand-text strong{font-size:21px;letter-spacing:3px;font-weight:650}.brand-text span{color:#b89b75;font-family:Georgia,serif;font-size:9px;letter-spacing:2.6px;margin-top:6px}.edition{margin-left:auto; font-size:12px;color:var(--muted)}.top-actions{margin-left:auto;display:flex;align-items:center;gap:10px}.subtle-btn,.rest-btn,.secondary-btn{background:#203745;border:1px solid #385361;color:#dfebe9;border-radius:8px;padding:9px 14px}.subtle-btn:hover,.rest-btn:hover,.secondary-btn:hover{border-color:#92afa9}.turn-badge{padding:10px 13px;color:#f0d4a0;background:#3a302b;border-radius:7px;font-size:12px;font-weight:700}.players-strip{display:flex;gap:12px;margin-bottom:22px;overflow-x:auto;scrollbar-width:thin}.player-pill{display:flex;gap:10px;align-items:center;min-width:180px;flex:1;padding:13px 12px;background:#152736;border:1px solid #2c4551;border-radius:10px}.player-pill.active-player{border-color:#bdad7f;background:linear-gradient(115deg,#253b43,#1c313c);box-shadow:inset 0 0 0 1px #5f685b}.avatar{width:30px;height:30px;border-radius:50%;border:1px solid #b49a66;color:#e9d39a;display:grid;place-items:center;flex-shrink:0;font-family:Georgia,serif}.player-info{display:flex;flex-direction:column;gap:4px;min-width:0}.player-info b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}.player-info small{font-size:10px;color:var(--muted);white-space:nowrap}.player-score{font-size:20px;font-family:Georgia,serif;margin-left:auto;color:#ecd09b;display:flex;flex-direction:column;align-items:center}.player-score small{font-size:9px;color:var(--muted)}.game-section{margin-top:27px}.section-head,.zone-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:14px;gap:15px}.section-head h2,.zone-head h2{margin:3px 0 0;font-size:22px;font-weight:650;letter-spacing:1px}.section-head h2 small,.zone-head h2 small{font-size:12px;font-weight:400;color:#9babae;margin-left:8px;letter-spacing:0}.section-index,.eyebrow{color:#c9aa77;letter-spacing:2.3px;font-size:10px;font-weight:700}.section-meta{font-size:12px;color:#99adb4}.golem-grid,.merchant-grid{display:grid;gap:12px;grid-template-columns:repeat(5,minmax(0,1fr))}.golem-card{text-align:left;position:relative;min-height:220px;display:flex;flex-direction:column;align-items:stretch;padding:13px 15px 10px;border-radius:10px;border:1px solid #755e4d;background:linear-gradient(160deg,#405a56 0%,#223c42 43%,#122e36 100%);color:var(--ink);box-shadow:inset 0 0 0 2px #1f3738,0 8px 20px #0002;overflow:hidden;transition:transform .15s,border-color .15s}.golem-card:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,#b2ba9240,transparent 60%);pointer-events:none}.golem-card:hover,.merchant-card:hover{transform:translateY(-3px);border-color:#dfbe85}.golem-card.affordable{border-color:#dfc480;box-shadow:0 0 0 1px #c9aa6d,0 7px 20px #0002}.golem-top{position:relative;display:flex;align-items:center;justify-content:space-between;min-height:22px;z-index:1}.golem-tag{color:#cdd8c4;font-size:10px}.golem-num{font-size:9px;color:#b5c1b7}.coin{border-radius:99px;padding:4px 7px;font-size:10px;font-weight:800}.coin.copper{background:#a66e4a;color:#fff7e6}.coin.silver{background:#a9bcc6;color:#243d48}.golem-emblem{display:grid;place-items:center;min-height:76px;position:relative}.emblem-inner{width:74px;height:74px;border:1px solid #94b0a184;display:grid;place-items:center;font:72px Georgia,serif;border-radius:35%;color:#cfdbb1;transform:rotate(15deg);text-shadow:0 0 20px #f4e5acaa}.golem-points{display:flex;align-items:baseline;justify-content:center;gap:6px;color:#f4dbab;z-index:1}.golem-points strong{font:700 31px Georgia,serif}.golem-points small{letter-spacing:2px;font-size:8px}.golem-cost{position:relative;display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin:7px 0 4px;min-height:24px}.golem-action{font-size:10px;text-align:center;border-top:1px solid #879b8b50;margin-top:auto;padding-top:8px;color:#aebeb0}.golem-card.affordable .golem-action{color:#f5d89d;font-weight:700}.merchant-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.merchant-card{min-height:173px;border:1px solid #5d6670;background:linear-gradient(140deg,#d1c6aa 0%,#f1e4c7 55%,#b8b8a7 100%);color:#273940;border-radius:9px;position:relative;text-align:left;padding:10px;display:flex;flex-direction:column;transition:transform .15s,border-color .15s;box-shadow:inset 0 0 0 2px #ffffff39,0 4px 10px #0002;min-width:0}.merchant-card.card-upgrade{background:linear-gradient(130deg,#c5d5b0,#ebe7cc 65%,#b0c3ae)}.merchant-card.card-trade{background:linear-gradient(135deg,#c3c6d4,#e1e7e3 55%,#b8c6c3)}.card-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #5669706b;padding-bottom:6px;font-size:12px;font-weight:800}.card-head small{font-size:9px;font-weight:400;opacity:.65}.merchant-effect{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80px;flex:1;gap:5px}.effect-label{font-size:11px;color:#50646a}.effect-large{font-size:24px;font-family:Georgia,serif;color:#2d655e}.trade-arrow{font-size:17px;color:#6c7b7b;line-height:1}.card-foot{border-top:1px solid #5669706b;display:flex;justify-content:space-between;align-items:center;gap:4px;padding-top:7px;font-size:10px}.card-foot b{color:#37524f}.market-bonus{margin-top:8px;font-size:10px;display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:5px;border-radius:5px;background:#5770643b}.stone-line,.resource-bar,.modal-stock,.preview>div{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.stone-group{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:650;white-space:nowrap}.stone-group b{color:inherit;font-size:11px}.gem{display:inline-block;width:17px;height:17px;transform:rotate(45deg);border-radius:4px 1px 4px 1px;box-shadow:inset -3px -3px 3px #0004,inset 2px 2px 2px #fff9,0 0 5px #0004;flex-shrink:0}.gem-yellow{background:#f6c645}.gem-green{background:#49bf86}.gem-blue{background:#63c6e8}.gem-pink{background:#f0a2cf}.none{font-size:12px;opacity:.6}.personal-zone{margin-top:28px;padding:21px;border:1px solid #3b5860;border-radius:12px;background:linear-gradient(140deg,#1d3441,#132735)}.zone-head{align-items:center;border-bottom:1px solid #2e4a57;padding-bottom:16px;margin-bottom:19px}.resource-bar{background:#0b1d2b;border-radius:9px;padding:10px 13px;gap:14px}.capacity{font-size:11px;color:#c7d4d3;border-left:1px solid #425863;padding-left:11px}.over-capacity{color:#f3a692}.personal-layout{display:grid;grid-template-columns:minmax(0,1fr) 252px;gap:20px}.hand-heading{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;font-size:13px}.hand-heading span{color:var(--muted);font-size:11px}.hand-grid{display:flex;gap:10px;flex-wrap:wrap;max-height:400px;overflow:auto;padding:3px}.hand-grid .merchant-card{width:164px;min-height:183px;flex-shrink:0}.empty-hand{font-size:12px;color:#a8bbbd}.played{font-size:12px;border-top:1px solid #38535f;margin-top:15px;padding-top:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.played span{color:var(--muted)}.rest-btn{margin-left:auto;font-size:12px}.right-column{display:flex;flex-direction:column;gap:13px}.score-panel,.history{background:#0f202e;padding:15px;border:1px solid #324c58;border-radius:9px}.score-panel h3,.history h3{font-size:13px;font-weight:650;margin:0 0 10px}.score-large{font:38px Georgia,serif;color:#e6c796}.score-large span{font:11px system-ui;color:var(--muted)}.score-breakdown{font-size:11px;color:#a2b8bc;display:flex;flex-direction:column;gap:7px;margin-top:11px}.history p{font-size:11px;margin:0;border-top:1px solid #334955;padding:8px 0;color:#b7c9cb;line-height:1.5}.history p:first-of-type{border-top:0}.footer{margin-top:25px;font-size:11px;color:#8aa3a8;text-align:center}.primary-btn{border:1px solid #e9c892;color:#11252c;background:linear-gradient(125deg,#f2d7a6,#cbaa70);border-radius:9px;padding:10px 18px;font-size:13px;font-weight:800}.primary-btn:hover{filter:brightness(1.08)}.primary-btn.big{width:100%;font-size:16px;padding:16px;display:flex;justify-content:space-between;align-items:center}.landing .topbar{margin-bottom:80px}.landing-split{display:grid;grid-template-columns:1.1fr .8fr;gap:75px;align-items:center;min-height:450px}.welcome-copy h1{font-size:clamp(37px,5vw,69px);line-height:1.25;letter-spacing:1px;margin:20px 0;color:#f5e7cf}.welcome-copy p{max-width:530px;color:#b6c7c9;line-height:2;font-size:15px}.feature-row{display:flex;gap:30px;font-size:12px;color:#d9c092;margin-top:30px}.setup-box{padding:30px;border:1px solid #4b6468;border-radius:15px;background:#172d3b;box-shadow:0 20px 70px #0003}.setup-box h2{font-size:25px;margin:12px 0}.hint,.small-muted{color:#9fb1b7;font-size:12px;line-height:1.7}.setup-box label{display:block;font-size:12px;color:#dce8e9;margin:22px 0 9px}.setup-box select,.setup-box input{width:100%;height:41px;border-radius:8px;background:#0e202e;border:1px solid #3a5661;color:#eef2ed;padding:0 12px}.name-inputs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0 24px}.overlay{position:fixed;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;background:#02101ddd;padding:18px;backdrop-filter:blur(5px)}.dialog{width:min(520px,100%);background:#1b303e;border:1px solid #59717a;border-radius:16px;padding:28px;box-shadow:0 30px 90px #0007;position:relative;max-height:94vh;overflow:auto}.dialog h2{margin:0 0 14px;color:#f5dfb5;font-size:25px}.dialog p{color:#bbccd0;line-height:1.7;font-size:13px}.dialog p strong{color:#f0d19a}.close-modal{position:absolute;top:15px;right:14px;border:0;background:transparent;color:#b9c7cc;font-size:20px}.modal-progress{margin:20px 0 12px;color:#f2d9a4;font-size:13px;font-weight:800}.modal-stock{border:1px solid #3e5966;padding:14px;border-radius:9px;background:#0e2231;gap:18px;min-height:55px}.modal-caption{margin-top:15px}.choice-row{display:flex;flex-wrap:wrap;gap:9px}.choice-btn{display:flex;align-items:center;gap:10px;background:#243e4c;color:#e5f0ed;border:1px solid #49616a;border-radius:8px;padding:10px 12px;font-size:13px}.choice-btn:hover:not(:disabled){border-color:#d5b986}.modal-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:25px}.stepper{display:flex;justify-content:center;align-items:center;gap:25px;background:#122837;padding:17px;margin-top:20px;border-radius:9px}.stepper button{width:37px;height:37px;color:#f1dbb5;background:#314955;border:1px solid #57717a;border-radius:8px;font-size:20px}.stepper strong{font-size:30px}.stepper strong small{font-size:11px;font-weight:400}.preview{border-radius:10px;padding:14px;background:#122837;margin-top:17px;color:#d7e6e3;font-size:13px}.preview>div{margin-top:10px}.preview .warn{color:#f2ab93}.selected{font-size:12px;color:#f0d2a0!important}.help-dialog{max-width:570px}.help-rows{margin:22px 0}.help-rows p{padding-bottom:9px;border-bottom:1px solid #38505d}.cover{z-index:12;background:#051822ee}.handoff-card,.result-card{border:1px solid #806d4b;border-radius:17px;background:linear-gradient(150deg,#253e46,#112735);padding:42px;text-align:center;width:min(465px,100%);box-shadow:0 40px 100px #0009}.cover-symbol{font:95px Georgia,serif;line-height:1;color:#d9bf8c}.handoff-card h2,.result-card h2{font-size:33px;color:#f0d7a7;margin:9px 0}.handoff-card p{font-size:13px;color:#b6c7ca;line-height:1.8;margin:10px 0 30px}.final-alert{border:1px solid #b99756;color:#f2d8a5;padding:11px;border-radius:8px;text-align:center;font-size:13px;background:#393329;margin-bottom:17px}.trophy{font:80px Georgia,serif;color:#e4c68f}.winner{font-size:18px}.winner strong{color:#f2cb83}.result-table{margin:25px 0 30px;text-align:left}.result-table>div{padding:12px 0;border-top:1px solid #546872;display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:13px}.result-table span{color:#a7b9ba}.result-table strong{color:#f5d9a2;font-size:17px}.toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);padding:13px 18px;border:1px solid #d4a88f;background:#522d2d;color:#ffdfd3;border-radius:10px;z-index:30;font-size:13px;max-width:90%;box-shadow:0 15px 45px #0005}
 @media(max-width:1100px){.merchant-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.golem-grid{grid-template-columns:repeat(5,minmax(130px,1fr));overflow-x:auto;padding-bottom:5px}.personal-layout{grid-template-columns:1fr 210px}.layout{padding:18px 18px 30px}.landing-split{gap:35px}}
@@ -91,6 +91,70 @@
 @media (max-width:2300px) { .duel-table { grid-template-columns:minmax(300px,1fr) minmax(620px,1.48fr) minmax(300px,1fr); gap:12px; } .duel-card-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .duel-center .merchant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .duel-center .golem-card { min-height:225px; } .duel-center { gap:14px; } }
 @media (max-width:1550px) { .duel-table { height:auto; min-height:0; grid-template-columns:1fr 1.3fr; } .duel-center { grid-column:2; grid-row:1 / span 2; } .duel-player { min-height:500px; } .duel-table>.duel-player:last-child { grid-column:1; grid-row:2; } .duel-hand,.duel-played { flex:auto; } .duel-card-grid { max-height:370px; grid-template-columns:repeat(3,minmax(0,1fr)); } .duel-center .merchant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media (max-width:900px) { .layout.duel-layout { padding:8px 12px 26px; } .duel-table { display:flex; flex-direction:column; } .duel-player,.duel-center { overflow:visible; } .duel-player { min-height:0; } .duel-card-grid { max-height:330px; } .duel-center { order:0; } .duel-table>.duel-player:first-child { order:1; } .duel-table>.duel-player:last-child { order:2; } .duel-now { margin-left:auto; font-size:11px; padding:6px; } .duel-center .golem-grid { overflow-x:auto; grid-template-columns:repeat(5,170px); } .duel-center .merchant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+/* V1.2：离线 AI 席位与 UWQHD 人机竞技桌布。 */
+.setup-players{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.setup-players label{display:block;margin:12px 0 8px}
+.setup-players select{width:100%}
+.ai-seat-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:16px 0 9px;font-size:13px;color:#efd49a}
+.ai-seat-heading span{font-size:11px;color:#a6b9ba}
+.ai-seat-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.ai-slot{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 3px;border:1px dashed #4b6268;border-radius:8px;background:#102633;color:#81979d}
+.ai-slot b{font-size:12px}.ai-slot span{font-size:10px}
+.ai-slot.selected{border:1px solid #e0bd87;background:#3a322b;color:#f3d6a9}
+.setup-validation{font-size:12px;color:#a2caba}.setup-validation.invalid{color:#f2a28e}
+.ai-pause{white-space:nowrap;border-color:#b7965f}
+.ai-board-layout .ai-arena{display:grid;grid-template-columns:minmax(520px,1fr) minmax(900px,1.7fr) minmax(760px,1.45fr);gap:clamp(12px,.8vw,24px);height:calc(100dvh - 104px);min-height:780px}
+.ai-arena>.duel-player,.ai-arena>.duel-center{min-height:0}
+.ai-arena .duel-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ai-arena .duel-center .merchant-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.ai-arena .duel-center .merchant-card{padding:8px}
+.ai-arena .duel-center .golem-grid{gap:8px}
+.ai-arena .duel-center .golem-card{min-height:clamp(205px,23vh,310px)}
+.ai-seat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:12px;min-height:0}
+.ai-seat{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;border:1px solid #36515d;border-radius:12px;background:linear-gradient(145deg,#192f3b,#0a202c);padding:12px;gap:8px}
+.ai-seat-active{border-color:#e6ba76;box-shadow:inset 0 0 0 1px #ac875b}
+.ai-seat-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #39545c;padding-bottom:9px}
+.ai-seat-top>div:first-child{display:grid;gap:3px}
+.ai-seat-tag{font-size:10px;color:#d9b774;letter-spacing:.1em}
+.ai-seat-top b{font-size:16px}.ai-seat-top small{font-size:10px;color:#9bb0b5}
+.ai-seat-score{display:flex;flex-direction:column;color:#e6c48b;font:28px Georgia,serif}
+.ai-seat-score small{font:10px sans-serif;text-align:right}
+.ai-seat-stock{display:flex;flex-direction:column;gap:5px;border:1px solid #324c59;border-radius:8px;padding:7px;min-height:50px}
+.ai-seat-stock>span{font-size:11px;color:#b1c9c5}
+.ai-seat-stock>div{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ai-seat-stock .gem{width:12px;height:12px;margin:0}
+.ai-seat-stock .stone-gems{gap:3px}
+.ai-seat-zone{min-height:0;flex:1 1 0;display:flex;flex-direction:column;gap:6px}
+.ai-seat-zone>span{font-size:11px;font-weight:800}
+.ai-face-row{min-height:0;overflow-y:auto;scrollbar-width:thin;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:100px;align-content:start;gap:5px}
+.ai-face-row .merchant-card{min-height:0;min-width:0;padding:5px;border-radius:6px}
+.ai-face-row .card-head{font-size:9px}
+.ai-face-row .card-head small{font-size:8px}
+.ai-face-row .merchant-effect{min-height:0;gap:2px;margin:auto 0}
+.ai-face-row .effect-label,.ai-face-row .card-foot{display:none}
+.ai-face-row .effect-large{font-size:18px}
+.ai-face-row .trade-arrow{font-size:11px;line-height:1}
+.ai-face-row .stone-gems{gap:1px}
+.ai-face-row .stone-line{gap:2px}
+.ai-face-row .gem{width:9px;height:9px;margin:0}
+.ai-empty{padding:12px;border:1px dashed #3d5863;color:#8ba7ab;border-radius:6px;font-size:11px;grid-column:1/-1}
+.ai-seat-foot{border-top:1px solid #36525c;padding-top:8px;font-size:10px;color:#a9bcbf}
+@media(max-width:2400px){
+ .ai-board-layout .ai-arena{grid-template-columns:minmax(330px,1fr) minmax(650px,1.6fr) minmax(480px,1.3fr)}
+ .ai-arena .duel-center .merchant-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .ai-arena .duel-card-grid,.ai-face-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:1450px){
+ .ai-board-layout .ai-arena{display:flex;flex-direction:column;height:auto}
+ .ai-arena>.duel-player{min-height:510px;order:1}
+ .ai-arena>.duel-center{order:0}
+ .ai-arena>.ai-seat-grid{order:2}
+ .ai-seat-grid{grid-template-rows:none;grid-auto-rows:minmax(360px,auto)}
+ .ai-seat{min-height:360px}
+}
+@media(max-width:720px){.ai-seat-grid{gap:7px}.ai-seat{padding:6px}.ai-seat-picker{gap:3px}.ai-slot{padding:9px 2px}.ai-seat-score{font-size:20px}}
+@media(max-width:430px){.ai-seat-grid{grid-template-columns:1fr}.ai-seat{max-height:420px}}
 </style>
 </head>
 <body><div id="app"></div><script>
@@ -209,16 +273,18 @@ function generator(seed) {
     let value = seed >>> 0;
     return () => { value = (Math.imul(value, 1664525) + 1013904223) >>> 0; return value / 4294967296; };
 }
-function createGame(playerNames, seed = Math.floor(Math.random() * 2 ** 32)) {
+function createGame(playerNames, seed = Math.floor(Math.random() * 2 ** 32), aiSeats = []) {
     requireThat(playerNames.length >= 2 && playerNames.length <= 5, '游戏人数必须为 2–5 人');
     requireThat(playerNames.every(name => typeof name === 'string' && name.trim().length > 0 && name.trim().length <= 20), '玩家姓名不能为空且不超过 20 字');
+    requireThat(Array.isArray(aiSeats) && new Set(aiSeats).size === aiSeats.length && aiSeats.every(i => Number.isInteger(i) && i >= 0 && i < playerNames.length), 'AI 席位参数无效');
+    requireThat(aiSeats.length <= 4 && aiSeats.length < playerNames.length, '最多 4 名 AI，且至少 1 名人类玩家');
     const random = generator(seed);
     const merchantDeck = shuffled(MERCHANT_DECK.map(m => m.id), random);
     const golemDeck = shuffled(GOLEM_DECK.map(g => g.id), random);
     const game = {
         version: 1,
         players: playerNames.map((name, i) => ({
-            id: i, name: name.trim(),
+            id: i, name: name.trim(), isAI: aiSeats.includes(i),
             stock: i === 0 || i === 3 || i === 4 ? (i === 0 ? [3, 0, 0, 0] : [3, 1, 0, 0]) : [4, 0, 0, 0],
             hand: [`S${i + 1}C`, `S${i + 1}U`], played: [], claimed: [], copper: 0, silver: 0, turns: 0,
         })),
@@ -407,6 +473,155 @@ function legalClaimIndices(g) {
     return g.golemMarket.flatMap((id, index) => has(g.players[g.current].stock, GOLEM_BY_ID[id].cost) ? [index] : []);
 }
 
+// @ts-nocheck
+/** 离线启发式 AI。候选动作须通过 applyAction 模拟，不读取隐藏牌库顺序。 */
+
+
+const COLORS = [0, 1, 2, 3];
+const VALUES = [1, 1.5, 2.05, 2.65];
+const weighted = stock => stock.reduce((s, n, i) => s + n * VALUES[i], 0);
+function targetValue(g, stock) {
+    if (!g.golemMarket.length)
+        return 0;
+    return Math.max(...g.golemMarket.map((id, i) => {
+        const card = GOLEM_BY_ID[id];
+        const shortage = card.cost.reduce((s, n, k) => s + Math.max(0, n - stock[k]) * VALUES[k], 0);
+        const matched = card.cost.reduce((s, n, k) => s + Math.min(n, stock[k]) * VALUES[k], 0);
+        return card.points * .24 + matched * .12 + (i === 0 && g.copper ? 1.3 : 0) - shortage * 1.33;
+    }));
+}
+const fitness = (g, stock) => targetValue(g, stock) + weighted(stock) * .10 - Math.max(0, count(stock) - 10) * 3;
+function chooseDiscard(g) {
+    const stock = [...g.players[g.current].stock], picked = [];
+    while (count(stock) > 10) {
+        let color = -1, best = -Infinity;
+        for (const c of COLORS) {
+            if (stock[c] === 0)
+                continue;
+            stock[c]--;
+            const value = fitness(g, stock);
+            stock[c]++;
+            if (value > best) {
+                color = c;
+                best = value;
+            }
+        }
+        if (color < 0)
+            throw Error('无法弃置超额水晶');
+        stock[color]--;
+        picked.push(color);
+    }
+    return picked;
+}
+function paymentVariants(stock, n) {
+    const result = [];
+    const search = (color, left, selected) => {
+        if (color === 4) {
+            if (left === 0)
+                result.push(selected);
+            return;
+        }
+        for (let k = 0; k <= Math.min(left, stock[color]); k++)
+            search(color + 1, left - k, selected.concat(Array(k).fill(color)));
+    };
+    search(0, n, []);
+    return result;
+}
+function upgradeVariants(stock, max) {
+    const result = [];
+    const search = (s, steps) => {
+        if (steps.length)
+            result.push(steps);
+        if (steps.length === max)
+            return;
+        for (const c of [0, 1, 2]) {
+            if (!s[c])
+                continue;
+            const next = [...s];
+            next[c]--;
+            next[c + 1]++;
+            search(next, steps.concat(c));
+        }
+    };
+    search([...stock], []);
+    return result;
+}
+function engineStrength(card, stock) {
+    if (card.kind === 'create')
+        return weighted(card.output) * .7;
+    if (card.kind === 'upgrade')
+        return card.steps * 1.24;
+    return Math.max(0, weighted(card.output) - weighted(card.input)) * .65 + 1 + (has(stock, card.input) ? .45 : 0);
+}
+function chooseAIAction(game) {
+    const g = game;
+    if (g.phase === 'finished')
+        throw Error('游戏结束，AI 无法行动');
+    const p = g.players[g.current];
+    if (!p?.isAI)
+        throw Error('当前行动者不是 AI');
+    if (g.phase === 'overflow')
+        return { action: { type: 'discard', colors: chooseDiscard(g) }, reason: '弃置超额水晶' };
+    const canClaim = g.golemMarket.flatMap((id, index) => {
+        const c = GOLEM_BY_ID[id];
+        if (!has(p.stock, c.cost))
+            return [];
+        const coin = index === 0 ? (g.copper ? 3 : g.silver ? 1 : 0) : index === 1 && g.silver && g.copper ? 1 : 0;
+        return [{ index, quality: c.points + coin * 1.6 }];
+    });
+    if (canClaim.length) {
+        canClaim.sort((a, b) => b.quality - a.quality);
+        return { action: { type: 'claim', index: canClaim[0].index }, reason: '认领魔像' };
+    }
+    const candidates = [], before = fitness(g, p.stock);
+    const offer = (action, bonus, reason) => {
+        try {
+            let sim = applyAction(g, action);
+            if (sim.phase === 'overflow')
+                sim = applyAction(sim, { type: 'discard', colors: chooseDiscard(sim) });
+            const next = sim.players[g.current];
+            let value = fitness(g, next.stock) - before + bonus;
+            if (action.type === 'acquire')
+                value -= Math.max(0, next.hand.length + next.played.length - 6) * .6;
+            candidates.push({ action, value, reason });
+        }
+        catch { }
+    };
+    for (const id of p.hand) {
+        const card = MERCHANT_BY_ID[id];
+        if (!card)
+            continue;
+        if (card.kind === 'create')
+            offer({ type: 'play', cardId: id }, .34, '创造水晶');
+        else if (card.kind === 'upgrade') {
+            for (const steps of upgradeVariants(p.stock, card.steps))
+                offer({ type: 'play', cardId: id, steps }, .3 + steps.length * .17, '升级水晶');
+        }
+        else {
+            for (let repeats = 1; repeats <= tradeLimit(p.stock, id); repeats++)
+                offer({ type: 'play', cardId: id, repeats }, .4, '交易水晶');
+        }
+    }
+    if (g.triggerPlayer === null && p.hand.length + p.played.length < 9) {
+        const stage = Math.max(.04, 1 - p.turns / 18);
+        g.merchantMarket.forEach((m, index) => {
+            if (index > count(p.stock))
+                return;
+            const card = MERCHANT_BY_ID[m.id];
+            const bonus = engineStrength(card, p.stock) * stage - index * .05;
+            for (const payment of paymentVariants(p.stock, index))
+                offer({ type: 'acquire', index, payment }, bonus, '获取商人卡');
+        });
+    }
+    const reclaim = p.played.reduce((s, id) => s + engineStrength(MERCHANT_BY_ID[id], p.stock), 0);
+    offer({ type: 'rest' }, p.played.length ? .22 + Math.min(2.6, reclaim * .23) : -2, '休息取回卡牌');
+    candidates.sort((a, b) => b.value - a.value);
+    if (!candidates.length)
+        throw Error('AI 无法选择合法行动');
+    return { action: candidates[0].action, reason: candidates[0].reason };
+}
+
+
 
 
 const KEY = 'crystal-corridor-game-v1';
@@ -418,6 +633,8 @@ let modal = null;
 let handoff = false;
 let showHelp = false;
 let toast = '';
+let botPaused = false;
+let botTimer = null;
 try {
     const saved = localStorage.getItem(KEY);
     if (saved) {
@@ -465,13 +682,46 @@ function merchantCard(id, marketIndex, bonus, view = 'hand') {
   </${tag}>`;
 }
 function renderSetup() {
-    return `<main class="layout landing"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><span class="edition">V1 · 本地轮流对局</span></header>
-    <div class="landing-split"><section class="welcome-copy"><div class="eyebrow">桌游数字化 · 独立练习原型</div><h1>把每一颗晶石，<br>变成制胜的筹码。</h1><p>独立规则引擎、43 张商人牌库、36 张魔像卡，自动执行市场成本、水晶容量与终局计分。</p><div class="feature-row"><span>◇ 2–5 人</span><span>◇ 离线可玩</span><span>◇ 自动存档</span></div></section>
-    <section class="setup-box"><div class="eyebrow">NEW GAME</div><h2>创建本地对局</h2><p class="hint">玩家轮流使用同一设备。双人模式左右同屏、无需交接；3–5 人继续使用交接界面。</p><label for="playerCount">玩家人数</label><select id="playerCount"><option value="2">2 人</option><option value="3">3 人</option><option value="4">4 人</option><option value="5">5 人</option></select><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1"/><input maxlength="20" aria-label="玩家 2" value="玩家 2"/></div><button class="primary-btn big" data-action="start">开始游戏 <span>↗</span></button><p class="small-muted">私人学习与功能验证用途；非官方作品，未使用原版美术素材。</p></section></div>
-    <footer class="footer">资料基准：项目规则文档和独立卡牌数据复核 · <a href="https://github.com/Xike-yuhuofei/Century" target="_blank" rel="noopener">项目仓库</a></footer></main>`;
+    return `<main class="layout landing"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><span class="edition">V1.2 · AI 对战</span></header>
+    <div class="landing-split"><section class="welcome-copy"><div class="eyebrow">桌游数字化 · AI 实战训练</div><h1>与四位晶石工匠，<br>角逐最佳引擎。</h1><p>1–5 名人类与 0–4 名 AI 自由组合，总人数 2–5 人。AI 自动行动，无需联网。</p><div class="feature-row"><span>◇ 4 个 AI 席位</span><span>◇ 自动行动</span><span>◇ 离线可玩</span></div></section>
+    <section class="setup-box"><div class="eyebrow">NEW GAME</div><h2>创建对局</h2><p class="hint">默认 1 名人类 + 1 名 AI。单人对战多名 AI 时将在超宽屏上显示全部对手席位。</p>
+    <div class="setup-players"><div><label for="humanCount">人类玩家</label><select id="humanCount">${Array.from({ length: 5 }, (_, i) => `<option value="${i + 1}">${i + 1} 名</option>`).join('')}</select></div>
+    <div><label for="botCount">AI 玩家</label><select id="botCount">${Array.from({ length: 5 }, (_, i) => `<option value="${i}" ${i === 1 ? 'selected' : ''}>${i} 名</option>`).join('')}</select></div></div>
+    <label>人类玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1"/></div>
+    <div class="ai-seat-heading"><b>AI 玩家席位</b><span>最多 4 位</span></div><div class="ai-seat-picker">${Array.from({ length: 4 }, (_, i) => `<div data-ai-slot="${i}" class="ai-slot ${i === 0 ? 'selected' : ''}"><b>✧ AI ${i + 1}</b><span>${i === 0 ? '已加入' : '空席'}</span></div>`).join('')}</div>
+    <p id="setupValidation" class="setup-validation">合计 2 名参赛者</p>
+    <button class="primary-btn big" data-action="start">开始对局 <span>↗</span></button><p class="small-muted">独立学习原型，不使用原版插画。</p></section></div>
+    <footer class="footer"><a href="https://github.com/Xike-yuhuofei/Century" target="_blank" rel="noopener">项目仓库</a></footer></main>`;
+}
+function syncSetup() {
+    if (game)
+        return;
+    const humans = Number(root.querySelector('#humanCount')?.value || 1);
+    const bots = Number(root.querySelector('#botCount')?.value || 0);
+    const container = root.querySelector('#nameInputs');
+    if (!container)
+        return;
+    const values = [...container.querySelectorAll('input')].map(x => x.value);
+    container.innerHTML = Array.from({ length: humans }, (_, i) => `<input maxlength="20" aria-label="玩家 ${i + 1}" value="${esc(values[i] ?? `玩家 ${i + 1}`)}"/>`).join('');
+    for (const seat of root.querySelectorAll('[data-ai-slot]')) {
+        const selected = Number(seat.dataset.aiSlot) < bots;
+        seat.classList.toggle('selected', selected);
+        const state = seat.querySelector('span');
+        if (state)
+            state.textContent = selected ? '已加入' : '空席';
+    }
+    const valid = humans + bots >= 2 && humans + bots <= 5;
+    const status = root.querySelector('#setupValidation');
+    if (status) {
+        status.textContent = valid ? `合计 ${humans + bots} 名参赛者` : '总人数须为 2–5 人';
+        status.classList.toggle('invalid', !valid);
+    }
+    const start = root.querySelector('[data-action="start"]');
+    if (start)
+        start.disabled = !valid;
 }
 function playerCard(p, active) {
-    return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${p.id + 1}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
+    return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${p.isAI ? "AI" : p.id + 1}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
 }
 function golemCard(id, index, g) {
     const golem = GOLEM_BY_ID[id];
@@ -494,16 +744,16 @@ function renderDuelPlayer(g, index) {
     const active = g.current === index && g.phase !== 'finished';
     return `<section class="duel-player ${active ? 'duel-active' : 'duel-waiting'}" aria-label="${esc(p.name)}的游戏区域" data-player="${index}">
     <header class="duel-player-head">
-      <div class="duel-player-title"><span class="duel-avatar">${index + 1}</span><div><div class="duel-name">${esc(p.name)}</div><span class="duel-status">${active ? '● 当前行动方' : '○ 等待行动'} · ${p.turns} 回合</span></div></div>
+      <div class="duel-player-title"><span class="duel-avatar">${p.isAI ? "AI" : index + 1}</span><div><div class="duel-name">${esc(p.name)}</div><span class="duel-status">${active ? (p.isAI ? '● AI 正在行动' : '● 当前行动方') : '○ 等待行动'} · ${p.turns} 回合</span></div></div>
       <div class="duel-score"><b>${score(p)}</b><small>当前估分</small></div>
     </header>
     <div class="duel-stock"><div class="duel-minor-head"><b>商队</b><span class="capacity ${count(p.stock) > 10 ? 'over-capacity' : ''}">${count(p.stock)} / 10 颗</span></div><div class="resource-bar">${stones(p.stock)}</div></div>
-    <div class="duel-zone duel-hand"><div class="duel-minor-head"><b>手牌 · ${p.hand.length} 张</b><span>${active ? '点击卡牌打出' : '正面公开展示'}</span></div>
-      <div class="duel-card-grid">${p.hand.length ? p.hand.map(id => merchantCard(id, undefined, undefined, active ? 'hand' : 'inactive')).join('') : '<div class="duel-empty">手牌已全部打出，可以休息取回</div>'}</div></div>
+    <div class="duel-zone duel-hand"><div class="duel-minor-head"><b>手牌 · ${p.hand.length} 张</b><span>${active && !p.isAI ? '点击卡牌打出' : '正面公开展示'}</span></div>
+      <div class="duel-card-grid">${p.hand.length ? p.hand.map(id => merchantCard(id, undefined, undefined, active && !p.isAI ? 'hand' : 'inactive')).join('') : '<div class="duel-empty">手牌已全部打出，可以休息取回</div>'}</div></div>
     <div class="duel-zone duel-played"><div class="duel-minor-head"><b>已打出 · ${p.played.length} 张</b><span>卡面朝上</span></div>
       <div class="duel-card-grid duel-used-grid">${p.played.length ? p.played.map(id => merchantCard(id, undefined, undefined, 'played')).join('') : '<div class="duel-empty">暂无已打出卡牌</div>'}</div></div>
     <footer class="duel-player-footer"><div><b>魔像 ${p.claimed.length} 张</b><span>${p.claimed.length ? p.claimed.map(id => `${GOLEM_BY_ID[id].points}分`).join(' · ') : '尚未认领'}</span><span>铜币 ${p.copper} · 银币 ${p.silver}</span></div>
-      <button type="button" class="rest-btn" data-action="rest" ${active && g.phase === 'turn' ? '' : 'disabled'}>休息 · 收回卡牌 ↗</button></footer>
+      <button type="button" class="rest-btn" data-action="rest" ${active && !p.isAI && g.phase === 'turn' ? '' : 'disabled'}>休息 · 收回卡牌 ↗</button></footer>
   </section>`;
 }
 function renderDuelBoard(g) {
@@ -511,7 +761,7 @@ function renderDuelBoard(g) {
     const finished = g.phase === 'finished';
     return `<main class="layout duel-layout"><header class="topbar duel-topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR · 双人同屏</span></div>
     <div class="duel-now">${finished ? '本局结束' : `第 ${g.turnNumber} 手 · ${esc(g.players[g.current].name)} 行动中`}</div>
-    <div class="top-actions"><button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+    <div class="top-actions">${aiPauseControl(g)}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
     ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发，本轮结束后结算</div>' : ''}
     <div class="duel-table">
       ${renderDuelPlayer(g, 0)}
@@ -526,13 +776,48 @@ function renderDuelBoard(g) {
       ${renderDuelPlayer(g, 1)}
     </div>${finished ? renderResult(g) : ''}</main>`;
 }
+function aiPauseControl(g) {
+    if (!g.players.some(p => p.isAI) || g.phase === 'finished')
+        return '';
+    return `<button class="subtle-btn ai-pause" data-action="ai-pause">${botPaused ? '▶ 继续 AI' : 'Ⅱ 暂停 AI'}</button>`;
+}
+function renderAISeat(g, p) {
+    const active = g.current === p.id && g.phase !== 'finished';
+    return `<section class="ai-seat ${active ? 'ai-seat-active' : ''}" data-bot-seat="${p.id}" aria-label="${esc(p.name)}席位">
+    <div class="ai-seat-top"><div><span class="ai-seat-tag">AI · ${p.id}</span><b>${esc(p.name)}</b><small>${active ? (botPaused ? '已暂停' : '正在计算行动') : '等待回合'}</small></div><div class="ai-seat-score">${score(p)}<small>分</small></div></div>
+    <div class="ai-seat-stock"><span>商队 ${count(p.stock)}/10</span><div>${stones(p.stock, true)}</div></div>
+    <div class="ai-seat-zone"><span>手牌 · ${p.hand.length}</span><div class="ai-face-row">${p.hand.length ? p.hand.map(id => merchantCard(id, undefined, undefined, 'inactive')).join('') : '<span class="ai-empty">无手牌</span>'}</div></div>
+    <div class="ai-seat-zone"><span>已打出 · ${p.played.length}</span><div class="ai-face-row">${p.played.length ? p.played.map(id => merchantCard(id, undefined, undefined, 'played')).join('') : '<span class="ai-empty">暂无</span>'}</div></div>
+    <div class="ai-seat-foot">魔像 ${p.claimed.length} 张 · 铜币 ${p.copper} · 银币 ${p.silver}</div>
+  </section>`;
+}
+function renderSoloAIBoard(g) {
+    const human = g.players.find(p => !p.isAI);
+    const bots = g.players.filter(p => p.isAI);
+    const finished = g.phase === 'finished', target = g.players.length >= 4 ? 5 : 6;
+    return `<main class="layout duel-layout ai-board-layout"><header class="topbar duel-topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR · AI ARENA</span></div>
+    <div class="duel-now">${finished ? '对局结束' : `第 ${g.turnNumber} 手 · ${esc(g.players[g.current].name)} 行动中`}</div>
+    <div class="top-actions">${aiPauseControl(g)}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+    ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发，本轮结束后结算</div>' : ''}
+    <div class="ai-arena">
+      ${renderDuelPlayer(g, human.id)}
+      <div class="duel-center"><div class="duel-center-heading"><span>共享市场 · CENTER TABLE</span><strong>1 名人类 VS ${bots.length} 名 AI</strong></div>
+        <section class="duel-market"><div class="duel-market-title"><h2>魔像市场</h2><span>剩余 ${g.golemDeck.length} 张 · 第 ${target} 张触发终局</span></div><div class="golem-grid">${g.golemMarket.map((id, i) => golemCard(id, i, g)).join('')}</div></section>
+        <section class="duel-market"><div class="duel-market-title"><h2>商人市场</h2><span>剩余 ${g.merchantDeck.length} 张</span></div><div class="merchant-grid">${g.merchantMarket.map((m, i) => merchantCard(m.id, i, m.bonus)).join('')}</div></section>
+        <section class="duel-log"><div class="duel-minor-head"><b>对局记录</b><span>AI 自动行动</span></div><div class="duel-log-lines">${g.log.slice(0, 6).map(line => `<span>${esc(line)}</span>`).join('')}</div></section>
+      </div>
+      <aside class="ai-seat-grid">${bots.map(p => renderAISeat(g, p)).join('')}</aside>
+    </div>${finished ? renderResult(g) : ''}</main>`;
+}
 function renderBoard(g) {
+    if (g.players.length > 2 && g.players.filter(p => !p.isAI).length === 1 && g.players.some(p => p.isAI))
+        return renderSoloAIBoard(g);
     if (g.players.length === 2)
         return renderDuelBoard(g);
     const p = g.players[g.current];
     const target = g.players.length >= 4 ? 5 : 6;
     const finished = g.phase === 'finished';
-    return `<main class="layout board-layout"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span><button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+    return `<main class="layout board-layout"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span>${aiPauseControl(g)}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
   <section class="players-strip">${g.players.map((x, i) => playerCard(x, i === g.current && !finished)).join('')}</section>
   ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发！本轮完成后结算。</div>' : ''}
   <section class="game-section"><div class="section-head"><div><span class="section-index">01 / THE GOLEMS</span><h2>魔像市场 <small>认领目标</small></h2></div><div class="section-meta">牌库剩余 ${g.golemDeck.length} 张 · 每人认领 ${target} 张触发终局</div></div>
@@ -588,6 +873,7 @@ function render() {
     root.innerHTML = `${game ? renderBoard(game) : renderSetup()}
     ${modal && game && !handoff && game.phase !== 'finished' ? `<div class="overlay" data-overlay="modal"><section class="dialog">${game.phase !== 'overflow' ? '<button class="close-modal" data-action="cancel">✕</button>' : ''}${modalBody()}</section></div>` : ''}
     ${showHelp ? renderRules() : ''}${toast ? `<div class="toast" role="alert">${esc(toast)}</div>` : ''}`;
+    scheduleBot();
 }
 function save() { try {
     if (game)
@@ -603,8 +889,8 @@ function action(a) {
     try {
         const previous = game.current;
         game = applyAction(game, a);
-        modal = game.phase === 'overflow' ? { kind: 'discard', colors: [] } : null;
-        handoff = game.players.length > 2 && game.current !== previous && game.phase !== 'finished';
+        modal = game.phase === 'overflow' && !game.players[game.current].isAI ? { kind: 'discard', colors: [] } : null;
+        handoff = game.players.length > 2 && game.current !== previous && game.phase !== 'finished' && !game.players[game.current].isAI && game.players.filter(p => !p.isAI).length > 1;
         toast = '';
         save();
         render();
@@ -616,9 +902,15 @@ function action(a) {
 function start() {
     const inputs = [...root.querySelectorAll('#nameInputs input')];
     try {
-        game = createGame(inputs.map(x => x.value));
+        const humans = Number(root.querySelector('#humanCount').value);
+        const bots = Number(root.querySelector('#botCount').value);
+        if (inputs.length !== humans)
+            throw Error('人类玩家人数无效');
+        const names = [...inputs.map(x => x.value), ...Array.from({ length: bots }, (_, i) => `AI 工匠 ${i + 1}`)];
+        game = createGame(names, undefined, Array.from({ length: bots }, (_, i) => humans + i));
         modal = null;
         handoff = false;
+        botPaused = false;
         showHelp = false;
         toast = '';
         save();
@@ -641,6 +933,7 @@ function control(target) {
         handoff = false;
         showHelp = false;
         modal = null;
+        botPaused = false;
         toast = '';
         save();
         render();
@@ -661,6 +954,11 @@ function control(target) {
         render();
         return;
     }
+    if (type === 'ai-pause') {
+        botPaused = !botPaused;
+        render();
+        return;
+    }
     if (type === 'cancel') {
         if (game?.phase === 'overflow')
             return;
@@ -669,7 +967,7 @@ function control(target) {
         render();
         return;
     }
-    if (!game || game.phase === 'finished' || handoff || showHelp)
+    if (!game || game.phase === 'finished' || handoff || showHelp || game.players[game.current].isAI)
         return;
     if (game.phase === 'overflow' && !modal)
         modal = { kind: 'discard', colors: [] };
@@ -794,6 +1092,27 @@ function control(target) {
         }
     }
 }
+function scheduleBot() {
+    if (botTimer !== null) {
+        clearTimeout(botTimer);
+        botTimer = null;
+    }
+    if (!game || game.phase === 'finished' || handoff || showHelp || modal || botPaused || !game.players[game.current]?.isAI)
+        return;
+    const player = game.current, turn = game.turnNumber;
+    botTimer = setTimeout(() => {
+        botTimer = null;
+        if (!game || game.current !== player || game.turnNumber !== turn || game.phase === 'finished' || handoff || showHelp || botPaused || !game.players[game.current]?.isAI)
+            return;
+        try {
+            action(chooseAIAction(game).action);
+        }
+        catch (e) {
+            botPaused = true;
+            notify('AI 行动异常，已暂停：' + (e instanceof Error ? e.message : String(e)));
+        }
+    }, 470);
+}
 root.addEventListener('click', event => {
     const element = event.target;
     const target = element.closest('[data-action]');
@@ -801,12 +1120,9 @@ root.addEventListener('click', event => {
         control(target);
 });
 root.addEventListener('change', e => {
-    const element = e.target;
-    if (element.id !== 'playerCount')
-        return;
-    const n = Number(element.value);
-    const slot = root.querySelector('#nameInputs');
-    slot.innerHTML = Array.from({ length: n }, (_, i) => `<input maxlength="20" aria-label="玩家 ${i + 1}" value="玩家 ${i + 1}"/>`).join('');
+    const target = e.target;
+    if (target.id === 'humanCount' || target.id === 'botCount')
+        syncSetup();
 });
 render();
 })();
