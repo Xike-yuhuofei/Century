@@ -194,7 +194,8 @@ function fiveHandOrder(p:Game['players'][number],side:number):string[]{
   fiveOrders[side]=ordered;
   if(fiveSorting[side]==='type'){
     const level:Record<string,number>={create:0,upgrade:1,trade:2};
-    return [...ordered].sort((x,y)=>level[MERCHANT_BY_ID[x].kind]-level[MERCHANT_BY_ID[y].kind]);
+    const sorted=ordered.filter(id=>!fivePinned[side].includes(id)).sort((x,y)=>level[MERCHANT_BY_ID[x].kind]-level[MERCHANT_BY_ID[y].kind]);
+    return ordered.map(id=>fivePinned[side].includes(id)?id:sorted.shift()!);
   }
   return ordered;
 }
@@ -258,6 +259,7 @@ function renderFiveBoard(g:Game):string {
       </section>
       ${fivePlayer(g,1)}
     </div>
+    <div id="five-hover" class="five-hover" hidden></div>
     ${finished?renderResult(g):''}
   </main>`;
 }
@@ -460,6 +462,28 @@ root.addEventListener('drop',event=>{
   fiveDrag=null;render();
 });
 root.addEventListener('dragend',()=>{fiveDrag=null;});
+// Read-only enlarged card preview; pointer does not obstruct the table.
+root.addEventListener('pointerover',event=>{
+  if(fiveDrag)return;
+  const c=(event.target as HTMLElement).closest<HTMLElement>('.five-root .merchant-card');
+  const tip=root.querySelector<HTMLElement>('#five-hover');
+  if(!c||!tip)return;
+  const id=c.dataset.id||'';
+  if(!MERCHANT_BY_ID[id])return;
+  tip.innerHTML=merchantCard(id,undefined,undefined,'inactive');
+  const r=c.getBoundingClientRect();
+  const w=220,h=260;
+  tip.style.left=(r.right+w+15<window.innerWidth?r.right+13:Math.max(8,r.left-w-13))+'px';
+  tip.style.top=Math.max(8,Math.min(window.innerHeight-h-8,r.top-5))+'px';
+  tip.hidden=false;
+});
+root.addEventListener('pointerout',event=>{
+  const c=(event.target as HTMLElement).closest<HTMLElement>('.five-root .merchant-card');
+  const other=event.relatedTarget as Node|null;
+  if(!c||other&&c.contains(other))return;
+  const tip=root.querySelector<HTMLElement>('#five-hover');
+  if(tip)tip.hidden=true;
+});
 root.addEventListener('contextmenu',event=>{
   const c=(event.target as HTMLElement).closest<HTMLElement>('.five-hand-cards .merchant-card[data-hand-owner]');
   if(!c)return;

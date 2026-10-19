@@ -191,3 +191,11 @@ html:has(.five-root),body:has(.five-root){height:100%;overflow:hidden}
 @media(max-width:2450px){.five-root .five-board{gap:8px}.five-player{padding:9px}.five-center{padding:9px}.five-hand-cards,.five-played-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.five-root .merchant-card .gem{width:10px;height:10px}.five-player-profile strong{font-size:15px}.five-merchant-grid{gap:4px}.five-golem-grid{gap:4px}.five-workbench{flex-basis:170px}}
 @media(max-width:1580px){.five-root{font-size:11px}.five-ai-strip{flex-basis:105px}.five-ai-cards{height:80px}.five-workbench{flex-basis:156px}.five-hand-cards,.five-played-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.five-topbar{height:48px!important;min-height:48px!important}.five-golem-grid .golem-card{padding:4px}.five-golem-grid .golem-top{font-size:9px}.five-merchant-grid{grid-template-columns:repeat(3,minmax(0,1fr));overflow:auto;grid-auto-rows:120px}.five-merchant-grid .merchant-card{height:120px}.five-market .five-rowhead>span{display:none}}
 
+
+/* Enlarged merchant effect preview keeps gems count visible without moving the original. */
+.five-hover{position:fixed;z-index:40;width:220px;height:260px;pointer-events:none;filter:drop-shadow(0 15px 30px #0009)}
+.five-hover[hidden]{display:none!important}
+.five-hover .merchant-card{width:100%;height:100%;min-height:0;padding:15px;transform:none!important;border-radius:12px}
+.five-hover .card-head{font-size:16px}.five-hover .card-head small{font-size:13px}
+.five-hover .merchant-effect{min-height:135px}.five-hover .merchant-card .gem{width:19px;height:19px;margin:1px}
+.five-hover .stone-gems{gap:5px}.five-hover .card-foot{font-size:12px}

@@ -24,6 +24,11 @@ jobs:
       - name: Compile and run rule/AI tests
         working-directory: web-v1
         run: npm test
+      - name: Install Playwright for live five-player smoke
+        run: python -m pip install playwright==1.56.0
+      - name: Test real two-human three-AI browser interactions
+        working-directory: web-v1
+        run: python scripts/live-five-smoke.py
       - name: Regenerate standalone HTML
         working-directory: web-v1
         run: npm run build
