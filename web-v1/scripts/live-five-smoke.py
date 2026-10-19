@@ -81,6 +81,49 @@ with sync_playwright() as p:
     page.locator('[data-action="start"]').click()
     assert page.locator(".five-ai-item:not(.five-ai-empty)").count() == 0
     assert page.locator(".five-player").count() == 2
+    width_0 = page.locator('.five-player[data-side="0"]').evaluate("(e)=>e.getBoundingClientRect().width")
+    # Check 1/2/3 bots do not change fixed human side widths.
+    for bots in [1, 2]:
+        page.once("dialog", lambda dialog: dialog.accept())
+        page.locator('[data-action="reset"]').click()
+        page.locator("#botCount").select_option(str(bots))
+        page.locator('[data-action="start"]').click()
+        assert page.locator(".five-ai-item:not(.five-ai-empty)").count() == bots
+        assert abs(page.locator('.five-player[data-side="0"]').evaluate("(e)=>e.getBoundingClientRect().width") - width_0) < 4
+    # Reset to 0 bots for deterministic paid acquisition and golem claim.
+    page.once("dialog", lambda dialog: dialog.accept())
+    page.locator('[data-action="reset"]').click()
+    page.locator("#botCount").select_option("0")
+    page.locator('[data-action="start"]').click()
+    # Paid position-3 merchant requires exactly two crystals on preceding cards.
+    page.locator('.five-merchant-grid [data-action="get-merchant"]').nth(2).click()
+    assert page.locator('.five-workbench .five-inline-modal').count() == 1
+    page.locator('.five-workbench [data-action="payment-pick"][data-color="0"]').click()
+    page.locator('.five-workbench [data-action="payment-pick"][data-color="0"]').click()
+    page.locator('.five-workbench [data-action="confirm-acquire"]').click()
+    assert page.locator('.five-player[data-side="0"] .five-hand-cards .merchant-card').count() == 3
+    assert page.locator(".five-merchant-grid .merchant-card").count() == 6
+    # Force a legal own-turn claim state through the same persisted game schema.
+    canonical = json.loads(root.parent.joinpath("data/cards.json").read_text("utf-8"))
+    first_golem = page.evaluate("""() => {
+        const key='crystal-corridor-game-v2-canonical';
+        const game=JSON.parse(localStorage.getItem(key));
+        game.current=0;game.phase='turn';
+        localStorage.setItem(key,JSON.stringify(game));
+        return game.golemMarket[0];
+    }""")
+    need = next(c["need"] for c in canonical["golems"] if c["id"] == first_golem)
+    stock = [need[c] for c in canonical["color_order"]]
+    page.evaluate("""s => {
+        const key='crystal-corridor-game-v2-canonical';
+        const game=JSON.parse(localStorage.getItem(key));
+        game.players[0].stock=s;
+        localStorage.setItem(key,JSON.stringify(game));
+    }""", stock)
+    page.reload()
+    page.locator('.five-golem-grid [data-action="claim"]').first.click()
+    assert "魔像 1 张" in page.locator('.five-player[data-side="0"] .five-player-foot').inner_text()
+    assert page.locator('.five-player[data-side="1"].five-active').count() == 1
     assert errors == [], errors
-    print("五人真实引擎端到端测试通过：固定双真人、3 AI、拖拽、排序、折叠、升级、休息、无移交遮罩、0 AI")
+    print("五人实战 UI E2E 通过：固定双真人、0–3 AI、拖拽、分组、折叠、升级、交易入口、付费获取、认领、休息及无交接遮罩")
     browser.close()
