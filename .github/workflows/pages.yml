@@ -40,10 +40,15 @@ jobs:
         run: |
           mkdir -p _site
           cp web-v1/dist/standalone.html _site/index.html
+          mkdir -p _site/mobile
+          cp web-v1/dist/mobile/index.html _site/mobile/index.html
           touch _site/.nojekyll
           test -s _site/index.html
           grep -q '<meta name="viewport"' _site/index.html
           grep -q 'function choosePlan(game)' _site/index.html
+          test -s _site/mobile/index.html
+          grep -q 'data-century-mode="mobile"' _site/mobile/index.html
+          grep -q 'function choosePlan(game)' _site/mobile/index.html
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
