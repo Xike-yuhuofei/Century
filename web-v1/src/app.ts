@@ -65,9 +65,9 @@ function merchantCard(id: string, marketIndex?: number, bonus?: Stock, view: 'ha
 }
 function renderSetup(): string {
   return `<main class="layout landing"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><span class="edition">V1.3 · 五人同屏</span></header>
-    <div class="landing-split"><section class="welcome-copy"><div class="eyebrow">桌游数字化 · AI 实战训练</div><h1>与晶石工匠，<br>角逐最佳引擎。</h1><p>固定双真人，支持 0–3 名 AI；3440 × 1440 超宽屏同屏操作。</p><div class="feature-row"><span>◇ 3 个 AI 席位</span><span>◇ 自动行动</span><span>◇ 离线可玩</span></div></section>
-    <section class="setup-box"><div class="eyebrow">NEW GAME</div><h2>创建对局</h2><p class="hint">两名真人分别使用左右侧完整操作区，最多添加三名 AI。</p>
-    <div class="setup-players"><div><label for="humanCount">人类玩家</label><select id="humanCount"><option value="2">2 名</option></select></div>
+    <div class="landing-split"><section class="welcome-copy"><div class="eyebrow">桌游数字化 · AI 实战训练</div><h1>与晶石工匠，<br>角逐最佳引擎。</h1><p>支持 1～2 名人类与 0～3 名 AI，最多 5 人；双真人支持超宽屏同屏操作。</p><div class="feature-row"><span>◇ 3 个 AI 席位</span><span>◇ 自动行动</span><span>◇ 离线可玩</span></div></section>
+    <section class="setup-box"><div class="eyebrow">NEW GAME</div><h2>创建对局</h2><p class="hint">单真人搭配至少一名 AI；双真人固定使用左右两侧操作区。最多三名 AI。</p>
+    <div class="setup-players"><div><label for="humanCount">人类玩家</label><select id="humanCount"><option value="1">1 名</option><option value="2" selected>2 名</option></select></div>
     <div><label for="botCount">AI 玩家</label><select id="botCount">${Array.from({length:4},(_,i)=>`<option value="${i}" ${i===3?'selected':''}>${i} 名</option>`).join('')}</select></div></div>
     <label>人类玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1"/><input maxlength="20" aria-label="玩家 2" value="玩家 2"/></div>
     <div class="ai-seat-heading"><b>AI 玩家席位</b><span>最多 3 位</span></div><div class="ai-seat-picker">${Array.from({length:3},(_,i)=>`<div data-ai-slot="${i}" class="ai-slot selected"><b>✧ AI ${i+1}</b><span>已加入</span></div>`).join('')}</div>
@@ -77,21 +77,25 @@ function renderSetup(): string {
 }
 function syncSetup(){
   if(game)return;
-  const humans=2;
+  const humans=Number((root.querySelector('#humanCount') as HTMLSelectElement)?.value||2);
   const bots=Number((root.querySelector('#botCount') as HTMLSelectElement)?.value||0);
   const container=root.querySelector<HTMLElement>('#nameInputs');
   if(!container)return;
-  const values=[...container.querySelectorAll<HTMLInputElement>('input')].map(x=>x.value);
-  container.innerHTML=Array.from({length:humans},(_,i)=>`<input maxlength="20" aria-label="玩家 ${i+1}" value="${esc(values[i]??`玩家 ${i+1}`)}"/>`).join('');
+  // Keep the second player's typed name when switching 2 -> 1 -> 2.
+  const nameInputs=[...container.querySelectorAll<HTMLInputElement>('input')];
+  nameInputs.forEach((input,i)=>{input.hidden=i>=humans;});
   for(const seat of root.querySelectorAll<HTMLElement>('[data-ai-slot]')){
     const selected=Number(seat.dataset.aiSlot)<bots;
     seat.classList.toggle('selected',selected);
     const state=seat.querySelector('span');
     if(state)state.textContent=selected?'已加入':'空席';
   }
-  const valid=bots>=0&&bots<=3;
+  const valid=(humans===1||humans===2)&&bots>=0&&bots<=3&&humans+bots>=2&&humans+bots<=5;
   const status=root.querySelector<HTMLElement>('#setupValidation');
-  if(status){status.textContent=valid?`合计 ${humans+bots} 名参赛者`:'总人数须为 2–5 人';status.classList.toggle('invalid',!valid);}
+  if(status){
+    status.textContent=valid?`合计 ${humans+bots} 名参赛者`:humans===1&&bots===0?'单人模式至少需要 1 名 AI':'总人数须为 2–5 人';
+    status.classList.toggle('invalid',!valid);
+  }
   const start=root.querySelector<HTMLButtonElement>('[data-action="start"]');
   if(start)start.disabled=!valid;
 }
@@ -266,7 +270,7 @@ function renderFiveBoard(g:Game):string {
 
 function renderBoard(g: Game): string {
   if(g.players.filter(p=>!p.isAI).length===2)return renderFiveBoard(g);
-  if(g.players.length>2&&g.players.filter(p=>!p.isAI).length===1&&g.players.some(p=>p.isAI))return renderSoloAIBoard(g);
+  if(g.players.filter(p=>!p.isAI).length===1&&g.players.some(p=>p.isAI))return renderSoloAIBoard(g);
   if (g.players.length === 2) return renderDuelBoard(g);
   const p = g.players[g.current];
   const target = g.players.length >= 4 ? 5 : 6;
@@ -346,8 +350,9 @@ function start(){
   try{
     const humans=Number((root.querySelector('#humanCount') as HTMLSelectElement).value);
     const bots=Number((root.querySelector('#botCount') as HTMLSelectElement).value);
-    if(humans!==2 || bots<0 || bots>3 || inputs.length!==2)throw Error('仅支持双真人与 0–3 名 AI');
-    const names=[...inputs.map(x=>x.value),...Array.from({length:bots},(_,i)=>`AI 工匠 ${i+1}`)];
+    if((humans!==1&&humans!==2)||bots<0||bots>3||humans+bots<2||humans+bots>5||inputs.length!==2)
+      throw Error('请选择 1～2 名人类和 0～3 名 AI，且总人数至少 2 人');
+    const names=[...inputs.slice(0,humans).map(x=>x.value),...Array.from({length:bots},(_,i)=>`AI 工匠 ${i+1}`)];
     game=createGame(names,undefined,Array.from({length:bots},(_,i)=>humans+i));
     fiveOrders={0:[],1:[]};fiveSorting={0:'manual',1:'manual'};fivePinned={0:[],1:[]};fiveFold={0:false,1:false};
     modal=null;handoff=false;botPaused=false;showHelp=false;toast='';save();render();

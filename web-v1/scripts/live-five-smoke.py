@@ -124,6 +124,56 @@ with sync_playwright() as p:
     page.locator('.five-golem-grid [data-action="claim"]').first.click()
     assert "魔像 1 张" in page.locator('.five-player[data-side="0"] .five-player-foot').inner_text()
     assert page.locator('.five-player[data-side="1"].five-active').count() == 1
+    # Human player count can be selected 1 or 2. The hidden P2 name must survive mode changes.
+    page.once("dialog", lambda dialog: dialog.accept())
+    page.locator('[data-action="reset"]').click()
+    page.locator('#nameInputs input').nth(1).fill('右侧真人')
+    page.locator('#humanCount').select_option("1")
+    assert page.locator('#nameInputs input:visible').count() == 1
+    assert page.locator('#nameInputs input').nth(1).input_value() == '右侧真人'
+    page.locator('#humanCount').select_option("2")
+    assert page.locator('#nameInputs input:visible').count() == 2
+    assert page.locator('#nameInputs input').nth(1).input_value() == '右侧真人'
+
+    # Solo human / no bot is invalid, and never starts a one-person game.
+    page.locator('#humanCount').select_option("1")
+    page.locator('#botCount').select_option("0")
+    assert page.locator('[data-action="start"]').is_disabled()
+    assert '至少需要 1 名 AI' in page.locator('#setupValidation').inner_text()
+
+    # One human plus 1, 2, or 3 bots must all use the dedicated human-vs-AI board.
+    for bots in [1, 2, 3]:
+        page.locator('#botCount').select_option(str(bots))
+        assert page.locator('[data-action="start"]').is_enabled()
+        page.locator('[data-action="start"]').click()
+        assert page.locator('.ai-board-layout').count() == 1
+        assert page.locator('.ai-arena > .duel-player').count() == 1
+        assert page.locator('.ai-seat-grid .ai-seat').count() == bots
+        assert page.locator('.ai-board-layout .golem-grid .golem-card').count() == 5
+        assert page.locator('.ai-board-layout .merchant-grid .merchant-card').count() == 6
+        assert page.locator('.handoff-card').count() == 0
+        state = page.evaluate("() => JSON.parse(localStorage.getItem('crystal-corridor-game-v2-canonical'))")
+        assert len(state["players"]) == bots + 1
+        assert sum(not player["isAI"] for player in state["players"]) == 1
+        if bots == 1:
+            page.locator('.ai-arena .duel-player [data-action="play-hand"].card-create').click()
+            page.wait_for_function(
+                "() => {const g=JSON.parse(localStorage.getItem('crystal-corridor-game-v2-canonical'));return g.players[1].turns>=1 && g.current===0;}",
+                timeout=12000
+            )
+            assert page.locator('.ai-arena > .duel-player.duel-active').count() == 1
+            assert page.locator('.handoff-card').count() == 0
+        page.once("dialog", lambda dialog: dialog.accept())
+        page.locator('[data-action="reset"]').click()
+        page.locator('#humanCount').select_option("1")
+
+    # Double-human without AI remains valid.
+    page.locator('#humanCount').select_option("2")
+    page.locator('#botCount').select_option("0")
+    assert page.locator('[data-action="start"]').is_enabled()
+    page.locator('[data-action="start"]').click()
+    assert page.locator('.five-player').count() == 2
+    assert page.locator('.five-ai-item:not(.five-ai-empty)').count() == 0
     assert errors == [], errors
-    print("五人实战 UI E2E 通过：固定双真人、0–3 AI、拖拽、分组、折叠、升级、交易入口、付费获取、认领、休息及无交接遮罩")
+    print("1–2 真人/0–3 AI UI E2E 通过：开局组合校验、名称保留、单人 AI 自动回合、双人固定同屏及四类行动")
     browser.close()
