@@ -16,6 +16,13 @@
 | [data/cards.json](data/cards.json) | 卡牌机器可读数据 |
 | [scripts/validate-cards.mjs](scripts/validate-cards.mjs) | 校验脚本 |
 
+## 手机与浏览器游玩（GitHub Pages）
+
+- **预计游戏地址（Pages 启用后）**：https://xike-yuhuofei.github.io/Century/
+- **自动部署**：[.github/workflows/pages.yml](.github/workflows/pages.yml)。每次 `main` 的 `web-v1/**` 更新会校验卡牌、运行测试、重新编译，并将 `web-v1/dist/standalone.html` 发布为网站首页。
+- **首次启用（仓库管理员操作一次）**：打开仓库 **Settings → Pages → Build and deployment**，将 **Source** 设置为 **GitHub Actions**。如首次自动运行因未启用 Pages 而失败，到 **Actions → Deploy Century Game to GitHub Pages → Run workflow** 选择 `main` 重跑。
+- **手机**：Safari / Chrome 打开网页，可将其添加至主屏幕；当前 UI 主要针对超宽屏设计，手机布局尚未专项优化。网页仅为当前设备本地游戏，存档位于浏览器本地存储，不支持跨设备实时联机。
+
 ## 验证
 
 需要 Node.js 18+，无额外 npm 依赖：
