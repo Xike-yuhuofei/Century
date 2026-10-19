@@ -1,76 +1,47 @@
-# 晶石回廊 V1.2 · 非官方桌游练习版
+# 晶石回廊 V1.3 · 双真人与 0～3 AI 桌面版
 
-这是一个基于《Century: Golem Edition》规则建立的**私人学习原型**。使用原创极简视觉呈现水晶和卡牌结构，**不含原版插画、商标或任何官方素材**，与游戏发行方无关联。
+《Century: Golem Edition》的私人离线学习游戏，使用自制卡面与水晶视觉，不含原版插画或商标，和发行方无关联。
 
-## 立即游玩（无须安装）
+## 立即游玩
 
-直接下载并打开 `dist/standalone.html`。这是一个完全自包含的网页：无需联网、无需下载额外资源，现代 Chrome / Edge / Safari 浏览器即可运行。
+下载并用 Windows Chrome 或 Edge 打开 [dist/standalone.html](dist/standalone.html)。该文件包含完整的真实游戏规则引擎与离线 AI，可直接双击运行。
 
-- 支持 **2–5 人参赛（0–4 名 AI）**，可以选 1 名人类对 1–4 名 AI，0 AI 时至少需 2 名人类；同设备轮流游戏。**双人模式**针对 3440×1440（21:9）超宽屏设计：双方手牌、已打出卡牌及商队分别在左右两侧始终可见，**无需交接或切换玩家界面**；3–5 人模式保留交接界面。
-- **所有卡面水晶逐颗绘制**（例如黄4颗画4颗黄水晶）；已打出卡牌正面可见，保留完整效果与编号。
-- 实现打出、获取、休息、认领四类行动，支持分步升级、重复交易、市场位置费用选择、获取卡上水晶奖励。
-- 回合结束容量超出 10 颗时，会强制选择弃置；提供自动计分、整轮终局、同分判定。
-- 游戏数据保存在当前浏览器的 LocalStorage（禁用站点存储时仍可对局，但可能不能跨刷新恢复）。
+- 固定 2 名真人，玩家 1 在左侧、玩家 2 在右侧；AI 可设 0～3 人（默认 3），总人数 2～5。
+- 中央同时展示 5 张魔像、6 张商人卡与行内操作台；AI 席位位于上方，不压缩真人区域。
+- 所有资源和卡牌来自真实对局状态，经 `applyAction` 校验。AI 使用 `chooseAIAction` 自动行动，可暂停。
+- 两名真人无交接遮罩；四类行动为打出、获取、休息、认领。包含分步升级、重复交易、市场位置支付、超 10 颗弃置及整轮终局。
+- 已打出卡牌正面显示；卡牌支持拖拽排序、按类型排列、鼠标右键固定、悬停放大和已打出区折叠。
+- 针对 3440×1440 超宽屏优化，卡牌水晶逐颗绘制；溢出限制在局部卡牌区，不出现页面整体滚动。
 
-## 本地开发
+## 开发与测试
 
-需要 Node.js 20 或以上，以及全局 `tsc` 命令（TypeScript 编译器）。不需要安装 React、Vite 或其他 npm 运行依赖。
+安装 Node.js 20+，然后：
+
+```bash
+npm install
+npm test
+npm start
+```
+
+运行后访问 `http://localhost:4173`。测试包括 19 项规则与 AI 单元测试，以及 GitHub Actions 中的 Chrome + Playwright 真正五人对局 UI 回归（2 真人 + 3 AI 自动轮转、0～3 AI 切换、拖拽、升级、休息、付费获取与认领魔像）。
+
+本地运行浏览器测试需 Python Playwright 和 Chrome：
 
 ```bash
 npm run build
-npm start
-npm test
+python scripts/live-five-smoke.py
 ```
 
-运行 `npm start` 后，用浏览器访问 `http://localhost:4173`。
+| 路径 | 说明 |
+|---|---|
+| `src/app.ts` / `src/styles.css` | 正式五人桌面 UI 和交互 |
+| `src/engine.ts` / `src/ai.ts` | 规则引擎及离线 AI |
+| `src/data.ts` | 从仓库根目录 `data/cards.json` 生成的牌面 |
+| `scripts/sync-cards.mjs` | 核对（`--check`）或重建卡表 |
+| `scripts/live-five-smoke.py` | Chrome 端到端验收 |
+| `design-5p/index.html` | 早期独立**视觉演示**，不是正式游戏 |
+| `dist/standalone.html` | **正式可玩版**，GitHub Actions 自动生成 |
 
-目录结构：
+核校卡牌总计 89 张实体牌：10 张起始商人卡、43 张商人牌库卡、36 张魔像；M29 为黄×4→蓝×2，M43 为升级3。旧编号存档使用单独 LocalStorage key 与版本号隔离。
 
-```text
-src/data.ts        89 张卡牌的结构化数据和校验
-src/engine.ts      不依赖 DOM 的确定性规则引擎
-src/ai.ts          基于真实规则引擎的本地启发式 AI
-src/app.ts         网页操作界面和本地对局管理
-src/styles.css     原创响应式样式
-scripts/build.mjs  同时生成模块化网页、单 HTML 独立版
-scripts/serve.mjs  Node 本地静态服务器
-tests/             规则、边界条件、终局等测试
-dist/standalone.html 直接用浏览器打开的版本
-```
-
-## 双人超宽屏布局与验证
-
-- 左栏：玩家1商队、正面手牌、正面已打出卡牌、已认领魔像、硬币与休息操作；右栏：玩家2对应区域。
-- 中栏：5张魔像与6张商人市场；仅**当前回合玩家**的手牌和休息按钮可用，另一位可见但无法误操作。
-- 3440×1440 浏览器视口已验证无整页横向/纵向滚动；随手牌增多，玩家面板内部的卡牌区可滚动；小屏幕改为纵向布局。
-- `npm test`：13项规则测试（新增M29效果与执行测试）；`python scripts/smoke.py`：UWQHD双人、3人交接及移动端交互测试（需Python Playwright及浏览器）。
-- 双人截图：`dist/duel-3440x1440.png`，行动后：`dist/duel-after-play-3440x1440.png`。
-
-## 数据与规则来源
-
-- 项目仓库：[Xike-yuhuofei/Century](https://github.com/Xike-yuhuofei/Century)
-- 复核卡牌 CSV：[kennethhyman/CenturyGolemEdition](https://github.com/kennethhyman/CenturyGolemEdition/blob/master/data/cards.csv)
-- 本地核对详情：`DATA-AUDIT.md`
-
-## 版本范围
-
-**V1.2 当前实现：** 本地双人同屏／3–5人交接式轮流，客户端规则自动校验，浏览器存档，原创卡面。
-
-**尚未实现：** 真正的多设备联网房间、实时同步、AI 难度分级、撤销和复盘、账号登录以及云端存档。这些工作归入 V2 / V3，不能因为打开了网页就将 V1 称为多人在线联机版。
-
-**上线之前：** 如果计划面向公众使用原版卡面、名称和插画，应先核对相关版权、商标及授权条款。
-
-## V1.2 本地 AI 玩法
-
-- 自由选择 0–4 名 AI，参赛总人数仍为 2–5 人。
-- 默认 1 名人类 + 1 名 AI，双人同屏；1 人 + 2–4 AI 在超宽屏下显示左侧人类、中央市场、右侧 2×2 AI 席位。
-- AI 自动创造、升级、交易、获取、休息、认领，超过 10 颗会主动弃置水晶。所有动作都经 applyAction 验证。
-- 支持暂停/继续 AI；AI 仅为基础启发式决策，不保证最优，也不使用网络。
-- 如使用源代码：`npm install && npm test && npm run build`，构建独立版 `dist/standalone.html`。
-
-## 五人 UI 与根目录卡牌映射（2026-10-19）
-
-- [双真人 + 0～3 AI 高保真 UI 原型](design-5p/index.html)，仅作交互演示；当前 V1 正式多玩家布局暂未与此设计集成。
-- 本次 V1 运行时代码与 `dist/standalone.html` 均已改用根目录 `data/cards.json` 的真实卡号和效果；起始卡 `S01` / `S02` 每人各一份。
-- 使用 `node scripts/sync-cards.mjs --check` 检验漂移，或者 `node scripts/sync-cards.mjs` 从根目录重建数据。
-- 与旧商人卡编号不兼容的历史浏览器存档采用版本 2 和独立 LocalStorage key 隔离，不会把旧牌误解释为新效果。
+**边界：** 当前为同一电脑的本地对局，不支持联机房间、账号、云存档或 AI 难度分级。AI 为启发式，并不保证最优策略。
