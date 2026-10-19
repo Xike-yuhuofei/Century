@@ -96,7 +96,7 @@ function syncSetup(){
   if(start)start.disabled=!valid;
 }
 function playerCard(p: Game['players'][number], active: boolean): string {
-  return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${p.id + 1}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
+  return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${p.isAI?"AI":p.id+1}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
 }
 function golemCard(id: string, index: number, g: Game): string {
   const golem = GOLEM_BY_ID[id];
@@ -116,16 +116,16 @@ function renderDuelPlayer(g: Game, index: number): string {
   const active = g.current === index && g.phase !== 'finished';
   return `<section class="duel-player ${active ? 'duel-active' : 'duel-waiting'}" aria-label="${esc(p.name)}的游戏区域" data-player="${index}">
     <header class="duel-player-head">
-      <div class="duel-player-title"><span class="duel-avatar">${index + 1}</span><div><div class="duel-name">${esc(p.name)}</div><span class="duel-status">${active ? '● 当前行动方' : '○ 等待行动'} · ${p.turns} 回合</span></div></div>
+      <div class="duel-player-title"><span class="duel-avatar">${p.isAI?"AI":index+1}</span><div><div class="duel-name">${esc(p.name)}</div><span class="duel-status">${active?(p.isAI?'● AI 正在行动':'● 当前行动方'):'○ 等待行动'} · ${p.turns} 回合</span></div></div>
       <div class="duel-score"><b>${score(p)}</b><small>当前估分</small></div>
     </header>
     <div class="duel-stock"><div class="duel-minor-head"><b>商队</b><span class="capacity ${count(p.stock) > 10 ? 'over-capacity' : ''}">${count(p.stock)} / 10 颗</span></div><div class="resource-bar">${stones(p.stock)}</div></div>
-    <div class="duel-zone duel-hand"><div class="duel-minor-head"><b>手牌 · ${p.hand.length} 张</b><span>${active ? '点击卡牌打出' : '正面公开展示'}</span></div>
-      <div class="duel-card-grid">${p.hand.length ? p.hand.map(id => merchantCard(id, undefined, undefined, active ? 'hand' : 'inactive')).join('') : '<div class="duel-empty">手牌已全部打出，可以休息取回</div>'}</div></div>
+    <div class="duel-zone duel-hand"><div class="duel-minor-head"><b>手牌 · ${p.hand.length} 张</b><span>${active&&!p.isAI?'点击卡牌打出':'正面公开展示'}</span></div>
+      <div class="duel-card-grid">${p.hand.length ? p.hand.map(id => merchantCard(id, undefined, undefined, active&&!p.isAI?'hand':'inactive')).join('') : '<div class="duel-empty">手牌已全部打出，可以休息取回</div>'}</div></div>
     <div class="duel-zone duel-played"><div class="duel-minor-head"><b>已打出 · ${p.played.length} 张</b><span>卡面朝上</span></div>
       <div class="duel-card-grid duel-used-grid">${p.played.length ? p.played.map(id => merchantCard(id, undefined, undefined, 'played')).join('') : '<div class="duel-empty">暂无已打出卡牌</div>'}</div></div>
     <footer class="duel-player-footer"><div><b>魔像 ${p.claimed.length} 张</b><span>${p.claimed.length ? p.claimed.map(id => `${GOLEM_BY_ID[id].points}分`).join(' · ') : '尚未认领'}</span><span>铜币 ${p.copper} · 银币 ${p.silver}</span></div>
-      <button type="button" class="rest-btn" data-action="rest" ${active && g.phase === 'turn' ? '' : 'disabled'}>休息 · 收回卡牌 ↗</button></footer>
+      <button type="button" class="rest-btn" data-action="rest" ${active&&!p.isAI&&g.phase==='turn'?'':'disabled'}>休息 · 收回卡牌 ↗</button></footer>
   </section>`;
 }
 function renderDuelBoard(g: Game): string {
@@ -133,7 +133,7 @@ function renderDuelBoard(g: Game): string {
   const finished = g.phase === 'finished';
   return `<main class="layout duel-layout"><header class="topbar duel-topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR · 双人同屏</span></div>
     <div class="duel-now">${finished ? '本局结束' : `第 ${g.turnNumber} 手 · ${esc(g.players[g.current].name)} 行动中`}</div>
-    <div class="top-actions"><button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+    <div class="top-actions">${aiPauseControl(g)}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
     ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发，本轮结束后结算</div>' : ''}
     <div class="duel-table">
       ${renderDuelPlayer(g, 0)}
@@ -148,12 +148,45 @@ function renderDuelBoard(g: Game): string {
       ${renderDuelPlayer(g, 1)}
     </div>${finished ? renderResult(g) : ''}</main>`;
 }
+function aiPauseControl(g:Game):string{
+  if(!g.players.some(p=>p.isAI)||g.phase==='finished')return '';
+  return `<button class="subtle-btn ai-pause" data-action="ai-pause">${botPaused?'▶ 继续 AI':'Ⅱ 暂停 AI'}</button>`;
+}
+function renderAISeat(g:Game,p:Game['players'][number]):string{
+  const active=g.current===p.id&&g.phase!=='finished';
+  return `<section class="ai-seat ${active?'ai-seat-active':''}" data-bot-seat="${p.id}" aria-label="${esc(p.name)}席位">
+    <div class="ai-seat-top"><div><span class="ai-seat-tag">AI · ${p.id}</span><b>${esc(p.name)}</b><small>${active?(botPaused?'已暂停':'正在计算行动'):'等待回合'}</small></div><div class="ai-seat-score">${score(p)}<small>分</small></div></div>
+    <div class="ai-seat-stock"><span>商队 ${count(p.stock)}/10</span><div>${stones(p.stock,true)}</div></div>
+    <div class="ai-seat-zone"><span>手牌 · ${p.hand.length}</span><div class="ai-face-row">${p.hand.length?p.hand.map(id=>merchantCard(id,undefined,undefined,'inactive')).join(''):'<span class="ai-empty">无手牌</span>'}</div></div>
+    <div class="ai-seat-zone"><span>已打出 · ${p.played.length}</span><div class="ai-face-row">${p.played.length?p.played.map(id=>merchantCard(id,undefined,undefined,'played')).join(''):'<span class="ai-empty">暂无</span>'}</div></div>
+    <div class="ai-seat-foot">魔像 ${p.claimed.length} 张 · 铜币 ${p.copper} · 银币 ${p.silver}</div>
+  </section>`;
+}
+function renderSoloAIBoard(g:Game):string{
+  const human=g.players.find(p=>!p.isAI)!;
+  const bots=g.players.filter(p=>p.isAI);
+  const finished=g.phase==='finished',target=g.players.length>=4?5:6;
+  return `<main class="layout duel-layout ai-board-layout"><header class="topbar duel-topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR · AI ARENA</span></div>
+    <div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 · ${esc(g.players[g.current].name)} 行动中`}</div>
+    <div class="top-actions">${aiPauseControl(g)}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+    ${g.triggerPlayer!==null&&!finished?'<div class="final-alert">终局已触发，本轮结束后结算</div>':''}
+    <div class="ai-arena">
+      ${renderDuelPlayer(g,human.id)}
+      <div class="duel-center"><div class="duel-center-heading"><span>共享市场 · CENTER TABLE</span><strong>1 名人类 VS ${bots.length} 名 AI</strong></div>
+        <section class="duel-market"><div class="duel-market-title"><h2>魔像市场</h2><span>剩余 ${g.golemDeck.length} 张 · 第 ${target} 张触发终局</span></div><div class="golem-grid">${g.golemMarket.map((id,i)=>golemCard(id,i,g)).join('')}</div></section>
+        <section class="duel-market"><div class="duel-market-title"><h2>商人市场</h2><span>剩余 ${g.merchantDeck.length} 张</span></div><div class="merchant-grid">${g.merchantMarket.map((m,i)=>merchantCard(m.id,i,m.bonus)).join('')}</div></section>
+        <section class="duel-log"><div class="duel-minor-head"><b>对局记录</b><span>AI 自动行动</span></div><div class="duel-log-lines">${g.log.slice(0,6).map(line=>`<span>${esc(line)}</span>`).join('')}</div></section>
+      </div>
+      <aside class="ai-seat-grid">${bots.map(p=>renderAISeat(g,p)).join('')}</aside>
+    </div>${finished?renderResult(g):''}</main>`;
+}
 function renderBoard(g: Game): string {
+  if(g.players.length>2&&g.players.filter(p=>!p.isAI).length===1&&g.players.some(p=>p.isAI))return renderSoloAIBoard(g);
   if (g.players.length === 2) return renderDuelBoard(g);
   const p = g.players[g.current];
   const target = g.players.length >= 4 ? 5 : 6;
   const finished = g.phase === 'finished';
-  return `<main class="layout board-layout"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span><button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+  return `<main class="layout board-layout"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span>${aiPauseControl(g)}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
   <section class="players-strip">${g.players.map((x, i) => playerCard(x, i === g.current && !finished)).join('')}</section>
   ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发！本轮完成后结算。</div>' : ''}
   <section class="game-section"><div class="section-head"><div><span class="section-index">01 / THE GOLEMS</span><h2>魔像市场 <small>认领目标</small></h2></div><div class="section-meta">牌库剩余 ${g.golemDeck.length} 张 · 每人认领 ${target} 张触发终局</div></div>
