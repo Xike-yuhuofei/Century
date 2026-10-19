@@ -27,7 +27,7 @@ try {
 } catch { /* 可脱机运行 */ }
 let dragging:{player:number; id:string} | null = null;
 let suppressPlayUntil = 0;
-const mobileMedia = window.matchMedia('(max-width: 800px)');
+const mobileMedia = window.matchMedia('(max-width: 980px)');
 let mobileTab: 'golems' | 'merchants' | 'opponents' = 'golems';
 let mobileHandExpanded = false;
 let mobilePlayedOpen = false;
