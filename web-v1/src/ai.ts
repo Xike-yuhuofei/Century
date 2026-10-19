@@ -110,6 +110,7 @@ function publicState(game) {
     merchantMarket: game.merchantMarket.map(m => ({ id: m.id, bonus: cloneStock(m.bonus) })),
     golemMarket: [...game.golemMarket], copper: game.copper, silver: game.silver,
     gained: 0, claimed: 0, acquired: 0, steps: 0, first: null, path: [],
+    remainingClaims: (game.players.length >= 4 ? 5 : 6) - player.claimed.length, terminal: false,
   };
 }
 function actions(state, preferred, allowAcquire) {
@@ -140,6 +141,7 @@ function actions(state, preferred, allowAcquire) {
   return result;
 }
 function step(state, action, preferred) {
+  if (state.terminal) return null;
   const next = {
     ...state, stock: cloneStock(state.stock), hand: [...state.hand], played: [...state.played],
     merchantMarket: state.merchantMarket, golemMarket: state.golemMarket,
@@ -195,6 +197,7 @@ function step(state, action, preferred) {
     next.gained += golem.points + coin;
     next.golemMarket = state.golemMarket.filter((_, i) => i !== action.index);
     next.claimed++;
+    next.terminal = next.claimed >= next.remainingClaims;
   }
   next.stock = trimStock(next.stock, next.golemMarket, preferred).stock;
   return next;
@@ -224,7 +227,7 @@ function choosePlan(game) {
   const mostClaimed = Math.max(...game.players.map(p => p.claimed.length));
   const nearEnd = game.triggerPlayer !== null || mostClaimed >= threshold - 1;
   const depth = game.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
-  const width = nearEnd ? 12 : 18;
+  const width = nearEnd ? 10 : 14;
   const stage = game.triggerPlayer !== null ? 0 : Math.max(.12, 1 - mostClaimed / threshold);
   let solved = null, prospective = null;
   for (const preferred of initial.golemMarket) {
@@ -236,6 +239,7 @@ function choosePlan(game) {
         for (const action of variants) {
           const next = step(position, action, preferred);
           if (!next) continue;
+          if (next.terminal && !completedFirstGoal(next, preferred)) continue;
           if (completedFirstGoal(next, preferred)) {
             const quality = routeGrade(next, preferred, stage);
             if (!solved || quality > solved.quality) solved = { ...next, preferred, quality };
