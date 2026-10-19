@@ -45,7 +45,7 @@ test('玩家每回合打出一次创造卡，卡牌进入已打出区且推进�
   assert.deepEqual(after.players[0].hand,['S02']);
   assert.equal(after.players[0].turns,1);
   assert.equal(after.current,1);
-  assert.throws(()=>applyAction(after,{type:'play',cardId:'S01'}),/只能打出/);
+  assert.throws(()=>applyAction(moveTo(copy(after),0),{type:'play',cardId:'S01'}),/只能打出/);
 });
 
 test('升级卡可以同一颗黄→绿→蓝、可以不使用满额',()=>{
