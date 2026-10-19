@@ -344,7 +344,7 @@ function renderMobileBoard(g: Game): string {
     '</div><div class="mobile-played '+(mobilePlayedOpen?'':'mobile-played-closed')+'">'+
     '<div class="mobile-played-label"><span>已打出 '+player.played.length+'</span><button type="button" class="fold-btn" data-action="mobile-toggle-played" aria-expanded="'+mobilePlayedOpen+'">'+(mobilePlayedOpen?'▾ 折叠':'▸ 展开')+'</button></div>'+
     (mobilePlayedOpen?'<div class="mobile-played-cards" data-scroll-zone="mobile-played-'+player.id+'">'+
-    player.played.map(id=>merchantCard(id,undefined,undefined,'played')).join('')+'</div>')+
+    player.played.map(id=>merchantCard(id,undefined,undefined,'played')).join('')+'</div>':'')+
     '</div></section>'+
     logPopover(g)+(finished?renderResult(g):'')+'</main>';
 }
