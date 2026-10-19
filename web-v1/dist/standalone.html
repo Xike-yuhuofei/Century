@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta name="theme-color" content="#0b1722"/>
 <meta name="description" content="晶石回廊：非官方的支持 0–4 名 AI 的本地晶石策略桌游练习原型"/>
-<title>晶石回廊 V1.2 · 本地 AI 对战</title>
+<title>晶石回廊 V2.0 · 离线多回合 AI</title>
 <style>:root { color-scheme:dark; --bg:#0b1722; --surface:#142533; --surface2:#1b3140; --edge:#2e4754; --ink:#eaf1eb; --muted:#95abb4; --gold:#dab67b; --accent:#c8e6c8; --faint:#203542; font-family: system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
 * {box-sizing:border-box} body{margin:0; background:radial-gradient(ellipse at 50% -25%,#1a3540 0%,#0b1722 60%); color:var(--ink); min-height:100vh} button,select,input{font:inherit} button{cursor:pointer} button:disabled{cursor:not-allowed;opacity:.4} button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #e8c891; outline-offset:3px} a{color:#e9cf9c} .layout{max-width:1480px;margin:auto;padding:22px 30px 40px}.topbar{height:70px;display:flex;gap:13px;align-items:center;border-bottom:1px solid #2a4350;margin-bottom:25px}.brand-icon{font-family:Georgia,serif;width:44px;height:44px;border:1px solid #a99163;color:var(--gold);display:grid;place-items:center;font-size:40px;transform:rotate(-8deg);border-radius:10px}.brand-text{display:flex;flex-direction:column;line-height:1.2}.brand-text strong{font-size:21px;letter-spacing:3px;font-weight:650}.brand-text span{color:#b89b75;font-family:Georgia,serif;font-size:9px;letter-spacing:2.6px;margin-top:6px}.edition{margin-left:auto; font-size:12px;color:var(--muted)}.top-actions{margin-left:auto;display:flex;align-items:center;gap:10px}.subtle-btn,.rest-btn,.secondary-btn{background:#203745;border:1px solid #385361;color:#dfebe9;border-radius:8px;padding:9px 14px}.subtle-btn:hover,.rest-btn:hover,.secondary-btn:hover{border-color:#92afa9}.turn-badge{padding:10px 13px;color:#f0d4a0;background:#3a302b;border-radius:7px;font-size:12px;font-weight:700}.players-strip{display:flex;gap:12px;margin-bottom:22px;overflow-x:auto;scrollbar-width:thin}.player-pill{display:flex;gap:10px;align-items:center;min-width:180px;flex:1;padding:13px 12px;background:#152736;border:1px solid #2c4551;border-radius:10px}.player-pill.active-player{border-color:#bdad7f;background:linear-gradient(115deg,#253b43,#1c313c);box-shadow:inset 0 0 0 1px #5f685b}.avatar{width:30px;height:30px;border-radius:50%;border:1px solid #b49a66;color:#e9d39a;display:grid;place-items:center;flex-shrink:0;font-family:Georgia,serif}.player-info{display:flex;flex-direction:column;gap:4px;min-width:0}.player-info b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}.player-info small{font-size:10px;color:var(--muted);white-space:nowrap}.player-score{font-size:20px;font-family:Georgia,serif;margin-left:auto;color:#ecd09b;display:flex;flex-direction:column;align-items:center}.player-score small{font-size:9px;color:var(--muted)}.game-section{margin-top:27px}.section-head,.zone-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:14px;gap:15px}.section-head h2,.zone-head h2{margin:3px 0 0;font-size:22px;font-weight:650;letter-spacing:1px}.section-head h2 small,.zone-head h2 small{font-size:12px;font-weight:400;color:#9babae;margin-left:8px;letter-spacing:0}.section-index,.eyebrow{color:#c9aa77;letter-spacing:2.3px;font-size:10px;font-weight:700}.section-meta{font-size:12px;color:#99adb4}.golem-grid,.merchant-grid{display:grid;gap:12px;grid-template-columns:repeat(5,minmax(0,1fr))}.golem-card{text-align:left;position:relative;min-height:220px;display:flex;flex-direction:column;align-items:stretch;padding:13px 15px 10px;border-radius:10px;border:1px solid #755e4d;background:linear-gradient(160deg,#405a56 0%,#223c42 43%,#122e36 100%);color:var(--ink);box-shadow:inset 0 0 0 2px #1f3738,0 8px 20px #0002;overflow:hidden;transition:transform .15s,border-color .15s}.golem-card:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,#b2ba9240,transparent 60%);pointer-events:none}.golem-card:hover,.merchant-card:hover{transform:translateY(-3px);border-color:#dfbe85}.golem-card.affordable{border-color:#dfc480;box-shadow:0 0 0 1px #c9aa6d,0 7px 20px #0002}.golem-top{position:relative;display:flex;align-items:center;justify-content:space-between;min-height:22px;z-index:1}.golem-tag{color:#cdd8c4;font-size:10px}.golem-num{font-size:9px;color:#b5c1b7}.coin{border-radius:99px;padding:4px 7px;font-size:10px;font-weight:800}.coin.copper{background:#a66e4a;color:#fff7e6}.coin.silver{background:#a9bcc6;color:#243d48}.golem-emblem{display:grid;place-items:center;min-height:76px;position:relative}.emblem-inner{width:74px;height:74px;border:1px solid #94b0a184;display:grid;place-items:center;font:72px Georgia,serif;border-radius:35%;color:#cfdbb1;transform:rotate(15deg);text-shadow:0 0 20px #f4e5acaa}.golem-points{display:flex;align-items:baseline;justify-content:center;gap:6px;color:#f4dbab;z-index:1}.golem-points strong{font:700 31px Georgia,serif}.golem-points small{letter-spacing:2px;font-size:8px}.golem-cost{position:relative;display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin:7px 0 4px;min-height:24px}.golem-action{font-size:10px;text-align:center;border-top:1px solid #879b8b50;margin-top:auto;padding-top:8px;color:#aebeb0}.golem-card.affordable .golem-action{color:#f5d89d;font-weight:700}.merchant-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.merchant-card{min-height:173px;border:1px solid #5d6670;background:linear-gradient(140deg,#d1c6aa 0%,#f1e4c7 55%,#b8b8a7 100%);color:#273940;border-radius:9px;position:relative;text-align:left;padding:10px;display:flex;flex-direction:column;transition:transform .15s,border-color .15s;box-shadow:inset 0 0 0 2px #ffffff39,0 4px 10px #0002;min-width:0}.merchant-card.card-upgrade{background:linear-gradient(130deg,#c5d5b0,#ebe7cc 65%,#b0c3ae)}.merchant-card.card-trade{background:linear-gradient(135deg,#c3c6d4,#e1e7e3 55%,#b8c6c3)}.card-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #5669706b;padding-bottom:6px;font-size:12px;font-weight:800}.card-head small{font-size:9px;font-weight:400;opacity:.65}.merchant-effect{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80px;flex:1;gap:5px}.effect-label{font-size:11px;color:#50646a}.effect-large{font-size:24px;font-family:Georgia,serif;color:#2d655e}.trade-arrow{font-size:17px;color:#6c7b7b;line-height:1}.card-foot{border-top:1px solid #5669706b;display:flex;justify-content:space-between;align-items:center;gap:4px;padding-top:7px;font-size:10px}.card-foot b{color:#37524f}.market-bonus{margin-top:8px;font-size:10px;display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:5px;border-radius:5px;background:#5770643b}.stone-line,.resource-bar,.modal-stock,.preview>div{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.stone-group{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:650;white-space:nowrap}.stone-group b{color:inherit;font-size:11px}.gem{display:inline-block;width:17px;height:17px;transform:rotate(45deg);border-radius:4px 1px 4px 1px;box-shadow:inset -3px -3px 3px #0004,inset 2px 2px 2px #fff9,0 0 5px #0004;flex-shrink:0}.gem-yellow{background:#f6c645}.gem-green{background:#49bf86}.gem-blue{background:#63c6e8}.gem-pink{background:#f0a2cf}.none{font-size:12px;opacity:.6}.personal-zone{margin-top:28px;padding:21px;border:1px solid #3b5860;border-radius:12px;background:linear-gradient(140deg,#1d3441,#132735)}.zone-head{align-items:center;border-bottom:1px solid #2e4a57;padding-bottom:16px;margin-bottom:19px}.resource-bar{background:#0b1d2b;border-radius:9px;padding:10px 13px;gap:14px}.capacity{font-size:11px;color:#c7d4d3;border-left:1px solid #425863;padding-left:11px}.over-capacity{color:#f3a692}.personal-layout{display:grid;grid-template-columns:minmax(0,1fr) 252px;gap:20px}.hand-heading{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;font-size:13px}.hand-heading span{color:var(--muted);font-size:11px}.hand-grid{display:flex;gap:10px;flex-wrap:wrap;max-height:400px;overflow:auto;padding:3px}.hand-grid .merchant-card{width:164px;min-height:183px;flex-shrink:0}.empty-hand{font-size:12px;color:#a8bbbd}.played{font-size:12px;border-top:1px solid #38535f;margin-top:15px;padding-top:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.played span{color:var(--muted)}.rest-btn{margin-left:auto;font-size:12px}.right-column{display:flex;flex-direction:column;gap:13px}.score-panel,.history{background:#0f202e;padding:15px;border:1px solid #324c58;border-radius:9px}.score-panel h3,.history h3{font-size:13px;font-weight:650;margin:0 0 10px}.score-large{font:38px Georgia,serif;color:#e6c796}.score-large span{font:11px system-ui;color:var(--muted)}.score-breakdown{font-size:11px;color:#a2b8bc;display:flex;flex-direction:column;gap:7px;margin-top:11px}.history p{font-size:11px;margin:0;border-top:1px solid #334955;padding:8px 0;color:#b7c9cb;line-height:1.5}.history p:first-of-type{border-top:0}.footer{margin-top:25px;font-size:11px;color:#8aa3a8;text-align:center}.primary-btn{border:1px solid #e9c892;color:#11252c;background:linear-gradient(125deg,#f2d7a6,#cbaa70);border-radius:9px;padding:10px 18px;font-size:13px;font-weight:800}.primary-btn:hover{filter:brightness(1.08)}.primary-btn.big{width:100%;font-size:16px;padding:16px;display:flex;justify-content:space-between;align-items:center}.landing .topbar{margin-bottom:80px}.landing-split{display:grid;grid-template-columns:1.1fr .8fr;gap:75px;align-items:center;min-height:450px}.welcome-copy h1{font-size:clamp(37px,5vw,69px);line-height:1.25;letter-spacing:1px;margin:20px 0;color:#f5e7cf}.welcome-copy p{max-width:530px;color:#b6c7c9;line-height:2;font-size:15px}.feature-row{display:flex;gap:30px;font-size:12px;color:#d9c092;margin-top:30px}.setup-box{padding:30px;border:1px solid #4b6468;border-radius:15px;background:#172d3b;box-shadow:0 20px 70px #0003}.setup-box h2{font-size:25px;margin:12px 0}.hint,.small-muted{color:#9fb1b7;font-size:12px;line-height:1.7}.setup-box label{display:block;font-size:12px;color:#dce8e9;margin:22px 0 9px}.setup-box select,.setup-box input{width:100%;height:41px;border-radius:8px;background:#0e202e;border:1px solid #3a5661;color:#eef2ed;padding:0 12px}.name-inputs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0 24px}.overlay{position:fixed;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;background:#02101ddd;padding:18px;backdrop-filter:blur(5px)}.dialog{width:min(520px,100%);background:#1b303e;border:1px solid #59717a;border-radius:16px;padding:28px;box-shadow:0 30px 90px #0007;position:relative;max-height:94vh;overflow:auto}.dialog h2{margin:0 0 14px;color:#f5dfb5;font-size:25px}.dialog p{color:#bbccd0;line-height:1.7;font-size:13px}.dialog p strong{color:#f0d19a}.close-modal{position:absolute;top:15px;right:14px;border:0;background:transparent;color:#b9c7cc;font-size:20px}.modal-progress{margin:20px 0 12px;color:#f2d9a4;font-size:13px;font-weight:800}.modal-stock{border:1px solid #3e5966;padding:14px;border-radius:9px;background:#0e2231;gap:18px;min-height:55px}.modal-caption{margin-top:15px}.choice-row{display:flex;flex-wrap:wrap;gap:9px}.choice-btn{display:flex;align-items:center;gap:10px;background:#243e4c;color:#e5f0ed;border:1px solid #49616a;border-radius:8px;padding:10px 12px;font-size:13px}.choice-btn:hover:not(:disabled){border-color:#d5b986}.modal-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:25px}.stepper{display:flex;justify-content:center;align-items:center;gap:25px;background:#122837;padding:17px;margin-top:20px;border-radius:9px}.stepper button{width:37px;height:37px;color:#f1dbb5;background:#314955;border:1px solid #57717a;border-radius:8px;font-size:20px}.stepper strong{font-size:30px}.stepper strong small{font-size:11px;font-weight:400}.preview{border-radius:10px;padding:14px;background:#122837;margin-top:17px;color:#d7e6e3;font-size:13px}.preview>div{margin-top:10px}.preview .warn{color:#f2ab93}.selected{font-size:12px;color:#f0d2a0!important}.help-dialog{max-width:570px}.help-rows{margin:22px 0}.help-rows p{padding-bottom:9px;border-bottom:1px solid #38505d}.cover{z-index:12;background:#051822ee}.handoff-card,.result-card{border:1px solid #806d4b;border-radius:17px;background:linear-gradient(150deg,#253e46,#112735);padding:42px;text-align:center;width:min(465px,100%);box-shadow:0 40px 100px #0009}.cover-symbol{font:95px Georgia,serif;line-height:1;color:#d9bf8c}.handoff-card h2,.result-card h2{font-size:33px;color:#f0d7a7;margin:9px 0}.handoff-card p{font-size:13px;color:#b6c7ca;line-height:1.8;margin:10px 0 30px}.final-alert{border:1px solid #b99756;color:#f2d8a5;padding:11px;border-radius:8px;text-align:center;font-size:13px;background:#393329;margin-bottom:17px}.trophy{font:80px Georgia,serif;color:#e4c68f}.winner{font-size:18px}.winner strong{color:#f2cb83}.result-table{margin:25px 0 30px;text-align:left}.result-table>div{padding:12px 0;border-top:1px solid #546872;display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:13px}.result-table span{color:#a7b9ba}.result-table strong{color:#f5d9a2;font-size:17px}.toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);padding:13px 18px;border:1px solid #d4a88f;background:#522d2d;color:#ffdfd3;border-radius:10px;z-index:30;font-size:13px;max-width:90%;box-shadow:0 15px 45px #0005}
 @media(max-width:1100px){.merchant-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.golem-grid{grid-template-columns:repeat(5,minmax(130px,1fr));overflow-x:auto;padding-bottom:5px}.personal-layout{grid-template-columns:1fr 210px}.layout{padding:18px 18px 30px}.landing-split{gap:35px}}
@@ -445,154 +445,290 @@ function legalClaimIndices(g) {
 }
 
 // @ts-nocheck
-/** 离线启发式 AI。候选动作须通过 applyAction 模拟，不读取隐藏牌库顺序。 */
+/** V2.0：离线目标规划 + 多回合束搜索。
+ * 规划只使用公开市场、自身牌/水晶与公开比分，不读取两类隐藏牌库顺序。
+ * 未来对手回合和未知翻牌保持不确定；使用当前公开市场作保守近似。
+ */
 
 
-const COLORS = [0, 1, 2, 3];
-const VALUES = [1, 1.5, 2.05, 2.65];
-const weighted = stock => stock.reduce((s, n, i) => s + n * VALUES[i], 0);
-function targetValue(g, stock) {
-    if (!g.golemMarket.length)
-        return 0;
-    return Math.max(...g.golemMarket.map((id, i) => {
-        const card = GOLEM_BY_ID[id];
-        const shortage = card.cost.reduce((s, n, k) => s + Math.max(0, n - stock[k]) * VALUES[k], 0);
-        const matched = card.cost.reduce((s, n, k) => s + Math.min(n, stock[k]) * VALUES[k], 0);
-        return card.points * .24 + matched * .12 + (i === 0 && g.copper ? 1.3 : 0) - shortage * 1.33;
-    }));
+const VALUES = [1, 1.7, 2.5, 3.4];
+const weighted = stock => stock.reduce((sum, n, color) => sum + n * VALUES[color], 0);
+const stockCount = stock => stock[0] + stock[1] + stock[2] + stock[3];
+const cloneStock = stock => [...stock];
+
+function goalGap(stock, goal) {
+  return goal.cost.reduce((sum, needed, color) => sum + Math.max(0, needed - stock[color]) * VALUES[color], 0);
 }
-const fitness = (g, stock) => targetValue(g, stock) + weighted(stock) * .10 - Math.max(0, count(stock) - 10) * 3;
-function chooseDiscard(g) {
-    const stock = [...g.players[g.current].stock], picked = [];
-    while (count(stock) > 10) {
-        let color = -1, best = -Infinity;
-        for (const c of COLORS) {
-            if (stock[c] === 0)
-                continue;
-            stock[c]--;
-            const value = fitness(g, stock);
-            stock[c]++;
-            if (value > best) {
-                color = c;
-                best = value;
-            }
-        }
-        if (color < 0)
-            throw Error('无法弃置超额水晶');
-        stock[color]--;
-        picked.push(color);
+function stockPotential(stock, goals) {
+  if (!goals.length) return weighted(stock) * .13;
+  return Math.max(...goals.map(id => {
+    const card = GOLEM_BY_ID[id];
+    const total = weighted(card.cost);
+    return card.points * Math.max(0, 1 - goalGap(stock, card) / (total + 2));
+  }));
+}
+function keepValue(stock, goals, preferred) {
+  const target = preferred ? GOLEM_BY_ID[preferred] : null;
+  const coverage = target ? target.cost.reduce((sum, amount, c) => sum + Math.min(amount, stock[c]) * VALUES[c], 0) : 0;
+  return coverage * 3 + stockPotential(stock, goals) * 1.2 + weighted(stock) * .16;
+}
+function trimStock(source, goals, preferred) {
+  const stock = cloneStock(source), discarded = [];
+  while (stockCount(stock) > 10) {
+    let color = -1, best = -Infinity;
+    for (let c = 0; c < 4; c++) {
+      if (stock[c] === 0) continue;
+      stock[c]--;
+      const rating = keepValue(stock, goals, preferred);
+      stock[c]++;
+      if (rating > best) { best = rating; color = c; }
     }
-    return picked;
+    if (color < 0) throw Error('超额水晶弃置失败');
+    stock[color]--;
+    discarded.push(color);
+  }
+  return { stock, discarded };
 }
-function paymentVariants(stock, n) {
-    const result = [];
-    const search = (color, left, selected) => {
-        if (color === 4) {
-            if (left === 0)
-                result.push(selected);
-            return;
-        }
-        for (let k = 0; k <= Math.min(left, stock[color]); k++)
-            search(color + 1, left - k, selected.concat(Array(k).fill(color)));
-    };
-    search(0, n, []);
-    return result;
-}
+
 function upgradeVariants(stock, max) {
-    const result = [];
-    const search = (s, steps) => {
-        if (steps.length)
-            result.push(steps);
-        if (steps.length === max)
-            return;
-        for (const c of [0, 1, 2]) {
-            if (!s[c])
-                continue;
-            const next = [...s];
-            next[c]--;
-            next[c + 1]++;
-            search(next, steps.concat(c));
-        }
-    };
-    search([...stock], []);
-    return result;
+  const variants = new Map();
+  function search(s, steps) {
+    if (steps.length) {
+      const key = s.join(',');
+      if (!variants.has(key) || variants.get(key).length > steps.length) variants.set(key, steps);
+    }
+    if (steps.length === max) return;
+    for (let c = 0; c < 3; c++) {
+      if (!s[c]) continue;
+      const next = cloneStock(s);
+      next[c]--; next[c + 1]++;
+      search(next, [...steps, c]);
+    }
+  }
+  search(stock, []);
+  return [...variants.values()];
 }
-function engineStrength(card, stock) {
-    if (card.kind === 'create')
-        return weighted(card.output) * .7;
-    if (card.kind === 'upgrade')
-        return card.steps * 1.24;
-    return Math.max(0, weighted(card.output) - weighted(card.input)) * .65 + 1 + (has(stock, card.input) ? .45 : 0);
+
+// 压晶只枚举不同颜色组合；同色组合排序后对应唯一的合法实际支付顺序。
+function payments(stock, index, goals, preferred) {
+  if (index === 0) return [[]];
+  if (stockCount(stock) < index) return [];
+  const result = [];
+  function walk(color, left, selected, rest) {
+    if (color === 4) {
+      if (left === 0) result.push({ payment: selected, value: keepValue(rest, goals, preferred) });
+      return;
+    }
+    for (let n = 0; n <= Math.min(stock[color], left); n++) {
+      const next = cloneStock(rest);
+      next[color] -= n;
+      walk(color + 1, left - n, [...selected, ...Array(n).fill(color)], next);
+    }
+  }
+  walk(0, index, [], cloneStock(stock));
+  result.sort((a, b) => b.value - a.value || a.payment.join('').localeCompare(b.payment.join('')));
+  return result.slice(0, 3).map(x => x.payment);
+}
+
+function cardEngineValue(card, stock, goal) {
+  if (card.kind === 'create') {
+    const useful = goal ? card.output.reduce((s, n, c) => s + Math.min(n, Math.max(0, goal.cost[c] - stock[c])) * VALUES[c], 0) : 0;
+    return weighted(card.output) * .32 + useful * .22;
+  }
+  if (card.kind === 'upgrade') return card.steps * .7;
+  const gain = weighted(card.output) - weighted(card.input);
+  const reachable = has(stock, card.input) ? 1 : .35;
+  const targetMatch = goal ? card.output.reduce((s, n, c) => s + Math.min(n, goal.cost[c]) * VALUES[c], 0) : 0;
+  return Math.max(0, gain) * .30 + reachable * .45 + targetMatch * .17;
+}
+function engineValue(state, preferred) {
+  const goal = preferred ? GOLEM_BY_ID[preferred] : null;
+  return [...state.hand, ...state.played].reduce((sum, id) => {
+    const card = MERCHANT_BY_ID[id];
+    return sum + (card ? cardEngineValue(card, state.stock, goal) : 0);
+  }, 0);
+}
+function publicState(game) {
+  const player = game.players[game.current];
+  return {
+    stock: cloneStock(player.stock), hand: [...player.hand], played: [...player.played],
+    merchantMarket: game.merchantMarket.map(m => ({ id: m.id, bonus: cloneStock(m.bonus) })),
+    golemMarket: [...game.golemMarket], copper: game.copper, silver: game.silver,
+    gained: 0, claimed: 0, acquired: 0, steps: 0, first: null, path: [],
+  };
+}
+function actions(state, preferred, allowAcquire) {
+  const result = [];
+  for (let i = 0; i < state.golemMarket.length; i++) {
+    if (has(state.stock, GOLEM_BY_ID[state.golemMarket[i]].cost)) result.push({ type: 'claim', index: i });
+  }
+  for (const id of state.hand) {
+    const card = MERCHANT_BY_ID[id];
+    if (!card) continue;
+    if (card.kind === 'create') result.push({ type: 'play', cardId: id });
+    else if (card.kind === 'upgrade') {
+      for (const steps of upgradeVariants(state.stock, card.steps)) result.push({ type: 'play', cardId: id, steps });
+    } else {
+      const limit = tradeLimit(state.stock, id);
+      for (let repeats = 1; repeats <= limit; repeats++) result.push({ type: 'play', cardId: id, repeats });
+    }
+  }
+  if (state.played.length) result.push({ type: 'rest' });
+  if (allowAcquire && state.acquired === 0 && state.hand.length + state.played.length < 10) {
+    state.merchantMarket.forEach((m, index) => {
+      for (const payment of payments(state.stock, index, state.golemMarket, preferred)) {
+        result.push({ type: 'acquire', index, payment });
+      }
+    });
+  }
+  if (!result.length) result.push({ type: 'rest' });
+  return result;
+}
+function step(state, action, preferred) {
+  const next = {
+    ...state, stock: cloneStock(state.stock), hand: [...state.hand], played: [...state.played],
+    merchantMarket: state.merchantMarket, golemMarket: state.golemMarket,
+    steps: state.steps + 1, first: state.first ?? action, path: [...state.path, action],
+  };
+  if (action.type === 'play') {
+    const card = MERCHANT_BY_ID[action.cardId];
+    if (!card) return null;
+    const i = next.hand.indexOf(action.cardId);
+    if (i < 0) return null;
+    if (card.kind === 'create') card.output.forEach((n, c) => { next.stock[c] += n; });
+    else if (card.kind === 'upgrade') {
+      for (const c of action.steps) {
+        if (!next.stock[c]) return null;
+        next.stock[c]--; next.stock[c + 1]++;
+      }
+    } else {
+      for (let i = 0; i < action.repeats; i++) {
+        if (!has(next.stock, card.input)) return null;
+        card.input.forEach((n, c) => { next.stock[c] -= n; });
+        card.output.forEach((n, c) => { next.stock[c] += n; });
+      }
+    }
+    next.hand.splice(i, 1);
+    next.played.push(action.cardId);
+  } else if (action.type === 'rest') {
+    next.hand.push(...next.played);
+    next.played = [];
+  } else if (action.type === 'acquire') {
+    const offer = state.merchantMarket[action.index];
+    if (!offer) return null;
+    for (const color of action.payment) {
+      if (!next.stock[color]) return null;
+      next.stock[color]--;
+    }
+    offer.bonus.forEach((n, c) => { next.stock[c] += n; });
+    next.hand.push(offer.id);
+    next.merchantMarket = state.merchantMarket.filter((_, i) => i !== action.index);
+    next.acquired++;
+  } else if (action.type === 'claim') {
+    const id = state.golemMarket[action.index];
+    if (!id) return null;
+    const golem = GOLEM_BY_ID[id];
+    if (!has(next.stock, golem.cost)) return null;
+    golem.cost.forEach((n, c) => { next.stock[c] -= n; });
+    let coin = 0;
+    if (action.index === 0) {
+      if (next.copper) { next.copper--; coin = 3; }
+      else if (next.silver) { next.silver--; coin = 1; }
+    } else if (action.index === 1 && next.copper && next.silver) {
+      next.silver--; coin = 1;
+    }
+    next.gained += golem.points + coin;
+    next.golemMarket = state.golemMarket.filter((_, i) => i !== action.index);
+    next.claimed++;
+  }
+  next.stock = trimStock(next.stock, next.golemMarket, preferred).stock;
+  return next;
+}
+function stateKey(state) {
+  return [state.stock.join(','), [...state.hand].sort().join(','), [...state.played].sort().join(','),
+    state.merchantMarket.map(x => x.id).join(','), state.golemMarket.join(','), state.acquired].join('|');
+}
+function searchGrade(state, preferred, stage) {
+  const goal = GOLEM_BY_ID[preferred];
+  const gap = goalGap(state.stock, goal);
+  return -gap * 2.6 + weighted(state.stock) * .13
+    + (engineValue(state, preferred) * stage * .22)
+    - state.steps * .35 - state.acquired * .15;
+}
+function routeGrade(state, preferred, stage) {
+  // gained 可能包括同一路径上先认领其他公开魔像取得的得分。
+  return state.gained / Math.pow(state.steps + .65, .90)
+    + weighted(state.stock) * .055 + engineValue(state, preferred) * stage * .085;
+}
+function completedFirstGoal(state, preferred) {
+  return !state.golemMarket.includes(preferred);
+}
+function choosePlan(game) {
+  const initial = publicState(game);
+  const threshold = game.players.length >= 4 ? 5 : 6;
+  const mostClaimed = Math.max(...game.players.map(p => p.claimed.length));
+  const nearEnd = game.triggerPlayer !== null || mostClaimed >= threshold - 1;
+  const depth = game.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
+  const width = nearEnd ? 12 : 18;
+  const stage = game.triggerPlayer !== null ? 0 : Math.max(.12, 1 - mostClaimed / threshold);
+  let solved = null, prospective = null;
+  for (const preferred of initial.golemMarket) {
+    let beam = [initial];
+    for (let layer = 1; layer <= depth; layer++) {
+      const successors = new Map();
+      for (const position of beam) {
+        const variants = actions(position, preferred, game.triggerPlayer === null);
+        for (const action of variants) {
+          const next = step(position, action, preferred);
+          if (!next) continue;
+          if (completedFirstGoal(next, preferred)) {
+            const quality = routeGrade(next, preferred, stage);
+            if (!solved || quality > solved.quality) solved = { ...next, preferred, quality };
+            continue;
+          }
+          const quality = searchGrade(next, preferred, stage);
+          const key = stateKey(next);
+          if (!successors.has(key) || successors.get(key).quality < quality) successors.set(key, { ...next, quality });
+        }
+      }
+      if (!successors.size) break;
+      beam = [...successors.values()].sort((a, b) => b.quality - a.quality).slice(0, width);
+      for (const candidate of beam) {
+        const expected = GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(candidate.stock, GOLEM_BY_ID[preferred]) / 3)
+          + engineValue(candidate, preferred) * stage * .12 - candidate.steps * .09;
+        if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
+      }
+    }
+  }
+  // 有可信的实际认领路线时优先执行；未找到时采用多回合目标推进的最佳前缀。
+  return solved ?? prospective;
 }
 function chooseAIAction(game) {
-    const g = game;
-    if (g.phase === 'finished')
-        throw Error('游戏结束，AI 无法行动');
-    const p = g.players[g.current];
-    if (!p?.isAI)
-        throw Error('当前行动者不是 AI');
-    if (g.phase === 'overflow')
-        return { action: { type: 'discard', colors: chooseDiscard(g) }, reason: '弃置超额水晶' };
-    const canClaim = g.golemMarket.flatMap((id, index) => {
-        const c = GOLEM_BY_ID[id];
-        if (!has(p.stock, c.cost))
-            return [];
-        const coin = index === 0 ? (g.copper ? 3 : g.silver ? 1 : 0) : index === 1 && g.silver && g.copper ? 1 : 0;
-        return [{ index, quality: c.points + coin * 1.6 }];
+  if (game.phase === 'finished') throw Error('游戏结束，AI 无法行动');
+  const p = game.players[game.current];
+  if (!p?.isAI) throw Error('当前行动者不是 AI');
+  if (game.phase === 'overflow') {
+    const discarded = trimStock(p.stock, game.golemMarket).discarded;
+    return { action: { type: 'discard', colors: discarded }, reason: '保留目标水晶，弃置超额水晶' };
+  }
+  const plan = choosePlan(game);
+  const action = plan?.first ?? { type: 'rest' };
+  // 搜索转移为快速本地模型；真正的第一步必须由正式规则引擎再次核实。
+  try { applyAction(game, action); }
+  catch (error) {
+    const fallback = actions(publicState(game), null, false).find(a => {
+      try { applyAction(game, a); return true; } catch { return false; }
     });
-    if (canClaim.length) {
-        canClaim.sort((a, b) => b.quality - a.quality);
-        return { action: { type: 'claim', index: canClaim[0].index }, reason: '认领魔像' };
-    }
-    const candidates = [], before = fitness(g, p.stock);
-    const offer = (action, bonus, reason) => {
-        try {
-            let sim = applyAction(g, action);
-            if (sim.phase === 'overflow')
-                sim = applyAction(sim, { type: 'discard', colors: chooseDiscard(sim) });
-            const next = sim.players[g.current];
-            let value = fitness(g, next.stock) - before + bonus;
-            if (action.type === 'acquire')
-                value -= Math.max(0, next.hand.length + next.played.length - 6) * .6;
-            candidates.push({ action, value, reason });
-        }
-        catch { }
-    };
-    for (const id of p.hand) {
-        const card = MERCHANT_BY_ID[id];
-        if (!card)
-            continue;
-        if (card.kind === 'create')
-            offer({ type: 'play', cardId: id }, .34, '创造水晶');
-        else if (card.kind === 'upgrade') {
-            for (const steps of upgradeVariants(p.stock, card.steps))
-                offer({ type: 'play', cardId: id, steps }, .3 + steps.length * .17, '升级水晶');
-        }
-        else {
-            for (let repeats = 1; repeats <= tradeLimit(p.stock, id); repeats++)
-                offer({ type: 'play', cardId: id, repeats }, .4, '交易水晶');
-        }
-    }
-    if (g.triggerPlayer === null && p.hand.length + p.played.length < 9) {
-        const stage = Math.max(.04, 1 - p.turns / 18);
-        g.merchantMarket.forEach((m, index) => {
-            if (index > count(p.stock))
-                return;
-            const card = MERCHANT_BY_ID[m.id];
-            const bonus = engineStrength(card, p.stock) * stage - index * .05;
-            for (const payment of paymentVariants(p.stock, index))
-                offer({ type: 'acquire', index, payment }, bonus, '获取商人卡');
-        });
-    }
-    const reclaim = p.played.reduce((s, id) => s + engineStrength(MERCHANT_BY_ID[id], p.stock), 0);
-    offer({ type: 'rest' }, p.played.length ? .22 + Math.min(2.6, reclaim * .23) : -2, '休息取回卡牌');
-    candidates.sort((a, b) => b.value - a.value);
-    if (!candidates.length)
-        throw Error('AI 无法选择合法行动');
-    return { action: candidates[0].action, reason: candidates[0].reason };
+    if (!fallback) throw error;
+    return { action: fallback, reason: '合法动作保底选择' };
+  }
+  const goal = plan?.preferred;
+  return {
+    action,
+    reason: goal ? `V2.0 规划 ${goal}：预计${plan.steps}次行动形成认领路线` : '公开市场暂无可规划目标',
+    plan: plan ? { goal, steps: plan.steps, actions: plan.path } : undefined,
+  };
 }
-
-
 
 
 const KEY = 'crystal-corridor-game-v2-canonical';
