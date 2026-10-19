@@ -1,146 +1,290 @@
-/**
- * 本地启发式 AI：穷举有限的合法行动候选，用完整规则引擎模拟结果并评分。
- * 无作弊、无隐藏牌库读取、无随机浏览器依赖；所有动作均须经过 applyAction。
+// @ts-nocheck
+/** V2.0：离线目标规划 + 多回合束搜索。
+ * 规划只使用公开市场、自身牌/水晶与公开比分，不读取两类隐藏牌库顺序。
+ * 未来对手回合和未知翻牌保持不确定；使用当前公开市场作保守近似。
  */
-import { GOLEM_BY_ID, MERCHANT_BY_ID, type Merchant, type Stock } from './data.js';
-import { add, applyAction, count, has, score, tradeLimit, type Action, type Color, type Game } from './engine.js';
+import { GOLEM_BY_ID, MERCHANT_BY_ID } from './data.js';
+import { applyAction, count, has, tradeLimit } from './engine.js';
 
-export type AIChoice = { action: Action; reason: string };
-const COLORS = [0, 1, 2, 3] as Color[];
-const UNIT = [1, 1.5, 2.05, 2.6];
-const total = (s: Stock) => s.reduce((v, n, i) => v + n * UNIT[i], 0);
-const copy = (s: Stock): Stock => [...s] as Stock;
+const VALUES = [1, 1.7, 2.5, 3.4];
+const weighted = stock => stock.reduce((sum, n, color) => sum + n * VALUES[color], 0);
+const stockCount = stock => stock[0] + stock[1] + stock[2] + stock[3];
+const cloneStock = stock => [...stock];
 
-function targets(g: Game, s: Stock): number {
-  if (!g.golemMarket.length) return 0;
-  return Math.max(...g.golemMarket.map((id, i) => {
+function goalGap(stock, goal) {
+  return goal.cost.reduce((sum, needed, color) => sum + Math.max(0, needed - stock[color]) * VALUES[color], 0);
+}
+function stockPotential(stock, goals) {
+  if (!goals.length) return weighted(stock) * .13;
+  return Math.max(...goals.map(id => {
     const card = GOLEM_BY_ID[id];
-    const miss = card.cost.reduce((v, need, color) => v + Math.max(0, need - s[color]) * UNIT[color], 0);
-    const usable = card.cost.reduce((v, need, color) => v + Math.min(need, s[color]) * UNIT[color], 0);
-    const bonus = i === 0 && g.copper ? 1.6 : i === 1 && g.silver && g.copper ? 0.5 : 0;
-    return card.points * 0.22 + usable * 0.12 + bonus - 1.34 * miss;
+    const total = weighted(card.cost);
+    return card.points * Math.max(0, 1 - goalGap(stock, card) / (total + 2));
   }));
 }
-
-function stockFitness(g: Game, s: Stock): number {
-  return targets(g, s) + total(s) * 0.11 - Math.max(0, count(s) - 10) * 3;
+function keepValue(stock, goals, preferred) {
+  const target = preferred ? GOLEM_BY_ID[preferred] : null;
+  const coverage = target ? target.cost.reduce((sum, amount, c) => sum + Math.min(amount, stock[c]) * VALUES[c], 0) : 0;
+  return coverage * 3 + stockPotential(stock, goals) * 1.2 + weighted(stock) * .16;
 }
-
-/** 超过 10 颗时保留最有用的组合（逐颗抛弃）。 */
-export function chooseAIDiscard(g: Game): Color[] {
-  const s = copy(g.players[g.current].stock);
-  const colors: Color[] = [];
-  while (count(s) > 10) {
-    let selected: Color = 0;
-    let best = -Infinity;
-    for (const color of COLORS) {
-      if (!s[color]) continue;
-      s[color]--;
-      const fitness = stockFitness(g, s);
-      s[color]++;
-      if (fitness > best) { best = fitness; selected = color; }
+function trimStock(source, goals, preferred) {
+  const stock = cloneStock(source), discarded = [];
+  while (stockCount(stock) > 10) {
+    let color = -1, best = -Infinity;
+    for (let c = 0; c < 4; c++) {
+      if (stock[c] === 0) continue;
+      stock[c]--;
+      const rating = keepValue(stock, goals, preferred);
+      stock[c]++;
+      if (rating > best) { best = rating; color = c; }
     }
-    s[selected]--;
-    colors.push(selected);
+    if (color < 0) throw Error('超额水晶弃置失败');
+    stock[color]--;
+    discarded.push(color);
   }
-  return colors;
+  return { stock, discarded };
 }
 
-function paymentVariants(s: Stock, qty: number): Color[][] {
-  if (qty === 0) return [[]];
-  const result: Color[][] = [];
-  const step = (i: number, left: number, payment: Color[]) => {
-    if (i === 4) { if (!left) result.push([...payment]); return; }
-    for (let n = 0; n <= Math.min(s[i], left); n++) {
-      step(i + 1, left - n, [...payment, ...Array<Color>(n).fill(i as Color)]);
+function upgradeVariants(stock, max) {
+  const variants = new Map();
+  function search(s, steps) {
+    if (steps.length) {
+      const key = s.join(',');
+      if (!variants.has(key) || variants.get(key).length > steps.length) variants.set(key, steps);
     }
-  };
-  step(0, qty, []);
-  return result;
-}
-
-function upgradeVariants(s: Stock, steps: number): Color[][] {
-  const results: Color[][] = [];
-  const walk = (stock: Stock, sequence: Color[]) => {
-    if (sequence.length > 0) results.push(sequence);
-    if (sequence.length === steps) return;
-    for (const color of [0, 1, 2] as Color[]) {
-      if (!stock[color]) continue;
-      const next = copy(stock);
-      next[color]--; next[color + 1]++;
-      walk(next, [...sequence, color]);
+    if (steps.length === max) return;
+    for (let c = 0; c < 3; c++) {
+      if (!s[c]) continue;
+      const next = cloneStock(s);
+      next[c]--; next[c + 1]++;
+      search(next, [...steps, c]);
     }
-  };
-  walk(s, []);
-  return results;
-}
-
-function engineStrength(card: Merchant, s: Stock): number {
-  if (card.kind === 'create') return total(card.output!) * 0.67;
-  if (card.kind === 'upgrade') return (card.steps ?? 0) * 1.23;
-  const material = Math.max(0, total(card.output!) - total(card.input!));
-  const accessible = has(s, card.input!) ? 0.42 : 0;
-  return material * 0.62 + 0.82 + accessible;
-}
-
-export function chooseAIAction(g: Game): AIChoice {
-  if (g.phase === 'finished') throw new Error('对局已结束，AI 不应行动');
-  const player = g.players[g.current];
-  if (!player?.isAI) throw new Error('当前不是 AI 回合');
-  if (g.phase === 'overflow') return {action:{type:'discard', colors:chooseAIDiscard(g)},reason:'弃置超额水晶'};
-  const claims = g.golemMarket.flatMap((id, index) => has(player.stock, GOLEM_BY_ID[id].cost)
-    ? [{ index, points:GOLEM_BY_ID[id].points, coin:index === 0 && (g.copper || g.silver) ? (g.copper ? 3 : 1) : index === 1 && g.silver && g.copper ? 1 : 0 }]
-    : []);
-  if (claims.length) {
-    claims.sort((a,b) => (b.points + b.coin * 1.7) - (a.points + a.coin * 1.7));
-    return {action:{type:'claim',index:claims[0].index},reason:'认领可支付的魔像'};
   }
-  type Candidate = {action: Action; value: number; reason: string};
-  const candidates: Candidate[] = [];
-  const before = stockFitness(g, player.stock);
-  const plan = (action: Action, bonus: number, reason: string) => {
-    try {
-      let simulated = applyAction(g, action);
-      if (simulated.phase === 'overflow') simulated = applyAction(simulated, {type:'discard',colors:chooseAIDiscard(simulated)});
-      const gained = stockFitness(g, simulated.players[g.current].stock) - before;
-      const after = simulated.players[g.current];
-      let utility = gained + bonus;
-      // 避免把所有水晶变成无用的单一颜色，或过度扩张商人卡。
-      if (action.type === 'acquire') utility -= Math.max(0, after.hand.length + after.played.length - 6) * 0.55;
-      candidates.push({action,value:utility,reason});
-    } catch { /* 不合法的候选由引擎拦截 */ }
-  };
-  for (const id of player.hand) {
+  search(stock, []);
+  return [...variants.values()];
+}
+
+// 压晶只枚举不同颜色组合；同色组合排序后对应唯一的合法实际支付顺序。
+function payments(stock, index, goals, preferred) {
+  if (index === 0) return [[]];
+  if (stockCount(stock) < index) return [];
+  const result = [];
+  function walk(color, left, selected, rest) {
+    if (color === 4) {
+      if (left === 0) result.push({ payment: selected, value: keepValue(rest, goals, preferred) });
+      return;
+    }
+    for (let n = 0; n <= Math.min(stock[color], left); n++) {
+      const next = cloneStock(rest);
+      next[color] -= n;
+      walk(color + 1, left - n, [...selected, ...Array(n).fill(color)], next);
+    }
+  }
+  walk(0, index, [], cloneStock(stock));
+  result.sort((a, b) => b.value - a.value || a.payment.join('').localeCompare(b.payment.join('')));
+  return result.slice(0, 3).map(x => x.payment);
+}
+
+function cardEngineValue(card, stock, goal) {
+  if (card.kind === 'create') {
+    const useful = goal ? card.output.reduce((s, n, c) => s + Math.min(n, Math.max(0, goal.cost[c] - stock[c])) * VALUES[c], 0) : 0;
+    return weighted(card.output) * .32 + useful * .22;
+  }
+  if (card.kind === 'upgrade') return card.steps * .7;
+  const gain = weighted(card.output) - weighted(card.input);
+  const reachable = has(stock, card.input) ? 1 : .35;
+  const targetMatch = goal ? card.output.reduce((s, n, c) => s + Math.min(n, goal.cost[c]) * VALUES[c], 0) : 0;
+  return Math.max(0, gain) * .30 + reachable * .45 + targetMatch * .17;
+}
+function engineValue(state, preferred) {
+  const goal = preferred ? GOLEM_BY_ID[preferred] : null;
+  return [...state.hand, ...state.played].reduce((sum, id) => {
     const card = MERCHANT_BY_ID[id];
-    if (card.kind === 'create') {
-      plan({type:'play',cardId:id}, 0.38, '创造水晶');
-    } else if (card.kind === 'upgrade') {
-      for (const steps of upgradeVariants(player.stock, card.steps!)) {
-        plan({type:'play',cardId:id,steps}, 0.35 + steps.length * 0.17, '升级水晶');
-      }
+    return sum + (card ? cardEngineValue(card, state.stock, goal) : 0);
+  }, 0);
+}
+function publicState(game) {
+  const player = game.players[game.current];
+  return {
+    stock: cloneStock(player.stock), hand: [...player.hand], played: [...player.played],
+    merchantMarket: game.merchantMarket.map(m => ({ id: m.id, bonus: cloneStock(m.bonus) })),
+    golemMarket: [...game.golemMarket], copper: game.copper, silver: game.silver,
+    gained: 0, claimed: 0, acquired: 0, steps: 0, first: null, path: [],
+    remainingClaims: (game.players.length >= 4 ? 5 : 6) - player.claimed.length, terminal: false,
+  };
+}
+function actions(state, preferred, allowAcquire) {
+  const result = [];
+  for (let i = 0; i < state.golemMarket.length; i++) {
+    if (has(state.stock, GOLEM_BY_ID[state.golemMarket[i]].cost)) result.push({ type: 'claim', index: i });
+  }
+  for (const id of state.hand) {
+    const card = MERCHANT_BY_ID[id];
+    if (!card) continue;
+    if (card.kind === 'create') result.push({ type: 'play', cardId: id });
+    else if (card.kind === 'upgrade') {
+      for (const steps of upgradeVariants(state.stock, card.steps)) result.push({ type: 'play', cardId: id, steps });
     } else {
-      for (let repeats = 1; repeats <= tradeLimit(player.stock, id); repeats++) {
-        plan({type:'play',cardId:id,repeats}, 0.48, '交易水晶');
-      }
+      const limit = tradeLimit(state.stock, id);
+      for (let repeats = 1; repeats <= limit; repeats++) result.push({ type: 'play', cardId: id, repeats });
     }
   }
-  // 中前期购买优质引擎卡；越接近终局越重视立即转换与认领。
-  const gameProgress = Math.max(0.02, 1 - player.turns / 18);
-  if (player.hand.length + player.played.length < 9 && g.triggerPlayer === null) {
-    g.merchantMarket.forEach((m, index) => {
-      if (index > count(player.stock)) return;
-      const card = MERCHANT_BY_ID[m.id];
-      for (const payment of paymentVariants(player.stock, index)) {
-        const gain = engineStrength(card, player.stock) * gameProgress;
-        plan({type:'acquire',index,payment}, gain + 0.04 - index * 0.05, '获取商人卡');
+  if (state.played.length) result.push({ type: 'rest' });
+  if (allowAcquire && state.acquired === 0 && state.hand.length + state.played.length < 10) {
+    state.merchantMarket.forEach((m, index) => {
+      for (const payment of payments(state.stock, index, state.golemMarket, preferred)) {
+        result.push({ type: 'acquire', index, payment });
       }
     });
   }
-  // 休息重新激活旧引擎，需要消费完整一回合，先与其他选择公平比较。
-  const goodPlayed = player.played.reduce((v,id) => v + engineStrength(MERCHANT_BY_ID[id], player.stock), 0);
-  plan({type:'rest'}, player.played.length ? 0.25 + Math.min(2.5,goodPlayed * 0.22) : -2.5, '休息并回收商人卡');
-  candidates.sort((a,b) => b.value - a.value);
-  const best = candidates[0];
-  if (!best) throw new Error('AI 没有可执行行动');
-  return {action:best.action, reason:best.reason};
+  if (!result.length) result.push({ type: 'rest' });
+  return result;
+}
+function step(state, action, preferred) {
+  if (state.terminal) return null;
+  const next = {
+    ...state, stock: cloneStock(state.stock), hand: [...state.hand], played: [...state.played],
+    merchantMarket: state.merchantMarket, golemMarket: state.golemMarket,
+    steps: state.steps + 1, first: state.first ?? action, path: [...state.path, action],
+  };
+  if (action.type === 'play') {
+    const card = MERCHANT_BY_ID[action.cardId];
+    if (!card) return null;
+    const i = next.hand.indexOf(action.cardId);
+    if (i < 0) return null;
+    if (card.kind === 'create') card.output.forEach((n, c) => { next.stock[c] += n; });
+    else if (card.kind === 'upgrade') {
+      for (const c of action.steps) {
+        if (!next.stock[c]) return null;
+        next.stock[c]--; next.stock[c + 1]++;
+      }
+    } else {
+      for (let i = 0; i < action.repeats; i++) {
+        if (!has(next.stock, card.input)) return null;
+        card.input.forEach((n, c) => { next.stock[c] -= n; });
+        card.output.forEach((n, c) => { next.stock[c] += n; });
+      }
+    }
+    next.hand.splice(i, 1);
+    next.played.push(action.cardId);
+  } else if (action.type === 'rest') {
+    next.hand.push(...next.played);
+    next.played = [];
+  } else if (action.type === 'acquire') {
+    const offer = state.merchantMarket[action.index];
+    if (!offer) return null;
+    for (const color of action.payment) {
+      if (!next.stock[color]) return null;
+      next.stock[color]--;
+    }
+    offer.bonus.forEach((n, c) => { next.stock[c] += n; });
+    next.hand.push(offer.id);
+    next.merchantMarket = state.merchantMarket.filter((_, i) => i !== action.index);
+    next.acquired++;
+  } else if (action.type === 'claim') {
+    const id = state.golemMarket[action.index];
+    if (!id) return null;
+    const golem = GOLEM_BY_ID[id];
+    if (!has(next.stock, golem.cost)) return null;
+    golem.cost.forEach((n, c) => { next.stock[c] -= n; });
+    let coin = 0;
+    if (action.index === 0) {
+      if (next.copper) { next.copper--; coin = 3; }
+      else if (next.silver) { next.silver--; coin = 1; }
+    } else if (action.index === 1 && next.copper && next.silver) {
+      next.silver--; coin = 1;
+    }
+    next.gained += golem.points + coin;
+    next.golemMarket = state.golemMarket.filter((_, i) => i !== action.index);
+    next.claimed++;
+    next.terminal = next.claimed >= next.remainingClaims;
+  }
+  next.stock = trimStock(next.stock, next.golemMarket, preferred).stock;
+  return next;
+}
+function stateKey(state) {
+  return [state.stock.join(','), [...state.hand].sort().join(','), [...state.played].sort().join(','),
+    state.merchantMarket.map(x => x.id).join(','), state.golemMarket.join(','), state.acquired].join('|');
+}
+function searchGrade(state, preferred, stage) {
+  const goal = GOLEM_BY_ID[preferred];
+  const gap = goalGap(state.stock, goal);
+  return -gap * 2.6 + weighted(state.stock) * .13
+    + (engineValue(state, preferred) * stage * .22)
+    - state.steps * .35 - state.acquired * .15;
+}
+function routeGrade(state, preferred, stage) {
+  // gained 可能包括同一路径上先认领其他公开魔像取得的得分。
+  return state.gained / Math.pow(state.steps + .65, .90)
+    + weighted(state.stock) * .055 + engineValue(state, preferred) * stage * .085;
+}
+function completedFirstGoal(state, preferred) {
+  return !state.golemMarket.includes(preferred);
+}
+function choosePlan(game) {
+  const initial = publicState(game);
+  const threshold = game.players.length >= 4 ? 5 : 6;
+  const mostClaimed = Math.max(...game.players.map(p => p.claimed.length));
+  const nearEnd = game.triggerPlayer !== null || mostClaimed >= threshold - 1;
+  const depth = game.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
+  const width = nearEnd ? 10 : 14;
+  const stage = game.triggerPlayer !== null ? 0 : Math.max(.12, 1 - mostClaimed / threshold);
+  let solved = null, prospective = null;
+  for (const preferred of initial.golemMarket) {
+    let beam = [initial];
+    for (let layer = 1; layer <= depth; layer++) {
+      const successors = new Map();
+      for (const position of beam) {
+        const variants = actions(position, preferred, game.triggerPlayer === null);
+        for (const action of variants) {
+          const next = step(position, action, preferred);
+          if (!next) continue;
+          if (next.terminal && !completedFirstGoal(next, preferred)) continue;
+          if (completedFirstGoal(next, preferred)) {
+            const quality = routeGrade(next, preferred, stage);
+            if (!solved || quality > solved.quality) solved = { ...next, preferred, quality };
+            continue;
+          }
+          const quality = searchGrade(next, preferred, stage);
+          const key = stateKey(next);
+          if (!successors.has(key) || successors.get(key).quality < quality) successors.set(key, { ...next, quality });
+        }
+      }
+      if (!successors.size) break;
+      beam = [...successors.values()].sort((a, b) => b.quality - a.quality).slice(0, width);
+      for (const candidate of beam) {
+        const expected = GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(candidate.stock, GOLEM_BY_ID[preferred]) / 3)
+          + engineValue(candidate, preferred) * stage * .12 - candidate.steps * .09;
+        if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
+      }
+    }
+  }
+  // 有可信的实际认领路线时优先执行；未找到时采用多回合目标推进的最佳前缀。
+  return solved ?? prospective;
+}
+export function chooseAIAction(game) {
+  if (game.phase === 'finished') throw Error('游戏结束，AI 无法行动');
+  const p = game.players[game.current];
+  if (!p?.isAI) throw Error('当前行动者不是 AI');
+  if (game.phase === 'overflow') {
+    const discarded = trimStock(p.stock, game.golemMarket).discarded;
+    return { action: { type: 'discard', colors: discarded }, reason: '保留目标水晶，弃置超额水晶' };
+  }
+  const plan = choosePlan(game);
+  const action = plan?.first ?? { type: 'rest' };
+  // 搜索转移为快速本地模型；真正的第一步必须由正式规则引擎再次核实。
+  try { applyAction(game, action); }
+  catch (error) {
+    const fallback = actions(publicState(game), null, false).find(a => {
+      try { applyAction(game, a); return true; } catch { return false; }
+    });
+    if (!fallback) throw error;
+    return { action: fallback, reason: '合法动作保底选择' };
+  }
+  const goal = plan?.preferred;
+  return {
+    action,
+    reason: goal ? `V2.0 规划 ${goal}：预计${plan.steps}次行动形成认领路线` : '公开市场暂无可规划目标',
+    plan: plan ? { goal, steps: plan.steps, actions: plan.path } : undefined,
+  };
 }

@@ -1,6 +1,7 @@
 """V1.3 浏览器交互回归：宽屏、大量手牌、排序、回收区、存档。"""
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+from browser_test_support import launch_browser
 import json
 
 BASE=Path(__file__).resolve().parent.parent
@@ -11,16 +12,16 @@ def setup_page(page):
 def reload_page(page):
     page.set_content(HTML)
 with sync_playwright() as p:
-    browser=p.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox'])
+    browser=launch_browser(p)
     errors=[]
     wide=browser.new_page(viewport={'width':3440,'height':1440},device_scale_factor=1)
     wide.on('pageerror',lambda e:errors.append(str(e)))
     setup_page(wide)
     wide.locator('[data-action="start"]').click()
     wide.evaluate('''() => {
-      let g=JSON.parse(localStorage.getItem('crystal-corridor-game-v1'));
+      let g=JSON.parse(localStorage.getItem('crystal-corridor-game-v2-canonical'));
       g.players[0].hand.push(...g.merchantDeck.splice(0,14));
-      localStorage.setItem('crystal-corridor-game-v1',JSON.stringify(g));
+      localStorage.setItem('crystal-corridor-game-v2-canonical',JSON.stringify(g));
     }''')
     reload_page(wide)
     assert wide.locator('.duel-player[data-player="0"] .hand-tile').count()==16
@@ -28,16 +29,16 @@ with sync_playwright() as p:
     assert wide.evaluate('document.documentElement.scrollWidth <= innerWidth')
     assert wide.evaluate('document.documentElement.scrollHeight <= innerHeight')
     wide.screenshot(path=str(BASE/'dist/hand-16-3440x1440.png'),full_page=True)
-    orig=wide.evaluate('JSON.parse(localStorage.getItem("crystal-corridor-game-v1"))')
+    orig=wide.evaluate('JSON.parse(localStorage.getItem("crystal-corridor-game-v2-canonical"))')
     get_order=lambda:wide.locator('.duel-player[data-player="0"] .hand-tile').evaluate_all('(els)=>els.map(el=>el.dataset.cardId)')
     cards=get_order()
     wide.locator(f'[data-action="move-card"][data-id="{cards[2]}"][data-direction="-1"]').click()
     assert get_order()[:3]==[cards[0],cards[2],cards[1]],get_order()[:3]
-    assert wide.evaluate('JSON.parse(localStorage.getItem("crystal-corridor-game-v1")).turnNumber')==orig['turnNumber']
-    assert wide.evaluate('JSON.parse(localStorage.getItem("crystal-corridor-game-v1")).players[0].hand')==orig['players'][0]['hand']
+    assert wide.evaluate('JSON.parse(localStorage.getItem("crystal-corridor-game-v2-canonical")).turnNumber')==orig['turnNumber']
+    assert wide.evaluate('JSON.parse(localStorage.getItem("crystal-corridor-game-v2-canonical")).players[0].hand')==orig['players'][0]['hand']
     # Native drag-and-drop: card 5 moves before card 1.
     cards=get_order()
-    wide.locator(f'.hand-tile[data-card-id="{cards[4]}"]').drag_to(wide.locator(f'.hand-tile[data-card-id="{cards[0]}"]'))
+    wide.locator(f'.duel-player[data-player="0"] .hand-tile[data-card-id="{cards[4]}"]').drag_to(wide.locator(f'.duel-player[data-player="0"] .hand-tile[data-card-id="{cards[0]}"]'))
     assert get_order()[0]==cards[4],get_order()[:5]
     reload_page(wide)
     assert get_order()[0]==cards[4], '手动排序应跨刷新保留'

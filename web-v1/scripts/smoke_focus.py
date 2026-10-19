@@ -1,9 +1,10 @@
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+from browser_test_support import launch_browser
 ROOT=Path(__file__).resolve().parent.parent
 html=(ROOT/'dist/standalone.html').read_text(encoding='utf-8')
 with sync_playwright() as pw:
-    browser=pw.chromium.launch(headless=True,executable_path='/usr/bin/chromium',args=['--no-sandbox'])
+    browser=launch_browser(pw)
     errors=[]
     positions_0=None
     for bots in (0,1,2,3,4):
@@ -41,7 +42,7 @@ with sync_playwright() as pw:
             # two human turns then four AI responses
             page.locator('.duel-player[data-player="0"] .card-create[data-action="play-hand"]').first.click()
             page.locator('.duel-player[data-player="1"] .card-create[data-action="play-hand"]').first.click()
-            page.wait_for_timeout(4*480+1200)
+            page.wait_for_function("() => document.querySelector('.duel-player[data-player=\"0\"].duel-active')", timeout=30000)
             assert page.locator('.duel-player[data-player="0"].duel-active').count()==1
             assert page.locator('.duel-player[data-player="0"] .played-face').count()==1
             page.screenshot(path=str(ROOT/'dist/focus-after-round.png'))
