@@ -564,7 +564,7 @@
 
 
 /* MOBILE GAME V1 — 独立触屏牌桌；桌面 UWQHD 布局保持不变。 */
-@media (max-width:800px) {
+@media (max-width:980px) {
   .layout.mobile-board {
     box-sizing:border-box;
     display:flex;
@@ -893,4 +893,30 @@
   .mobile-board .mobile-market-grid {gap:6px;}
   .mobile-board .mobile-dock {padding-inline:8px;flex-basis:218px;}
   .mobile-board .mobile-dock-cards .hand-tile {flex-basis:110px;}
+}
+
+/* 横屏手机：缩短固定区域，优先保留可滚动的市场。 */
+@media (max-width:980px) and (orientation:landscape) and (max-height:550px) {
+  .mobile-board .mobile-topbar {height:38px;flex-basis:38px;}
+  .mobile-board .mobile-more>summary {height:32px;}
+  .mobile-board .mobile-more-menu {top:36px;}
+  .mobile-board .mobile-overview {padding:4px 13px 5px;gap:3px;}
+  .mobile-board .mobile-player-line {min-height:23px;}
+  .mobile-board .mobile-score {font-size:19px;}
+  .mobile-board .mobile-resource-line {min-height:19px;}
+  .mobile-board .mobile-resource-line .gem {width:11px;height:11px;}
+  .mobile-board .mobile-tabs {flex-basis:35px;padding-top:0;}
+  .mobile-board .mobile-tab {height:34px;font-size:12px;}
+  .mobile-board .mobile-stage {padding-top:6px;}
+  .mobile-board .mobile-market-grid {grid-template-columns:repeat(3,minmax(0,1fr));}
+  .mobile-board .mobile-golems .golem-card {min-height:143px;height:143px;}
+  .mobile-board .mobile-merchants .merchant-card {min-height:145px;height:145px;}
+  .mobile-board .mobile-dock {flex-basis:145px!important;gap:2px;padding-top:3px;padding-bottom:max(3px,env(safe-area-inset-bottom, 0px));}
+  .mobile-board.mobile-hand-expanded .mobile-dock {flex-basis:min(65dvh,250px)!important;}
+  .mobile-board .mobile-dock-toolbar {flex-basis:30px;}
+  .mobile-board .mobile-dock-toolbar button {height:30px;}
+  .mobile-board .mobile-dock-cards .hand-tile .merchant-card {padding-bottom:26px;}
+  .mobile-board .mobile-dock-cards .tile-move button {height:24px;}
+  .mobile-board .mobile-played {flex-basis:20px;}
+  .mobile-board .mobile-played-label {min-height:20px;}
 }
