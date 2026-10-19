@@ -1,0 +1,64 @@
+name: Deploy Century Game to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web-v1/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Verify and package game
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web-v1/package-lock.json
+      - name: Install dependencies
+        working-directory: web-v1
+        run: npm ci --no-audit --no-fund
+      - name: Verify rules, cards and game build
+        working-directory: web-v1
+        run: npm test
+      - name: Prepare single-file website
+        run: |
+          mkdir -p _site
+          cp web-v1/dist/standalone.html _site/index.html
+          touch _site/.nojekyll
+          test -s _site/index.html
+          grep -q '<meta name="viewport"' _site/index.html
+          grep -q 'function choosePlan(game)' _site/index.html
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    name: Publish game
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
