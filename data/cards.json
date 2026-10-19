@@ -1,0 +1,1248 @@
+{
+  "schema_version": 1,
+  "verified_on": "2026-10-19",
+  "color_order": [
+    "yellow",
+    "green",
+    "blue",
+    "pink"
+  ],
+  "valuation_weights": {
+    "yellow": 1,
+    "green": 2,
+    "blue": 3,
+    "pink": 4
+  },
+  "sources": {
+    "merchant_csv": "https://github.com/kennethhyman/CenturyGolemEdition/blob/master/data/cards.csv",
+    "golem_csv": "https://github.com/kennethhyman/CenturyGolemEdition/blob/master/data/golems.csv",
+    "starter_csv": "https://github.com/kennethhyman/CenturyGolemEdition/blob/master/data/starter_cards.csv",
+    "crosscheck": "https://github.com/sarahduv/CenturyGolem/blob/master/CenturyGolem/Actions/ActionDeck.cs",
+    "official_rules": "https://cdn.svc.asmodee.net/production-nextmove/uploads/sites/4/2024/06/EN-Century-Golem-Rules_2024_compressed.pdf"
+  },
+  "notes": [
+    "卡牌文本来自第三方开源实现交叉核对，不等同于对实体卡面的官方逐张认证。",
+    "value_delta=产出资源估值减去投入资源估值；升级卡记录最多升级次数的理论增益。",
+    "max_trades_10_crystals仅针对一张交易卡、投入与产出均不超过10颗的纯输入场景，是上界而非现实可达保证。",
+    "终局剩余每颗非黄水晶只计1分，不按照转换估值计分。"
+  ],
+  "starters": [
+    {
+      "id": "S01",
+      "type": "创造",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 2,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "copies": 5
+    },
+    {
+      "id": "S02",
+      "type": "升级",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 2,
+      "copies": 5
+    }
+  ],
+  "merchants": [
+    {
+      "id": "M01",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 1,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 1,
+        "green": 2,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M02",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 2
+      },
+      "output": {
+        "yellow": 1,
+        "green": 1,
+        "blue": 3,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 4,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M03",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 1,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 1,
+      "max_trades_10_crystals": 5
+    },
+    {
+      "id": "M04",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 2
+      },
+      "output": {
+        "yellow": 0,
+        "green": 3,
+        "blue": 2,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 4,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M05",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 1
+      },
+      "output": {
+        "yellow": 1,
+        "green": 1,
+        "blue": 1,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M06",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 2,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 2,
+        "green": 3,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M07",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 1
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 2,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 5
+    },
+    {
+      "id": "M08",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 1,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 3,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 1,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M09",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 1,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 4,
+        "green": 1,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 3,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M10",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 1
+      },
+      "output": {
+        "yellow": 3,
+        "green": 0,
+        "blue": 1,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M11",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 1
+      },
+      "output": {
+        "yellow": 2,
+        "green": 2,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M12",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 1
+      },
+      "output": {
+        "yellow": 0,
+        "green": 3,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M13",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 3,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 2,
+        "green": 0,
+        "blue": 2,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M14",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 2,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 0,
+        "pink": 1
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M15",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 3,
+        "green": 0,
+        "blue": 1,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M16",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 2,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 2,
+        "green": 1,
+        "blue": 0,
+        "pink": 1
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M17",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 2,
+        "green": 0,
+        "blue": 0,
+        "pink": 1
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M18",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 2,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 2
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 5
+    },
+    {
+      "id": "M19",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 3,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 2
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M20",
+      "type": "交易",
+      "input": {
+        "yellow": 2,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 5
+    },
+    {
+      "id": "M21",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 3,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 3,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 3,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M22",
+      "type": "交易",
+      "input": {
+        "yellow": 3,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 3,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 3,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M23",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 2,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 5
+    },
+    {
+      "id": "M24",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 3,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 3
+      },
+      "upgrade_steps": 0,
+      "value_delta": 3,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M25",
+      "type": "交易",
+      "input": {
+        "yellow": 5,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 3,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 4,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M26",
+      "type": "交易",
+      "input": {
+        "yellow": 2,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 1,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 1,
+      "max_trades_10_crystals": 5
+    },
+    {
+      "id": "M27",
+      "type": "交易",
+      "input": {
+        "yellow": 2,
+        "green": 0,
+        "blue": 1,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 2
+      },
+      "upgrade_steps": 0,
+      "value_delta": 3,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M28",
+      "type": "交易",
+      "input": {
+        "yellow": 1,
+        "green": 1,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 1
+      },
+      "upgrade_steps": 0,
+      "value_delta": 1,
+      "max_trades_10_crystals": 5
+    },
+    {
+      "id": "M29",
+      "type": "交易",
+      "input": {
+        "yellow": 4,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 2,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M30",
+      "type": "交易",
+      "input": {
+        "yellow": 5,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 2
+      },
+      "upgrade_steps": 0,
+      "value_delta": 3,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M31",
+      "type": "交易",
+      "input": {
+        "yellow": 0,
+        "green": 3,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 1,
+        "green": 0,
+        "blue": 1,
+        "pink": 1
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M32",
+      "type": "交易",
+      "input": {
+        "yellow": 3,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 1,
+        "blue": 1,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 2,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M33",
+      "type": "交易",
+      "input": {
+        "yellow": 3,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 1
+      },
+      "upgrade_steps": 0,
+      "value_delta": 1,
+      "max_trades_10_crystals": 3
+    },
+    {
+      "id": "M34",
+      "type": "交易",
+      "input": {
+        "yellow": 4,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 1,
+        "pink": 1
+      },
+      "upgrade_steps": 0,
+      "value_delta": 3,
+      "max_trades_10_crystals": 2
+    },
+    {
+      "id": "M35",
+      "type": "创造",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 4,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 4,
+      "max_trades_10_crystals": null
+    },
+    {
+      "id": "M36",
+      "type": "创造",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 1
+      },
+      "upgrade_steps": 0,
+      "value_delta": 4,
+      "max_trades_10_crystals": null
+    },
+    {
+      "id": "M37",
+      "type": "创造",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 1,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 3,
+      "max_trades_10_crystals": null
+    },
+    {
+      "id": "M38",
+      "type": "创造",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 2,
+        "green": 1,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 4,
+      "max_trades_10_crystals": null
+    },
+    {
+      "id": "M39",
+      "type": "创造",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 3,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 3,
+      "max_trades_10_crystals": null
+    },
+    {
+      "id": "M40",
+      "type": "创造",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 1,
+        "green": 1,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 3,
+      "max_trades_10_crystals": null
+    },
+    {
+      "id": "M41",
+      "type": "创造",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 1,
+        "green": 0,
+        "blue": 1,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 4,
+      "max_trades_10_crystals": null
+    },
+    {
+      "id": "M42",
+      "type": "创造",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 0,
+      "value_delta": 4,
+      "max_trades_10_crystals": null
+    },
+    {
+      "id": "M43",
+      "type": "升级",
+      "input": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "output": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 0
+      },
+      "upgrade_steps": 3,
+      "value_delta": 3,
+      "max_trades_10_crystals": null
+    }
+  ],
+  "golems": [
+    {
+      "id": "G01",
+      "need": {
+        "yellow": 2,
+        "green": 1,
+        "blue": 0,
+        "pink": 1
+      },
+      "points": 9
+    },
+    {
+      "id": "G02",
+      "need": {
+        "yellow": 0,
+        "green": 3,
+        "blue": 0,
+        "pink": 2
+      },
+      "points": 14
+    },
+    {
+      "id": "G03",
+      "need": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 5
+      },
+      "points": 20
+    },
+    {
+      "id": "G04",
+      "need": {
+        "yellow": 1,
+        "green": 1,
+        "blue": 1,
+        "pink": 3
+      },
+      "points": 20
+    },
+    {
+      "id": "G05",
+      "need": {
+        "yellow": 1,
+        "green": 1,
+        "blue": 1,
+        "pink": 1
+      },
+      "points": 12
+    },
+    {
+      "id": "G06",
+      "need": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 2,
+        "pink": 2
+      },
+      "points": 14
+    },
+    {
+      "id": "G07",
+      "need": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 2,
+        "pink": 0
+      },
+      "points": 10
+    },
+    {
+      "id": "G08",
+      "need": {
+        "yellow": 2,
+        "green": 2,
+        "blue": 0,
+        "pink": 0
+      },
+      "points": 6
+    },
+    {
+      "id": "G09",
+      "need": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 2,
+        "pink": 3
+      },
+      "points": 18
+    },
+    {
+      "id": "G10",
+      "need": {
+        "yellow": 2,
+        "green": 2,
+        "blue": 0,
+        "pink": 2
+      },
+      "points": 15
+    },
+    {
+      "id": "G11",
+      "need": {
+        "yellow": 1,
+        "green": 3,
+        "blue": 1,
+        "pink": 1
+      },
+      "points": 16
+    },
+    {
+      "id": "G12",
+      "need": {
+        "yellow": 1,
+        "green": 0,
+        "blue": 2,
+        "pink": 1
+      },
+      "points": 12
+    },
+    {
+      "id": "G13",
+      "need": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 3,
+        "pink": 0
+      },
+      "points": 13
+    },
+    {
+      "id": "G14",
+      "need": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 4,
+        "pink": 0
+      },
+      "points": 12
+    },
+    {
+      "id": "G15",
+      "need": {
+        "yellow": 2,
+        "green": 0,
+        "blue": 0,
+        "pink": 3
+      },
+      "points": 14
+    },
+    {
+      "id": "G16",
+      "need": {
+        "yellow": 3,
+        "green": 1,
+        "blue": 1,
+        "pink": 1
+      },
+      "points": 14
+    },
+    {
+      "id": "G17",
+      "need": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 5,
+        "pink": 0
+      },
+      "points": 15
+    },
+    {
+      "id": "G18",
+      "need": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 0,
+        "pink": 4
+      },
+      "points": 16
+    },
+    {
+      "id": "G19",
+      "need": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 0,
+        "pink": 3
+      },
+      "points": 16
+    },
+    {
+      "id": "G20",
+      "need": {
+        "yellow": 3,
+        "green": 0,
+        "blue": 2,
+        "pink": 0
+      },
+      "points": 9
+    },
+    {
+      "id": "G21",
+      "need": {
+        "yellow": 2,
+        "green": 2,
+        "blue": 2,
+        "pink": 0
+      },
+      "points": 13
+    },
+    {
+      "id": "G22",
+      "need": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 0,
+        "pink": 2
+      },
+      "points": 12
+    },
+    {
+      "id": "G23",
+      "need": {
+        "yellow": 0,
+        "green": 5,
+        "blue": 0,
+        "pink": 0
+      },
+      "points": 10
+    },
+    {
+      "id": "G24",
+      "need": {
+        "yellow": 2,
+        "green": 0,
+        "blue": 2,
+        "pink": 0
+      },
+      "points": 8
+    },
+    {
+      "id": "G25",
+      "need": {
+        "yellow": 0,
+        "green": 0,
+        "blue": 3,
+        "pink": 2
+      },
+      "points": 17
+    },
+    {
+      "id": "G26",
+      "need": {
+        "yellow": 0,
+        "green": 4,
+        "blue": 0,
+        "pink": 0
+      },
+      "points": 8
+    },
+    {
+      "id": "G27",
+      "need": {
+        "yellow": 0,
+        "green": 3,
+        "blue": 2,
+        "pink": 0
+      },
+      "points": 12
+    },
+    {
+      "id": "G28",
+      "need": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 1,
+        "pink": 1
+      },
+      "points": 12
+    },
+    {
+      "id": "G29",
+      "need": {
+        "yellow": 2,
+        "green": 3,
+        "blue": 0,
+        "pink": 0
+      },
+      "points": 8
+    },
+    {
+      "id": "G30",
+      "need": {
+        "yellow": 2,
+        "green": 0,
+        "blue": 0,
+        "pink": 2
+      },
+      "points": 10
+    },
+    {
+      "id": "G31",
+      "need": {
+        "yellow": 2,
+        "green": 0,
+        "blue": 2,
+        "pink": 2
+      },
+      "points": 17
+    },
+    {
+      "id": "G32",
+      "need": {
+        "yellow": 1,
+        "green": 1,
+        "blue": 3,
+        "pink": 1
+      },
+      "points": 18
+    },
+    {
+      "id": "G33",
+      "need": {
+        "yellow": 0,
+        "green": 2,
+        "blue": 2,
+        "pink": 2
+      },
+      "points": 19
+    },
+    {
+      "id": "G34",
+      "need": {
+        "yellow": 3,
+        "green": 2,
+        "blue": 0,
+        "pink": 0
+      },
+      "points": 7
+    },
+    {
+      "id": "G35",
+      "need": {
+        "yellow": 3,
+        "green": 0,
+        "blue": 0,
+        "pink": 2
+      },
+      "points": 11
+    },
+    {
+      "id": "G36",
+      "need": {
+        "yellow": 2,
+        "green": 0,
+        "blue": 3,
+        "pink": 0
+      },
+      "points": 11
+    }
+  ]
+}
