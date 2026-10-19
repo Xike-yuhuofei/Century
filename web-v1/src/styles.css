@@ -83,3 +83,67 @@
 @media (max-width:2300px) { .duel-table { grid-template-columns:minmax(300px,1fr) minmax(620px,1.48fr) minmax(300px,1fr); gap:12px; } .duel-card-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .duel-center .merchant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .duel-center .golem-card { min-height:225px; } .duel-center { gap:14px; } }
 @media (max-width:1550px) { .duel-table { height:auto; min-height:0; grid-template-columns:1fr 1.3fr; } .duel-center { grid-column:2; grid-row:1 / span 2; } .duel-player { min-height:500px; } .duel-table>.duel-player:last-child { grid-column:1; grid-row:2; } .duel-hand,.duel-played { flex:auto; } .duel-card-grid { max-height:370px; grid-template-columns:repeat(3,minmax(0,1fr)); } .duel-center .merchant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
 @media (max-width:900px) { .layout.duel-layout { padding:8px 12px 26px; } .duel-table { display:flex; flex-direction:column; } .duel-player,.duel-center { overflow:visible; } .duel-player { min-height:0; } .duel-card-grid { max-height:330px; } .duel-center { order:0; } .duel-table>.duel-player:first-child { order:1; } .duel-table>.duel-player:last-child { order:2; } .duel-now { margin-left:auto; font-size:11px; padding:6px; } .duel-center .golem-grid { overflow-x:auto; grid-template-columns:repeat(5,170px); } .duel-center .merchant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+/* V1.2：离线 AI 席位与 UWQHD 人机竞技桌布。 */
+.setup-players{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.setup-players label{display:block;margin:12px 0 8px}
+.setup-players select{width:100%}
+.ai-seat-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:16px 0 9px;font-size:13px;color:#efd49a}
+.ai-seat-heading span{font-size:11px;color:#a6b9ba}
+.ai-seat-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.ai-slot{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 3px;border:1px dashed #4b6268;border-radius:8px;background:#102633;color:#81979d}
+.ai-slot b{font-size:12px}.ai-slot span{font-size:10px}
+.ai-slot.selected{border:1px solid #e0bd87;background:#3a322b;color:#f3d6a9}
+.setup-validation{font-size:12px;color:#a2caba}.setup-validation.invalid{color:#f2a28e}
+.ai-pause{white-space:nowrap;border-color:#b7965f}
+.ai-board-layout .ai-arena{display:grid;grid-template-columns:minmax(520px,1fr) minmax(900px,1.7fr) minmax(760px,1.45fr);gap:clamp(12px,.8vw,24px);height:calc(100dvh - 104px);min-height:780px}
+.ai-arena>.duel-player,.ai-arena>.duel-center{min-height:0}
+.ai-arena .duel-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ai-arena .duel-center .merchant-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.ai-arena .duel-center .merchant-card{padding:8px}
+.ai-arena .duel-center .golem-grid{gap:8px}
+.ai-arena .duel-center .golem-card{min-height:clamp(205px,23vh,310px)}
+.ai-seat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:12px;min-height:0}
+.ai-seat{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;border:1px solid #36515d;border-radius:12px;background:linear-gradient(145deg,#192f3b,#0a202c);padding:12px;gap:8px}
+.ai-seat-active{border-color:#e6ba76;box-shadow:inset 0 0 0 1px #ac875b}
+.ai-seat-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #39545c;padding-bottom:9px}
+.ai-seat-top>div:first-child{display:grid;gap:3px}
+.ai-seat-tag{font-size:10px;color:#d9b774;letter-spacing:.1em}
+.ai-seat-top b{font-size:16px}.ai-seat-top small{font-size:10px;color:#9bb0b5}
+.ai-seat-score{display:flex;flex-direction:column;color:#e6c48b;font:28px Georgia,serif}
+.ai-seat-score small{font:10px sans-serif;text-align:right}
+.ai-seat-stock{display:flex;flex-direction:column;gap:5px;border:1px solid #324c59;border-radius:8px;padding:7px;min-height:50px}
+.ai-seat-stock>span{font-size:11px;color:#b1c9c5}
+.ai-seat-stock>div{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ai-seat-stock .gem{width:12px;height:12px;margin:0}
+.ai-seat-stock .stone-gems{gap:3px}
+.ai-seat-zone{min-height:0;flex:1 1 0;display:flex;flex-direction:column;gap:6px}
+.ai-seat-zone>span{font-size:11px;font-weight:800}
+.ai-face-row{min-height:0;overflow-y:auto;scrollbar-width:thin;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:100px;align-content:start;gap:5px}
+.ai-face-row .merchant-card{min-height:0;min-width:0;padding:5px;border-radius:6px}
+.ai-face-row .card-head{font-size:9px}
+.ai-face-row .card-head small{font-size:8px}
+.ai-face-row .merchant-effect{min-height:0;gap:2px;margin:auto 0}
+.ai-face-row .effect-label,.ai-face-row .card-foot{display:none}
+.ai-face-row .effect-large{font-size:18px}
+.ai-face-row .trade-arrow{font-size:11px;line-height:1}
+.ai-face-row .stone-gems{gap:1px}
+.ai-face-row .stone-line{gap:2px}
+.ai-face-row .gem{width:9px;height:9px;margin:0}
+.ai-empty{padding:12px;border:1px dashed #3d5863;color:#8ba7ab;border-radius:6px;font-size:11px;grid-column:1/-1}
+.ai-seat-foot{border-top:1px solid #36525c;padding-top:8px;font-size:10px;color:#a9bcbf}
+@media(max-width:2400px){
+ .ai-board-layout .ai-arena{grid-template-columns:minmax(330px,1fr) minmax(650px,1.6fr) minmax(480px,1.3fr)}
+ .ai-arena .duel-center .merchant-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .ai-arena .duel-card-grid,.ai-face-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:1450px){
+ .ai-board-layout .ai-arena{display:flex;flex-direction:column;height:auto}
+ .ai-arena>.duel-player{min-height:510px;order:1}
+ .ai-arena>.duel-center{order:0}
+ .ai-arena>.ai-seat-grid{order:2}
+ .ai-seat-grid{grid-template-rows:none;grid-auto-rows:minmax(360px,auto)}
+ .ai-seat{min-height:360px}
+}
+@media(max-width:720px){.ai-seat-grid{gap:7px}.ai-seat{padding:6px}.ai-seat-picker{gap:3px}.ai-slot{padding:9px 2px}.ai-seat-score{font-size:20px}}
+@media(max-width:430px){.ai-seat-grid{grid-template-columns:1fr}.ai-seat{max-height:420px}}
