@@ -28,6 +28,11 @@ try {
 let dragging:{player:number; id:string} | null = null;
 let suppressPlayUntil = 0;
 const mobileMedia = window.matchMedia('(max-width: 980px)');
+const dedicatedMobilePage = document.documentElement.dataset.centuryMode === 'mobile';
+function usesMobileLayout() { return dedicatedMobilePage || mobileMedia.matches; }
+function pageVersionLink() { return dedicatedMobilePage
+  ? '<a class="page-version-link" href="../">电脑版</a>'
+  : '<a class="page-version-link" href="./mobile/">手机版</a>'; }
 let mobileTab: 'golems' | 'merchants' | 'opponents' = 'golems';
 let mobileHandExpanded = false;
 let mobilePlayedOpen = false;
@@ -56,7 +61,7 @@ function reorderHand(player:number, id:string, direction?:-1|1, targetId?:string
 }
 function handTile(p:Game['players'][number],id:string,active:boolean,index:number,ordered:string[]):string {
   if(p.isAI) return merchantCard(id,undefined,undefined,'inactive');
-  return `<div class="hand-tile" draggable="${mobileMedia.matches ? 'false' : 'true'}" data-drag-player="${p.id}" data-card-id="${id}" aria-label="${esc(merchantDescription(MERCHANT_BY_ID[id]))}，可拖动排序">
+  return `<div class="hand-tile" draggable="${usesMobileLayout() ? 'false' : 'true'}" data-drag-player="${p.id}" data-card-id="${id}" aria-label="${esc(merchantDescription(MERCHANT_BY_ID[id]))}，可拖动排序">
     <div class="tile-grip" aria-hidden="true">⠿</div>
     ${merchantCard(id,undefined,undefined,active?'hand':'inactive')}
     <div class="tile-move"><button type="button" aria-label="将 ${id} 向前移动" title="向前移动" data-action="move-card" data-player="${p.id}" data-id="${id}" data-direction="-1" ${index===0?'disabled':''}>‹</button><span>拖动排序</span><button type="button" aria-label="将 ${id} 向后移动" title="向后移动" data-action="move-card" data-player="${p.id}" data-id="${id}" data-direction="1" ${index===ordered.length-1?'disabled':''}>›</button></div>
@@ -125,7 +130,7 @@ function merchantCard(id: string, marketIndex?: number, bonus?: Stock, view: 'ha
 }
 function renderSetup(): string {
   const botOptions=Array.from({length:5},(_,n)=>`<option value="${n}" ${n===1?'selected':''}>${n} 名</option>`).join('');
-  return `<main class="layout landing focus-landing"><header class="topbar focus-setup-top"><strong>晶石回廊</strong><small>V1.5 · 极简桌面版</small></header>
+  return `<main class="layout landing focus-landing"><header class="topbar focus-setup-top"><strong>晶石回廊</strong>${pageVersionLink()}</header>
   <section class="focus-setup-panel"><h1>开始对局</h1><p>两名真人固定左右两侧 · 最多 4 名 AI</p>
     <div class="setup-players"><div><label for="humanCount">真人</label><select id="humanCount">${Array.from({length:5},(_,n)=>`<option value="${n+1}" ${n===1?'selected':''}>${n+1} 名</option>`).join('')}</select></div><div><label for="botCount">AI</label><select id="botCount">${botOptions}</select></div></div>
     <label for="nameInputs">玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1" /><input maxlength="20" aria-label="玩家 2" value="玩家 2" /></div>
@@ -216,7 +221,7 @@ function renderAIInspector(g:Game):string {
 }
 function minimalTopbar(g:Game):string {
   const finished = g.phase==='finished';
-  return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact?'▦':'▣'}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
+  return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${pageVersionLink()}${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact?'▦':'▣'}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
 }
 function logPopover(g:Game):string {
   return showLog?`<aside class="focus-log-popover" aria-label="行动记录"><div class="log-pop-head"><strong>行动记录</strong><button data-action="toggle-log" aria-label="关闭行动记录">✕</button></div>${g.log.slice(0,10).map(t=>`<p>${esc(t)}</p>`).join('')}</aside>`:'';
@@ -271,7 +276,7 @@ function renderSoloAIBoard(g:Game):string {
   const bots = g.players.filter(p=>p.isAI);
   const finished = g.phase==='finished';
   const target = g.players.length>=4 ? 5 : 6;
-  return `<main class="layout duel-layout ai-board-layout ${viewState.compact?'compact-cards':'normal-cards'}"><header class="topbar duel-topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR · AI ARENA</span></div><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 · ${esc(g.players[g.current].name)} 行动中`}</div><div class="top-actions">${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+  return `<main class="layout duel-layout ai-board-layout ${viewState.compact?'compact-cards':'normal-cards'}"><header class="topbar duel-topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR · AI ARENA</span></div><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 · ${esc(g.players[g.current].name)} 行动中`}</div><div class="top-actions">${pageVersionLink()}${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
     ${g.triggerPlayer!==null&&!finished?'<div class="final-alert">终局已触发，本轮结束后结算</div>':''}
     <div class="ai-arena">
       ${renderDuelPlayer(g,human.id)}
@@ -317,7 +322,7 @@ function renderMobileBoard(g: Game): string {
     '<header class="mobile-topbar"><span class="mobile-brand">晶石回廊</span>'+
     '<span class="mobile-turn">'+(finished?'对局结束':'第 '+g.turnNumber+' 手')+'</span>'+
     '<details class="mobile-more"><summary aria-label="更多设置与规则" title="更多">•••</summary>'+
-    '<div class="mobile-more-menu">'+aiPauseControl(g)+
+    '<div class="mobile-more-menu">'+pageVersionLink()+aiPauseControl(g)+
     '<button type="button" data-action="card-size">'+(viewState.compact?'放大卡牌':'缩小卡牌')+'</button>'+
     '<button type="button" data-action="toggle-log">行动记录</button>'+
     '<button type="button" data-action="help">游戏规则</button>'+
@@ -350,14 +355,14 @@ function renderMobileBoard(g: Game): string {
 }
 
 function renderBoard(g: Game): string {
-  if (mobileMedia.matches) return renderMobileBoard(g);
+  if (usesMobileLayout()) return renderMobileBoard(g);
   if (g.players.filter(p=>!p.isAI).length === 2 && g.players.length > 2 && g.players.some(p=>p.isAI)) return renderHumanAIBoard(g);
   if (g.players.length === 2) return renderDuelBoard(g);
   if (g.players.filter(p=>!p.isAI).length === 1 && g.players.some(p=>p.isAI)) return renderSoloAIBoard(g);
   const p = g.players[g.current];
   const target = g.players.length >= 4 ? 5 : 6;
   const finished = g.phase === 'finished';
-  return `<main class="layout board-layout ${viewState.compact?'compact-cards':'normal-cards'}"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span>${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+  return `<main class="layout board-layout ${viewState.compact?'compact-cards':'normal-cards'}"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span>${pageVersionLink()}${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
   <section class="players-strip">${g.players.map((x, i) => playerCard(x, i === g.current && !finished)).join('')}</section>
   ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发！本轮完成后结算。</div>' : ''}
   <section class="game-section"><div class="section-head"><div><span class="section-index">01 / THE GOLEMS</span><h2>魔像市场 <small>认领目标</small></h2></div><div class="section-meta">牌库剩余 ${g.golemDeck.length} 张 · 每人认领 ${target} 张触发终局</div></div>
@@ -580,5 +585,5 @@ root.addEventListener('change', e => {
   if (element.id !== 'humanCount' && element.id !== 'botCount') return;
   syncSetup();
 });
-mobileMedia.addEventListener('change', () => { mobileTab='golems'; mobileHandExpanded=false; mobilePlayedOpen=false; render(); });
+mobileMedia.addEventListener('change', () => { if (!dedicatedMobilePage) { mobileTab='golems'; mobileHandExpanded=false; mobilePlayedOpen=false; render(); } });
 render();
