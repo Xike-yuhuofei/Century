@@ -155,6 +155,50 @@
 }
 @media(max-width:720px){.ai-seat-grid{gap:7px}.ai-seat{padding:6px}.ai-seat-picker{gap:3px}.ai-slot{padding:9px 2px}.ai-seat-score{font-size:20px}}
 @media(max-width:430px){.ai-seat-grid{grid-template-columns:1fr}.ai-seat{max-height:420px}}
+
+
+/* V1.3 five-player live table: real engine-backed dual-human layout. */
+html:has(.five-root),body:has(.five-root){height:100%;overflow:hidden}
+.five-root{height:100dvh;width:100%;overflow:hidden;padding:8px clamp(9px,.7vw,24px) 12px;background:radial-gradient(ellipse at 50% 0%,#243b47 0%,#09131d 65%);display:flex;flex-direction:column;gap:9px;font-size:13px}
+.five-root .five-topbar{height:58px;min-height:58px;display:flex;align-items:center;gap:15px;padding:0 7px 9px;border-bottom:1px solid #2f4958}
+.five-brand{display:flex;align-items:center;gap:9px;min-width:220px}.five-brand-gem{font:35px Georgia,serif;color:#e9cf99}.five-brand b{display:block;letter-spacing:2px;font-size:19px}.five-brand small{display:block;letter-spacing:2.5px;font-size:9px;color:#9aabb0}
+.five-turn{margin:auto;background:#2b302f;border:1px solid #736b54;padding:8px 18px;border-radius:10px;font-weight:700;color:#e9d1a2}.five-controls{display:flex;gap:8px}
+.five-final-alert{height:23px;min-height:23px;text-align:center;color:#eac992;font-size:12px}
+.five-board{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.22fr) minmax(0,1fr);gap:clamp(8px,.6vw,20px)}
+.five-player,.five-center{border:1px solid #314957;border-radius:15px;min-height:0;min-width:0;overflow:hidden;background:linear-gradient(145deg,#172633,#101e2a);box-shadow:0 8px 25px #0003}
+.five-player{display:flex;flex-direction:column;padding:14px;gap:12px}.five-player.five-active{border-color:#d0af78;box-shadow:inset 0 0 0 1px #836f51}
+.five-player-top{display:flex;align-items:center;justify-content:space-between;min-height:62px;border-bottom:1px solid #324554;padding-bottom:12px}
+.five-player-profile{display:flex;align-items:center;gap:10px;min-width:0}.five-num{border:1px solid #aa936a;color:#e8cd97;width:37px;height:37px;display:grid;place-items:center;border-radius:50%;font-size:17px}
+.five-player-profile strong{display:block;font-size:19px;max-width:26ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.five-player-profile small{display:block;color:#a6b5b8;font-size:11px;margin-top:5px}.five-active .five-player-profile small{color:#e5c88c}
+.five-player-points{text-align:right;color:#ebd3a4;flex:none}.five-player-points strong{font:700 29px Georgia,serif}.five-player-points small{display:block;font-size:10px;color:#a7b8bb}
+.five-rowhead{display:flex;align-items:center;justify-content:space-between;gap:7px;min-height:25px}.five-rowhead b{font-size:13px;font-weight:700;white-space:nowrap}.five-rowhead em{font-style:normal;color:#dfc18a;margin-left:5px}.five-rowhead>span{color:#91a5af;font-size:10px;white-space:nowrap}
+.five-stock{min-height:89px}.five-stones{display:flex;flex-wrap:wrap;gap:9px;align-items:center;min-height:58px;border:1px solid #243f4f;background:#0c1c29;padding:12px;border-radius:8px}.five-stones .gem{width:18px;height:18px}
+.five-cards-zone{display:flex;flex-direction:column;min-height:0}.five-hand-zone{flex:1 1 58%;}.five-played-zone{flex:0 1 26%;border-top:1px solid #344958;padding-top:8px;min-height:57px}.five-played-zone.five-folded{flex:0 0 34px}
+.five-hand-cards,.five-played-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:159px;gap:7px;overflow-y:auto;overflow-x:hidden;min-height:0;align-content:start;padding:3px;scrollbar-width:thin}
+.five-hand-cards{flex:1}.five-played-cards{flex:1;grid-auto-rows:118px}.five-folded .five-played-cards{display:none}
+.five-hand-cards .merchant-card,.five-played-cards .merchant-card{min-height:0;height:100%;padding:7px;overflow:hidden;border-radius:7px;box-shadow:0 2px 7px #0003}
+.five-hand-cards .card-head,.five-played-cards .card-head{font-size:11px}.five-hand-cards .card-head small,.five-played-cards .card-head small{font-size:9px}.five-hand-cards .merchant-effect,.five-played-cards .merchant-effect{min-height:0;gap:2px}
+.five-hand-cards .merchant-card .gem,.five-played-cards .merchant-card .gem{width:11px;height:11px;margin:0}.five-hand-cards .stone-gems,.five-played-cards .stone-gems{gap:2px}.five-hand-cards .stone-line,.five-played-cards .stone-line{gap:3px}.five-hand-cards .card-foot,.five-played-cards .card-foot{font-size:9px;padding-top:4px}.five-hand-cards .card-foot>span{display:none}
+.five-hand-cards .merchant-card.five-pinned{outline:2px solid #eac785;outline-offset:-2px}.five-hand-cards .merchant-card.five-pinned:after{content:'◆';position:absolute;right:7px;bottom:18px;font-size:9px;color:#d7b875}
+.five-tiny-buttons{display:flex;gap:4px}.five-tiny-buttons button,.five-fold{background:transparent;border:1px solid #344e5d;color:#aec0c7;padding:5px 7px;font-size:10px;border-radius:6px}.five-tiny-buttons .selected{background:#34444a;border-color:#a18b66;color:#f0d6a3}
+.five-player-foot{min-height:83px;border-top:1px solid #344958;padding-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}.five-player-foot>div{min-width:0;display:flex;flex-direction:column;gap:8px}.five-player-foot strong{font-size:12px}.five-player-foot span{font-size:11px;color:#a8bdc2;display:block;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.five-player-foot small{color:#b4c0bd}
+.five-rest{background:#283f48;color:#edd5a7;border:1px solid #7a7257;border-radius:8px;padding:12px 10px;font-weight:650;font-size:11px;white-space:nowrap}
+.five-center{display:flex;flex-direction:column;gap:9px;padding:12px}
+.five-ai-strip{flex:0 0 132px;min-height:0}.five-ai-cards{height:103px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.five-ai-item{border:1px solid #38505d;border-radius:9px;padding:9px;background:#142532;min-width:0;overflow:hidden}.five-ai-current{border-color:#cfaf71;background:#27343a}.five-ai-empty{display:grid;place-items:center;color:#637785;border-style:dashed}
+.five-ai-top{display:flex;align-items:center;justify-content:space-between;gap:4px}.five-ai-top b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}.five-ai-top strong{white-space:nowrap;font:700 20px Georgia,serif;color:#ecd39b}.five-ai-top small{font:10px system-ui}.five-ai-stones{height:30px;display:flex;align-items:center;gap:4px;overflow:hidden}.five-ai-stones .gem{width:10px;height:10px;margin:0}.five-ai-stones .stone-gems{gap:3px}.five-ai-meta,.five-ai-log{font-size:10px;color:#a9bbc0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.five-ai-log{margin-top:4px;color:#7896a2}
+.five-market{display:flex;flex-direction:column;min-height:0}.five-golem-market{flex:1.08 1 0}.five-merchant-market{flex:.95 1 0}
+.five-golem-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;padding:2px 0}.five-golem-grid .golem-card{min-height:0;height:100%;padding:10px 8px 8px;border-radius:9px}.five-golem-grid .golem-emblem{min-height:0;flex:1}.five-golem-grid .emblem-inner{width:58px;height:58px;font-size:56px}.five-golem-grid .golem-points strong{font-size:28px}.five-golem-grid .gem{width:12px;height:12px;margin:0}.five-golem-grid .stone-gems{gap:4px}.five-golem-grid .golem-cost{gap:4px}
+.five-merchant-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:2px 0}.five-merchant-grid .merchant-card{min-height:0;height:100%;padding:7px;border-radius:8px}.five-merchant-grid .card-head{font-size:11px}.five-merchant-grid .merchant-effect{min-height:0;gap:4px}.five-merchant-grid .merchant-card .gem{width:12px;height:12px;margin:0}.five-merchant-grid .stone-gems{gap:2px}.five-merchant-grid .card-foot{font-size:9px}.five-merchant-grid .market-bonus{padding:3px;font-size:9px}
+.five-workbench{flex:0 0 198px;min-height:0;border:1px solid #425869;border-radius:11px;background:linear-gradient(120deg,#192c38,#122431);padding:11px 16px;overflow-y:auto;scrollbar-width:thin}
+.five-work-default{height:100%;display:flex;flex-direction:column;justify-content:center;gap:12px}.five-work-default strong{font-size:18px;color:#ead4a9}.five-work-default span{font-size:12px;color:#b6c7cc}.five-work-default small{font-size:11px;color:#859eaa}
+.five-inline-modal{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.five-inline-modal h2{font-size:17px;color:#f1d69f;margin:0 9px 0 0}.five-inline-modal p{font-size:11px;margin:2px 5px;color:#c3d3d4}.five-inline-modal .modal-progress{margin:5px}.five-inline-modal .modal-stock{min-height:30px;padding:5px 8px}.five-inline-modal .choice-row{gap:5px}.five-inline-modal .choice-btn{padding:5px 9px;font-size:11px}.five-inline-modal .stepper{padding:4px 10px;margin:0;gap:12px}.five-inline-modal .stepper button{width:30px;height:30px}.five-inline-modal .stepper strong{font-size:18px}.five-inline-modal .preview{padding:5px 9px;margin:0}.five-inline-modal .preview>div{margin-top:3px}.five-inline-modal .modal-actions{margin:4px 0;gap:8px}.five-inline-modal .primary-btn,.five-inline-modal .secondary-btn{padding:8px 12px}.five-inline-modal .selected{margin:4px 0}.five-inline-modal .gem{width:11px;height:11px}.five-inline-modal .stone-gems{gap:2px}
+.five-log{flex:0 0 20px;font-size:11px;color:#7d99a5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.five-root .merchant-card:focus-visible,.five-root .golem-card:focus-visible{outline:2px solid #f1d19c;outline-offset:2px}
+@media(min-width:2850px) and (min-height:1250px){.five-hand-cards{grid-auto-rows:195px}.five-played-cards{grid-auto-rows:142px}.five-ai-strip{flex-basis:148px}.five-ai-cards{height:119px}.five-workbench{flex-basis:220px}.five-golem-grid .emblem-inner{width:80px;height:80px;font-size:75px}.five-golem-grid .golem-points strong{font-size:34px}.five-golem-grid .gem{width:16px;height:16px}.five-merchant-grid .merchant-card .gem{width:16px;height:16px}}
+@media(max-width:2450px){.five-root .five-board{gap:8px}.five-player{padding:9px}.five-center{padding:9px}.five-hand-cards,.five-played-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.five-root .merchant-card .gem{width:10px;height:10px}.five-player-profile strong{font-size:15px}.five-merchant-grid{gap:4px}.five-golem-grid{gap:4px}.five-workbench{flex-basis:170px}}
+@media(max-width:1580px){.five-root{font-size:11px}.five-ai-strip{flex-basis:105px}.five-ai-cards{height:80px}.five-workbench{flex-basis:156px}.five-hand-cards,.five-played-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.five-topbar{height:48px!important;min-height:48px!important}.five-golem-grid .golem-card{padding:4px}.five-golem-grid .golem-top{font-size:9px}.five-merchant-grid{grid-template-columns:repeat(3,minmax(0,1fr));overflow:auto;grid-auto-rows:120px}.five-merchant-grid .merchant-card{height:120px}.five-market .five-rowhead>span{display:none}}
+
 </style>
 </head>
 <body><div id="app"></div><script>
@@ -602,20 +646,20 @@ function merchantCard(id, marketIndex, bonus, view = 'hand') {
 }
 function renderSetup() {
     return `<main class="layout landing"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><span class="edition">V1.2 · AI 对战</span></header>
-    <div class="landing-split"><section class="welcome-copy"><div class="eyebrow">桌游数字化 · AI 实战训练</div><h1>与四位晶石工匠，<br>角逐最佳引擎。</h1><p>1–5 名人类与 0–4 名 AI 自由组合，总人数 2–5 人。AI 自动行动，无需联网。</p><div class="feature-row"><span>◇ 4 个 AI 席位</span><span>◇ 自动行动</span><span>◇ 离线可玩</span></div></section>
-    <section class="setup-box"><div class="eyebrow">NEW GAME</div><h2>创建对局</h2><p class="hint">默认 1 名人类 + 1 名 AI。单人对战多名 AI 时将在超宽屏上显示全部对手席位。</p>
-    <div class="setup-players"><div><label for="humanCount">人类玩家</label><select id="humanCount">${Array.from({ length: 5 }, (_, i) => `<option value="${i + 1}">${i + 1} 名</option>`).join('')}</select></div>
-    <div><label for="botCount">AI 玩家</label><select id="botCount">${Array.from({ length: 5 }, (_, i) => `<option value="${i}" ${i === 1 ? 'selected' : ''}>${i} 名</option>`).join('')}</select></div></div>
-    <label>人类玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1"/></div>
-    <div class="ai-seat-heading"><b>AI 玩家席位</b><span>最多 4 位</span></div><div class="ai-seat-picker">${Array.from({ length: 4 }, (_, i) => `<div data-ai-slot="${i}" class="ai-slot ${i === 0 ? 'selected' : ''}"><b>✧ AI ${i + 1}</b><span>${i === 0 ? '已加入' : '空席'}</span></div>`).join('')}</div>
-    <p id="setupValidation" class="setup-validation">合计 2 名参赛者</p>
+    <div class="landing-split"><section class="welcome-copy"><div class="eyebrow">桌游数字化 · AI 实战训练</div><h1>与晶石工匠，<br>角逐最佳引擎。</h1><p>固定双真人，支持 0–3 名 AI；3440 × 1440 超宽屏同屏操作。</p><div class="feature-row"><span>◇ 3 个 AI 席位</span><span>◇ 自动行动</span><span>◇ 离线可玩</span></div></section>
+    <section class="setup-box"><div class="eyebrow">NEW GAME</div><h2>创建对局</h2><p class="hint">两名真人分别使用左右侧完整操作区，最多添加三名 AI。</p>
+    <div class="setup-players"><div><label for="humanCount">人类玩家</label><select id="humanCount"><option value="2">2 名</option></select></div>
+    <div><label for="botCount">AI 玩家</label><select id="botCount">${Array.from({ length: 4 }, (_, i) => `<option value="${i}" ${i === 3 ? 'selected' : ''}>${i} 名</option>`).join('')}</select></div></div>
+    <label>人类玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1"/><input maxlength="20" aria-label="玩家 2" value="玩家 2"/></div>
+    <div class="ai-seat-heading"><b>AI 玩家席位</b><span>最多 3 位</span></div><div class="ai-seat-picker">${Array.from({ length: 3 }, (_, i) => `<div data-ai-slot="${i}" class="ai-slot selected"><b>✧ AI ${i + 1}</b><span>已加入</span></div>`).join('')}</div>
+    <p id="setupValidation" class="setup-validation">合计 5 名参赛者</p>
     <button class="primary-btn big" data-action="start">开始对局 <span>↗</span></button><p class="small-muted">独立学习原型，不使用原版插画。</p></section></div>
     <footer class="footer"><a href="https://github.com/Xike-yuhuofei/Century" target="_blank" rel="noopener">项目仓库</a></footer></main>`;
 }
 function syncSetup() {
     if (game)
         return;
-    const humans = Number(root.querySelector('#humanCount')?.value || 1);
+    const humans = 2;
     const bots = Number(root.querySelector('#botCount')?.value || 0);
     const container = root.querySelector('#nameInputs');
     if (!container)
@@ -629,7 +673,7 @@ function syncSetup() {
         if (state)
             state.textContent = selected ? '已加入' : '空席';
     }
-    const valid = humans + bots >= 2 && humans + bots <= 5;
+    const valid = bots >= 0 && bots <= 3;
     const status = root.querySelector('#setupValidation');
     if (status) {
         status.textContent = valid ? `合计 ${humans + bots} 名参赛者` : '总人数须为 2–5 人';
@@ -728,7 +772,91 @@ function renderSoloAIBoard(g) {
       <aside class="ai-seat-grid">${bots.map(p => renderAISeat(g, p)).join('')}</aside>
     </div>${finished ? renderResult(g) : ''}</main>`;
 }
+// Visual-only preferences; game engine owns card ownership, availability and turns.
+let fiveOrders = { 0: [], 1: [] };
+let fiveSorting = { 0: 'manual', 1: 'manual' };
+let fivePinned = { 0: [], 1: [] };
+let fiveFold = { 0: false, 1: false };
+let fiveDrag = null;
+function fiveHandOrder(p, side) {
+    const ids = p.hand;
+    const previous = fiveOrders[side].filter(id => ids.includes(id));
+    const ordered = [...previous, ...ids.filter(id => !previous.includes(id))];
+    fiveOrders[side] = ordered;
+    if (fiveSorting[side] === 'type') {
+        const level = { create: 0, upgrade: 1, trade: 2 };
+        return [...ordered].sort((x, y) => level[MERCHANT_BY_ID[x].kind] - level[MERCHANT_BY_ID[y].kind]);
+    }
+    return ordered;
+}
+function fiveHandCard(id, side, active) {
+    return merchantCard(id, undefined, undefined, active ? 'hand' : 'inactive')
+        .replace('class="merchant-card', `draggable="true" data-hand-owner="${side}" class="merchant-card ${fivePinned[side].includes(id) ? 'five-pinned' : ''}`);
+}
+function fivePlayer(g, side) {
+    const p = g.players[side], active = g.current === side && g.phase !== 'finished';
+    const hand = fiveHandOrder(p, side);
+    return `<section class="five-player ${active ? 'five-active' : ''}" aria-label="${esc(p.name)}的操作区" data-side="${side}">
+    <header class="five-player-top">
+      <div class="five-player-profile"><span class="five-num">${side + 1}</span><div><strong>${esc(p.name)}</strong><small>${active ? '● 当前行动' : '等待行动'} · 已行动 ${p.turns} 回合</small></div></div>
+      <div class="five-player-points"><strong>${score(p)}</strong><small>当前得分</small></div>
+    </header>
+    <div class="five-stock"><div class="five-rowhead"><b>商队水晶</b><span class="${count(p.stock) > 10 ? 'over-capacity' : ''}">${count(p.stock)} / 10</span></div><div class="five-stones">${stones(p.stock)}</div></div>
+    <div class="five-cards-zone five-hand-zone">
+      <div class="five-rowhead"><b>商人手牌 <em>${p.hand.length}</em></b><div class="five-tiny-buttons">
+        <button data-action="five-sort" data-side="${side}" data-mode="type" class="${fiveSorting[side] === 'type' ? 'selected' : ''}">按类型</button>
+        <button data-action="five-sort" data-side="${side}" data-mode="manual" class="${fiveSorting[side] === 'manual' ? 'selected' : ''}">自定义</button>
+      </div></div>
+      <div class="five-hand-cards" data-list-side="${side}">${hand.map(id => fiveHandCard(id, side, active)).join('') || '<div class="five-blank">手牌已打完。可执行休息或其他行动。</div>'}</div>
+    </div>
+    <div class="five-cards-zone five-played-zone ${fiveFold[side] ? 'five-folded' : ''}">
+      <div class="five-rowhead"><b>已打出 <em>${p.played.length}</em></b><button class="five-fold" data-action="five-fold" data-side="${side}">${fiveFold[side] ? '展开' : '折叠'} ${fiveFold[side] ? '▾' : '▴'}</button></div>
+      <div class="five-played-cards">${p.played.map(id => merchantCard(id, undefined, undefined, 'played')).join('') || '<div class="five-blank">尚未打出商人卡</div>'}</div>
+    </div>
+    <footer class="five-player-foot">
+      <div><div><strong>魔像 ${p.claimed.length} 张</strong><span>${p.claimed.map(id => GOLEM_BY_ID[id].points + '分').join(' · ') || '尚未认领'}</span></div><small>铜币 ${p.copper} · 银币 ${p.silver}</small></div>
+      <button class="five-rest" data-action="rest" ${!active || g.phase !== 'turn' ? 'disabled' : ''}>休息 · 回收商人卡</button>
+    </footer>
+  </section>`;
+}
+function fiveAI(g) {
+    const bots = g.players.filter(p => p.isAI);
+    return `<section class="five-ai-strip"><div class="five-rowhead"><b>AI 玩家 ${bots.length} / 3</b><span>自动行动 · 不占用真人区域</span></div><div class="five-ai-cards">${Array.from({ length: 3 }, (_, i) => {
+        const p = bots[i];
+        if (!p)
+            return '<div class="five-ai-item five-ai-empty">空席</div>';
+        const active = g.current === p.id && g.phase !== 'finished';
+        const last = g.log.find(line => line.startsWith(p.name + ' ')) || '尚未行动';
+        return `<article class="five-ai-item ${active ? 'five-ai-current' : ''}" title="${esc(last)}"><div class="five-ai-top"><b>${esc(p.name)}</b><strong>${score(p)} <small>分</small></strong></div><div class="five-ai-stones">${stones(p.stock, true)}</div><div class="five-ai-meta">商人 ${p.hand.length + p.played.length} · 魔像 ${p.claimed.length} · ${active ? '正在行动' : '等待'}</div><div class="five-ai-log">${esc(last)}</div></article>`;
+    }).join('')}</div></section>`;
+}
+function renderFiveBoard(g) {
+    const current = g.players[g.current], finished = g.phase === 'finished', target = g.players.length >= 4 ? 5 : 6;
+    return `<main class="five-root">
+    <header class="five-topbar"><div class="five-brand"><span class="five-brand-gem">◇</span><div><b>晶石回廊</b><small>CENTURY · GOLEM</small></div></div><div class="five-turn">第 ${g.turnNumber} 手 · ${finished ? '对局已结束' : esc(current.name) + ' 行动中'}</div>
+       <div class="five-controls">${aiPauseControl(g)}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新游戏</button></div></header>
+    ${g.triggerPlayer !== null && !finished ? '<div class="five-final-alert">终局已触发，本轮结束后计分</div>' : ''}
+    <div class="five-board">
+      ${fivePlayer(g, 0)}
+      <section class="five-center">
+        ${fiveAI(g)}
+        <section class="five-market five-golem-market"><div class="five-rowhead"><b>魔像市场 <em>5</em></b><span>第 ${target} 张触发终局 · 牌库剩余 ${g.golemDeck.length}</span></div>
+        <div class="five-golem-grid">${g.golemMarket.map((id, i) => golemCard(id, i, g)).join('')}</div></section>
+        <section class="five-market five-merchant-market"><div class="five-rowhead"><b>商人市场 <em>6</em></b><span>从左至右获取成本递增 · 牌库剩余 ${g.merchantDeck.length}</span></div>
+        <div class="five-merchant-grid">${g.merchantMarket.map((m, i) => merchantCard(m.id, i, m.bonus)).join('')}</div></section>
+        <section class="five-workbench ${modal ? 'five-work-active' : ''}">
+          ${modal && !finished ? `<div class="five-inline-modal">${modalBody()}</div>` : `<div class="five-work-default"><strong>${current.isAI ? 'AI 自动执行行动' : current.name + ' · 请选择行动'}</strong><span>打出手牌、获取商人、认领魔像或休息。点击卡牌查看或执行操作。</span><small>交易和升级在此处选择数量；当前商队 ${count(current.stock)} / 10</small></div>`}
+        </section>
+        <div class="five-log">${esc(g.log[0] || '对局已开始')}</div>
+      </section>
+      ${fivePlayer(g, 1)}
+    </div>
+    ${finished ? renderResult(g) : ''}
+  </main>`;
+}
 function renderBoard(g) {
+    if (g.players.filter(p => !p.isAI).length === 2)
+        return renderFiveBoard(g);
     if (g.players.length > 2 && g.players.filter(p => !p.isAI).length === 1 && g.players.some(p => p.isAI))
         return renderSoloAIBoard(g);
     if (g.players.length === 2)
@@ -790,7 +918,7 @@ function renderRules() {
 }
 function render() {
     root.innerHTML = `${game ? renderBoard(game) : renderSetup()}
-    ${modal && game && !handoff && game.phase !== 'finished' ? `<div class="overlay" data-overlay="modal"><section class="dialog">${game.phase !== 'overflow' ? '<button class="close-modal" data-action="cancel">✕</button>' : ''}${modalBody()}</section></div>` : ''}
+    ${modal && game && game.players.filter(p => !p.isAI).length !== 2 && !handoff && game.phase !== 'finished' ? `<div class="overlay" data-overlay="modal"><section class="dialog">${game.phase !== 'overflow' ? '<button class="close-modal" data-action="cancel">✕</button>' : ''}${modalBody()}</section></div>` : ''}
     ${showHelp ? renderRules() : ''}${toast ? `<div class="toast" role="alert">${esc(toast)}</div>` : ''}`;
     scheduleBot();
 }
@@ -809,7 +937,7 @@ function action(a) {
         const previous = game.current;
         game = applyAction(game, a);
         modal = game.phase === 'overflow' && !game.players[game.current].isAI ? { kind: 'discard', colors: [] } : null;
-        handoff = game.players.length > 2 && game.current !== previous && game.phase !== 'finished' && !game.players[game.current].isAI && game.players.filter(p => !p.isAI).length > 1;
+        handoff = game.players.filter(p => !p.isAI).length !== 2 && game.players.length > 2 && game.current !== previous && game.phase !== 'finished' && !game.players[game.current].isAI && game.players.filter(p => !p.isAI).length > 1;
         toast = '';
         save();
         render();
@@ -823,10 +951,14 @@ function start() {
     try {
         const humans = Number(root.querySelector('#humanCount').value);
         const bots = Number(root.querySelector('#botCount').value);
-        if (inputs.length !== humans)
-            throw Error('人类玩家人数无效');
+        if (humans !== 2 || bots < 0 || bots > 3 || inputs.length !== 2)
+            throw Error('仅支持双真人与 0–3 名 AI');
         const names = [...inputs.map(x => x.value), ...Array.from({ length: bots }, (_, i) => `AI 工匠 ${i + 1}`)];
         game = createGame(names, undefined, Array.from({ length: bots }, (_, i) => humans + i));
+        fiveOrders = { 0: [], 1: [] };
+        fiveSorting = { 0: 'manual', 1: 'manual' };
+        fivePinned = { 0: [], 1: [] };
+        fiveFold = { 0: false, 1: false };
         modal = null;
         handoff = false;
         botPaused = false;
@@ -1032,10 +1164,66 @@ function scheduleBot() {
         }
     }, 470);
 }
+// Non-game UI actions: folding, sorting and ordering do not consume a turn.
+function fiveUIControl(target) {
+    const action = target.dataset.action, side = Number(target.dataset.side);
+    if (!game || !['five-fold', 'five-sort'].includes(action || ''))
+        return false;
+    if (side !== 0 && side !== 1)
+        return true;
+    if (action === 'five-fold')
+        fiveFold[side] = !fiveFold[side];
+    if (action === 'five-sort')
+        fiveSorting[side] = target.dataset.mode === 'type' ? 'type' : 'manual';
+    render();
+    return true;
+}
+root.addEventListener('dragstart', event => {
+    const c = event.target.closest('.five-hand-cards .merchant-card[data-hand-owner]');
+    if (!c || !game)
+        return;
+    fiveDrag = { id: c.dataset.id || '', side: Number(c.dataset.handOwner) };
+    event.dataTransfer?.setData('text/plain', fiveDrag.id);
+    if (event.dataTransfer)
+        event.dataTransfer.effectAllowed = 'move';
+});
+root.addEventListener('dragover', event => {
+    const c = event.target.closest('.five-hand-cards .merchant-card[data-hand-owner]');
+    if (c && fiveDrag && Number(c.dataset.handOwner) === fiveDrag.side)
+        event.preventDefault();
+});
+root.addEventListener('drop', event => {
+    const c = event.target.closest('.five-hand-cards .merchant-card[data-hand-owner]');
+    if (!game || !fiveDrag || !c || Number(c.dataset.handOwner) !== fiveDrag.side)
+        return;
+    event.preventDefault();
+    const from = fiveDrag.id, to = c.dataset.id || '', side = fiveDrag.side;
+    const order = fiveHandOrder(game.players[side], side).filter(id => id !== from);
+    const position = order.indexOf(to);
+    if (position >= 0 && game.players[side].hand.includes(from)) {
+        order.splice(position, 0, from);
+        fiveOrders[side] = order;
+        fiveSorting[side] = 'manual';
+    }
+    fiveDrag = null;
+    render();
+});
+root.addEventListener('dragend', () => { fiveDrag = null; });
+root.addEventListener('contextmenu', event => {
+    const c = event.target.closest('.five-hand-cards .merchant-card[data-hand-owner]');
+    if (!c)
+        return;
+    event.preventDefault();
+    const side = Number(c.dataset.handOwner), id = c.dataset.id || '';
+    if (side !== 0 && side !== 1)
+        return;
+    fivePinned[side] = fivePinned[side].includes(id) ? fivePinned[side].filter(x => x !== id) : [...fivePinned[side], id];
+    render();
+});
 root.addEventListener('click', event => {
     const element = event.target;
     const target = element.closest('[data-action]');
-    if (target && !target.hasAttribute('disabled'))
+    if (target && !target.hasAttribute('disabled') && !fiveUIControl(target))
         control(target);
 });
 root.addEventListener('change', e => {
