@@ -6,7 +6,7 @@ const read = p => readFileSync(resolve(base,p),'utf-8');
 mkdirSync(resolve(base,'dist'),{recursive:true});
 copyFileSync(resolve(base,'index.html'),resolve(base,'dist/index.html'));
 copyFileSync(resolve(base,'src/styles.css'),resolve(base,'dist/styles.css'));
-const modules = ['data','engine','app'].map(n => read(`dist/js/${n}.js`)
+const modules = ['data','engine','ai','app'].map(n => read(`dist/js/${n}.js`)
   .replace(/^import\s.*?from\s+['"].*?['"];?\s*$/gm, '')
   .replace(/^export\s+(?=(const|function|class)\b)/gm, '')
   .replace(/^export\s*\{[^}]*\};?\s*$/gm, ''));
