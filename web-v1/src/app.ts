@@ -456,9 +456,14 @@ root.addEventListener('drop',event=>{
   if(!game||!fiveDrag||!c||Number(c.dataset.handOwner)!==fiveDrag.side)return;
   event.preventDefault();
   const from=fiveDrag.id,to=c.dataset.id||'',side=fiveDrag.side;
-  const order=fiveHandOrder(game.players[side],side).filter(id=>id!==from);
+  const previous=fiveHandOrder(game.players[side],side);
+  const before=previous.indexOf(from),target=previous.indexOf(to);
+  const order=previous.filter(id=>id!==from);
   const position=order.indexOf(to);
-  if(position>=0&&game.players[side].hand.includes(from)){order.splice(position,0,from);fiveOrders[side]=order;fiveSorting[side]='manual';}
+  if(before>=0&&target>=0&&position>=0&&from!==to){
+    order.splice(before<target?position+1:position,0,from);
+    fiveOrders[side]=order;fiveSorting[side]='manual';
+  }
   fiveDrag=null;render();
 });
 root.addEventListener('dragend',()=>{fiveDrag=null;});
