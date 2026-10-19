@@ -199,6 +199,14 @@ html:has(.five-root),body:has(.five-root){height:100%;overflow:hidden}
 @media(max-width:2450px){.five-root .five-board{gap:8px}.five-player{padding:9px}.five-center{padding:9px}.five-hand-cards,.five-played-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.five-root .merchant-card .gem{width:10px;height:10px}.five-player-profile strong{font-size:15px}.five-merchant-grid{gap:4px}.five-golem-grid{gap:4px}.five-workbench{flex-basis:170px}}
 @media(max-width:1580px){.five-root{font-size:11px}.five-ai-strip{flex-basis:105px}.five-ai-cards{height:80px}.five-workbench{flex-basis:156px}.five-hand-cards,.five-played-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.five-topbar{height:48px!important;min-height:48px!important}.five-golem-grid .golem-card{padding:4px}.five-golem-grid .golem-top{font-size:9px}.five-merchant-grid{grid-template-columns:repeat(3,minmax(0,1fr));overflow:auto;grid-auto-rows:120px}.five-merchant-grid .merchant-card{height:120px}.five-market .five-rowhead>span{display:none}}
 
+
+/* Enlarged merchant effect preview keeps gems count visible without moving the original. */
+.five-hover{position:fixed;z-index:40;width:220px;height:260px;pointer-events:none;filter:drop-shadow(0 15px 30px #0009)}
+.five-hover[hidden]{display:none!important}
+.five-hover .merchant-card{width:100%;height:100%;min-height:0;padding:15px;transform:none!important;border-radius:12px}
+.five-hover .card-head{font-size:16px}.five-hover .card-head small{font-size:13px}
+.five-hover .merchant-effect{min-height:135px}.five-hover .merchant-card .gem{width:19px;height:19px;margin:1px}
+.five-hover .stone-gems{gap:5px}.five-hover .card-foot{font-size:12px}
 </style>
 </head>
 <body><div id="app"></div><script>
@@ -785,7 +793,8 @@ function fiveHandOrder(p, side) {
     fiveOrders[side] = ordered;
     if (fiveSorting[side] === 'type') {
         const level = { create: 0, upgrade: 1, trade: 2 };
-        return [...ordered].sort((x, y) => level[MERCHANT_BY_ID[x].kind] - level[MERCHANT_BY_ID[y].kind]);
+        const sorted = ordered.filter(id => !fivePinned[side].includes(id)).sort((x, y) => level[MERCHANT_BY_ID[x].kind] - level[MERCHANT_BY_ID[y].kind]);
+        return ordered.map(id => fivePinned[side].includes(id) ? id : sorted.shift());
     }
     return ordered;
 }
@@ -851,6 +860,7 @@ function renderFiveBoard(g) {
       </section>
       ${fivePlayer(g, 1)}
     </div>
+    <div id="five-hover" class="five-hover" hidden></div>
     ${finished ? renderResult(g) : ''}
   </main>`;
 }
@@ -1198,10 +1208,12 @@ root.addEventListener('drop', event => {
         return;
     event.preventDefault();
     const from = fiveDrag.id, to = c.dataset.id || '', side = fiveDrag.side;
-    const order = fiveHandOrder(game.players[side], side).filter(id => id !== from);
+    const previous = fiveHandOrder(game.players[side], side);
+    const before = previous.indexOf(from), target = previous.indexOf(to);
+    const order = previous.filter(id => id !== from);
     const position = order.indexOf(to);
-    if (position >= 0 && game.players[side].hand.includes(from)) {
-        order.splice(position, 0, from);
+    if (before >= 0 && target >= 0 && position >= 0 && from !== to) {
+        order.splice(before < target ? position + 1 : position, 0, from);
         fiveOrders[side] = order;
         fiveSorting[side] = 'manual';
     }
@@ -1209,6 +1221,33 @@ root.addEventListener('drop', event => {
     render();
 });
 root.addEventListener('dragend', () => { fiveDrag = null; });
+// Read-only enlarged card preview; pointer does not obstruct the table.
+root.addEventListener('pointerover', event => {
+    if (fiveDrag)
+        return;
+    const c = event.target.closest('.five-root .merchant-card');
+    const tip = root.querySelector('#five-hover');
+    if (!c || !tip)
+        return;
+    const id = c.dataset.id || '';
+    if (!MERCHANT_BY_ID[id])
+        return;
+    tip.innerHTML = merchantCard(id, undefined, undefined, 'inactive');
+    const r = c.getBoundingClientRect();
+    const w = 220, h = 260;
+    tip.style.left = (r.right + w + 15 < window.innerWidth ? r.right + 13 : Math.max(8, r.left - w - 13)) + 'px';
+    tip.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, r.top - 5)) + 'px';
+    tip.hidden = false;
+});
+root.addEventListener('pointerout', event => {
+    const c = event.target.closest('.five-root .merchant-card');
+    const other = event.relatedTarget;
+    if (!c || other && c.contains(other))
+        return;
+    const tip = root.querySelector('#five-hover');
+    if (tip)
+        tip.hidden = true;
+});
 root.addEventListener('contextmenu', event => {
     const c = event.target.closest('.five-hand-cards .merchant-card[data-hand-owner]');
     if (!c)
