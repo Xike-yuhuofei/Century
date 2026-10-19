@@ -1,46 +1,44 @@
 import { readFileSync, writeFileSync, copyFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-
 const base = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const read = path => readFileSync(resolve(base, path), 'utf-8');
-mkdirSync(resolve(base, 'dist/mobile'), { recursive:true });
+const read = p => readFileSync(resolve(base,p),'utf-8');
+mkdirSync(resolve(base,'dist'),{recursive:true});
 copyFileSync(resolve(base,'index.html'),resolve(base,'dist/index.html'));
 copyFileSync(resolve(base,'src/styles.css'),resolve(base,'dist/styles.css'));
-
-const modules = ['data','engine','ai','organize','app'].map(name => read(`dist/js/${name}.js`)
+const modules = ['data','engine','ai','organize','app'].map(n => read(`dist/js/${n}.js`)
   .replace(/^import\s.*?from\s+['"].*?['"];?\s*$/gm, '')
   .replace(/^export\s+(?=(const|function|class)\b)/gm, '')
   .replace(/^export\s*\{[^}]*\};?\s*$/gm, ''));
-const sourceCSS = read('src/styles.css').replace(/^@import url\(''\);\s*/,'');
-const script = `<script>\n(()=>{'use strict';${modules.join('\n')}})();\n</script>`;
+const inlineCSS = read('src/styles.css').replace(/^@import url\(''\);\s*/,'');
+const html = read('index.html').replace('<link rel="stylesheet" href="./styles.css"/>', `<style>${inlineCSS}</style>`)
+  .replace('<script type="module" src="./js/app.js"></script>', `<script>${'\n'}(()=>{'use strict';${modules.join('\n')}})();${'\n'}</script>`);
+writeFileSync(resolve(base,'dist/standalone.html'),html);
+console.log('已生成 dist/index.html（服务器运行）和 dist/standalone.html（直接双击运行）');
 
-function bundle(css) {
-  return read('index.html')
-    .replace('<link rel="stylesheet" href="./styles.css"/>', `<style>${css}</style>`)
-    .replace('<script type="module" src="./js/app.js"></script>', script);
+// 手机入口独立打包；资源目录包含共享引擎/AI 的内容指纹，避免新旧模块混用。
+const { createHash } = await import('node:crypto');
+const mobileNames = ['data','engine','ai','organize','mobile/storage','mobile/app','mobile/worker'];
+const digest = createHash('sha256').update(mobileNames.map(n=>read(`dist/js/${n}.js`)).join('\n') + read('src/mobile/styles.css')).digest('hex').slice(0,12);
+const mobileRoot = resolve(base,'dist/mobile');
+const assetPath = `assets/${digest}`;
+mkdirSync(resolve(mobileRoot,assetPath),{recursive:true});
+for(const name of mobileNames){
+  const target=resolve(mobileRoot,assetPath,`${name}.js`);
+  mkdirSync(dirname(target),{recursive:true});
+  copyFileSync(resolve(base,`dist/js/${name}.js`),target);
 }
-
-const desktopHTML = bundle(sourceCSS);
-writeFileSync(resolve(base,'dist/standalone.html'),desktopHTML);
-
-// 专属 /mobile/ 入口在任何窗口宽度均强制使用手机界面。
-// 把独立的移动端样式媒体查询变成无条件规则，仅应用于该 HTML，
-// 而不是复制游戏逻辑、规则或 AI 实现。
-const marker = '/* MOBILE GAME V1';
-const markerIndex = sourceCSS.indexOf(marker);
-if (markerIndex < 0) throw new Error('找不到手机端样式块');
-const mobileCSS = sourceCSS.slice(0,markerIndex) +
-  sourceCSS.slice(markerIndex).replace('@media (max-width:980px) {', '@media (min-width:0px) {');
-if (mobileCSS === sourceCSS) throw new Error('无法将手机端样式应用于独立页面');
-
-const mobileHTML = bundle(mobileCSS)
-  .replace('<html lang="zh-CN">', '<html lang="zh-CN" data-century-mode="mobile">')
-  .replace('<meta name="viewport" content="width=device-width, initial-scale=1"/>',
-    '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>')
-  .replace(/<title>[^<]*<\/title>/,
-    '<title>晶石回廊 · 手机版</title>')
-  .replace('</head>',
-    '<meta name="apple-mobile-web-app-capable" content="yes"/>\n<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>\n</head>');
-writeFileSync(resolve(base,'dist/mobile/index.html'),mobileHTML);
-console.log('已生成 dist/standalone.html（电脑版/响应式）和 dist/mobile/index.html（独立手机版）');
+copyFileSync(resolve(base,'src/mobile/styles.css'),resolve(mobileRoot,assetPath,'styles.css'));
+const mobileHTML = read('mobile/index.html').replace('./styles.css',`./${assetPath}/styles.css`).replace('./app.js',`./${assetPath}/mobile/app.js`).replace('./worker.js',`./${assetPath}/mobile/worker.js`);
+writeFileSync(resolve(mobileRoot,'modules.html'),mobileHTML);
+const strip = n => read(`dist/js/${n}.js`).replace(/^import\s.*?from\s+['"].*?['"];?\s*$/gm,'').replace(/^export\s+(?=(const|function|class)\b)/gm,'').replace(/^export\s*\{[^}]*\};?\s*$/gm,'');
+const offlineWorker = ['data','engine','ai','mobile/worker'].map(strip).join('\n');
+const offlineMobile = ['data','engine','ai','organize','mobile/storage','mobile/app'].map(strip).join('\n');
+const mobileOfflineHTML = read('mobile/index.html')
+  .replace('<link rel="stylesheet" href="./styles.css">',`<style>${read('src/mobile/styles.css')}</style>`)
+  .replace('<script type="module" src="./app.js"></script>',`<script type="text/plain" id="offline-worker">${offlineWorker}</script><script>(()=>{'use strict';${offlineMobile}})();</script>`);
+// Pages 的 HTML 可能缓存十分钟；主入口自包含，旧 HTML 仍有完整匹配的规则、样式与 Worker。
+writeFileSync(resolve(mobileRoot,'standalone.html'),mobileOfflineHTML);
+writeFileSync(resolve(mobileRoot,'index.html'),mobileOfflineHTML);
+writeFileSync(resolve(base,'dist/.nojekyll'),'');
+console.log(`已生成 dist/mobile/（资源 ${digest}）和 mobile/standalone.html（离线）`);

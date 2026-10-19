@@ -6,21 +6,18 @@
 
 直接双击 `dist/standalone.html`。Chrome / Edge / Safari 可离线运行。推荐 3440×1440 (UWQHD / 21:9)，默认 2 名真人 + 1 名 AI，可选 0–4 名 AI。2 真人 + 4 AI 是单独注明的非官方六人扩展局。
 
-## 独立手机版
+## 独立触屏手机版
 
-- **手机版专用地址**：https://xike-yuhuofei.github.io/Century/mobile/
-- **电脑版首页**：https://xike-yuhuofei.github.io/Century/
-- 本地构建产物：`dist/mobile/index.html`；可离线打开，内嵌同一套规则、卡牌与 AI 引擎。
-- `/mobile/` 无论打开设备宽度，都使用独立手机布局（宽屏预览时居中显示手机宽度）。电脑页面仍保留原来的 3440×1440 布局；主页面在窄视口下也保留原来的响应式兼容。
-- 两个页面可通过「电脑版」「手机版」入口相互切换；由于处于同一个 GitHub Pages 域名，**在同一浏览器中共用存档**。不同设备仍不会同步。
-- GitHub Pages 工作流会同时发布根目录首页与 `/mobile/`，不是单纯把电脑版缩小。
+- 手机地址：https://xike-yuhuofei.github.io/Century/mobile/
+- 电脑地址：https://xike-yuhuofei.github.io/Century/
 
-- 顶部展示当前玩家、分数、水晶与 10 颗容量；标签页切换魔像市场、商人市场和对手详情。
-- 底部常驻当前真人玩家手牌（左右滑动选牌）、休息与分类整理；点「手牌」可展开。触屏通过 ‹ › 调整卡序，不依赖桌面拖放。
-- 商人费用按市场从左到右显示；获取、升级、交易、弃置与认领沿用正式游戏引擎校验。
-- 已打出卡牌可展开查看；更多菜单包含 AI 暂停、卡牌尺寸、行动记录、规则与新局。
-- 手机对局与电脑端复用同一浏览器存档键，但不同设备/浏览器不会自动同步存档，也不支持网络实时联机。
-- 建议在 Chrome / Safari 使用；单独的手机版页面通过 `python scripts/smoke_mobile.py` 自动检查 320、390、430 像素、932 像素横屏及多人模式。
+构建后访问 `/mobile/`；GitHub Pages 项目地址为 `/Century/mobile/`。手机 UI 使用 `src/mobile/`，独立于桌面样式和视图，复用同一引擎与 AI 2.0。手机与电脑分别自动保存 version 2 存档，可导入/导出备份。
+
+`dist/mobile/standalone.html` 为完整离线入口，`dist/mobile/modules.html` 为指纹模块调试入口。两真人在同一设备轮流行动，六人局明确为非官方扩展，不支持跨设备实时联网。
+
+设计、截图、测试与发布边界见 [手机交付报告](../docs/mobile/DELIVERY.md)。浏览器回归：`python scripts/smoke_mobile.py`（需要 Playwright 1.56 的 Chromium 与 WebKit）。
+
+需求逐项自查与修正证据见 [自查报告](../docs/mobile/SELF-AUDIT.md)。补充边界回归：`python scripts/audit_mobile.py`，覆盖 AI 回合恢复隐私、长姓名、触控尺寸、排序、备份和离线文件启动。
 
 ## V1.5 设计决策
 

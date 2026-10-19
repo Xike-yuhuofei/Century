@@ -18,10 +18,11 @@
 
 ## 手机与浏览器游玩（GitHub Pages）
 
-- **预计游戏地址（Pages 启用后）**：https://xike-yuhuofei.github.io/Century/
+- **电脑地址**：https://xike-yuhuofei.github.io/Century/
 - **自动部署**：[.github/workflows/pages.yml](.github/workflows/pages.yml)。每次 `main` 的 `web-v1/**` 更新会校验卡牌、运行测试、重新编译，并将 `web-v1/dist/standalone.html` 发布为网站首页。
 - **首次启用（仓库管理员操作一次）**：打开仓库 **Settings → Pages → Build and deployment**，将 **Source** 设置为 **GitHub Actions**。如首次自动运行因未启用 Pages 而失败，到 **Actions → Deploy Century Game to GitHub Pages → Run workflow** 选择 `main` 重跑。
-- **手机**：Safari / Chrome 打开网页，可将其添加至主屏幕；当前 UI 主要针对超宽屏设计，手机布局尚未专项优化。网页仅为当前设备本地游戏，存档位于浏览器本地存储，不支持跨设备实时联机。
+- **手机地址**：https://xike-yuhuofei.github.io/Century/mobile/ 。独立触屏界面提供双行市场、底部手牌抽屉、完整行动与双真人交接遮挡；复用电脑版规则和 AI 2.0。手机与电脑各自保存本地对局，可显式导入/导出备份，不支持跨设备实时联机。
+- **设计与验收**：[交付报告](docs/mobile/DELIVERY.md)、[自查报告](docs/mobile/SELF-AUDIT.md)。
 
 ## 验证
 

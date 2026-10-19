@@ -1,71 +1,63 @@
 name: Deploy Century Game to GitHub Pages
-
 on:
+  workflow_dispatch:
   push:
     branches: [main]
-    paths:
-      - 'web-v1/**'
-      - '.github/workflows/pages.yml'
-  workflow_dispatch:
-
+    paths: ['web-v1/**', 'data/**', '.github/workflows/pages.yml']
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
 concurrency:
   group: github-pages
   cancel-in-progress: true
-
 jobs:
   build:
-    name: Verify and package game
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout source
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: web-v1/package-lock.json
-      - name: Install dependencies
+      - run: npm ci --no-audit --no-fund
         working-directory: web-v1
-        run: npm ci --no-audit --no-fund
-      - name: Verify rules, cards and game build
+      - run: npm test
         working-directory: web-v1
-        run: npm test
-      - name: Prepare single-file website
+      - name: Install mobile browser checks
+        run: |
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium webkit
+      - name: Verify mobile flows in Chromium and WebKit
+        run: python web-v1/scripts/smoke_mobile.py
+      - name: Check mobile privacy, touch and save recovery boundaries
+        run: python web-v1/scripts/audit_mobile.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mobile-browser-evidence
+          path: docs/mobile/
+      - name: Prepare complete website
         run: |
           mkdir -p _site
+          cp -R web-v1/dist/. _site/
           cp web-v1/dist/standalone.html _site/index.html
-          mkdir -p _site/mobile
-          cp web-v1/dist/mobile/index.html _site/mobile/index.html
-          touch _site/.nojekyll
           test -s _site/index.html
-          grep -q '<meta name="viewport"' _site/index.html
-          grep -q 'function choosePlan(game)' _site/index.html
           test -s _site/mobile/index.html
-          grep -q 'data-century-mode="mobile"' _site/mobile/index.html
-          grep -q 'function choosePlan(game)' _site/mobile/index.html
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
-
   deploy:
-    name: Publish game
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Configure or enable Pages
-        uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v5
         with:
           enablement: true
-      - name: Deploy to GitHub Pages
+      - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
