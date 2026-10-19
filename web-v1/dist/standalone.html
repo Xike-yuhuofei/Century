@@ -1,0 +1,1280 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="theme-color" content="#0b1722"/>
+<meta name="description" content="晶石回廊：非官方的双真人与 0–3 名 AI 的本地晶石策略桌游练习原型"/>
+<title>晶石回廊 V1.3 · 本地 AI 对战</title>
+<style>:root { color-scheme:dark; --bg:#0b1722; --surface:#142533; --surface2:#1b3140; --edge:#2e4754; --ink:#eaf1eb; --muted:#95abb4; --gold:#dab67b; --accent:#c8e6c8; --faint:#203542; font-family: system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; }
+* {box-sizing:border-box} body{margin:0; background:radial-gradient(ellipse at 50% -25%,#1a3540 0%,#0b1722 60%); color:var(--ink); min-height:100vh} button,select,input{font:inherit} button{cursor:pointer} button:disabled{cursor:not-allowed;opacity:.4} button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid #e8c891; outline-offset:3px} a{color:#e9cf9c} .layout{max-width:1480px;margin:auto;padding:22px 30px 40px}.topbar{height:70px;display:flex;gap:13px;align-items:center;border-bottom:1px solid #2a4350;margin-bottom:25px}.brand-icon{font-family:Georgia,serif;width:44px;height:44px;border:1px solid #a99163;color:var(--gold);display:grid;place-items:center;font-size:40px;transform:rotate(-8deg);border-radius:10px}.brand-text{display:flex;flex-direction:column;line-height:1.2}.brand-text strong{font-size:21px;letter-spacing:3px;font-weight:650}.brand-text span{color:#b89b75;font-family:Georgia,serif;font-size:9px;letter-spacing:2.6px;margin-top:6px}.edition{margin-left:auto; font-size:12px;color:var(--muted)}.top-actions{margin-left:auto;display:flex;align-items:center;gap:10px}.subtle-btn,.rest-btn,.secondary-btn{background:#203745;border:1px solid #385361;color:#dfebe9;border-radius:8px;padding:9px 14px}.subtle-btn:hover,.rest-btn:hover,.secondary-btn:hover{border-color:#92afa9}.turn-badge{padding:10px 13px;color:#f0d4a0;background:#3a302b;border-radius:7px;font-size:12px;font-weight:700}.players-strip{display:flex;gap:12px;margin-bottom:22px;overflow-x:auto;scrollbar-width:thin}.player-pill{display:flex;gap:10px;align-items:center;min-width:180px;flex:1;padding:13px 12px;background:#152736;border:1px solid #2c4551;border-radius:10px}.player-pill.active-player{border-color:#bdad7f;background:linear-gradient(115deg,#253b43,#1c313c);box-shadow:inset 0 0 0 1px #5f685b}.avatar{width:30px;height:30px;border-radius:50%;border:1px solid #b49a66;color:#e9d39a;display:grid;place-items:center;flex-shrink:0;font-family:Georgia,serif}.player-info{display:flex;flex-direction:column;gap:4px;min-width:0}.player-info b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:13px}.player-info small{font-size:10px;color:var(--muted);white-space:nowrap}.player-score{font-size:20px;font-family:Georgia,serif;margin-left:auto;color:#ecd09b;display:flex;flex-direction:column;align-items:center}.player-score small{font-size:9px;color:var(--muted)}.game-section{margin-top:27px}.section-head,.zone-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:14px;gap:15px}.section-head h2,.zone-head h2{margin:3px 0 0;font-size:22px;font-weight:650;letter-spacing:1px}.section-head h2 small,.zone-head h2 small{font-size:12px;font-weight:400;color:#9babae;margin-left:8px;letter-spacing:0}.section-index,.eyebrow{color:#c9aa77;letter-spacing:2.3px;font-size:10px;font-weight:700}.section-meta{font-size:12px;color:#99adb4}.golem-grid,.merchant-grid{display:grid;gap:12px;grid-template-columns:repeat(5,minmax(0,1fr))}.golem-card{text-align:left;position:relative;min-height:220px;display:flex;flex-direction:column;align-items:stretch;padding:13px 15px 10px;border-radius:10px;border:1px solid #755e4d;background:linear-gradient(160deg,#405a56 0%,#223c42 43%,#122e36 100%);color:var(--ink);box-shadow:inset 0 0 0 2px #1f3738,0 8px 20px #0002;overflow:hidden;transition:transform .15s,border-color .15s}.golem-card:before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,#b2ba9240,transparent 60%);pointer-events:none}.golem-card:hover,.merchant-card:hover{transform:translateY(-3px);border-color:#dfbe85}.golem-card.affordable{border-color:#dfc480;box-shadow:0 0 0 1px #c9aa6d,0 7px 20px #0002}.golem-top{position:relative;display:flex;align-items:center;justify-content:space-between;min-height:22px;z-index:1}.golem-tag{color:#cdd8c4;font-size:10px}.golem-num{font-size:9px;color:#b5c1b7}.coin{border-radius:99px;padding:4px 7px;font-size:10px;font-weight:800}.coin.copper{background:#a66e4a;color:#fff7e6}.coin.silver{background:#a9bcc6;color:#243d48}.golem-emblem{display:grid;place-items:center;min-height:76px;position:relative}.emblem-inner{width:74px;height:74px;border:1px solid #94b0a184;display:grid;place-items:center;font:72px Georgia,serif;border-radius:35%;color:#cfdbb1;transform:rotate(15deg);text-shadow:0 0 20px #f4e5acaa}.golem-points{display:flex;align-items:baseline;justify-content:center;gap:6px;color:#f4dbab;z-index:1}.golem-points strong{font:700 31px Georgia,serif}.golem-points small{letter-spacing:2px;font-size:8px}.golem-cost{position:relative;display:flex;justify-content:center;gap:9px;flex-wrap:wrap;margin:7px 0 4px;min-height:24px}.golem-action{font-size:10px;text-align:center;border-top:1px solid #879b8b50;margin-top:auto;padding-top:8px;color:#aebeb0}.golem-card.affordable .golem-action{color:#f5d89d;font-weight:700}.merchant-grid{grid-template-columns:repeat(6,minmax(0,1fr))}.merchant-card{min-height:173px;border:1px solid #5d6670;background:linear-gradient(140deg,#d1c6aa 0%,#f1e4c7 55%,#b8b8a7 100%);color:#273940;border-radius:9px;position:relative;text-align:left;padding:10px;display:flex;flex-direction:column;transition:transform .15s,border-color .15s;box-shadow:inset 0 0 0 2px #ffffff39,0 4px 10px #0002;min-width:0}.merchant-card.card-upgrade{background:linear-gradient(130deg,#c5d5b0,#ebe7cc 65%,#b0c3ae)}.merchant-card.card-trade{background:linear-gradient(135deg,#c3c6d4,#e1e7e3 55%,#b8c6c3)}.card-head{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #5669706b;padding-bottom:6px;font-size:12px;font-weight:800}.card-head small{font-size:9px;font-weight:400;opacity:.65}.merchant-effect{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80px;flex:1;gap:5px}.effect-label{font-size:11px;color:#50646a}.effect-large{font-size:24px;font-family:Georgia,serif;color:#2d655e}.trade-arrow{font-size:17px;color:#6c7b7b;line-height:1}.card-foot{border-top:1px solid #5669706b;display:flex;justify-content:space-between;align-items:center;gap:4px;padding-top:7px;font-size:10px}.card-foot b{color:#37524f}.market-bonus{margin-top:8px;font-size:10px;display:flex;gap:4px;align-items:center;flex-wrap:wrap;padding:5px;border-radius:5px;background:#5770643b}.stone-line,.resource-bar,.modal-stock,.preview>div{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.stone-group{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:650;white-space:nowrap}.stone-group b{color:inherit;font-size:11px}.gem{display:inline-block;width:17px;height:17px;transform:rotate(45deg);border-radius:4px 1px 4px 1px;box-shadow:inset -3px -3px 3px #0004,inset 2px 2px 2px #fff9,0 0 5px #0004;flex-shrink:0}.gem-yellow{background:#f6c645}.gem-green{background:#49bf86}.gem-blue{background:#63c6e8}.gem-pink{background:#f0a2cf}.none{font-size:12px;opacity:.6}.personal-zone{margin-top:28px;padding:21px;border:1px solid #3b5860;border-radius:12px;background:linear-gradient(140deg,#1d3441,#132735)}.zone-head{align-items:center;border-bottom:1px solid #2e4a57;padding-bottom:16px;margin-bottom:19px}.resource-bar{background:#0b1d2b;border-radius:9px;padding:10px 13px;gap:14px}.capacity{font-size:11px;color:#c7d4d3;border-left:1px solid #425863;padding-left:11px}.over-capacity{color:#f3a692}.personal-layout{display:grid;grid-template-columns:minmax(0,1fr) 252px;gap:20px}.hand-heading{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;font-size:13px}.hand-heading span{color:var(--muted);font-size:11px}.hand-grid{display:flex;gap:10px;flex-wrap:wrap;max-height:400px;overflow:auto;padding:3px}.hand-grid .merchant-card{width:164px;min-height:183px;flex-shrink:0}.empty-hand{font-size:12px;color:#a8bbbd}.played{font-size:12px;border-top:1px solid #38535f;margin-top:15px;padding-top:13px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.played span{color:var(--muted)}.rest-btn{margin-left:auto;font-size:12px}.right-column{display:flex;flex-direction:column;gap:13px}.score-panel,.history{background:#0f202e;padding:15px;border:1px solid #324c58;border-radius:9px}.score-panel h3,.history h3{font-size:13px;font-weight:650;margin:0 0 10px}.score-large{font:38px Georgia,serif;color:#e6c796}.score-large span{font:11px system-ui;color:var(--muted)}.score-breakdown{font-size:11px;color:#a2b8bc;display:flex;flex-direction:column;gap:7px;margin-top:11px}.history p{font-size:11px;margin:0;border-top:1px solid #334955;padding:8px 0;color:#b7c9cb;line-height:1.5}.history p:first-of-type{border-top:0}.footer{margin-top:25px;font-size:11px;color:#8aa3a8;text-align:center}.primary-btn{border:1px solid #e9c892;color:#11252c;background:linear-gradient(125deg,#f2d7a6,#cbaa70);border-radius:9px;padding:10px 18px;font-size:13px;font-weight:800}.primary-btn:hover{filter:brightness(1.08)}.primary-btn.big{width:100%;font-size:16px;padding:16px;display:flex;justify-content:space-between;align-items:center}.landing .topbar{margin-bottom:80px}.landing-split{display:grid;grid-template-columns:1.1fr .8fr;gap:75px;align-items:center;min-height:450px}.welcome-copy h1{font-size:clamp(37px,5vw,69px);line-height:1.25;letter-spacing:1px;margin:20px 0;color:#f5e7cf}.welcome-copy p{max-width:530px;color:#b6c7c9;line-height:2;font-size:15px}.feature-row{display:flex;gap:30px;font-size:12px;color:#d9c092;margin-top:30px}.setup-box{padding:30px;border:1px solid #4b6468;border-radius:15px;background:#172d3b;box-shadow:0 20px 70px #0003}.setup-box h2{font-size:25px;margin:12px 0}.hint,.small-muted{color:#9fb1b7;font-size:12px;line-height:1.7}.setup-box label{display:block;font-size:12px;color:#dce8e9;margin:22px 0 9px}.setup-box select,.setup-box input{width:100%;height:41px;border-radius:8px;background:#0e202e;border:1px solid #3a5661;color:#eef2ed;padding:0 12px}.name-inputs{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0 24px}.overlay{position:fixed;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;background:#02101ddd;padding:18px;backdrop-filter:blur(5px)}.dialog{width:min(520px,100%);background:#1b303e;border:1px solid #59717a;border-radius:16px;padding:28px;box-shadow:0 30px 90px #0007;position:relative;max-height:94vh;overflow:auto}.dialog h2{margin:0 0 14px;color:#f5dfb5;font-size:25px}.dialog p{color:#bbccd0;line-height:1.7;font-size:13px}.dialog p strong{color:#f0d19a}.close-modal{position:absolute;top:15px;right:14px;border:0;background:transparent;color:#b9c7cc;font-size:20px}.modal-progress{margin:20px 0 12px;color:#f2d9a4;font-size:13px;font-weight:800}.modal-stock{border:1px solid #3e5966;padding:14px;border-radius:9px;background:#0e2231;gap:18px;min-height:55px}.modal-caption{margin-top:15px}.choice-row{display:flex;flex-wrap:wrap;gap:9px}.choice-btn{display:flex;align-items:center;gap:10px;background:#243e4c;color:#e5f0ed;border:1px solid #49616a;border-radius:8px;padding:10px 12px;font-size:13px}.choice-btn:hover:not(:disabled){border-color:#d5b986}.modal-actions{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:25px}.stepper{display:flex;justify-content:center;align-items:center;gap:25px;background:#122837;padding:17px;margin-top:20px;border-radius:9px}.stepper button{width:37px;height:37px;color:#f1dbb5;background:#314955;border:1px solid #57717a;border-radius:8px;font-size:20px}.stepper strong{font-size:30px}.stepper strong small{font-size:11px;font-weight:400}.preview{border-radius:10px;padding:14px;background:#122837;margin-top:17px;color:#d7e6e3;font-size:13px}.preview>div{margin-top:10px}.preview .warn{color:#f2ab93}.selected{font-size:12px;color:#f0d2a0!important}.help-dialog{max-width:570px}.help-rows{margin:22px 0}.help-rows p{padding-bottom:9px;border-bottom:1px solid #38505d}.cover{z-index:12;background:#051822ee}.handoff-card,.result-card{border:1px solid #806d4b;border-radius:17px;background:linear-gradient(150deg,#253e46,#112735);padding:42px;text-align:center;width:min(465px,100%);box-shadow:0 40px 100px #0009}.cover-symbol{font:95px Georgia,serif;line-height:1;color:#d9bf8c}.handoff-card h2,.result-card h2{font-size:33px;color:#f0d7a7;margin:9px 0}.handoff-card p{font-size:13px;color:#b6c7ca;line-height:1.8;margin:10px 0 30px}.final-alert{border:1px solid #b99756;color:#f2d8a5;padding:11px;border-radius:8px;text-align:center;font-size:13px;background:#393329;margin-bottom:17px}.trophy{font:80px Georgia,serif;color:#e4c68f}.winner{font-size:18px}.winner strong{color:#f2cb83}.result-table{margin:25px 0 30px;text-align:left}.result-table>div{padding:12px 0;border-top:1px solid #546872;display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:13px}.result-table span{color:#a7b9ba}.result-table strong{color:#f5d9a2;font-size:17px}.toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);padding:13px 18px;border:1px solid #d4a88f;background:#522d2d;color:#ffdfd3;border-radius:10px;z-index:30;font-size:13px;max-width:90%;box-shadow:0 15px 45px #0005}
+@media(max-width:1100px){.merchant-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.golem-grid{grid-template-columns:repeat(5,minmax(130px,1fr));overflow-x:auto;padding-bottom:5px}.personal-layout{grid-template-columns:1fr 210px}.layout{padding:18px 18px 30px}.landing-split{gap:35px}}
+@media(max-width:720px){.layout{padding:12px 13px 35px}.topbar{margin-bottom:16px}.brand-text strong{font-size:17px}.brand-text span{font-size:7px}.top-actions{gap:5px}.subtle-btn{padding:8px;font-size:10px}.turn-badge{font-size:10px;padding:8px}.players-strip{gap:7px}.player-pill{min-width:140px;padding:8px}.avatar{width:25px;height:25px}.player-info b{font-size:11px}.player-info small{font-size:9px}.player-score{font-size:17px}.section-head,.zone-head{align-items:start;flex-direction:column}.section-meta{font-size:10px}.golem-grid{grid-template-columns:repeat(5,155px);overflow-x:auto}.golem-card{min-height:205px}.merchant-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}.merchant-card{padding:7px;min-height:165px}.card-foot{font-size:9px}.card-foot span{max-width:72px}.merchant-effect{min-height:73px}.merchant-card .stone-line{gap:5px}.stone-group b{font-size:10px}.gem{width:14px;height:14px}.personal-zone{padding:13px}.personal-layout{grid-template-columns:1fr}.right-column{display:grid;grid-template-columns:1fr 1fr}.resource-bar{gap:9px}.hand-grid .merchant-card{width:148px}.landing .topbar{margin-bottom:25px}.landing-split{grid-template-columns:1fr;gap:20px}.welcome-copy h1{font-size:39px}.setup-box{padding:22px}.feature-row{gap:15px}.footer{line-height:1.8}}
+@media(max-width:420px){.right-column{grid-template-columns:1fr}.merchant-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.top-actions{margin-left:auto}.turn-badge{display:none}.brand-icon{width:35px;height:35px}.brand-text strong{font-size:15px}.golem-grid{grid-template-columns:repeat(5,145px)}.resource-bar{flex-wrap:wrap}.handoff-card,.result-card{padding:23px}}
+
+/* V1.1: 全站水晶均按实际颗数绘制，而非「单颗 × 数量」。 */
+.stone-group { display:inline-flex; align-items:center; vertical-align:middle; white-space:normal; flex-shrink:0; }
+.stone-gems { display:inline-flex; flex-wrap:wrap; align-items:center; gap:6px; max-width:100%; }
+.stone-line { justify-content:center; }
+.merchant-card .stone-line { gap:7px; }
+.merchant-card .stone-gems { gap:5px; }
+.merchant-card .gem { width:16px; height:16px; margin:2px; }
+.golem-card .stone-gems { gap:5px; justify-content:center; }
+.golem-card .gem { width:16px; height:16px; margin:2px; }
+.merchant-card .market-bonus .gem { width:13px; height:13px; margin:1px; }
+.merchant-card.played-face { cursor:default; filter:saturate(.85); }
+.merchant-card.played-face:hover,.merchant-card.inactive-face:hover { transform:none; border-color:#647379; }
+.merchant-card.inactive-face { cursor:default; }
+
+/* 双人桌布：左右各自独立的卡牌区，中间共享两个市场。 */
+.layout.duel-layout { width:100%; max-width:none; margin:0 auto; padding:10px clamp(18px,1.05vw,42px) 16px; }
+.duel-layout .topbar { height:64px; margin-bottom:11px; }
+.duel-layout .brand-text strong { font-size:21px; }
+.duel-now { margin-left:auto; border:1px solid #73654e; border-radius:8px; background:#332f2a; color:#f1d2a0; padding:9px 16px; font-size:15px; font-weight:750; }
+.duel-layout .top-actions { margin-left:12px; }
+.duel-table { display:grid; grid-template-columns:minmax(440px,1fr) minmax(790px,1.56fr) minmax(440px,1fr); align-items:stretch; gap:clamp(12px,.85vw,27px); height:calc(100dvh - 105px); min-height:800px; }
+.duel-player,.duel-center { min-width:0; border:1px solid #2c5057; border-radius:17px; background:linear-gradient(145deg,#172e3c,#0f2330 85%); box-shadow:0 10px 35px #0003; overflow:hidden; }
+.duel-player { display:flex; flex-direction:column; min-height:0; padding:clamp(12px,.7vw,22px); gap:14px; border-color:#35525b; }
+.duel-player.duel-active { border-color:#c6a367; box-shadow:inset 0 0 0 1px #a18e69,0 12px 35px #0004; }
+.duel-player.duel-waiting { background:linear-gradient(145deg,#142835,#0c1f2c 85%); }
+.duel-player-head { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid #38525f; }
+.duel-player-title { display:flex; gap:12px; align-items:center; min-width:0; }
+.duel-avatar { width:42px; height:42px; display:grid; place-items:center; border:1px solid #ab9468; border-radius:50%; color:#f2d8a0; flex-shrink:0; }
+.duel-name { font-size:21px; font-weight:800; color:#ebeee7; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; max-width:24ch; }
+.duel-status { color:#b2bec2; font-size:12px; line-height:1.8; }
+.duel-active .duel-status { color:#f2d39b; }
+.duel-score { display:flex; flex-direction:column; align-items:center; color:#efce8d; }
+.duel-score b { font:34px Georgia,serif; }
+.duel-score small { color:#a6b8bd; white-space:nowrap; font-size:11px; }
+.duel-minor-head { display:flex; justify-content:space-between; align-items:center; gap:10px; min-width:0; padding:0 1px; margin-bottom:9px; }
+.duel-minor-head b { font-size:14px; white-space:nowrap; color:#e6e8e5; }
+.duel-minor-head span { color:#8fa7b0; font-size:11px; text-align:right; }
+.duel-stock .resource-bar { padding:11px 13px; min-height:55px; gap:15px; }
+.duel-stock .gem { width:19px; height:19px; }
+.duel-zone { min-height:0; }
+.duel-hand { flex:1.12 1 0; display:flex; flex-direction:column; }
+.duel-played { flex:1 1 0; display:flex; flex-direction:column; border-top:1px solid #39505c; padding-top:13px; }
+.duel-card-grid { min-height:0; overflow:auto; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); grid-auto-rows:minmax(170px, 1fr); align-content:start; gap:9px; padding:2px 3px 6px; scrollbar-width:thin; }
+.duel-card-grid .merchant-card { min-height:176px; padding:9px; width:auto; }
+.duel-card-grid .card-head { font-size:12px; }
+.duel-card-grid .merchant-effect { min-height:77px; }
+.duel-card-grid .card-foot { font-size:10px; }
+.duel-card-grid .gem { width:14px; height:14px; margin:1px; }
+.duel-card-grid .stone-gems { gap:3px; }
+.duel-used-grid .merchant-card { min-height:162px; }
+.duel-empty { grid-column:1/-1; border:1px dashed #3f5760; color:#8fa5af; padding:17px; font-size:12px; border-radius:9px; min-height:72px; }
+.duel-player-footer { border-top:1px solid #35515c; padding-top:13px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.duel-player-footer > div { display:flex; flex-direction:column; gap:5px; max-width:65%; }
+.duel-player-footer b { font-size:12px; }
+.duel-player-footer span { font-size:11px; color:#b3c3c2; white-space:normal; }
+.duel-player-footer .rest-btn { font-size:12px; min-width:145px; }
+.duel-center { padding:clamp(14px,.85vw,28px); background:radial-gradient(ellipse at 50% 45%,#274643 0%,#172e35 55%,#122632 100%); display:flex; flex-direction:column; min-height:0; gap:clamp(16px,2vh,30px); }
+.duel-center-heading { border-bottom:1px solid #52716b; padding-bottom:13px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.duel-center-heading span { color:#e7c38c; font-size:13px; font-weight:750; letter-spacing:1.5px; }
+.duel-center-heading strong { color:#b5cecc; font-size:12px; font-weight:450; }
+.duel-market-title { display:flex; justify-content:space-between; align-items:center; gap:15px; margin-bottom:12px; }
+.duel-market-title h2 { font-size:22px; margin:0; color:#f0e2c3; letter-spacing:2px; }
+.duel-market-title span { color:#b3c9c7; font-size:12px; }
+.duel-center .golem-grid { grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
+.duel-center .golem-card { min-height:clamp(230px,25vh,335px); }
+.duel-center .golem-emblem { flex:1; }
+.duel-center .merchant-grid { grid-template-columns:repeat(6,minmax(0,1fr)); gap:10px; }
+.duel-center .merchant-card { min-height:clamp(196px,20vh,245px); padding:10px; }
+.duel-center .merchant-effect { min-height:90px; }
+.duel-center .stone-gems { gap:5px; }
+.duel-center .gem { width:17px; height:17px; margin:2px; }
+.duel-log { margin-top:auto; border:1px solid #385951; background:#0f292ac9; border-radius:10px; padding:14px; min-height:90px; }
+.duel-log-lines { display:grid; grid-template-columns:1fr 1fr; gap:8px 20px; }
+.duel-log-lines span { font-size:11px; color:#b7c9c8; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.duel-layout .final-alert { margin:0 0 8px; }
+@media (min-width:2800px) { .duel-card-grid { grid-auto-rows:minmax(183px,1fr); gap:13px; } .duel-card-grid .merchant-card { min-height:183px; } .duel-center .merchant-card { min-height:255px; } .duel-center .golem-card { min-height:320px; } .duel-player { gap:19px; } }
+@media (max-width:2300px) { .duel-table { grid-template-columns:minmax(300px,1fr) minmax(620px,1.48fr) minmax(300px,1fr); gap:12px; } .duel-card-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .duel-center .merchant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } .duel-center .golem-card { min-height:225px; } .duel-center { gap:14px; } }
+@media (max-width:1550px) { .duel-table { height:auto; min-height:0; grid-template-columns:1fr 1.3fr; } .duel-center { grid-column:2; grid-row:1 / span 2; } .duel-player { min-height:500px; } .duel-table>.duel-player:last-child { grid-column:1; grid-row:2; } .duel-hand,.duel-played { flex:auto; } .duel-card-grid { max-height:370px; grid-template-columns:repeat(3,minmax(0,1fr)); } .duel-center .merchant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:900px) { .layout.duel-layout { padding:8px 12px 26px; } .duel-table { display:flex; flex-direction:column; } .duel-player,.duel-center { overflow:visible; } .duel-player { min-height:0; } .duel-card-grid { max-height:330px; } .duel-center { order:0; } .duel-table>.duel-player:first-child { order:1; } .duel-table>.duel-player:last-child { order:2; } .duel-now { margin-left:auto; font-size:11px; padding:6px; } .duel-center .golem-grid { overflow-x:auto; grid-template-columns:repeat(5,170px); } .duel-center .merchant-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+
+/* V1.2：离线 AI 席位与 UWQHD 人机竞技桌布。 */
+.setup-players{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.setup-players label{display:block;margin:12px 0 8px}
+.setup-players select{width:100%}
+.ai-seat-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:16px 0 9px;font-size:13px;color:#efd49a}
+.ai-seat-heading span{font-size:11px;color:#a6b9ba}
+.ai-seat-picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+.ai-slot{display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 3px;border:1px dashed #4b6268;border-radius:8px;background:#102633;color:#81979d}
+.ai-slot b{font-size:12px}.ai-slot span{font-size:10px}
+.ai-slot.selected{border:1px solid #e0bd87;background:#3a322b;color:#f3d6a9}
+.setup-validation{font-size:12px;color:#a2caba}.setup-validation.invalid{color:#f2a28e}
+.ai-pause{white-space:nowrap;border-color:#b7965f}
+.ai-board-layout .ai-arena{display:grid;grid-template-columns:minmax(520px,1fr) minmax(900px,1.7fr) minmax(760px,1.45fr);gap:clamp(12px,.8vw,24px);height:calc(100dvh - 104px);min-height:780px}
+.ai-arena>.duel-player,.ai-arena>.duel-center{min-height:0}
+.ai-arena .duel-card-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ai-arena .duel-center .merchant-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+.ai-arena .duel-center .merchant-card{padding:8px}
+.ai-arena .duel-center .golem-grid{gap:8px}
+.ai-arena .duel-center .golem-card{min-height:clamp(205px,23vh,310px)}
+.ai-seat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:12px;min-height:0}
+.ai-seat{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;border:1px solid #36515d;border-radius:12px;background:linear-gradient(145deg,#192f3b,#0a202c);padding:12px;gap:8px}
+.ai-seat-active{border-color:#e6ba76;box-shadow:inset 0 0 0 1px #ac875b}
+.ai-seat-top{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #39545c;padding-bottom:9px}
+.ai-seat-top>div:first-child{display:grid;gap:3px}
+.ai-seat-tag{font-size:10px;color:#d9b774;letter-spacing:.1em}
+.ai-seat-top b{font-size:16px}.ai-seat-top small{font-size:10px;color:#9bb0b5}
+.ai-seat-score{display:flex;flex-direction:column;color:#e6c48b;font:28px Georgia,serif}
+.ai-seat-score small{font:10px sans-serif;text-align:right}
+.ai-seat-stock{display:flex;flex-direction:column;gap:5px;border:1px solid #324c59;border-radius:8px;padding:7px;min-height:50px}
+.ai-seat-stock>span{font-size:11px;color:#b1c9c5}
+.ai-seat-stock>div{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.ai-seat-stock .gem{width:12px;height:12px;margin:0}
+.ai-seat-stock .stone-gems{gap:3px}
+.ai-seat-zone{min-height:0;flex:1 1 0;display:flex;flex-direction:column;gap:6px}
+.ai-seat-zone>span{font-size:11px;font-weight:800}
+.ai-face-row{min-height:0;overflow-y:auto;scrollbar-width:thin;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:100px;align-content:start;gap:5px}
+.ai-face-row .merchant-card{min-height:0;min-width:0;padding:5px;border-radius:6px}
+.ai-face-row .card-head{font-size:9px}
+.ai-face-row .card-head small{font-size:8px}
+.ai-face-row .merchant-effect{min-height:0;gap:2px;margin:auto 0}
+.ai-face-row .effect-label,.ai-face-row .card-foot{display:none}
+.ai-face-row .effect-large{font-size:18px}
+.ai-face-row .trade-arrow{font-size:11px;line-height:1}
+.ai-face-row .stone-gems{gap:1px}
+.ai-face-row .stone-line{gap:2px}
+.ai-face-row .gem{width:9px;height:9px;margin:0}
+.ai-empty{padding:12px;border:1px dashed #3d5863;color:#8ba7ab;border-radius:6px;font-size:11px;grid-column:1/-1}
+.ai-seat-foot{border-top:1px solid #36525c;padding-top:8px;font-size:10px;color:#a9bcbf}
+@media(max-width:2400px){
+ .ai-board-layout .ai-arena{grid-template-columns:minmax(330px,1fr) minmax(650px,1.6fr) minmax(480px,1.3fr)}
+ .ai-arena .duel-center .merchant-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .ai-arena .duel-card-grid,.ai-face-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:1450px){
+ .ai-board-layout .ai-arena{display:flex;flex-direction:column;height:auto}
+ .ai-arena>.duel-player{min-height:510px;order:1}
+ .ai-arena>.duel-center{order:0}
+ .ai-arena>.ai-seat-grid{order:2}
+ .ai-seat-grid{grid-template-rows:none;grid-auto-rows:minmax(360px,auto)}
+ .ai-seat{min-height:360px}
+}
+@media(max-width:720px){.ai-seat-grid{gap:7px}.ai-seat{padding:6px}.ai-seat-picker{gap:3px}.ai-slot{padding:9px 2px}.ai-seat-score{font-size:20px}}
+@media(max-width:430px){.ai-seat-grid{grid-template-columns:1fr}.ai-seat{max-height:420px}}
+
+
+/* V1.3 five-player live table: real engine-backed dual-human layout. */
+html:has(.five-root),body:has(.five-root){height:100%;overflow:hidden}
+.five-root{height:100dvh;width:100%;overflow:hidden;padding:8px clamp(9px,.7vw,24px) 12px;background:radial-gradient(ellipse at 50% 0%,#243b47 0%,#09131d 65%);display:flex;flex-direction:column;gap:9px;font-size:13px}
+.five-root .five-topbar{height:58px;min-height:58px;display:flex;align-items:center;gap:15px;padding:0 7px 9px;border-bottom:1px solid #2f4958}
+.five-brand{display:flex;align-items:center;gap:9px;min-width:220px}.five-brand-gem{font:35px Georgia,serif;color:#e9cf99}.five-brand b{display:block;letter-spacing:2px;font-size:19px}.five-brand small{display:block;letter-spacing:2.5px;font-size:9px;color:#9aabb0}
+.five-turn{margin:auto;background:#2b302f;border:1px solid #736b54;padding:8px 18px;border-radius:10px;font-weight:700;color:#e9d1a2}.five-controls{display:flex;gap:8px}
+.five-final-alert{height:23px;min-height:23px;text-align:center;color:#eac992;font-size:12px}
+.five-board{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.22fr) minmax(0,1fr);gap:clamp(8px,.6vw,20px)}
+.five-player,.five-center{border:1px solid #314957;border-radius:15px;min-height:0;min-width:0;overflow:hidden;background:linear-gradient(145deg,#172633,#101e2a);box-shadow:0 8px 25px #0003}
+.five-player{display:flex;flex-direction:column;padding:14px;gap:12px}.five-player.five-active{border-color:#d0af78;box-shadow:inset 0 0 0 1px #836f51}
+.five-player-top{display:flex;align-items:center;justify-content:space-between;min-height:62px;border-bottom:1px solid #324554;padding-bottom:12px}
+.five-player-profile{display:flex;align-items:center;gap:10px;min-width:0}.five-num{border:1px solid #aa936a;color:#e8cd97;width:37px;height:37px;display:grid;place-items:center;border-radius:50%;font-size:17px}
+.five-player-profile strong{display:block;font-size:19px;max-width:26ch;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.five-player-profile small{display:block;color:#a6b5b8;font-size:11px;margin-top:5px}.five-active .five-player-profile small{color:#e5c88c}
+.five-player-points{text-align:right;color:#ebd3a4;flex:none}.five-player-points strong{font:700 29px Georgia,serif}.five-player-points small{display:block;font-size:10px;color:#a7b8bb}
+.five-rowhead{display:flex;align-items:center;justify-content:space-between;gap:7px;min-height:25px}.five-rowhead b{font-size:13px;font-weight:700;white-space:nowrap}.five-rowhead em{font-style:normal;color:#dfc18a;margin-left:5px}.five-rowhead>span{color:#91a5af;font-size:10px;white-space:nowrap}
+.five-stock{min-height:89px}.five-stones{display:flex;flex-wrap:wrap;gap:9px;align-items:center;min-height:58px;border:1px solid #243f4f;background:#0c1c29;padding:12px;border-radius:8px}.five-stones .gem{width:18px;height:18px}
+.five-cards-zone{display:flex;flex-direction:column;min-height:0}.five-hand-zone{flex:1 1 58%;}.five-played-zone{flex:0 1 26%;border-top:1px solid #344958;padding-top:8px;min-height:57px}.five-played-zone.five-folded{flex:0 0 34px}
+.five-hand-cards,.five-played-cards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-auto-rows:159px;gap:7px;overflow-y:auto;overflow-x:hidden;min-height:0;align-content:start;padding:3px;scrollbar-width:thin}
+.five-hand-cards{flex:1}.five-played-cards{flex:1;grid-auto-rows:118px}.five-folded .five-played-cards{display:none}
+.five-hand-cards .merchant-card,.five-played-cards .merchant-card{min-height:0;height:100%;padding:7px;overflow:hidden;border-radius:7px;box-shadow:0 2px 7px #0003}
+.five-hand-cards .card-head,.five-played-cards .card-head{font-size:11px}.five-hand-cards .card-head small,.five-played-cards .card-head small{font-size:9px}.five-hand-cards .merchant-effect,.five-played-cards .merchant-effect{min-height:0;gap:2px}
+.five-hand-cards .merchant-card .gem,.five-played-cards .merchant-card .gem{width:11px;height:11px;margin:0}.five-hand-cards .stone-gems,.five-played-cards .stone-gems{gap:2px}.five-hand-cards .stone-line,.five-played-cards .stone-line{gap:3px}.five-hand-cards .card-foot,.five-played-cards .card-foot{font-size:9px;padding-top:4px}.five-hand-cards .card-foot>span{display:none}
+.five-hand-cards .merchant-card.five-pinned{outline:2px solid #eac785;outline-offset:-2px}.five-hand-cards .merchant-card.five-pinned:after{content:'◆';position:absolute;right:7px;bottom:18px;font-size:9px;color:#d7b875}
+.five-tiny-buttons{display:flex;gap:4px}.five-tiny-buttons button,.five-fold{background:transparent;border:1px solid #344e5d;color:#aec0c7;padding:5px 7px;font-size:10px;border-radius:6px}.five-tiny-buttons .selected{background:#34444a;border-color:#a18b66;color:#f0d6a3}
+.five-player-foot{min-height:83px;border-top:1px solid #344958;padding-top:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}.five-player-foot>div{min-width:0;display:flex;flex-direction:column;gap:8px}.five-player-foot strong{font-size:12px}.five-player-foot span{font-size:11px;color:#a8bdc2;display:block;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.five-player-foot small{color:#b4c0bd}
+.five-rest{background:#283f48;color:#edd5a7;border:1px solid #7a7257;border-radius:8px;padding:12px 10px;font-weight:650;font-size:11px;white-space:nowrap}
+.five-center{display:flex;flex-direction:column;gap:9px;padding:12px}
+.five-ai-strip{flex:0 0 132px;min-height:0}.five-ai-cards{height:103px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.five-ai-item{border:1px solid #38505d;border-radius:9px;padding:9px;background:#142532;min-width:0;overflow:hidden}.five-ai-current{border-color:#cfaf71;background:#27343a}.five-ai-empty{display:grid;place-items:center;color:#637785;border-style:dashed}
+.five-ai-top{display:flex;align-items:center;justify-content:space-between;gap:4px}.five-ai-top b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px}.five-ai-top strong{white-space:nowrap;font:700 20px Georgia,serif;color:#ecd39b}.five-ai-top small{font:10px system-ui}.five-ai-stones{height:30px;display:flex;align-items:center;gap:4px;overflow:hidden}.five-ai-stones .gem{width:10px;height:10px;margin:0}.five-ai-stones .stone-gems{gap:3px}.five-ai-meta,.five-ai-log{font-size:10px;color:#a9bbc0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.five-ai-log{margin-top:4px;color:#7896a2}
+.five-market{display:flex;flex-direction:column;min-height:0}.five-golem-market{flex:1.08 1 0}.five-merchant-market{flex:.95 1 0}
+.five-golem-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;padding:2px 0}.five-golem-grid .golem-card{min-height:0;height:100%;padding:10px 8px 8px;border-radius:9px}.five-golem-grid .golem-emblem{min-height:0;flex:1}.five-golem-grid .emblem-inner{width:58px;height:58px;font-size:56px}.five-golem-grid .golem-points strong{font-size:28px}.five-golem-grid .gem{width:12px;height:12px;margin:0}.five-golem-grid .stone-gems{gap:4px}.five-golem-grid .golem-cost{gap:4px}
+.five-merchant-grid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:2px 0}.five-merchant-grid .merchant-card{min-height:0;height:100%;padding:7px;border-radius:8px}.five-merchant-grid .card-head{font-size:11px}.five-merchant-grid .merchant-effect{min-height:0;gap:4px}.five-merchant-grid .merchant-card .gem{width:12px;height:12px;margin:0}.five-merchant-grid .stone-gems{gap:2px}.five-merchant-grid .card-foot{font-size:9px}.five-merchant-grid .market-bonus{padding:3px;font-size:9px}
+.five-workbench{flex:0 0 198px;min-height:0;border:1px solid #425869;border-radius:11px;background:linear-gradient(120deg,#192c38,#122431);padding:11px 16px;overflow-y:auto;scrollbar-width:thin}
+.five-work-default{height:100%;display:flex;flex-direction:column;justify-content:center;gap:12px}.five-work-default strong{font-size:18px;color:#ead4a9}.five-work-default span{font-size:12px;color:#b6c7cc}.five-work-default small{font-size:11px;color:#859eaa}
+.five-inline-modal{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.five-inline-modal h2{font-size:17px;color:#f1d69f;margin:0 9px 0 0}.five-inline-modal p{font-size:11px;margin:2px 5px;color:#c3d3d4}.five-inline-modal .modal-progress{margin:5px}.five-inline-modal .modal-stock{min-height:30px;padding:5px 8px}.five-inline-modal .choice-row{gap:5px}.five-inline-modal .choice-btn{padding:5px 9px;font-size:11px}.five-inline-modal .stepper{padding:4px 10px;margin:0;gap:12px}.five-inline-modal .stepper button{width:30px;height:30px}.five-inline-modal .stepper strong{font-size:18px}.five-inline-modal .preview{padding:5px 9px;margin:0}.five-inline-modal .preview>div{margin-top:3px}.five-inline-modal .modal-actions{margin:4px 0;gap:8px}.five-inline-modal .primary-btn,.five-inline-modal .secondary-btn{padding:8px 12px}.five-inline-modal .selected{margin:4px 0}.five-inline-modal .gem{width:11px;height:11px}.five-inline-modal .stone-gems{gap:2px}
+.five-log{flex:0 0 20px;font-size:11px;color:#7d99a5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.five-root .merchant-card:focus-visible,.five-root .golem-card:focus-visible{outline:2px solid #f1d19c;outline-offset:2px}
+@media(min-width:2850px) and (min-height:1250px){.five-hand-cards{grid-auto-rows:195px}.five-played-cards{grid-auto-rows:142px}.five-ai-strip{flex-basis:148px}.five-ai-cards{height:119px}.five-workbench{flex-basis:220px}.five-golem-grid .emblem-inner{width:80px;height:80px;font-size:75px}.five-golem-grid .golem-points strong{font-size:34px}.five-golem-grid .gem{width:16px;height:16px}.five-merchant-grid .merchant-card .gem{width:16px;height:16px}}
+@media(max-width:2450px){.five-root .five-board{gap:8px}.five-player{padding:9px}.five-center{padding:9px}.five-hand-cards,.five-played-cards{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}.five-root .merchant-card .gem{width:10px;height:10px}.five-player-profile strong{font-size:15px}.five-merchant-grid{gap:4px}.five-golem-grid{gap:4px}.five-workbench{flex-basis:170px}}
+@media(max-width:1580px){.five-root{font-size:11px}.five-ai-strip{flex-basis:105px}.five-ai-cards{height:80px}.five-workbench{flex-basis:156px}.five-hand-cards,.five-played-cards{grid-template-columns:repeat(3,minmax(0,1fr))}.five-topbar{height:48px!important;min-height:48px!important}.five-golem-grid .golem-card{padding:4px}.five-golem-grid .golem-top{font-size:9px}.five-merchant-grid{grid-template-columns:repeat(3,minmax(0,1fr));overflow:auto;grid-auto-rows:120px}.five-merchant-grid .merchant-card{height:120px}.five-market .five-rowhead>span{display:none}}
+
+
+/* Enlarged merchant effect preview keeps gems count visible without moving the original. */
+.five-hover{position:fixed;z-index:40;width:220px;height:260px;pointer-events:none;filter:drop-shadow(0 15px 30px #0009)}
+.five-hover[hidden]{display:none!important}
+.five-hover .merchant-card{width:100%;height:100%;min-height:0;padding:15px;transform:none!important;border-radius:12px}
+.five-hover .card-head{font-size:16px}.five-hover .card-head small{font-size:13px}
+.five-hover .merchant-effect{min-height:135px}.five-hover .merchant-card .gem{width:19px;height:19px;margin:1px}
+.five-hover .stone-gems{gap:5px}.five-hover .card-foot{font-size:12px}
+
+/* Preserve the second human name while toggling the setup selector. */
+.name-inputs input[hidden]{display:none!important}
+</style>
+</head>
+<body><div id="app"></div><script>
+(()=>{'use strict';const STARTER_CARDS = [{ "id": "S01", "kind": "create", "output": [2, 0, 0, 0], "starter": true }, { "id": "S01", "kind": "create", "output": [2, 0, 0, 0], "starter": true }, { "id": "S01", "kind": "create", "output": [2, 0, 0, 0], "starter": true }, { "id": "S01", "kind": "create", "output": [2, 0, 0, 0], "starter": true }, { "id": "S01", "kind": "create", "output": [2, 0, 0, 0], "starter": true }, { "id": "S02", "kind": "upgrade", "steps": 2, "starter": true }, { "id": "S02", "kind": "upgrade", "steps": 2, "starter": true }, { "id": "S02", "kind": "upgrade", "steps": 2, "starter": true }, { "id": "S02", "kind": "upgrade", "steps": 2, "starter": true }, { "id": "S02", "kind": "upgrade", "steps": 2, "starter": true }];
+const MERCHANT_DECK = [{ "id": "M01", "kind": "trade", "input": [0, 0, 1, 0], "output": [1, 2, 0, 0] }, { "id": "M02", "kind": "trade", "input": [0, 0, 0, 2], "output": [1, 1, 3, 0] }, { "id": "M03", "kind": "trade", "input": [0, 0, 1, 0], "output": [0, 2, 0, 0] }, { "id": "M04", "kind": "trade", "input": [0, 0, 0, 2], "output": [0, 3, 2, 0] }, { "id": "M05", "kind": "trade", "input": [0, 0, 0, 1], "output": [1, 1, 1, 0] }, { "id": "M06", "kind": "trade", "input": [0, 0, 2, 0], "output": [2, 3, 0, 0] }, { "id": "M07", "kind": "trade", "input": [0, 0, 0, 1], "output": [0, 0, 2, 0] }, { "id": "M08", "kind": "trade", "input": [0, 1, 0, 0], "output": [3, 0, 0, 0] }, { "id": "M09", "kind": "trade", "input": [0, 0, 1, 0], "output": [4, 1, 0, 0] }, { "id": "M10", "kind": "trade", "input": [0, 0, 0, 1], "output": [3, 0, 1, 0] }, { "id": "M11", "kind": "trade", "input": [0, 0, 0, 1], "output": [2, 2, 0, 0] }, { "id": "M12", "kind": "trade", "input": [0, 0, 0, 1], "output": [0, 3, 0, 0] }, { "id": "M13", "kind": "trade", "input": [0, 3, 0, 0], "output": [2, 0, 2, 0] }, { "id": "M14", "kind": "trade", "input": [0, 0, 2, 0], "output": [0, 2, 0, 1] }, { "id": "M15", "kind": "trade", "input": [0, 2, 0, 0], "output": [3, 0, 1, 0] }, { "id": "M16", "kind": "trade", "input": [0, 0, 2, 0], "output": [2, 1, 0, 1] }, { "id": "M17", "kind": "trade", "input": [0, 2, 0, 0], "output": [2, 0, 0, 1] }, { "id": "M18", "kind": "trade", "input": [0, 0, 2, 0], "output": [0, 0, 0, 2] }, { "id": "M19", "kind": "trade", "input": [0, 3, 0, 0], "output": [0, 0, 0, 2] }, { "id": "M20", "kind": "trade", "input": [2, 0, 0, 0], "output": [0, 2, 0, 0] }, { "id": "M21", "kind": "trade", "input": [0, 3, 0, 0], "output": [0, 0, 3, 0] }, { "id": "M22", "kind": "trade", "input": [3, 0, 0, 0], "output": [0, 3, 0, 0] }, { "id": "M23", "kind": "trade", "input": [0, 2, 0, 0], "output": [0, 0, 2, 0] }, { "id": "M24", "kind": "trade", "input": [0, 0, 3, 0], "output": [0, 0, 0, 3] }, { "id": "M25", "kind": "trade", "input": [5, 0, 0, 0], "output": [0, 0, 3, 0] }, { "id": "M26", "kind": "trade", "input": [2, 0, 0, 0], "output": [0, 0, 1, 0] }, { "id": "M27", "kind": "trade", "input": [2, 0, 1, 0], "output": [0, 0, 0, 2] }, { "id": "M28", "kind": "trade", "input": [1, 1, 0, 0], "output": [0, 0, 0, 1] }, { "id": "M29", "kind": "trade", "input": [4, 0, 0, 0], "output": [0, 0, 2, 0] }, { "id": "M30", "kind": "trade", "input": [5, 0, 0, 0], "output": [0, 0, 0, 2] }, { "id": "M31", "kind": "trade", "input": [0, 3, 0, 0], "output": [1, 0, 1, 1] }, { "id": "M32", "kind": "trade", "input": [3, 0, 0, 0], "output": [0, 1, 1, 0] }, { "id": "M33", "kind": "trade", "input": [3, 0, 0, 0], "output": [0, 0, 0, 1] }, { "id": "M34", "kind": "trade", "input": [4, 0, 0, 0], "output": [0, 0, 1, 1] }, { "id": "M35", "kind": "create", "output": [4, 0, 0, 0] }, { "id": "M36", "kind": "create", "output": [0, 0, 0, 1] }, { "id": "M37", "kind": "create", "output": [0, 0, 1, 0] }, { "id": "M38", "kind": "create", "output": [2, 1, 0, 0] }, { "id": "M39", "kind": "create", "output": [3, 0, 0, 0] }, { "id": "M40", "kind": "create", "output": [1, 1, 0, 0] }, { "id": "M41", "kind": "create", "output": [1, 0, 1, 0] }, { "id": "M42", "kind": "create", "output": [0, 2, 0, 0] }, { "id": "M43", "kind": "upgrade", "steps": 3 }];
+const GOLEM_DECK = [{ "id": "G01", "points": 9, "cost": [2, 1, 0, 1] }, { "id": "G02", "points": 14, "cost": [0, 3, 0, 2] }, { "id": "G03", "points": 20, "cost": [0, 0, 0, 5] }, { "id": "G04", "points": 20, "cost": [1, 1, 1, 3] }, { "id": "G05", "points": 12, "cost": [1, 1, 1, 1] }, { "id": "G06", "points": 14, "cost": [0, 0, 2, 2] }, { "id": "G07", "points": 10, "cost": [0, 2, 2, 0] }, { "id": "G08", "points": 6, "cost": [2, 2, 0, 0] }, { "id": "G09", "points": 18, "cost": [0, 0, 2, 3] }, { "id": "G10", "points": 15, "cost": [2, 2, 0, 2] }, { "id": "G11", "points": 16, "cost": [1, 3, 1, 1] }, { "id": "G12", "points": 12, "cost": [1, 0, 2, 1] }, { "id": "G13", "points": 13, "cost": [0, 2, 3, 0] }, { "id": "G14", "points": 12, "cost": [0, 0, 4, 0] }, { "id": "G15", "points": 14, "cost": [2, 0, 0, 3] }, { "id": "G16", "points": 14, "cost": [3, 1, 1, 1] }, { "id": "G17", "points": 15, "cost": [0, 0, 5, 0] }, { "id": "G18", "points": 16, "cost": [0, 0, 0, 4] }, { "id": "G19", "points": 16, "cost": [0, 2, 0, 3] }, { "id": "G20", "points": 9, "cost": [3, 0, 2, 0] }, { "id": "G21", "points": 13, "cost": [2, 2, 2, 0] }, { "id": "G22", "points": 12, "cost": [0, 2, 0, 2] }, { "id": "G23", "points": 10, "cost": [0, 5, 0, 0] }, { "id": "G24", "points": 8, "cost": [2, 0, 2, 0] }, { "id": "G25", "points": 17, "cost": [0, 0, 3, 2] }, { "id": "G26", "points": 8, "cost": [0, 4, 0, 0] }, { "id": "G27", "points": 12, "cost": [0, 3, 2, 0] }, { "id": "G28", "points": 12, "cost": [0, 2, 1, 1] }, { "id": "G29", "points": 8, "cost": [2, 3, 0, 0] }, { "id": "G30", "points": 10, "cost": [2, 0, 0, 2] }, { "id": "G31", "points": 17, "cost": [2, 0, 2, 2] }, { "id": "G32", "points": 18, "cost": [1, 1, 3, 1] }, { "id": "G33", "points": 19, "cost": [0, 2, 2, 2] }, { "id": "G34", "points": 7, "cost": [3, 2, 0, 0] }, { "id": "G35", "points": 11, "cost": [3, 0, 0, 2] }, { "id": "G36", "points": 11, "cost": [2, 0, 3, 0] }];
+const MERCHANT_BY_ID = Object.fromEntries([...STARTER_CARDS, ...MERCHANT_DECK].map(m => [m.id, m]));
+const GOLEM_BY_ID = Object.fromEntries(GOLEM_DECK.map(g => [g.id, g]));
+if (STARTER_CARDS.length !== 10 || MERCHANT_DECK.length !== 43 || GOLEM_DECK.length !== 36)
+    throw Error('Wrong card count');
+if (new Set(STARTER_CARDS.map(x => x.id)).size !== 2 || new Set(MERCHANT_DECK.map(x => x.id)).size !== 43 || new Set(GOLEM_DECK.map(x => x.id)).size !== 36)
+    throw Error('Duplicate card ID');
+
+
+const COLOR_NAMES = ['黄', '绿', '蓝', '粉'];
+const count = (stock) => stock.reduce((s, v) => s + v, 0);
+const freshStock = () => [0, 0, 0, 0];
+const has = (available, needed) => needed.every((n, i) => available[i] >= n);
+const add = (a, b, factor = 1) => a.map((x, i) => x + b[i] * factor);
+const readable = (stock) => stock.map((n, i) => n ? `${COLOR_NAMES[i]}×${n}` : '').filter(Boolean).join('、') || '无';
+const fail = (message) => { throw new Error(message); };
+const requireThat = (condition, message) => { if (!condition)
+    fail(message); };
+const isColor = (i) => Number.isInteger(i) && i >= 0 && i <= 3;
+const clone = (game) => JSON.parse(JSON.stringify(game));
+function shuffled(array, random) {
+    const result = [...array];
+    for (let i = result.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [result[i], result[j]] = [result[j], result[i]];
+    }
+    return result;
+}
+function generator(seed) {
+    let value = seed >>> 0;
+    return () => { value = (Math.imul(value, 1664525) + 1013904223) >>> 0; return value / 4294967296; };
+}
+function createGame(playerNames, seed = Math.floor(Math.random() * 2 ** 32), aiSeats = []) {
+    requireThat(playerNames.length >= 2 && playerNames.length <= 5, '游戏人数必须为 2–5 人');
+    requireThat(playerNames.every(name => typeof name === 'string' && name.trim().length > 0 && name.trim().length <= 20), '玩家姓名不能为空且不超过 20 字');
+    requireThat(Array.isArray(aiSeats) && new Set(aiSeats).size === aiSeats.length && aiSeats.every(i => Number.isInteger(i) && i >= 0 && i < playerNames.length), 'AI 席位参数无效');
+    requireThat(aiSeats.length <= 4 && aiSeats.length < playerNames.length, '最多 4 名 AI，且至少 1 名人类玩家');
+    const random = generator(seed);
+    const merchantDeck = shuffled(MERCHANT_DECK.map(m => m.id), random);
+    const golemDeck = shuffled(GOLEM_DECK.map(g => g.id), random);
+    const game = {
+        version: 2,
+        players: playerNames.map((name, i) => ({
+            id: i, name: name.trim(), isAI: aiSeats.includes(i),
+            stock: i === 0 || i === 3 || i === 4 ? (i === 0 ? [3, 0, 0, 0] : [3, 1, 0, 0]) : [4, 0, 0, 0],
+            hand: ['S01', 'S02'], played: [], claimed: [], copper: 0, silver: 0, turns: 0,
+        })),
+        current: 0, merchantMarket: [], merchantDeck,
+        golemMarket: [], golemDeck,
+        copper: playerNames.length * 2, silver: playerNames.length * 2,
+        phase: 'turn', triggerPlayer: null, log: [], turnNumber: 1,
+    };
+    for (let i = 0; i < 6; i++)
+        drawMerchant(game);
+    for (let i = 0; i < 5; i++)
+        drawGolem(game);
+    record(game, `游戏开始，${game.players.length} 人对局，由 ${game.players[0].name} 先手`);
+    return game;
+}
+function drawMerchant(g) {
+    const id = g.merchantDeck.shift();
+    if (id)
+        g.merchantMarket.push({ id, bonus: freshStock() });
+}
+function drawGolem(g) {
+    const id = g.golemDeck.shift();
+    if (id)
+        g.golemMarket.push(id);
+}
+function record(g, message) {
+    g.log.unshift(message);
+    g.log = g.log.slice(0, 45);
+}
+function finishAction(g) {
+    const player = g.players[g.current];
+    if (count(player.stock) > 10) {
+        g.phase = 'overflow';
+        record(g, `${player.name} 商队超过 10 颗，需弃置 ${count(player.stock) - 10} 颗`);
+        return;
+    }
+    player.turns += 1;
+    const next = (g.current + 1) % g.players.length;
+    if (g.triggerPlayer !== null && next === 0) {
+        g.phase = 'finished';
+        record(g, '全体玩家完成本轮，游戏结束');
+    }
+    else {
+        g.current = next;
+        g.turnNumber += 1;
+    }
+}
+function applyPlay(g, a) {
+    const p = g.players[g.current];
+    const idx = p.hand.indexOf(a.cardId);
+    requireThat(idx >= 0, '只能打出当前手牌中的商人卡');
+    const card = MERCHANT_BY_ID[a.cardId];
+    requireThat(!!card, '未知商人卡');
+    let detail = '';
+    if (card.kind === 'create') {
+        requireThat(!a.steps?.length && a.repeats === undefined, '创造卡不接受额外参数');
+        p.stock = add(p.stock, card.output);
+        detail = `创造 ${readable(card.output)}`;
+    }
+    else if (card.kind === 'upgrade') {
+        const steps = a.steps ?? [];
+        requireThat(a.repeats === undefined && steps.length <= card.steps, `本卡最多升级 ${card.steps} 次`);
+        for (const source of steps) {
+            requireThat(isColor(source) && source < 3, '只能升级黄、绿、蓝水晶');
+            requireThat(p.stock[source] > 0, `没有可升级的${COLOR_NAMES[source]}水晶`);
+            p.stock[source]--;
+            p.stock[source + 1]++;
+        }
+        detail = `升级 ${steps.length} 次`;
+    }
+    else {
+        const n = a.repeats ?? 1;
+        requireThat(Number.isSafeInteger(n) && n >= 1 && n <= 10 && !a.steps?.length, '交易次数无效');
+        for (let i = 0; i < n; i++) {
+            requireThat(has(p.stock, card.input), `第 ${i + 1} 次交易的水晶不足`);
+            p.stock = add(add(p.stock, card.input, -1), card.output);
+        }
+        detail = `交易 ${n} 次：${readable(card.input)} → ${readable(card.output)}`;
+    }
+    p.hand.splice(idx, 1);
+    p.played.push(card.id);
+    record(g, `${p.name} 打出 ${detail}`);
+    finishAction(g);
+}
+function applyAcquire(g, a) {
+    const p = g.players[g.current];
+    requireThat(Number.isInteger(a.index) && a.index >= 0 && a.index < g.merchantMarket.length, '无效商人卡位置');
+    requireThat(Array.isArray(a.payment) && a.payment.length === a.index, `需要支付 ${a.index} 颗水晶`);
+    const remaining = [...p.stock];
+    for (const c of a.payment) {
+        requireThat(isColor(c) && remaining[c] > 0, '市场位置费用无效或水晶不足');
+        remaining[c]--;
+    }
+    for (let i = 0; i < a.index; i++)
+        g.merchantMarket[i].bonus[a.payment[i]]++;
+    const target = g.merchantMarket.splice(a.index, 1)[0];
+    p.stock = add(remaining, target.bonus);
+    p.hand.push(target.id);
+    drawMerchant(g);
+    record(g, `${p.name} 获取商人卡 ${target.id}（支付 ${a.payment.length}，收回卡上 ${count(target.bonus)} 颗）`);
+    finishAction(g);
+}
+function applyClaim(g, a) {
+    const p = g.players[g.current];
+    requireThat(Number.isInteger(a.index) && a.index >= 0 && a.index < g.golemMarket.length, '无效魔像卡位置');
+    const id = g.golemMarket[a.index];
+    const card = GOLEM_BY_ID[id];
+    requireThat(has(p.stock, card.cost), '商队水晶不足，无法认领该魔像');
+    p.stock = add(p.stock, card.cost, -1);
+    p.claimed.push(id);
+    let coin = '';
+    if (a.index === 0 && g.copper > 0) {
+        g.copper--;
+        p.copper++;
+        coin = '、获得铜币 3 分';
+    }
+    else if (a.index === 0 && g.copper === 0 && g.silver > 0) {
+        g.silver--;
+        p.silver++;
+        coin = '、获得银币 1 分';
+    }
+    else if (a.index === 1 && g.copper > 0 && g.silver > 0) {
+        g.silver--;
+        p.silver++;
+        coin = '、获得银币 1 分';
+    }
+    g.golemMarket.splice(a.index, 1);
+    drawGolem(g);
+    record(g, `${p.name} 认领 ${card.points} 分魔像${coin}`);
+    const target = g.players.length >= 4 ? 5 : 6;
+    if (p.claimed.length >= target && g.triggerPlayer === null) {
+        g.triggerPlayer = g.current;
+        record(g, `${p.name} 认领第 ${target} 张魔像，触发终局，本轮结束后结算`);
+    }
+    finishAction(g);
+}
+function applyAction(game, action) {
+    const g = clone(game);
+    requireThat(g.phase !== 'finished', '游戏已经结束');
+    const p = g.players[g.current];
+    if (g.phase === 'overflow') {
+        if (action.type !== 'discard')
+            throw new Error('必须先弃置超出上限的水晶');
+        const excess = count(p.stock) - 10;
+        requireThat(Array.isArray(action.colors) && action.colors.length === excess, `必须弃置恰好 ${excess} 颗`);
+        for (const color of action.colors) {
+            requireThat(isColor(color) && p.stock[color] > 0, '弃置的水晶不存在');
+            p.stock[color]--;
+        }
+        record(g, `${p.name} 弃置 ${excess} 颗水晶`);
+        g.phase = 'turn';
+        finishAction(g);
+        return g;
+    }
+    requireThat(action.type !== 'discard', '当前无需弃置水晶');
+    if (action.type === 'play')
+        applyPlay(g, action);
+    else if (action.type === 'acquire')
+        applyAcquire(g, action);
+    else if (action.type === 'claim')
+        applyClaim(g, action);
+    else if (action.type === 'rest') {
+        p.hand.push(...p.played);
+        p.played = [];
+        record(g, `${p.name} 休息，收回全部已打出商人卡`);
+        finishAction(g);
+    }
+    else
+        fail('未知行动类型');
+    return g;
+}
+function score(p) {
+    return p.claimed.reduce((sum, id) => sum + GOLEM_BY_ID[id].points, 0) + p.copper * 3 + p.silver + p.stock.slice(1).reduce((sum, x) => sum + x, 0);
+}
+function ranking(g) {
+    // 平分时本轮后手优先；实际结算在当前整轮完成以后发生。
+    return [...g.players].sort((a, b) => score(b) - score(a) || b.id - a.id);
+}
+function tradeLimit(available, cardId) {
+    const card = MERCHANT_BY_ID[cardId];
+    if (!card || card.kind !== 'trade')
+        return 0;
+    return Math.min(10, ...card.input.map((n, i) => n > 0 ? Math.floor(available[i] / n) : 10));
+}
+function legalClaimIndices(g) {
+    return g.golemMarket.flatMap((id, index) => has(g.players[g.current].stock, GOLEM_BY_ID[id].cost) ? [index] : []);
+}
+
+// @ts-nocheck
+/** 离线启发式 AI。候选动作须通过 applyAction 模拟，不读取隐藏牌库顺序。 */
+
+
+const COLORS = [0, 1, 2, 3];
+const VALUES = [1, 1.5, 2.05, 2.65];
+const weighted = stock => stock.reduce((s, n, i) => s + n * VALUES[i], 0);
+function targetValue(g, stock) {
+    if (!g.golemMarket.length)
+        return 0;
+    return Math.max(...g.golemMarket.map((id, i) => {
+        const card = GOLEM_BY_ID[id];
+        const shortage = card.cost.reduce((s, n, k) => s + Math.max(0, n - stock[k]) * VALUES[k], 0);
+        const matched = card.cost.reduce((s, n, k) => s + Math.min(n, stock[k]) * VALUES[k], 0);
+        return card.points * .24 + matched * .12 + (i === 0 && g.copper ? 1.3 : 0) - shortage * 1.33;
+    }));
+}
+const fitness = (g, stock) => targetValue(g, stock) + weighted(stock) * .10 - Math.max(0, count(stock) - 10) * 3;
+function chooseDiscard(g) {
+    const stock = [...g.players[g.current].stock], picked = [];
+    while (count(stock) > 10) {
+        let color = -1, best = -Infinity;
+        for (const c of COLORS) {
+            if (stock[c] === 0)
+                continue;
+            stock[c]--;
+            const value = fitness(g, stock);
+            stock[c]++;
+            if (value > best) {
+                color = c;
+                best = value;
+            }
+        }
+        if (color < 0)
+            throw Error('无法弃置超额水晶');
+        stock[color]--;
+        picked.push(color);
+    }
+    return picked;
+}
+function paymentVariants(stock, n) {
+    const result = [];
+    const search = (color, left, selected) => {
+        if (color === 4) {
+            if (left === 0)
+                result.push(selected);
+            return;
+        }
+        for (let k = 0; k <= Math.min(left, stock[color]); k++)
+            search(color + 1, left - k, selected.concat(Array(k).fill(color)));
+    };
+    search(0, n, []);
+    return result;
+}
+function upgradeVariants(stock, max) {
+    const result = [];
+    const search = (s, steps) => {
+        if (steps.length)
+            result.push(steps);
+        if (steps.length === max)
+            return;
+        for (const c of [0, 1, 2]) {
+            if (!s[c])
+                continue;
+            const next = [...s];
+            next[c]--;
+            next[c + 1]++;
+            search(next, steps.concat(c));
+        }
+    };
+    search([...stock], []);
+    return result;
+}
+function engineStrength(card, stock) {
+    if (card.kind === 'create')
+        return weighted(card.output) * .7;
+    if (card.kind === 'upgrade')
+        return card.steps * 1.24;
+    return Math.max(0, weighted(card.output) - weighted(card.input)) * .65 + 1 + (has(stock, card.input) ? .45 : 0);
+}
+function chooseAIAction(game) {
+    const g = game;
+    if (g.phase === 'finished')
+        throw Error('游戏结束，AI 无法行动');
+    const p = g.players[g.current];
+    if (!p?.isAI)
+        throw Error('当前行动者不是 AI');
+    if (g.phase === 'overflow')
+        return { action: { type: 'discard', colors: chooseDiscard(g) }, reason: '弃置超额水晶' };
+    const canClaim = g.golemMarket.flatMap((id, index) => {
+        const c = GOLEM_BY_ID[id];
+        if (!has(p.stock, c.cost))
+            return [];
+        const coin = index === 0 ? (g.copper ? 3 : g.silver ? 1 : 0) : index === 1 && g.silver && g.copper ? 1 : 0;
+        return [{ index, quality: c.points + coin * 1.6 }];
+    });
+    if (canClaim.length) {
+        canClaim.sort((a, b) => b.quality - a.quality);
+        return { action: { type: 'claim', index: canClaim[0].index }, reason: '认领魔像' };
+    }
+    const candidates = [], before = fitness(g, p.stock);
+    const offer = (action, bonus, reason) => {
+        try {
+            let sim = applyAction(g, action);
+            if (sim.phase === 'overflow')
+                sim = applyAction(sim, { type: 'discard', colors: chooseDiscard(sim) });
+            const next = sim.players[g.current];
+            let value = fitness(g, next.stock) - before + bonus;
+            if (action.type === 'acquire')
+                value -= Math.max(0, next.hand.length + next.played.length - 6) * .6;
+            candidates.push({ action, value, reason });
+        }
+        catch { }
+    };
+    for (const id of p.hand) {
+        const card = MERCHANT_BY_ID[id];
+        if (!card)
+            continue;
+        if (card.kind === 'create')
+            offer({ type: 'play', cardId: id }, .34, '创造水晶');
+        else if (card.kind === 'upgrade') {
+            for (const steps of upgradeVariants(p.stock, card.steps))
+                offer({ type: 'play', cardId: id, steps }, .3 + steps.length * .17, '升级水晶');
+        }
+        else {
+            for (let repeats = 1; repeats <= tradeLimit(p.stock, id); repeats++)
+                offer({ type: 'play', cardId: id, repeats }, .4, '交易水晶');
+        }
+    }
+    if (g.triggerPlayer === null && p.hand.length + p.played.length < 9) {
+        const stage = Math.max(.04, 1 - p.turns / 18);
+        g.merchantMarket.forEach((m, index) => {
+            if (index > count(p.stock))
+                return;
+            const card = MERCHANT_BY_ID[m.id];
+            const bonus = engineStrength(card, p.stock) * stage - index * .05;
+            for (const payment of paymentVariants(p.stock, index))
+                offer({ type: 'acquire', index, payment }, bonus, '获取商人卡');
+        });
+    }
+    const reclaim = p.played.reduce((s, id) => s + engineStrength(MERCHANT_BY_ID[id], p.stock), 0);
+    offer({ type: 'rest' }, p.played.length ? .22 + Math.min(2.6, reclaim * .23) : -2, '休息取回卡牌');
+    candidates.sort((a, b) => b.value - a.value);
+    if (!candidates.length)
+        throw Error('AI 无法选择合法行动');
+    return { action: candidates[0].action, reason: candidates[0].reason };
+}
+
+
+
+
+const KEY = 'crystal-corridor-game-v2-canonical';
+const COLOR = ['黄', '绿', '蓝', '粉'];
+const classColor = ['yellow', 'green', 'blue', 'pink'];
+const root = document.getElementById('app');
+let game = null;
+let modal = null;
+let handoff = false;
+let showHelp = false;
+let toast = '';
+let botPaused = false;
+let botTimer = null;
+try {
+    const saved = localStorage.getItem(KEY);
+    if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed?.version === 2 && Array.isArray(parsed.players) && parsed.players.length >= 2 && parsed.players.length <= 5 && parsed.players[parsed.current])
+            game = parsed;
+    }
+}
+catch { /* 浏览器禁用存储时仍可游玩 */ }
+function esc(value) { return String(value).replace(/[&<>"']/g, x => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[x] || x)); }
+// 卡面直接绘制实际水晶数量。颜色数量仅保留在屏幕阅读器的 aria-label 中。
+function stones(s, compact = false) {
+    return s.map((n, i) => n > 0
+        ? `<span class="stone-group ${compact ? 'stone-group-compact' : ''}" role="img" aria-label="${COLOR[i]}水晶 ${n} 颗"><span class="stone-gems">${Array.from({ length: n }, () => `<span aria-hidden="true" class="gem gem-${classColor[i]}"></span>`).join('')}</span></span>`
+        : '').filter(Boolean).join('') || '<span class="none">无</span>';
+}
+function merchantDescription(card) {
+    if (card.kind === 'create')
+        return `获得 ${readable(card.output)}`;
+    if (card.kind === 'upgrade')
+        return `最多升级 ${card.steps} 次`;
+    return `${readable(card.input)} → ${readable(card.output)}`;
+}
+function merchantCard(id, marketIndex, bonus, view = 'hand') {
+    const card = MERCHANT_BY_ID[id];
+    const title = card.kind === 'create' ? '创造' : card.kind === 'upgrade' ? '升级' : '交易';
+    const symbol = card.kind === 'create' ? '✦' : card.kind === 'upgrade' ? '⇧' : '⇄';
+    const effect = card.kind === 'create'
+        ? `<div class="effect-label">获得水晶</div><div class="stone-line">${stones(card.output, true)}</div>`
+        : card.kind === 'upgrade'
+            ? `<div class="effect-large">⇧ <strong>${card.steps}</strong></div><div class="effect-label">可连续升级</div>`
+            : `<div class="stone-line">${stones(card.input, true)}</div><div class="trade-arrow">↓</div><div class="stone-line">${stones(card.output, true)}</div>`;
+    const market = marketIndex !== undefined;
+    const playable = market || view === 'hand';
+    const tag = playable ? 'button' : 'div';
+    const actionAttr = market ? `data-action="get-merchant" data-index="${marketIndex}"` : view === 'hand' ? 'data-action="play-hand"' : '';
+    const bottom = market ? `<span>${marketIndex === 0 ? '免费获取' : `左侧压 ${marketIndex} 颗`}</span><b>获取 ↗</b>`
+        : view === 'played' ? '<span>已打出 · 休息后收回</span>'
+            : view === 'inactive' ? '<span>等待自己回合</span>'
+                : `<span>${card.starter ? '起始卡' : '商人卡'}</span><b>打出 ↗</b>`;
+    return `<${tag} ${playable ? 'type="button"' : ''} ${actionAttr} data-id="${id}" class="merchant-card card-${card.kind} ${view === 'played' ? 'played-face' : ''} ${view === 'inactive' ? 'inactive-face' : ''}" title="${esc(merchantDescription(card))}">
+    <div class="card-head"><span>${symbol} ${title}</span><small>${id}</small></div>
+    <div class="merchant-effect">${effect}</div><div class="card-foot">${bottom}</div>
+    ${market && bonus && count(bonus) > 0 ? `<div class="market-bonus">卡上水晶 ${stones(bonus, true)}</div>` : ''}
+  </${tag}>`;
+}
+function renderSetup() {
+    return `<main class="layout landing"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><span class="edition">V1.3 · 五人同屏</span></header>
+    <div class="landing-split"><section class="welcome-copy"><div class="eyebrow">桌游数字化 · AI 实战训练</div><h1>与晶石工匠，<br>角逐最佳引擎。</h1><p>支持 1～2 名人类与 0～3 名 AI，最多 5 人；双真人支持超宽屏同屏操作。</p><div class="feature-row"><span>◇ 3 个 AI 席位</span><span>◇ 自动行动</span><span>◇ 离线可玩</span></div></section>
+    <section class="setup-box"><div class="eyebrow">NEW GAME</div><h2>创建对局</h2><p class="hint">单真人搭配至少一名 AI；双真人固定使用左右两侧操作区。最多三名 AI。</p>
+    <div class="setup-players"><div><label for="humanCount">人类玩家</label><select id="humanCount"><option value="1">1 名</option><option value="2" selected>2 名</option></select></div>
+    <div><label for="botCount">AI 玩家</label><select id="botCount">${Array.from({ length: 4 }, (_, i) => `<option value="${i}" ${i === 3 ? 'selected' : ''}>${i} 名</option>`).join('')}</select></div></div>
+    <label>人类玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1"/><input maxlength="20" aria-label="玩家 2" value="玩家 2"/></div>
+    <div class="ai-seat-heading"><b>AI 玩家席位</b><span>最多 3 位</span></div><div class="ai-seat-picker">${Array.from({ length: 3 }, (_, i) => `<div data-ai-slot="${i}" class="ai-slot selected"><b>✧ AI ${i + 1}</b><span>已加入</span></div>`).join('')}</div>
+    <p id="setupValidation" class="setup-validation">合计 5 名参赛者</p>
+    <button class="primary-btn big" data-action="start">开始对局 <span>↗</span></button><p class="small-muted">独立学习原型，不使用原版插画。</p></section></div>
+    <footer class="footer"><a href="https://github.com/Xike-yuhuofei/Century" target="_blank" rel="noopener">项目仓库</a></footer></main>`;
+}
+function syncSetup() {
+    if (game)
+        return;
+    const humans = Number(root.querySelector('#humanCount')?.value || 2);
+    const bots = Number(root.querySelector('#botCount')?.value || 0);
+    const container = root.querySelector('#nameInputs');
+    if (!container)
+        return;
+    // Keep the second player's typed name when switching 2 -> 1 -> 2.
+    const nameInputs = [...container.querySelectorAll('input')];
+    nameInputs.forEach((input, i) => { input.hidden = i >= humans; });
+    for (const seat of root.querySelectorAll('[data-ai-slot]')) {
+        const selected = Number(seat.dataset.aiSlot) < bots;
+        seat.classList.toggle('selected', selected);
+        const state = seat.querySelector('span');
+        if (state)
+            state.textContent = selected ? '已加入' : '空席';
+    }
+    const valid = (humans === 1 || humans === 2) && bots >= 0 && bots <= 3 && humans + bots >= 2 && humans + bots <= 5;
+    const status = root.querySelector('#setupValidation');
+    if (status) {
+        status.textContent = valid ? `合计 ${humans + bots} 名参赛者` : humans === 1 && bots === 0 ? '单人模式至少需要 1 名 AI' : '总人数须为 2–5 人';
+        status.classList.toggle('invalid', !valid);
+    }
+    const start = root.querySelector('[data-action="start"]');
+    if (start)
+        start.disabled = !valid;
+}
+function playerCard(p, active) {
+    return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${p.isAI ? "AI" : p.id + 1}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
+}
+function golemCard(id, index, g) {
+    const golem = GOLEM_BY_ID[id];
+    const available = has(g.players[g.current].stock, golem.cost);
+    let bonus = '';
+    if (index === 0 && g.copper > 0)
+        bonus = `<span class="coin copper">铜 +3 · ${g.copper} 枚</span>`;
+    else if (index === 0 && g.copper === 0 && g.silver > 0)
+        bonus = `<span class="coin silver">银 +1 · ${g.silver} 枚</span>`;
+    else if (index === 1 && g.copper > 0 && g.silver > 0)
+        bonus = `<span class="coin silver">银 +1 · ${g.silver} 枚</span>`;
+    return `<button type="button" data-action="claim" data-index="${index}" class="golem-card ${available ? 'affordable' : ''}" aria-label="${golem.points} 分魔像，需 ${esc(readable(golem.cost))}">
+     <div class="golem-top">${bonus || '<span class="golem-tag">魔像卡</span>'}<span class="golem-num">${id}</span></div>
+     <div class="golem-emblem"><div class="emblem-inner">✧</div></div><div class="golem-points"><strong>${golem.points}</strong><small>POINTS</small></div>
+     <div class="golem-cost">${stones(golem.cost, true)}</div><div class="golem-action">${available ? '可认领 ↗' : '水晶不足'}</div></button>`;
+}
+/** 双人专用：左右玩家区域始终同时显示；中间共享市场。 */
+function renderDuelPlayer(g, index) {
+    const p = g.players[index];
+    const active = g.current === index && g.phase !== 'finished';
+    return `<section class="duel-player ${active ? 'duel-active' : 'duel-waiting'}" aria-label="${esc(p.name)}的游戏区域" data-player="${index}">
+    <header class="duel-player-head">
+      <div class="duel-player-title"><span class="duel-avatar">${p.isAI ? "AI" : index + 1}</span><div><div class="duel-name">${esc(p.name)}</div><span class="duel-status">${active ? (p.isAI ? '● AI 正在行动' : '● 当前行动方') : '○ 等待行动'} · ${p.turns} 回合</span></div></div>
+      <div class="duel-score"><b>${score(p)}</b><small>当前估分</small></div>
+    </header>
+    <div class="duel-stock"><div class="duel-minor-head"><b>商队</b><span class="capacity ${count(p.stock) > 10 ? 'over-capacity' : ''}">${count(p.stock)} / 10 颗</span></div><div class="resource-bar">${stones(p.stock)}</div></div>
+    <div class="duel-zone duel-hand"><div class="duel-minor-head"><b>手牌 · ${p.hand.length} 张</b><span>${active && !p.isAI ? '点击卡牌打出' : '正面公开展示'}</span></div>
+      <div class="duel-card-grid">${p.hand.length ? p.hand.map(id => merchantCard(id, undefined, undefined, active && !p.isAI ? 'hand' : 'inactive')).join('') : '<div class="duel-empty">手牌已全部打出，可以休息取回</div>'}</div></div>
+    <div class="duel-zone duel-played"><div class="duel-minor-head"><b>已打出 · ${p.played.length} 张</b><span>卡面朝上</span></div>
+      <div class="duel-card-grid duel-used-grid">${p.played.length ? p.played.map(id => merchantCard(id, undefined, undefined, 'played')).join('') : '<div class="duel-empty">暂无已打出卡牌</div>'}</div></div>
+    <footer class="duel-player-footer"><div><b>魔像 ${p.claimed.length} 张</b><span>${p.claimed.length ? p.claimed.map(id => `${GOLEM_BY_ID[id].points}分`).join(' · ') : '尚未认领'}</span><span>铜币 ${p.copper} · 银币 ${p.silver}</span></div>
+      <button type="button" class="rest-btn" data-action="rest" ${active && !p.isAI && g.phase === 'turn' ? '' : 'disabled'}>休息 · 收回卡牌 ↗</button></footer>
+  </section>`;
+}
+function renderDuelBoard(g) {
+    const target = 6;
+    const finished = g.phase === 'finished';
+    return `<main class="layout duel-layout"><header class="topbar duel-topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR · 双人同屏</span></div>
+    <div class="duel-now">${finished ? '本局结束' : `第 ${g.turnNumber} 手 · ${esc(g.players[g.current].name)} 行动中`}</div>
+    <div class="top-actions">${aiPauseControl(g)}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+    ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发，本轮结束后结算</div>' : ''}
+    <div class="duel-table">
+      ${renderDuelPlayer(g, 0)}
+      <div class="duel-center"><div class="duel-center-heading"><span>共享市场 · CENTER TABLE</span><strong>玩家双方均可查看所有卡牌</strong></div>
+        <section class="duel-market"><div class="duel-market-title"><h2>魔像市场</h2><span>剩余 ${g.golemDeck.length} 张 · 认领第 ${target} 张触发终局</span></div>
+        <div class="golem-grid">${g.golemMarket.map((id, i) => golemCard(id, i, g)).join('')}</div></section>
+        <section class="duel-market"><div class="duel-market-title"><h2>商人市场</h2><span>剩余 ${g.merchantDeck.length} 张 · 越靠右获取成本越高</span></div>
+        <div class="merchant-grid">${g.merchantMarket.map((m, i) => merchantCard(m.id, i, m.bonus)).join('')}</div></section>
+        <section class="duel-log"><div class="duel-minor-head"><b>行动记录</b><span>点击对应玩家手牌、市场牌或休息按钮完成行动</span></div>
+        <div class="duel-log-lines">${g.log.slice(0, 4).map(line => `<span>${esc(line)}</span>`).join('')}</div></section>
+      </div>
+      ${renderDuelPlayer(g, 1)}
+    </div>${finished ? renderResult(g) : ''}</main>`;
+}
+function aiPauseControl(g) {
+    if (!g.players.some(p => p.isAI) || g.phase === 'finished')
+        return '';
+    return `<button class="subtle-btn ai-pause" data-action="ai-pause">${botPaused ? '▶ 继续 AI' : 'Ⅱ 暂停 AI'}</button>`;
+}
+function renderAISeat(g, p) {
+    const active = g.current === p.id && g.phase !== 'finished';
+    return `<section class="ai-seat ${active ? 'ai-seat-active' : ''}" data-bot-seat="${p.id}" aria-label="${esc(p.name)}席位">
+    <div class="ai-seat-top"><div><span class="ai-seat-tag">AI · ${p.id}</span><b>${esc(p.name)}</b><small>${active ? (botPaused ? '已暂停' : '正在计算行动') : '等待回合'}</small></div><div class="ai-seat-score">${score(p)}<small>分</small></div></div>
+    <div class="ai-seat-stock"><span>商队 ${count(p.stock)}/10</span><div>${stones(p.stock, true)}</div></div>
+    <div class="ai-seat-zone"><span>手牌 · ${p.hand.length}</span><div class="ai-face-row">${p.hand.length ? p.hand.map(id => merchantCard(id, undefined, undefined, 'inactive')).join('') : '<span class="ai-empty">无手牌</span>'}</div></div>
+    <div class="ai-seat-zone"><span>已打出 · ${p.played.length}</span><div class="ai-face-row">${p.played.length ? p.played.map(id => merchantCard(id, undefined, undefined, 'played')).join('') : '<span class="ai-empty">暂无</span>'}</div></div>
+    <div class="ai-seat-foot">魔像 ${p.claimed.length} 张 · 铜币 ${p.copper} · 银币 ${p.silver}</div>
+  </section>`;
+}
+function renderSoloAIBoard(g) {
+    const human = g.players.find(p => !p.isAI);
+    const bots = g.players.filter(p => p.isAI);
+    const finished = g.phase === 'finished', target = g.players.length >= 4 ? 5 : 6;
+    return `<main class="layout duel-layout ai-board-layout"><header class="topbar duel-topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR · AI ARENA</span></div>
+    <div class="duel-now">${finished ? '对局结束' : `第 ${g.turnNumber} 手 · ${esc(g.players[g.current].name)} 行动中`}</div>
+    <div class="top-actions">${aiPauseControl(g)}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+    ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发，本轮结束后结算</div>' : ''}
+    <div class="ai-arena">
+      ${renderDuelPlayer(g, human.id)}
+      <div class="duel-center"><div class="duel-center-heading"><span>共享市场 · CENTER TABLE</span><strong>1 名人类 VS ${bots.length} 名 AI</strong></div>
+        <section class="duel-market"><div class="duel-market-title"><h2>魔像市场</h2><span>剩余 ${g.golemDeck.length} 张 · 第 ${target} 张触发终局</span></div><div class="golem-grid">${g.golemMarket.map((id, i) => golemCard(id, i, g)).join('')}</div></section>
+        <section class="duel-market"><div class="duel-market-title"><h2>商人市场</h2><span>剩余 ${g.merchantDeck.length} 张</span></div><div class="merchant-grid">${g.merchantMarket.map((m, i) => merchantCard(m.id, i, m.bonus)).join('')}</div></section>
+        <section class="duel-log"><div class="duel-minor-head"><b>对局记录</b><span>AI 自动行动</span></div><div class="duel-log-lines">${g.log.slice(0, 6).map(line => `<span>${esc(line)}</span>`).join('')}</div></section>
+      </div>
+      <aside class="ai-seat-grid">${bots.map(p => renderAISeat(g, p)).join('')}</aside>
+    </div>${finished ? renderResult(g) : ''}</main>`;
+}
+// Visual-only preferences; game engine owns card ownership, availability and turns.
+let fiveOrders = { 0: [], 1: [] };
+let fiveSorting = { 0: 'manual', 1: 'manual' };
+let fivePinned = { 0: [], 1: [] };
+let fiveFold = { 0: false, 1: false };
+let fiveDrag = null;
+function fiveHandOrder(p, side) {
+    const ids = p.hand;
+    const previous = fiveOrders[side].filter(id => ids.includes(id));
+    const ordered = [...previous, ...ids.filter(id => !previous.includes(id))];
+    fiveOrders[side] = ordered;
+    if (fiveSorting[side] === 'type') {
+        const level = { create: 0, upgrade: 1, trade: 2 };
+        const sorted = ordered.filter(id => !fivePinned[side].includes(id)).sort((x, y) => level[MERCHANT_BY_ID[x].kind] - level[MERCHANT_BY_ID[y].kind]);
+        return ordered.map(id => fivePinned[side].includes(id) ? id : sorted.shift());
+    }
+    return ordered;
+}
+function fiveHandCard(id, side, active) {
+    return merchantCard(id, undefined, undefined, active ? 'hand' : 'inactive')
+        .replace('class="merchant-card', `draggable="true" data-hand-owner="${side}" class="merchant-card ${fivePinned[side].includes(id) ? 'five-pinned' : ''}`);
+}
+function fivePlayer(g, side) {
+    const p = g.players[side], active = g.current === side && g.phase !== 'finished';
+    const hand = fiveHandOrder(p, side);
+    return `<section class="five-player ${active ? 'five-active' : ''}" aria-label="${esc(p.name)}的操作区" data-side="${side}">
+    <header class="five-player-top">
+      <div class="five-player-profile"><span class="five-num">${side + 1}</span><div><strong>${esc(p.name)}</strong><small>${active ? '● 当前行动' : '等待行动'} · 已行动 ${p.turns} 回合</small></div></div>
+      <div class="five-player-points"><strong>${score(p)}</strong><small>当前得分</small></div>
+    </header>
+    <div class="five-stock"><div class="five-rowhead"><b>商队水晶</b><span class="${count(p.stock) > 10 ? 'over-capacity' : ''}">${count(p.stock)} / 10</span></div><div class="five-stones">${stones(p.stock)}</div></div>
+    <div class="five-cards-zone five-hand-zone">
+      <div class="five-rowhead"><b>商人手牌 <em>${p.hand.length}</em></b><div class="five-tiny-buttons">
+        <button data-action="five-sort" data-side="${side}" data-mode="type" class="${fiveSorting[side] === 'type' ? 'selected' : ''}">按类型</button>
+        <button data-action="five-sort" data-side="${side}" data-mode="manual" class="${fiveSorting[side] === 'manual' ? 'selected' : ''}">自定义</button>
+      </div></div>
+      <div class="five-hand-cards" data-list-side="${side}">${hand.map(id => fiveHandCard(id, side, active)).join('') || '<div class="five-blank">手牌已打完。可执行休息或其他行动。</div>'}</div>
+    </div>
+    <div class="five-cards-zone five-played-zone ${fiveFold[side] ? 'five-folded' : ''}">
+      <div class="five-rowhead"><b>已打出 <em>${p.played.length}</em></b><button class="five-fold" data-action="five-fold" data-side="${side}">${fiveFold[side] ? '展开' : '折叠'} ${fiveFold[side] ? '▾' : '▴'}</button></div>
+      <div class="five-played-cards">${p.played.map(id => merchantCard(id, undefined, undefined, 'played')).join('') || '<div class="five-blank">尚未打出商人卡</div>'}</div>
+    </div>
+    <footer class="five-player-foot">
+      <div><div><strong>魔像 ${p.claimed.length} 张</strong><span>${p.claimed.map(id => GOLEM_BY_ID[id].points + '分').join(' · ') || '尚未认领'}</span></div><small>铜币 ${p.copper} · 银币 ${p.silver}</small></div>
+      <button class="five-rest" data-action="rest" ${!active || g.phase !== 'turn' ? 'disabled' : ''}>休息 · 回收商人卡</button>
+    </footer>
+  </section>`;
+}
+function fiveAI(g) {
+    const bots = g.players.filter(p => p.isAI);
+    return `<section class="five-ai-strip"><div class="five-rowhead"><b>AI 玩家 ${bots.length} / 3</b><span>自动行动 · 不占用真人区域</span></div><div class="five-ai-cards">${Array.from({ length: 3 }, (_, i) => {
+        const p = bots[i];
+        if (!p)
+            return '<div class="five-ai-item five-ai-empty">空席</div>';
+        const active = g.current === p.id && g.phase !== 'finished';
+        const last = g.log.find(line => line.startsWith(p.name + ' ')) || '尚未行动';
+        return `<article class="five-ai-item ${active ? 'five-ai-current' : ''}" title="${esc(last)}"><div class="five-ai-top"><b>${esc(p.name)}</b><strong>${score(p)} <small>分</small></strong></div><div class="five-ai-stones">${stones(p.stock, true)}</div><div class="five-ai-meta">商人 ${p.hand.length + p.played.length} · 魔像 ${p.claimed.length} · ${active ? '正在行动' : '等待'}</div><div class="five-ai-log">${esc(last)}</div></article>`;
+    }).join('')}</div></section>`;
+}
+function renderFiveBoard(g) {
+    const current = g.players[g.current], finished = g.phase === 'finished', target = g.players.length >= 4 ? 5 : 6;
+    return `<main class="five-root">
+    <header class="five-topbar"><div class="five-brand"><span class="five-brand-gem">◇</span><div><b>晶石回廊</b><small>CENTURY · GOLEM</small></div></div><div class="five-turn">第 ${g.turnNumber} 手 · ${finished ? '对局已结束' : esc(current.name) + ' 行动中'}</div>
+       <div class="five-controls">${aiPauseControl(g)}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新游戏</button></div></header>
+    ${g.triggerPlayer !== null && !finished ? '<div class="five-final-alert">终局已触发，本轮结束后计分</div>' : ''}
+    <div class="five-board">
+      ${fivePlayer(g, 0)}
+      <section class="five-center">
+        ${fiveAI(g)}
+        <section class="five-market five-golem-market"><div class="five-rowhead"><b>魔像市场 <em>5</em></b><span>第 ${target} 张触发终局 · 牌库剩余 ${g.golemDeck.length}</span></div>
+        <div class="five-golem-grid">${g.golemMarket.map((id, i) => golemCard(id, i, g)).join('')}</div></section>
+        <section class="five-market five-merchant-market"><div class="five-rowhead"><b>商人市场 <em>6</em></b><span>从左至右获取成本递增 · 牌库剩余 ${g.merchantDeck.length}</span></div>
+        <div class="five-merchant-grid">${g.merchantMarket.map((m, i) => merchantCard(m.id, i, m.bonus)).join('')}</div></section>
+        <section class="five-workbench ${modal ? 'five-work-active' : ''}">
+          ${modal && !finished ? `<div class="five-inline-modal">${modalBody()}</div>` : `<div class="five-work-default"><strong>${current.isAI ? 'AI 自动执行行动' : current.name + ' · 请选择行动'}</strong><span>打出手牌、获取商人、认领魔像或休息。点击卡牌查看或执行操作。</span><small>交易和升级在此处选择数量；当前商队 ${count(current.stock)} / 10</small></div>`}
+        </section>
+        <div class="five-log">${esc(g.log[0] || '对局已开始')}</div>
+      </section>
+      ${fivePlayer(g, 1)}
+    </div>
+    <div id="five-hover" class="five-hover" hidden></div>
+    ${finished ? renderResult(g) : ''}
+  </main>`;
+}
+function renderBoard(g) {
+    if (g.players.filter(p => !p.isAI).length === 2)
+        return renderFiveBoard(g);
+    if (g.players.filter(p => !p.isAI).length === 1 && g.players.some(p => p.isAI))
+        return renderSoloAIBoard(g);
+    if (g.players.length === 2)
+        return renderDuelBoard(g);
+    const p = g.players[g.current];
+    const target = g.players.length >= 4 ? 5 : 6;
+    const finished = g.phase === 'finished';
+    return `<main class="layout board-layout"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span>${aiPauseControl(g)}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+  <section class="players-strip">${g.players.map((x, i) => playerCard(x, i === g.current && !finished)).join('')}</section>
+  ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发！本轮完成后结算。</div>' : ''}
+  <section class="game-section"><div class="section-head"><div><span class="section-index">01 / THE GOLEMS</span><h2>魔像市场 <small>认领目标</small></h2></div><div class="section-meta">牌库剩余 ${g.golemDeck.length} 张 · 每人认领 ${target} 张触发终局</div></div>
+  <div class="golem-grid">${g.golemMarket.map((id, i) => golemCard(id, i, g)).join('')}</div></section>
+  <section class="game-section"><div class="section-head"><div><span class="section-index">02 / THE MERCHANTS</span><h2>商人市场 <small>构建引擎</small></h2></div><div class="section-meta">牌库剩余 ${g.merchantDeck.length} 张 · 越靠右获取成本越高</div></div>
+  <div class="merchant-grid">${g.merchantMarket.map((card, i) => merchantCard(card.id, i, card.bonus)).join('')}</div></section>
+  <section class="personal-zone"><div class="zone-head"><div><span class="section-index">03 / YOUR CARAVAN</span><h2>${esc(p.name)} 的回合 <small>${finished ? '已结束' : '请选择一个行动'}</small></h2></div><div class="resource-bar">${stones(p.stock)}<div class="capacity ${count(p.stock) > 10 ? 'over-capacity' : ''}">${count(p.stock)} / 10 颗</div></div></div>
+  <div class="personal-layout"><div class="hand-area"><div class="hand-heading"><b>当前手牌 <span>${p.hand.length} 张</span></b><span>点击卡牌执行打出</span></div><div class="hand-grid">${p.hand.length ? p.hand.map(id => merchantCard(id)).join('') : '<p class="empty-hand">没有可打出的商人卡。可以休息、获取或认领。</p>'}</div>
+  <div class="played"><b>已打出 ${p.played.length} 张</b> <span>${p.played.map(id => MERCHANT_BY_ID[id].kind === 'create' ? '创造' : MERCHANT_BY_ID[id].kind === 'upgrade' ? '升级' : '交易').join(' · ') || '无'}</span><button class="rest-btn" data-action="rest" ${finished ? 'disabled' : ''}>休息 · 收回已打出卡牌</button></div></div>
+  <aside class="right-column"><div class="score-panel"><h3>个人战绩</h3><div class="score-large">${score(p)} <span>当前估分</span></div><div class="score-breakdown"><span>魔像 ${p.claimed.reduce((s, id) => s + GOLEM_BY_ID[id].points, 0)} 分</span><span>铜币 ${p.copper} · 银币 ${p.silver}</span><span>非黄水晶 ${p.stock[1] + p.stock[2] + p.stock[3]} 分</span></div></div>
+  <div class="history"><h3>行动记录</h3>${g.log.slice(0, 7).map(line => `<p>${esc(line)}</p>`).join('')}</div></aside></div></section>
+  <footer class="footer">点击手牌：打出 · 点击市场：获取或认领 · 「休息」独占一回合。所有规则由本地引擎校验。</footer>
+  ${handoff && !finished ? `<div class="overlay cover"><div class="handoff-card"><div class="cover-symbol">◇</div><div class="eyebrow">PASS THE DEVICE</div><h2>轮到 ${esc(p.name)}</h2><p>请把设备交给下一位玩家，准备后再显示手牌。</p><button class="primary-btn big" data-action="ready">我已就位，显示游戏 ↗</button></div></div>` : ''}
+  ${finished ? renderResult(g) : ''}</main>`;
+}
+function renderResult(g) {
+    const result = ranking(g);
+    return `<div class="overlay cover"><section class="result-card"><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><b>${i + 1}. ${esc(p.name)}</b><span>${p.claimed.length} 张魔像</span><strong>${score(p)} 分</strong></div>`).join('')}</div><button class="primary-btn big" data-action="reset">开始新的一局 ↗</button></section></div>`;
+}
+function modalBody() {
+    if (!game || !modal)
+        return '';
+    const p = game.players[game.current];
+    const m = modal;
+    if (m.kind === 'upgrade') {
+        const card = MERCHANT_BY_ID[m.id];
+        return `<h2>升级水晶</h2><p>本张卡最多升级 <b>${card.steps}</b> 次，可连续升级同一颗水晶，例如 黄→绿→蓝。</p><div class="modal-progress">已使用 ${m.steps.length} / ${card.steps} 次</div><div class="modal-stock">${stones(m.draft)}</div><p class="modal-caption">点击要升级的水晶颜色：</p><div class="choice-row">${[0, 1, 2].map(c => `<button data-action="upgrade-step" data-color="${c}" ${m.kind === 'upgrade' && (m.steps.length >= card.steps || m.draft[c] === 0) ? 'disabled' : ''} class="choice-btn">${stones([0, 0, 0, 0].map((_, i) => i === c ? 1 : 0))} <span>→ ${COLOR[c + 1]}</span></button>`).join('')}</div><div class="modal-actions"><button class="secondary-btn" data-action="upgrade-undo" ${m.steps.length === 0 ? 'disabled' : ''}>撤销一步</button><button class="primary-btn" data-action="confirm-upgrade">确认打出</button></div>`;
+    }
+    if (m.kind === 'trade') {
+        const card = MERCHANT_BY_ID[m.id];
+        const max = tradeLimit(p.stock, m.id);
+        const repeats = m.repeats;
+        const forecast = p.stock.map((n, i) => n + (card.output[i] - card.input[i]) * repeats);
+        return `<h2>交易水晶</h2><p>每次支付 <strong>${readable(card.input)}</strong>，获得 <strong>${readable(card.output)}</strong>。</p><div class="stepper"><button data-action="trade-minus" ${m.repeats <= 1 ? 'disabled' : ''}>−</button><strong>${m.repeats} <small>次</small></strong><button data-action="trade-plus" ${m.repeats >= max ? 'disabled' : ''}>+</button></div><p class="modal-caption">本次最多可交易 ${max} 次</p><div class="preview"><b>交易后水晶</b><div>${stones(forecast)}</div>${count(forecast) > 10 ? `<p class="warn">回合结束需弃置 ${count(forecast) - 10} 颗</p>` : ''}</div><div class="modal-actions"><button class="secondary-btn" data-action="cancel">取消</button><button class="primary-btn" data-action="confirm-trade">确认交易</button></div>`;
+    }
+    if (m.kind === 'acquire') {
+        const target = game.merchantMarket[m.index];
+        const used = [0, 0, 0, 0];
+        m.payment.forEach(c => used[c]++);
+        const remain = p.stock.map((n, i) => n - used[i]);
+        return `<h2>获取商人卡</h2><p>获取第 <b>${m.index + 1}</b> 张：需向左侧每张商人卡各压 1 颗水晶，共 <b>${m.index}</b> 颗。</p><div class="preview"><b>${merchantDescription(MERCHANT_BY_ID[target.id])}</b><p>该卡附赠：${readable(target.bonus)}</p></div><div class="modal-progress">已选择 ${m.payment.length} / ${m.index} 颗</div><div class="modal-stock">${stones(remain)}</div><p class="modal-caption">按照从左到右的顺序选择支付水晶：</p><div class="choice-row">${[0, 1, 2, 3].map(c => `<button class="choice-btn" data-action="payment-pick" data-color="${c}" ${remain[c] === 0 || m.kind === 'acquire' && m.payment.length >= m.index ? 'disabled' : ''}>${stones([0, 0, 0, 0].map((_, i) => i === c ? 1 : 0))}</button>`).join('')}</div><p class="selected">${m.payment.length ? '已选择：' + m.payment.map(c => COLOR[c]).join(' → ') : '尚未选择'}</p><div class="modal-actions"><button class="secondary-btn" data-action="payment-undo" ${m.payment.length === 0 ? 'disabled' : ''}>撤销一颗</button><button class="primary-btn" data-action="confirm-acquire" ${m.payment.length !== m.index ? 'disabled' : ''}>确认获取</button></div>`;
+    }
+    const needed = count(p.stock) - 10;
+    const used = [0, 0, 0, 0];
+    m.colors.forEach(c => used[c]++);
+    const remain = p.stock.map((n, i) => n - used[i]);
+    return `<h2>商队容量管理</h2><p>水晶超过 10 颗，请自主选择弃置水晶。该次行动在弃置完成后结束。</p><div class="modal-progress">已选择弃置 ${m.colors.length} / ${needed} 颗</div><div class="modal-stock">${stones(remain)}</div><div class="choice-row">${[0, 1, 2, 3].map(c => `<button class="choice-btn" data-action="discard-pick" data-color="${c}" ${remain[c] === 0 || m.kind === 'discard' && m.colors.length >= needed ? 'disabled' : ''}>弃 ${COLOR[c]}</button>`).join('')}</div><p class="selected">${m.colors.length ? '已选择：' + m.colors.map(c => COLOR[c]).join('、') : '尚未选择'}</p><div class="modal-actions"><button class="secondary-btn" data-action="discard-undo" ${m.colors.length === 0 ? 'disabled' : ''}>撤销一颗</button><button class="primary-btn" data-action="confirm-discard" ${m.colors.length !== needed ? 'disabled' : ''}>确认弃置</button></div>`;
+}
+function renderRules() {
+    return `<div class="overlay" data-overlay="help"><section class="dialog help-dialog"><button class="close-modal" data-action="close-help">✕</button><div class="eyebrow">RULE BOOK</div><h2>规则速览</h2><div class="help-rows"><p><b>四类行动：</b>每回合选择 打出、获取、休息、认领 中的一项。</p><p><b>打出：</b>创造获得水晶；升级可逐级、可连续升级同一颗；交易可在一回合重复多次。</p><p><b>获取：</b>目标左侧每张卡上压 1 颗任意水晶，目标卡上的累计水晶归获取者。</p><p><b>休息：</b>取回全部已打出商人卡，占用完整一回合。</p><p><b>认领：</b>精确支付魔像需求。左一铜币 +3 分，左二银币 +1 分；铜币耗尽后银币移至最左。</p><p><b>容量：</b>你的回合结束最多保留 10 颗，超过时自行选择弃置。</p><p><b>终局：</b>2–3 人局认领第 6 张、4–5 人局认领第 5 张触发；完成当前整轮后结算。</p><p><b>计分：</b>魔像分 + 铜币×3 + 银币×1 + 剩余非黄水晶×1；平分时最后行动者获胜。</p></div><button class="primary-btn" data-action="close-help">返回游戏</button></section></div>`;
+}
+function render() {
+    root.innerHTML = `${game ? renderBoard(game) : renderSetup()}
+    ${modal && game && game.players.filter(p => !p.isAI).length !== 2 && !handoff && game.phase !== 'finished' ? `<div class="overlay" data-overlay="modal"><section class="dialog">${game.phase !== 'overflow' ? '<button class="close-modal" data-action="cancel">✕</button>' : ''}${modalBody()}</section></div>` : ''}
+    ${showHelp ? renderRules() : ''}${toast ? `<div class="toast" role="alert">${esc(toast)}</div>` : ''}`;
+    scheduleBot();
+}
+function save() { try {
+    if (game)
+        localStorage.setItem(KEY, JSON.stringify(game));
+    else
+        localStorage.removeItem(KEY);
+}
+catch { /* 可无存储运行 */ } }
+function notify(message) { toast = message; render(); }
+function action(a) {
+    if (!game)
+        return;
+    try {
+        const previous = game.current;
+        game = applyAction(game, a);
+        modal = game.phase === 'overflow' && !game.players[game.current].isAI ? { kind: 'discard', colors: [] } : null;
+        handoff = game.players.filter(p => !p.isAI).length !== 2 && game.players.length > 2 && game.current !== previous && game.phase !== 'finished' && !game.players[game.current].isAI && game.players.filter(p => !p.isAI).length > 1;
+        toast = '';
+        save();
+        render();
+    }
+    catch (e) {
+        notify(e instanceof Error ? e.message : '行动无法执行');
+    }
+}
+function start() {
+    const inputs = [...root.querySelectorAll('#nameInputs input')];
+    try {
+        const humans = Number(root.querySelector('#humanCount').value);
+        const bots = Number(root.querySelector('#botCount').value);
+        if ((humans !== 1 && humans !== 2) || bots < 0 || bots > 3 || humans + bots < 2 || humans + bots > 5 || inputs.length !== 2)
+            throw Error('请选择 1～2 名人类和 0～3 名 AI，且总人数至少 2 人');
+        const names = [...inputs.slice(0, humans).map(x => x.value), ...Array.from({ length: bots }, (_, i) => `AI 工匠 ${i + 1}`)];
+        game = createGame(names, undefined, Array.from({ length: bots }, (_, i) => humans + i));
+        fiveOrders = { 0: [], 1: [] };
+        fiveSorting = { 0: 'manual', 1: 'manual' };
+        fivePinned = { 0: [], 1: [] };
+        fiveFold = { 0: false, 1: false };
+        modal = null;
+        handoff = false;
+        botPaused = false;
+        showHelp = false;
+        toast = '';
+        save();
+        render();
+    }
+    catch (e) {
+        notify(e instanceof Error ? e.message : '无法开始游戏');
+    }
+}
+function control(target) {
+    const type = target.dataset.action || '';
+    if (type === 'start') {
+        start();
+        return;
+    }
+    if (type === 'reset') {
+        if (game?.phase !== 'finished' && !confirm('确定结束当前对局并重新开始吗？当前存档将被覆盖。'))
+            return;
+        game = null;
+        handoff = false;
+        showHelp = false;
+        modal = null;
+        botPaused = false;
+        toast = '';
+        save();
+        render();
+        return;
+    }
+    if (type === 'help') {
+        showHelp = true;
+        render();
+        return;
+    }
+    if (type === 'close-help') {
+        showHelp = false;
+        render();
+        return;
+    }
+    if (type === 'ready') {
+        handoff = false;
+        render();
+        return;
+    }
+    if (type === 'ai-pause') {
+        botPaused = !botPaused;
+        render();
+        return;
+    }
+    if (type === 'cancel') {
+        if (game?.phase === 'overflow')
+            return;
+        modal = null;
+        toast = '';
+        render();
+        return;
+    }
+    if (!game || game.phase === 'finished' || handoff || showHelp || game.players[game.current].isAI)
+        return;
+    if (game.phase === 'overflow' && !modal)
+        modal = { kind: 'discard', colors: [] };
+    const p = game.players[game.current];
+    const idx = Number(target.dataset.index);
+    const color = Number(target.dataset.color);
+    if (type === 'rest') {
+        action({ type: 'rest' });
+        return;
+    }
+    if (type === 'claim') {
+        action({ type: 'claim', index: idx });
+        return;
+    }
+    if (type === 'get-merchant') {
+        if (idx > count(p.stock)) {
+            notify(`当前仅有 ${count(p.stock)} 颗水晶，支付不起市场位置费用`);
+            return;
+        }
+        if (idx === 0) {
+            action({ type: 'acquire', index: 0, payment: [] });
+            return;
+        }
+        modal = { kind: 'acquire', index: idx, payment: [] };
+        render();
+        return;
+    }
+    if (type === 'play-hand') {
+        const id = target.dataset.id;
+        const card = MERCHANT_BY_ID[id];
+        if (!card)
+            return;
+        if (card.kind === 'create') {
+            action({ type: 'play', cardId: id });
+            return;
+        }
+        if (card.kind === 'upgrade')
+            modal = { kind: 'upgrade', id, steps: [], draft: [...p.stock] };
+        else if (tradeLimit(p.stock, id) > 0)
+            modal = { kind: 'trade', id, repeats: 1 };
+        else {
+            notify('现有水晶不足以执行该交易');
+            return;
+        }
+        render();
+        return;
+    }
+    if (!modal)
+        return;
+    if (modal.kind === 'upgrade') {
+        if (type === 'upgrade-step' && modal.steps.length < MERCHANT_BY_ID[modal.id].steps && color <= 2 && modal.draft[color] > 0) {
+            modal.draft[color]--;
+            modal.draft[color + 1]++;
+            modal.steps.push(color);
+            render();
+            return;
+        }
+        if (type === 'upgrade-undo' && modal.steps.length) {
+            const c = modal.steps.pop();
+            modal.draft[c]++;
+            modal.draft[c + 1]--;
+            render();
+            return;
+        }
+        if (type === 'confirm-upgrade') {
+            action({ type: 'play', cardId: modal.id, steps: modal.steps });
+            return;
+        }
+    }
+    if (modal.kind === 'trade') {
+        if (type === 'trade-minus') {
+            modal.repeats = Math.max(1, modal.repeats - 1);
+            render();
+            return;
+        }
+        if (type === 'trade-plus') {
+            modal.repeats = Math.min(tradeLimit(p.stock, modal.id), modal.repeats + 1);
+            render();
+            return;
+        }
+        if (type === 'confirm-trade') {
+            action({ type: 'play', cardId: modal.id, repeats: modal.repeats });
+            return;
+        }
+    }
+    if (modal.kind === 'acquire') {
+        if (type === 'payment-pick' && modal.payment.length < modal.index) {
+            const used = modal.payment.filter(c => c === color).length;
+            if (used < p.stock[color]) {
+                modal.payment.push(color);
+                render();
+            }
+            return;
+        }
+        if (type === 'payment-undo') {
+            modal.payment.pop();
+            render();
+            return;
+        }
+        if (type === 'confirm-acquire') {
+            action({ type: 'acquire', index: modal.index, payment: modal.payment });
+            return;
+        }
+    }
+    if (modal.kind === 'discard') {
+        if (type === 'discard-pick' && modal.colors.length < count(p.stock) - 10) {
+            const used = modal.colors.filter(c => c === color).length;
+            if (used < p.stock[color]) {
+                modal.colors.push(color);
+                render();
+            }
+            return;
+        }
+        if (type === 'discard-undo') {
+            modal.colors.pop();
+            render();
+            return;
+        }
+        if (type === 'confirm-discard') {
+            action({ type: 'discard', colors: modal.colors });
+            return;
+        }
+    }
+}
+function scheduleBot() {
+    if (botTimer !== null) {
+        clearTimeout(botTimer);
+        botTimer = null;
+    }
+    if (!game || game.phase === 'finished' || handoff || showHelp || modal || botPaused || !game.players[game.current]?.isAI)
+        return;
+    const player = game.current, turn = game.turnNumber;
+    botTimer = setTimeout(() => {
+        botTimer = null;
+        if (!game || game.current !== player || game.turnNumber !== turn || game.phase === 'finished' || handoff || showHelp || botPaused || !game.players[game.current]?.isAI)
+            return;
+        try {
+            action(chooseAIAction(game).action);
+        }
+        catch (e) {
+            botPaused = true;
+            notify('AI 行动异常，已暂停：' + (e instanceof Error ? e.message : String(e)));
+        }
+    }, 470);
+}
+// Non-game UI actions: folding, sorting and ordering do not consume a turn.
+function fiveUIControl(target) {
+    const action = target.dataset.action, side = Number(target.dataset.side);
+    if (!game || !['five-fold', 'five-sort'].includes(action || ''))
+        return false;
+    if (side !== 0 && side !== 1)
+        return true;
+    if (action === 'five-fold')
+        fiveFold[side] = !fiveFold[side];
+    if (action === 'five-sort')
+        fiveSorting[side] = target.dataset.mode === 'type' ? 'type' : 'manual';
+    render();
+    return true;
+}
+root.addEventListener('dragstart', event => {
+    const c = event.target.closest('.five-hand-cards .merchant-card[data-hand-owner]');
+    if (!c || !game)
+        return;
+    fiveDrag = { id: c.dataset.id || '', side: Number(c.dataset.handOwner) };
+    event.dataTransfer?.setData('text/plain', fiveDrag.id);
+    if (event.dataTransfer)
+        event.dataTransfer.effectAllowed = 'move';
+});
+root.addEventListener('dragover', event => {
+    const c = event.target.closest('.five-hand-cards .merchant-card[data-hand-owner]');
+    if (c && fiveDrag && Number(c.dataset.handOwner) === fiveDrag.side)
+        event.preventDefault();
+});
+root.addEventListener('drop', event => {
+    const c = event.target.closest('.five-hand-cards .merchant-card[data-hand-owner]');
+    if (!game || !fiveDrag || !c || Number(c.dataset.handOwner) !== fiveDrag.side)
+        return;
+    event.preventDefault();
+    const from = fiveDrag.id, to = c.dataset.id || '', side = fiveDrag.side;
+    const previous = fiveHandOrder(game.players[side], side);
+    const before = previous.indexOf(from), target = previous.indexOf(to);
+    const order = previous.filter(id => id !== from);
+    const position = order.indexOf(to);
+    if (before >= 0 && target >= 0 && position >= 0 && from !== to) {
+        order.splice(before < target ? position + 1 : position, 0, from);
+        fiveOrders[side] = order;
+        fiveSorting[side] = 'manual';
+    }
+    fiveDrag = null;
+    render();
+});
+root.addEventListener('dragend', () => { fiveDrag = null; });
+// Read-only enlarged card preview; pointer does not obstruct the table.
+root.addEventListener('pointerover', event => {
+    if (fiveDrag)
+        return;
+    const c = event.target.closest('.five-root .merchant-card');
+    const tip = root.querySelector('#five-hover');
+    if (!c || !tip)
+        return;
+    const id = c.dataset.id || '';
+    if (!MERCHANT_BY_ID[id])
+        return;
+    tip.innerHTML = merchantCard(id, undefined, undefined, 'inactive');
+    const r = c.getBoundingClientRect();
+    const w = 220, h = 260;
+    tip.style.left = (r.right + w + 15 < window.innerWidth ? r.right + 13 : Math.max(8, r.left - w - 13)) + 'px';
+    tip.style.top = Math.max(8, Math.min(window.innerHeight - h - 8, r.top - 5)) + 'px';
+    tip.hidden = false;
+});
+root.addEventListener('pointerout', event => {
+    const c = event.target.closest('.five-root .merchant-card');
+    const other = event.relatedTarget;
+    if (!c || other && c.contains(other))
+        return;
+    const tip = root.querySelector('#five-hover');
+    if (tip)
+        tip.hidden = true;
+});
+root.addEventListener('contextmenu', event => {
+    const c = event.target.closest('.five-hand-cards .merchant-card[data-hand-owner]');
+    if (!c)
+        return;
+    event.preventDefault();
+    const side = Number(c.dataset.handOwner), id = c.dataset.id || '';
+    if (side !== 0 && side !== 1)
+        return;
+    fivePinned[side] = fivePinned[side].includes(id) ? fivePinned[side].filter(x => x !== id) : [...fivePinned[side], id];
+    render();
+});
+root.addEventListener('click', event => {
+    const element = event.target;
+    const target = element.closest('[data-action]');
+    if (target && !target.hasAttribute('disabled') && !fiveUIControl(target))
+        control(target);
+});
+root.addEventListener('change', e => {
+    const target = e.target;
+    if (target.id === 'humanCount' || target.id === 'botCount')
+        syncSetup();
+});
+render();
+})();
+</script></body>
+</html>
