@@ -4,12 +4,34 @@ from playwright.sync_api import sync_playwright
 from browser_test_support import launch_browser
 
 ROOT = Path(__file__).resolve().parent.parent
-HTML = (ROOT / 'dist/standalone.html').as_uri()
+HTML = (ROOT / 'dist/mobile/index.html').as_uri()
+HTML_DESKTOP = (ROOT / 'dist/standalone.html').as_uri()
 KEY = 'crystal-corridor-game-v2-canonical'
 
 with sync_playwright() as pw:
     browser = launch_browser(pw)
     errors = []
+    # 独立手机版在大屏浏览器中也必须显示手机 UI，不能退回桌面版。
+    desktop_preview = browser.new_page(viewport={'width': 1440, 'height': 900})
+    desktop_preview.on('pageerror', lambda error: errors.append(str(error)))
+    desktop_preview.goto(HTML)
+    assert desktop_preview.locator('html[data-century-mode="mobile"]').count() == 1
+    desktop_preview.locator('[data-action="start"]').click()
+    assert desktop_preview.locator('.mobile-board').count() == 1
+    assert desktop_preview.locator('.duel-table').count() == 0
+    assert desktop_preview.locator('.mobile-board').evaluate('(el) => el.getBoundingClientRect().width') <= 641
+    assert desktop_preview.locator('.mobile-more .page-version-link').get_attribute('href') == '../'
+    desktop_preview.close()
+
+    # 原根目录入口仍保持桌面 UI，双入口复用同一规则引擎。
+    desktop = browser.new_page(viewport={'width': 1440, 'height': 900})
+    desktop.on('pageerror', lambda error: errors.append(str(error)))
+    desktop.goto(HTML_DESKTOP)
+    desktop.locator('[data-action="start"]').click()
+    assert desktop.locator('.mobile-board').count() == 0
+    assert desktop.locator('.duel-table').count() == 1
+    desktop.close()
+
     for width, height in [(320, 640), (390, 844), (430, 932)]:
         page = browser.new_page(
             viewport={'width': width, 'height': height},
@@ -106,4 +128,4 @@ with sync_playwright() as pw:
     assert page.locator('.help-dialog').count() == 0
     assert not errors, errors
     browser.close()
-print('手机端 320 / 390 / 430 / 横屏 932 与多人响应式回归通过')
+print('独立手机版 /mobile/ 与电脑版入口、320 / 390 / 430 / 横屏 932、多人回归通过')
