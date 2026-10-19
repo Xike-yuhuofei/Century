@@ -93,7 +93,12 @@ export const GOLEM_DECK: Golem[] = golemRows.flatMap(([points, costs]) =>
   costs.map(cost => ({ id: '', points, cost: stock(cost) }))
 ).map((x, i) => ({ ...x, id: `G${String(i + 1).padStart(2,'0')}` }));
 
-export const MERCHANT_BY_ID = Object.fromEntries([...STARTER_CARDS, ...MERCHANT_DECK].map(m => [m.id, m])) as Record<string, Merchant>;
+// 六人扩展模式中的第 6 人专用虚拟起始卡；不计入原版 89 张实体牌。
+export const HOUSE_STARTER_CARDS: Merchant[] = [
+  { id:'S6C', kind:'create', output:stock('2,0,0,0'), starter:true },
+  { id:'S6U', kind:'upgrade', steps:2, starter:true },
+];
+export const MERCHANT_BY_ID = Object.fromEntries([...STARTER_CARDS, ...HOUSE_STARTER_CARDS, ...MERCHANT_DECK].map(m => [m.id, m])) as Record<string, Merchant>;
 export const GOLEM_BY_ID = Object.fromEntries(GOLEM_DECK.map(g => [g.id, g])) as Record<string, Golem>;
 
 // 检查数据完整性；不要以「理论增益」替代真实的行动合法性校验。
