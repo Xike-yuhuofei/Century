@@ -424,6 +424,7 @@ function action(a: Action) {
   try {
     const previous = game.current;
     game = applyAction(game, a);
+    if (game.current !== previous) mobilePlayedOpen = false;
     modal = game.phase === 'overflow' && !game.players[game.current].isAI ? { kind:'discard', colors:[] } : null;
     handoff = game.players.length > 2 && game.current !== previous && game.phase !== 'finished' && !game.players[game.current].isAI && game.players.filter(p=>!p.isAI).length > 2;
     toast = '';
