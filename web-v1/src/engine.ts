@@ -11,6 +11,8 @@ export type Player = {
   copper: number;
   silver: number;
   turns: number;
+  /** AI seat; pre-V1.2 saves omit this field and remain human */
+  isAI?: boolean;
 };
 export type MarketMerchant = { id: string; bonus: Stock };
 export type Game = {
@@ -59,16 +61,18 @@ function generator(seed: number): () => number {
   let value = seed >>> 0;
   return () => { value = (Math.imul(value, 1664525) + 1013904223) >>> 0; return value / 4294967296; };
 }
-export function createGame(playerNames: string[], seed = Math.floor(Math.random() * 2 ** 32)): Game {
+export function createGame(playerNames: string[], seed = Math.floor(Math.random() * 2 ** 32), aiSeats: number[] = []): Game {
   requireThat(playerNames.length >= 2 && playerNames.length <= 5, '游戏人数必须为 2–5 人');
   requireThat(playerNames.every(name => typeof name === 'string' && name.trim().length > 0 && name.trim().length <= 20), '玩家姓名不能为空且不超过 20 字');
+  requireThat(Array.isArray(aiSeats) && new Set(aiSeats).size === aiSeats.length && aiSeats.every(i => Number.isInteger(i) && i >= 0 && i < playerNames.length), 'AI 席位参数无效');
+  requireThat(aiSeats.length <= 4 && aiSeats.length < playerNames.length, '最多 4 名 AI，且至少 1 名人类玩家');
   const random = generator(seed);
   const merchantDeck = shuffled(MERCHANT_DECK.map(m => m.id), random);
   const golemDeck = shuffled(GOLEM_DECK.map(g => g.id), random);
   const game: Game = {
     version: 1,
     players: playerNames.map((name, i) => ({
-      id: i, name: name.trim(),
+      id: i, name: name.trim(), isAI: aiSeats.includes(i),
       stock: i === 0 || i === 3 || i === 4 ? (i === 0 ? [3,0,0,0] : [3,1,0,0]) : [4,0,0,0],
       hand: [`S${i + 1}C`, `S${i + 1}U`], played: [], claimed: [], copper: 0, silver: 0, turns: 0,
     })),
