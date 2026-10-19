@@ -11,7 +11,7 @@ export type Player = {
   copper: number;
   silver: number;
   turns: number;
-  /** AI seat; pre-V1.2 saves omit this field and remain human */
+  /** AI 席位；旧版存档缺省为人类。 */
   isAI?: boolean;
 };
 export type MarketMerchant = { id: string; bonus: Stock };
@@ -62,10 +62,11 @@ function generator(seed: number): () => number {
   return () => { value = (Math.imul(value, 1664525) + 1013904223) >>> 0; return value / 4294967296; };
 }
 export function createGame(playerNames: string[], seed = Math.floor(Math.random() * 2 ** 32), aiSeats: number[] = []): Game {
-  requireThat(playerNames.length >= 2 && playerNames.length <= 5, '游戏人数必须为 2–5 人');
+  requireThat(playerNames.length >= 2 && playerNames.length <= 6, '游戏人数必须为 2–6 人（6 人仅限 2 真人 + 4 AI 扩展模式）');
   requireThat(playerNames.every(name => typeof name === 'string' && name.trim().length > 0 && name.trim().length <= 20), '玩家姓名不能为空且不超过 20 字');
-  requireThat(Array.isArray(aiSeats) && new Set(aiSeats).size === aiSeats.length && aiSeats.every(i => Number.isInteger(i) && i >= 0 && i < playerNames.length), 'AI 席位参数无效');
-  requireThat(aiSeats.length <= 4 && aiSeats.length < playerNames.length, '最多 4 名 AI，且至少 1 名人类玩家');
+  requireThat(Array.isArray(aiSeats) && new Set(aiSeats).size === aiSeats.length && aiSeats.every(n => Number.isInteger(n) && n >= 0 && n < playerNames.length), 'AI 席位序号无效');
+  requireThat(aiSeats.length <= 4 && aiSeats.length < playerNames.length, '最多 4 名 AI，且至少有 1 名人类玩家');
+  requireThat(playerNames.length !== 6 || (aiSeats.length === 4 && aiSeats.every(i => i >= 2)), '六人扩展仅允许 2 名人类 + 4 名 AI（固定后四席）');
   const random = generator(seed);
   const merchantDeck = shuffled(MERCHANT_DECK.map(m => m.id), random);
   const golemDeck = shuffled(GOLEM_DECK.map(g => g.id), random);
@@ -73,7 +74,7 @@ export function createGame(playerNames: string[], seed = Math.floor(Math.random(
     version: 2,
     players: playerNames.map((name, i) => ({
       id: i, name: name.trim(), isAI: aiSeats.includes(i),
-      stock: i === 0 || i === 3 || i === 4 ? (i === 0 ? [3,0,0,0] : [3,1,0,0]) : [4,0,0,0],
+      stock: i === 0 ? [3,0,0,0] : i === 1 || i === 2 ? [4,0,0,0] : [3,1,0,0], // 第六席沿用四/五号的起始水晶，仅供非官方扩展
       hand: ['S01', 'S02'], played: [], claimed: [], copper: 0, silver: 0, turns: 0,
     })),
     current: 0, merchantMarket: [], merchantDeck,
