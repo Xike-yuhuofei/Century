@@ -68,6 +68,18 @@ with sync_playwright() as pw:
         page.screenshot(path=str(ROOT / f'dist/mobile-{width}.png'), full_page=True)
         page.close()
 
+    landscape = browser.new_page(viewport={'width': 932, 'height': 430}, is_mobile=True, has_touch=True)
+    landscape.on('pageerror', lambda error: errors.append(str(error)))
+    landscape.goto(HTML)
+    landscape.select_option('#humanCount', '1')
+    landscape.select_option('#botCount', '1')
+    landscape.locator('[data-action="start"]').tap()
+    assert landscape.locator('.mobile-board').count() == 1
+    assert landscape.evaluate('document.documentElement.scrollWidth <= innerWidth')
+    assert landscape.locator('.mobile-stage').evaluate('(el) => el.getBoundingClientRect().height') >= 120
+    landscape.screenshot(path=str(ROOT / 'dist/mobile-landscape-932.png'), full_page=True)
+    landscape.close()
+
     page = browser.new_page(viewport={'width':390,'height':844}, is_mobile=True, has_touch=True)
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.goto(HTML)
@@ -94,4 +106,4 @@ with sync_playwright() as pw:
     assert page.locator('.help-dialog').count() == 0
     assert not errors, errors
     browser.close()
-print('手机端 320 / 390 / 430 与多人响应式回归通过')
+print('手机端 320 / 390 / 430 / 横屏 932 与多人响应式回归通过')
