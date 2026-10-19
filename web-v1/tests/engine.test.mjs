@@ -14,7 +14,8 @@ test('89 张牌结构正确，魔像分值由水晶费用核算', () => {
   assert.equal(MERCHANT_DECK.filter(x=>x.kind==='trade').length,34);
   assert.equal(MERCHANT_DECK.filter(x=>x.kind==='create').length,8);
   assert.equal(MERCHANT_DECK.filter(x=>x.kind==='upgrade').length,1);
-  assert.equal(new Set([...STARTER_CARDS,...MERCHANT_DECK].map(x=>x.id)).size,53);
+  assert.equal(new Set([...STARTER_CARDS,...MERCHANT_DECK].map(x=>x.id)).size,45);
+  assert.deepEqual(STARTER_CARDS.map(x=>x.id).sort(),[...Array(5).fill('S01'),...Array(5).fill('S02')]);
   assert.equal(new Set(GOLEM_DECK.map(x=>x.id)).size,36);
   assert.equal(MERCHANT_DECK.some(x=>x.kind==='trade' && String(x.input)==='0,0,0,1' && String(x.output)==='0,2,0,0'),false);
 });
@@ -37,25 +38,25 @@ test('开局 2–5 人，第一轮商队和市场配置正确',()=>{
 
 test('玩家每回合打出一次创造卡，卡牌进入已打出区且推进到下一玩家',()=>{
   const before=make();
-  const after=applyAction(before,{type:'play',cardId:'S1C'});
+  const after=applyAction(before,{type:'play',cardId:'S01'});
   assert.deepEqual(before.players[0].stock,[3,0,0,0]);
   assert.deepEqual(after.players[0].stock,[5,0,0,0]);
-  assert.deepEqual(after.players[0].played,['S1C']);
-  assert.deepEqual(after.players[0].hand,['S1U']);
+  assert.deepEqual(after.players[0].played,['S01']);
+  assert.deepEqual(after.players[0].hand,['S02']);
   assert.equal(after.players[0].turns,1);
   assert.equal(after.current,1);
-  assert.throws(()=>applyAction(after,{type:'play',cardId:'S1C'}),/只能打出/);
+  assert.throws(()=>applyAction(after,{type:'play',cardId:'S01'}),/只能打出/);
 });
 
 test('升级卡可以同一颗黄→绿→蓝、可以不使用满额',()=>{
   let g=make();
-  g=applyAction(g,{type:'play',cardId:'S1U',steps:[0,1]});
+  g=applyAction(g,{type:'play',cardId:'S02',steps:[0,1]});
   assert.deepEqual(g.players[0].stock,[2,0,1,0]);
-  assert.throws(()=>applyAction(moveTo(copy(g),1),{type:'play',cardId:'S2U',steps:[0,1,2]}),/最多升级/);
+  assert.throws(()=>applyAction(moveTo(copy(g),1),{type:'play',cardId:'S02',steps:[0,1,2]}),/最多升级/);
   const before=make();
-  const zero=applyAction(before,{type:'play',cardId:'S1U',steps:[]});
+  const zero=applyAction(before,{type:'play',cardId:'S02',steps:[]});
   assert.deepEqual(zero.players[0].stock,[3,0,0,0]);
-  assert.throws(()=>applyAction(make(),{type:'play',cardId:'S1U',steps:[2]}),/没有可升级/);
+  assert.throws(()=>applyAction(make(),{type:'play',cardId:'S02',steps:[2]}),/没有可升级/);
 });
 
 test('交易卡可以重复交易，必须每次都支付足够水晶',()=>{
@@ -87,7 +88,7 @@ test('获取卡需向左侧逐张压入水晶，并取走目标卡累计奖励',
 
 test('上限只在回合结束检查，需精确弃置后才能推进',()=>{
   const g=make(); g.players[0].stock=[10,0,0,0];
-  const over=applyAction(g,{type:'play',cardId:'S1C'});
+  const over=applyAction(g,{type:'play',cardId:'S01'});
   assert.equal(count(over.players[0].stock),12);
   assert.equal(over.current,0);
   assert.equal(over.phase,'overflow');
@@ -123,9 +124,9 @@ test('认领精准支付，铜银币位置及铜币耗尽后前移正确',()=>{
 });
 
 test('休息收回全部已打出卡并消费一回合',()=>{
-  const g=make(); g.players[0].hand=[]; g.players[0].played=['S1C','S1U'];
+  const g=make(); g.players[0].hand=[]; g.players[0].played=['S01','S02'];
   const after=applyAction(g,{type:'rest'});
-  assert.deepEqual(after.players[0].hand,['S1C','S1U']);
+  assert.deepEqual(after.players[0].hand,['S01','S02']);
   assert.deepEqual(after.players[0].played,[]);
   assert.equal(after.current,1);
 });
@@ -178,21 +179,22 @@ test('牌库存量守恒：获取/打出/休息仍保证所有可用卡牌唯一
       g=applyAction(g,{type:'discard',colors:xs});
     }
   }
-  const gameCardIds=[...g.merchantDeck,...g.merchantMarket.map(m=>m.id),...g.players.flatMap(p=>[...p.hand,...p.played])];
-  assert.equal(gameCardIds.length,43+4);
-  assert.equal(new Set(gameCardIds).size,gameCardIds.length);
+  const merchantIds=[...g.merchantDeck,...g.merchantMarket.map(m=>m.id),...g.players.flatMap(p=>[...p.hand,...p.played].filter(id=>id.startsWith('M')))];
+  assert.equal(merchantIds.length,43);
+  assert.equal(new Set(merchantIds).size,43);
+  g.players.forEach(p=>assert.deepEqual([...p.hand,...p.played].filter(id=>id.startsWith('S')).sort(),['S01','S02']));
   const golemCardIds=[...g.golemDeck,...g.golemMarket,...g.players.flatMap(p=>p.claimed)];
   assert.equal(golemCardIds.length,36);
   assert.equal(new Set(golemCardIds).size,36);
 });
 
-test('M29 已核验：蓝 1 颗换黄 4 颗与绿 1 颗（项目内部编号）',()=>{
+test('M29 与核校卡表一致：黄×4 → 蓝×2',()=>{
   const card=MERCHANT_BY_ID.M29;
   assert.equal(card.kind,'trade');
-  assert.deepEqual(card.input,[0,0,1,0]);
-  assert.deepEqual(card.output,[4,1,0,0]);
-  const g=make();g.players[0].hand.push('M29');g.players[0].stock=[0,0,1,0];
+  assert.deepEqual(card.input,[4,0,0,0]);
+  assert.deepEqual(card.output,[0,0,2,0]);
+  const g=make();g.players[0].hand.push('M29');g.players[0].stock=[4,0,0,0];
   const after=applyAction(g,{type:'play',cardId:'M29',repeats:1});
-  assert.deepEqual(after.players[0].stock,[4,1,0,0]);
+  assert.deepEqual(after.players[0].stock,[0,0,2,0]);
   assert.deepEqual(after.players[0].played,['M29']);
 });

@@ -2,7 +2,7 @@ import { GOLEM_BY_ID, MERCHANT_BY_ID, type Merchant, type Stock } from './data.j
 import { applyAction, count, createGame, has, ranking, readable, score, tradeLimit, type Action, type Color, type Game } from './engine.js';
 import { chooseAIAction } from './ai.js';
 
-const KEY = 'crystal-corridor-game-v1';
+const KEY = 'crystal-corridor-game-v2-canonical';
 const COLOR = ['黄','绿','蓝','粉'];
 const classColor = ['yellow','green','blue','pink'];
 const root = document.getElementById('app')!;
@@ -24,7 +24,7 @@ try {
   const saved = localStorage.getItem(KEY);
   if (saved) {
     const parsed: Game = JSON.parse(saved);
-    if (parsed?.version === 1 && Array.isArray(parsed.players) && parsed.players.length >= 2 && parsed.players.length <= 5 && parsed.players[parsed.current]) game = parsed;
+    if (parsed?.version === 2 && Array.isArray(parsed.players) && parsed.players.length >= 2 && parsed.players.length <= 5 && parsed.players[parsed.current]) game = parsed;
   }
 } catch { /* 浏览器禁用存储时仍可游玩 */ }
 

@@ -67,3 +67,10 @@ dist/standalone.html 直接用浏览器打开的版本
 - AI 自动创造、升级、交易、获取、休息、认领，超过 10 颗会主动弃置水晶。所有动作都经 applyAction 验证。
 - 支持暂停/继续 AI；AI 仅为基础启发式决策，不保证最优，也不使用网络。
 - 如使用源代码：`npm install && npm test && npm run build`，构建独立版 `dist/standalone.html`。
+
+## 五人 UI 与根目录卡牌映射（2026-10-19）
+
+- [双真人 + 0～3 AI 高保真 UI 原型](design-5p/index.html)，仅作交互演示；当前 V1 正式多玩家布局暂未与此设计集成。
+- 本次 V1 运行时代码与 `dist/standalone.html` 均已改用根目录 `data/cards.json` 的真实卡号和效果；起始卡 `S01` / `S02` 每人各一份。
+- 使用 `node scripts/sync-cards.mjs --check` 检验漂移，或者 `node scripts/sync-cards.mjs` 从根目录重建数据。
+- 与旧商人卡编号不兼容的历史浏览器存档采用版本 2 和独立 LocalStorage key 隔离，不会把旧牌误解释为新效果。

@@ -13,7 +13,7 @@ test('支持 1–4 位 AI 且必须至少 1 名人类',()=>{
 });
 test('AI 决策不应直接修改原始状态',()=>{
  const g=make(1);
- const next=applyAction(g,{type:'play',cardId:'S1C'});
+ const next=applyAction(g,{type:'play',cardId:'S01'});
  const snapshot=JSON.stringify(next);
  const choice=chooseAIAction(next);
  assert.equal(JSON.stringify(next),snapshot);

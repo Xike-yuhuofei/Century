@@ -7,8 +7,12 @@
   "scripts": {
     "build": "tsc && node scripts/build.mjs",
     "start": "npm run build && node scripts/serve.mjs",
-    "test": "npm run build && node --test tests/*.test.mjs"
+    "test": "node scripts/sync-cards.mjs --check && npm run build && node --test tests/*.test.mjs"
   },
-  "devDependencies": {"typescript": "^5.9.3"},
-  "engines": {"node": ">=20"}
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
 }

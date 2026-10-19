@@ -16,7 +16,7 @@ export type Player = {
 };
 export type MarketMerchant = { id: string; bonus: Stock };
 export type Game = {
-  version: 1;
+  version: 2;
   players: Player[];
   current: number;
   merchantMarket: MarketMerchant[];
@@ -70,11 +70,11 @@ export function createGame(playerNames: string[], seed = Math.floor(Math.random(
   const merchantDeck = shuffled(MERCHANT_DECK.map(m => m.id), random);
   const golemDeck = shuffled(GOLEM_DECK.map(g => g.id), random);
   const game: Game = {
-    version: 1,
+    version: 2,
     players: playerNames.map((name, i) => ({
       id: i, name: name.trim(), isAI: aiSeats.includes(i),
       stock: i === 0 || i === 3 || i === 4 ? (i === 0 ? [3,0,0,0] : [3,1,0,0]) : [4,0,0,0],
-      hand: [`S${i + 1}C`, `S${i + 1}U`], played: [], claimed: [], copper: 0, silver: 0, turns: 0,
+      hand: ['S01', 'S02'], played: [], claimed: [], copper: 0, silver: 0, turns: 0,
     })),
     current: 0, merchantMarket: [], merchantDeck,
     golemMarket: [], golemDeck,
