@@ -1,0 +1,38 @@
+name: V1.2 AI build and rule tests
+on:
+  push:
+    branches:
+      - feature/v1-ai-opponents-20261019
+    paths:
+      - 'web-v1/**'
+      - '.github/workflows/web-v1-ai.yml'
+permissions:
+  contents: write
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install TypeScript
+        working-directory: web-v1
+        run: npm install --no-audit --no-fund
+      - name: Compile and run rule/AI tests
+        working-directory: web-v1
+        run: npm test
+      - name: Regenerate standalone HTML
+        working-directory: web-v1
+        run: npm run build
+      - name: Save current standalone bundle
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add web-v1/dist/standalone.html
+          if ! git diff --cached --quiet; then
+            git commit -m "build(web-v1): refresh V1.2 AI standalone HTML"
+            git push
+          fi
