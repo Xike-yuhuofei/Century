@@ -55,9 +55,16 @@ with sync_playwright() as pw:
         page.wait_for_function("(key) => JSON.parse(localStorage.getItem(key)).players[0].played.includes('S01')", arg=KEY, timeout=30000)
         page.wait_for_function("(key) => JSON.parse(localStorage.getItem(key)).current === 0", arg=KEY, timeout=30000)
         assert page.locator('.mobile-played-label').inner_text().startswith('已打出 1')
-        page.locator('[data-action="toggle-played"]').tap()
+        page.locator('[data-action="mobile-toggle-played"]').tap()
         assert page.locator('.mobile-played-cards .played-face').count() == 1
-        page.locator('[data-action="toggle-played"]').tap()
+        page.locator('[data-action="mobile-toggle-played"]').tap()
+        page.locator('[data-action="mobile-tab"][data-tab="merchants"]').tap()
+        target_id = page.evaluate("(key) => JSON.parse(localStorage.getItem(key)).merchantMarket[1].id", KEY)
+        page.locator('.mobile-merchants [data-action="get-merchant"][data-index="1"]').tap()
+        assert page.locator('[data-action="payment-pick"]').count() == 4
+        page.locator('[data-action="payment-pick"][data-color="0"]').tap()
+        page.locator('[data-action="confirm-acquire"]').tap()
+        page.wait_for_function("([key,id]) => JSON.parse(localStorage.getItem(key)).players[0].hand.includes(id)", arg=[KEY,target_id])
         page.screenshot(path=str(ROOT / f'dist/mobile-{width}.png'), full_page=True)
         page.close()
 
