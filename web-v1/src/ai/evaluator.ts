@@ -5,6 +5,7 @@
 
 import { GOLEM_BY_ID, MERCHANT_BY_ID, type Golem, type Stock } from '../data.js';
 import type { AIParameters } from './parameters.js';
+import type { PressureModel } from './opponent-model.js';
 import { VALUES, weighted, stockCount, cloneStock, engineValue } from './knowledge.js';
 
 /** 距目标魔像的费用差距（按水晶价值加权）。 */
@@ -63,13 +64,16 @@ export function trimStock(
 }
 
 /** 商人卡获取价值：引擎增量 + 组合协同 + 目标契合 + 抢牌竞争。
- * engineWeight / synergyWeight / goalWeight / contestWeight 全部在此接入。 */
+ * engineWeight / synergyWeight / goalWeight / contestWeight 全部在此接入。
+ * 抢牌竞争项（审计整改）：mean 为平均需求热度，peak 为最强对手需求——
+ * 唯一急需该卡的对手不再被另外三名对手稀释；peak 高且高度契合当前
+ * 目标的卡按"关键商人卡"加急处理，抢牌价值随紧迫度放大。 */
 export function acquisitionValue(
   state: { stock: readonly number[]; hand: readonly string[]; played: readonly string[] },
   cardId: string,
   preferred: string | null,
   profile: { engine: number; contest: number },
-  pressure: Record<string, number>,
+  pressure: PressureModel,
   params: AIParameters,
 ): number {
   const card = MERCHANT_BY_ID[cardId];
@@ -92,6 +96,10 @@ export function acquisitionValue(
   const goalFit = target && card.output
     ? card.output.reduce((n, amount, i) => n + Math.min(amount, target.cost[i]) * VALUES[i], 0) / (weighted(target.cost) + 1)
     : 0;
+  const demand = pressure.mean[cardId] ?? 0;
+  const risk = pressure.peak[cardId] ?? 0;
+  // 被抢风险与目标契合叠加为紧迫度：越关键且越可能被抢，越值得立刻出手。
+  const urgency = 1 + (risk > 0 && goalFit > 0 ? goalFit : 0);
   return profile.engine * (raw * .6 * params.engineWeight + synergy * 2 * params.synergyWeight + goalFit * 2 * params.goalWeight)
-    + profile.contest * (pressure[cardId] ?? 0) * .9 * params.contestWeight;
+    + profile.contest * params.contestWeight * (demand * .45 + risk * urgency * .55) * .9;
 }

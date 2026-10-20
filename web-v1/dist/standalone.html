@@ -1324,6 +1324,10 @@ const PROFILES = [
     { name: '精算大师', engine: 1.0, tempo: 1.0, contest: 1.0 },
     { name: '战术大师', engine: 0.9, tempo: 1.0, contest: 1.5 },
 ];
+/** 中立人格：全部乘子为 1.0，等价于"无人格偏好"。
+ * 训练模拟器用它代理人类席位（正式游戏中人类席位的决策不走 profileFor，
+ * 代理席位因此不应叠加任何人格乘子，保证 4 个真实 AI 席位与正式游戏逐席一致）。 */
+const NEUTRAL_PROFILE = { name: '中立代理', engine: 1.0, tempo: 1.0, contest: 1.0 };
 /** 按公开席位结构推导当前行动者的人格。 */
 function profileFor(view) {
     const aiIndex = view.players.slice(0, view.current + 1).filter(p => p.isAI).length - 1;
@@ -1434,35 +1438,74 @@ function publicKnowledge(view) {
         unseenGolems: GOLEM_DECK.filter(c => !knownGolems.has(c.id)).map(c => c.id),
     };
 }
+/** 未来牌库对目标路线的期望支持度（纯公共知识，审计整改：让全局卡牌知识
+ * 真正参与战略规划）。对未翻开商人卡全集按当前库存与目标魔像求平均引擎价值：
+ * 一个目标若能被未来大概率出现的卡补足费用缺口，其长期可行性更高。
+ * 只使用卡牌全集构成，绝不推断翻牌顺序。 */
+function futureDeckSupport(stock, preferred, unseenMerchants) {
+    if (!unseenMerchants.length)
+        return 0;
+    const goal = GOLEM_BY_ID[preferred] ?? null;
+    let sum = 0;
+    for (const id of unseenMerchants) {
+        const card = MERCHANT_BY_ID[id];
+        if (card)
+            sum += cardEngineValue(card, stock, goal);
+    }
+    return sum / unseenMerchants.length;
+}
 
 /** 对手市场竞争模型（任务书 AI 4 战术大师维度）。
  * 基于全部公开信息估计对手对某张市场商人卡的需求压力，
  * 用于抢牌竞争权重（contestWeight）的求值输入。
+ *
+ * V4.0 修订（审计整改）：单一"平均压力"会把唯一急需该卡的对手
+ * 稀释进其余不感兴趣的对手里，导致 AI 低估被抢风险、错失关键商人卡。
+ * 现同时输出 mean（平均需求）与 peak（最强对手需求）两个维度，
+ * 求值端按"关键卡识别 + 被抢风险"组合使用。
  */
 
 
-/** 对手平均需求压力：0（无人感兴趣）– 1（所有人都高度契合）。 */
-function contestPressure(view, cardId) {
+/** 单个对手对某张商人卡的契合度：0（无兴趣）– 1（高度契合）。 */
+function opponentAffinity(view, cardId, opponent) {
     const card = MERCHANT_BY_ID[cardId];
     if (!card)
         return 0;
-    const opponents = view.players.filter(p => p.id !== view.current);
-    return opponents.reduce((sum, p) => {
-        const engine = [...p.hand, ...p.played].map(id => MERCHANT_BY_ID[id]).filter(Boolean);
-        const outputs = engine.reduce((tot, c) => {
-            if (c.output)
-                c.output.forEach((n, i) => { tot[i] += n; });
-            return tot;
-        }, [0, 0, 0, 0]);
-        const affinity = card.kind === 'trade'
-            ? card.input.reduce((v, n, i) => v + Math.min(n, p.stock[i] + outputs[i]) * VALUES[i], 0) / (weighted(card.input) + 1)
-            : card.kind === 'create' ? weighted(card.output) / 10 : card.steps / 5;
-        return sum + Math.min(1, affinity);
-    }, 0) / Math.max(1, opponents.length);
+    const engine = [...opponent.hand, ...opponent.played].map(id => MERCHANT_BY_ID[id]).filter(Boolean);
+    const outputs = engine.reduce((tot, c) => {
+        if (c.output)
+            c.output.forEach((n, i) => { tot[i] += n; });
+        return tot;
+    }, [0, 0, 0, 0]);
+    const affinity = card.kind === 'trade'
+        ? card.input.reduce((v, n, i) => v + Math.min(n, opponent.stock[i] + outputs[i]) * VALUES[i], 0) / (weighted(card.input) + 1)
+        : card.kind === 'create' ? weighted(card.output) / 10 : card.steps / 5;
+    return Math.min(1, affinity);
 }
-/** 全部市场卡的竞争压力表。 */
-function pressureMap(view) {
-    return Object.fromEntries(view.merchantMarket.map(m => [m.id, contestPressure(view, m.id)]));
+/** 对手平均需求压力：0（无人感兴趣）– 1（所有人都高度契合）。 */
+function contestPressure(view, cardId) {
+    const opponents = view.players.filter(p => p.id !== view.current);
+    if (!opponents.length)
+        return 0;
+    return opponents.reduce((sum, p) => sum + opponentAffinity(view, cardId, p), 0) / opponents.length;
+}
+/** 最强对手需求压力：取全部对手中的最高契合度。
+ * 一名对手极度需要时该值逼近 1，不再被其余对手稀释——
+ * 这正是"关键商人卡被下一家抢走"的公开信号。 */
+function peakPressure(view, cardId) {
+    const opponents = view.players.filter(p => p.id !== view.current);
+    if (!opponents.length)
+        return 0;
+    return Math.max(...opponents.map(p => opponentAffinity(view, cardId, p)));
+}
+function pressureModel(view) {
+    const mean = {};
+    const peak = {};
+    for (const m of view.merchantMarket) {
+        mean[m.id] = contestPressure(view, m.id);
+        peak[m.id] = peakPressure(view, m.id);
+    }
+    return { mean, peak };
 }
 
 /** 参数化求值器：引擎价值、目标差距、水晶保留价值与获取价值。
@@ -1520,7 +1563,10 @@ function trimStock(source, goals, preferred, params) {
     return { stock, discarded };
 }
 /** 商人卡获取价值：引擎增量 + 组合协同 + 目标契合 + 抢牌竞争。
- * engineWeight / synergyWeight / goalWeight / contestWeight 全部在此接入。 */
+ * engineWeight / synergyWeight / goalWeight / contestWeight 全部在此接入。
+ * 抢牌竞争项（审计整改）：mean 为平均需求热度，peak 为最强对手需求——
+ * 唯一急需该卡的对手不再被另外三名对手稀释；peak 高且高度契合当前
+ * 目标的卡按"关键商人卡"加急处理，抢牌价值随紧迫度放大。 */
 function acquisitionValue(state, cardId, preferred, profile, pressure, params) {
     const card = MERCHANT_BY_ID[cardId];
     if (!card)
@@ -1543,8 +1589,12 @@ function acquisitionValue(state, cardId, preferred, profile, pressure, params) {
     const goalFit = target && card.output
         ? card.output.reduce((n, amount, i) => n + Math.min(amount, target.cost[i]) * VALUES[i], 0) / (weighted(target.cost) + 1)
         : 0;
+    const demand = pressure.mean[cardId] ?? 0;
+    const risk = pressure.peak[cardId] ?? 0;
+    // 被抢风险与目标契合叠加为紧迫度：越关键且越可能被抢，越值得立刻出手。
+    const urgency = 1 + (risk > 0 && goalFit > 0 ? goalFit : 0);
     return profile.engine * (raw * .6 * params.engineWeight + synergy * 2 * params.synergyWeight + goalFit * 2 * params.goalWeight)
-        + profile.contest * (pressure[cardId] ?? 0) * .9 * params.contestWeight;
+        + profile.contest * params.contestWeight * (demand * .45 + risk * urgency * .55) * .9;
 }
 
 /** 多回合束搜索规划器（V3.0 结构 + V4.0 参数化）。
@@ -1559,7 +1609,6 @@ function acquisitionValue(state, cardId, preferred, profile, pressure, params) {
  *   纯即时质量剪枝会系统性淘汰唯一能收回已打出卡的路线；
  *   现为每层最佳休息后继保留一个束席位（main 分支预置失败测试的根因）。
  */
-
 
 
 
@@ -1754,13 +1803,16 @@ function stateKey(state) {
     return [state.stock.join(','), [...state.hand].sort().join(','), [...state.played].sort().join(','),
         state.merchantMarket.map(x => x.id).join(','), state.golemMarket.join(','), state.acquired].join('|');
 }
-/** 中间层评分：向目标推进的势头（restWeight 作用于含休息的路线）。 */
-function searchGrade(state, preferred, stage, profile, pressure, params) {
+/** 中间层评分：向目标推进的势头（restWeight 作用于含休息的路线）。
+ * futureSupport：未翻开牌库对该目标的期望支持度（公共知识），
+ * 让目标选择考虑"未来能否补足费用缺口"，而非只看当下统计数量。 */
+function searchGrade(state, preferred, stage, profile, pressure, params, futureSupport) {
     const goal = GOLEM_BY_ID[preferred];
     const gap = goalGap(state.stock, goal);
     const restFactor = state.path.at(-1)?.type === 'rest' ? params.restWeight : 1;
     return -gap * 2.6 + weighted(state.stock) * .13 * params.capacityWeight
         + engineValue(state, preferred) * stage * .22 * profile.engine * params.engineWeight
+        + futureSupport * stage * .45 * profile.engine * params.engineWeight
         + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params), 0) * stage * .35
         - state.steps * .35 * profile.tempo * params.tempoWeight * restFactor
         - state.acquired * .15;
@@ -1775,11 +1827,13 @@ function routeGrade(state, preferred, stage, profile, params) {
 function completedFirstGoal(state, preferred) {
     return !state.golemMarket.includes(preferred);
 }
-/** 主规划入口：只依赖 AIObservation 与参数集，不接触任何隐藏信息。 */
-function choosePlan(view, params) {
-    const profile = profileFor(view);
+/** 主规划入口：只依赖 AIObservation 与参数集，不接触任何隐藏信息。
+ * profileOverride：显式人格（训练模拟器按正式游戏席位映射注入）；
+ * 缺省时沿用 profileFor 的席位推导，正式游戏行为不变。 */
+function choosePlan(view, params, profileOverride) {
+    const profile = profileOverride ?? profileFor(view);
     const knowledge = publicKnowledge(view);
-    const pressure = pressureMap(view);
+    const pressure = pressureModel(view);
     const initial = initialState(view);
     const threshold = view.players.length >= 4 ? 5 : 6;
     const mostClaimed = Math.max(...view.players.map(p => p.claimed.length));
@@ -1791,6 +1845,8 @@ function choosePlan(view, params) {
     const stage = Math.pow(rawStage, params.endgameWeight);
     let solved = null, prospective = null;
     for (const preferred of initial.golemMarket) {
+        // 每个目标只算一次未来牌库支持度（纯公共知识，成本可控）。
+        const futureSupport = futureDeckSupport(initial.stock, preferred, knowledge.unseenMerchants);
         let beam = [{ ...initial, quality: 0 }];
         // 血统救援：休息及其后续推进状态共同构成"唯一可行的收卡路线"，
         // 每层为该血统的最佳后继保留一个束席位，防止即时质量剪枝饿死整条路线。
@@ -1816,7 +1872,7 @@ function choosePlan(view, params) {
                             solved = { ...next, preferred, quality };
                         continue;
                     }
-                    const quality = searchGrade(next, preferred, stage, profile, pressure, params);
+                    const quality = searchGrade(next, preferred, stage, profile, pressure, params, futureSupport);
                     const scored = { ...next, quality };
                     const key = stateKey(next);
                     if (!successors.has(key) || successors.get(key).quality < quality)
@@ -1855,6 +1911,7 @@ function choosePlan(view, params) {
                 const expected = GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(candidate.stock, GOLEM_BY_ID[preferred]) / 3)
                     + engineValue(candidate, preferred) * stage * .12 * profile.engine * params.engineWeight
                     + candidate.newCards.reduce((sum, id) => sum + acquisitionValue(candidate, id, preferred, profile, pressure, params), 0) * stage * .32
+                    + futureSupport * stage * .25 * profile.engine * params.engineWeight
                     - candidate.steps * .09 * profile.tempo * params.tempoWeight;
                 if (!prospective || expected > prospective.quality)
                     prospective = { ...candidate, preferred, quality: expected };
@@ -1892,7 +1949,7 @@ function chooseAIAction(game, options) {
     }
     // 决策只使用公开观察；隐藏牌库顺序在观察中不存在。
     const view = buildObservation(game);
-    const plan = choosePlan(view, params);
+    const plan = choosePlan(view, params, options?.profile);
     const action = plan?.first ?? { type: 'rest' };
     // 搜索转移为快速本地模型；真正的第一步必须由正式规则引擎再次核实。
     try {

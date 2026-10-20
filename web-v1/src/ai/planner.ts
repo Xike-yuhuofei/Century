@@ -15,11 +15,10 @@ import { GOLEM_BY_ID, MERCHANT_BY_ID, type Stock } from '../data.js';
 import { has, tradeLimit, type Action, type Color, type MarketMerchant } from '../engine.js';
 import type { AIParameters } from './parameters.js';
 import type { AIObservation } from './observation.js';
-import { weighted, stockCount, cloneStock, engineValue } from './knowledge.js';
+import { weighted, stockCount, cloneStock, engineValue, publicKnowledge, futureDeckSupport } from './knowledge.js';
 import { goalGap, keepValue, trimStock, acquisitionValue } from './evaluator.js';
 import { profileFor, type Profile } from './profiles.js';
-import { publicKnowledge } from './knowledge.js';
-import { pressureMap } from './opponent-model.js';
+import { pressureModel, type PressureModel } from './opponent-model.js';
 
 export type SearchState = {
   stock: Stock;
@@ -205,20 +204,24 @@ function stateKey(state: SearchState): string {
     state.merchantMarket.map(x => x.id).join(','), state.golemMarket.join(','), state.acquired].join('|');
 }
 
-/** 中间层评分：向目标推进的势头（restWeight 作用于含休息的路线）。 */
+/** 中间层评分：向目标推进的势头（restWeight 作用于含休息的路线）。
+ * futureSupport：未翻开牌库对该目标的期望支持度（公共知识），
+ * 让目标选择考虑"未来能否补足费用缺口"，而非只看当下统计数量。 */
 function searchGrade(
   state: SearchState,
   preferred: string,
   stage: number,
   profile: Profile,
-  pressure: Record<string, number>,
+  pressure: PressureModel,
   params: AIParameters,
+  futureSupport: number,
 ): number {
   const goal = GOLEM_BY_ID[preferred];
   const gap = goalGap(state.stock, goal);
   const restFactor = state.path.at(-1)?.type === 'rest' ? params.restWeight : 1;
   return -gap * 2.6 + weighted(state.stock) * .13 * params.capacityWeight
     + engineValue(state, preferred) * stage * .22 * profile.engine * params.engineWeight
+    + futureSupport * stage * .45 * profile.engine * params.engineWeight
     + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params), 0) * stage * .35
     - state.steps * .35 * profile.tempo * params.tempoWeight * restFactor
     - state.acquired * .15;
@@ -242,11 +245,13 @@ function completedFirstGoal(state: SearchState, preferred: string): boolean {
   return !state.golemMarket.includes(preferred);
 }
 
-/** 主规划入口：只依赖 AIObservation 与参数集，不接触任何隐藏信息。 */
-export function choosePlan(view: AIObservation, params: AIParameters): (ScoredState & { profile: string; unseenCounts: number[] }) | null {
-  const profile = profileFor(view);
+/** 主规划入口：只依赖 AIObservation 与参数集，不接触任何隐藏信息。
+ * profileOverride：显式人格（训练模拟器按正式游戏席位映射注入）；
+ * 缺省时沿用 profileFor 的席位推导，正式游戏行为不变。 */
+export function choosePlan(view: AIObservation, params: AIParameters, profileOverride?: Profile): (ScoredState & { profile: string; unseenCounts: number[] }) | null {
+  const profile = profileOverride ?? profileFor(view);
   const knowledge = publicKnowledge(view);
-  const pressure = pressureMap(view);
+  const pressure = pressureModel(view);
   const initial = initialState(view);
   const threshold = view.players.length >= 4 ? 5 : 6;
   const mostClaimed = Math.max(...view.players.map(p => p.claimed.length));
@@ -258,6 +263,8 @@ export function choosePlan(view: AIObservation, params: AIParameters): (ScoredSt
   const stage = Math.pow(rawStage, params.endgameWeight);
   let solved: ScoredState | null = null, prospective: ScoredState | null = null;
   for (const preferred of initial.golemMarket) {
+    // 每个目标只算一次未来牌库支持度（纯公共知识，成本可控）。
+    const futureSupport = futureDeckSupport(initial.stock, preferred, knowledge.unseenMerchants);
     let beam: ScoredState[] = [{ ...initial, quality: 0 }];
     // 血统救援：休息及其后续推进状态共同构成"唯一可行的收卡路线"，
     // 每层为该血统的最佳后继保留一个束席位，防止即时质量剪枝饿死整条路线。
@@ -280,7 +287,7 @@ export function choosePlan(view: AIObservation, params: AIParameters): (ScoredSt
             if (!solved || quality > solved.quality) solved = { ...next, preferred, quality };
             continue;
           }
-          const quality = searchGrade(next, preferred, stage, profile, pressure, params);
+          const quality = searchGrade(next, preferred, stage, profile, pressure, params, futureSupport);
           const scored: ScoredState = { ...next, quality };
           const key = stateKey(next);
           if (!successors.has(key) || successors.get(key)!.quality < quality) successors.set(key, scored);
@@ -311,6 +318,7 @@ export function choosePlan(view: AIObservation, params: AIParameters): (ScoredSt
         const expected = GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(candidate.stock, GOLEM_BY_ID[preferred]) / 3)
           + engineValue(candidate, preferred) * stage * .12 * profile.engine * params.engineWeight
           + candidate.newCards.reduce((sum, id) => sum + acquisitionValue(candidate, id, preferred, profile, pressure, params), 0) * stage * .32
+          + futureSupport * stage * .25 * profile.engine * params.engineWeight
           - candidate.steps * .09 * profile.tempo * params.tempoWeight;
         if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
       }

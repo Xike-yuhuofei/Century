@@ -59,3 +59,22 @@ export function publicKnowledge(view: AIObservation) {
     unseenGolems: GOLEM_DECK.filter(c => !knownGolems.has(c.id)).map(c => c.id),
   };
 }
+
+/** 未来牌库对目标路线的期望支持度（纯公共知识，审计整改：让全局卡牌知识
+ * 真正参与战略规划）。对未翻开商人卡全集按当前库存与目标魔像求平均引擎价值：
+ * 一个目标若能被未来大概率出现的卡补足费用缺口，其长期可行性更高。
+ * 只使用卡牌全集构成，绝不推断翻牌顺序。 */
+export function futureDeckSupport(
+  stock: readonly number[],
+  preferred: string,
+  unseenMerchants: readonly string[],
+): number {
+  if (!unseenMerchants.length) return 0;
+  const goal: Golem | null = GOLEM_BY_ID[preferred] ?? null;
+  let sum = 0;
+  for (const id of unseenMerchants) {
+    const card = MERCHANT_BY_ID[id];
+    if (card) sum += cardEngineValue(card, stock, goal);
+  }
+  return sum / unseenMerchants.length;
+}

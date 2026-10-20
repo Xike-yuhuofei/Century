@@ -20,6 +20,11 @@ export const PROFILES: readonly Profile[] = [
   { name: '战术大师', engine: 0.9, tempo: 1.0, contest: 1.5 },
 ];
 
+/** 中立人格：全部乘子为 1.0，等价于"无人格偏好"。
+ * 训练模拟器用它代理人类席位（正式游戏中人类席位的决策不走 profileFor，
+ * 代理席位因此不应叠加任何人格乘子，保证 4 个真实 AI 席位与正式游戏逐席一致）。 */
+export const NEUTRAL_PROFILE: Profile = { name: '中立代理', engine: 1.0, tempo: 1.0, contest: 1.0 };
+
 /** 按公开席位结构推导当前行动者的人格。 */
 export function profileFor(view: AIObservation): Profile {
   const aiIndex = view.players.slice(0, view.current + 1).filter(p => p.isAI).length - 1;
