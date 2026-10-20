@@ -7,7 +7,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { createGame, applyAction } from '../dist/js/engine.js';
-import { chooseAIAction, buildObservation, BASELINE_PARAMETERS } from '../dist/js/ai.js';
+import { chooseAIAction, buildObservation, CHAMPION_PARAMETERS } from '../dist/js/ai.js';
 
 const shuffle = (array, random) => {
   const result = [...array];
@@ -100,13 +100,26 @@ test('静态扫描：AI 决策源码对隐藏牌库字段的引用必须为零',
   }
 });
 
-test('决策不修改输入局面且与基线参数显式传入结果一致', () => {
+test('决策不修改输入局面且与冠军参数显式传入结果一致', () => {
   const positions = midgamePositions(5);
   for (const original of positions) {
     const snapshot = JSON.stringify(original);
     const implicit = chooseAIAction(original);
     assert.equal(JSON.stringify(original), snapshot, 'chooseAIAction 不得修改输入局面');
-    const explicit = chooseAIAction(original, { parameters: BASELINE_PARAMETERS });
+    const explicit = chooseAIAction(original, { parameters: CHAMPION_PARAMETERS });
     assert.deepEqual(implicit.action, explicit.action);
+  }
+});
+
+test('冠军参数与训练系统冠军记录一致（审计整改：防止真正晋级后测试误报）', () => {
+  // 此前本文件要求"默认冠军决策与基线一致"——初始冠军恰为基线时成立，
+  // 一旦真正晋级非中性参数就会误报。正确的不变量是：
+  // CHAMPION_PARAMETERS 必须与 training/champions/champion.json 逐字段一致。
+  const record = JSON.parse(readFileSync(new URL('../../training/champions/champion.json', import.meta.url), 'utf8'));
+  const recorded = record.parameters ?? record;
+  assert.equal(CHAMPION_PARAMETERS.id, recorded.id, '冠军 id 必须与冠军记录一致');
+  for (const [key, value] of Object.entries(recorded)) {
+    if (key === 'id') continue;
+    assert.equal(CHAMPION_PARAMETERS[key], value, `冠军参数 ${key} 必须与冠军记录一致`);
   }
 });

@@ -5,11 +5,11 @@
   "description": "Century AI 4.0 自动进化训练系统（与 web-v1 共用同一 AI 决策核心编译产物）",
   "type": "module",
   "scripts": {
-    "pretest": "node ../web-v1/scripts/sync-cards.mjs --check || true",
+    "pretest": "node ../web-v1/scripts/sync-cards.mjs --check",
     "test": "node --test tests/*.test.mjs",
     "simulate": "node simulator/cli.mjs",
-    "challenge": "node tournament/challenge.mjs",
-    "evolve": "node optimizer/evolve.mjs",
+    "challenge": "node tournament/challenge-cli.mjs",
+    "evolve": "node optimizer/evolve-cli.mjs",
     "diagnose": "node diagnostics/analyze.mjs",
     "perf": "node evaluator/benchmark.mjs"
   },

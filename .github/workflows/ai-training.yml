@@ -20,28 +20,28 @@ on:
         default: evolve
         options: [test, evolve, challenge]
       generations:
-        description: '进化代数'
+        description: '进化代数（1-30）'
         default: '3'
       population:
-        description: '每代候选数'
+        description: '每代候选数（1-64）'
         default: '8'
       games-per-candidate:
-        description: '每候选快速筛选种子数（×2 局）'
+        description: '每候选快速筛选种子数（×2 局，1-200）'
         default: '20'
       confirm-seeds:
-        description: '确认挑战种子数（×2 局）'
+        description: '确认挑战种子数（×2 局，1-500）'
         default: '60'
-      sigma:
-        description: '进化扰动步长'
-        default: '0.18'
       challenge-seeds:
-        description: 'challenge 模式种子数（×2 局）'
+        description: 'challenge 模式种子数（×2 局，1-500）'
         default: '100'
       time-budget-min:
-        description: '时间预算（分钟）'
+        description: '时间预算（分钟，5-55）'
         default: '40'
+      pool-size:
+        description: '训练对手池大小（1=仅冠军，2-8）'
+        default: '5'
 
-# 默认只读；写权限仅在 evolve/promote 任务内显式声明。
+# 默认只读；写权限仅在 promote 任务内显式声明。
 permissions:
   contents: read
 
@@ -62,10 +62,10 @@ jobs:
       - name: Build web-v1（训练与正式游戏共用同一编译产物）
         working-directory: web-v1
         run: npm install --no-audit --no-fund && npm run build
-      - name: web-v1 规则与 AI 测试（含信息公平性）
+      - name: web-v1 规则与 AI 测试（含信息公平性、冠军记录一致性）
         working-directory: web-v1
         run: npm test
-      - name: training 系统测试
+      - name: training 系统测试（含 CLI 端到端与晋级脚本）
         working-directory: training
         run: npm test
       - name: 模拟器快速评估（PR 100 局）
@@ -76,7 +76,7 @@ jobs:
   evolve:
     if: github.event_name == 'schedule' && github.event.schedule == '0 2 * * *' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'evolve')
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -85,20 +85,89 @@ jobs:
       - name: Build web-v1
         working-directory: web-v1
         run: npm install --no-audit --no-fund && npm run build
+      - name: 校验手动输入（白名单：纯数字 + 范围，经环境变量传递，杜绝注入 Shell）
+        env:
+          GENERATIONS: ${{ inputs.generations || '3' }}
+          POPULATION: ${{ inputs.population || '8' }}
+          GAMES_PER_CANDIDATE: ${{ inputs['games-per-candidate'] || '20' }}
+          CONFIRM_SEEDS: ${{ inputs['confirm-seeds'] || '60' }}
+          TIME_BUDGET_MIN: ${{ inputs['time-budget-min'] || '40' }}
+          POOL_SIZE: ${{ inputs['pool-size'] || '5' }}
+        run: |
+          check() {
+            name="$1"; value="$2"; low="$3"; high="$4"
+            case "$value" in ''|*[!0-9]*) echo "输入 $name 非法：必须是正整数，实际 '$value'"; exit 1;; esac
+            if [ "$value" -lt "$low" ] || [ "$value" -gt "$high" ]; then
+              echo "输入 $name 超出允许范围 [$low, $high]：$value"; exit 1
+            fi
+          }
+          check GENERATIONS "$GENERATIONS" 1 30
+          check POPULATION "$POPULATION" 1 64
+          check GAMES_PER_CANDIDATE "$GAMES_PER_CANDIDATE" 1 200
+          check CONFIRM_SEEDS "$CONFIRM_SEEDS" 1 500
+          check TIME_BUDGET_MIN "$TIME_BUDGET_MIN" 5 55
+          check POOL_SIZE "$POOL_SIZE" 1 8
       - name: 快速回归（规则 + 训练系统）
         run: |
           (cd web-v1 && npm test)
           (cd training && npm test)
-      - name: 参数进化训练（时间预算内自动收敛）
+      - name: 下载上次训练状态（断点续训 + 验证种子账本）
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          mkdir -p training/state-prev
+          found=0
+          for run_id in $(gh run list --workflow=ai-training.yml --status=success -L 10 --json databaseId --jq '.[].databaseId'); do
+            if gh run download "$run_id" --name evolve-state-latest --dir training/state-prev 2>/dev/null; then
+              echo "已恢复 run $run_id 的训练状态"; found=1; break
+            fi
+          done
+          [ "$found" = "1" ] || echo "无可用历史状态，从全新状态开始（种子基数仍按日期递进）"
+      - name: 参数进化训练（每日种子递进 + 断点续训 + 时间预算安全退出）
+        env:
+          GENERATIONS: ${{ inputs.generations || '3' }}
+          POPULATION: ${{ inputs.population || '8' }}
+          GAMES_PER_CANDIDATE: ${{ inputs['games-per-candidate'] || '20' }}
+          CONFIRM_SEEDS: ${{ inputs['confirm-seeds'] || '60' }}
+          TIME_BUDGET_MIN: ${{ inputs['time-budget-min'] || '40' }}
+          POOL_SIZE: ${{ inputs['pool-size'] || '5' }}
+        run: |
+          # 每日种子基数：按日期派生，跨日探索不同的候选与牌局，绝不逐日重复同一搜索。
+          seed_base=$(date +%Y%m%d)
+          resume_args=()
+          if [ -f training/state-prev/state.json ]; then
+            resume_args+=(--resume training/state-prev/state.json)
+            echo "续训：从上次状态继续（种子游标与精英池继承）"
+          fi
+          if [ -f training/state-prev/validation-ledger.json ]; then
+            resume_args+=(--seed-ledger training/state-prev/validation-ledger.json)
+            echo "验证种子账本：从上次消费位置续接（种子块不可复用）"
+          fi
           node training/optimizer/evolve-cli.mjs \
-            --generations ${{ github.event_name == 'workflow_dispatch' && inputs.generations || 3 }} \
-            --population ${{ github.event_name == 'workflow_dispatch' && inputs.population || 8 }} \
-            --games-per-candidate ${{ github.event_name == 'workflow_dispatch' && inputs['games-per-candidate'] || 20 }} \
-            --confirm-seeds ${{ github.event_name == 'workflow_dispatch' && inputs['confirm-seeds'] || 60 }} \
-            --sigma ${{ github.event_name == 'workflow_dispatch' && inputs.sigma || 0.18 }} \
-            --time-budget-min ${{ github.event_name == 'workflow_dispatch' && inputs['time-budget-min'] || 40 }} \
-            --out training/reports/evolve-$(date +%Y%m%d)
+            --generations "$GENERATIONS" \
+            --population "$POPULATION" \
+            --games-per-candidate "$GAMES_PER_CANDIDATE" \
+            --confirm-seeds "$CONFIRM_SEEDS" \
+            --time-budget-min "$TIME_BUDGET_MIN" \
+            --pool-size "$POOL_SIZE" \
+            --seed-base "$seed_base" \
+            "${resume_args[@]}" \
+            --out "training/reports/evolve-$(date +%Y%m%d)"
+      - name: 归集训练状态（供次日续训）
+        if: always()
+        run: |
+          mkdir -p training/state
+          cp training/reports/evolve-*/state.json training/state/ 2>/dev/null || true
+          cp training/reports/evolve-*/validation-ledger.json training/state/ 2>/dev/null || true
+      - name: 上传训练状态
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evolve-state-latest
+          path: training/state/
+          retention-days: 30
+          if-no-files-found: ignore
       - name: 上传训练产物
         uses: actions/upload-artifact@v4
         if: always()
@@ -113,7 +182,7 @@ jobs:
     needs: evolve
     if: needs.evolve.result == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     permissions:
       contents: write
       pull-requests: write
@@ -122,6 +191,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build web-v1（晋级脚本与回归测试都需要编译产物）
+        working-directory: web-v1
+        run: npm install --no-audit --no-fund && npm run build
       - name: 下载训练产物
         uses: actions/download-artifact@v4
         with:
@@ -136,7 +208,7 @@ jobs:
             candidate_id=$(node -p "JSON.parse(require('fs').readFileSync('$file','utf8')).id")
             echo "id=$candidate_id" >> "$GITHUB_OUTPUT"
           fi
-      - name: 落地候选参数并创建晋级 PR
+      - name: 晋级（归档候选 + 同步 champion.json + 落地参数区 + 完整回归）
         if: steps.candidate.outputs.file != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -146,26 +218,32 @@ jobs:
           git config user.name "century-ai-bot"
           git config user.email "actions@users.noreply.github.com"
           branch="ai-champion/${CANDIDATE_ID}-$(date +%Y%m%d%H%M)"
-          cp "$CANDIDATE_FILE" "training/champions/candidates/${CANDIDATE_ID}.json"
-          node training/scripts/apply-champion.mjs --champion "training/champions/candidates/${CANDIDATE_ID}.json"
+          # 归档候选（目录自动创建）并同步 champion.json——
+          # 保证下一轮进化以新冠军为基准，训练与正式游戏不脱节。
+          node training/scripts/promote-champion.mjs --candidate "$CANDIDATE_FILE"
+          node training/scripts/apply-champion.mjs --champion training/champions/champion.json
           # 晋级前完整回归：参数变更必须通过全部规则、公平性与训练测试。
-          (cd web-v1 && npm install --no-audit --no-fund && npm run build && npm test)
+          (cd web-v1 && npm test)
           (cd training && npm test)
+          # 终检：web-v1 参数区必须与冠军记录逐字段一致。
+          node training/scripts/apply-champion.mjs --check
           git checkout -b "$branch"
           git add training/champions/ web-v1/src/ai/parameters.ts training/reports/
-          git commit -m "feat(ai4): 晋级冠军参数 ${CANDIDATE_ID}（挑战证据见 PR 正文）"
+          git commit -m "feat(ai4): 晋级冠军参数 ${CANDIDATE_ID}（挑战证据见 PR 正文，champion.json 已同步）"
           git push origin "$branch"
           {
             echo "## AI 4.0 冠军晋级候选：${CANDIDATE_ID}"
             echo
-            echo '### 挑战证据（独立验证种子，双向混战 + 座位轮换）'
+            echo '### 挑战证据（独立验证种子块，双向混战 + 座位轮换 + 按种子配对统计）'
             node -e "const d=require('./$CANDIDATE_FILE');console.log('\`\`\`json\\n'+JSON.stringify(d.confirmation,null,2)+'\\n\`\`\`')"
             echo '### 晋级判定'
             node -e "const d=require('./$CANDIDATE_FILE');console.log(d.confirmation.decision.reason)"
             echo '### 回归状态'
-            echo '- web-v1 全部测试通过（规则 / AI / 信息公平性 / 模块化）'
-            echo '- training 全部测试通过（模拟器 / 统计 / 进化）'
-            echo '- 参数区由 apply-champion.mjs 生成，训练版与网页实战版使用同一参数'
+            echo '- web-v1 全部测试通过（规则 / AI / 信息公平性 / 冠军记录一致性 / 模块化）'
+            echo '- training 全部测试通过（模拟器 / 统计 / 进化 / 晋级脚本 / CLI 端到端）'
+            echo '- training/champions/champion.json 已同步（下一轮进化以新冠军为基准）'
+            echo '- 候选已归档至 training/champions/candidates/（跨版本对抗对手池来源）'
+            echo '- web-v1 参数区由 apply-champion.mjs 生成，训练版与网页实战版使用同一参数'
           } > pr-body.md
           gh pr create --title "AI 4.0 冠军晋级：${CANDIDATE_ID}" --body-file pr-body.md --base main --head "$branch"
 
@@ -178,15 +256,26 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: 校验手动输入（白名单：纯数字 + 范围）
+        env:
+          CHALLENGE_SEEDS: ${{ inputs['challenge-seeds'] || '100' }}
+        run: |
+          case "$CHALLENGE_SEEDS" in ''|*[!0-9]*) echo "输入 challenge-seeds 非法：'$CHALLENGE_SEEDS'"; exit 1;; esac
+          if [ "$CHALLENGE_SEEDS" -lt 1 ] || [ "$CHALLENGE_SEEDS" -gt 500 ]; then
+            echo "challenge-seeds 超出范围 [1, 500]：$CHALLENGE_SEEDS"; exit 1
+          fi
       - name: Build web-v1
         working-directory: web-v1
         run: npm install --no-audit --no-fund && npm run build
       - name: 大规模冠军基线挑战（当前冠军自对弈回归基准 + V1/V2 赛马）
+        env:
+          CHALLENGE_SEEDS: ${{ inputs['challenge-seeds'] || '100' }}
         run: |
           (cd web-v1 && node scripts/benchmark-ai.mjs 16)
+          # 种子基数按年积日 + 星期派生，避免每周挑战反复消耗同一种子段。
           node training/simulator/cli.mjs \
-            --games ${{ github.event_name == 'workflow_dispatch' && inputs['challenge-seeds'] || 100 }} \
-            --seed-base 500000 --out training/reports/weekly-challenge-$(date +%Y%m%d)
+            --games "$CHALLENGE_SEEDS" \
+            --seed-base $((500000 + 100000 * $(date +%u) + $(date +%j))) --out training/reports/weekly-challenge-$(date +%Y%m%d)
       - name: 上传周报
         uses: actions/upload-artifact@v4
         with:

@@ -25,9 +25,10 @@ export function mutateCandidate(parent, { id, sigma, rng }) {
   return validateAIParameters(candidate);
 }
 
-/** 快速对战评估：候选相对冠军的胜率与诊断指标。 */
-export function evaluateCandidate(champion, candidate, { seeds, seedBase, maxMoves, deadlineMs }) {
-  const { summary } = runChallenge({ champion, candidate, seeds, seedBase });
+/** 快速对战评估：候选相对冠军的胜率与诊断指标。
+ * opponents：可选对手池（审计整改：多样化训练对手）；缺省 = 仅冠军。 */
+export function evaluateCandidate(champion, candidate, { seeds, seedBase, maxMoves, deadlineMs, opponents = null }) {
+  const { summary } = runChallenge({ champion, candidate, seeds, seedBase, opponents });
   return {
     wins: summary.candidateWins,
     games: summary.finishedGames,
@@ -63,6 +64,10 @@ export function defaultEvolveOptions() {
  * @param {object} options.champion 冠军参数（AIParameters，含 id）
  * @param {object} [options.initialState] 断点恢复的状态（来自上次 state 导出）
  * @param {number} [options.generations] 代数
+ * @param {Array<object>} [options.opponents] 训练对手池（缺省 = 仅冠军）
+ * @param {number|null} [options.deadlineAt] 真实墙钟截止时间（epoch ms，审计整改：
+ *        超时前按安全余量停止生成新候选，已完成的整代状态照常持久化，可断点续训）
+ * @param {number} [options.safetyMarginMs] 截止安全余量（默认 90s）
  * @param {Function} [options.onGeneration] (state, candidates) => void，每代回调（用于持久化/日志）
  * @returns {{bestCandidate: object|null, improved: boolean, state: object}}
  */
@@ -71,6 +76,9 @@ export function evolve({
   initialState = null,
   generations, population, eliteKeep, gamesPerCandidate, seedBase, sigma,
   maxMoves, deadlineMs,
+  opponents = null,
+  deadlineAt = null,
+  safetyMarginMs = 90_000,
   onGeneration = null,
   experimentLog = null,
 }) {
@@ -91,7 +99,9 @@ export function evolve({
     history: [],
     pendingCandidate: null,
   };
+  state.interrupted = false;
 
+  outer:
   for (let gen = 0; gen < opts.generations; gen++) {
     const rng = mulberry32(state.seedCursor++);
     const parents = state.elites.length
@@ -99,6 +109,12 @@ export function evolve({
       : [champion];
     const candidates = [];
     for (let k = 0; k < opts.population; k++) {
+      // 真实截止时间：预算将尽时安全退出——未完成的候选直接丢弃，
+      // 状态保持"最后一个完整代"的一致性，下次 --resume 从这里继续。
+      if (deadlineAt !== null && Date.now() + safetyMarginMs > deadlineAt) {
+        state.interrupted = true;
+        break outer;
+      }
       const parent = parents[k % parents.length];
       const candidate = mutateCandidate(parent, {
         id: `evo-g${state.generation}-${k}`,
@@ -109,7 +125,7 @@ export function evolve({
       const evaluation = evaluateCandidate(champion, candidate, {
         seeds: opts.gamesPerCandidate,
         seedBase: candidateSeedBase,
-        maxMoves, deadlineMs,
+        maxMoves, deadlineMs, opponents,
       });
       candidates.push({ parameters: candidate, evaluation, seedBase: candidateSeedBase, parentId: parent.id });
       experimentLog?.({

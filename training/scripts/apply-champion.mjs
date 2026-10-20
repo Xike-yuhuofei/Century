@@ -11,13 +11,13 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { requireBuiltEngine } from '../lib/paths.mjs';
+import { requireBuiltEngine, REPO_ROOT } from '../lib/paths.mjs';
 
 const args = process.argv.slice(2);
 const checkOnly = args.includes('--check');
 const championIndex = args.indexOf('--champion');
 const championArg = championIndex >= 0 ? args[championIndex + 1] : undefined;
-const championPath = resolve(process.cwd(), championArg ?? 'training/champions/champion.json');
+const championPath = resolve(championArg !== undefined ? process.cwd() : REPO_ROOT, championArg ?? 'training/champions/champion.json');
 
 requireBuiltEngine();
 const champion = JSON.parse(readFileSync(championPath, 'utf8'));
