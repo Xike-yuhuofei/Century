@@ -126,3 +126,11 @@
  .markets .rail{height:calc(100% - 30px);max-height:calc(100% - 30px);flex:0 0 auto}
  .markets .golem-rail .card,.markets .merchant-rail .card{height:100%;max-height:100%}
 }
+
+/* Board merchant cards have no top/bottom captions. Reward icons remain visible. */
+.merchant-rail .graphic-card,.tactical-grid .graphic-card{position:relative}
+.merchant-rail .graphic-card>.effect,.tactical-grid .graphic-card>.effect{height:100%;min-height:0}
+.graphic-card .graphic-bonus{position:absolute;bottom:2px;left:1px;right:1px;display:flex;justify-content:center;pointer-events:none}
+.graphic-card .graphic-bonus .gems{flex-wrap:nowrap;gap:1px;max-width:100%;overflow:hidden}
+.graphic-card .graphic-bonus .gem{width:8px;height:10px;flex:0 0 8px}
+.graphic-card .graphic-bonus .gem i{display:none}

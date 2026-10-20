@@ -33,6 +33,11 @@ function mCard(id:string, action='',attrs='',foot=''):string {
   const c = MERCHANT_BY_ID[id], tag = action?'button':'div';
   return `<${tag} ${action?`type="button" data-action="${action}"`:''} ${attrs} class="card merchant ${c.kind}" aria-label="${mDescription(id)}"><span class="card-top"><strong>${mKinds[c.kind]}</strong><small>${id}</small></span>${mEffect(id)}${foot?`<span class="card-foot">${foot}</span>`:''}</${tag}>`;
 }
+// Compact board cards display only the actual effect; full descriptions remain accessible to screen readers.
+function mGraphicCard(id:string, action='', attrs='', bonus=''):string {
+  const card=MERCHANT_BY_ID[id], tag=action?'button':'div';
+  return `<${tag} ${action?`type="button" data-action="${action}"`:''} ${attrs} class="card merchant ${card.kind} graphic-card" aria-label="${mDescription(id)}">${mEffect(id)}${bonus?`<span class="graphic-bonus">${bonus}</span>`:''}</${tag}>`;
+}
 function mCoin(i:number):string {
   if(!mGame)return '';
   if(i===0 && mGame.copper) return `<span class="coin copper">铜 +3</span>`;
@@ -88,7 +93,7 @@ function mHeader():string {
 }
 function mMarkets():string {
   const g=mGame!,p=g.players[g.current];
-  return `<main class="markets"><section><div class="section-title"><h2>魔像市场 <small>${g.golemMarket.length}</small></h2><span>铜余 ${g.copper} · 银余 ${g.silver}</span></div><div class="rail golem-rail">${g.golemMarket.map((id,i)=>{const c=GOLEM_BY_ID[id],ready=has(p.stock,c.cost);return `<button type="button" class="card golem ${ready?'claimable':''}" data-action="claim" data-index="${i}" aria-label="${c.points} 分魔像 ${id}，需要 ${readable(c.cost)}，${ready?'可认领':'水晶不足'}"><span class="card-top">${mCoin(i)}<small>${id}</small></span><span class="points">${c.points}<small>分</small></span>${mGems(c.cost)}<span class="card-foot">${ready?'可以认领':'查看需求'}</span></button>`;}).join('')}</div></section><section><div class="section-title"><h2>商人市场 <small>${g.merchantMarket.length}</small></h2><span>全部可见</span></div><div class="rail merchant-rail">${g.merchantMarket.map((m,i)=>mCard(m.id,'acquire',`data-index="${i}"`,`<span>${i===0?'免费获取':`支付 ${i} 颗`}</span><span class="bonus">${count(m.bonus)?`卡上奖励 ${mGems(m.bonus)}`:'无奖励水晶'}</span>`)).join('')}</div></section><p class="last-action" aria-live="polite">${mEsc(g.log[0]||'选择一个行动')}</p></main>`;
+  return `<main class="markets"><section><div class="section-title"><h2>魔像市场 <small>${g.golemMarket.length}</small></h2><span>铜余 ${g.copper} · 银余 ${g.silver}</span></div><div class="rail golem-rail">${g.golemMarket.map((id,i)=>{const c=GOLEM_BY_ID[id],ready=has(p.stock,c.cost);return `<button type="button" class="card golem ${ready?'claimable':''}" data-action="claim" data-index="${i}" aria-label="${c.points} 分魔像 ${id}，需要 ${readable(c.cost)}，${ready?'可认领':'水晶不足'}"><span class="card-top">${mCoin(i)}<small>${id}</small></span><span class="points">${c.points}<small>分</small></span>${mGems(c.cost)}<span class="card-foot">${ready?'可以认领':'查看需求'}</span></button>`;}).join('')}</div></section><section><div class="section-title"><h2>商人市场 <small>${g.merchantMarket.length}</small></h2><span>全部可见</span></div><div class="rail merchant-rail">${g.merchantMarket.map((m,i)=>mGraphicCard(m.id,'acquire',`data-index="${i}"`,count(m.bonus)?mGems(m.bonus):'')).join('')}</div></section><p class="last-action" aria-live="polite">${mEsc(g.log[0]||'选择一个行动')}</p></main>`;
 }
 function mHand():string {
   const g=mGame!;
@@ -105,7 +110,7 @@ function mHand():string {
     const showing=all.slice(0,10),more=Math.max(0,all.length-10);
     const tiles=showing.map(id=>{
       const played=p.played.includes(id);
-      return `<div class="${played?'played-tile':'hand-tile'} tactical-tile" data-card="${id}">${mCard(id,played?'':'play',`data-id="${id}" ${!active?'disabled':''}`)}</div>`;
+      return `<div class="${played?'played-tile':'hand-tile'} tactical-tile" data-card="${id}">${mGraphicCard(id,played?'':'play',`data-id="${id}" ${!active?'disabled':''}`)}</div>`;
     }).join('')+Array.from({length:Math.max(0,10-showing.length)},()=>'<div class="tactical-tile vacant-card" aria-hidden="true"></div>').join('');
     return `<section class="hand-dock tactical-hand" aria-label="个人手牌"><div class="dock-title tactical-head"><div><strong>我的商人卡</strong><small>可打出 ${p.hand.length} · 已打出 ${p.played.length}</small></div>${mBtn(more?`全部 +${more}`:'整理','expand','aria-label="展开全部商人卡及排序"')}${mBtn('已打出','played',`aria-expanded="${mPlayed}"`)}</div><div class="tactical-grid">${tiles}</div><div class="tactical-footer">${mBtn('休息','rest',!active?'disabled':'','primary')}<span>点击卡牌选择行动</span></div>${mPlayed?`<div class="rail played-rail">${p.played.map(id=>mCard(id)).join('')||'<p>尚未打出卡牌</p>'}</div>`:''}</section>`;
   }
