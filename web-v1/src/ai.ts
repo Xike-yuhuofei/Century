@@ -1,12 +1,76 @@
 // @ts-nocheck
-/** V2.0：离线目标规划 + 多回合束搜索。
+/** V3.0 第一阶段：公开信息驱动的多策略目标规划 + 多回合束搜索。
  * 规划只使用公开市场、自身牌/水晶与公开比分，不读取两类隐藏牌库顺序。
  * 未来对手回合和未知翻牌保持不确定；使用当前公开市场作保守近似。
  */
-import { GOLEM_BY_ID, MERCHANT_BY_ID } from './data.js';
+import { GOLEM_BY_ID, MERCHANT_BY_ID, GOLEM_DECK, MERCHANT_DECK } from './data.js';
 import { applyAction, count, has, tradeLimit } from './engine.js';
 
 const VALUES = [1, 1.7, 2.5, 3.4];
+// 所有 AI 共享规则知识；策略偏好由固定席位决定，绝不依赖身份识别为人类。
+const PROFILES = [
+  { name: '引擎大师', engine: 1.3, tempo: 0.8, contest: 0.9 },
+  { name: '速攻专家', engine: 0.7, tempo: 1.3, contest: 1.0 },
+  { name: '精算大师', engine: 1.0, tempo: 1.0, contest: 1.0 },
+  { name: '战术大师', engine: 0.9, tempo: 1.0, contest: 1.5 },
+];
+const profileFor = game => {
+  const aiIndex = game.players.slice(0, game.current + 1).filter(p => p.isAI).length - 1;
+  return PROFILES[Math.max(0, aiIndex) % PROFILES.length];
+};
+// 只读取公开卡及历史获取记录；绝不读取 merchantDeck/golemDeck 数组。
+// 卡牌全集用于推断未知牌有哪些，而非猜测任何预定的抽牌次序。
+function publicKnowledge(game) {
+  const knownMerchants = new Set(game.merchantMarket.map(x => x.id));
+  const knownGolems = new Set(game.golemMarket);
+  for (const p of game.players) {
+    for (const id of [...p.hand, ...p.played]) knownMerchants.add(id);
+    for (const id of p.claimed) knownGolems.add(id);
+  }
+  // 魔像累计公开认领完整，商人卡被弃置的规则不存在。
+  return {
+    unseenMerchants: MERCHANT_DECK.filter(c => !knownMerchants.has(c.id)).map(c => c.id),
+    unseenGolems: GOLEM_DECK.filter(c => !knownGolems.has(c.id)).map(c => c.id),
+  };
+}
+function contestPressure(game, cardId) {
+  const card = MERCHANT_BY_ID[cardId];
+  if (!card) return 0;
+  const opponents = game.players.filter((_, i) => i !== game.current);
+  return opponents.reduce((sum, p) => {
+    const engine = [...p.hand, ...p.played].map(id => MERCHANT_BY_ID[id]).filter(Boolean);
+    const outputs = engine.reduce((tot, c) => {
+      if (c.output) c.output.forEach((n, i) => { tot[i] += n; });
+      return tot;
+    }, [0,0,0,0]);
+    const affinity = card.kind === 'trade'
+      ? card.input.reduce((v, n, i) => v + Math.min(n, p.stock[i] + outputs[i]) * VALUES[i], 0) / (weighted(card.input) + 1)
+      : card.kind === 'create' ? weighted(card.output) / 10 : card.steps / 5;
+    return sum + Math.min(1, affinity);
+  }, 0) / Math.max(1, opponents.length);
+}
+function acquisitionValue(state, cardId, preferred, profile, pressure) {
+  const card = MERCHANT_BY_ID[cardId];
+  if (!card) return 0;
+  const current = engineValue(state, preferred);
+  const added = {...state, hand: [...state.hand, cardId]};
+  const raw = Math.max(0, engineValue(added, preferred) - current);
+  const target = preferred ? GOLEM_BY_ID[preferred] : null;
+  const engine = [...state.hand, ...state.played].map(id => MERCHANT_BY_ID[id]).filter(Boolean);
+  const supplied = engine.reduce((a, c) => {
+    if (c.output) c.output.forEach((n,i) => { a[i] += n; });
+    return a;
+  }, [0,0,0,0]);
+  const synergy = card.kind === 'trade'
+    ? card.input.reduce((n, amount, i) => n + Math.min(amount, supplied[i]) * VALUES[i], 0) / (weighted(card.input) + 1)
+    : card.kind === 'create' ? engine.filter(c => c.kind === 'trade').reduce((n,c) =>
+        n + c.input.reduce((v,amount,i) => v + Math.min(amount, card.output[i]), 0), 0) * .18 : .5;
+  const goalFit = target && card.output
+    ? card.output.reduce((n,amount,i)=>n+Math.min(amount,target.cost[i])*VALUES[i],0) / (weighted(target.cost)+1)
+    : 0;
+  return profile.engine * (raw * .6 + synergy * 2 + goalFit * 2)
+    + profile.contest * (pressure[cardId] ?? 0) * .9;
+}
 const weighted = stock => stock.reduce((sum, n, color) => sum + n * VALUES[color], 0);
 const stockCount = stock => stock[0] + stock[1] + stock[2] + stock[3];
 const cloneStock = stock => [...stock];
@@ -109,7 +173,7 @@ function publicState(game) {
     stock: cloneStock(player.stock), hand: [...player.hand], played: [...player.played],
     merchantMarket: game.merchantMarket.map(m => ({ id: m.id, bonus: cloneStock(m.bonus) })),
     golemMarket: [...game.golemMarket], copper: game.copper, silver: game.silver,
-    gained: 0, claimed: 0, acquired: 0, steps: 0, first: null, path: [],
+    gained: 0, claimed: 0, acquired: 0, newCards: [], steps: 0, first: null, path: [],
     remainingClaims: (game.players.length >= 4 ? 5 : 6) - player.claimed.length, terminal: false,
   };
 }
@@ -130,7 +194,7 @@ function actions(state, preferred, allowAcquire) {
     }
   }
   if (state.played.length) result.push({ type: 'rest' });
-  if (allowAcquire && state.acquired === 0 && state.hand.length + state.played.length < 10) {
+  if (allowAcquire && state.acquired < 2) {
     state.merchantMarket.forEach((m, index) => {
       for (const payment of payments(state.stock, index, state.golemMarket, preferred)) {
         result.push({ type: 'acquire', index, payment });
@@ -179,6 +243,7 @@ function step(state, action, preferred) {
     }
     offer.bonus.forEach((n, c) => { next.stock[c] += n; });
     next.hand.push(offer.id);
+    next.newCards = [...state.newCards, offer.id];
     next.merchantMarket = state.merchantMarket.filter((_, i) => i !== action.index);
     next.acquired++;
   } else if (action.type === 'claim') {
@@ -206,23 +271,28 @@ function stateKey(state) {
   return [state.stock.join(','), [...state.hand].sort().join(','), [...state.played].sort().join(','),
     state.merchantMarket.map(x => x.id).join(','), state.golemMarket.join(','), state.acquired].join('|');
 }
-function searchGrade(state, preferred, stage) {
+function searchGrade(state, preferred, stage, profile, pressure) {
   const goal = GOLEM_BY_ID[preferred];
   const gap = goalGap(state.stock, goal);
   return -gap * 2.6 + weighted(state.stock) * .13
-    + (engineValue(state, preferred) * stage * .22)
-    - state.steps * .35 - state.acquired * .15;
+    + (engineValue(state, preferred) * stage * .22 * profile.engine)
+    + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure), 0) * stage * .35
+    - state.steps * .35 * profile.tempo - state.acquired * .15;
 }
-function routeGrade(state, preferred, stage) {
+function routeGrade(state, preferred, stage, profile) {
   // gained 可能包括同一路径上先认领其他公开魔像取得的得分。
-  return state.gained / Math.pow(state.steps + .65, .90)
-    + weighted(state.stock) * .055 + engineValue(state, preferred) * stage * .085;
+  return state.gained * profile.tempo / Math.pow(state.steps + .65, .90)
+    + weighted(state.stock) * .055 + engineValue(state, preferred) * stage * .085 * profile.engine;
 }
 function completedFirstGoal(state, preferred) {
   return !state.golemMarket.includes(preferred);
 }
 function choosePlan(game) {
+  const profile = profileFor(game);
+  const knowledge = publicKnowledge(game);
+  const pressure = Object.fromEntries(game.merchantMarket.map(m => [m.id, contestPressure(game, m.id)]));
   const initial = publicState(game);
+  initial.newCards = [];
   const threshold = game.players.length >= 4 ? 5 : 6;
   const mostClaimed = Math.max(...game.players.map(p => p.claimed.length));
   const nearEnd = game.triggerPlayer !== null || mostClaimed >= threshold - 1;
@@ -241,11 +311,11 @@ function choosePlan(game) {
           if (!next) continue;
           if (next.terminal && !completedFirstGoal(next, preferred)) continue;
           if (completedFirstGoal(next, preferred)) {
-            const quality = routeGrade(next, preferred, stage);
+            const quality = routeGrade(next, preferred, stage, profile);
             if (!solved || quality > solved.quality) solved = { ...next, preferred, quality };
             continue;
           }
-          const quality = searchGrade(next, preferred, stage);
+          const quality = searchGrade(next, preferred, stage, profile, pressure);
           const key = stateKey(next);
           if (!successors.has(key) || successors.get(key).quality < quality) successors.set(key, { ...next, quality });
         }
@@ -254,13 +324,16 @@ function choosePlan(game) {
       beam = [...successors.values()].sort((a, b) => b.quality - a.quality).slice(0, width);
       for (const candidate of beam) {
         const expected = GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(candidate.stock, GOLEM_BY_ID[preferred]) / 3)
-          + engineValue(candidate, preferred) * stage * .12 - candidate.steps * .09;
+          + engineValue(candidate, preferred) * stage * .12 * profile.engine
+          + candidate.newCards.reduce((sum, id) => sum + acquisitionValue(candidate, id, preferred, profile, pressure), 0) * stage * .32
+          - candidate.steps * .09 * profile.tempo;
         if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
       }
     }
   }
   // 有可信的实际认领路线时优先执行；未找到时采用多回合目标推进的最佳前缀。
-  return solved ?? prospective;
+  const plan = solved ?? prospective;
+  return plan ? { ...plan, profile: profile.name, unseenCounts: [knowledge.unseenMerchants.length, knowledge.unseenGolems.length] } : null;
 }
 export function chooseAIAction(game) {
   if (game.phase === 'finished') throw Error('游戏结束，AI 无法行动');
@@ -284,7 +357,7 @@ export function chooseAIAction(game) {
   const goal = plan?.preferred;
   return {
     action,
-    reason: goal ? `V2.0 规划 ${goal}：预计${plan.steps}次行动形成认领路线` : '公开市场暂无可规划目标',
+    reason: goal ? `AI 3.0 ${plan.profile}：公开目标 ${goal}，规划${plan.steps}步；未知商人/魔像各${plan.unseenCounts.join('/')}张` : '公开市场暂无可规划目标',
     plan: plan ? { goal, steps: plan.steps, actions: plan.path } : undefined,
   };
 }
