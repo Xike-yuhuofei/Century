@@ -13,3 +13,105 @@
 .table-header>div{min-width:0;flex:1}.table-header h1{display:flex;align-items:baseline;gap:4px;min-width:0}.turn-player{font-weight:inherit;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.table-header h1>span{flex-shrink:0}
 .waiting-dock{flex-direction:row;align-items:center;gap:12px;min-height:82px;padding:12px 14px calc(12px + env(safe-area-inset-bottom))}.waiting-dock>div{min-width:0;flex:1}.waiting-dock strong{font-size:12px}.waiting-dock p{font-size:10px;margin-top:6px}.waiting-dock button{font-size:11px}
 @media(orientation:landscape) and (max-height:600px){.waiting-dock{flex-direction:column;align-items:stretch;justify-content:center}.waiting-dock>div{flex:0}}
+
+
+/* 21-card fixed tactical board: market 5+6, personal 5x2. */
+.game-shell{max-width:620px;padding:env(safe-area-inset-top) max(8px,env(safe-area-inset-right)) 0 max(8px,env(safe-area-inset-left))}
+.board{min-height:0;overflow:hidden}
+.table-header{min-height:36px;height:36px;flex-shrink:0}
+.table-header .eyebrow{letter-spacing:.5px;font-size:9px;color:#d1c6a4}
+.table-header h1{font-size:15px;margin:0;line-height:19px}
+.menu-btn{min-height:44px;padding:4px 9px;font-size:11px}
+.players{height:32px;min-height:32px;gap:3px;padding:0 0 2px;overflow-x:hidden}
+.players .player{flex:1;min-width:0;max-width:none;padding:2px;border-radius:7px;gap:0;align-items:center;justify-content:center}
+.players .player strong{font-size:9px;line-height:13px;max-width:100%}
+.players .player span{font-size:9px;line-height:13px}
+.turn-line{display:none}
+.caravan{height:51px;min-height:51px;margin:0 0 3px;padding:4px 9px;display:flex;flex-direction:column;justify-content:center;gap:2px;border-radius:10px;background:linear-gradient(120deg,#25363c,#152630)}
+.caravan-title strong{font-size:10px}
+.caravan-title .capacity{font-size:11px;font-weight:700}
+.caravan-title>span:last-child{font-size:9px}
+.inventory.crystal-strip{display:flex;justify-content:flex-start;align-items:center;margin:0;gap:3px;min-height:21px;overflow:hidden}
+.crystal-strip .gems{display:flex;flex:0 1 auto;flex-wrap:nowrap;gap:2px;justify-content:flex-start;overflow:hidden}
+.crystal-strip .gem{width:clamp(12px,4.2vw,18px);height:clamp(16px,5.2vw,22px);flex:0 0 clamp(12px,4.2vw,18px)}
+.crystal-strip .gem i{display:none}
+.vacant-slots{display:flex;gap:2px;overflow:hidden}
+.vacant-slots i{display:block;width:clamp(12px,4.2vw,18px);height:clamp(16px,5.2vw,22px);flex:0 0 clamp(12px,4.2vw,18px);border:1px dashed #75807b;opacity:.4;clip-path:polygon(50% 0,95% 25%,95% 75%,50% 100%,5% 75%,5% 25%)}
+.caravan .overflow-resume{position:absolute;z-index:8;right:10px;top:calc(60px + env(safe-area-inset-top));width:auto;min-height:44px;padding:4px 8px}
+.markets{flex:1;min-height:0;overflow:hidden;padding:0;display:grid;grid-template-rows:minmax(0,53fr) minmax(0,47fr);gap:3px}
+.markets section{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.markets section+section{margin:0}
+.markets .section-title{flex:0 0 21px;min-height:21px;height:21px;padding:0 2px}
+.markets .section-title h2{font-size:12px}
+.markets .section-title span{font-size:9px}
+.markets .rail{flex:1;display:grid;min-height:0;height:100%;overflow:hidden;padding:0;gap:3px;scroll-snap-type:none}
+.markets .golem-rail{grid-template-columns:repeat(5,minmax(0,1fr))}
+.markets .merchant-rail{grid-template-columns:repeat(6,minmax(0,1fr))}
+.markets .card{width:100%;max-width:100%;min-width:0;min-height:44px;height:100%;max-height:148px;flex:initial;padding:4px 2px;align-self:center;justify-self:stretch;border-radius:8px;overflow:hidden;border-color:#b7a788;box-shadow:inset 0 1px 1px #fff8,0 2px 4px #0003}
+.markets .golem{display:flex;align-items:center;gap:1px;background:radial-gradient(ellipse at center,#b8c9bd55,transparent 65%),linear-gradient(140deg,#dad4c2,#f2e7d3,#c5b8a0)}
+.markets .golem::before{content:'◆';position:absolute;top:29%;left:0;right:0;text-align:center;font-size:clamp(22px,7vw,52px);color:#63877e44;pointer-events:none}
+.markets .golem .card-top{height:17px;flex:0 0 17px;justify-content:center;z-index:1}
+.markets .golem .card-top small{display:none}
+.markets .golem .coin{font-size:8px;padding:0 2px;line-height:13px}
+.markets .golem .points{font-size:clamp(19px,5vw,30px);line-height:1;align-items:center;flex:1;z-index:1}
+.markets .golem .points small{font-size:8px}
+.markets .golem>.gems{min-height:19px;max-height:46px;width:100%;flex:0 0 auto;align-content:end;justify-content:center;gap:1px;z-index:1}
+.markets .golem .gem{width:clamp(8px,2.5vw,13px);height:clamp(11px,3.2vw,17px);flex:0 0 clamp(8px,2.5vw,13px)}
+.markets .golem .gem i{display:none}
+.markets .golem .card-foot{display:none}
+.markets .golem.claimable{border:2px solid #76c895;box-shadow:0 0 0 1px #39865b88,0 0 8px #71d39588}
+.markets .merchant-rail .card{max-height:138px;background:radial-gradient(ellipse at 50% 95%,#cfa97488,transparent 60%),linear-gradient(150deg,#ebdbc2,#f9f0db,#c9b99c)}
+.merchant-rail .card-top,.tactical-grid .card-top{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.merchant-rail .card>.effect,.tactical-grid .card>.effect{display:flex;flex:1;min-height:0;align-items:center;justify-content:center;width:100%}
+.merchant-rail .trade-effect,.tactical-grid .trade-effect{flex-direction:column;gap:0}
+.merchant-rail .gems,.tactical-grid .gems{flex-wrap:wrap;gap:1px;justify-content:center;max-width:100%}
+.merchant-rail .gem,.tactical-grid .gem{width:clamp(9px,2.8vw,15px);height:clamp(11px,3.4vw,19px);flex:0 0 clamp(9px,2.8vw,15px)}
+.merchant-rail .gem i,.tactical-grid .gem i{display:none}
+.merchant-rail .trade-arrow,.tactical-grid .trade-arrow{font-size:13px;line-height:12px;margin:1px 0}
+.merchant-rail .upgrade-effect,.tactical-grid .upgrade-effect{flex:1;flex-direction:column;gap:0}
+.merchant-rail .upgrade-effect:before,.tactical-grid .upgrade-effect:before{content:'↑';font-size:20px;line-height:20px;color:#977440}
+.merchant-rail .upgrade-effect b,.tactical-grid .upgrade-effect b{font-size:27px;line-height:29px;color:#504735}
+.merchant-rail .upgrade-effect>span,.tactical-grid .upgrade-effect>span,.merchant-rail .upgrade-path,.tactical-grid .upgrade-path{display:none}
+.merchant-rail .card-foot{position:absolute;bottom:0;left:0;right:0;border:0;padding:0;margin:0;font-size:0;line-height:0}
+.merchant-rail .card-foot>span:not(.bonus){display:none}
+.merchant-rail .bonus{height:11px;overflow:hidden}
+.merchant-rail .bonus .gems{display:flex;flex-wrap:nowrap;justify-content:center;overflow:hidden;padding:0}
+.merchant-rail .bonus .gem{width:8px;height:10px;flex:0 0 8px}
+.markets .last-action{display:none}
+.hand-dock.tactical-hand{position:relative;flex-shrink:0;height:43%;min-height:0;max-height:none;margin:4px -8px 0;padding:4px 8px calc(4px + env(safe-area-inset-bottom));background:linear-gradient(180deg,#28373f,#17252c);border-radius:13px 13px 0 0;border-top:1px solid #69736a;gap:4px;overflow:visible;box-shadow:0 -4px 15px #0003}
+.tactical-head{height:35px;min-height:35px;flex-shrink:0;gap:5px}
+.tactical-head>div{flex:1;min-width:0}
+.tactical-head strong{font-size:12px}
+.tactical-head small{font-size:9px}
+.tactical-head button{min-width:44px;min-height:44px;height:44px;padding:4px 8px;font-size:10px;align-self:center;white-space:nowrap}
+.tactical-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));flex:1;min-height:0;gap:4px;overflow:hidden}
+.tactical-tile{min-width:0;min-height:0;display:flex}
+.tactical-tile .card{height:100%;width:100%;max-width:100%;min-width:0;min-height:44px;flex:1;border-radius:9px;padding:3px;overflow:hidden;background:radial-gradient(ellipse at 50% 95%,#d6a97177,transparent 60%),linear-gradient(140deg,#ecdec4,#faf2de 56%,#ccb99d);border-color:#cbb48b;box-shadow:inset 0 1px 1px #fff9,0 2px 3px #0003}
+.tactical-grid .played-tile .card{opacity:.3;filter:saturate(.55);box-shadow:none}
+.tactical-grid .vacant-card{border:1px dashed #80908966;border-radius:9px;background:#ffffff0a}
+.tactical-footer{height:45px;min-height:45px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:9px}
+.tactical-footer button{min-height:44px;height:44px;width:min(49%,205px);padding:5px 12px;background:#367f60;border:1px solid #74c79a;color:#f1f8f3;border-radius:23px;font-size:15px;letter-spacing:3px}
+.tactical-footer span{font-size:10px;color:#aebeb7;white-space:nowrap}
+.tactical-hand>.played-rail{position:absolute;bottom:51px;left:8px;right:8px;z-index:8;height:134px;max-height:134px;padding:7px;background:#1c2b33;border:1px solid #6a7d75;border-radius:9px;box-shadow:0 -8px 24px #0009}
+.hand-dock.expanded{height:auto;max-height:76dvh;overflow:hidden;z-index:12}
+@media(max-height:690px) and (orientation:portrait){
+ .table-header{min-height:34px;height:34px}.players{height:30px;min-height:30px}.caravan{height:47px;min-height:47px}
+ .markets{grid-template-rows:minmax(0,51fr) minmax(0,49fr)}.hand-dock.tactical-hand{height:43.5%}
+ .markets .golem{max-height:130px}.markets .merchant-rail .card{max-height:118px}
+ .tactical-head{height:32px;min-height:32px}
+}
+@media(max-width:350px){
+ .game-shell{padding-left:7px;padding-right:7px}
+ .hand-dock.tactical-hand{margin-left:-7px;margin-right:-7px;padding-left:7px;padding-right:7px}
+ .markets .rail{gap:2px}.tactical-grid{gap:3px}.tactical-footer span{font-size:9px}
+}
+@media(orientation:landscape) and (max-height:600px){
+ .game-shell{max-width:1200px;padding:2px 7px env(safe-area-inset-bottom)}
+ .board{display:grid;grid-template-columns:minmax(160px,21%) minmax(310px,37%) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:6px}
+ .board>.table-header,.board>.players,.board>.caravan{grid-column:1;grid-row:1;align-self:start}
+ .board>.players{margin-top:42px}.board>.caravan{margin-top:81px;height:66px}
+ .markets{grid-column:2;grid-row:1;grid-template-rows:52% 48%;margin:0}
+ .hand-dock.tactical-hand{grid-column:3;grid-row:1;height:100%;width:100%;max-height:none;margin:0;padding:4px 6px 5px;border-radius:11px}
+ .markets .golem,.markets .merchant-rail .card{max-height:none}
+ .hand-dock.expanded{position:fixed;grid-column:auto;grid-row:auto;width:min(600px,90vw);max-height:95dvh;height:auto}
+}
