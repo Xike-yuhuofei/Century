@@ -11,5 +11,5 @@ export {
   type AIParameters,
 } from './ai/parameters.js';
 export { buildObservation, type AIObservation, type ObservationPlayer } from './ai/observation.js';
-export { PROFILES, profileFor, type Profile } from './ai/profiles.js';
+export { PROFILES, profileFor, NEUTRAL_PROFILE, type Profile } from './ai/profiles.js';
 export { choosePlan } from './ai/planner.js';

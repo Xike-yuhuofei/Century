@@ -11,12 +11,19 @@
  */
 
 import { createGame, applyAction, score, ranking, count } from '../../web-v1/dist/js/engine.js';
-import { chooseAIAction } from '../../web-v1/dist/js/ai.js';
+import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
 
 export const DEFAULT_MAX_MOVES = 1200;
 export const DEFAULT_DEADLINE_MS = 60_000;
-/** 5 名 AI 席位在 4 种策略人格间循环映射（由现有 profileFor 的席位推导决定）。 */
-export const PROFILE_CYCLE = ['引擎大师', '速攻专家', '精算大师', '战术大师'];
+
+/** 席位人格映射：与正式游戏（1 人类 + 4 AI）的 profileFor 结果逐席一致。
+ * 正式游戏中 profileFor 只统计 isAI 玩家，第 n 个行动的 AI 得到第 n 种人格；
+ * 训练模拟把席位 0 的人类替换为中立代理（NEUTRAL_PROFILE，全部乘子 1.0），
+ * 席位 1-4 因此与正式游戏完全对齐（引擎大师/速攻专家/精算大师/战术大师），
+ * 不再出现"代理席挤占人格序号"导致的错位与重复。 */
+export function seatProfile(seat) {
+  return seat === 0 ? NEUTRAL_PROFILE : PROFILES[(seat - 1) % PROFILES.length];
+}
 
 /** 每席位统计容器。 */
 function seatStats(seatCount) {
@@ -86,10 +93,12 @@ export function simulateGame(options) {
       const seat = game.current;
       const version = versions?.[seat] ?? null;
       const decisionStart = performance.now();
-      const response = chooseAIAction(
-        game,
-        version?.parameters ? { parameters: version.parameters } : undefined,
-      );
+      // 人格按正式游戏席位映射显式注入（席位 0 为中立人类代理），
+      // 决策核心与正式游戏共用同一实现，仅人格来源由"席位推导"改为"显式映射"。
+      const response = chooseAIAction(game, {
+        ...(version?.parameters ? { parameters: version.parameters } : {}),
+        profile: seatProfile(seat),
+      });
       const decisionMs = performance.now() - decisionStart;
       const stats = seats[seat];
       stats.decisionCount += 1;

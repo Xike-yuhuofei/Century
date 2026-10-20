@@ -11,10 +11,13 @@ import { buildObservation } from './observation.js';
 import { resolveAIParameters, type AIParameters } from './parameters.js';
 import { choosePlan, initialState, actions } from './planner.js';
 import { trimStock } from './evaluator.js';
+import type { Profile } from './profiles.js';
 
 export type AIOptions = {
   /** 覆盖参数：对象、已注册版本 id，或缺省使用当前激活参数（冠军）。 */
   parameters?: AIParameters | string;
+  /** 显式人格：训练模拟器按正式游戏席位映射注入；缺省按席位结构自动推导。 */
+  profile?: Profile;
 };
 
 export type AIDecision = {
@@ -34,7 +37,7 @@ export function chooseAIAction(game: Game, options?: AIOptions): AIDecision {
   }
   // 决策只使用公开观察；隐藏牌库顺序在观察中不存在。
   const view = buildObservation(game);
-  const plan = choosePlan(view, params);
+  const plan = choosePlan(view, params, options?.profile);
   const action = plan?.first ?? { type: 'rest' };
   // 搜索转移为快速本地模型；真正的第一步必须由正式规则引擎再次核实。
   try {
