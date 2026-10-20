@@ -48,7 +48,7 @@ def geometry(page):
       const counts=el=>[0,1,2,3].map(c=>el.querySelectorAll('.gem-'+c).length),equal=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
       const mismatch=[];
       for(const card of document.querySelectorAll('.card')){
-        const id=card.querySelector('.card-top small').textContent;
+        const id=card.dataset.cardId || card.querySelector('.card-top small')?.textContent;
         if(card.classList.contains('golem')){
           const data=expected.golems[id];
           if(!equal(counts(card.querySelector('.gems')),data.cost)||parseInt(card.querySelector('.points').textContent)!==data.points)mismatch.push(id);

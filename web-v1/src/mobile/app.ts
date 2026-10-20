@@ -36,7 +36,7 @@ function mCard(id:string, action='',attrs='',foot=''):string {
 // Compact board cards display only the actual effect; full descriptions remain accessible to screen readers.
 function mGraphicCard(id:string, action='', attrs='', bonus=''):string {
   const card=MERCHANT_BY_ID[id], tag=action?'button':'div';
-  return `<${tag} ${action?`type="button" data-action="${action}"`:''} ${attrs} class="card merchant ${card.kind} graphic-card" aria-label="${mDescription(id)}">${mEffect(id)}${bonus?`<span class="graphic-bonus">${bonus}</span>`:''}</${tag}>`;
+  return `<${tag} ${action?`type="button" data-action="${action}"`:''} ${attrs} class="card merchant ${card.kind} graphic-card" data-card-id="${id}" aria-label="${mDescription(id)}">${mEffect(id)}${bonus?`<span class="graphic-bonus bonus">${bonus}</span>`:''}</${tag}>`;
 }
 function mCoin(i:number):string {
   if(!mGame)return '';
