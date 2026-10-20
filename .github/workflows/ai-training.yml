@@ -1,0 +1,191 @@
+name: AI 4.0 auto training
+
+on:
+  schedule:
+    # 每日 02:00 UTC 参数优化训练（约 40 分钟预算）
+    - cron: '0 2 * * *'
+    # 每周一 03:00 UTC 大规模冠军挑战
+    - cron: '0 3 * * 1'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'web-v1/**'
+      - 'training/**'
+      - '.github/workflows/ai-training.yml'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: '运行模式'
+        type: choice
+        default: evolve
+        options: [test, evolve, challenge]
+      generations:
+        description: '进化代数'
+        default: '3'
+      population:
+        description: '每代候选数'
+        default: '8'
+      games-per-candidate:
+        description: '每候选快速筛选种子数（×2 局）'
+        default: '20'
+      confirm-seeds:
+        description: '确认挑战种子数（×2 局）'
+        default: '60'
+      challenge-seeds:
+        description: 'challenge 模式种子数（×2 局）'
+        default: '100'
+      time-budget-min:
+        description: '时间预算（分钟）'
+        default: '40'
+
+# 默认只读；写权限仅在 evolve/promote 任务内显式声明。
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-training
+  cancel-in-progress: false
+
+jobs:
+  test:
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'test')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build web-v1（训练与正式游戏共用同一编译产物）
+        working-directory: web-v1
+        run: npm install --no-audit --no-fund && npm run build
+      - name: web-v1 规则与 AI 测试（含信息公平性）
+        working-directory: web-v1
+        run: npm test
+      - name: training 系统测试
+        working-directory: training
+        run: npm test
+      - name: 模拟器快速评估（PR 100 局）
+        run: |
+          node training/simulator/cli.mjs --games 100 --seed-base 1 --out training/reports/pr-eval
+          node -e "const s=require('./training/reports/pr-eval/summary.json');console.log('finished:',s.finishedGames,'anomalyRate:',s.anomalyRate,'meanMoves:',s.meanMoves);if(s.anomalyRate>0.02){console.error('异常率超限');process.exit(1)}"
+
+  evolve:
+    if: github.event_name == 'schedule' && github.event.schedule == '0 2 * * *' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'evolve')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build web-v1
+        working-directory: web-v1
+        run: npm install --no-audit --no-fund && npm run build
+      - name: 快速回归（规则 + 训练系统）
+        run: |
+          (cd web-v1 && npm test)
+          (cd training && npm test)
+      - name: 参数进化训练（时间预算内自动收敛）
+        run: |
+          node training/optimizer/evolve-cli.mjs \
+            --generations ${{ github.event_name == 'workflow_dispatch' && inputs.generations || 3 }} \
+            --population ${{ github.event_name == 'workflow_dispatch' && inputs.population || 8 }} \
+            --games-per-candidate ${{ github.event_name == 'workflow_dispatch' && inputs['games-per-candidate'] || 20 }} \
+            --confirm-seeds ${{ github.event_name == 'workflow_dispatch' && inputs['confirm-seeds'] || 60 }} \
+            --time-budget-min ${{ github.event_name == 'workflow_dispatch' && inputs['time-budget-min'] || 40 }} \
+            --out training/reports/evolve-$(date +%Y%m%d)
+      - name: 上传训练产物
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evolve-${{ github.run_id }}
+          path: |
+            training/reports/evolve-*/
+          if-no-files-found: warn
+          retention-days: 30
+
+  promote:
+    needs: evolve
+    if: needs.evolve.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 下载训练产物
+        uses: actions/download-artifact@v4
+        with:
+          name: evolve-${{ github.run_id }}
+          path: training/reports/
+      - name: 检查是否存在已通过确认挑战的候选
+        id: candidate
+        run: |
+          file=$(ls training/reports/evolve-*/candidate.json 2>/dev/null | head -1 || true)
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+          if [ -n "$file" ]; then
+            candidate_id=$(node -p "JSON.parse(require('fs').readFileSync('$file','utf8')).id")
+            echo "id=$candidate_id" >> "$GITHUB_OUTPUT"
+          fi
+      - name: 落地候选参数并创建晋级 PR
+        if: steps.candidate.outputs.file != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CANDIDATE_FILE: ${{ steps.candidate.outputs.file }}
+          CANDIDATE_ID: ${{ steps.candidate.outputs.id }}
+        run: |
+          git config user.name "century-ai-bot"
+          git config user.email "actions@users.noreply.github.com"
+          branch="ai-champion/${CANDIDATE_ID}-$(date +%Y%m%d%H%M)"
+          cp "$CANDIDATE_FILE" "training/champions/candidates/${CANDIDATE_ID}.json"
+          node training/scripts/apply-champion.mjs --champion "training/champions/candidates/${CANDIDATE_ID}.json"
+          # 晋级前完整回归：参数变更必须通过全部规则、公平性与训练测试。
+          (cd web-v1 && npm install --no-audit --no-fund && npm run build && npm test)
+          (cd training && npm test)
+          git checkout -b "$branch"
+          git add training/champions/ web-v1/src/ai/parameters.ts training/reports/
+          git commit -m "feat(ai4): 晋级冠军参数 ${CANDIDATE_ID}（挑战证据见 PR 正文）"
+          git push origin "$branch"
+          {
+            echo "## AI 4.0 冠军晋级候选：${CANDIDATE_ID}"
+            echo
+            echo '### 挑战证据（独立验证种子，双向混战 + 座位轮换）'
+            node -e "const d=require('./$CANDIDATE_FILE');console.log('\`\`\`json\\n'+JSON.stringify(d.confirmation,null,2)+'\\n\`\`\`')"
+            echo '### 晋级判定'
+            node -e "const d=require('./$CANDIDATE_FILE');console.log(d.confirmation.decision.reason)"
+            echo '### 回归状态'
+            echo '- web-v1 全部测试通过（规则 / AI / 信息公平性 / 模块化）'
+            echo '- training 全部测试通过（模拟器 / 统计 / 进化）'
+            echo '- 参数区由 apply-champion.mjs 生成，训练版与网页实战版使用同一参数'
+          } > pr-body.md
+          gh pr create --title "AI 4.0 冠军晋级：${CANDIDATE_ID}" --body-file pr-body.md --base main --head "$branch"
+
+  challenge:
+    if: github.event_name == 'schedule' && github.event.schedule == '0 3 * * 1' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'challenge')
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build web-v1
+        working-directory: web-v1
+        run: npm install --no-audit --no-fund && npm run build
+      - name: 大规模冠军基线挑战（当前冠军自对弈回归基准 + V1/V2 赛马）
+        run: |
+          (cd web-v1 && node scripts/benchmark-ai.mjs 16)
+          node training/simulator/cli.mjs \
+            --games ${{ github.event_name == 'workflow_dispatch' && inputs['challenge-seeds'] || 100 }} \
+            --seed-base 500000 --out training/reports/weekly-challenge-$(date +%Y%m%d)
+      - name: 上传周报
+        uses: actions/upload-artifact@v4
+        with:
+          name: weekly-challenge-${{ github.run_id }}
+          path: training/reports/weekly-challenge-*/
+          retention-days: 90

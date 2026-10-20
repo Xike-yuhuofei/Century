@@ -1,0 +1,69 @@
+{
+  "champion": "v4.0-baseline",
+  "generations": 2,
+  "history": [
+    {
+      "generation": 0,
+      "bestId": "evo-g0-3",
+      "bestWinRate": 0.625,
+      "bestMeanScoreDiff": 4.208,
+      "promoted": true,
+      "populationMeanWinRate": 0.5347,
+      "sigma": 0.153
+    },
+    {
+      "generation": 1,
+      "bestId": "evo-g1-3",
+      "bestWinRate": 0.625,
+      "bestMeanScoreDiff": 4.979,
+      "promoted": true,
+      "populationMeanWinRate": 0.5208,
+      "sigma": 0.13
+    }
+  ],
+  "improved": true,
+  "bestCandidateId": "evo-g1-3",
+  "confirmation": {
+    "champion": "v4.0-baseline",
+    "candidate": "evo-g1-3",
+    "seeds": 60,
+    "totalGames": 120,
+    "finishedGames": 120,
+    "anomalies": 0,
+    "anomalyRate": 0,
+    "candidateWins": 60,
+    "candidateWinRate": 0.5,
+    "seedBase": 900000000,
+    "winCI": {
+      "point": 0.5,
+      "lower": 0.41193870541108385,
+      "upper": 0.5880612945889161
+    },
+    "meanScoreDiffCI": {
+      "mean": 2.3895833333333334,
+      "se": 0.9475606112468276,
+      "lower": 0.5323986621207921,
+      "upper": 4.246768004545874
+    },
+    "meanRankCI": {
+      "mean": 2.808333333333333,
+      "se": 0.08138836706301424,
+      "lower": 2.648815065129299,
+      "upper": 2.967851601537367
+    },
+    "meanGolems": 3.956,
+    "meanMoves": 179.8,
+    "meanDecisionMs": 2502.4,
+    "decision": {
+      "promote": false,
+      "verdict": "inconclusive",
+      "reason": "区间 [0.412, 0.588] 跨越 0.5，结果不确定，保留冠军并建议增加样本",
+      "ci": {
+        "point": 0.5,
+        "lower": 0.41193870541108385,
+        "upper": 0.5880612945889161
+      }
+    }
+  },
+  "wallMs": 977951
+}

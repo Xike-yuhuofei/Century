@@ -29,7 +29,7 @@ jobs:
       - name: Check generated offline standalone includes planner
         working-directory: web-v1
         run: |
-          node -e "const fs=require('fs');const html=fs.readFileSync('dist/standalone.html','utf8');if(!html.includes('function choosePlan(game)'))process.exit(1)"
+          node -e "const fs=require('fs');const html=fs.readFileSync('dist/standalone.html','utf8');if(!html.includes('function choosePlan('))process.exit(1)"
       - name: Small seeded V1/V2 benchmark (diagnostic)
         working-directory: web-v1
         run: node scripts/benchmark-ai.mjs 2

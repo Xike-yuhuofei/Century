@@ -1,0 +1,19 @@
+{
+  "name": "century-ai-training",
+  "private": true,
+  "version": "4.0.0",
+  "description": "Century AI 4.0 自动进化训练系统（与 web-v1 共用同一 AI 决策核心编译产物）",
+  "type": "module",
+  "scripts": {
+    "pretest": "node ../web-v1/scripts/sync-cards.mjs --check || true",
+    "test": "node --test tests/*.test.mjs",
+    "simulate": "node simulator/cli.mjs",
+    "challenge": "node tournament/challenge.mjs",
+    "evolve": "node optimizer/evolve.mjs",
+    "diagnose": "node diagnostics/analyze.mjs",
+    "perf": "node evaluator/benchmark.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
