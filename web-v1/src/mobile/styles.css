@@ -134,3 +134,20 @@
 .graphic-card .graphic-bonus .gems{flex-wrap:nowrap;gap:1px;max-width:100%;overflow:hidden}
 .graphic-card .graphic-bonus .gem{width:8px;height:10px;flex:0 0 8px}
 .graphic-card .graphic-bonus .gem i{display:none}
+
+
+/* iOS 命中区：标题菜单、玩家座次、手牌整理按钮均实际占满 44pt。 */
+.table-header{height:44px;min-height:44px}
+.players{height:44px;min-height:44px;overflow:visible}
+.players .player{height:44px;min-height:44px}
+.tactical-head{height:44px;min-height:44px}
+@media(max-height:690px) and (orientation:portrait){
+ .table-header{height:44px;min-height:44px}
+ .players{height:44px;min-height:44px}
+ .hand-dock.tactical-hand{height:42%}
+ .tactical-head{height:44px;min-height:44px}
+}
+@media(orientation:landscape) and (max-height:600px){
+ .board>.players{margin-top:47px}
+ .board>.caravan{margin-top:98px}
+}
