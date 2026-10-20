@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#13100B">
+<title>Century · 晶石之路 — 手机 UI 概念演示</title>
+<style>
+/* ============================================================
+   Century 手机版视觉概念演示 · 「墨玉与象牙·精琢版」
+   Apple 排印纪律 × 实体桌游材质 × 水晶切面工艺
+   演示隔离目录，不影响正式 /mobile/
+   ============================================================ */
+:root{
+  color-scheme:dark;
+  /* 墨玉桌面 — 深石墨暖灰 */
+  --ink-950:#13100B;--ink-900:#1A1510;--ink-800:#231C14;--ink-700:#2C241A;
+  --hairline:rgba(212,184,130,.10);--hairline-strong:rgba(212,184,130,.18);
+  /* 象牙纸卡 */
+  --paper-hi:#FBF6EA;--paper:#F2EBDA;--paper-lo:#E2D4B8;
+  --paper-line:#BBA879;--paper-line-soft:rgba(150,128,86,.40);
+  --paper-ink:#382E1F;--paper-ink-soft:#7A6C52;--paper-ink-faint:#A89878;
+  /* 青铜金属 */
+  --bronze:#A98F5F;--bronze-hi:#D8C293;--bronze-deep:#6E5A35;
+  /* 玉色强调（唯一操作色） */
+  --jade:#4E9A6F;--jade-hi:#7CC298;--jade-deep:#2E5E44;
+  /* 文字（深底） */
+  --tx:#EFE7D3;--tx-mid:#BFB49A;--tx-dim:#8F8570;
+  /* 四色水晶 — 更饱和、更通透 */
+  --amber-hi:#FBE08A;--amber-mid:#E4B23F;--amber-deep:#9E6E12;--amber-rim:#6E4A08;
+  --jadeG-hi:#A4DEAC;--jadeG-mid:#4E9E66;--jadeG-deep:#276238;--jadeG-rim:#16401F;
+  --sapp-hi:#9BD0F0;--sapp-mid:#4693C8;--sapp-deep:#255A8A;--sapp-rim:#17405F;
+  --rose-hi:#F4B7CF;--rose-mid:#D17BA1;--rose-deep:#9C4672;--rose-rim:#682748;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","PingFang SC","Segoe UI",sans-serif;
+  --serif:Georgia,"Times New Roman","Songti SC",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:var(--font);background:var(--ink-950);color:var(--tx);
+  font-size:14px;-webkit-tap-highlight-color:transparent;overflow:hidden;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;touch-action:manipulation}
+button:disabled{cursor:default}
+
+/* ---------- 舞台网格 ---------- */
+.stage{
+  height:100vh;height:100dvh;max-width:480px;margin:0 auto;
+  display:grid;grid-template-rows:auto auto auto minmax(0,1fr) auto;
+  gap:5px;padding:calc(4px + env(safe-area-inset-top)) 8px 0;
+  background:
+    radial-gradient(120% 70% at 50% -12%,#2E2718 0%,transparent 55%),
+    radial-gradient(140% 90% at 50% 115%,#0E0B07 0%,transparent 60%),
+    linear-gradient(180deg,#1A1510 0%,#13100B 100%);
+}
+
+/* ---------- 顶栏 ---------- */
+.topbar{display:flex;align-items:center;gap:10px;min-height:40px}
+.brand{flex:1;min-width:0}
+.eyebrow{display:flex;align-items:center;gap:6px;font-size:9px;font-weight:700;letter-spacing:2.6px;color:#C9B482;white-space:nowrap}
+.eyebrow::before{content:"";width:5px;height:5px;background:linear-gradient(135deg,var(--bronze-hi),var(--bronze-deep));transform:rotate(45deg);flex:0 0 5px;border-radius:1px}
+.topbar h1{font-size:15px;font-weight:650;letter-spacing:.2px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar h1 small{font-size:11px;font-weight:500;color:var(--tx-dim);margin-left:5px}
+.icon-btn{
+  display:flex;align-items:center;gap:5px;min-width:44px;min-height:44px;justify-content:center;
+  font-size:11px;font-weight:600;color:var(--tx-mid);
+  border:1px solid var(--hairline-strong);border-radius:10px;background:rgba(255,244,214,.05);
+}
+.icon-btn:active{background:rgba(255,244,214,.11)}
+
+/* ---------- 玩家座次 ---------- */
+.players{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.pchip{
+  display:flex;align-items:center;gap:7px;min-height:34px;padding:4px 10px;
+  border:1px solid var(--hairline);border-radius:10px;background:rgba(255,244,214,.035);
+  text-align:left;transition:border-color .2s,background .2s;
+}
+.pchip .dot{width:6px;height:6px;border-radius:50%;background:#4A4234;flex:0 0 6px;transition:all .2s}
+.pchip.active{border-color:rgba(124,194,152,.42);background:rgba(124,194,152,.09)}
+.pchip.active .dot{background:var(--jade-hi);box-shadow:0 0 7px rgba(124,194,152,.85)}
+.pchip b{font-size:11px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pchip span{font-size:9.5px;color:var(--tx-dim);font-variant-numeric:tabular-nums;white-space:nowrap;margin-left:auto}
+.pchip.active b{color:#D9EDDE}
+
+/* ---------- 商队容量栏 ---------- */
+.caravan{
+  border:1px solid #453A26;border-radius:12px;padding:6px 10px 7px;
+  background:linear-gradient(168deg,#2B2418 0%,#1E1911 100%);
+  box-shadow:inset 0 1px 0 rgba(255,236,190,.07),0 2px 6px rgba(0,0,0,.35);
+}
+.caravan-head{display:flex;align-items:baseline;gap:8px}
+.caravan-head .name{font-size:11px;font-weight:650;color:#D9CDB0;letter-spacing:.4px}
+.coins{display:flex;gap:4px;margin-left:auto}
+.coin{
+  display:inline-flex;align-items:center;gap:3px;font-size:8.5px;font-weight:700;letter-spacing:.3px;
+  padding:1.5px 6px;border-radius:8px;font-variant-numeric:tabular-nums;
+}
+.coin.copper{color:#3D2408;background:linear-gradient(180deg,#F0CD92 0%,#D9A85C 55%,#B8843A 100%);box-shadow:inset 0 1px 0 #FFF3DC99,0 1px 2px rgba(0,0,0,.4)}
+.coin.silver{color:#2E3A42;background:linear-gradient(180deg,#F2F6F8 0%,#C2CFD5 55%,#9CAAB0 100%);box-shadow:inset 0 1px 0 #FFFFFFAA,0 1px 2px rgba(0,0,0,.4)}
+.coin.none{display:none}
+.capacity{font-size:11px;font-weight:700;color:#E8B54D;font-variant-numeric:tabular-nums;letter-spacing:.4px}
+.slots{display:flex;gap:3px;margin-top:6px;align-items:center;flex-wrap:nowrap;overflow:hidden}
+
+/* ---------- 水晶（精琢切面） ---------- */
+.gems{--w:15px;--h:18px;display:inline-flex;align-items:center;justify-content:center;gap:3px;flex-wrap:wrap;max-width:100%}
+.sz-xs{--w:9px;--h:11px;gap:1.5px}
+.sz-s{--w:11px;--h:13px;gap:2px}
+.sz-m{--w:13px;--h:16px}
+.sz-l{--w:17px;--h:20px}
+.sz-xl{--w:24px;--h:29px;gap:4px}
+.gem{
+  width:var(--w);height:var(--h);flex:0 0 var(--w);
+  position:relative;display:inline-block;clip-path:var(--cut);
+  background:
+    linear-gradient(180deg,rgba(0,0,0,.28) 0%,rgba(0,0,0,0) 35%,rgba(0,0,0,.18) 100%),
+    linear-gradient(150deg,var(--hi) 0%,var(--mid) 50%,var(--deep) 100%);
+  filter:drop-shadow(0 0 .5px var(--rim)) drop-shadow(0 1px 1.2px rgba(0,0,0,.45));
+}
+/* 切面高光：左上主面 */
+.gem::before{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(200deg,rgba(255,255,255,.75) 0%,rgba(255,255,255,.18) 30%,rgba(255,255,255,0) 55%);
+  clip-path:var(--facet-top);
+}
+/* 切面暗部：右下 */
+.gem::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(20deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,0) 50%);
+  clip-path:var(--facet-bot);
+}
+/* 四色四形 + 对应切面 */
+.gY{--cut:polygon(50% 0,94% 25%,94% 75%,50% 100%,6% 75%,6% 25%);
+    --facet-top:polygon(6% 25%,50% 0,94% 25%,70% 50%,30% 50%);
+    --facet-bot:polygon(30% 50%,70% 50%,94% 75%,50% 100%,6% 75%);
+    --hi:var(--amber-hi);--mid:var(--amber-mid);--deep:var(--amber-deep);--rim:var(--amber-rim)}
+.gG{--cut:polygon(28% 0,72% 0,100% 18%,100% 82%,72% 100%,28% 100%,0 82%,0 18%);
+    --facet-top:polygon(0 18%,28% 0,72% 0,100% 18%,72% 36%,28% 36%);
+    --facet-bot:polygon(28% 36%,72% 36%,100% 82%,72% 100%,28% 100%,0 82%);
+    --hi:var(--jadeG-hi);--mid:var(--jadeG-mid);--deep:var(--jadeG-deep);--rim:var(--jadeG-rim)}
+.gB{--cut:polygon(50% 0,100% 50%,50% 100%,0 50%);
+    --facet-top:polygon(0 50%,50% 0,100% 50%,65% 50%,50% 35%,35% 50%);
+    --facet-bot:polygon(35% 50%,50% 65%,65% 50%,100% 50%,50% 100%,0 50%);
+    --hi:var(--sapp-hi);--mid:var(--sapp-mid);--deep:var(--sapp-deep);--rim:var(--sapp-rim)}
+.gP{--cut:polygon(50% 0,100% 38%,80% 100%,20% 100%,0 38%);
+    --facet-top:polygon(0 38%,50% 0,100% 38%,75% 50%,50% 30%,25% 50%);
+    --facet-bot:polygon(25% 50%,50% 40%,75% 50%,80% 100%,20% 100%);
+    --hi:var(--rose-hi);--mid:var(--rose-mid);--deep:var(--rose-deep);--rim:var(--rose-rim)}
+/* 商队空槽：暗刻 */
+.slot-empty{width:var(--w);height:var(--h);flex:0 0 var(--w);clip-path:var(--cut);
+  background:linear-gradient(180deg,rgba(255,244,214,.05),rgba(255,244,214,.015));
+  border:1px solid rgba(255,244,214,.06);box-sizing:border-box}
+.slots{--w:17px;--h:20px}
+
+/* ---------- 市场区 ---------- */
+.markets{display:grid;grid-template-rows:minmax(0,54fr) minmax(0,46fr);gap:6px;min-height:0;padding-top:1px}
+.mkt{display:flex;flex-direction:column;min-height:0}
+.mkt-head{display:flex;align-items:center;gap:7px;flex:0 0 20px;padding:0 2px}
+.mkt-head h2{font-size:12px;font-weight:650;letter-spacing:1.2px;color:#E5DBC2;white-space:nowrap}
+.mkt-head h2 em{font-style:normal;font-size:9px;font-weight:600;color:var(--tx-dim);margin-left:5px;font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.mkt-head .rule{flex:1;height:1px;background:linear-gradient(90deg,var(--hairline-strong),transparent)}
+.mkt-head .meta{font-size:9px;color:var(--tx-dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rail{flex:1;min-height:0;display:grid;gap:5px;padding:2px 0}
+.rail.golems{grid-template-columns:repeat(5,minmax(0,1fr))}
+.rail.mers{grid-template-columns:repeat(6,minmax(0,1fr))}
+
+/* ---------- 卡牌：象牙纸（精琢） ---------- */
+.card{
+  position:relative;border-radius:10px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;min-width:0;min-height:44px;
+  background:
+    linear-gradient(0deg,rgba(122,84,16,.05),rgba(122,84,16,0) 40%),
+    linear-gradient(168deg,var(--paper-hi) 0%,var(--paper) 52%,var(--paper-lo) 100%);
+  border:1px solid var(--paper-line);
+  box-shadow:
+    inset 0 1px 0 rgba(255,250,235,.9),
+    inset 0 -1px 0 rgba(122,84,16,.10),
+    0 1px 1px rgba(0,0,0,.45),
+    0 3px 8px rgba(0,0,0,.30);
+  transition:transform .12s ease,box-shadow .12s ease;
+}
+button.card:active{transform:scale(.965)}
+.card::before{ /* 纸纹 */
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:
+    repeating-linear-gradient(0deg,rgba(60,45,20,.025) 0 1px,transparent 1px 3px),
+    repeating-linear-gradient(90deg,rgba(60,45,20,.018) 0 1px,transparent 1px 3px);
+}
+.card::after{ /* 内框金属细线 */
+  content:"";position:absolute;inset:2.5px;border-radius:7px;pointer-events:none;
+  border:1px solid rgba(150,128,86,.28);
+  box-shadow:inset 0 0 0 1px rgba(255,250,235,.25);
+}
+.card>*{position:relative;z-index:1}
+/* 类型顶釉：极淡 */
+.card.k-create{background:
+  radial-gradient(90% 42% at 50% 0%,rgba(216,164,52,.13),transparent 70%),
+  linear-gradient(168deg,var(--paper-hi) 0%,var(--paper) 52%,var(--paper-lo) 100%)}
+.card.k-upgrade{background:
+  radial-gradient(90% 42% at 50% 0%,rgba(96,142,96,.15),transparent 70%),
+  linear-gradient(168deg,var(--paper-hi) 0%,var(--paper) 52%,var(--paper-lo) 100%)}
+.card.k-trade{background:
+  radial-gradient(90% 42% at 50% 0%,rgba(74,146,198,.12),transparent 70%),
+  linear-gradient(168deg,var(--paper-hi) 0%,var(--paper) 52%,var(--paper-lo) 100%)}
+
+/* ---------- 魔像卡 ---------- */
+.golem{height:100%;max-height:152px;padding:8px 3px 0;justify-content:flex-start;gap:5px;overflow:hidden;
+  background:
+    radial-gradient(58% 36% at 50% 42%,rgba(122,84,16,.07),transparent 72%),
+    linear-gradient(0deg,rgba(122,84,16,.05),rgba(122,84,16,0) 40%),
+    linear-gradient(168deg,var(--paper-hi) 0%,var(--paper) 52%,var(--paper-lo) 100%)}
+.golem .coin{position:absolute;top:4px;left:4px;z-index:2}
+.golem .coin.none{display:none}
+.golem .pts{
+  font-family:var(--serif);font-weight:700;color:var(--paper-ink);
+  font-size:clamp(23px,6.4vw,31px);line-height:1;letter-spacing:-.5px;
+  text-shadow:0 1px 0 rgba(255,250,235,.9);
+  display:flex;align-items:center;justify-content:center;gap:3px;flex:1;min-height:0;
+}
+.golem .pts i{font-style:normal;font-family:var(--font);font-size:8px;font-weight:650;color:var(--paper-ink-soft);letter-spacing:1px;align-self:center;margin-top:10px}
+.plinth{
+  width:calc(100% + 6px);margin:0 -3px;padding:4px 2px 5px;
+  background:linear-gradient(180deg,rgba(122,84,16,.03),rgba(122,84,16,.14));
+  border-top:1px solid rgba(150,128,86,.40);
+  display:flex;align-items:center;justify-content:center;min-height:22px;
+}
+.plinth .gems{gap:2px;flex-wrap:wrap}
+.golem.claimable{
+  border-color:#5FAE80;
+  box-shadow:
+    inset 0 1px 0 rgba(255,250,235,.9),
+    inset 0 -1px 0 rgba(122,84,16,.10),
+    0 0 0 1.5px rgba(111,191,138,.55),
+    0 0 14px rgba(111,191,138,.30),
+    0 3px 8px rgba(0,0,0,.30);
+  animation:claim-pulse 2.4s ease-in-out infinite;
+}
+@keyframes claim-pulse{
+  0%,100%{box-shadow:inset 0 1px 0 rgba(255,250,235,.9),inset 0 -1px 0 rgba(122,84,16,.10),0 0 0 1.5px rgba(111,191,138,.55),0 0 10px rgba(111,191,138,.22),0 3px 8px rgba(0,0,0,.30)}
+  50%{box-shadow:inset 0 1px 0 rgba(255,250,235,.9),inset 0 -1px 0 rgba(122,84,16,.10),0 0 0 1.5px rgba(111,191,138,.70),0 0 18px rgba(111,191,138,.38),0 3px 8px rgba(0,0,0,.30)}
+}
+.golem.claimable::after{border-color:rgba(95,174,128,.55)}
+.badge-claim{
+  position:absolute;top:-5px;right:-4px;z-index:3;width:12px;height:12px;border-radius:50%;
+  background:radial-gradient(120% 120% at 30% 25%,#B8E6C8,#4E9A6F 70%);
+  box-shadow:0 1px 3px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.6);
+}
+
+/* ---------- 商人卡（无文字图形卡） ---------- */
+.merchant{height:100%;max-height:126px;padding:8px 3px 4px;justify-content:center;overflow:hidden}
+.effect{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;min-height:0;flex:1}
+.effect .gems{flex-wrap:wrap;gap:2px}
+.tarrow{width:13px;height:14px;color:#6E5730;margin:1.5px 0;flex:0 0 auto}
+.ustep{display:flex;flex-direction:column;align-items:center;gap:1px;color:#8A6D33}
+.ustep svg{width:15px;height:9px}
+.unum{font-family:var(--serif);font-weight:700;font-size:24px;line-height:1;color:#4E4128;text-shadow:0 1px 0 rgba(255,250,235,.85)}
+/* 奖励托盘 */
+.bonus-tray{
+  position:absolute;bottom:2.5px;left:2.5px;right:2.5px;z-index:2;
+  display:flex;justify-content:center;align-items:center;min-height:13px;
+  background:rgba(122,84,16,.10);border:1px solid rgba(150,128,86,.28);border-radius:5px;
+  padding:1.5px 2px;
+}
+.bonus-tray:empty{display:none}
+.bonus-tray .gems{flex-wrap:nowrap;gap:1.5px;overflow:hidden;max-width:100%}
+
+/* ---------- 手牌区 ---------- */
+.hand{
+  margin:1px -8px 0;background:linear-gradient(180deg,#251F16 0%,#1A1510 100%);
+  border-radius:15px 15px 0 0;border-top:1px solid #4A3E29;
+  box-shadow:0 -6px 22px rgba(0,0,0,.42);
+  padding:5px 8px calc(5px + env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;gap:4px;
+}
+.hand-head{display:flex;align-items:center;gap:8px;min-height:30px}
+.hand-head h2{font-size:12px;font-weight:650;letter-spacing:1.2px;color:#E5DBC2;white-space:nowrap}
+.hand-head .sub{font-size:9px;color:var(--tx-dim);margin-left:2px;white-space:nowrap}
+.hand-head .manage{
+  margin-left:auto;min-width:44px;min-height:44px;padding:6px 8px;
+  font-size:10px;font-weight:600;color:var(--tx-mid);white-space:nowrap;
+  border:1px solid var(--hairline-strong);border-radius:9px;background:rgba(255,244,214,.04);
+}
+.handGrid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:5px;flex:1;min-height:0}
+.tile{display:flex;min-width:0;min-height:0;position:relative}
+.tile .card{width:100%;height:100%;min-height:86px;max-height:104px;padding:6px 2px 4px}
+.tile .card .unum{font-size:20px}
+.tile .card .ustep svg{width:12px;height:7px}
+/* 已打出：优雅封存 — 褪色+微转+印记 */
+.tile.played .card{
+  filter:grayscale(.62) brightness(.84) contrast(.95);
+  opacity:.62;
+  transform:rotate(-1.2deg);
+  box-shadow:
+    inset 0 1px 0 rgba(255,250,235,.5),
+    0 1px 2px rgba(0,0,0,.35);
+}
+.tile.played::after{
+  content:"";position:absolute;top:5px;right:5px;width:9px;height:9px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#8a7a5a,#3a3020 80%);
+  box-shadow:0 1px 2px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.2);
+  z-index:3;opacity:.85;
+}
+.tile.vacant{border:1px dashed rgba(255,244,214,.13);border-radius:10px;background:rgba(255,244,214,.02)}
+.hand-foot{display:flex;align-items:center;gap:10px;min-height:46px;flex:0 0 auto}
+.cta{
+  flex:1;min-height:44px;border-radius:22px;font-size:14px;font-weight:700;letter-spacing:4px;text-indent:4px;
+  color:#F2F8F1;background:linear-gradient(180deg,#4A8362 0%,#2E5E44 100%);
+  border:1px solid #6FAE8B;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 2px 8px rgba(0,0,0,.4);
+  transition:filter .12s,transform .12s;
+}
+.cta:active{filter:brightness(1.1);transform:translateY(1px)}
+.cta:disabled{background:#332D22;border-color:#4A4234;color:#6E6551;box-shadow:none}
+.hand-foot .hint{font-size:9.5px;color:var(--tx-dim);white-space:nowrap;flex:0 0 auto}
+
+/* ---------- 浮层 ---------- */
+.scrim[hidden]{display:none}
+.scrim{
+  position:fixed;inset:0;z-index:20;background:rgba(8,6,3,.58);
+  -webkit-backdrop-filter:blur(8px) saturate(.82);backdrop-filter:blur(8px) saturate(.82);
+  display:flex;align-items:flex-end;justify-content:center;
+  animation:fade .2s ease-out;
+}
+.sheet{
+  width:min(100%,480px);max-height:90vh;max-height:90dvh;
+  background:linear-gradient(180deg,#282217 0%,#1C1712 100%);
+  border:1px solid #55482E;border-bottom:0;border-radius:20px 20px 0 0;
+  box-shadow:0 -12px 44px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,236,190,.09);
+  display:flex;flex-direction:column;min-height:0;
+  padding-bottom:env(safe-area-inset-bottom);
+  animation:rise .26s cubic-bezier(.2,.85,.25,1);
+}
+.grab{width:34px;height:4px;border-radius:2px;background:rgba(255,244,214,.22);margin:7px auto 0;flex:0 0 auto}
+.sheet-head{display:flex;align-items:center;gap:8px;padding:8px 16px 2px;flex:0 0 auto}
+.sheet-head h2{font-size:16px;font-weight:700;letter-spacing:.3px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sheet-head h2 em{font-style:normal;color:var(--tx-dim);font-weight:500;font-size:12px;margin-left:4px}
+.sheet-head .x{width:44px;height:44px;margin-right:-8px;display:flex;align-items:center;justify-content:center;color:var(--tx-dim);font-size:15px}
+.sheet-body{padding:8px 20px 14px;overflow:auto;min-height:0;overscroll-behavior:contain}
+.sheet-foot{display:flex;padding:8px 20px 12px;border-top:1px solid var(--hairline);flex:0 0 auto}
+.sheet h3{font-size:10px;font-weight:700;letter-spacing:1.6px;color:var(--tx-dim);margin:13px 0 7px}
+.sheet h3:first-child{margin-top:4px}
+.preview{display:flex;justify-content:center;padding:4px 0 2px}
+.preview .card{width:148px;height:150px;padding:12px 6px 6px}
+.preview .card .unum{font-size:30px}
+.preview .card .ustep svg{width:20px;height:12px}
+.srow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.note{font-size:11px;line-height:1.7;color:var(--tx-mid)}
+.miss{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:#E2A48F}
+/* 选择器 */
+.picker{display:flex;gap:7px;margin:6px 0 2px}
+.pick{
+  flex:1;min-height:52px;border-radius:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  background:rgba(255,244,214,.05);border:1px solid var(--hairline-strong);
+  font-size:9.5px;font-weight:600;color:var(--tx-mid);
+}
+.pick b{font-size:14px;color:var(--tx);font-variant-numeric:tabular-nums}
+.pick:active{background:rgba(255,244,214,.12)}
+.pick:disabled{opacity:.35}
+.pick.sel{border-color:#7CC298;background:rgba(124,194,152,.14)}
+.selrow{min-height:34px;display:flex;align-items:center;gap:5px;padding:4px 0;flex-wrap:wrap}
+.stepper{display:flex;align-items:center;justify-content:center;gap:22px;padding:6px 0}
+.stepper b{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums}
+.stepbtn{
+  width:46px;height:46px;border-radius:50%;font-size:21px;font-weight:600;
+  background:rgba(255,244,214,.06);border:1px solid var(--hairline-strong);color:var(--tx);
+}
+.stepbtn:disabled{opacity:.35}
+.menu-list{display:flex;flex-direction:column;gap:9px;margin:4px 0 8px}
+.menu-list button{
+  min-height:48px;text-align:left;padding:10px 14px;font-size:13.5px;font-weight:600;color:var(--tx);
+  background:rgba(255,244,214,.045);border:1px solid var(--hairline);border-radius:12px;
+}
+.help p{font-size:12px;line-height:1.85;color:var(--tx-mid);margin-bottom:9px}
+.help b{color:var(--tx)}
+/* 迷你卡（浮层内一览） */
+.minirail{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}
+.minirail::-webkit-scrollbar{display:none}
+.minirail .card{flex:0 0 96px;width:96px;height:100px;padding:8px 3px 4px}
+.minirail .card .unum{font-size:18px}
+.minirail .tile{flex:0 0 96px}
+.minirail .tile.played .card{filter:grayscale(.72) brightness(.8);opacity:.5;transform:none}
+.minirail .tile.played::after{display:none}
+
+/* ---------- Toast ---------- */
+.toast{
+  position:fixed;z-index:30;left:50%;transform:translateX(-50%);
+  bottom:calc(112px + env(safe-area-inset-bottom));
+  max-width:calc(100vw - 40px);padding:9px 16px;border-radius:12px;
+  background:linear-gradient(180deg,#F5EFDF,#E7DCC2);color:#3B3122;
+  font-size:11.5px;font-weight:600;box-shadow:0 6px 22px rgba(0,0,0,.5);
+  pointer-events:none;animation:rise .22s ease-out;
+}
+
+@keyframes rise{from{transform:translateY(26px);opacity:.4}to{transform:translateY(0);opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ---------- 紧凑视口适配 ---------- */
+@media(max-height:760px){
+  .stage{gap:4px}
+  .topbar{min-height:36px}
+  .golem{max-height:136px}.golem .pts{margin-top:6px}
+  .merchant{max-height:112px}
+}
+@media(max-height:690px){
+  .topbar{min-height:34px}.topbar h1{font-size:14px}
+  .pchip{min-height:30px}
+  .caravan{padding:5px 9px 6px}
+  .slots .gem,.slots .slot-empty{--w:13px;--h:16px}
+  .markets{grid-template-rows:minmax(0,53fr) minmax(0,47fr)}
+  .golem{max-height:124px}.golem .pts{font-size:clamp(20px,6vw,26px)}
+  .merchant{max-height:100px}
+  .tile .card{min-height:64px;max-height:92px}.tile .card .unum{font-size:18px}
+  .hand-foot{min-height:42px}.hand-head{min-height:26px}
+}
+@media(min-height:780px){
+  .golem{max-height:170px}
+  .merchant{max-height:138px}
+  .tile .card{min-height:92px;max-height:102px}
+  .hand-foot{min-height:50px}
+}
+@media(max-width:359px){
+  .stage{padding-left:6px;padding-right:6px}
+  .rail{gap:3px}.handGrid{gap:3px}
+  .slots{gap:2px}.slots .gem,.slots .slot-empty{--w:12px;--h:15px}
+  .hand-foot .hint{display:none}
+  .mkt-head h2{letter-spacing:.4px}
+}
+@media(min-width:420px){
+  .golem{max-height:176px}.merchant{max-height:142px}.tile .card{max-height:106px}
+}
+</style>
+</head>
+<body>
+<div class="stage">
+  <header class="topbar">
+    <div class="brand">
+      <span class="eyebrow">CENTURY · 晶石之路</span>
+      <h1 id="turnTitle">第 12 回合 <small>你的回合 · 演示沙盒</small></h1>
+    </div>
+    <button class="icon-btn" id="menuBtn" aria-label="打开菜单">
+      <svg width="14" height="10" viewBox="0 0 14 10" aria-hidden="true"><path d="M1 1h12M1 5h12M1 9h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      菜单
+    </button>
+  </header>
+
+  <nav class="players" id="players" aria-label="玩家座次"></nav>
+
+  <section class="caravan" aria-label="商队容量">
+    <div class="caravan-head">
+      <span class="name">你的商队</span>
+      <span class="coins" id="coinChips"></span>
+      <span class="capacity" id="capacity"></span>
+    </div>
+    <div class="slots sz-l" id="slots"></div>
+  </section>
+
+  <main class="markets">
+    <section class="mkt">
+      <div class="mkt-head"><h2>魔像市场<em id="golemCount"></em></h2><i class="rule"></i><span class="meta" id="coinMeta"></span></div>
+      <div class="rail golems" id="golemGrid"></div>
+    </section>
+    <section class="mkt">
+      <div class="mkt-head"><h2>商人市场<em id="merCount"></em></h2><i class="rule"></i><span class="meta">全部可见</span></div>
+      <div class="rail mers" id="merGrid"></div>
+    </section>
+  </main>
+
+  <section class="hand" aria-label="我的商人卡">
+    <div class="hand-head">
+      <h2>我的商人卡</h2><span class="sub" id="handMeta"></span>
+      <button class="manage" id="manageBtn">手牌管理</button>
+    </div>
+    <div class="handGrid" id="handGrid"></div>
+    <div class="hand-foot">
+      <button class="cta" id="restBtn">休息</button>
+      <span class="hint">点击卡牌选择行动</span>
+    </div>
+  </section>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+<div class="scrim" id="scrim" hidden><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" id="sheet"></section></div>
+
+<script>
+/* ================= 真实卡牌数据（同步自 data/cards.json，勿手改） ================= */
+const MERCHANTS={
+S01:{id:"S01",kind:"create",output:[2,0,0,0]},
+S02:{id:"S02",kind:"upgrade",steps:2},
+M01:{id:"M01",kind:"trade",input:[0,0,1,0],output:[1,2,0,0]},
+M02:{id:"M02",kind:"trade",input:[0,0,0,2],output:[1,1,3,0]},
+M05:{id:"M05",kind:"trade",input:[0,0,0,1],output:[1,1,1,0]},
+M06:{id:"M06",kind:"trade",input:[0,0,2,0],output:[2,3,0,0]},
+M07:{id:"M07",kind:"trade",input:[0,0,0,1],output:[0,0,2,0]},
+M09:{id:"M09",kind:"trade",input:[0,0,1,0],output:[4,1,0,0]},
+M10:{id:"M10",kind:"trade",input:[0,0,0,1],output:[3,0,1,0]},
+M11:{id:"M11",kind:"trade",input:[0,0,0,1],output:[2,2,0,0]},
+M13:{id:"M13",kind:"trade",input:[0,3,0,0],output:[2,0,2,0]},
+M14:{id:"M14",kind:"trade",input:[0,0,2,0],output:[0,2,0,1]},
+M17:{id:"M17",kind:"trade",input:[0,2,0,0],output:[2,0,0,1]},
+M20:{id:"M20",kind:"trade",input:[2,0,0,0],output:[0,2,0,0]},
+M22:{id:"M22",kind:"trade",input:[3,0,0,0],output:[0,3,0,0]},
+M24:{id:"M24",kind:"trade",input:[0,0,3,0],output:[0,0,0,3]},
+M27:{id:"M27",kind:"trade",input:[2,0,1,0],output:[0,0,0,2]},
+M31:{id:"M31",kind:"trade",input:[0,3,0,0],output:[1,0,1,1]},
+M36:{id:"M36",kind:"create",output:[0,0,0,1]},
+M38:{id:"M38",kind:"create",output:[2,1,0,0]},
+M42:{id:"M42",kind:"create",output:[0,2,0,0]},
+M43:{id:"M43",kind:"upgrade",steps:3}};
+const GOLEMS={
+G02:{id:"G02",points:14,cost:[0,3,0,2]},
+G03:{id:"G03",points:20,cost:[0,0,0,5]},
+G05:{id:"G05",points:12,cost:[1,1,1,1]},
+G08:{id:"G08",points:6,cost:[2,2,0,0]},
+G09:{id:"G09",points:18,cost:[0,0,2,3]},
+G11:{id:"G11",points:16,cost:[1,3,1,1]},
+G14:{id:"G14",points:12,cost:[0,0,4,0]},
+G16:{id:"G16",points:14,cost:[3,1,1,1]},
+G18:{id:"G18",points:16,cost:[0,0,0,4]},
+G21:{id:"G21",points:13,cost:[2,2,2,0]},
+G23:{id:"G23",points:10,cost:[0,5,0,0]},
+G32:{id:"G32",points:18,cost:[1,1,3,1]},
+G36:{id:"G36",points:11,cost:[2,0,3,0]}};
+const COLOR_NAMES=["黄","绿","蓝","粉"];
+const GEM_CLS=["gY","gG","gB","gP"];
+
+/* ================= 演示牌局快照（真实规则一致） ================= */
+function freshState(){return{
+  turn:12,
+  players:[
+    {name:"你",isAI:false,stock:[3,2,1,0],copper:0,silver:1,
+     order:["S01","S02","M05","M36","M07","M22","M20","M42","M17","M31"],
+     hand:["S02","M36","M07","M20","M42","M17","M31"],played:["S01","M05","M22"],
+     claimed:["G23","G14"]},
+    {name:"AI 1",isAI:true,stock:[1,1,0,0],copper:1,silver:2,hand:[],played:[],claimed:["G18"]}
+  ],
+  golemMarket:["G03","G21","G16","G05","G08"],
+  golemDeck:["G09","G11","G32","G36","G02"],
+  merchantMarket:[
+    {id:"M09",bonus:[0,1,0,0]},{id:"M24",bonus:[0,0,1,0]},{id:"M38",bonus:[0,0,0,0]},
+    {id:"M27",bonus:[0,0,0,0]},{id:"M43",bonus:[0,0,0,0]},{id:"M13",bonus:[1,0,0,0]}],
+  merchantDeck:["M02","M06","M10","M11","M14"],
+  copper:3,silver:4,overflow:false
+};}
+let S=freshState();
+const me=()=>S.players[0];
+
+/* ================= 工具 ================= */
+const $=s=>document.querySelector(s);
+const count=s=>s.reduce((a,b)=>a+b,0);
+const add=(a,b,f=1)=>a.map((x,i)=>x+b[i]*f);
+const has=(s,need)=>need.every((n,i)=>s[i]>=n);
+const readable=s=>s.map((n,i)=>n?`${COLOR_NAMES[i]}×${n}`:"").filter(Boolean).join("、")||"无";
+const esc=s=>s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function gemsHTML(stock,sz="sz-m",allowEmpty=true){
+  let h="";
+  stock.forEach((n,c)=>{for(let i=0;i<n;i++)h+=`<i class="gem ${GEM_CLS[c]}" aria-hidden="true"></i>`;});
+  return `<span class="gems ${sz}" role="img" aria-label="${readable(stock)}">${h||(allowEmpty?'<span class="note">无水晶</span>':'')}</span>`;
+}
+function arrowSVG(){return `<svg class="tarrow" viewBox="0 0 12 13" aria-hidden="true"><path d="M6 1v8.4M2.4 6.2 6 9.8l3.6-3.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M2.6 12h6.8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" opacity=".5"/></svg>`;}
+function upSVG(){return `<svg viewBox="0 0 16 10" aria-hidden="true"><path d="M2.5 8.4 8 3l5.5 5.4M2.5 4.6 8 -0.8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" transform="translate(0,1.4)"/></svg>`;}
+function cardHTML(id){
+  const c=MERCHANTS[id];
+  let eff="";
+  if(c.kind==="create")eff=gemsHTML(c.output,"sz-s");
+  else if(c.kind==="upgrade")eff=`<span class="ustep">${upSVG()}</span><span class="unum">${c.steps}</span>`;
+  else eff=`${gemsHTML(c.input,"sz-s")}${arrowSVG()}${gemsHTML(c.output,"sz-s")}`;
+  return `<span class="effect">${eff}</span>`;
+}
+function merchantCard(id,{bonus=null,cls="",act="",attrs=""}={}){
+  const c=MERCHANTS[id];
+  const tray=bonus&&count(bonus)?`<span class="bonus-tray">${gemsHTML(bonus,"sz-xs")}</span>`:"";
+  const tag=act?"button":"span";
+  return `<${tag} ${act?`data-act="${act}"`:''} ${attrs} class="card merchant k-${c.kind} ${cls}" aria-label="${cardLabel(id)}${bonus&&count(bonus)?`，卡上奖励 ${readable(bonus)}`:""}">${cardHTML(id)}${tray}</${tag}>`;
+}
+function cardLabel(id){
+  const c=MERCHANTS[id];
+  if(c.kind==="create")return `创造卡：获得 ${readable(c.output)}`;
+  if(c.kind==="upgrade")return `升级卡：至多升级 ${c.steps} 次（黄→绿→蓝→粉）`;
+  return `交易卡：支付 ${readable(c.input)} 换取 ${readable(c.output)}`;
+}
+function golemHTML(gid,i){
+  const g=GOLEMS[gid],ready=has(me().stock,g.cost);
+  const coin=i===0?(S.copper>0?`<span class="coin copper">铜 +3</span>`:(S.silver>0?`<span class="coin silver">银 +1</span>`:""))
+    :i===1?(S.copper>0&&S.silver>0?`<span class="coin silver">银 +1</span>`:""):"";
+  return `<button data-act="claim" data-index="${i}" class="card golem ${ready?"claimable":""}" aria-label="${g.points} 分魔像，需要 ${readable(g.cost)}，${ready?"可以认领":"水晶不足"}">
+    ${coin}${ready?'<span class="badge-claim" aria-hidden="true"></span>':""}
+    <span class="pts">${g.points}<i>分</i></span>
+    <span class="plinth">${gemsHTML(g.cost,"sz-xs")}</span>
+  </button>`;
+}
+const coinHTML=p=>p.copper?`<span class="coin copper">铜 ${p.copper}</span>`:"",coinSHTML=p=>p.silver?`<span class="coin silver">银 ${p.silver}</span>`:"";
+
+/* ================= 渲染 ================= */
+function score(p){return p.claimed.reduce((n,id)=>n+GOLEMS[id].points,0)+p.copper*3+p.silver+count(p.stock)-p.stock[0];}
+function render(){
+  const p=me();
+  $("#players").innerHTML=S.players.map((pl,i)=>`
+    <button class="pchip ${i===0?"active":""}" aria-current="${i===0}">
+      <span class="dot"></span><b>${esc(pl.name)}</b><span>${score(pl)} 分 · ${pl.claimed.length} 魔像</span>
+    </button>`).join("");
+  $("#coinChips").innerHTML=(p.copper?`<span class="coin copper">铜 ${p.copper}</span>`:"")+(p.silver?`<span class="coin silver">银 ${p.silver}</span>`:"");
+  const n=count(p.stock);
+  $("#capacity").textContent=`${n} / 10`;
+  let slots="";
+  p.stock.forEach((cnt,c)=>{for(let i=0;i<cnt;i++)slots+=`<i class="gem ${GEM_CLS[c]}" aria-hidden="true"></i>`;});
+  for(let i=n;i<10;i++)slots+=`<i class="slot-empty ${GEM_CLS[i%4]}" aria-hidden="true"></i>`;
+  $("#slots").innerHTML=slots;
+  $("#coinMeta").textContent=`铜余 ${S.copper} · 银余 ${S.silver}`;
+  $("#golemCount").textContent=S.golemMarket.length;
+  $("#merCount").textContent=S.merchantMarket.length;
+  $("#golemGrid").innerHTML=S.golemMarket.map((gid,i)=>golemHTML(gid,i)).join("");
+  $("#merGrid").innerHTML=S.merchantMarket.map(m=>merchantCard(m.id,{bonus:m.bonus,act:"acquire",attrs:`data-index="${S.merchantMarket.indexOf(m)}"`})).join("");
+  const playedSet=new Set(p.played);
+  const show=p.order.slice(0,10);
+  $("#handGrid").innerHTML=show.map(id=>`
+    <div class="tile ${playedSet.has(id)?"played":""}">${merchantCard(id,playedSet.has(id)?{}:{act:"play",attrs:`data-id="${id}"`})}</div>`).join("")
+    +Array.from({length:Math.max(0,10-show.length)},()=>'<div class="tile vacant" aria-hidden="true"></div>').join("");
+  $("#handMeta").textContent=`可打出 ${p.hand.length} · 已打出 ${p.played.length}`+(p.order.length>10?` · 共 ${p.order.length}`:"");
+}
+let toastTimer=null;
+function toast(msg){const t=$("#toast");t.hidden=false;t.textContent=msg;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.hidden=true,3000);}
+
+/* ================= 迷你引擎（与 engine.ts 规则一致） ================= */
+function tradeLimit(stock,id){const c=MERCHANTS[id];if(!c||c.kind!=="trade")return 0;
+  return Math.min(10,...c.input.map((n,i)=>n>0?Math.floor(stock[i]/n):10));}
+function afterOverflow(){
+  if(count(me().stock)>10){S.overflow=true;openDiscard();return true;}
+  return false;
+}
+function doPlay(id,steps,repeats){
+  const p=me(),c=MERCHANTS[id];
+  p.hand.splice(p.hand.indexOf(id),1);p.played.push(id);
+  if(c.kind==="create")p.stock=add(p.stock,c.output);
+  else if(c.kind==="upgrade"){for(const s of steps){p.stock[s]--;p.stock[s+1]++;}}
+  else{p.stock=add(add(p.stock,c.input,-repeats),c.output,repeats);}
+  render();closeSheet();
+  toast(`✓ ${c.kind==="create"?`创造 ${readable(c.output)}`:c.kind==="upgrade"?`升级 ${steps.length} 次`:`交易 ${repeats} 次`} · 演示不推进回合`);
+  afterOverflow();
+}
+function doAcquire(index,payment){
+  const p=me(),m=S.merchantMarket[index];
+  const rest=[...p.stock];for(const c of payment)rest[c]--;
+  for(let i=0;i<index;i++)S.merchantMarket[i].bonus[payment[i]]++;
+  S.merchantMarket.splice(index,1);
+  p.stock=add(rest,m.bonus);p.hand.push(m.id);p.order.push(m.id);
+  const nxt=S.merchantDeck.shift();if(nxt)S.merchantMarket.push({id:nxt,bonus:[0,0,0,0]});
+  render();closeSheet();
+  toast(`✓ 获取商人卡 ${m.id}（支付 ${payment.length} 颗，收回卡上 ${count(m.bonus)} 颗）`);
+  afterOverflow();
+}
+function doClaim(index){
+  const p=me(),g=GOLEMS[S.golemMarket[index]];
+  p.stock=add(p.stock,g.cost,-1);p.claimed.push(g.id);
+  let coin="";
+  if(index===0&&S.copper>0){S.copper--;p.copper++;coin="，获得铜币 +3 分";}
+  else if(index===0&&S.copper===0&&S.silver>0){S.silver--;p.silver++;coin="，获得银币 +1 分";}
+  else if(index===1&&S.copper>0&&S.silver>0){S.silver--;p.silver++;coin="，获得银币 +1 分";}
+  S.golemMarket.splice(index,1);
+  const nxt=S.golemDeck.shift();if(nxt)S.golemMarket.push(nxt);
+  render();closeSheet();
+  toast(`✓ 认领 ${g.points} 分魔像${coin}`);
+  afterOverflow();
+}
+function doRest(){const p=me();p.hand.push(...p.played);p.played=[];render();closeSheet();toast("✓ 休息：收回全部已打出商人卡");}
+function doDiscard(colors){const p=me();for(const c of colors)p.stock[c]--;S.overflow=false;render();closeSheet();toast(`✓ 弃置 ${colors.length} 颗水晶，回到 10 颗上限内`);}
+
+/* ================= 浮层 ================= */
+let sheetState=null;
+function openSheet(html){$("#sheet").innerHTML=html;$("#scrim").hidden=false;$("#toast").hidden=true;clearTimeout(toastTimer);}
+function closeSheet(){sheetState=null;$("#scrim").hidden=true;}
+function sheetHead(title,em=""){return `<div class="grab"></div><div class="sheet-head"><h2 id="sheetTitle">${title}${em?`<em>${em}</em>`:""}</h2><button class="x" data-act="close" aria-label="关闭">✕</button></div>`;}
+function sheetFoot(label,disabled=false,act="confirm"){return `<div class="sheet-foot"><button class="cta" data-act="${act}" ${disabled?"disabled":""} style="letter-spacing:2px;text-indent:2px">${label}</button></div>`;}
+
+function openClaim(i){
+  const g=GOLEMS[S.golemMarket[i]],p=me(),ok=has(p.stock,g.cost);
+  const miss=g.cost.map((n,c)=>Math.max(0,n-p.stock[c]));
+  const coin=i===0?(S.copper>0?"铜币 +3 分":S.silver>0?"银币 +1 分":"无硬币可领")
+    :i===1?(S.copper>0&&S.silver>0?"银币 +1 分":"无硬币可领"):"无硬币";
+  openSheet(`${sheetHead(`认领魔像`,`${g.points} 分 · ${coin}`)}
+    <div class="sheet-body">
+      <h3>卡面需求</h3><div class="srow">${gemsHTML(g.cost,"sz-xl")}<span class="note">${readable(g.cost)}</span></div>
+      ${ok?`<h3>支付后商队</h3><div class="srow">${gemsHTML(add(p.stock,g.cost,-1),"sz-l")}<span class="note">剩 ${count(add(p.stock,g.cost,-1))}/10</span></div>`
+         :`<h3>还缺少</h3><div class="srow"><span class="miss">水晶不足</span>${gemsHTML(miss,"sz-l")}<span class="note">需再凑 ${readable(miss)}</span></div>`}
+      <h3 style="margin-top:12px" class="note">按卡面一次性支付；左侧魔像附带更高级硬币。</h3>
+    </div>${sheetFoot(ok?"确认认领":"水晶不足",!ok)}`);
+  sheetState={kind:"claim",index:i};
+}
+function openAcquire(i){
+  const m=S.merchantMarket[i],p=me();
+  sheetState={kind:"acquire",index:i,payment:[]};
+  openSheet(`${sheetHead(i===0?"免费获取":"获取商人卡",MERCHANTS[m.id].id)}
+    <div class="sheet-body">
+      <div class="preview">${merchantCard(m.id,{bonus:m.bonus})}</div>
+      <p class="note" style="text-align:center">${cardLabel(m.id)}</p>
+      ${i===0?"":`<h3>获取费用 · 向左侧 ${i} 张卡各放 1 颗</h3>
+      <div class="picker" id="payPicker">${p.stock.map((n,c)=>`
+        <button class="pick" data-act="pick" data-color="${c}" aria-label="支付${COLOR_NAMES[c]}水晶" ${n<=0?"disabled":""}>
+          ${gemsHTML([1,0,0,0].map((v,x)=>x===c?1:0),"sz-m")}<b id="payn-${c}">${n}</b>
+        </button>`).join("")}</div>
+      <div class="selrow" id="paySel">${gemsHTML([0,0,0,0],"sz-s")}<span class="note">已选 0 / ${i}</span></div>`}
+      <h3>同时拿走卡上奖励</h3><div class="srow">${count(m.bonus)?gemsHTML(m.bonus,"sz-l"):'<span class="note">本卡暂无奖励水晶</span>'}</div>
+      <h3>获取后商队</h3><div class="srow" id="acqPreview"></div>
+    </div>${sheetFoot("确认获取",true)}`);
+  updateAcquire();
+}
+function updateAcquire(){
+  const s=sheetState;if(!s||s.kind!=="acquire")return;
+  const m=S.merchantMarket[s.index],p=me();
+  document.querySelectorAll("#payPicker .pick").forEach(b=>{
+    const c=+b.dataset.color,used=s.payment.filter(x=>x===c).length;
+    b.classList.toggle("sel",used>0);
+    const el=b.querySelector("b");if(el)el.textContent=p.stock[c]-used;
+  });
+  const sel=s.payment.reduce((a,c)=>{a[c]++;return a;},[0,0,0,0]);
+  const paySel=$("#paySel");
+  if(paySel)paySel.innerHTML=gemsHTML(sel,"sz-s",false)+`<span class="note">已选 ${s.payment.length} / ${s.index}</span>`;
+  const after=add(add([...p.stock],sel,-1),m.bonus);
+  const acq=$("#acqPreview");
+  if(acq)acq.innerHTML=gemsHTML(after,"sz-l")+`<span class="note">${count(after)}/10${count(after)>10?" · 超限需弃置":""}</span>`;
+  const btn=$("#sheet .sheet-foot .cta");if(btn)btn.disabled=s.payment.length!==s.index;
+}
+function openPlay(id){
+  const c=MERCHANTS[id],p=me();
+  if(c.kind==="create"){
+    openSheet(`${sheetHead("创造水晶",c.id)}
+      <div class="sheet-body"><div class="preview">${merchantCard(id)}</div>
+      <h3>获得后商队</h3><div class="srow">${gemsHTML(add(p.stock,c.output),"sz-l")}<span class="note">${count(add(p.stock,c.output))}/10</span></div></div>
+      ${sheetFoot("确认打出")}`);
+    sheetState={kind:"play",id,steps:[],repeats:1};
+  }else if(c.kind==="upgrade"){
+    sheetState={kind:"play",id,steps:[],repeats:1};
+    openSheet(`${sheetHead("升级水晶",c.id)}
+      <div class="sheet-body"><div class="preview">${merchantCard(id)}</div>
+      <p class="note" style="text-align:center">点选起始颜色，每次升一级；可连续升级同一颗，也可中途结束。</p>
+      <h3>选择升级路径</h3><div class="picker" id="upPicker">${[0,1,2].map(k=>`
+        <button class="pick" data-act="up" data-color="${k}" aria-label="升级${COLOR_NAMES[k]}水晶">
+          ${gemsHTML([1,0,0,0].map((v,x)=>x===k?1:0),"sz-m")}<span>→ ${COLOR_NAMES[k+1]}</span>
+        </button>`).join("")}</div>
+      <div class="selrow" id="upSel"></div>
+      <h3>升级后商队</h3><div class="srow" id="upPreview"></div></div>
+      ${sheetFoot("完成 0 次升级",true)}`);
+    updateUpgrade();
+  }else{
+    const limit=tradeLimit(p.stock,id);
+    sheetState={kind:"play",id,steps:[],repeats:1};
+    openSheet(`${sheetHead("连续交易",c.id)}
+      <div class="sheet-body"><div class="preview">${merchantCard(id)}</div>
+      <p class="note" style="text-align:center">${readable(c.input)} → ${readable(c.output)}，可一次重复多次。</p>
+      <div class="stepper">
+        <button class="stepbtn" data-act="minus" aria-label="减少一次">−</button>
+        <b id="repN">1 次</b>
+        <button class="stepbtn" data-act="plus" aria-label="增加一次" ${limit<=1?"disabled":""}>+</button>
+      </div>
+      <p class="note" style="text-align:center">当前商队最多交易 ${limit} 次</p>
+      <h3>交易后商队</h3><div class="srow" id="trPreview"></div></div>
+      ${sheetFoot(limit?"确认交易":"水晶不足",!limit)}`);
+    updateTrade();
+  }
+}
+function draftStock(){const s=sheetState,p=me(),d=[...p.stock];for(const c of s.steps){d[c]--;d[c+1]++;}return d;}
+function updateUpgrade(){
+  const s=sheetState,c=MERCHANTS[s.id],d=draftStock();
+  document.querySelectorAll("#upPicker .pick").forEach(b=>{
+    const k=+b.dataset.color;b.disabled=s.steps.length>=c.steps||d[k]<=0;
+  });
+  const stepsSel=s.steps.reduce((a,c)=>{a[c]++;return a;},[0,0,0,0]);
+  $("#upSel").innerHTML=s.steps.length?`<span class="note">${s.steps.map(k=>`${COLOR_NAMES[k]}→${COLOR_NAMES[k+1]}`).join("，")}</span>`:'<span class="note">尚未选择升级</span>';
+  $("#upPreview").innerHTML=gemsHTML(d,"sz-l")+`<span class="note">${count(d)}/10</span>`;
+  const btn=$("#sheet .sheet-foot .cta");btn.textContent=`完成 ${s.steps.length} 次升级`;btn.disabled=false;
+}
+function updateTrade(){
+  const s=sheetState,c=MERCHANTS[s.id],p=me();
+  const result=add(add([...p.stock],c.input,-s.repeats),c.output,s.repeats);
+  $("#repN").textContent=`${s.repeats} 次`;
+  $("#trPreview").innerHTML=gemsHTML(result,"sz-l")+`<span class="note">${count(result)}/10</span>`;
+  document.querySelector('[data-act="minus"]').disabled=s.repeats<=1;
+  document.querySelector('[data-act="plus"]').disabled=s.repeats>=tradeLimit(p.stock,s.id);
+  $("#sheet .sheet-foot .cta").textContent=`确认交易 ${s.repeats} 次`;
+}
+function openRest(){
+  const p=me();
+  openSheet(`${sheetHead("休息，重新出发",`收回 ${p.played.length} 张`)}
+    <div class="sheet-body"><p class="note">收回全部正面商人卡到手牌，本次休息占用一个回合（演示不推进回合）。</p>
+    <h3>将收回的卡</h3><div class="minirail">${p.played.map(id=>`<span class="tile played">${merchantCard(id,{})}</span>`).join("")||'<p class="note">尚无已打出的卡</p>'}</div></div>
+    ${sheetFoot("确认休息",false)}`);
+  sheetState={kind:"rest"};
+}
+function openDiscard(){
+  const p=me(),excess=count(p.stock)-10;
+  sheetState={kind:"discard",colors:[]};
+  openSheet(`${sheetHead("商队超额",`弃置 ${excess} 颗`)}
+    <div class="sheet-body"><p class="note">行动已执行，请选择要放回供应堆的水晶，之后结束回合。</p>
+    <div class="picker" id="disPicker">${p.stock.map((n,c)=>`
+      <button class="pick" data-act="pick" data-color="${c}" aria-label="弃置${COLOR_NAMES[c]}水晶" ${n<=0?"disabled":""}>
+        ${gemsHTML([1,0,0,0].map((v,x)=>x===c?1:0),"sz-m")}<b id="payn-${c}">${n}</b>
+      </button>`).join("")}</div>
+    <div class="selrow" id="paySel"></div></div>
+    ${sheetFoot("确认弃置",true)}`);
+  updateDiscard();
+}
+function updateDiscard(){
+  const s=sheetState,p=me(),excess=count(p.stock)-10;
+  document.querySelectorAll("#disPicker .pick").forEach(b=>{
+    const c=+b.dataset.color,used=s.colors.filter(x=>x===c).length;
+    b.classList.toggle("sel",used>0);
+    const el=b.querySelector("b");if(el)el.textContent=p.stock[c]-used;
+    b.disabled=p.stock[c]-used<=0;
+  });
+  const sel=s.colors.reduce((a,c)=>{a[c]++;return a;},[0,0,0,0]);
+  $("#paySel").innerHTML=gemsHTML(sel,"sz-s",false)+`<span class="note">已选 ${s.colors.length} / ${excess}</span>`;
+  $("#sheet .sheet-foot .cta").disabled=s.colors.length!==excess;
+}
+function openManage(){
+  const p=me(),playedSet=new Set(p.played);
+  openSheet(`${sheetHead("手牌管理",`共 ${p.order.length} 张`)}
+    <div class="sheet-body"><p class="note">固定总览保留前 10 张；点击下方任意未打出的卡即可选择行动。</p>
+    <div class="minirail" style="flex-wrap:wrap;overflow:visible">${p.order.map(id=>playedSet.has(id)
+      ?`<span class="tile played">${merchantCard(id,{})}</span>`
+      :`<span class="tile">${merchantCard(id,{act:"manage-play",attrs:`data-id="${id}"`})}</span>`).join("")}</div></div>
+    ${sheetFoot("返回桌面",false,"close")}`);
+  sheetState={kind:"manage"};
+}
+function openMenu(){
+  openSheet(`${sheetHead("对局菜单")}
+    <div class="sheet-body"><div class="menu-list">
+      <button data-act="help">玩法速览</button>
+      <button data-act="reset">重置演示牌局</button>
+      <button data-act="close">返回桌面</button>
+    </div>
+    <p class="note">概念演示 v2 · 视觉方向 B 精琢版「墨玉与象牙」· 数据与规则同步自正式版 engine.ts / cards.json</p></div>`);
+  sheetState={kind:"menu"};
+}
+function openHelp(){
+  openSheet(`${sheetHead("四个行动，一次选择")}
+    <div class="sheet-body help">
+      <p><b>打出</b> — 创造水晶、至多逐级升级，或重复交易。</p>
+      <p><b>获取</b> — 为目标左侧每张卡各放 1 颗任意水晶，拿走目标及其卡上奖励。</p>
+      <p><b>休息</b> — 花一个回合收回所有已打出的商人卡。</p>
+      <p><b>认领</b> — 按卡面支付水晶，获得魔像与相应硬币。</p>
+      <p>回合结束保留至多 10 颗水晶，超额自选弃置。升级可以中途结束，也可对同一颗连续升级。</p>
+      <p>总分 = 魔像分 + 铜币×3 + 银币 + 非黄水晶数；平分时本轮后手胜。</p>
+    </div>${sheetFoot("知道了",false,"close")}`);
+  sheetState={kind:"help"};
+}
+
+/* ================= 事件 ================= */
+document.body.addEventListener("click",e=>{
+  const el=e.target.closest("[data-act]");if(!el||el.disabled)return;
+  const act=el.dataset.act;
+  if(act==="close")return closeSheet();
+  if(act==="help")return openHelp();
+  if(act==="manage-play")return openPlay(el.dataset.id);
+  if(act==="reset"){S=freshState();closeSheet();render();return toast("已重置演示牌局");}
+  if(!sheetState){
+    if(act==="claim")return openClaim(+el.dataset.index);
+    if(act==="acquire")return openAcquire(+el.dataset.index);
+    if(act==="play")return openPlay(el.dataset.id);
+    return;
+  }
+  const s=sheetState;
+  if(act==="confirm"){
+    if(s.kind==="claim")doClaim(s.index);
+    else if(s.kind==="acquire")doAcquire(s.index,s.payment);
+    else if(s.kind==="rest")doRest();
+    else if(s.kind==="play"){const c=MERCHANTS[s.id];doPlay(s.id,c.kind==="upgrade"?s.steps:undefined,c.kind==="trade"?s.repeats:undefined);}
+    else if(s.kind==="discard")doDiscard(s.colors);
+    return;
+  }
+  if(act==="pick"&&(s.kind==="acquire"||s.kind==="discard")){
+    const c=+el.dataset.color,p=me();
+    if(s.kind==="acquire"){if(s.payment.length<s.index&&s.payment.filter(x=>x===c).length<p.stock[c]){s.payment.push(c);updateAcquire();}}
+    else{if(s.colors.length<count(p.stock)-10&&s.colors.filter(x=>x===c).length<p.stock[c]){s.colors.push(c);updateDiscard();}}
+    return;
+  }
+  if(act==="up"&&s.kind==="play"){
+    const c=MERCHANTS[s.id],d=draftStock(),k=+el.dataset.color;
+    if(s.steps.length<c.steps&&d[k]>0){s.steps.push(k);updateUpgrade();}
+    return;
+  }
+  if(act==="plus"&&s.kind==="play"){s.repeats=Math.min(tradeLimit(me().stock,s.id),s.repeats+1);updateTrade();return;}
+  if(act==="minus"&&s.kind==="play"){s.repeats=Math.max(1,s.repeats-1);updateTrade();return;}
+});
+$("#scrim").addEventListener("click",e=>{if(e.target===e.currentTarget)closeSheet();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#scrim").hidden)closeSheet();});
+$("#menuBtn").addEventListener("click",openMenu);
+$("#manageBtn").addEventListener("click",openManage);
+$("#restBtn").addEventListener("click",openRest);
+
+render();
+</script>
+</body>
+</html>
