@@ -127,7 +127,7 @@ with sync_playwright() as pw:
         assert page.locator('.handoff').count()==1 and page.locator('.hand-dock').count()==0
         shot(page,f'{engine}-04-handoff.png')
         page.reload();action(page,'resume');assert page.locator('.handoff').count()==1
-        action(page,'ready');assert '玩家 2' in page.locator('.dock-title').inner_text()
+        action(page,'ready');assert '玩家 2' in page.locator('.table-header').inner_text()
         resume(page,fixtures['base']);page.locator('[data-id="S02"][data-action="play"]').click();action(page,'confirm')
         assert saved(page)['players'][0]['stock']==[3,0,0,0] # 零次合法升级
         resume(page,fixtures['base']);page.locator('[data-id="S02"][data-action="play"]').click()
