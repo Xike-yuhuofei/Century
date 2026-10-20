@@ -1251,10 +1251,15 @@ const BASELINE_PARAMETERS = {
 };
 // === CHAMPION-PARAMETERS-BEGIN（由 training/scripts/apply-champion.mjs 生成，勿手改） ===
 const CHAMPION_PARAMETERS = {
-    id: 'v4.0-baseline',
-    engineWeight: 1, tempoWeight: 1, contestWeight: 1,
-    synergyWeight: 1, goalWeight: 1, capacityWeight: 1,
-    restWeight: 1, endgameWeight: 1,
+    id: "v4.0-baseline",
+    engineWeight: 1,
+    tempoWeight: 1,
+    contestWeight: 1,
+    synergyWeight: 1,
+    goalWeight: 1,
+    capacityWeight: 1,
+    restWeight: 1,
+    endgameWeight: 1,
 };
 // === CHAMPION-PARAMETERS-END ===
 const PARAM_KEYS = Object.keys(PARAMETER_BOUNDS);
@@ -1337,7 +1342,7 @@ function profileFor(view) {
  *   本文件及 src/ai/ 下其他模块对这两个字段的引用为零，
  *   由 tests/ai-fairness.test.mjs 的静态扫描与纯度测试强制保证。
  */
-const cloneStock = (stock) => [...stock];
+const clonePlayerStock = (stock) => [...stock];
 function deepFreeze(value) {
     if (value && typeof value === 'object' && !Object.isFrozen(value)) {
         Object.freeze(value);
@@ -1359,7 +1364,7 @@ function buildObservation(game, playerId = game.current) {
             id: p.id,
             name: p.name,
             isAI: p.isAI === true,
-            stock: cloneStock(p.stock),
+            stock: clonePlayerStock(p.stock),
             hand: [...p.hand],
             played: [...p.played],
             claimed: [...p.claimed],
@@ -1368,7 +1373,7 @@ function buildObservation(game, playerId = game.current) {
             turns: p.turns,
         })),
         current: game.current,
-        merchantMarket: game.merchantMarket.map(m => ({ id: m.id, bonus: cloneStock(m.bonus) })),
+        merchantMarket: game.merchantMarket.map(m => ({ id: m.id, bonus: clonePlayerStock(m.bonus) })),
         golemMarket: [...game.golemMarket],
         copper: game.copper,
         silver: game.silver,

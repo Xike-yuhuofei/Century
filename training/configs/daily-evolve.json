@@ -1,0 +1,21 @@
+{
+  "$comment": "每日参数优化训练配置样例（供 ai-training.yml evolve 任务或本地 evolve-cli 使用）",
+  "mode": "evolve",
+  "generations": 3,
+  "population": 8,
+  "gamesPerCandidate": 20,
+  "confirmSeeds": 60,
+  "minGames": 120,
+  "sigma": 0.18,
+  "timeBudgetMin": 40,
+  "seedPolicy": {
+    "trainSeedBase": 100000,
+    "validationSeedBase": 900000000,
+    "note": "训练种子与确认种子严格隔离，禁止用训练种子宣布晋级"
+  },
+  "promotion": {
+    "minGames": 120,
+    "maxAnomalyRate": 0.02,
+    "rule": "先名率 Wilson 95% CI 下界 > 0.5"
+  }
+}
