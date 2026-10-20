@@ -31,6 +31,9 @@ on:
       confirm-seeds:
         description: '确认挑战种子数（×2 局）'
         default: '60'
+      sigma:
+        description: '进化扰动步长'
+        default: '0.18'
       challenge-seeds:
         description: 'challenge 模式种子数（×2 局）'
         default: '100'
@@ -73,7 +76,7 @@ jobs:
   evolve:
     if: github.event_name == 'schedule' && github.event.schedule == '0 2 * * *' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'evolve')
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -93,6 +96,7 @@ jobs:
             --population ${{ github.event_name == 'workflow_dispatch' && inputs.population || 8 }} \
             --games-per-candidate ${{ github.event_name == 'workflow_dispatch' && inputs['games-per-candidate'] || 20 }} \
             --confirm-seeds ${{ github.event_name == 'workflow_dispatch' && inputs['confirm-seeds'] || 60 }} \
+            --sigma ${{ github.event_name == 'workflow_dispatch' && inputs.sigma || 0.18 }} \
             --time-budget-min ${{ github.event_name == 'workflow_dispatch' && inputs['time-budget-min'] || 40 }} \
             --out training/reports/evolve-$(date +%Y%m%d)
       - name: 上传训练产物
