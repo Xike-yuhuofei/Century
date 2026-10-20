@@ -9,7 +9,7 @@
  */
 import { resolve } from 'node:path';
 import { simulateGame, summarizeResults } from './simulate.mjs';
-import { requireBuiltEngine } from '../lib/paths.mjs';
+import { requireBuiltEngine, REPO_ROOT } from '../lib/paths.mjs';
 import { writeJSON, appendJSONL, ensureDir, readJSON, readJSONL } from '../lib/io.mjs';
 
 function parseArgs(argv) {
@@ -44,7 +44,7 @@ if (args.versions) {
   });
 }
 
-const outDir = resolve(process.cwd(), outArg);
+const outDir = resolve(args.out !== undefined ? process.cwd() : REPO_ROOT, outArg);
 ensureDir(outDir);
 const resultsPath = resolve(outDir, 'results.jsonl');
 const started = performance.now();

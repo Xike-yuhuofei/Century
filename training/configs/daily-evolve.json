@@ -5,17 +5,23 @@
   "population": 8,
   "gamesPerCandidate": 20,
   "confirmSeeds": 60,
-  "minGames": 120,
+  "minSeeds": 60,
+  "poolSize": 5,
   "sigma": 0.18,
   "timeBudgetMin": 40,
   "seedPolicy": {
-    "trainSeedBase": 100000,
-    "validationSeedBase": 900000000,
+    "trainSeedBase": "每日由工作流按日期派生（date +%Y%m%d），保证跨日探索不重复",
+    "validationSeedPool": {
+      "base": 900000000,
+      "stride": 2000,
+      "ledger": "training/reports/evolve-*/validation-ledger.json，经工作流 artifact 持久化、下次 --seed-ledger 续接，验证种子块绝不重复使用"
+    },
     "note": "训练种子与确认种子严格隔离，禁止用训练种子宣布晋级"
   },
   "promotion": {
-    "minGames": 120,
+    "minSeeds": 60,
     "maxAnomalyRate": 0.02,
-    "rule": "先名率 Wilson 95% CI 下界 > 0.5"
+    "rule": "按种子配对统计：决定性种子的先名率 Wilson 95% CI 下界 > 0.5（同种子双向对局是配对样本，不按独立局计数）",
+    "opponents": "确认挑战保持冠军独占对手；快速筛选使用多样化对手池（风格变体 + 历史冠军）"
   }
 }
