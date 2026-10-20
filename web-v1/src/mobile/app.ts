@@ -59,6 +59,10 @@ function mAdvance(action:Action) {
   if(!mGame)return;
   try {
     const before=mGame.current;
+    // 行动前记录包含已打出卡的顺序，休息/打出均不让卡片重排。
+    const actor=mGame.players[mGame.current];
+    mOrder[actor.id]=visibleOrder([...actor.hand,...actor.played],mOrder[actor.id]||[]);
+    mSaveOrder();
     mGame=applyAction(mGame,action);mSheet=null;mExpanded=false;mArrange=false;mFilter='all';
     if(mGame.current!==before && !mGame.players[mGame.current].isAI){
       mOwner=mGame.current;

@@ -82,6 +82,31 @@ with sync_playwright() as pw:
             assert card['y']+card['height']<=market['y']+market['height']+1, (w,h,market,card)
             shot(page,f'{engine}-02-table-{w}x{h}.png')
             report.append({'engine':engine,'viewport':f'{w}x{h}',**stats})
+        # 设计验收：真实10张手牌与5+6公共卡牌，在375×667不滚动同时可见。
+        page.set_viewport_size({'width':375,'height':667})
+        resume(page,fixtures['many'])
+        assert page.locator('.golem-rail .card').count()==5
+        assert page.locator('.merchant-rail .card').count()==6
+        assert page.locator('.tactical-grid .card').count()==10
+        assert page.locator('.crystal-strip .gem-0').count()==fixtures['many']['players'][0]['stock'][0]
+        board_visible=page.evaluate("""() => {
+          const items=[...document.querySelectorAll('.golem-rail .card,.merchant-rail .card,.tactical-grid .card')];
+          return items.length===21 && items.every(el=>{
+            const r=el.getBoundingClientRect();
+            return r.width>=44 && r.height>=44 && r.top>=0 && r.bottom<=innerHeight+1 && r.left>=0 && r.right<=innerWidth+1;
+          }) && document.documentElement.scrollHeight<=innerHeight+1;
+        }""")
+        assert board_visible,'21张卡必须全屏可见且可点击'
+        # 任意已打出卡牌保持原来的格位，不允许跳至最后一格。
+        resume(page,fixtures['base'])
+        page.locator('[data-action="play"][data-id="S01"]').click()
+        action(page,'confirm')
+        action(page,'ready')
+        page.locator('[data-action="play"][data-id="S01"]').click()
+        action(page,'confirm')
+        action(page,'ready')
+        assert page.locator('.tactical-grid .tactical-tile').first.get_attribute('data-card')=='S01'
+        assert page.locator('.tactical-grid .tactical-tile').first.get_attribute('class').find('played-tile')>=0
         # 所有真实卡面在最小屏幕逐一通过，不遗漏高颗数交易或魔像。
         page.set_viewport_size({'width':320,'height':640})
         for offset in range(0,43,6):
