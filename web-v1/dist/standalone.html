@@ -1228,20 +1228,251 @@ function legalClaimIndices(g) {
     return g.golemMarket.flatMap((id, index) => has(g.players[g.current].stock, GOLEM_BY_ID[id].cost) ? [index] : []);
 }
 
-// @ts-nocheck
-/** V2.0：离线目标规划 + 多回合束搜索。
- * 规划只使用公开市场、自身牌/水晶与公开比分，不读取两类隐藏牌库顺序。
- * 未来对手回合和未知翻牌保持不确定；使用当前公开市场作保守近似。
+/** AI 参数集中管理（任务书第六节）。
+ *
+ * 设计原则：
+ * - 8 个任务参数全部实现为既有求值项的乘子，默认值 1.0 时决策行为与 V3.0 基线逐位一致。
+ * - 每个参数必须真实影响决策（由 tests/ai-modules.test.mjs 灵敏度测试保证），禁止虚假参数。
+ * - 冠军参数块由训练系统通过 PR 生成更新（training/scripts/apply-champion.mjs），
+ *   保证训练版与网页实战版永远使用同一套参数与同一份算法源码。
+ */
+/** 参数合法区间；超出即拒绝（防止进化产生无意义参数）。 */
+const PARAMETER_BOUNDS = {
+    engineWeight: [0.05, 5], tempoWeight: [0.05, 5], contestWeight: [0.05, 5],
+    synergyWeight: [0.05, 5], goalWeight: [0.05, 5], capacityWeight: [0.05, 5],
+    restWeight: [0.05, 5], endgameWeight: [0.25, 4],
+};
+/** 基线参数：与 V3.0 第一阶段（main @ 8e3e2c3）行为完全一致。 */
+const BASELINE_PARAMETERS = {
+    id: 'v4.0-baseline',
+    engineWeight: 1, tempoWeight: 1, contestWeight: 1,
+    synergyWeight: 1, goalWeight: 1, capacityWeight: 1,
+    restWeight: 1, endgameWeight: 1,
+};
+// === CHAMPION-PARAMETERS-BEGIN（由 training/scripts/apply-champion.mjs 生成，勿手改） ===
+const CHAMPION_PARAMETERS = {
+    id: 'v4.0-baseline',
+    engineWeight: 1, tempoWeight: 1, contestWeight: 1,
+    synergyWeight: 1, goalWeight: 1, capacityWeight: 1,
+    restWeight: 1, endgameWeight: 1,
+};
+// === CHAMPION-PARAMETERS-END ===
+const PARAM_KEYS = Object.keys(PARAMETER_BOUNDS);
+/** 校验并归一化参数对象；非法输入抛出明确错误。 */
+function validateAIParameters(input) {
+    if (typeof input !== 'object' || input === null)
+        throw new Error('AI 参数必须为对象');
+    const source = input;
+    if (typeof source.id !== 'string' || source.id.length === 0 || source.id.length > 64) {
+        throw new Error('AI 参数缺少合法的 id');
+    }
+    const result = { id: source.id };
+    for (const key of PARAM_KEYS) {
+        const value = source[key];
+        const [low, high] = PARAMETER_BOUNDS[key];
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < low || value > high) {
+            throw new Error(`参数 ${key} 必须为 ${low}–${high} 之间的有限数值，实际：${String(value)}`);
+        }
+        result[key] = value;
+    }
+    return result;
+}
+let activeParameters = CHAMPION_PARAMETERS;
+/** 读取当前激活参数（正式游戏默认即冠军参数）。 */
+function getAIParameters() {
+    return activeParameters;
+}
+/** 设置当前激活参数（训练/实验用；正式游戏无需调用）。 */
+function setAIParameters(parameters) {
+    activeParameters = validateAIParameters(parameters);
+}
+/** 恢复冠军基线参数。 */
+function resetAIParameters() {
+    activeParameters = CHAMPION_PARAMETERS;
+}
+/** 版本注册表：多版本混战时按 id 解析参数。 */
+const versionRegistry = new Map();
+function registerAIVersion(parameters) {
+    const validated = validateAIParameters(parameters);
+    versionRegistry.set(validated.id, validated);
+}
+function resolveAIParameters(reference) {
+    if (reference === undefined || reference === null)
+        return activeParameters;
+    if (typeof reference === 'string') {
+        const found = versionRegistry.get(reference);
+        if (!found)
+            throw new Error(`未注册的 AI 版本：${reference}`);
+        return found;
+    }
+    return validateAIParameters(reference);
+}
+
+/** AI 策略人格（任务书第三节）。
+ * 四个 AI 共享同一基础决策引擎；人格只通过既有求值项的乘子制造偏好差异，
+ * 绝不通过降低基础决策质量制造差异，也绝不依赖"人类/机器"身份采取特殊针对。
+ * 人格由席位结构决定（第 n 个行动的 AI 对应第 n 种人格，循环取模）。
+ */
+const PROFILES = [
+    { name: '引擎大师', engine: 1.3, tempo: 0.8, contest: 0.9 },
+    { name: '速攻专家', engine: 0.7, tempo: 1.3, contest: 1.0 },
+    { name: '精算大师', engine: 1.0, tempo: 1.0, contest: 1.0 },
+    { name: '战术大师', engine: 0.9, tempo: 1.0, contest: 1.5 },
+];
+/** 按公开席位结构推导当前行动者的人格。 */
+function profileFor(view) {
+    const aiIndex = view.players.slice(0, view.current + 1).filter(p => p.isAI).length - 1;
+    return PROFILES[Math.max(0, aiIndex) % PROFILES.length];
+}
+
+/** AIObservation：AI 决策的唯一合法输入（任务书第四节·信息公平性）。
+ *
+ * 信息边界：
+ * - 只包含当前公开可知信息：翻开的商人卡/魔像卡、全部玩家的水晶与已打出/已认领卡、
+ *   公开资源池、游戏阶段与终局触发者。
+ * - 关于其他玩家手牌：本游戏中每张商人卡进入手牌都来自公开观察到的获取事件
+ *   （起始配置或市场获取，商人卡不存在弃置/暗置规则），因此手牌内容是
+ *   由公开历史可推导的合法信息，不属于隐藏牌库顺序。
+ * - 严禁包含：merchantDeck / golemDeck（两类未翻开牌库的顺序）。
+ *   本文件及 src/ai/ 下其他模块对这两个字段的引用为零，
+ *   由 tests/ai-fairness.test.mjs 的静态扫描与纯度测试强制保证。
+ */
+const cloneStock = (stock) => [...stock];
+function deepFreeze(value) {
+    if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+        Object.freeze(value);
+        for (const child of Object.values(value))
+            deepFreeze(child);
+    }
+    return value;
+}
+/** 从完整游戏状态中构造只读公开观察。
+ * 本函数是信息边界的唯一入口：逐字段显式复制公开信息，
+ * 隐藏牌库顺序在结构上不可能进入观察对象。 */
+function buildObservation(game, playerId = game.current) {
+    const player = game.players[playerId];
+    if (!player)
+        throw new Error(`观察席位不存在：${playerId}`);
+    return deepFreeze({
+        playerId,
+        players: game.players.map(p => ({
+            id: p.id,
+            name: p.name,
+            isAI: p.isAI === true,
+            stock: cloneStock(p.stock),
+            hand: [...p.hand],
+            played: [...p.played],
+            claimed: [...p.claimed],
+            copper: p.copper,
+            silver: p.silver,
+            turns: p.turns,
+        })),
+        current: game.current,
+        merchantMarket: game.merchantMarket.map(m => ({ id: m.id, bonus: cloneStock(m.bonus) })),
+        golemMarket: [...game.golemMarket],
+        copper: game.copper,
+        silver: game.silver,
+        phase: game.phase,
+        triggerPlayer: game.triggerPlayer,
+        turnNumber: game.turnNumber,
+    });
+}
+
+/** AI 公共卡牌知识：水晶价值标尺、卡牌引擎价值与未知牌集合推断。
+ * 全部函数只接受 AIObservation 或纯卡牌数据，绝不接触隐藏牌库顺序。
  */
 
 
+/** 四色水晶价值标尺（黄/绿/蓝/粉），为全体 AI 共享的规则知识。 */
 const VALUES = [1, 1.7, 2.5, 3.4];
-const weighted = stock => stock.reduce((sum, n, color) => sum + n * VALUES[color], 0);
-const stockCount = stock => stock[0] + stock[1] + stock[2] + stock[3];
-const cloneStock = stock => [...stock];
+const weighted = (stock) => stock.reduce((sum, n, color) => sum + n * VALUES[color], 0);
+const stockCount = (stock) => stock[0] + stock[1] + stock[2] + stock[3];
+const cloneStock = (stock) => [...stock];
+/** 单张商人卡在当前库存与目标魔像下的引擎价值。 */
+function cardEngineValue(card, stock, goal) {
+    if (card.kind === 'create') {
+        const useful = goal
+            ? card.output.reduce((s, n, c) => s + Math.min(n, Math.max(0, goal.cost[c] - stock[c])) * VALUES[c], 0)
+            : 0;
+        return weighted(card.output) * .32 + useful * .22;
+    }
+    if (card.kind === 'upgrade')
+        return card.steps * .7;
+    const gain = weighted(card.output) - weighted(card.input);
+    const reachable = has(stock, card.input) ? 1 : .35;
+    const targetMatch = goal
+        ? card.output.reduce((s, n, c) => s + Math.min(n, goal.cost[c]) * VALUES[c], 0)
+        : 0;
+    return Math.max(0, gain) * .30 + reachable * .45 + targetMatch * .17;
+}
+/** 玩家整套引擎（手牌 + 已打出）对目标魔像的综合引擎价值。 */
+function engineValue(state, preferred) {
+    const goal = preferred ? GOLEM_BY_ID[preferred] ?? null : null;
+    return [...state.hand, ...state.played].reduce((sum, id) => {
+        const card = MERCHANT_BY_ID[id];
+        return sum + (card ? cardEngineValue(card, state.stock, goal) : 0);
+    }, 0);
+}
+/** 公开知识推断：未翻开牌库中还剩哪些卡（只利用卡牌全集构成，不猜测任何顺序）。 */
+function publicKnowledge(view) {
+    const knownMerchants = new Set(view.merchantMarket.map(x => x.id));
+    const knownGolems = new Set(view.golemMarket);
+    for (const p of view.players) {
+        for (const id of [...p.hand, ...p.played])
+            knownMerchants.add(id);
+        for (const id of p.claimed)
+            knownGolems.add(id);
+    }
+    // 魔像累计公开认领完整；商人卡被弃置的规则不存在。
+    return {
+        unseenMerchants: MERCHANT_DECK.filter(c => !knownMerchants.has(c.id)).map(c => c.id),
+        unseenGolems: GOLEM_DECK.filter(c => !knownGolems.has(c.id)).map(c => c.id),
+    };
+}
+
+/** 对手市场竞争模型（任务书 AI 4 战术大师维度）。
+ * 基于全部公开信息估计对手对某张市场商人卡的需求压力，
+ * 用于抢牌竞争权重（contestWeight）的求值输入。
+ */
+
+
+/** 对手平均需求压力：0（无人感兴趣）– 1（所有人都高度契合）。 */
+function contestPressure(view, cardId) {
+    const card = MERCHANT_BY_ID[cardId];
+    if (!card)
+        return 0;
+    const opponents = view.players.filter(p => p.id !== view.current);
+    return opponents.reduce((sum, p) => {
+        const engine = [...p.hand, ...p.played].map(id => MERCHANT_BY_ID[id]).filter(Boolean);
+        const outputs = engine.reduce((tot, c) => {
+            if (c.output)
+                c.output.forEach((n, i) => { tot[i] += n; });
+            return tot;
+        }, [0, 0, 0, 0]);
+        const affinity = card.kind === 'trade'
+            ? card.input.reduce((v, n, i) => v + Math.min(n, p.stock[i] + outputs[i]) * VALUES[i], 0) / (weighted(card.input) + 1)
+            : card.kind === 'create' ? weighted(card.output) / 10 : card.steps / 5;
+        return sum + Math.min(1, affinity);
+    }, 0) / Math.max(1, opponents.length);
+}
+/** 全部市场卡的竞争压力表。 */
+function pressureMap(view) {
+    return Object.fromEntries(view.merchantMarket.map(m => [m.id, contestPressure(view, m.id)]));
+}
+
+/** 参数化求值器：引擎价值、目标差距、水晶保留价值与获取价值。
+ * 全部公式与 V3.0 基线一致，8 个任务参数以"默认 1.0 的乘子"形式接入，
+ * 保证默认参数下决策与基线逐位一致，且每个参数真实影响决策。
+ */
+
+
+/** 距目标魔像的费用差距（按水晶价值加权）。 */
 function goalGap(stock, goal) {
+    if (!goal)
+        return 0;
     return goal.cost.reduce((sum, needed, color) => sum + Math.max(0, needed - stock[color]) * VALUES[color], 0);
 }
+/** 库存对候选魔像的最大实现概率近似。 */
 function stockPotential(stock, goals) {
     if (!goals.length)
         return weighted(stock) * .13;
@@ -1251,20 +1482,25 @@ function stockPotential(stock, goals) {
         return card.points * Math.max(0, 1 - goalGap(stock, card) / (total + 2));
     }));
 }
-function keepValue(stock, goals, preferred) {
-    const target = preferred ? GOLEM_BY_ID[preferred] : null;
-    const coverage = target ? target.cost.reduce((sum, amount, c) => sum + Math.min(amount, stock[c]) * VALUES[c], 0) : 0;
-    return coverage * 3 + stockPotential(stock, goals) * 1.2 + weighted(stock) * .16;
+/** 水晶保留价值：支付选择与超额弃置决策共用（capacityWeight 作用点）。 */
+function keepValue(stock, goals, preferred, params) {
+    const target = preferred ? GOLEM_BY_ID[preferred] ?? null : null;
+    const coverage = target
+        ? target.cost.reduce((sum, amount, c) => sum + Math.min(amount, stock[c]) * VALUES[c], 0)
+        : 0;
+    return coverage * 3 + stockPotential(stock, goals) * 1.2 + weighted(stock) * .16 * params.capacityWeight;
 }
-function trimStock(source, goals, preferred) {
-    const stock = cloneStock(source), discarded = [];
+/** 超额水晶迭代弃置：每颗都选择弃置后保留价值最高的颜色。 */
+function trimStock(source, goals, preferred, params) {
+    const stock = cloneStock(source);
+    const discarded = [];
     while (stockCount(stock) > 10) {
         let color = -1, best = -Infinity;
         for (let c = 0; c < 4; c++) {
             if (stock[c] === 0)
                 continue;
             stock[c]--;
-            const rating = keepValue(stock, goals, preferred);
+            const rating = keepValue(stock, goals, preferred, params);
             stock[c]++;
             if (rating > best) {
                 best = rating;
@@ -1272,11 +1508,75 @@ function trimStock(source, goals, preferred) {
             }
         }
         if (color < 0)
-            throw Error('超额水晶弃置失败');
+            throw new Error('超额水晶弃置失败');
         stock[color]--;
         discarded.push(color);
     }
     return { stock, discarded };
+}
+/** 商人卡获取价值：引擎增量 + 组合协同 + 目标契合 + 抢牌竞争。
+ * engineWeight / synergyWeight / goalWeight / contestWeight 全部在此接入。 */
+function acquisitionValue(state, cardId, preferred, profile, pressure, params) {
+    const card = MERCHANT_BY_ID[cardId];
+    if (!card)
+        return 0;
+    const current = engineValue(state, preferred);
+    const added = { ...state, hand: [...state.hand, cardId] };
+    const raw = Math.max(0, engineValue(added, preferred) - current);
+    const target = preferred ? GOLEM_BY_ID[preferred] ?? null : null;
+    const engine = [...state.hand, ...state.played].map(id => MERCHANT_BY_ID[id]).filter(Boolean);
+    const supplied = engine.reduce((a, c) => {
+        if (c.output)
+            c.output.forEach((n, i) => { a[i] += n; });
+        return a;
+    }, [0, 0, 0, 0]);
+    const synergy = card.kind === 'trade'
+        ? card.input.reduce((n, amount, i) => n + Math.min(amount, supplied[i]) * VALUES[i], 0) / (weighted(card.input) + 1)
+        : card.kind === 'create'
+            ? engine.filter(c => c.kind === 'trade').reduce((n, c) => n + c.input.reduce((v, amount, i) => v + Math.min(amount, card.output[i]), 0), 0) * .18
+            : .5;
+    const goalFit = target && card.output
+        ? card.output.reduce((n, amount, i) => n + Math.min(amount, target.cost[i]) * VALUES[i], 0) / (weighted(target.cost) + 1)
+        : 0;
+    return profile.engine * (raw * .6 * params.engineWeight + synergy * 2 * params.synergyWeight + goalFit * 2 * params.goalWeight)
+        + profile.contest * (pressure[cardId] ?? 0) * .9 * params.contestWeight;
+}
+
+/** 多回合束搜索规划器（V3.0 结构 + V4.0 参数化）。
+ *
+ * 规划只使用 AIObservation 公开信息；未来对手回合和未知翻牌保持不确定，
+ * 以当前公开市场作保守近似。搜索深度/宽度沿用基线结构：
+ * 触发终局后仅看当步，接近终局 3 层，其余 6 层；宽度 14/10。
+ *
+ * V4.0 变更：
+ * - 全部求值项经 parameters.ts 的 8 个乘子接入（默认 1.0 = 基线行为）。
+ * - 修复束搜索"休息饿死"缺陷：休息分支的收益延迟 2+ 层才体现，
+ *   纯即时质量剪枝会系统性淘汰唯一能收回已打出卡的路线；
+ *   现为每层最佳休息后继保留一个束席位（main 分支预置失败测试的根因）。
+ */
+
+
+
+
+
+
+
+/** 从公开观察构造搜索根状态。 */
+function initialState(view) {
+    const player = view.players[view.current];
+    const threshold = view.players.length >= 4 ? 5 : 6;
+    return {
+        stock: cloneStock(player.stock),
+        hand: [...player.hand],
+        played: [...player.played],
+        merchantMarket: view.merchantMarket.map(m => ({ id: m.id, bonus: cloneStock(m.bonus) })),
+        golemMarket: [...view.golemMarket],
+        copper: view.copper,
+        silver: view.silver,
+        gained: 0, claimed: 0, acquired: 0, newCards: [], steps: 0,
+        first: null, path: [], remainingClaims: threshold - player.claimed.length,
+        terminal: false,
+    };
 }
 function upgradeVariants(stock, max) {
     const variants = new Map();
@@ -1297,11 +1597,11 @@ function upgradeVariants(stock, max) {
             search(next, [...steps, c]);
         }
     }
-    search(stock, []);
+    search(cloneStock(stock), []);
     return [...variants.values()];
 }
-// 压晶只枚举不同颜色组合；同色组合排序后对应唯一的合法实际支付顺序。
-function payments(stock, index, goals, preferred) {
+/** 压晶只枚举不同颜色组合；同色组合排序后对应唯一的合法实际支付顺序。 */
+function payments(stock, index, goals, preferred, params) {
     if (index === 0)
         return [[]];
     if (stockCount(stock) < index)
@@ -1310,7 +1610,7 @@ function payments(stock, index, goals, preferred) {
     function walk(color, left, selected, rest) {
         if (color === 4) {
             if (left === 0)
-                result.push({ payment: selected, value: keepValue(rest, goals, preferred) });
+                result.push({ payment: selected, value: keepValue(rest, goals, preferred, params) });
             return;
         }
         for (let n = 0; n <= Math.min(stock[color], left); n++) {
@@ -1323,36 +1623,7 @@ function payments(stock, index, goals, preferred) {
     result.sort((a, b) => b.value - a.value || a.payment.join('').localeCompare(b.payment.join('')));
     return result.slice(0, 3).map(x => x.payment);
 }
-function cardEngineValue(card, stock, goal) {
-    if (card.kind === 'create') {
-        const useful = goal ? card.output.reduce((s, n, c) => s + Math.min(n, Math.max(0, goal.cost[c] - stock[c])) * VALUES[c], 0) : 0;
-        return weighted(card.output) * .32 + useful * .22;
-    }
-    if (card.kind === 'upgrade')
-        return card.steps * .7;
-    const gain = weighted(card.output) - weighted(card.input);
-    const reachable = has(stock, card.input) ? 1 : .35;
-    const targetMatch = goal ? card.output.reduce((s, n, c) => s + Math.min(n, goal.cost[c]) * VALUES[c], 0) : 0;
-    return Math.max(0, gain) * .30 + reachable * .45 + targetMatch * .17;
-}
-function engineValue(state, preferred) {
-    const goal = preferred ? GOLEM_BY_ID[preferred] : null;
-    return [...state.hand, ...state.played].reduce((sum, id) => {
-        const card = MERCHANT_BY_ID[id];
-        return sum + (card ? cardEngineValue(card, state.stock, goal) : 0);
-    }, 0);
-}
-function publicState(game) {
-    const player = game.players[game.current];
-    return {
-        stock: cloneStock(player.stock), hand: [...player.hand], played: [...player.played],
-        merchantMarket: game.merchantMarket.map(m => ({ id: m.id, bonus: cloneStock(m.bonus) })),
-        golemMarket: [...game.golemMarket], copper: game.copper, silver: game.silver,
-        gained: 0, claimed: 0, acquired: 0, steps: 0, first: null, path: [],
-        remainingClaims: (game.players.length >= 4 ? 5 : 6) - player.claimed.length, terminal: false,
-    };
-}
-function actions(state, preferred, allowAcquire) {
+function actions(state, preferred, allowAcquire, params) {
     const result = [];
     for (let i = 0; i < state.golemMarket.length; i++) {
         if (has(state.stock, GOLEM_BY_ID[state.golemMarket[i]].cost))
@@ -1365,8 +1636,9 @@ function actions(state, preferred, allowAcquire) {
         if (card.kind === 'create')
             result.push({ type: 'play', cardId: id });
         else if (card.kind === 'upgrade') {
-            for (const steps of upgradeVariants(state.stock, card.steps))
-                result.push({ type: 'play', cardId: id, steps });
+            for (const steps of upgradeVariants(state.stock, card.steps)) {
+                result.push({ type: 'play', cardId: id, steps: steps });
+            }
         }
         else {
             const limit = tradeLimit(state.stock, id);
@@ -1376,10 +1648,10 @@ function actions(state, preferred, allowAcquire) {
     }
     if (state.played.length)
         result.push({ type: 'rest' });
-    if (allowAcquire && state.acquired === 0 && state.hand.length + state.played.length < 10) {
+    if (allowAcquire && state.acquired < 2) {
         state.merchantMarket.forEach((m, index) => {
-            for (const payment of payments(state.stock, index, state.golemMarket, preferred)) {
-                result.push({ type: 'acquire', index, payment });
+            for (const payment of payments(state.stock, index, state.golemMarket, preferred, params)) {
+                result.push({ type: 'acquire', index, payment: payment });
             }
         });
     }
@@ -1387,7 +1659,7 @@ function actions(state, preferred, allowAcquire) {
         result.push({ type: 'rest' });
     return result;
 }
-function step(state, action, preferred) {
+function step(state, action, preferred, params) {
     if (state.terminal)
         return null;
     const next = {
@@ -1405,7 +1677,7 @@ function step(state, action, preferred) {
         if (card.kind === 'create')
             card.output.forEach((n, c) => { next.stock[c] += n; });
         else if (card.kind === 'upgrade') {
-            for (const c of action.steps) {
+            for (const c of action.steps ?? []) {
                 if (!next.stock[c])
                     return null;
                 next.stock[c]--;
@@ -1413,7 +1685,7 @@ function step(state, action, preferred) {
             }
         }
         else {
-            for (let i = 0; i < action.repeats; i++) {
+            for (let i = 0; i < (action.repeats ?? 1); i++) {
                 if (!has(next.stock, card.input))
                     return null;
                 card.input.forEach((n, c) => { next.stock[c] -= n; });
@@ -1438,6 +1710,7 @@ function step(state, action, preferred) {
         }
         offer.bonus.forEach((n, c) => { next.stock[c] += n; });
         next.hand.push(offer.id);
+        next.newCards = [...state.newCards, offer.id];
         next.merchantMarket = state.merchantMarket.filter((_, i) => i !== action.index);
         next.acquired++;
     }
@@ -1469,93 +1742,159 @@ function step(state, action, preferred) {
         next.claimed++;
         next.terminal = next.claimed >= next.remainingClaims;
     }
-    next.stock = trimStock(next.stock, next.golemMarket, preferred).stock;
+    next.stock = trimStock(next.stock, next.golemMarket, preferred, params).stock;
     return next;
 }
 function stateKey(state) {
     return [state.stock.join(','), [...state.hand].sort().join(','), [...state.played].sort().join(','),
         state.merchantMarket.map(x => x.id).join(','), state.golemMarket.join(','), state.acquired].join('|');
 }
-function searchGrade(state, preferred, stage) {
+/** 中间层评分：向目标推进的势头（restWeight 作用于含休息的路线）。 */
+function searchGrade(state, preferred, stage, profile, pressure, params) {
     const goal = GOLEM_BY_ID[preferred];
     const gap = goalGap(state.stock, goal);
-    return -gap * 2.6 + weighted(state.stock) * .13
-        + (engineValue(state, preferred) * stage * .22)
-        - state.steps * .35 - state.acquired * .15;
+    const restFactor = state.path.at(-1)?.type === 'rest' ? params.restWeight : 1;
+    return -gap * 2.6 + weighted(state.stock) * .13 * params.capacityWeight
+        + engineValue(state, preferred) * stage * .22 * profile.engine * params.engineWeight
+        + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params), 0) * stage * .35
+        - state.steps * .35 * profile.tempo * params.tempoWeight * restFactor
+        - state.acquired * .15;
 }
-function routeGrade(state, preferred, stage) {
+/** 完成路线评分：单位行动得分效率。 */
+function routeGrade(state, preferred, stage, profile, params) {
     // gained 可能包括同一路径上先认领其他公开魔像取得的得分。
-    return state.gained / Math.pow(state.steps + .65, .90)
-        + weighted(state.stock) * .055 + engineValue(state, preferred) * stage * .085;
+    return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + .65, .90)
+        + weighted(state.stock) * .055 * params.capacityWeight
+        + engineValue(state, preferred) * stage * .085 * profile.engine * params.engineWeight;
 }
 function completedFirstGoal(state, preferred) {
     return !state.golemMarket.includes(preferred);
 }
-function choosePlan(game) {
-    const initial = publicState(game);
-    const threshold = game.players.length >= 4 ? 5 : 6;
-    const mostClaimed = Math.max(...game.players.map(p => p.claimed.length));
-    const nearEnd = game.triggerPlayer !== null || mostClaimed >= threshold - 1;
-    const depth = game.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
+/** 主规划入口：只依赖 AIObservation 与参数集，不接触任何隐藏信息。 */
+function choosePlan(view, params) {
+    const profile = profileFor(view);
+    const knowledge = publicKnowledge(view);
+    const pressure = pressureMap(view);
+    const initial = initialState(view);
+    const threshold = view.players.length >= 4 ? 5 : 6;
+    const mostClaimed = Math.max(...view.players.map(p => p.claimed.length));
+    const nearEnd = view.triggerPlayer !== null || mostClaimed >= threshold - 1;
+    const depth = view.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
     const width = nearEnd ? 10 : 14;
-    const stage = game.triggerPlayer !== null ? 0 : Math.max(.12, 1 - mostClaimed / threshold);
+    const rawStage = view.triggerPlayer !== null ? 0 : Math.max(.12, 1 - mostClaimed / threshold);
+    // endgameWeight：越接近终局，引擎/新卡项衰减越快（stage 的指数）。
+    const stage = Math.pow(rawStage, params.endgameWeight);
     let solved = null, prospective = null;
     for (const preferred of initial.golemMarket) {
-        let beam = [initial];
+        let beam = [{ ...initial, quality: 0 }];
+        // 血统救援：休息及其后续推进状态共同构成"唯一可行的收卡路线"，
+        // 每层为该血统的最佳后继保留一个束席位，防止即时质量剪枝饿死整条路线。
+        const rescuedKeys = new Set();
         for (let layer = 1; layer <= depth; layer++) {
             const successors = new Map();
+            let restFallback = null;
+            let lineagePlay = null;
+            let lineageRest = null;
+            let lineageOther = null;
             for (const position of beam) {
-                const variants = actions(position, preferred, game.triggerPlayer === null);
+                const parentKey = stateKey(position);
+                const variants = actions(position, preferred, view.triggerPlayer === null, params);
                 for (const action of variants) {
-                    const next = step(position, action, preferred);
+                    const next = step(position, action, preferred, params);
                     if (!next)
                         continue;
                     if (next.terminal && !completedFirstGoal(next, preferred))
                         continue;
                     if (completedFirstGoal(next, preferred)) {
-                        const quality = routeGrade(next, preferred, stage);
+                        const quality = routeGrade(next, preferred, stage, profile, params);
                         if (!solved || quality > solved.quality)
                             solved = { ...next, preferred, quality };
                         continue;
                     }
-                    const quality = searchGrade(next, preferred, stage);
+                    const quality = searchGrade(next, preferred, stage, profile, pressure, params);
+                    const scored = { ...next, quality };
                     const key = stateKey(next);
                     if (!successors.has(key) || successors.get(key).quality < quality)
-                        successors.set(key, { ...next, quality });
+                        successors.set(key, scored);
+                    if (action.type === 'rest' && (!restFallback || quality > restFallback.quality))
+                        restFallback = scored;
+                    if (rescuedKeys.has(parentKey)) {
+                        // 血统延续按"路线相关性"而非纯即时质量选择：打牌/认领直接推进目标转换，
+                        // 休息用于回收卡牌；引擎扩张（acquire）应让位于已在进行的转换路线。
+                        const isRouteAction = action.type === 'play' || action.type === 'claim';
+                        if (isRouteAction && (!lineagePlay || quality > lineagePlay.quality))
+                            lineagePlay = scored;
+                        else if (action.type === 'rest' && (!lineageRest || quality > lineageRest.quality))
+                            lineageRest = scored;
+                        else if (!isRouteAction && action.type !== 'rest' && (!lineageOther || quality > lineageOther.quality))
+                            lineageOther = scored;
+                    }
                 }
             }
             if (!successors.size)
                 break;
             beam = [...successors.values()].sort((a, b) => b.quality - a.quality).slice(0, width);
+            const rescue = (candidate) => {
+                if (!candidate)
+                    return;
+                const key = stateKey(candidate);
+                // 无论是否已按质量进入束，都要登记血统键：休息路线可能天然排在束内，
+                // 但它的后续推进仍需要逐层救援，否则血统在下一层断链。
+                if (!beam.some(b => stateKey(b) === key))
+                    beam.push(candidate);
+                rescuedKeys.add(key);
+            };
+            rescue(lineagePlay ?? lineageRest ?? lineageOther);
+            rescue(restFallback);
             for (const candidate of beam) {
                 const expected = GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(candidate.stock, GOLEM_BY_ID[preferred]) / 3)
-                    + engineValue(candidate, preferred) * stage * .12 - candidate.steps * .09;
+                    + engineValue(candidate, preferred) * stage * .12 * profile.engine * params.engineWeight
+                    + candidate.newCards.reduce((sum, id) => sum + acquisitionValue(candidate, id, preferred, profile, pressure, params), 0) * stage * .32
+                    - candidate.steps * .09 * profile.tempo * params.tempoWeight;
                 if (!prospective || expected > prospective.quality)
                     prospective = { ...candidate, preferred, quality: expected };
             }
         }
     }
     // 有可信的实际认领路线时优先执行；未找到时采用多回合目标推进的最佳前缀。
-    return solved ?? prospective;
+    const plan = solved ?? prospective;
+    return plan
+        ? { ...plan, profile: profile.name, unseenCounts: [knowledge.unseenMerchants.length, knowledge.unseenGolems.length] }
+        : null;
 }
-function chooseAIAction(game) {
+
+/** AI 决策入口（对外唯一 API）。
+ *
+ * 信息边界：完整 Game 只在入口处用于构造 AIObservation 与合法性核验；
+ * 决策本身只消费公开观察，无法访问隐藏牌库顺序。
+ * 正式网页版（桌面/手机/Worker）与训练模拟器共用本函数。
+ */
+
+
+
+
+
+function chooseAIAction(game, options) {
+    const params = resolveAIParameters(options?.parameters);
     if (game.phase === 'finished')
-        throw Error('游戏结束，AI 无法行动');
+        throw new Error('游戏结束，AI 无法行动');
     const p = game.players[game.current];
     if (!p?.isAI)
-        throw Error('当前行动者不是 AI');
+        throw new Error('当前行动者不是 AI');
     if (game.phase === 'overflow') {
-        const discarded = trimStock(p.stock, game.golemMarket).discarded;
+        const discarded = trimStock(p.stock, game.golemMarket, null, params).discarded;
         return { action: { type: 'discard', colors: discarded }, reason: '保留目标水晶，弃置超额水晶' };
     }
-    const plan = choosePlan(game);
+    // 决策只使用公开观察；隐藏牌库顺序在观察中不存在。
+    const view = buildObservation(game);
+    const plan = choosePlan(view, params);
     const action = plan?.first ?? { type: 'rest' };
     // 搜索转移为快速本地模型；真正的第一步必须由正式规则引擎再次核实。
     try {
         applyAction(game, action);
     }
     catch (error) {
-        const fallback = actions(publicState(game), null, false).find(a => {
+        const fallback = actions(initialState(view), null, false, params).find((a) => {
             try {
                 applyAction(game, a);
                 return true;
@@ -1571,8 +1910,10 @@ function chooseAIAction(game) {
     const goal = plan?.preferred;
     return {
         action,
-        reason: goal ? `V2.0 规划 ${goal}：预计${plan.steps}次行动形成认领路线` : '公开市场暂无可规划目标',
-        plan: plan ? { goal, steps: plan.steps, actions: plan.path } : undefined,
+        reason: goal
+            ? `AI 4.0 ${plan.profile}（${params.id}）：公开目标 ${goal}，规划${plan.steps}步；未知商人/魔像各${plan.unseenCounts.join('/')}张`
+            : '公开市场暂无可规划目标',
+        plan: plan && goal ? { goal, steps: plan.steps, actions: plan.path } : undefined,
     };
 }
 

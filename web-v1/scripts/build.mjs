@@ -6,7 +6,9 @@ const read = p => readFileSync(resolve(base,p),'utf-8');
 mkdirSync(resolve(base,'dist'),{recursive:true});
 copyFileSync(resolve(base,'index.html'),resolve(base,'dist/index.html'));
 copyFileSync(resolve(base,'src/styles.css'),resolve(base,'dist/styles.css'));
-const modules = ['data','engine','ai','organize','replay','app'].map(n => read(`dist/js/${n}.js`)
+// AI 4.0：决策核心拆分为 ai/ 目录；内联顺序必须满足运行时依赖（参数 → 观察 → 知识 → 求值 → 规划 → 决策）。
+const AI_MODULES = ['ai/parameters','ai/profiles','ai/observation','ai/knowledge','ai/opponent-model','ai/evaluator','ai/planner','ai/decision'];
+const modules = ['data','engine',...AI_MODULES,'organize','replay','app'].map(n => read(`dist/js/${n}.js`)
   .replace(/^import\s.*?from\s+['"].*?['"];?\s*$/gm, '')
   .replace(/^export\s+(?=(const|function|class)\b)/gm, '')
   .replace(/^export\s*\{[^}]*\};?\s*$/gm, ''));
@@ -18,7 +20,7 @@ console.log('已生成 dist/index.html（服务器运行）和 dist/standalone.h
 
 // 手机入口独立打包；资源目录包含共享引擎/AI 的内容指纹，避免新旧模块混用。
 const { createHash } = await import('node:crypto');
-const mobileNames = ['data','engine','ai','organize','replay','mobile/storage','mobile/app','mobile/worker'];
+const mobileNames = ['data','engine',...AI_MODULES,'organize','replay','mobile/storage','mobile/app','mobile/worker'];
 const digest = createHash('sha256').update(mobileNames.map(n=>read(`dist/js/${n}.js`)).join('\n') + read('src/mobile/styles.css')).digest('hex').slice(0,12);
 const mobileRoot = resolve(base,'dist/mobile');
 const assetPath = `assets/${digest}`;
@@ -32,8 +34,8 @@ copyFileSync(resolve(base,'src/mobile/styles.css'),resolve(mobileRoot,assetPath,
 const mobileHTML = read('mobile/index.html').replace('./styles.css',`./${assetPath}/styles.css`).replace('./app.js',`./${assetPath}/mobile/app.js`).replace('./worker.js',`./${assetPath}/mobile/worker.js`);
 writeFileSync(resolve(mobileRoot,'modules.html'),mobileHTML);
 const strip = n => read(`dist/js/${n}.js`).replace(/^import\s.*?from\s+['"].*?['"];?\s*$/gm,'').replace(/^export\s+(?=(const|function|class)\b)/gm,'').replace(/^export\s*\{[^}]*\};?\s*$/gm,'');
-const offlineWorker = ['data','engine','ai','mobile/worker'].map(strip).join('\n');
-const offlineMobile = ['data','engine','ai','organize','replay','mobile/storage','mobile/app'].map(strip).join('\n');
+const offlineWorker = ['data','engine',...AI_MODULES,'mobile/worker'].map(strip).join('\n');
+const offlineMobile = ['data','engine',...AI_MODULES,'organize','replay','mobile/storage','mobile/app'].map(strip).join('\n');
 const mobileOfflineHTML = read('mobile/index.html')
   .replace('<link rel="stylesheet" href="./styles.css">',`<style>${read('src/mobile/styles.css')}</style>`)
   .replace('<script type="module" src="./app.js"></script>',`<script type="text/plain" id="offline-worker">${offlineWorker}</script><script>(()=>{'use strict';${offlineMobile}})();</script>`);
