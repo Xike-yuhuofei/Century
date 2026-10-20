@@ -1,4 +1,5 @@
 import { GOLEM_BY_ID, MERCHANT_BY_ID } from '../data.js';
+import { validateReplay } from '../replay.js';
 import { count, type Game } from '../engine.js';
 export const MOBILE_KEY = 'century-mobile-game-v2';
 export const DESKTOP_KEY = 'crystal-corridor-game-v2-canonical';
@@ -26,5 +27,7 @@ export function parseMobileSave(raw: string | null): Game | null {
       overflow && count(game.players[game.current].stock)<=10 || game.phase==='finished' && game.triggerPlayer===null){
     throw Error('存档的回合阶段与商队容量不一致，请导入有效备份');
   }
-  return g as Game;
+  validateReplay(game.replay, game);
+  if (game.replay) parseMobileSave(JSON.stringify(game.replay.initial));
+  return game;
 }

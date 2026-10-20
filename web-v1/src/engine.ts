@@ -29,6 +29,26 @@ export type Game = {
   triggerPlayer: number | null;
   log: string[];
   turnNumber: number;
+  /** 旧版 v2 存档没有此字段；首次行动后从当时局面开始记录。 */
+  replay?: Replay;
+};
+export type ReplayTurn = {
+  turnNumber: number;
+  round: number;
+  playerTurn: number;
+  playerId: number;
+  cardId?: string;
+  actions: Action[];
+  before: Player;
+  after: Player;
+  completed: boolean;
+  triggersEnd: boolean;
+};
+export type Replay = {
+  version: 1;
+  fromStart: boolean;
+  initial: Omit<Game, 'replay'>;
+  turns: ReplayTurn[];
 };
 export type Action =
   | { type: 'play'; cardId: string; steps?: Color[]; repeats?: number }
@@ -47,7 +67,13 @@ export const readable = (stock: Stock) => stock.map((n, i) => n ? `${COLOR_NAMES
 const fail = (message: string): never => { throw new Error(message); };
 const requireThat = (condition: unknown, message: string) => { if (!condition) fail(message); };
 const isColor = (i: number): i is Color => Number.isInteger(i) && i >= 0 && i <= 3;
-const clone = (game: Game): Game => JSON.parse(JSON.stringify(game)) as Game;
+const snapshot = <T>(value: T): T => JSON.parse(JSON.stringify(value)) as T;
+function gamePosition(game: Game): Omit<Game, 'replay'> {
+  const { replay, ...position } = game;
+  return snapshot(position);
+}
+// 历史条目只追加或替换末条，避免每个 AI 合法性检查都深拷贝整局历史。
+const clone = (game: Game): Game => ({ ...gamePosition(game), ...(game.replay ? {replay: {...game.replay, turns: [...game.replay.turns]}} : {}) });
 
 function shuffled<T>(array: T[], random: () => number): T[] {
   const result = [...array];
@@ -85,7 +111,28 @@ export function createGame(playerNames: string[], seed = Math.floor(Math.random(
   for (let i = 0; i < 6; i++) drawMerchant(game);
   for (let i = 0; i < 5; i++) drawGolem(game);
   record(game, `游戏开始，${game.players.length} 人对局，由 ${game.players[0].name} 先手`);
+  game.replay = { version: 1, fromStart: true, initial: gamePosition(game), turns: [] };
   return game;
+}
+function recordReplay(before: Game, after: Game, action: Action) {
+  const replay = after.replay ?? {version: 1, fromStart: false, initial: gamePosition(before), turns: []};
+  const previous = replay.turns.at(-1);
+  const continuation = action.type === 'discard' && previous?.turnNumber === before.turnNumber && previous.playerId === before.current && !previous.completed;
+  const turn: ReplayTurn = {
+    turnNumber: before.turnNumber,
+    round: Math.floor((before.turnNumber - 1) / before.players.length) + 1,
+    playerTurn: before.players[before.current].turns + 1,
+    playerId: before.current,
+    cardId: action.type === 'play' ? action.cardId : action.type === 'acquire' ? before.merchantMarket[action.index].id : action.type === 'claim' ? before.golemMarket[action.index] : undefined,
+    actions: [snapshot(action)],
+    before: snapshot(before.players[before.current]),
+    after: snapshot(after.players[before.current]),
+    completed: after.phase !== 'overflow',
+    triggersEnd: before.triggerPlayer === null && after.triggerPlayer !== null,
+  };
+  if (continuation) replay.turns[replay.turns.length - 1] = {...previous, actions: [...previous.actions, snapshot(action)], after: turn.after, completed: turn.completed};
+  else replay.turns.push(turn);
+  after.replay = replay;
 }
 function drawMerchant(g: Game) {
   const id = g.merchantDeck.shift();
@@ -205,6 +252,7 @@ export function applyAction(game: Game, action: Action): Game {
     record(g, `${p.name} 弃置 ${excess} 颗水晶`);
     g.phase = 'turn';
     finishAction(g);
+    recordReplay(game, g, action);
     return g;
   }
   requireThat(action.type !== 'discard', '当前无需弃置水晶');
@@ -217,6 +265,7 @@ export function applyAction(game: Game, action: Action): Game {
     record(g, `${p.name} 休息，收回全部已打出商人卡`);
     finishAction(g);
   } else fail('未知行动类型');
+  recordReplay(game, g, action);
   return g;
 }
 export function score(p: Player): number {

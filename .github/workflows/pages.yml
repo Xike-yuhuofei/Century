@@ -31,6 +31,12 @@ jobs:
         run: python web-v1/scripts/smoke_mobile.py
       - name: Check mobile privacy, touch and save recovery boundaries
         run: python web-v1/scripts/audit_mobile.py
+      - name: Verify replay downloads on desktop and mobile
+        run: python web-v1/scripts/smoke_replay.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: replay-browser-evidence
+          path: web-v1/dist/replay-evidence/
       - uses: actions/upload-artifact@v4
         with:
           name: mobile-browser-evidence

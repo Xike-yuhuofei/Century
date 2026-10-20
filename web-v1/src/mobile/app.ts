@@ -1,6 +1,7 @@
 import { GOLEM_BY_ID, MERCHANT_BY_ID, type Stock } from '../data.js';
 import { applyAction, add, count, createGame, has, ranking, readable, score, tradeLimit, type Action, type Color, type Game, type Player } from '../engine.js';
 import { visibleOrder, groupOrder, stepInOrder } from '../organize.js';
+import { downloadReplay, replayCoverage } from '../replay.js';
 import { chooseAIAction } from '../ai.js';
 import { MOBILE_KEY, DESKTOP_KEY, parseMobileSave } from './storage.js';
 
@@ -120,12 +121,15 @@ function mDraft(steps:Color[]):Stock {const s=[...mGame!.players[mGame!.current]
 function mPicker(colors:Color[],limit:number,stock:Stock):string {
   return `<p>已选择 ${colors.length} / ${limit} 颗</p><div class="picker">${stock.map((n,c)=>mBtn(`${mGems(Array.from({length:4},(_,i)=>i===c?1:0) as Stock)}<b>${n-colors.filter(x=>x===c).length}</b>`,'pick',`data-color="${c}" aria-label="选择${mColors[c]}水晶" ${colors.length>=limit||colors.filter(x=>x===c).length>=n?'disabled':''}`)).join('')}</div><div class="selected-gems">${mGems(colors.reduce((s,c)=>{s[c]++;return s;},[0,0,0,0] as Stock))}</div>${mBtn('撤销选择','undo',!colors.length?'disabled':'')}`;
 }
+function mReplayControls(g: Game): string {
+  return `<p>${mEsc(replayCoverage(g))}</p><div class="menu-list">${mBtn('导出复盘 Markdown','export-replay-md')}${mBtn('导出复盘 JSON','export-replay-json')}</div>`;
+}
 function mSheetBody():{title:string;body:string;confirm?:string;disabled?:boolean} {
   const s=mSheet!,g=mGame,p=g?.players[g.current];
   if(s.kind==='help')return {title:'四个行动，一次选择',body:`<div class="help"><p><b>打出</b> 创造水晶、至多逐级升级，或重复交易。</p><p><b>获取</b> 为目标左侧每张卡各放 1 颗任意水晶，拿走目标及其奖励。</p><p><b>休息</b> 花一个回合收回所有已打出卡。</p><p><b>认领</b> 按卡面支付，获得魔像与相应硬币。</p><p>回合结束保留至多 10 颗，自选超额弃置。升级可以中途结束，也可同一颗连续升级。</p><p>2–3 人第 6 张、4–5 人第 5 张魔像触发终局；完成当前整轮后结算。六人为非官方扩展。</p><p>总分 = 魔像分 + 铜币×3 + 银币 + 非黄水晶数；平分时本轮后手胜。</p><p>手牌为私人信息；玩家状态页仅展示水晶、硬币、手牌数量与正面已打出卡。</p></div>`};
-  if(s.kind==='menu')return {title:'对局菜单',body:`<div class="menu-list">${mBtn(mPaused?'继续 AI':'暂停 AI','pause')}${mBtn('行动记录','log')}${mBtn('玩法与计分','help')}${mBtn('导出本局备份','export')}${mBtn('返回首页（保留存档）','home')}${mBtn('开始新局','new')}</div><p>手机与电脑存档相互独立。导出的 JSON 可在首页导入。</p>`};
+  if(s.kind==='menu')return {title:'对局菜单',body:`<div class="menu-list">${mBtn(mPaused?'继续 AI':'暂停 AI','pause')}${mBtn('行动记录与复盘导出','log')}${mBtn('玩法与计分','help')}${mBtn('导出本局备份','export')}${mBtn('返回首页（保留存档）','home')}${mBtn('开始新局','new')}</div><p>手机与电脑存档相互独立。「本局备份」可在首页导入；「复盘导出」用于阅读和分析。</p>`};
   if(s.kind==='new')return {title:'结束当前旅程？',body:'<p>开始新局会覆盖手机存档。可先取消并从菜单导出备份。</p>',confirm:'结束并配置新局'};
-  if(s.kind==='log')return {title:'行动记录',body:`<ol class="game-log">${g!.log.map(l=>`<li>${mEsc(l)}</li>`).join('')}</ol>`};
+  if(s.kind==='log')return {title:'行动记录',body:`${mReplayControls(g!)}<ol class="game-log">${g!.log.map(l=>`<li>${mEsc(l)}</li>`).join('')}</ol>`};
   if(s.kind==='player'){
     const q=g!.players[s.index];return {title:`${mEsc(q.name)} · 公开信息`,body:`<p>${score(q)} 分（含当前水晶残值） · ${q.claimed.length} 张魔像 · 手牌 ${q.hand.length} 张</p><p>铜币 ${q.copper} · 银币 ${q.silver} · 已行动 ${q.turns} 次</p>${mGems(q.stock)}<h3>已打出的商人卡</h3><div class="public-grid">${q.played.map(id=>mCard(id)).join('')||'暂无'}</div>`};
   }
@@ -156,7 +160,7 @@ function mOverlay():string {
   const info=mSheetBody();return `<div class="scrim"><section class="action-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" tabindex="-1"><div class="sheet-heading"><h2 id="sheet-title">${info.title}</h2>${mBtn(mSheet.kind==='discard'?'稍后':'取消','cancel','aria-label="关闭操作面板"')}</div><div class="sheet-content">${info.body}</div>${info.confirm?`<div class="sheet-footer">${mBtn(info.confirm,'confirm',info.disabled?'disabled':'','primary wide')}</div>`:''}</section></div>`;
 }
 function mResults():string {
-  return `<section class="results"><span class="eyebrow">旅程完成</span><h2>${mEsc(ranking(mGame!)[0].name)} 获胜</h2>${ranking(mGame!).map((p,i)=>`<div class="result-row"><b>${i+1}</b><div><strong>${mEsc(p.name)}</strong><small>魔像 ${p.claimed.reduce((n,id)=>n+GOLEM_BY_ID[id].points,0)} + 铜 ${p.copper*3} + 银 ${p.silver} + 水晶 ${count(p.stock)-p.stock[0]}</small></div><strong>${score(p)} 分</strong></div>`).join('')}<p>平分时本轮后手优先。</p>${mBtn('再来一局','new','','primary')}</section>`;
+  return `<section class="results"><span class="eyebrow">旅程完成</span><h2>${mEsc(ranking(mGame!)[0].name)} 获胜</h2>${ranking(mGame!).map((p,i)=>`<div class="result-row"><b>${i+1}</b><div><strong>${mEsc(p.name)}</strong><small>魔像 ${p.claimed.reduce((n,id)=>n+GOLEM_BY_ID[id].points,0)} + 铜 ${p.copper*3} + 银 ${p.silver} + 水晶 ${count(p.stock)-p.stock[0]}</small></div><strong>${score(p)} 分</strong></div>`).join('')}<p>平分时本轮后手优先。</p>${mReplayControls(mGame!)}${mBtn('再来一局','new','','primary')}</section>`;
 }
 function mRender(){
   // 保留市场/手牌各自的滚动位置，草稿更新不使用户丢失目标。
@@ -184,6 +188,7 @@ function mControl(el:HTMLElement){
   if(a==='menu'||a==='log'||a==='new'){mSheet={kind:a};mRender();return;}
   if(a==='pause'){mPaused=!mPaused;mStopAI();mSheet=null;mRender();return;}
   if(a==='home'){mStopAI();mSave();mGame=null;mSheet=null;mRender();return;}
+  if(a==='export-replay-md'||a==='export-replay-json'){downloadReplay(mGame,a==='export-replay-md'?'md':'json');return;}
   if(a==='export'){const url=URL.createObjectURL(new Blob([JSON.stringify(mGame,null,2)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download='century-mobile-v2.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}
   if(a==='player'){mSheet={kind:'player',index:i};mRender();return;}
   if(mHandoff)return;

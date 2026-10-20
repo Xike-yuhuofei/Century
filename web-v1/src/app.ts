@@ -1,5 +1,6 @@
 import { GOLEM_BY_ID, MERCHANT_BY_ID, type Merchant, type Stock } from './data.js';
 import { applyAction, count, createGame, has, ranking, readable, score, tradeLimit, type Action, type Color, type Game } from './engine.js';
+import { downloadReplay, replayCoverage, validateReplay } from './replay.js';
 import { chooseAIAction } from './ai.js';
 import { visibleOrder, moveInOrder, stepInOrder, groupOrder } from './organize.js';
 
@@ -89,6 +90,7 @@ try {
   const saved = localStorage.getItem(KEY);
   if (saved) {
     const parsed: Game = JSON.parse(saved);
+    validateReplay(parsed?.replay, parsed);
     if (parsed?.version === 2 && Array.isArray(parsed.players) && parsed.players.length >= 2 && parsed.players.length <= 6 && parsed.players[parsed.current]) game = parsed;
   }
 } catch { /* 浏览器禁用存储时仍可游玩 */ }
@@ -223,8 +225,11 @@ function minimalTopbar(g:Game):string {
   const finished = g.phase==='finished';
   return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${pageVersionLink()}${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact?'▦':'▣'}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
 }
+function replayControls(g: Game): string {
+  return `<div class="replay-controls"><small>${esc(replayCoverage(g))}</small><button class="subtle-btn" data-action="export-replay-md">导出复盘 Markdown</button><button class="subtle-btn" data-action="export-replay-json">导出复盘 JSON</button></div>`;
+}
 function logPopover(g:Game):string {
-  return showLog?`<aside class="focus-log-popover" aria-label="行动记录"><div class="log-pop-head"><strong>行动记录</strong><button data-action="toggle-log" aria-label="关闭行动记录">✕</button></div>${g.log.slice(0,10).map(t=>`<p>${esc(t)}</p>`).join('')}</aside>`:'';
+  return showLog?`<aside class="focus-log-popover" aria-label="行动记录"><div class="log-pop-head"><strong>行动记录</strong><button data-action="toggle-log" aria-label="关闭行动记录">✕</button></div>${replayControls(g)}${g.log.slice(0,10).map(t=>`<p>${esc(t)}</p>`).join('')}</aside>`:'';
 }
 /** V1.4 主模式：两位真人始终占据左右两边，AI 位于公共市场上方，不侵占人类操作区。 */
 function renderHumanAIBoard(g: Game): string {
@@ -283,7 +288,7 @@ function renderSoloAIBoard(g:Game):string {
       <div class="duel-center"><div class="duel-center-heading"><span>共享市场 · CENTER TABLE</span><strong>1 名人类 VS ${bots.length} 名 AI</strong></div>
         <section class="duel-market"><div class="duel-market-title"><h2>魔像市场</h2><span>剩余 ${g.golemDeck.length} 张 · 第 ${target} 张触发终局</span></div><div class="golem-grid">${g.golemMarket.map((id,i)=>golemCard(id,i,g)).join('')}</div></section>
         <section class="duel-market"><div class="duel-market-title"><h2>商人市场</h2><span>剩余 ${g.merchantDeck.length} 张</span></div><div class="merchant-grid">${g.merchantMarket.map((m,i)=>merchantCard(m.id,i,m.bonus)).join('')}</div></section>
-        <section class="duel-log"><div class="duel-minor-head"><b>对局记录</b><span>AI 自动选择行动</span></div><div class="duel-log-lines">${g.log.slice(0,6).map(line=>`<span>${esc(line)}</span>`).join('')}</div></section>
+        <section class="duel-log"><div class="duel-minor-head"><b>对局记录</b><span>AI 自动选择行动</span></div>${replayControls(g)}<div class="duel-log-lines">${g.log.slice(0,6).map(line=>`<span>${esc(line)}</span>`).join('')}</div></section>
       </div>
       <aside class="ai-seat-grid ${bots.length===2?'ai-seat-grid-two':''}">${bots.map(p=>renderAISeat(g,p)).join('')}</aside>
     </div>${finished?renderResult(g):''}</main>`;
@@ -373,14 +378,14 @@ function renderBoard(g: Game): string {
   <div class="personal-layout"><div class="hand-area"><div class="hand-heading"><b>当前手牌 <span>${p.hand.length} 张</span></b>${handTools(p)}</div><div class="hand-grid player-hand-grid" data-scroll-zone="hand-${p.id}" data-hand-player="${p.id}">${p.hand.length ? sortedHand(p).map((id,i,arr)=>handTile(p,id,!finished,i,arr)).join('') : '<p class="empty-hand">没有可打出的商人卡。可以休息、获取或认领。</p>'}</div>
   <div class="played ${pref(p.id).folded?'zone-folded':''}"><div class="played-header"><b>回收区 · ${p.played.length} 张</b>${foldedPlayed(p)}</div>${pref(p.id).folded?'':`<div class="played-card-grid" data-scroll-zone="played-${p.id}">${p.played.length ? p.played.map(id=>merchantCard(id,undefined,undefined,'played')).join('') : '<span class="empty-hand">暂无已打出的商人卡</span>'}</div>`}<button class="rest-btn" data-action="rest" ${finished ? 'disabled' : ''}>休息 · 收回已打出卡牌</button></div></div>
   <aside class="right-column"><div class="score-panel"><h3>个人战绩</h3><div class="score-large">${score(p)} <span>当前估分</span></div><div class="score-breakdown"><span>魔像 ${p.claimed.reduce((s, id) => s + GOLEM_BY_ID[id].points, 0)} 分</span><span>铜币 ${p.copper} · 银币 ${p.silver}</span><span>非黄水晶 ${p.stock[1] + p.stock[2] + p.stock[3]} 分</span></div></div>
-  <div class="history"><h3>行动记录</h3>${g.log.slice(0, 7).map(line => `<p>${esc(line)}</p>`).join('')}</div></aside></div></section>
+  <div class="history"><h3>行动记录</h3>${replayControls(g)}${g.log.slice(0, 7).map(line => `<p>${esc(line)}</p>`).join('')}</div></aside></div></section>
   <footer class="footer">点击手牌：打出 · 点击市场：获取或认领 · 「休息」独占一回合。所有规则由本地引擎校验。</footer>
   ${handoff && !finished ? `<div class="overlay cover"><div class="handoff-card"><div class="cover-symbol">◇</div><div class="eyebrow">PASS THE DEVICE</div><h2>轮到 ${esc(p.name)}</h2><p>请把设备交给下一位玩家，准备后再显示手牌。</p><button class="primary-btn big" data-action="ready">我已就位，显示游戏 ↗</button></div></div>` : ''}
   ${finished ? renderResult(g) : ''}</main>`;
 }
 function renderResult(g: Game): string {
   const result = ranking(g);
-  return `<div class="overlay cover"><section class="result-card"><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><b>${i + 1}. ${esc(p.name)}</b><span>${p.claimed.length} 张魔像</span><strong>${score(p)} 分</strong></div>`).join('')}</div><button class="primary-btn big" data-action="reset">开始新的一局 ↗</button></section></div>`;
+  return `<div class="overlay cover"><section class="result-card"><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><b>${i + 1}. ${esc(p.name)}</b><span>${p.claimed.length} 张魔像</span><strong>${score(p)} 分</strong></div>`).join('')}</div>${replayControls(g)}<button class="primary-btn big" data-action="reset">开始新的一局 ↗</button></section></div>`;
 }
 function modalBody(): string {
   if (!game || !modal) return '';
@@ -459,6 +464,7 @@ function control(target: HTMLElement) {
   if (type === 'mobile-expand-hand') { mobileHandExpanded=!mobileHandExpanded; render(); return; }
   if (type === 'mobile-toggle-played') { mobilePlayedOpen=!mobilePlayedOpen; render(); return; }
   if (type === 'inspect-ai') { const id=Number(target.dataset.player); inspectedAI = inspectedAI===id ? null : id; render(); return; }
+  if ((type === 'export-replay-md' || type === 'export-replay-json') && game) { downloadReplay(game, type === 'export-replay-md' ? 'md' : 'json'); return; }
   if (type === 'toggle-log') { showLog=!showLog; render(); return; }
   if (type === 'reset') {
     if (game?.phase !== 'finished' && !confirm('确定结束当前对局并重新开始吗？当前存档将被覆盖。')) return;

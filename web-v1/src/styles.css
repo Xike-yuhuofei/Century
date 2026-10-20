@@ -945,3 +945,9 @@ html[data-century-mode="mobile"] .mobile-board {
   max-width:640px;margin-inline:auto;
   box-shadow:0 0 55px #0006;
 }
+
+/* 复盘导出放在按需展开的记录中，长姓名和窄屏均可换行。 */
+.replay-controls { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
+.replay-controls small { flex-basis:100%; line-height:1.5; overflow-wrap:anywhere; }
+.replay-controls button { white-space:normal; min-height:36px; }
+.result-card { max-height:94vh; overflow-y:auto; }
