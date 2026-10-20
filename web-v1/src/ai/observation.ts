@@ -40,7 +40,7 @@ export type AIObservation = {
   readonly turnNumber: number;
 };
 
-const cloneStock = (stock: Stock): Stock => [...stock] as Stock;
+const clonePlayerStock = (stock: Stock): Stock => [...stock] as Stock;
 
 function deepFreeze<T>(value: T): T {
   if (value && typeof value === 'object' && !Object.isFrozen(value)) {
@@ -62,7 +62,7 @@ export function buildObservation(game: Game, playerId: number = game.current): A
       id: p.id,
       name: p.name,
       isAI: p.isAI === true,
-      stock: cloneStock(p.stock),
+      stock: clonePlayerStock(p.stock),
       hand: [...p.hand],
       played: [...p.played],
       claimed: [...p.claimed],
@@ -71,7 +71,7 @@ export function buildObservation(game: Game, playerId: number = game.current): A
       turns: p.turns,
     })),
     current: game.current,
-    merchantMarket: game.merchantMarket.map(m => ({ id: m.id, bonus: cloneStock(m.bonus) })),
+    merchantMarket: game.merchantMarket.map(m => ({ id: m.id, bonus: clonePlayerStock(m.bonus) })),
     golemMarket: [...game.golemMarket],
     copper: game.copper,
     silver: game.silver,

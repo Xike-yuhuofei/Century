@@ -36,3 +36,21 @@ test('手机与电脑嵌入同一份编译规则和 AI，不复制规则源码',
     assert.ok(mobile.includes(code), `手机缺少同源 ${name}`);
   }
 });
+
+test('内联产物顶层标识符无冲突（standalone 为共享作用域）', () => {
+  const strip = name => readFileSync(new URL(`../dist/js/${name}.js`, import.meta.url), 'utf8')
+    .replace(/^import\s.*?from\s+['"].*?['"];?\s*$/gm, '')
+    .replace(/^export\s+(?=(const|function|class)\b)/gm, '')
+    .replace(/^export\s*\{[^}]*\};?\s*$/gm, '');
+  const decls = new Map();
+  for (const name of ['data','engine',...AI_MODULES,'organize','replay','app','mobile/storage','mobile/app','mobile/worker']) {
+    const src = strip(name);
+    const re = /^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/gm;
+    let m;
+    while ((m = re.exec(src))) {
+      const id = m[1];
+      assert.ok(!decls.has(id), `顶层标识符 '${id}' 在 ${name}.js 与 ${decls.get(id)}.js 重复声明，内联包会 SyntaxError`);
+      decls.set(id, name);
+    }
+  }
+});
