@@ -1,0 +1,98 @@
+{
+  "generated_at": "2026-10-21 17:44:51 +0800",
+  "system": {
+    "python": "3.13.2",
+    "pytorch": "2.14.1",
+    "torch_cuda_compiled": false,
+    "mps_built": true,
+    "mps_available": true,
+    "macos": "26.6.2",
+    "macos_build": "25G83",
+    "chip": "Apple M4",
+    "cpu_cores": "10",
+    "perf_cores": "4",
+    "efficiency_cores": "6",
+    "unified_memory_bytes": 17179869184,
+    "node_version": "v22.16.0",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O"
+  },
+  "mps_correctness": {
+    "all_ok": true,
+    "checks": {
+      "matmul_256": {
+        "ok": true,
+        "max_abs_diff": 0.0
+      },
+      "linear_chain": {
+        "ok": true,
+        "max_abs_diff": 2.6702880859375e-05
+      },
+      "conv2d": {
+        "ok": true,
+        "max_abs_diff": 4.76837158203125e-07
+      },
+      "layer_norm": {
+        "ok": true,
+        "max_abs_diff": 9.5367431640625e-07
+      },
+      "embedding": {
+        "ok": true,
+        "max_abs_diff": 0.0
+      },
+      "softmax": {
+        "ok": true,
+        "max_abs_diff": 4.470348358154297e-08
+      },
+      "gelu": {
+        "ok": true,
+        "max_abs_diff": 4.76837158203125e-07
+      },
+      "masked_fill": {
+        "ok": true,
+        "max_abs_diff": 0.0
+      },
+      "cumsum": {
+        "ok": true,
+        "max_abs_diff": 5.7220458984375e-06
+      },
+      "topk": {
+        "ok": true,
+        "max_abs_diff": 0.0
+      },
+      "gather": {
+        "ok": true,
+        "max_abs_diff": 0.0
+      },
+      "where": {
+        "ok": true,
+        "max_abs_diff": 0.0
+      },
+      "cross_entropy": {
+        "ok": true,
+        "max_abs_diff": 2.384185791015625e-07
+      },
+      "mse_loss": {
+        "ok": true,
+        "max_abs_diff": 1.1920928955078125e-07
+      }
+    }
+  },
+  "mps_speed_probe": {
+    "matmul_1024_ms": 0.91,
+    "approx_tflops": 2.36
+  },
+  "memory": {
+    "unified_memory_gb": 17.2,
+    "free_pages": 3741,
+    "free_estimate_gb": 0.06,
+    "swap_usage": "total = 3072.00M  used = 1781.31M  free = 1290.69M  (encrypted)",
+    "mps_allocated_mb": 0.0,
+    "mps_driver_allocated_mb": 44.9
+  },
+  "stability_probe": {
+    "steps_3s": 3968,
+    "steps_per_second": 1322.7,
+    "mps_allocated_mb_after": 3.0,
+    "driver_allocated_mb_after": 53.3
+  }
+}
