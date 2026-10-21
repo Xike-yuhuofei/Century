@@ -7,7 +7,9 @@
  *   保证训练版与网页实战版永远使用同一套参数与同一份算法源码。
  */
 
-/** 可调参数集。全部乘子默认 1.0 = 基线行为。 */
+/** 可调参数集。全部乘子默认 1.0 = 基线行为。
+ * structure：可选结构变体标识（beam-adaptive/beam-rollout），
+ * 由验证器透传，使"结构 × 参数"作为完整版本参与进化与挑战。 */
 export type AIParameters = {
   /** 版本标识（写进决策理由，便于追溯）。 */
   id: string;
@@ -27,6 +29,8 @@ export type AIParameters = {
   restWeight: number;
   /** 终局紧迫程度：越接近终局引擎项衰减越快（stage 的指数）。 */
   endgameWeight: number;
+  /** 结构变体（缺省 beam-lineage = 冠军基线）。 */
+  structure?: 'beam-lineage' | 'beam-adaptive' | 'beam-rollout';
 };
 
 /** 参数合法区间；超出即拒绝（防止进化产生无意义参数）。 */
@@ -58,7 +62,7 @@ export const CHAMPION_PARAMETERS: AIParameters = {
 };
 // === CHAMPION-PARAMETERS-END ===
 
-const PARAM_KEYS = Object.keys(PARAMETER_BOUNDS) as Array<Exclude<keyof AIParameters, 'id'>>;
+const PARAM_KEYS = Object.keys(PARAMETER_BOUNDS) as Array<keyof typeof PARAMETER_BOUNDS>;
 
 /** 校验并归一化参数对象；非法输入抛出明确错误。 */
 export function validateAIParameters(input: unknown): AIParameters {
@@ -75,6 +79,13 @@ export function validateAIParameters(input: unknown): AIParameters {
       throw new Error(`参数 ${key} 必须为 ${low}–${high} 之间的有限数值，实际：${String(value)}`);
     }
     result[key] = value;
+  }
+  // 结构标识透传（可选）：合法性在此统一校验，决策入口无需重复。
+  if (source.structure !== undefined) {
+    if (source.structure !== 'beam-lineage' && source.structure !== 'beam-adaptive' && source.structure !== 'beam-rollout') {
+      throw new Error(`未知 AI 结构：${String(source.structure)}`);
+    }
+    result.structure = source.structure;
   }
   return result as AIParameters;
 }

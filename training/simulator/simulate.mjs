@@ -46,7 +46,7 @@ function emptyResult(seed, versions, seatCount) {
  * 模拟一局完整对局。
  * @param {object} options
  * @param {number} options.seed 引擎随机种子（洗牌与起始配置全部由此决定）
- * @param {Array<{id?:string, parameters?:object}|null>} [options.versions] 每席位 AI 版本；null 使用当前激活参数
+ * @param {Array<{id?:string, parameters?:object, structure?:string}|null>} [options.versions] 每席位 AI 版本（可带结构变体）；null 使用当前激活参数
  * @param {number} [options.seatCount] 席位数，默认 5（1 人类代理席 + 4 AI）
  * @param {number} [options.maxMoves] 单局行动步数上限（防死循环）
  * @param {number} [options.deadlineMs] 单局墙钟时间预算（毫秒，防长时间无进展）
@@ -94,9 +94,11 @@ export function simulateGame(options) {
       const version = versions?.[seat] ?? null;
       const decisionStart = performance.now();
       // 人格按正式游戏席位映射显式注入（席位 0 为中立人类代理），
-      // 决策核心与正式游戏共用同一实现，仅人格来源由"席位推导"改为"显式映射"。
+      // 结构变体按版本配置透传（beam-lineage/beam-adaptive/beam-rollout），
+      // 决策核心与正式游戏共用同一实现。
       const response = chooseAIAction(game, {
         ...(version?.parameters ? { parameters: version.parameters } : {}),
+        ...(version?.structure ? { structure: version.structure } : {}),
         profile: seatProfile(seat),
       });
       const decisionMs = performance.now() - decisionStart;

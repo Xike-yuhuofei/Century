@@ -1280,6 +1280,13 @@ function validateAIParameters(input) {
         }
         result[key] = value;
     }
+    // 结构标识透传（可选）：合法性在此统一校验，决策入口无需重复。
+    if (source.structure !== undefined) {
+        if (source.structure !== 'beam-lineage' && source.structure !== 'beam-adaptive' && source.structure !== 'beam-rollout') {
+            throw new Error(`未知 AI 结构：${String(source.structure)}`);
+        }
+        result.structure = source.structure;
+    }
     return result;
 }
 let activeParameters = CHAMPION_PARAMETERS;
@@ -1508,6 +1515,76 @@ function pressureModel(view) {
     return { mean, peak };
 }
 
+/** 结构模块专用确定性随机源（mulberry32）。
+ * 独立文件以保持 structures.ts 零引擎依赖；训练侧 lib/rng.mjs 是同名算法的
+ * 独立实现，二者数值一致但互不引用（AI 核心不得反向依赖训练目录）。
+ */
+function mulberry32(seed) {
+    let value = seed >>> 0;
+    return () => {
+        value = (value + 0x6D2B79F5) | 0;
+        let t = Math.imul(value ^ (value >>> 15), 1 | value);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
+/** AI 结构变体框架（任务书第六节延伸：结构级挑战，而非仅参数扰动）。
+ *
+ * 冠军结构 'beam-lineage' = 束搜索 + 血统救援（基线）。
+ * 变体通过 choosePlan 的 structure 入口参与冠军挑战，全部：
+ * - 只消费 AIObservation 公开信息（信息公平性与主结构一致，静态扫描强制）；
+ * - 完全确定性：rollout 随机性来自状态哈希派生的种子，无 Math.random，
+ *   同一种子与配置下决策逐位可复现；
+ * - 行动合法性由 decision.ts 的正式引擎核验兜底，与主结构一致。
+ */
+
+const AI_STRUCTURES = ['beam-lineage', 'beam-adaptive', 'beam-rollout'];
+const DEFAULT_STRUCTURE = 'beam-lineage';
+/** 归一化结构标识：undefined/缺省 → 冠军结构；未知值抛错。 */
+function normalizeStructure(input) {
+    if (input === undefined || input === null || input === '')
+        return DEFAULT_STRUCTURE;
+    if (AI_STRUCTURES.includes(input))
+        return input;
+    throw new Error(`未知 AI 结构：${String(input)}（可选：${AI_STRUCTURES.join(' / ')}）`);
+}
+/** 束宽度自适应（beam-adaptive 变体）：
+ * 前置宽、后置窄——浅层扩大探索（更多转换路线进入束），深层收窄聚焦。
+ * 纯层号/深度/基准宽的确定性函数，无任何时间或随机因素。
+ * depth=6、base=14 时约为 22/20/18/15/13/10；depth=3、base=10 时为 16/10/4。 */
+function adaptiveWidth(layer, depth, base) {
+    const t = depth <= 1 ? 0 : (layer - 1) / (depth - 1);
+    return Math.max(4, Math.round(base * (1.6 - 1.2 * t)));
+}
+/** 确定性 rollout 随机源：由状态键 + 目标 + 回合 + 序号派生种子。
+ * 同一局面同一序号必然同一随机序列——可复现性不因结构变体而破坏。 */
+function structureRng(stateKey, preferred, turnNumber, rolloutIndex) {
+    let hash = 0x811c9dc5;
+    const mix = (text) => {
+        for (let i = 0; i < text.length; i++) {
+            hash ^= text.charCodeAt(i);
+            hash = Math.imul(hash, 0x01000193) >>> 0;
+        }
+    };
+    mix(stateKey);
+    mix(preferred);
+    mix(String(turnNumber));
+    mix(String(rolloutIndex));
+    return mulberry32(hash >>> 0);
+}
+/** rollout 求值默认配置（成本上界：候选数 × 次数 × 步数）。 */
+const ROLLOUT_DEFAULTS = {
+    /** 每个 preferred 的最终束中参与 rollout 的候选数（按公式分预排序）。 */
+    topK: 10,
+    /** 每候选 rollout 次数。 */
+    rollouts: 5,
+    /** 每次 rollout 最大行动步数。 */
+    stepCap: 8,
+    /** rollout 与公式先验的混合权重（rollout 占比）。 */
+    blend: 0.7,
+};
+
 /** 参数化求值器：引擎价值、目标差距、水晶保留价值与获取价值。
  * 全部公式与 V3.0 基线一致，8 个任务参数以"默认 1.0 的乘子"形式接入，
  * 保证默认参数下决策与基线逐位一致，且每个参数真实影响决策。
@@ -1597,7 +1674,7 @@ function acquisitionValue(state, cardId, preferred, profile, pressure, params) {
         + profile.contest * params.contestWeight * (demand * .45 + risk * urgency * .55) * .9;
 }
 
-/** 多回合束搜索规划器（V3.0 结构 + V4.0 参数化）。
+/** 多回合束搜索规划器（V3.0 结构 + V4.0 参数化 + 结构变体框架）。
  *
  * 规划只使用 AIObservation 公开信息；未来对手回合和未知翻牌保持不确定，
  * 以当前公开市场作保守近似。搜索深度/宽度沿用基线结构：
@@ -1605,10 +1682,13 @@ function acquisitionValue(state, cardId, preferred, profile, pressure, params) {
  *
  * V4.0 变更：
  * - 全部求值项经 parameters.ts 的 8 个乘子接入（默认 1.0 = 基线行为）。
- * - 修复束搜索"休息饿死"缺陷：休息分支的收益延迟 2+ 层才体现，
- *   纯即时质量剪枝会系统性淘汰唯一能收回已打出卡的路线；
- *   现为每层最佳休息后继保留一个束席位（main 分支预置失败测试的根因）。
+ * - 修复束搜索"休息饿死"缺陷：血统救援（restFallback）逐层保留席位。
+ * - 结构变体（structures.ts）：beam-lineage（冠军基线）/
+ *   beam-adaptive（束宽度自适应：前置宽后置窄）/
+ *   beam-rollout（蒙特卡洛 rollout 替代 prospective 期望公式）。
+ *   全部结构共用同一求值器与合法性核验，仅探索/评估策略不同。
  */
+
 
 
 
@@ -1827,10 +1907,20 @@ function routeGrade(state, preferred, stage, profile, params) {
 function completedFirstGoal(state, preferred) {
     return !state.golemMarket.includes(preferred);
 }
+/** prospective 期望公式（多回合目标推进的解析先验）。 */
+function prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport) {
+    return GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(state.stock, GOLEM_BY_ID[preferred]) / 3)
+        + engineValue(state, preferred) * stage * .12 * profile.engine * params.engineWeight
+        + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params), 0) * stage * .32
+        + futureSupport * stage * .25 * profile.engine * params.engineWeight
+        - state.steps * .09 * profile.tempo * params.tempoWeight;
+}
 /** 主规划入口：只依赖 AIObservation 与参数集，不接触任何隐藏信息。
  * profileOverride：显式人格（训练模拟器按正式游戏席位映射注入）；
- * 缺省时沿用 profileFor 的席位推导，正式游戏行为不变。 */
-function choosePlan(view, params, profileOverride) {
+ * 缺省时沿用 profileFor 的席位推导，正式游戏行为不变。
+ * structure：结构变体分派（缺省 beam-lineage = 冠军基线）。 */
+function choosePlan(view, params, profileOverride, structureInput) {
+    const structure = structureInput ?? 'beam-lineage';
     const profile = profileOverride ?? profileFor(view);
     const knowledge = publicKnowledge(view);
     const pressure = pressureModel(view);
@@ -1839,11 +1929,15 @@ function choosePlan(view, params, profileOverride) {
     const mostClaimed = Math.max(...view.players.map(p => p.claimed.length));
     const nearEnd = view.triggerPlayer !== null || mostClaimed >= threshold - 1;
     const depth = view.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
-    const width = nearEnd ? 10 : 14;
+    const baseWidth = nearEnd ? 10 : 14;
+    // beam-adaptive：宽度随层号自适应（前置宽、后置窄）；其余结构用固定宽度。
+    const widthFor = (layer) => structure === 'beam-adaptive' ? adaptiveWidth(layer, depth, baseWidth) : baseWidth;
     const rawStage = view.triggerPlayer !== null ? 0 : Math.max(.12, 1 - mostClaimed / threshold);
     // endgameWeight：越接近终局，引擎/新卡项衰减越快（stage 的指数）。
     const stage = Math.pow(rawStage, params.endgameWeight);
+    const allowAcquire = view.triggerPlayer === null;
     let solved = null, prospective = null;
+    const finalBeams = [];
     for (const preferred of initial.golemMarket) {
         // 每个目标只算一次未来牌库支持度（纯公共知识，成本可控）。
         const futureSupport = futureDeckSupport(initial.stock, preferred, knowledge.unseenMerchants);
@@ -1859,7 +1953,7 @@ function choosePlan(view, params, profileOverride) {
             let lineageOther = null;
             for (const position of beam) {
                 const parentKey = stateKey(position);
-                const variants = actions(position, preferred, view.triggerPlayer === null, params);
+                const variants = actions(position, preferred, allowAcquire, params);
                 for (const action of variants) {
                     const next = step(position, action, preferred, params);
                     if (!next)
@@ -1894,7 +1988,7 @@ function choosePlan(view, params, profileOverride) {
             }
             if (!successors.size)
                 break;
-            beam = [...successors.values()].sort((a, b) => b.quality - a.quality).slice(0, width);
+            beam = [...successors.values()].sort((a, b) => b.quality - a.quality).slice(0, widthFor(layer));
             const rescue = (candidate) => {
                 if (!candidate)
                     return;
@@ -1908,15 +2002,45 @@ function choosePlan(view, params, profileOverride) {
             rescue(lineagePlay ?? lineageRest ?? lineageOther);
             rescue(restFallback);
             for (const candidate of beam) {
-                const expected = GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(candidate.stock, GOLEM_BY_ID[preferred]) / 3)
-                    + engineValue(candidate, preferred) * stage * .12 * profile.engine * params.engineWeight
-                    + candidate.newCards.reduce((sum, id) => sum + acquisitionValue(candidate, id, preferred, profile, pressure, params), 0) * stage * .32
-                    + futureSupport * stage * .25 * profile.engine * params.engineWeight
-                    - candidate.steps * .09 * profile.tempo * params.tempoWeight;
+                const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport);
                 if (!prospective || expected > prospective.quality)
                     prospective = { ...candidate, preferred, quality: expected };
             }
         }
+        finalBeams.push({ preferred, futureSupport, beam: [...beam] });
+    }
+    // beam-rollout：用确定性蒙特卡洛 rollout 评估最终束候选的"未来期望得分"，
+    // 与公式先验按权重混合后取代解析 prospective（solved 路线仍优先）。
+    if (structure === 'beam-rollout' && !solved && finalBeams.length) {
+        const ranked = finalBeams.flatMap(({ preferred, futureSupport, beam }) => beam.map(state => ({
+            preferred, state,
+            formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport),
+        }))).sort((a, b) => b.formula - a.formula).slice(0, ROLLOUT_DEFAULTS.topK);
+        let rolloutBest = null;
+        for (const { preferred, state, formula } of ranked) {
+            let total = 0;
+            for (let r = 0; r < ROLLOUT_DEFAULTS.rollouts; r++) {
+                const rng = structureRng(stateKey(state), preferred, view.turnNumber, r);
+                let cursor = state;
+                let taken = 0;
+                while (!cursor.terminal && taken < ROLLOUT_DEFAULTS.stepCap) {
+                    const variants = actions(cursor, preferred, allowAcquire, params);
+                    const pick = variants[Math.floor(rng() * variants.length)];
+                    const next = step(cursor, pick, preferred, params);
+                    if (!next)
+                        break;
+                    cursor = next;
+                    taken += 1;
+                }
+                total += cursor.gained;
+            }
+            const meanGained = total / ROLLOUT_DEFAULTS.rollouts;
+            const quality = ROLLOUT_DEFAULTS.blend * meanGained + (1 - ROLLOUT_DEFAULTS.blend) * formula;
+            if (!rolloutBest || quality > rolloutBest.quality)
+                rolloutBest = { ...state, preferred, quality };
+        }
+        if (rolloutBest)
+            prospective = rolloutBest;
     }
     // 有可信的实际认领路线时优先执行；未找到时采用多回合目标推进的最佳前缀。
     const plan = solved ?? prospective;
@@ -1936,8 +2060,11 @@ function choosePlan(view, params, profileOverride) {
 
 
 
+
 function chooseAIAction(game, options) {
     const params = resolveAIParameters(options?.parameters);
+    // 结构来源优先级：显式 options.structure > 参数内嵌 structure > 冠军基线。
+    const structure = normalizeStructure((options?.structure ?? params.structure));
     if (game.phase === 'finished')
         throw new Error('游戏结束，AI 无法行动');
     const p = game.players[game.current];
@@ -1949,7 +2076,7 @@ function chooseAIAction(game, options) {
     }
     // 决策只使用公开观察；隐藏牌库顺序在观察中不存在。
     const view = buildObservation(game);
-    const plan = choosePlan(view, params, options?.profile);
+    const plan = choosePlan(view, params, options?.profile, structure);
     const action = plan?.first ?? { type: 'rest' };
     // 搜索转移为快速本地模型；真正的第一步必须由正式规则引擎再次核实。
     try {
@@ -1970,10 +2097,11 @@ function chooseAIAction(game, options) {
         return { action: fallback, reason: '合法动作保底选择' };
     }
     const goal = plan?.preferred;
+    const structureTag = structure === 'beam-lineage' ? '' : `·${structure}`;
     return {
         action,
         reason: goal
-            ? `AI 4.0 ${plan.profile}（${params.id}）：公开目标 ${goal}，规划${plan.steps}步；未知商人/魔像各${plan.unseenCounts.join('/')}张`
+            ? `AI 4.0 ${plan.profile}（${params.id}${structureTag}）：公开目标 ${goal}，规划${plan.steps}步；未知商人/魔像各${plan.unseenCounts.join('/')}张`
             : '公开市场暂无可规划目标',
         plan: plan && goal ? { goal, steps: plan.steps, actions: plan.path } : undefined,
     };

@@ -57,6 +57,8 @@ const championFile = fromArg(args.champion, 'training/champions/champion.json');
 const championEntry = readJSON(championFile);
 const champion = championEntry.parameters ?? championEntry;
 if (!champion.id) throw new Error('冠军文件缺少 id 或 parameters');
+// 结构变体透传：champion.json 可选 structure 字段（缺省 beam-lineage）。
+if (championEntry.structure) champion.structure = championEntry.structure;
 
 const generations = Number(args.generations ?? 3);
 const population = Number(args.population ?? 8);

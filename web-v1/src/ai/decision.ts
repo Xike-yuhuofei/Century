@@ -11,6 +11,7 @@ import { buildObservation } from './observation.js';
 import { resolveAIParameters, type AIParameters } from './parameters.js';
 import { choosePlan, initialState, actions } from './planner.js';
 import { trimStock } from './evaluator.js';
+import { normalizeStructure, type AIStructure } from './structures.js';
 import type { Profile } from './profiles.js';
 
 export type AIOptions = {
@@ -18,6 +19,8 @@ export type AIOptions = {
   parameters?: AIParameters | string;
   /** 显式人格：训练模拟器按正式游戏席位映射注入；缺省按席位结构自动推导。 */
   profile?: Profile;
+  /** 结构变体：beam-lineage（冠军基线）/ beam-adaptive / beam-rollout。 */
+  structure?: AIStructure | string;
 };
 
 export type AIDecision = {
@@ -28,6 +31,8 @@ export type AIDecision = {
 
 export function chooseAIAction(game: Game, options?: AIOptions): AIDecision {
   const params = resolveAIParameters(options?.parameters);
+  // 结构来源优先级：显式 options.structure > 参数内嵌 structure > 冠军基线。
+  const structure = normalizeStructure((options?.structure ?? params.structure) as string | undefined);
   if (game.phase === 'finished') throw new Error('游戏结束，AI 无法行动');
   const p = game.players[game.current];
   if (!p?.isAI) throw new Error('当前行动者不是 AI');
@@ -37,7 +42,7 @@ export function chooseAIAction(game: Game, options?: AIOptions): AIDecision {
   }
   // 决策只使用公开观察；隐藏牌库顺序在观察中不存在。
   const view = buildObservation(game);
-  const plan = choosePlan(view, params, options?.profile);
+  const plan = choosePlan(view, params, options?.profile, structure);
   const action = plan?.first ?? { type: 'rest' };
   // 搜索转移为快速本地模型；真正的第一步必须由正式规则引擎再次核实。
   try {
@@ -50,10 +55,11 @@ export function chooseAIAction(game: Game, options?: AIOptions): AIDecision {
     return { action: fallback, reason: '合法动作保底选择' };
   }
   const goal = plan?.preferred;
+  const structureTag = structure === 'beam-lineage' ? '' : `·${structure}`;
   return {
     action,
     reason: goal
-      ? `AI 4.0 ${plan!.profile}（${params.id}）：公开目标 ${goal}，规划${plan!.steps}步；未知商人/魔像各${plan!.unseenCounts.join('/')}张`
+      ? `AI 4.0 ${plan!.profile}（${params.id}${structureTag}）：公开目标 ${goal}，规划${plan!.steps}步；未知商人/魔像各${plan!.unseenCounts.join('/')}张`
       : '公开市场暂无可规划目标',
     plan: plan && goal ? { goal, steps: plan.steps, actions: plan.path } : undefined,
   };

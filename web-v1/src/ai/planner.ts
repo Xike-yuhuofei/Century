@@ -1,4 +1,4 @@
-/** 多回合束搜索规划器（V3.0 结构 + V4.0 参数化）。
+/** 多回合束搜索规划器（V3.0 结构 + V4.0 参数化 + 结构变体框架）。
  *
  * 规划只使用 AIObservation 公开信息；未来对手回合和未知翻牌保持不确定，
  * 以当前公开市场作保守近似。搜索深度/宽度沿用基线结构：
@@ -6,9 +6,11 @@
  *
  * V4.0 变更：
  * - 全部求值项经 parameters.ts 的 8 个乘子接入（默认 1.0 = 基线行为）。
- * - 修复束搜索"休息饿死"缺陷：休息分支的收益延迟 2+ 层才体现，
- *   纯即时质量剪枝会系统性淘汰唯一能收回已打出卡的路线；
- *   现为每层最佳休息后继保留一个束席位（main 分支预置失败测试的根因）。
+ * - 修复束搜索"休息饿死"缺陷：血统救援（restFallback）逐层保留席位。
+ * - 结构变体（structures.ts）：beam-lineage（冠军基线）/
+ *   beam-adaptive（束宽度自适应：前置宽后置窄）/
+ *   beam-rollout（蒙特卡洛 rollout 替代 prospective 期望公式）。
+ *   全部结构共用同一求值器与合法性核验，仅探索/评估策略不同。
  */
 
 import { GOLEM_BY_ID, MERCHANT_BY_ID, type Stock } from '../data.js';
@@ -19,6 +21,7 @@ import { weighted, stockCount, cloneStock, engineValue, publicKnowledge, futureD
 import { goalGap, keepValue, trimStock, acquisitionValue } from './evaluator.js';
 import { profileFor, type Profile } from './profiles.js';
 import { pressureModel, type PressureModel } from './opponent-model.js';
+import { adaptiveWidth, structureRng, ROLLOUT_DEFAULTS, type AIStructure } from './structures.js';
 
 export type SearchState = {
   stock: Stock;
@@ -245,10 +248,35 @@ function completedFirstGoal(state: SearchState, preferred: string): boolean {
   return !state.golemMarket.includes(preferred);
 }
 
+/** prospective 期望公式（多回合目标推进的解析先验）。 */
+function prospectiveFormula(
+  state: SearchState,
+  preferred: string,
+  stage: number,
+  profile: Profile,
+  pressure: PressureModel,
+  params: AIParameters,
+  depth: number,
+  futureSupport: number,
+): number {
+  return GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(state.stock, GOLEM_BY_ID[preferred]) / 3)
+    + engineValue(state, preferred) * stage * .12 * profile.engine * params.engineWeight
+    + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params), 0) * stage * .32
+    + futureSupport * stage * .25 * profile.engine * params.engineWeight
+    - state.steps * .09 * profile.tempo * params.tempoWeight;
+}
+
 /** 主规划入口：只依赖 AIObservation 与参数集，不接触任何隐藏信息。
  * profileOverride：显式人格（训练模拟器按正式游戏席位映射注入）；
- * 缺省时沿用 profileFor 的席位推导，正式游戏行为不变。 */
-export function choosePlan(view: AIObservation, params: AIParameters, profileOverride?: Profile): (ScoredState & { profile: string; unseenCounts: number[] }) | null {
+ * 缺省时沿用 profileFor 的席位推导，正式游戏行为不变。
+ * structure：结构变体分派（缺省 beam-lineage = 冠军基线）。 */
+export function choosePlan(
+  view: AIObservation,
+  params: AIParameters,
+  profileOverride?: Profile,
+  structureInput?: AIStructure,
+): (ScoredState & { profile: string; unseenCounts: number[] }) | null {
+  const structure = structureInput ?? 'beam-lineage';
   const profile = profileOverride ?? profileFor(view);
   const knowledge = publicKnowledge(view);
   const pressure = pressureModel(view);
@@ -257,11 +285,16 @@ export function choosePlan(view: AIObservation, params: AIParameters, profileOve
   const mostClaimed = Math.max(...view.players.map(p => p.claimed.length));
   const nearEnd = view.triggerPlayer !== null || mostClaimed >= threshold - 1;
   const depth = view.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
-  const width = nearEnd ? 10 : 14;
+  const baseWidth = nearEnd ? 10 : 14;
+  // beam-adaptive：宽度随层号自适应（前置宽、后置窄）；其余结构用固定宽度。
+  const widthFor = (layer: number) =>
+    structure === 'beam-adaptive' ? adaptiveWidth(layer, depth, baseWidth) : baseWidth;
   const rawStage = view.triggerPlayer !== null ? 0 : Math.max(.12, 1 - mostClaimed / threshold);
   // endgameWeight：越接近终局，引擎/新卡项衰减越快（stage 的指数）。
   const stage = Math.pow(rawStage, params.endgameWeight);
+  const allowAcquire = view.triggerPlayer === null;
   let solved: ScoredState | null = null, prospective: ScoredState | null = null;
+  const finalBeams: Array<{ preferred: string; futureSupport: number; beam: ScoredState[] }> = [];
   for (const preferred of initial.golemMarket) {
     // 每个目标只算一次未来牌库支持度（纯公共知识，成本可控）。
     const futureSupport = futureDeckSupport(initial.stock, preferred, knowledge.unseenMerchants);
@@ -277,7 +310,7 @@ export function choosePlan(view: AIObservation, params: AIParameters, profileOve
       let lineageOther: ScoredState | null = null;
       for (const position of beam) {
         const parentKey = stateKey(position);
-        const variants = actions(position, preferred, view.triggerPlayer === null, params);
+        const variants = actions(position, preferred, allowAcquire, params);
         for (const action of variants) {
           const next = step(position, action, preferred, params);
           if (!next) continue;
@@ -303,7 +336,7 @@ export function choosePlan(view: AIObservation, params: AIParameters, profileOve
         }
       }
       if (!successors.size) break;
-      beam = [...successors.values()].sort((a, b) => b.quality - a.quality).slice(0, width);
+      beam = [...successors.values()].sort((a, b) => b.quality - a.quality).slice(0, widthFor(layer));
       const rescue = (candidate: ScoredState | null) => {
         if (!candidate) return;
         const key = stateKey(candidate);
@@ -315,14 +348,41 @@ export function choosePlan(view: AIObservation, params: AIParameters, profileOve
       rescue(lineagePlay ?? lineageRest ?? lineageOther);
       rescue(restFallback);
       for (const candidate of beam) {
-        const expected = GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(candidate.stock, GOLEM_BY_ID[preferred]) / 3)
-          + engineValue(candidate, preferred) * stage * .12 * profile.engine * params.engineWeight
-          + candidate.newCards.reduce((sum, id) => sum + acquisitionValue(candidate, id, preferred, profile, pressure, params), 0) * stage * .32
-          + futureSupport * stage * .25 * profile.engine * params.engineWeight
-          - candidate.steps * .09 * profile.tempo * params.tempoWeight;
+        const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport);
         if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
       }
     }
+    finalBeams.push({ preferred, futureSupport, beam: [...beam] });
+  }
+  // beam-rollout：用确定性蒙特卡洛 rollout 评估最终束候选的"未来期望得分"，
+  // 与公式先验按权重混合后取代解析 prospective（solved 路线仍优先）。
+  if (structure === 'beam-rollout' && !solved && finalBeams.length) {
+    const ranked = finalBeams.flatMap(({ preferred, futureSupport, beam }) => beam.map(state => ({
+      preferred, state,
+      formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport),
+    }))).sort((a, b) => b.formula - a.formula).slice(0, ROLLOUT_DEFAULTS.topK);
+    let rolloutBest: ScoredState | null = null;
+    for (const { preferred, state, formula } of ranked) {
+      let total = 0;
+      for (let r = 0; r < ROLLOUT_DEFAULTS.rollouts; r++) {
+        const rng = structureRng(stateKey(state), preferred, view.turnNumber, r);
+        let cursor: SearchState = state;
+        let taken = 0;
+        while (!cursor.terminal && taken < ROLLOUT_DEFAULTS.stepCap) {
+          const variants = actions(cursor, preferred, allowAcquire, params);
+          const pick = variants[Math.floor(rng() * variants.length)];
+          const next = step(cursor, pick, preferred, params);
+          if (!next) break;
+          cursor = next;
+          taken += 1;
+        }
+        total += cursor.gained;
+      }
+      const meanGained = total / ROLLOUT_DEFAULTS.rollouts;
+      const quality = ROLLOUT_DEFAULTS.blend * meanGained + (1 - ROLLOUT_DEFAULTS.blend) * formula;
+      if (!rolloutBest || quality > rolloutBest.quality) rolloutBest = { ...state, preferred, quality };
+    }
+    if (rolloutBest) prospective = rolloutBest;
   }
   // 有可信的实际认领路线时优先执行；未找到时采用多回合目标推进的最佳前缀。
   const plan = solved ?? prospective;
