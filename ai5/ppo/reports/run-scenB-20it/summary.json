@@ -1,0 +1,93 @@
+{
+  "run": "ai5/ppo/reports/run-scenB-20it",
+  "iterationsDone": 20,
+  "interrupted": false,
+  "totals": {
+    "games": 1270,
+    "anomaly_games": 0,
+    "decisions": 40964,
+    "pruned_decisions": 0,
+    "updates": 20
+  },
+  "gitSha": "ada4e59f2fc12710b349d8acfbf62af2ca2bc92b",
+  "runSeed": 20261023,
+  "device": "mps",
+  "params": 588418,
+  "config": {
+    "train": {
+      "iterations": 20,
+      "rolloutSteps": 2048,
+      "runSeed": 20261023,
+      "device": "auto",
+      "checkpointEvery": 5,
+      "logEvery": 1,
+      "collectWallMaxS": 1800,
+      "timeBudgetMin": 0
+    },
+    "env": {
+      "workers": 4,
+      "maxMoves": 1200,
+      "deadlineMs": 60000,
+      "maxCandidates": 512,
+      "batchWaitMs": 4.0
+    },
+    "model": {
+      "obsDim": 1419,
+      "actDim": 84,
+      "hidden": [
+        256,
+        256,
+        256
+      ],
+      "activation": "relu"
+    },
+    "ppo": {
+      "lr": 0.0003,
+      "lrSchedule": "constant",
+      "clip": 0.2,
+      "vfCoef": 0.5,
+      "entCoef": 0.01,
+      "epochs": 4,
+      "minibatch": 512,
+      "gamma": 0.999,
+      "gaeLambda": 0.95,
+      "maxGradNorm": 0.5,
+      "targetKl": 0.03,
+      "advantageNorm": true,
+      "valueClip": true
+    },
+    "reward": {
+      "mode": "rank_win",
+      "winWeight": 0.5,
+      "rankWeight": 0.5,
+      "scoreMarginWeight": 0.0,
+      "aux": {
+        "golemProgress": 0.0,
+        "turnEfficiency": 0.0
+      }
+    },
+    "seats": {
+      "layout": [
+        "learner",
+        "node:champion",
+        "node:champion",
+        "node:champion",
+        "node:champion"
+      ],
+      "snapshots": {
+        "every": 0,
+        "poolSize": 2
+      }
+    },
+    "eval": {
+      "every": 0,
+      "games": 40
+    }
+  },
+  "modelVersions": {
+    "stateEncoding": "ai5-state-v1",
+    "actionEncoding": "ai5-action-v1",
+    "interface": "ai5-inference-v1",
+    "modelHash": "4ab2e365d31788b2d978fd3b9a5fe7402a8d9836e3b699e7f6eae8f86cd960b9"
+  }
+}
