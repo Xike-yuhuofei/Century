@@ -15,7 +15,7 @@ let mShownCurrent = -1;
 let mOwner = 0, mWorker:Worker|null = null, mTimer:ReturnType<typeof setTimeout>|null = null;
 let mWorkerURL:string|null=null;
 let mBusy = false, mToast = '', mNotice = '', mNames = ['玩家 1','玩家 2'];
-let mHumans = 1, mBots = 1, mOrder:Record<string,string[]> = {};
+let mHumans = 1, mBots = 4, mOrder:Record<string,string[]> = {};
 let mToastTimer:ReturnType<typeof setTimeout>|null = null;
 try { mSaved = parseMobileSave(localStorage.getItem(MOBILE_KEY)); const order=JSON.parse(localStorage.getItem('century-mobile-order-v1')||'{}');mOrder=Object.fromEntries(Object.entries(order||{}).filter(([,ids])=>Array.isArray(ids)&&ids.every(id=>typeof id==='string'&&Object.hasOwn(MERCHANT_BY_ID,id)))) as Record<string,string[]>; } catch(e) { mNotice = e instanceof Error ? e.message : '无法读取存档'; }
 const mEsc = (s:string) => s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));

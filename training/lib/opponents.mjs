@@ -7,6 +7,8 @@
  * - 冠军的风格变体（tempo/contest/engine 加权扰动，仍走同一决策核心）；
  * - 历史冠军档案（training/champions/candidates/ 下的晋级归档），
  *   实现跨版本对抗，防止"只在最新版本之间内卷"。
+ *   P1 复审修复：历史冠军享保底席位（此前按填充顺序排在末尾，
+ *   默认池容量 5 时永远无法入池）。
  */
 
 import { readdirSync, readFileSync } from 'node:fs';
@@ -58,6 +60,9 @@ export function historicalChampions(archiveDir, { excludeId = null, limit = 3 } 
 }
 
 /** 构建对手池：冠军 + 中立基线 + 风格变体 + 历史冠军（按 id 去重、限量）。
+ * 席位分配（P1 复审修复）：归档中存在历史冠军时，为其保底 1 席——
+ * 此前历史冠军排在填充顺序末尾，默认池容量 5 时永远轮不到，"跨版本防过拟合"
+ * 名存实亡。剩余容量按 基线 → 风格变体 → 其余历史版本 顺序填充。
  * @param {object} options
  * @param {object} options.champion 冠军参数
  * @param {object} [options.baseline] 中立基线参数
@@ -71,8 +76,12 @@ export function buildOpponentPool({ champion, baseline = null, archiveDir = null
     if (pool.some(x => x.id === p.id)) return;
     pool.push(p);
   };
+  const history = archiveDir ? historicalChampions(archiveDir, { excludeId: champion.id, limit: Math.max(maxOpponents, 3) }) : [];
+  // 历史冠军保底席位：只要归档里有历史版本且池容量 ≥ 2，就至少保留 1 席。
+  if (history.length > 0 && maxOpponents >= 2) push(history[history.length - 1]);
   if (baseline) push(validateAIParameters(baseline));
   for (const variant of styleVariants(champion)) push(variant);
-  if (archiveDir) for (const old of historicalChampions(archiveDir, { excludeId: champion.id })) push(old);
+  // 剩余容量继续补充更早的历史版本，让不同代际冠军都有机会进入对抗。
+  for (const old of history.slice(0, -1)) push(old);
   return pool;
 }

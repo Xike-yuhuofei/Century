@@ -29,8 +29,8 @@ on:
         description: '每候选快速筛选种子数（×2 局，1-200）'
         default: '20'
       confirm-seeds:
-        description: '确认挑战种子数（×2 局，1-500）'
-        default: '60'
+        description: '确认挑战种子数（×2 局，1-500；默认 80 = 决定性下限 60 + 平局/异常余量）'
+        default: '80'
       challenge-seeds:
         description: 'challenge 模式种子数（×2 局，1-500）'
         default: '100'
@@ -90,7 +90,7 @@ jobs:
           GENERATIONS: ${{ inputs.generations || '3' }}
           POPULATION: ${{ inputs.population || '8' }}
           GAMES_PER_CANDIDATE: ${{ inputs['games-per-candidate'] || '20' }}
-          CONFIRM_SEEDS: ${{ inputs['confirm-seeds'] || '60' }}
+          CONFIRM_SEEDS: ${{ inputs['confirm-seeds'] || '80' }}
           TIME_BUDGET_MIN: ${{ inputs['time-budget-min'] || '40' }}
           POOL_SIZE: ${{ inputs['pool-size'] || '5' }}
         run: |
@@ -129,7 +129,7 @@ jobs:
           GENERATIONS: ${{ inputs.generations || '3' }}
           POPULATION: ${{ inputs.population || '8' }}
           GAMES_PER_CANDIDATE: ${{ inputs['games-per-candidate'] || '20' }}
-          CONFIRM_SEEDS: ${{ inputs['confirm-seeds'] || '60' }}
+          CONFIRM_SEEDS: ${{ inputs['confirm-seeds'] || '80' }}
           TIME_BUDGET_MIN: ${{ inputs['time-budget-min'] || '40' }}
           POOL_SIZE: ${{ inputs['pool-size'] || '5' }}
         run: |

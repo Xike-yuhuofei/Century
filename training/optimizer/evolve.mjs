@@ -6,6 +6,8 @@
  * - 精细评估：胜过冠军的最佳候选交由调用方用独立验证种子做确认挑战。
  * - 全程记录：随机种子、参数、评估结果经 onGeneration / 实验日志回调导出。
  * - 断点续训：状态对象可序列化；持久化与恢复由 CLI 层负责。
+ * - 冠军切换防护（P0）：恢复断点时校验冠军身份指纹（id+结构+参数），
+ *   冠军已换人则旧精英池/待定候选强制失效，从新冠军重新出发。
  */
 
 import { mulberry32, gaussian, clamp } from '../lib/rng.mjs';
@@ -13,6 +15,14 @@ import { runChallenge } from '../tournament/challenge.mjs';
 import { PARAMETER_BOUNDS, validateAIParameters } from '../../web-v1/dist/js/ai/parameters.js';
 
 const TUNABLE_KEYS = Object.keys(PARAMETER_BOUNDS);
+
+/** 冠军身份指纹：id + 结构 + 全部可调参数值。
+ * 断点续训时用于检测冠军是否已切换——旧冠军下的精英池对新冠军不可信。 */
+export function championFingerprint(champion) {
+  const structure = champion.structure ?? 'beam-lineage';
+  const values = TUNABLE_KEYS.map(key => champion[key]);
+  return JSON.stringify([champion.id, structure, values]);
+}
 
 /** 由父代参数生成一个候选（对数扰动 + 边界约束）。
  * 父代的 structure 字段（结构变体）原样继承——参数进化在选定结构内进行。 */
@@ -100,8 +110,33 @@ export function evolve({
     elites: [],
     history: [],
     pendingCandidate: null,
+    championId: champion.id,
+    championFingerprint: championFingerprint(champion),
   };
   state.interrupted = false;
+
+  // P0 修复（冠军切换后的状态继承）：断点状态是围绕"当时的冠军"搜索的产物。
+  // 冠军晋级换人后（id、结构或参数指纹任一变化），旧精英/待定候选继续作为
+  // 父代会让进化沿旧结构、旧参数区域搜索，新冠军形同虚设。此处强制失效：
+  // 精英池与待定候选清空、步长复位；种子游标保留（训练种子不重复消费），
+  // 历史保留（审计可追溯），并记录失效事件。
+  const currentFingerprint = championFingerprint(champion);
+  if (initialState && initialState.championFingerprint !== currentFingerprint) {
+    const discarded = {
+      stateChampionId: initialState.championId ?? null,
+      eliteCount: Array.isArray(initialState.elites) ? initialState.elites.length : 0,
+      hadPendingCandidate: initialState.pendingCandidate != null,
+    };
+    state.elites = [];
+    state.pendingCandidate = null;
+    state.sigma = opts.sigma;
+    state.championId = champion.id;
+    state.championFingerprint = currentFingerprint;
+    state.eliteReset = { ...discarded, newChampionId: champion.id, atGeneration: state.generation };
+  } else if (initialState) {
+    state.championId = champion.id;
+    state.championFingerprint = currentFingerprint;
+  }
 
   outer:
   for (let gen = 0; gen < opts.generations; gen++) {

@@ -17,6 +17,7 @@ let showLog = false;
 let inspectedAI: number | null = null;
 let toast = '';
 let botPaused = false;
+let resultHidden = false;
 const humanNames:string[] = [];
 let botTimer: ReturnType<typeof setTimeout> | null = null;
 type PlayerView = { order:string[]; folded:boolean };
@@ -131,12 +132,12 @@ function merchantCard(id: string, marketIndex?: number, bonus?: Stock, view: 'ha
   </${tag}>`;
 }
 function renderSetup(): string {
-  const botOptions=Array.from({length:5},(_,n)=>`<option value="${n}" ${n===1?'selected':''}>${n} 名</option>`).join('');
+  const botOptions=Array.from({length:5},(_,n)=>`<option value="${n}" ${n===4?'selected':''}>${n} 名</option>`).join('');
   return `<main class="layout landing focus-landing"><header class="topbar focus-setup-top"><strong>晶石回廊</strong>${pageVersionLink()}</header>
-  <section class="focus-setup-panel"><h1>开始对局</h1><p>两名真人固定左右两侧 · 最多 4 名 AI</p>
-    <div class="setup-players"><div><label for="humanCount">真人</label><select id="humanCount">${Array.from({length:5},(_,n)=>`<option value="${n+1}" ${n===1?'selected':''}>${n+1} 名</option>`).join('')}</select></div><div><label for="botCount">AI</label><select id="botCount">${botOptions}</select></div></div>
-    <label for="nameInputs">玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1" /><input maxlength="20" aria-label="玩家 2" value="玩家 2" /></div>
-    <p class="setup-validation" id="setupValidation">共 3 人 · 标准模式</p>
+  <section class="focus-setup-panel"><h1>开始对局</h1><p>默认 1 名真人挑战 4 名 AI · 最多 4 名 AI</p>
+    <div class="setup-players"><div><label for="humanCount">真人</label><select id="humanCount">${Array.from({length:5},(_,n)=>`<option value="${n+1}" ${n===0?'selected':''}>${n+1} 名</option>`).join('')}</select></div><div><label for="botCount">AI</label><select id="botCount">${botOptions}</select></div></div>
+    <label for="nameInputs">玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1" /></div>
+    <p class="setup-validation" id="setupValidation">共 5 人 · 标准模式</p>
     <button class="primary-btn big" data-action="start">开始游戏 <span>→</span></button>
     <small class="focus-notice">本地离线对局 · 6 人局为非官方扩展</small>
   </section></main>`;
@@ -384,8 +385,9 @@ function renderBoard(g: Game): string {
   ${finished ? renderResult(g) : ''}</main>`;
 }
 function renderResult(g: Game): string {
+  if (resultHidden) return '';
   const result = ranking(g);
-  return `<div class="overlay cover"><section class="result-card"><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><b>${i + 1}. ${esc(p.name)}</b><span>${p.claimed.length} 张魔像</span><strong>${score(p)} 分</strong></div>`).join('')}</div>${replayControls(g)}<button class="primary-btn big" data-action="reset">开始新的一局 ↗</button></section></div>`;
+  return `<div class="overlay cover"><section class="result-card"><button class="close-modal" data-action="close-result" aria-label="关闭结算面板">✕</button><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><b>${i + 1}. ${esc(p.name)}</b><span>${p.claimed.length} 张魔像</span><strong>${score(p)} 分</strong></div>`).join('')}</div>${replayControls(g)}<div class="result-actions"><button class="primary-btn big" data-action="reset">开始新的一局 ↗</button><button class="secondary-btn" data-action="close-result">查看最终棋盘</button></div></section></div>`;
 }
 function modalBody(): string {
   if (!game || !modal) return '';
@@ -423,6 +425,7 @@ function render() {
   root.querySelectorAll<HTMLElement>('[data-scroll-zone]').forEach(el=>scrolls.set(el.dataset.scrollZone!,{top:el.scrollTop,left:el.scrollLeft}));
   root.innerHTML = `${game ? renderBoard(game) : renderSetup()}
     ${modal && game && !handoff && game.phase !== 'finished' ? `<div class="overlay" data-overlay="modal"><section class="dialog">${game.phase !== 'overflow' ? '<button class="close-modal" data-action="cancel">✕</button>' : ''}${modalBody()}</section></div>` : ''}
+    ${game && game.phase === 'finished' && resultHidden ? '<button class="result-fab" data-action="show-result">查看结算</button>' : ''}
     ${showHelp ? renderRules() : ''}${toast ? `<div class="toast" role="alert">${esc(toast)}</div>` : ''}`;
   root.querySelectorAll<HTMLElement>('[data-scroll-zone]').forEach(el=>{ const at=scrolls.get(el.dataset.scrollZone!); if(at){el.scrollTop=at.top;el.scrollLeft=at.left;} });
   scheduleBot();
@@ -449,7 +452,7 @@ function start() {
     const names = [...inputs.map(x=>x.value),...Array.from({length:bots},(_,i)=>`AI 工匠 ${i+1}`)];
     if(humans!==inputs.length) throw new Error('人类玩家人数无效');
     game = createGame(names, undefined, Array.from({length:bots},(_,i)=>humans+i));
-    modal = null; handoff = false; botPaused = false; showHelp = false; showLog=false; inspectedAI=null; mobileTab='golems'; mobileHandExpanded=false; mobilePlayedOpen=false; toast = ''; viewState.players={}; saveView(); save(); render();
+    modal = null; handoff = false; botPaused = false; showHelp = false; showLog=false; inspectedAI=null; resultHidden = false; mobileTab='golems'; mobileHandExpanded=false; mobilePlayedOpen=false; toast = ''; viewState.players={}; saveView(); save(); render();
   }
   catch(e) { notify(e instanceof Error ? e.message : '无法开始游戏'); }
 }
@@ -468,10 +471,12 @@ function control(target: HTMLElement) {
   if (type === 'toggle-log') { showLog=!showLog; render(); return; }
   if (type === 'reset') {
     if (game?.phase !== 'finished' && !confirm('确定结束当前对局并重新开始吗？当前存档将被覆盖。')) return;
-    game = null; handoff = false; showHelp = false; showLog=false; inspectedAI=null; modal = null; botPaused = false; toast = ''; viewState.players={}; mobileTab='golems'; mobileHandExpanded=false; mobilePlayedOpen=false; saveView(); save(); render(); return;
+    game = null; handoff = false; showHelp = false; showLog=false; inspectedAI=null; modal = null; botPaused = false; resultHidden = false; toast = ''; viewState.players={}; mobileTab='golems'; mobileHandExpanded=false; mobilePlayedOpen=false; saveView(); save(); render(); return;
   }
   if (type === 'help') { showHelp = true; render(); return; }
   if (type === 'close-help') { showHelp = false; render(); return; }
+  if (type === 'close-result') { resultHidden = true; render(); return; }
+  if (type === 'show-result') { resultHidden = false; render(); return; }
   if (type === 'ready') { handoff = false; render(); return; }
   if (type === 'ai-pause') { botPaused = !botPaused; render(); return; }
   if (type === 'card-size') { viewState.compact=!viewState.compact; saveView(); render(); return; }

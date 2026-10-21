@@ -11,6 +11,8 @@ with sync_playwright() as pw:
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.goto(HTML)
+    # 默认开局为 1 真人 + 4 AI：多真人用例先显式展开第二个姓名输入框。
+    page.select_option('#humanCount', '2')
     page.locator('#nameInputs input').nth(1).fill('右侧真人')
     page.select_option('#humanCount', '1')
     page.select_option('#humanCount', '2')

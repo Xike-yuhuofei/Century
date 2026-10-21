@@ -14,7 +14,7 @@
  */
 
 import { simulateGame } from '../simulator/simulate.mjs';
-import { pairedPromotionDecision, wilsonCI, meanCI } from '../evaluator/stats.mjs';
+import { pairedPromotionDecision, firstPlaceStats, wilsonCI, meanCI } from '../evaluator/stats.mjs';
 
 const SEAT_COUNT = 5;
 
@@ -112,8 +112,11 @@ export function runChallenge({ champion, candidate, seeds, seedBase = 1, opponen
     anomalies,
     anomalyRate: games.length ? Number((anomalies / games.length).toFixed(4)) : 0,
     candidateWins: wins,
+    // candidateWinRate 即"合并第一名率"（候选阵营 rank-1 局占比），语义细节见 firstPlace。
     candidateWinRate: finished.length ? Number((wins / finished.length).toFixed(4)) : 0,
     seedBase,
+    // 真实第一名率（P1 复审：与配对得分优势率严格区分，随证据披露）。
+    firstPlace: firstPlaceStats(games),
     paired: {
       seeds,
       finished: finishedPairs.length,
@@ -139,6 +142,8 @@ export function runChallenge({ champion, candidate, seeds, seedBase = 1, opponen
 
 /** 完整挑战：含晋级判定（按种子配对统计）。
  * minSeeds：决定性配对种子下限（默认 60 = 120 局）。
+ * 晋级统计量为「配对得分优势率」（决定性种子中双向平均分差 > 0 的比例），
+ * 不是第一名概率；真实第一名率随 summary.firstPlace 一并披露。
  * 对手池缺省 = 仅冠军，保证晋级语义是"胜过当前冠军"。 */
 export function challengeWithDecision({ champion, candidate, seeds, seedBase = 1, minSeeds = 60, maxAnomalyRate = 0.02, opponents = null, ...rest }) {
   const { summary, games } = runChallenge({ champion, candidate, seeds, seedBase, opponents, ...rest });

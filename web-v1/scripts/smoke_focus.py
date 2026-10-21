@@ -11,6 +11,8 @@ with sync_playwright() as pw:
         page=browser.new_page(viewport={'width':3440,'height':1440}, device_scale_factor=1)
         page.on('pageerror',lambda e:errors.append(str(e)))
         page.set_content(html)
+        # 默认开局为 1 真人 + 4 AI：本用例验证双真人对决布局，显式选 2 真人。
+        page.select_option('#humanCount','2')
         page.select_option('#botCount',str(bots))
         page.click('[data-action="start"]')
         assert page.locator('.focus-board .duel-player').count()==2
@@ -50,6 +52,7 @@ with sync_playwright() as pw:
     phone=browser.new_page(viewport={'width':390,'height':844},device_scale_factor=1)
     phone.on('pageerror',lambda e:errors.append(str(e)))
     phone.set_content(html)
+    phone.select_option('#humanCount','2')  # 沿用 2 真人 + 4 AI 的 6 人扩展布局
     phone.select_option('#botCount','4')
     phone.click('[data-action="start"]')
     assert phone.evaluate('document.documentElement.scrollWidth<=innerWidth')
