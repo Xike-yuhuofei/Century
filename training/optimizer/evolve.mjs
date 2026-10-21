@@ -14,7 +14,8 @@ import { PARAMETER_BOUNDS, validateAIParameters } from '../../web-v1/dist/js/ai/
 
 const TUNABLE_KEYS = Object.keys(PARAMETER_BOUNDS);
 
-/** 由父代参数生成一个候选（对数扰动 + 边界约束）。 */
+/** 由父代参数生成一个候选（对数扰动 + 边界约束）。
+ * 父代的 structure 字段（结构变体）原样继承——参数进化在选定结构内进行。 */
 export function mutateCandidate(parent, { id, sigma, rng }) {
   const candidate = { id };
   for (const key of TUNABLE_KEYS) {
@@ -22,6 +23,7 @@ export function mutateCandidate(parent, { id, sigma, rng }) {
     const sigmaKey = key === 'endgameWeight' ? sigma * 0.6 : sigma;
     candidate[key] = clamp(parent[key] * Math.exp(gaussian(rng) * sigmaKey), low, high);
   }
+  if (parent.structure) candidate.structure = parent.structure;
   return validateAIParameters(candidate);
 }
 

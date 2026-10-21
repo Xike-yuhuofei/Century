@@ -13,3 +13,7 @@ export {
 export { buildObservation, type AIObservation, type ObservationPlayer } from './ai/observation.js';
 export { PROFILES, profileFor, NEUTRAL_PROFILE, type Profile } from './ai/profiles.js';
 export { choosePlan } from './ai/planner.js';
+export {
+  AI_STRUCTURES, DEFAULT_STRUCTURE, normalizeStructure,
+  adaptiveWidth, ROLLOUT_DEFAULTS, type AIStructure,
+} from './ai/structures.js';

@@ -20,9 +20,11 @@ const SEAT_COUNT = 5;
 
 function versionsFor(candidateSeats, candidate, opponents, seedIndex) {
   return Array.from({ length: SEAT_COUNT }, (_, seat) => {
-    if (candidateSeats.includes(seat)) return { id: candidate.id, parameters: candidate };
+    if (candidateSeats.includes(seat)) {
+      return { id: candidate.id, parameters: candidate, structure: candidate.structure };
+    }
     const opponent = opponents[(seedIndex * SEAT_COUNT + seat) % opponents.length];
-    return { id: opponent.id, parameters: opponent };
+    return { id: opponent.id, parameters: opponent, structure: opponent.structure };
   });
 }
 

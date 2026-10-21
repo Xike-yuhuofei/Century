@@ -36,7 +36,10 @@ requireBuiltEngine();
 
 const loadVersion = path => {
   const data = readJSON(resolve(process.cwd(), path));
-  return data.parameters ? data : { id: data.id, parameters: data };
+  // 版本文件两种形态：{id, parameters, structure?} 包装式，或 {id, structure?, ...params} 平铺式。
+  return data.parameters
+    ? { id: data.id, parameters: data.parameters, structure: data.structure }
+    : { id: data.id, parameters: data, structure: data.structure };
 };
 
 const champion = loadVersion(args.champion);
