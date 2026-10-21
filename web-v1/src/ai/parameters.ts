@@ -50,7 +50,7 @@ export const BASELINE_PARAMETERS: AIParameters = {
 
 // === CHAMPION-PARAMETERS-BEGIN（由 training/scripts/apply-champion.mjs 生成，勿手改） ===
 export const CHAMPION_PARAMETERS: AIParameters = {
-  id: "v4.0-baseline",
+  id: "struct-beam-rollout",
   engineWeight: 1,
   tempoWeight: 1,
   contestWeight: 1,
@@ -59,6 +59,7 @@ export const CHAMPION_PARAMETERS: AIParameters = {
   capacityWeight: 1,
   restWeight: 1,
   endgameWeight: 1,
+  structure: "beam-rollout",
 };
 // === CHAMPION-PARAMETERS-END ===
 

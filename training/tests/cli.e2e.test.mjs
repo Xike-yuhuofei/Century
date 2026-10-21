@@ -33,7 +33,9 @@ test('evolve-cli 端到端：进化 → 状态/账本/报告完整落盘', { tim
   assert.ok(existsSync(join(outDir, 'experiments.jsonl')), 'experiments.jsonl 必须落盘');
   const report = JSON.parse(readFileSync(join(outDir, 'report.json'), 'utf8'));
   assert.equal(report.generations, 1);
-  assert.equal(report.champion, 'v4.0-baseline');
+  // 冠军基准动态读取：晋级后 evolve 以新冠军为基准，测试不得硬编码冠军 id。
+  const championRecord = JSON.parse(readFileSync(join(TRAINING_ROOT, 'champions', 'champion.json'), 'utf8'));
+  assert.equal(report.champion, championRecord.parameters?.id ?? championRecord.id);
   assert.equal(report.opponents.length, 1, 'pool-size 1 时对手池退化为仅冠军');
   assert.ok(Array.isArray(report.history) && report.history.length === 1);
   // 断点续训状态完整性：恢复所需字段齐全。

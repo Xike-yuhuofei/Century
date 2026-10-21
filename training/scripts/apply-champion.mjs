@@ -41,6 +41,11 @@ const lines = ordered.map(key => {
   if (value === undefined) throw new Error(`冠军参数缺少 ${key}`);
   return `  ${key}: ${typeof value === 'string' ? JSON.stringify(value) : round(value)},`;
 });
+// 结构变体是冠军版本的一部分：冠军参数携带 structure 时必须透传，
+// 否则网页端会静默回落 beam-lineage，破坏"训练与实战同参"约束。
+if (parameters.structure !== undefined) {
+  lines.push(`  structure: ${JSON.stringify(parameters.structure)},`);
+}
 const block = [
   `${BEGIN}（由 training/scripts/apply-champion.mjs 生成，勿手改） ===`,
   'export const CHAMPION_PARAMETERS: AIParameters = {',

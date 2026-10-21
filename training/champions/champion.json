@@ -1,9 +1,10 @@
 {
-  "id": "v4.0-baseline",
-  "name": "AI 4.0 基线冠军",
-  "description": "束搜索决策核心 + 休息路线血统救援 + V4.0 审计整改（mean/peak 双维竞争压力、futureDeckSupport 未来牌库支持度、训练/正式游戏人格席位对齐）；8 个可调参数均为中性 1.0。",
+  "id": "struct-beam-rollout",
+  "name": "AI 4.0 冠军 struct-beam-rollout",
+  "description": "由自动进化训练晋级（基于 v4.0-baseline）；确认挑战证据见 provenance.promotionEvidence。",
   "parameters": {
-    "id": "v4.0-baseline",
+    "id": "struct-beam-rollout",
+    "structure": "beam-rollout",
     "engineWeight": 1,
     "tempoWeight": 1,
     "contestWeight": 1,
@@ -14,13 +15,38 @@
     "endgameWeight": 1
   },
   "provenance": {
-    "basedOn": "web-v1/src/ai.ts V3.0 第一阶段",
-    "baselineCommit": "8e3e2c3",
-    "promotedAt": "2026-10-20",
-    "promotionEvidence": "初始冠军，无挑战记录；后续冠军必须附带 challenge summary 的 Wilson 95% 置信区间证据"
-  },
-  "baselineMetrics": {
-    "note": "5 席全 AI 基线对局（本地基准，20 局，seed 1-20）：单局约 2.1 秒，平均约 171 步",
-    "seatWinRates": [0.15, 0.35, 0.1, 0.25, 0.15]
+    "basedOn": "v4.0-baseline",
+    "promotedAt": "2026-10-21",
+    "promotionEvidence": {
+      "seeds": 300,
+      "games": 600,
+      "seedBase": 924142000,
+      "winRate": 0.5583,
+      "paired": {
+        "seeds": 300,
+        "finished": 300,
+        "won": 189,
+        "lost": 109,
+        "tied": 2
+      },
+      "ci": {
+        "point": 0.6342281879194631,
+        "lower": 0.5781571946550674,
+        "upper": 0.6868826057506257
+      },
+      "decision": {
+        "promote": true,
+        "verdict": "promote",
+        "reason": "配对先名率 0.634（决定性种子 298，平局率 0.0067），95% CI 下界 0.578 > 0.5",
+        "ci": {
+          "point": 0.6342281879194631,
+          "lower": 0.5781571946550674,
+          "upper": 0.6868826057506257
+        },
+        "tieRate": 0.0067,
+        "anomalyRate": 0
+      }
+    },
+    "candidateArchive": "candidates/struct-beam-rollout.json"
   }
 }
