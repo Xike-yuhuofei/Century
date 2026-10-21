@@ -64,7 +64,17 @@ class CodexExecLLM:
                 if item.get("type") == "agent_message" and item.get("text"):
                     texts.append(item["text"])
             elif event.get("type") == "turn.completed":
-                usage = event.get("usage")
+                # codex exec 的 usage 键（input_tokens/output_tokens…）映射为
+                # OpenEvolve process_parallel 期望的 prompt/completion/total 键，
+                # 使每迭代「模型调用及资源消耗」真实进入日志与 checkpoint。
+                u = event.get("usage") or {}
+                usage = {
+                    "prompt_tokens": u.get("input_tokens", 0),
+                    "completion_tokens": u.get("output_tokens", 0),
+                    "total_tokens": u.get("input_tokens", 0) + u.get("output_tokens", 0),
+                    "cached_input_tokens": u.get("cached_input_tokens", 0),
+                    "reasoning_output_tokens": u.get("reasoning_output_tokens", 0),
+                }
             elif event.get("type") == "turn.failed":
                 error = (event.get("error") or {}).get("message", "turn failed")
                 raise CodexExecError(f"codex exec turn failed: {error[:200]}")
