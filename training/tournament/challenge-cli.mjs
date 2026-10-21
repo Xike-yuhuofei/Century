@@ -49,6 +49,13 @@ if (!Number.isSafeInteger(seeds) || seeds < 1) throw Error('--seeds 必须为正
 const minSeeds = args['min-seeds'] !== undefined
   ? Number(args['min-seeds'])
   : Math.ceil(Number(args['min-games'] ?? 120) / 2);
+// --challenge-index：本次挑战在系统中的累计序号（来自验证账本 challengeCount + 1）。
+// 传入后按几何 alpha 消耗收紧检验阈值（多重检验防线）；不传维持 95% 单次检验，
+// 但其结论缺少多重检验核验要素，不得作为晋级证据（promote-champion 会拒绝）。
+const challengeIndex = args['challenge-index'] !== undefined ? Number(args['challenge-index']) : null;
+if (challengeIndex !== null && (!Number.isSafeInteger(challengeIndex) || challengeIndex < 1)) {
+  throw Error('--challenge-index 必须为 ≥ 1 的整数');
+}
 const opponents = args.opponents
   ? args.opponents.split(',').filter(Boolean).map(path => {
       const version = loadVersion(path);
@@ -62,6 +69,7 @@ const { summary, games } = challengeWithDecision({
   seeds, seedBase: Number(args['seed-base'] ?? 1),
   minSeeds,
   opponents,
+  challengeIndex,
   maxMoves: args['max-moves'] ? Number(args['max-moves']) : undefined,
   deadlineMs: args['deadline-ms'] ? Number(args['deadline-ms']) : undefined,
 });

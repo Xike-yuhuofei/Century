@@ -41,27 +41,39 @@ test('evolve-cli 端到端：进化 → 状态/账本/报告完整落盘', { tim
   // 断点续训状态完整性：恢复所需字段齐全。
   const state = JSON.parse(readFileSync(join(outDir, 'state.json'), 'utf8'));
   assert.equal(state.generation, 1);
-  // P0 回归：--seed-base 必须真正驱动训练种子游标
-  // （population 1 × 1 代：rng 消费 +1、候选种子块 +1 → 777000 + 2）。
-  assert.equal(state.seedCursor, 777002, `CLI 的 --seed-base 未透传到进化器：游标 ${state.seedCursor}`);
+  // P0 回归：--seed-base 必须真正驱动训练种子游标（块分配语义：
+  // 777000 块对齐后消费一个 1000 种子块 → 778000；rng 游标独立 +1）。
+  assert.equal(state.seedCursor, 778000, `CLI 的 --seed-base 未透传到进化器：游标 ${state.seedCursor}`);
+  assert.equal(state.rngCursor, 777001, 'rng 游标必须独立逐代前进');
   assert.ok(Number.isFinite(state.seedCursor));
   assert.ok('interrupted' in state, '状态必须记录中断标记');
   assert.equal(state.championId, report.champion, '状态必须记录冠军身份（切换检测依赖）');
   assert.ok(typeof state.championFingerprint === 'string', '状态必须记录冠军指纹');
+  // P0 整改：报告必须携带种子分配审计与证据溯源块。
+  assert.equal(report.seedAllocation.block, 1000);
+  assert.equal(report.seedAllocation.seedCursorAfter, 778000);
+  assert.ok(/^[0-9a-f]{64}$/.test(report.provenance.engineBundleSha256), '报告必须携带运行时产物指纹');
+  assert.ok('codeCommit' in report.provenance, '报告必须记录代码版本（无 git 环境为 null）');
 
   // P1 回归：账本必须无条件落盘（即使本次未触发确认挑战也续接旧账本），
   // 否则工作流归集不到账本，下次运行会重复消费验证种子块。
   assert.ok(existsSync(join(outDir, 'validation-ledger.json')), 'validation-ledger.json 必须无条件落盘');
   const ledger = JSON.parse(readFileSync(join(outDir, 'validation-ledger.json'), 'utf8'));
   assert.ok(Array.isArray(ledger.history), '账本必须含 history 字段');
+  assert.ok(Number.isInteger(ledger.challengeCount), '账本必须含 challengeCount（多重检验挑战序号来源）');
 
-  // 若候选通过快速筛选并完成确认挑战，验证种子账本必须落盘且不与默认池重叠。
+  // 若候选通过快速筛选并完成确认挑战，验证种子账本必须落盘且不与默认池重叠；
+  // 晋级证据必须携带多重检验要素（challengeIndex / alphaBudget / 引擎指纹）。
   if (existsSync(join(outDir, 'candidate.json'))) {
     const candidate = JSON.parse(readFileSync(join(outDir, 'candidate.json'), 'utf8'));
     assert.ok(candidate.confirmation.decision.promote === true);
     assert.ok(candidate.confirmation.seedBase >= 900_000_000, '验证种子必须来自验证种子池');
-    const ledger = JSON.parse(readFileSync(join(outDir, 'validation-ledger.json'), 'utf8'));
-    assert.equal(ledger.lastBase, candidate.confirmation.seedBase);
+    assert.ok(Number.isSafeInteger(candidate.confirmation.challengeIndex) && candidate.confirmation.challengeIndex >= 1, '晋级证据必须携带 challengeIndex');
+    assert.equal(candidate.confirmation.alphaBudget, 0.05);
+    assert.ok(/^[0-9a-f]{64}$/.test(candidate.engineBundleSha256), '晋级证据必须携带引擎指纹');
+    const promotedLedger = JSON.parse(readFileSync(join(outDir, 'validation-ledger.json'), 'utf8'));
+    assert.equal(promotedLedger.lastBase, candidate.confirmation.seedBase);
+    assert.equal(promotedLedger.challengeCount, candidate.confirmation.challengeIndex, '账本 challengeCount 必须与证据序号一致');
   }
 });
 

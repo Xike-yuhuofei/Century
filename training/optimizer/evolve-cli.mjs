@@ -11,7 +11,11 @@
  * - 时间预算真实生效：进化循环按墙钟截止安全退出，不再"只影响是否验证"；
  *   收尾前预留确认挑战时间，验证不足预算时宁可放弃候选也不降低证据标准。
  * - 验证种子账本：确认挑战种子块不可重复使用（lib/seeds.mjs），防止长期过拟合；
- *   账本随训练状态持久化，下次 --seed-ledger 续接。
+ *   账本随训练状态持久化，下次 --seed-ledger 续接；challengeCount 记录累计挑战次数，
+ *   作为多重检验几何 alpha 消耗的挑战序号（长期家族误晋级率 ≤ 5% 预算）。
+ * - 训练种子块分配：--seed-base 为训练池 [0, 900M) 内的绝对种子起点（块对齐），
+ *   每候选固定预留 1000 种子块，绝不越过训练/验证池边界（旧版"游标×1000"语义
+ *   会把日期基数乘出 2^31 以上的回绕种子，已废弃；旧断点恢复时自动迁移）。
  * - 多样化对手池：快速筛选默认引入风格变体/历史冠军（--pool-size 控制），
  *   晋级确认挑战保持"冠军独占对手"。
  * - 断点续训：--resume 读取上次 state.json，种子游标与精英池原样续接。
@@ -20,12 +24,14 @@
  */
 import { resolve } from 'node:path';
 import { existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { evolve } from './evolve.mjs';
 import { challengeWithDecision } from '../tournament/challenge.mjs';
-import { requireBuiltEngine, REPO_ROOT } from '../lib/paths.mjs';
+import { requireBuiltEngine, REPO_ROOT, engineBundleSha256 } from '../lib/paths.mjs';
 import { writeJSON, appendJSONL, readJSON, ensureDir } from '../lib/io.mjs';
-import { nextValidationBase, consumeLedger, assertBlockFree } from '../lib/seeds.mjs';
+import { nextValidationBase, consumeLedger, assertBlockFree, validationChallengeCount, TRAINING_POOL_MAX, TRAINING_SEED_BLOCK, VALIDATION_POOL_MAX } from '../lib/seeds.mjs';
 import { buildOpponentPool } from '../lib/opponents.mjs';
+import { PROMOTION_ALPHA_BUDGET } from '../evaluator/stats.mjs';
 import { BASELINE_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
 
 function parseArgs(argv) {
@@ -43,6 +49,15 @@ function parseArgs(argv) {
 
 const args = parseArgs(process.argv.slice(2));
 requireBuiltEngine();
+
+/** 当前代码版本（git commit）；非 git 环境（如纯目录分发）返回 null，仅影响溯源展示。 */
+function gitHeadCommit() {
+  try {
+    return execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO_ROOT, stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return null;
+  }
+}
 
 /** 显式参数相对 cwd 解析；默认值相对仓库根解析（npm run 场景 cwd 是 training/）。 */
 const fromArg = (value, fallback) => resolve(value !== undefined ? process.cwd() : REPO_ROOT, value ?? fallback);
@@ -86,9 +101,13 @@ for (const [name, value, low, high] of [
     throw new Error(`${name} 必须为 ${low}–${high} 之间的整数，实际：${String(value)}`);
   }
 }
-if (seedBase !== undefined && (!Number.isSafeInteger(seedBase) || seedBase < 0 || seedBase >= 900_000_000)) {
+if (seedBase !== undefined && (!Number.isSafeInteger(seedBase) || seedBase < 0 || seedBase >= TRAINING_POOL_MAX)) {
   // 训练种子必须留在 [0, 900M) 训练池内：>= 900M 属于验证种子池，绝不能用于训练。
-  throw new Error(`--seed-base 必须为 [0, 900000000) 内的安全整数，实际：${String(seedBase)}`);
+  throw new Error(`--seed-base 必须为 [0, ${TRAINING_POOL_MAX}) 内的安全整数，实际：${String(seedBase)}`);
+}
+if (seedBase !== undefined && seedBase > TRAINING_POOL_MAX - TRAINING_SEED_BLOCK) {
+  // 块对齐后连一个候选块都放不下的基数直接拒绝（训练池耗尽的哨兵）。
+  throw new Error(`--seed-base 必须为 ≤ ${TRAINING_POOL_MAX - TRAINING_SEED_BLOCK}（训练池内至少能放一个 ${TRAINING_SEED_BLOCK} 种子的候选块），实际：${String(seedBase)}`);
 }
 
 // 对手池（审计整改：训练对手多样化）；pool-size 1 退化为仅冠军。
@@ -157,22 +176,36 @@ const report = {
   opponents: opponents?.map(o => o.id) ?? [champion.id],
   // 报告记录实际生效的训练种子基数（断点续训时以 state.seedCursor 为准）。
   seedBase: args['seed-base'] !== undefined ? seedBase : 'default(100000)',
+  // 种子分配审计（P0 整改）：训练池布局、块大小与运行后的游标位置。
+  seedAllocation: {
+    pool: `[0, ${TRAINING_POOL_MAX})`,
+    block: TRAINING_SEED_BLOCK,
+    seedCursorAfter: result.state.seedCursor,
+    rngCursor: result.state.rngCursor,
+    migrated: result.state.seedMigration ?? null,
+  },
+  // 证据溯源（P1）：本次运行使用的运行时产物指纹与代码版本。
+  provenance: { engineBundleSha256: engineBundleSha256(), codeCommit: gitHeadCommit() },
 };
 
 // 时间预算允许时，用独立验证种子对最佳候选做确认挑战（训练/验证种子隔离 + 不可复用）。
+// P0 多重检验防线：challengeIndex = 账本已记账挑战次数 + 1，按几何 alpha 消耗
+// 收紧本次检验阈值，控制长期重复挑战的家族误晋级率 ≤ 预算（默认 5%）。
 if (result.improved && remaining() > reserveMs * 0.6) {
   const validationSeedBase = nextValidationBase(previousLedger);
   // 防重断言（P1 复审）：拟消费块与账本任何已消费块重叠时拒绝挑战，绝不复用种子。
   assertBlockFree(validationSeedBase, confirmSeeds, previousLedger);
+  const challengeIndex = validationChallengeCount(previousLedger) + 1;
   const { summary } = challengeWithDecision({
     champion, candidate: result.bestCandidate,
     seeds: confirmSeeds, seedBase: validationSeedBase,
-    minSeeds,
+    minSeeds, challengeIndex,
   });
   report.confirmation = summary;
   report.validationSeedBase = validationSeedBase;
-  appendJSONL(logPath, { type: 'confirmation', candidateId: result.bestCandidate.id, seedBase: validationSeedBase, summary });
-  // 记账：该验证种子块已消费（记录块大小供防重校验），写入 outDir 供工作流归档、下次续接。
+  report.challengeIndex = challengeIndex;
+  appendJSONL(logPath, { type: 'confirmation', candidateId: result.bestCandidate.id, seedBase: validationSeedBase, challengeIndex, summary });
+  // 记账：该验证种子块已消费（记录块大小与累计挑战次数供防重与 alpha 消耗），写入 outDir 供工作流归档、下次续接。
   const ledger = consumeLedger(previousLedger, validationSeedBase, confirmSeeds);
   writeJSON(resolve(outDir, 'validation-ledger.json'), ledger);
   if (summary.decision.promote) {
@@ -184,6 +217,9 @@ if (result.improved && remaining() > reserveMs * 0.6) {
       confirmation: {
         seeds: confirmSeeds, games: summary.finishedGames,
         seedBase: validationSeedBase,
+        // 多重检验证据：挑战序号与 alpha 预算随证据落盘，晋级脚本据此独立重算收紧后的判定。
+        challengeIndex,
+        alphaBudget: PROMOTION_ALPHA_BUDGET,
         // 完整配对证据随候选归档：晋级脚本据此独立重算判定，不信任调用方给出的结论。
         paired: summary.paired,
         seedPairs: summary.seedPairs,
@@ -191,6 +227,10 @@ if (result.improved && remaining() > reserveMs * 0.6) {
         winRate: summary.candidateWinRate, pairedDiff: summary.pairedDiffCI,
         ci: summary.decision.ci, decision: summary.decision,
       },
+      // 证据完整性溯源（P1）：证据生成时的运行时产物指纹与代码版本。
+      // 晋级时重算当前产物指纹比对，引擎在证据生成后变更过则证据失效。
+      engineBundleSha256: engineBundleSha256(),
+      codeCommit: gitHeadCommit(),
       generatedAt: new Date().toISOString(),
     });
     report.candidateFile = candidateFile;
@@ -208,7 +248,7 @@ if (result.improved && remaining() > reserveMs * 0.6) {
 // 否则工作流归集不到账本文件，下次运行会因账本丢失而重复消费验证种子块。
 if (!existsSync(resolve(outDir, 'validation-ledger.json'))) {
   if (previousLedger) writeJSON(resolve(outDir, 'validation-ledger.json'), previousLedger);
-  else writeJSON(resolve(outDir, 'validation-ledger.json'), { lastBase: null, history: [] });
+  else writeJSON(resolve(outDir, 'validation-ledger.json'), { lastBase: null, challengeCount: 0, history: [] });
 }
 
 report.wallMs = Date.now() - startedAt;

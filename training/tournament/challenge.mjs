@@ -14,16 +14,31 @@
  */
 
 import { simulateGame } from '../simulator/simulate.mjs';
-import { pairedPromotionDecision, firstPlaceStats, wilsonCI, meanCI } from '../evaluator/stats.mjs';
+import { pairedPromotionDecision, firstPlaceStats, wilsonCI, meanCI, alphaSpendingThreshold, PROMOTION_ALPHA_BUDGET, Z_95 } from '../evaluator/stats.mjs';
 
 const SEAT_COUNT = 5;
 
-function versionsFor(candidateSeats, candidate, opponents, seedIndex) {
+/** 席位版本分配（含对手池轮换，导出供轮换分布回归测试）。
+ *
+ * 对手轮换（P1 可靠性整改）：旧公式 `(seedIndex×5+seat) % pool.length` 在池大小
+ * 为 5（默认）时塌缩为 `seat % 5`——每个席位的对手在所有种子上固定不变，
+ * "风格跨席位轮换"名存实亡。新公式取 `(池大小−1)×(seedIndex+seat) mod 池大小`
+ * （即 −(seedIndex+seat) mod L，步长 L−1 与 L 恒互素）：
+ * - 任何池大小下，每个席位的对手都随 seedIndex 遍历全池（确定性、可复现）；
+ * - 池 ≥ 5 时同一局内各对手席位拿到互不相同的对手（席位差 < 5 ≤ 池大小）；
+ * - 分配只依赖 (seedIndex, seat)，与方向 A/B 无关——同一 seed 双向对局的
+ *   同席位对手完全一致，保持配对设计的可比性（只差候选席位数）；
+ * - 池首（冠军本体）经轮换会以对手身份出现在席位 1–4（各占 1/5 的种子）；
+ *   f=0 ⇔ i ≡ −s (mod L)，此时席位 s = 候选席仅当 s=0 且 i≡0，故冠军永远不会
+ *   在候选席位上"自己对抗自己"。 */
+export function versionsFor(candidateSeats, candidate, opponents, seedIndex) {
+  const poolSize = opponents.length;
   return Array.from({ length: SEAT_COUNT }, (_, seat) => {
     if (candidateSeats.includes(seat)) {
       return { id: candidate.id, parameters: candidate, structure: candidate.structure };
     }
-    const opponent = opponents[(seedIndex * SEAT_COUNT + seat) % opponents.length];
+    const opponentIndex = (poolSize - 1) * ((seedIndex + seat) % poolSize) % poolSize;
+    const opponent = opponents[opponentIndex];
     return { id: opponent.id, parameters: opponent, structure: opponent.structure };
   });
 }
@@ -55,7 +70,7 @@ function candidateGameMetrics(result, candidateSeats) {
  * @param {object} options.candidate 候选参数（AIParameters）
  * @param {number} options.seeds 种子数量（每种子 2 局：双向）
  * @param {number} [options.seedBase] 种子起点
- * @param {Array<object>} [options.opponents] 对手池（默认仅冠军）；非候选席位按 (seedIndex×5+seat) 轮转取池内对手
+ * @param {Array<object>} [options.opponents] 对手池（默认仅冠军）；非候选席位按 (seedIndex×(池大小−1)+seat) 轮转取池内对手，任何池大小下逐种子轮换
  * @param {number} [options.maxMoves] 单局步数上限
  * @param {number} [options.deadlineMs] 单局时间预算
  */
@@ -140,17 +155,32 @@ export function runChallenge({ champion, candidate, seeds, seedBase = 1, opponen
   return { summary, games };
 }
 
-/** 完整挑战：含晋级判定（按种子配对统计）。
+/** 完整挑战：含晋级判定（按种子配对统计 + alpha 消耗多重检验控制）。
  * minSeeds：决定性配对种子下限（默认 60 = 120 局）。
  * 晋级统计量为「配对得分优势率」（决定性种子中双向平均分差 > 0 的比例），
  * 不是第一名概率；真实第一名率随 summary.firstPlace 一并披露。
- * 对手池缺省 = 仅冠军，保证晋级语义是"胜过当前冠军"。 */
-export function challengeWithDecision({ champion, candidate, seeds, seedBase = 1, minSeeds = 60, maxAnomalyRate = 0.02, opponents = null, ...rest }) {
-  const { summary, games } = runChallenge({ champion, candidate, seeds, seedBase, opponents, ...rest });
+ * 对手池缺省 = 仅冠军，保证晋级语义是"胜过当前冠军"。
+ *
+ * challengeIndex（P0 可靠性整改）：本次确认挑战是系统终身第几次挑战（来自验证
+ * 账本 challengeCount + 1）。传入后按几何 alpha 消耗收紧检验阈值（α_k = 预算/2^k），
+ * 控制长期重复挑战的家族误晋级率 ≤ 预算（默认 5%）；判定对象携带
+ * challengeIndex / alpha / alphaBudget / z 供晋级脚本独立重算。不传（手动诊断）时
+ * 维持 95% 单次检验，其结论不得作为晋级证据。 */
+export function challengeWithDecision({ champion, candidate, seeds, seedBase = 1, minSeeds = 60, maxAnomalyRate = 0.02, opponents = null, challengeIndex = null, alphaBudget = PROMOTION_ALPHA_BUDGET, maxMoves, deadlineMs }) {
+  const { summary, games } = runChallenge({ champion, candidate, seeds, seedBase, opponents, maxMoves, deadlineMs });
+  const threshold = challengeIndex !== null
+    ? alphaSpendingThreshold(challengeIndex, { alphaBudget })
+    : null;
   summary.decision = pairedPromotionDecision({
     seedPairs: summary.seedPairs,
     minSeeds,
     maxAnomalyRate,
+    z: threshold?.z ?? Z_95,
   });
+  if (threshold) {
+    summary.decision.challengeIndex = threshold.challengeIndex;
+    summary.decision.alpha = threshold.alpha;
+    summary.decision.alphaBudget = threshold.alphaBudget;
+  }
   return { summary, games };
 }

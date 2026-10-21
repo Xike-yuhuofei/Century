@@ -4,12 +4,17 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { wilsonCI, meanCI, promotionDecision, pairedPromotionDecision, firstPlaceStats } from '../evaluator/stats.mjs';
-import { runChallenge, challengeWithDecision } from '../tournament/challenge.mjs';
+import { wilsonCI, meanCI, promotionDecision, pairedPromotionDecision, firstPlaceStats, probit, alphaSpendingThreshold, PROMOTION_ALPHA_BUDGET, Z_95 } from '../evaluator/stats.mjs';
+import { runChallenge, challengeWithDecision, versionsFor } from '../tournament/challenge.mjs';
 import { mutateCandidate, evolve, compareCandidates, championFingerprint } from '../optimizer/evolve.mjs';
 import { mulberry32 } from '../lib/rng.mjs';
 import { buildOpponentPool, styleVariants, historicalChampions } from '../lib/opponents.mjs';
-import { nextValidationBase, consumeLedger, assertBlockFree, VALIDATION_POOL_BASE, VALIDATION_STRIDE } from '../lib/seeds.mjs';
+import {
+  nextValidationBase, consumeLedger, assertBlockFree, validationChallengeCount,
+  alignToTrainingBlock, allocateTrainingBlock, migrateLegacyCursor,
+  VALIDATION_POOL_BASE, VALIDATION_POOL_MAX, VALIDATION_STRIDE,
+  TRAINING_POOL_MAX, TRAINING_SEED_BLOCK, ENGINE_SEED_MAX,
+} from '../lib/seeds.mjs';
 import { BASELINE_PARAMETERS, validateAIParameters } from '../../web-v1/dist/js/ai/parameters.js';
 
 test('Wilson 区间数学性质', () => {
@@ -145,11 +150,17 @@ test('验证种子账本：种子块不可重复使用', () => {
   // 有账本：下一块严格落在已消费块之后（旧式 lastBase 无 size 按整步长保守计）。
   const next = nextValidationBase({ lastBase: VALIDATION_POOL_BASE + 5 * VALIDATION_STRIDE }, { runId: '999' });
   assert.equal(next, VALIDATION_POOL_BASE + 7 * VALIDATION_STRIDE, 'lastBase 块按最大步长保守估计，下一块再空一个步长');
-  // 消费记账保留历史。
+  // 消费记账保留历史 + 累计挑战次数（多重检验 alpha 消耗的挑战序号来源）。
   const ledger = consumeLedger(null, first);
   assert.equal(ledger.lastBase, first);
   assert.equal(ledger.history.length, 1);
-  assert.equal(consumeLedger(ledger, next).history.length, 2);
+  assert.equal(ledger.challengeCount, 1);
+  const twice = consumeLedger(ledger, next);
+  assert.equal(twice.history.length, 2);
+  assert.equal(twice.challengeCount, 2);
+  // 旧账本（无 challengeCount 字段）按 history 条数兜底。
+  assert.equal(validationChallengeCount({ lastBase: first, history: ledger.history }), 1);
+  assert.equal(validationChallengeCount(null), 0);
 });
 
 test('候选参数突变：合法、可复现、受边界约束', () => {
@@ -263,16 +274,18 @@ test('runChallenge：summary 必须携带 firstPlace 真实第一名率', () => 
 
 // ---- P0 复审：训练种子基数透传 ----
 
-test('evolve：seedBase 必须真正驱动训练种子游标（P0 透传回归）', () => {
+test('evolve：seedBase 必须真正驱动训练种子游标（P0 透传回归，块分配语义）', () => {
   const champion = { ...BASELINE_PARAMETERS, id: 'evo-seedbase' };
-  // population 1 × 1 代：rng 消费 +1，候选种子块消费 +1 → 游标 = seedBase + 2。
+  // population 1 × 1 代：rngCursor +1；候选种子块 = 对齐基数起的第一个 1000 种子块。
   const result = evolve({
     champion, generations: 1, population: 1, gamesPerCandidate: 2, seedBase: 20261021,
   });
-  assert.equal(result.state.seedCursor, 20261021 + 2, `seedBase 未透传：游标 ${result.state.seedCursor}`);
+  // 20261021 向上块对齐 = 20262000；消费一个 1000 种子块后游标 = 20263000。
+  assert.equal(result.state.seedCursor, 20263000, `seedBase 未透传：游标 ${result.state.seedCursor}`);
+  assert.equal(result.state.rngCursor, 20261022, 'rng 游标必须独立逐代前进');
   // 缺省时退回默认基数（行为不变，仅确认默认值仍生效）。
   const fallback = evolve({ champion, generations: 1, population: 1, gamesPerCandidate: 2 });
-  assert.ok(fallback.state.seedCursor > 100000, '缺省 seedBase 应为 100000 起步');
+  assert.equal(fallback.state.seedCursor, 101000, '缺省 seedBase 100000 对齐后消费一块 → 101000');
 });
 
 // ---- P0 复审：冠军切换后的状态继承 ----
@@ -309,10 +322,20 @@ test('evolve：冠军切换后旧精英池与待定候选必须失效（P0 回�
   assert.ok(result.state.eliteReset, '必须记录精英失效事件');
   assert.equal(result.state.eliteReset.newChampionId, 'new-champ');
   assert.equal(result.state.eliteReset.eliteCount, 2);
-  // 步长复位（0.18）后经 1 代收缩（×0.85，两个分支同率）→ 0.153，绝不残留旧值 0.05。
-  assert.equal(result.state.sigma, Number((0.18 * 0.85).toFixed(6)), '冠军切换后步长必须从初始值重新收缩，不得残留旧值');
-  // 游标从 123456 续接：1 代 × population 2 → rng +1、候选块 +2。
-  assert.equal(result.state.seedCursor, 123459, '种子游标保留，避免重复消费训练种子');
+  // 步长复位（0.18）后经 1 代收缩：胜率 > 0.5 → ×0.85 = 0.153；否则 ×0.92 = 0.1656。
+  // 两个分支都从复位值 0.18 出发，绝不残留断点里的旧步长 0.05。
+  assert.ok(
+    Math.abs(result.state.sigma - 0.18 * 0.85) < 1e-9 || Math.abs(result.state.sigma - 0.18 * 0.92) < 1e-9,
+    `冠军切换后步长必须从初始值重新收缩，不得残留旧值：${result.state.sigma}`,
+  );
+  // 旧格式断点（无 rngCursor）自动迁移：seedCursor 123456（旧块索引语义）
+  // → 绝对种子 123,456,000（旧最后已消费块之后），rng 流从 123456 续接；
+  // 1 代 × population 2 消费 2 块 → 123,458,000。
+  assert.equal(result.state.seedCursor, 123458000, '旧断点必须迁移到绝对种子语义且续接在旧已消费块之后');
+  assert.equal(result.state.rngCursor, 123457, 'rng 游标从旧游标续接，不重复');
+  assert.ok(result.state.seedMigration, '迁移事件必须落盘供审计');
+  assert.equal(result.state.seedMigration.from, 123456);
+  assert.equal(result.state.seedMigration.to, 123458000 - 2000, '迁移起点 = 旧游标×1000（旧最后已消费块之后）');
   assert.equal(result.state.history.length, 2, '历史必须保留供审计');
 });
 
@@ -407,4 +430,211 @@ test('验证种子账本：重叠消费必须被拒绝（防重复使用）', ()
   assert.ok(assertBlockFree(VALIDATION_POOL_BASE + 1000 * VALIDATION_STRIDE + VALIDATION_STRIDE, 80, ledger));
   // 非法输入直接抛错。
   assert.throws(() => assertBlockFree(VALIDATION_POOL_BASE, 0, null), /非法/);
+});
+
+// ---- P0 可靠性整改：长期多重检验控制（几何 alpha 消耗） ----
+
+test('probit：标准正态分位数精度达标', () => {
+  assert.ok(Math.abs(probit(0.975) - 1.959963984540054) < 1e-6, `probit(0.975) = ${probit(0.975)}`);
+  assert.ok(Math.abs(probit(0.5)) < 1e-9);
+  assert.ok(Math.abs(probit(1 - 0.001) - 3.090232306167813) < 1e-6);
+  assert.throws(() => probit(0), /probit/);
+  assert.throws(() => probit(1), /probit/);
+});
+
+test('alphaSpendingThreshold：几何消耗，挑战越多阈值越紧，终身族错误率受控', () => {
+  // 第 1 次挑战与旧制完全一致（单侧 α=0.025，z≈1.96）——不惩罚首次晋级。
+  const first = alphaSpendingThreshold(1);
+  assert.equal(first.alpha, 0.025);
+  assert.ok(Math.abs(first.z - Z_95) < 1e-6, `第 1 次阈值应等于 1.96：${first.z}`);
+  // 单调收紧（α < 1e-15 后 z 饱和于双精度极限，改为单调不减；前 45 次严格递增）。
+  let sum = 0;
+  let prevZ = 0;
+  for (let k = 1; k <= 200; k++) {
+    const t = alphaSpendingThreshold(k);
+    assert.ok(t.z >= prevZ, `阈值必须随挑战次数单调不减：k=${k}`);
+    if (k <= 45) assert.ok(t.z > prevZ, `前 45 次阈值必须严格收紧：k=${k}`);
+    prevZ = t.z;
+    sum += t.alpha;
+  }
+  assert.ok(sum <= PROMOTION_ALPHA_BUDGET + 1e-12, `Σα_k=${sum} 必须受终身预算 ${PROMOTION_ALPHA_BUDGET} 约束`);
+  assert.ok(Math.abs(sum - PROMOTION_ALPHA_BUDGET) < 1e-9, '预算应被几何级数精确耗尽');
+  // 非法输入快速失败。
+  assert.throws(() => alphaSpendingThreshold(0), /challengeIndex/);
+  assert.throws(() => alphaSpendingThreshold(1.5), /challengeIndex/);
+  assert.throws(() => alphaSpendingThreshold(3, { alphaBudget: 1.5 }), /alphaBudget/);
+});
+
+test('pairedPromotionDecision：同一证据下挑战序号越大判定越严格（多重检验回归）', () => {
+  // 41/60 决定性种子胜（优势率 0.683）：k=1 时 Wilson 下界 > 0.5 → 晋级；
+  // k=6 时阈值收紧到 z≈3.16 → 下界跌回 0.5 以下 → 不确定，保留冠军。
+  const pairs = Array.from({ length: 60 }, (_, i) => ({ seed: VALIDATION_POOL_BASE + i, status: 'finished', diff: i < 41 ? 2 : -1.5, anomalies: 0 }));
+  const first = pairedPromotionDecision({ seedPairs: pairs, minSeeds: 60, z: alphaSpendingThreshold(1).z });
+  assert.equal(first.verdict, 'promote');
+  const sixth = pairedPromotionDecision({ seedPairs: pairs, minSeeds: 60, z: alphaSpendingThreshold(6).z });
+  assert.equal(sixth.verdict, 'inconclusive', '同一证据在第 6 次挑战时必须按收紧阈值保留冠军');
+  // 判定必须披露所用阈值。
+  assert.equal(first.z, alphaSpendingThreshold(1).z);
+  assert.equal(sixth.z, alphaSpendingThreshold(6).z);
+});
+
+test('challengeWithDecision：challengeIndex 透传到判定证据（供晋级脚本独立重算）', () => {
+  const champion = { ...BASELINE_PARAMETERS, id: 'champ-idx' };
+  const candidate = { ...BASELINE_PARAMETERS, id: 'cand-idx' };
+  const { summary } = challengeWithDecision({ champion, candidate, seeds: 3, seedBase: 602, minSeeds: 1, challengeIndex: 2 });
+  assert.equal(summary.decision.challengeIndex, 2);
+  assert.equal(summary.decision.alphaBudget, PROMOTION_ALPHA_BUDGET);
+  assert.equal(summary.decision.alpha, 0.0125, '第 2 次挑战 α = 0.05/4');
+  assert.ok(Math.abs(summary.decision.z - alphaSpendingThreshold(2).z) < 1e-12);
+  // 不传 challengeIndex（手动诊断）时维持 95% 检验且不携带序号。
+  const manual = challengeWithDecision({ champion: { ...champion, id: 'champ-idx2' }, candidate, seeds: 2, seedBase: 603, minSeeds: 1 });
+  assert.equal(manual.summary.decision.challengeIndex, undefined);
+  assert.ok(Math.abs(manual.summary.decision.z - Z_95) < 1e-12);
+});
+
+// ---- P0 可靠性整改：对手池轮换塌缩回归 ----
+
+test('versionsFor：pool=5（默认池）时每席位对手必须随种子轮转（塌缩回归）', () => {
+  const champion = { ...BASELINE_PARAMETERS, id: 'champ-rot' };
+  const candidate = { ...BASELINE_PARAMETERS, id: 'cand-rot' };
+  const pool = [champion, ...[1, 2, 3, 4].map(n => ({ ...BASELINE_PARAMETERS, id: `opp-${n}` }))];
+  // 旧公式 (seedIndex×5+seat)%5 = seat：席位 s 永远拿 opp-s（每席只出现 1 种对手）。
+  // 修复后必须逐种子轮转：每席位在 25 个种子窗口内至少见到 4 种不同对手。
+  for (let seat = 0; seat < 5; seat++) {
+    const seen = new Set();
+    for (let i = 0; i < 25; i++) {
+      if (i % 5 === seat) continue; // 该种子席位 s 是候选席，不计入对手观察
+      seen.add(versionsFor([i % 5], candidate, pool, i)[seat].id);
+    }
+    assert.ok(seen.size >= 4, `席位 ${seat} 的对手必须跨种子轮转（旧缺陷固定为 1 种），实际 ${seen.size} 种`);
+  }
+  // 池首（冠军本体）必须经轮换以对手身份出场（席位 1-4）。
+  const allIds = new Set();
+  for (let i = 0; i < 25; i++) {
+    for (let seat = 0; seat < 5; seat++) {
+      if (i % 5 === seat) continue;
+      allIds.add(versionsFor([i % 5], candidate, pool, i)[seat].id);
+    }
+  }
+  assert.ok(allIds.has('champ-rot'), '冠军本体必须经轮换以对手身份出场');
+  // 同局内各对手席位的对手互不重复（池 ≥ 5 时）。
+  for (let i = 0; i < 10; i++) {
+    const seat = i % 5;
+    const row = versionsFor([seat], candidate, pool, i);
+    const oppIds = row.filter((_, s) => s !== seat).map(v => v.id);
+    assert.equal(new Set(oppIds).size, oppIds.length, `seed${i} 同局对手重复：${oppIds.join(',')}`);
+  }
+  // 确定性复现：同输入逐位一致。
+  assert.deepEqual(versionsFor([1], candidate, pool, 7), versionsFor([1], candidate, pool, 7));
+});
+
+test('versionsFor：分配只依赖 (seedIndex, seat)，双向对战同席位对手一致（配对可比性）', () => {
+  const champion = { ...BASELINE_PARAMETERS, id: 'champ-pair' };
+  const candidate = { ...BASELINE_PARAMETERS, id: 'cand-pair' };
+  const pool = [champion, { ...BASELINE_PARAMETERS, id: 'opp-1' }, { ...BASELINE_PARAMETERS, id: 'opp-2' }];
+  // 方向 A 候选占席位 cA、方向 B 候选占 cB：只要席位 s 在两方向都是对手席，
+  // 它拿到的对手必须相同——配对差异只来自候选席位数，不来自对手身份漂移。
+  for (let i = 0; i < 6; i++) {
+    for (const cA of [0, 2]) {
+      for (const cB of [1, 4]) {
+        if (cA === cB) continue;
+        for (let s = 0; s < 5; s++) {
+          if (s === cA || s === cB) continue;
+          const inA = versionsFor([cA], candidate, pool, i)[s];
+          const inB = versionsFor([cB], candidate, pool, i)[s];
+          assert.equal(inA.id, inB.id, `seed${i} 席位${s} 在双向对局中必须拿到同一对手（A:${inA.id} vs B:${inB.id}）`);
+        }
+      }
+    }
+  }
+});
+
+// ---- P0 可靠性整改：训练种子块分配 ----
+
+test('训练种子块分配：块对齐、池内、耗尽拒绝', () => {
+  assert.equal(alignToTrainingBlock(0), 0);
+  assert.equal(alignToTrainingBlock(100000), 100000);
+  assert.equal(alignToTrainingBlock(20261021), 20262000, '非块对齐基数向上对齐');
+  assert.throws(() => alignToTrainingBlock(-1), /非法/);
+  assert.throws(() => alignToTrainingBlock(1.5), /非法/);
+
+  const first = allocateTrainingBlock(0);
+  assert.deepEqual(first, { base: 0, next: TRAINING_SEED_BLOCK });
+  // 池内最后一块必须完整放下。
+  const last = allocateTrainingBlock(TRAINING_POOL_MAX - TRAINING_SEED_BLOCK);
+  assert.equal(last.base + TRAINING_SEED_BLOCK, TRAINING_POOL_MAX);
+  // 越过训练池上限（= 验证池起点）必须拒绝，绝不污染验证种子。
+  assert.throws(() => allocateTrainingBlock(TRAINING_POOL_MAX), /训练种子池已耗尽/);
+  // 非块对齐游标拒绝（无论是否越界）。
+  assert.throws(() => allocateTrainingBlock(TRAINING_POOL_MAX - TRAINING_SEED_BLOCK + 1), /块对齐/);
+  assert.throws(() => allocateTrainingBlock(123), /块对齐/);
+});
+
+test('种子池布局：训练池与验证池物理隔离且全部在引擎安全范围内', () => {
+  assert.equal(TRAINING_POOL_MAX, VALIDATION_POOL_BASE, '训练池上界 = 验证池起点，无缝无叠');
+  assert.ok(VALIDATION_POOL_MAX <= ENGINE_SEED_MAX, '验证池上限必须 ≤ 2^31-1（引擎 mod 2^32 回绕）');
+  assert.ok(TRAINING_POOL_MAX <= ENGINE_SEED_MAX);
+  assert.equal(TRAINING_SEED_BLOCK, 1000, '块大小与 --games-per-candidate 上限对齐');
+});
+
+test('旧断点迁移：两种旧游标语义都确定性续接且不重复消费', () => {
+  // 小游标（默认基数起步的旧运行）：旧消费名义值 = 游标×1000，新种子从其后继续。
+  assert.deepEqual(migrateLegacyCursor(123456), { seedCursor: 123456000, rngCursor: 123456 });
+  assert.deepEqual(migrateLegacyCursor(0), { seedCursor: 0, rngCursor: 0 });
+  assert.deepEqual(migrateLegacyCursor(899999), { seedCursor: 899999000, rngCursor: 899999 }, '恰好在池内最后一块之前');
+  // 大游标（日期基数 20261021 起步的真实断点）：旧消费名义值 ≈ 2e10 在池外，
+  // 直接把游标向上对齐为池内绝对种子续用，绝不落到旧"游标×1000"（> 2^31）。
+  const migrated = migrateLegacyCursor(20261049);
+  assert.equal(migrated.seedCursor, 20262000, '真实断点 20261049 → 池内绝对种子 20262000');
+  assert.ok(migrated.seedCursor < TRAINING_POOL_MAX, '迁移结果必须留在训练池内');
+  assert.ok(migrated.seedCursor * 1000 > ENGINE_SEED_MAX, '若按旧语义乘 1000 必然越界（回归动机）');
+  assert.throws(() => migrateLegacyCursor(-5), /seedCursor/);
+  assert.throws(() => migrateLegacyCursor(undefined), /seedCursor/);
+});
+
+test('evolve：训练种子块互不重叠且全部落在训练池内（分配回归）', () => {
+  const champion = { ...BASELINE_PARAMETERS, id: 'evo-blocks' };
+  const logged = [];
+  const result = evolve({
+    champion, generations: 2, population: 3, gamesPerCandidate: 5, seedBase: 500,
+    experimentLog: entry => { if (entry.type === 'candidate') logged.push(entry); },
+  });
+  const blocks = logged.map(e => e.seedBase);
+  assert.equal(blocks.length, 6);
+  // 块对齐且互不重叠，按消费顺序严格递增一个块。
+  for (let i = 0; i < blocks.length; i++) {
+    assert.equal(blocks[i] % TRAINING_SEED_BLOCK, 0, `块 ${i} 必须块对齐`);
+    assert.ok(blocks[i] + TRAINING_SEED_BLOCK <= TRAINING_POOL_MAX, '块必须完整落在训练池内');
+    if (i > 0) assert.equal(blocks[i], blocks[i - 1] + TRAINING_SEED_BLOCK, '块必须连续不重叠');
+  }
+  assert.equal(result.state.seedCursor, blocks.at(-1) + TRAINING_SEED_BLOCK);
+  assert.equal(result.state.rngCursor, 500 + 2, 'rng 游标逐代 +1');
+});
+
+test('evolve：训练池耗尽必须抛错而不是越界污染验证池（边界值）', () => {
+  const champion = { ...BASELINE_PARAMETERS, id: 'evo-exhaust' };
+  // 游标停在池内最后一块：population 2 → 第 2 块越界抛错。
+  assert.throws(() => evolve({
+    champion,
+    initialState: {
+      generation: 0, sigma: 0.18, rngCursor: 1, seedCursor: TRAINING_POOL_MAX - TRAINING_SEED_BLOCK,
+      elites: [], history: [], pendingCandidate: null,
+      championId: champion.id, championFingerprint: championFingerprint(champion),
+    },
+    generations: 1, population: 2, gamesPerCandidate: 2,
+  }), /训练种子池已耗尽/);
+  // 恰好一块放得下：不抛错且游标精确停在池上限。
+  const fits = evolve({
+    champion,
+    initialState: {
+      generation: 0, sigma: 0.18, rngCursor: 1, seedCursor: TRAINING_POOL_MAX - TRAINING_SEED_BLOCK,
+      elites: [], history: [], pendingCandidate: null,
+      championId: champion.id, championFingerprint: championFingerprint(champion),
+    },
+    generations: 1, population: 1, gamesPerCandidate: 2,
+  });
+  assert.equal(fits.state.seedCursor, TRAINING_POOL_MAX);
+  // 非法 seedBase 快速失败。
+  assert.throws(() => evolve({ champion, seedBase: -1 }), /seedBase/);
+  assert.throws(() => evolve({ champion, seedBase: TRAINING_POOL_MAX }), /放不下|seedBase/);
 });
