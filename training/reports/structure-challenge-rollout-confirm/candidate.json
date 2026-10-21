@@ -1,0 +1,47 @@
+{
+  "id": "struct-beam-rollout",
+  "basedOn": "v4.0-baseline",
+  "parameters": {
+    "id": "struct-beam-rollout",
+    "structure": "beam-rollout",
+    "engineWeight": 1,
+    "tempoWeight": 1,
+    "contestWeight": 1,
+    "synergyWeight": 1,
+    "goalWeight": 1,
+    "capacityWeight": 1,
+    "restWeight": 1,
+    "endgameWeight": 1
+  },
+  "confirmation": {
+    "seeds": 300,
+    "games": 600,
+    "seedBase": 924142000,
+    "winRate": 0.5583,
+    "paired": {
+      "seeds": 300,
+      "finished": 300,
+      "won": 189,
+      "lost": 109,
+      "tied": 2
+    },
+    "ci": {
+      "point": 0.6342281879194631,
+      "lower": 0.5781571946550674,
+      "upper": 0.6868826057506257
+    },
+    "decision": {
+      "promote": true,
+      "verdict": "promote",
+      "reason": "配对先名率 0.634（决定性种子 298，平局率 0.0067），95% CI 下界 0.578 > 0.5",
+      "ci": {
+        "point": 0.6342281879194631,
+        "lower": 0.5781571946550674,
+        "upper": 0.6868826057506257
+      },
+      "tieRate": 0.0067,
+      "anomalyRate": 0
+    }
+  },
+  "generatedAt": "2026-10-21T03:32:27.657Z"
+}
