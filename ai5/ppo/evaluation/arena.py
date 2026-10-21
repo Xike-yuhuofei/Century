@@ -84,12 +84,22 @@ def _write_ledger(ledger: dict) -> None:
 
 
 def allocate_validation_block(size: int, purpose: str) -> int:
-    """从验证池分配互不重叠的种子块；账本持久化（无挑战也落盘续接）。"""
+    """从验证池分配互不重叠的种子块；账本持久化（无挑战也落盘续接）。
+
+    只统计验证池条目（AI5 本账本中 purpose 非 training: 的条目 + AI4 账本全部块），
+    训练池条目（5M 约定区）不参与 highest_end 计算——否则验证种子会被拖进训练区。
+    """
     ledger = _read_ledger()
-    consumed = [(int(e["base"]), int(e.get("size", VALIDATION_STRIDE))) for e in ledger.get("history", [])]
-    consumed += load_ai4_ledger_blocks()
+    validation_entries = [
+        (int(e["base"]), int(e.get("size", VALIDATION_STRIDE)))
+        for e in ledger.get("history", [])
+        if not str(e.get("purpose", "")).startswith("training:")
+    ]
+    consumed = validation_entries + load_ai4_ledger_blocks()
     highest_end = max((b + s for b, s in consumed), default=VALIDATION_POOL_BASE - VALIDATION_STRIDE)
     base = highest_end + VALIDATION_STRIDE
+    if base < VALIDATION_POOL_BASE:
+        base = VALIDATION_POOL_BASE
     if base + size > VALIDATION_POOL_MAX:
         raise RuntimeError(f"验证种子池耗尽：下一块 [{base}, {base + size}) 超过上限 {VALIDATION_POOL_MAX}")
     for b, s in consumed:

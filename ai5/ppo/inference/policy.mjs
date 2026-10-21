@@ -15,7 +15,7 @@
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { buildObservation } from '../../../web-v1/dist/js/ai.js';
-import { enumerateCandidates } from '../bridge/action_enum.mjs';
+import { enumerateCandidates, descriptorToEngineAction } from '../bridge/action_enum.mjs';
 import {
   encodeState, encodeAction,
   STATE_ENCODING_VERSION, ACTION_ENCODING_VERSION, STATE_DIM, ACTION_DIM,
@@ -170,7 +170,11 @@ export class Policy {
         if (acc <= 0) break;
       }
     }
-    return { index, action: candidates[index], probs, enumStats: stats };
+    return {
+      index, action: candidates[index],
+      engineAction: descriptorToEngineAction(candidates[index]),
+      probs, enumStats: stats,
+    };
   }
 
   /** 便捷：从完整 Game 出发（内部只取公开观察）。 */
