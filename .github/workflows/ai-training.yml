@@ -272,10 +272,13 @@ jobs:
           CHALLENGE_SEEDS: ${{ inputs['challenge-seeds'] || '100' }}
         run: |
           (cd web-v1 && node scripts/benchmark-ai.mjs 16)
-          # 种子基数按年积日 + 星期派生，避免每周挑战反复消耗同一种子段。
+          # 周挑战基准种子（训练池 [400M, 900M) 评测约定区，与日常进化 [0, 400M) 不相交）：
+          # 年份(2位)×4M + 年积日×1000——每个自然日唯一，跨年绝不重复同一批对局，
+          # 且 2125 年前恒在训练池内（10# 强制十进制，防 date 前导零被当八进制）。
+          weekly_base=$((400000000 + 10#$(date +%y) * 4000000 + 10#$(date +%j) * 1000))
           node training/simulator/cli.mjs \
             --games "$CHALLENGE_SEEDS" \
-            --seed-base $((500000 + 100000 * $(date +%u) + $(date +%j))) --out training/reports/weekly-challenge-$(date +%Y%m%d)
+            --seed-base "$weekly_base" --out training/reports/weekly-challenge-$(date +%Y%m%d)
       - name: 上传周报
         uses: actions/upload-artifact@v4
         with:

@@ -11,9 +11,15 @@
  *    携带的逐种子配对证据（seedPairs）重新执行 pairedPromotionDecision，
  *    并交叉核对样本量、验证种子池归属与 CI 一致性；证据缺失、被篡改或
  *    重算结论不一致一律拒绝晋级；
- * 3. 校验候选参数合法性（validateAIParameters）；
- * 4. 创建并归档候选到 training/champions/candidates/<id>.json；
- * 5. 同步更新 training/champions/champion.json（含挑战证据溯源），
+ * 3. P0 多重检验核验：证据必须携带挑战序号 challengeIndex 与 alphaBudget，
+ *    按几何 alpha 消耗（α_k = 预算/2^k）重算收紧后的判定；随附验证账本时
+ *    交叉核对挑战序号与账本 challengeCount 一致，防伪造小序号换宽松阈值；
+ * 4. P1 证据完整性核验：确认挑战证据的运行时产物指纹（engineBundleSha256）
+ *    必须与当前编译产物一致——引擎在证据生成后变更过则旧证据失效，必须重新挑战；
+ *    codeCommit 缺失时警告（溯源降级）；
+ * 5. 校验候选参数合法性（validateAIParameters）；
+ * 6. 创建并归档候选到 training/champions/candidates/<id>.json；
+ * 7. 同步更新 training/champions/champion.json（含挑战证据、引擎/代码版本溯源），
  *    保证下一轮进化以新冠军为基准。
  *
  * 用法：node training/scripts/promote-champion.mjs --candidate <候选文件> \
@@ -22,12 +28,12 @@
  * 更低门槛也按本门槛执行，防止用小样本证据混过晋级。
  * 之后由 apply-champion.mjs 把参数写入 web-v1/src/ai/parameters.ts。
  */
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
-import { ensureDir } from '../lib/io.mjs';
-import { requireBuiltEngine, REPO_ROOT } from '../lib/paths.mjs';
-import { pairedPromotionDecision } from '../evaluator/stats.mjs';
-import { VALIDATION_POOL_BASE } from '../lib/seeds.mjs';
+import { ensureDir, readJSON } from '../lib/io.mjs';
+import { requireBuiltEngine, REPO_ROOT, engineBundleSha256 } from '../lib/paths.mjs';
+import { pairedPromotionDecision, alphaSpendingThreshold, PROMOTION_ALPHA_BUDGET } from '../evaluator/stats.mjs';
+import { VALIDATION_POOL_BASE, VALIDATION_POOL_MAX, validationChallengeCount } from '../lib/seeds.mjs';
 import { validateAIParameters } from '../../web-v1/dist/js/ai/parameters.js';
 
 function parseArgs(argv) {
@@ -81,8 +87,41 @@ for (const pair of seedPairs) {
   }
 }
 // 证据必须来自独立验证种子池，训练种子上的"胜过冠军"不构成晋级证据。
-if (!Number.isSafeInteger(confirmation.seedBase) || confirmation.seedBase < VALIDATION_POOL_BASE) {
-  throw new Error(`确认挑战种子基数 ${confirmation.seedBase} 不在验证种子池（>= ${VALIDATION_POOL_BASE}）内，证据无效，禁止晋级`);
+if (!Number.isSafeInteger(confirmation.seedBase) || confirmation.seedBase < VALIDATION_POOL_BASE || confirmation.seedBase >= VALIDATION_POOL_MAX) {
+  throw new Error(`确认挑战种子基数 ${confirmation.seedBase} 不在验证种子池（[${VALIDATION_POOL_BASE}, ${VALIDATION_POOL_MAX})）内，证据无效，禁止晋级`);
+}
+// ---- P0 多重检验核验：按证据自报的挑战序号独立重算收紧后的判定 ----
+// 长期重复挑战下，单次 95% 检验必然累积误晋级；晋级证据必须携带挑战序号
+// （challengeIndex，来自验证账本 challengeCount），按几何 alpha 消耗重算。
+const challengeIndex = confirmation.challengeIndex;
+if (!Number.isSafeInteger(challengeIndex) || challengeIndex < 1) {
+  throw new Error(`确认挑战证据缺少合法的 challengeIndex（多重检验 alpha 消耗防线），禁止晋级；请用新版 evolve-cli 重新生成证据`);
+}
+const alphaBudget = confirmation.alphaBudget;
+if (alphaBudget !== PROMOTION_ALPHA_BUDGET) {
+  throw new Error(`确认挑战证据的 alphaBudget ${alphaBudget} 与系统预算 ${PROMOTION_ALPHA_BUDGET} 不一致，无法核验，禁止晋级`);
+}
+// 账本交叉核对：候选文件同目录若带有账本（工作流归档的 evolve 产物必带），
+// 挑战序号必须与账本 challengeCount 一致——防伪造更小的序号换取更宽松阈值。
+const siblingLedgerPath = join(dirname(candidatePath), 'validation-ledger.json');
+if (existsSync(siblingLedgerPath)) {
+  const ledgerCount = validationChallengeCount(readJSON(siblingLedgerPath));
+  if (ledgerCount !== challengeIndex) {
+    throw new Error(`challengeIndex ${challengeIndex} 与随附验证账本的累计挑战次数 ${ledgerCount} 不一致，疑似伪造挑战序号，禁止晋级`);
+  }
+}
+// 引擎指纹核验（P1 证据完整性）：证据必须产自与当前晋级环境一致的运行时产物。
+// 引擎在证据生成后变更过 → 旧证据不适用，必须用新引擎重新确认挑战。
+const currentBundleSha256 = engineBundleSha256();
+if (confirmation.engineBundleSha256 !== currentBundleSha256) {
+  throw new Error(
+    `确认挑战证据的运行时产物指纹与当前编译产物不一致` +
+    `（证据 ${confirmation.engineBundleSha256 ?? '缺失'} ≠ 当前 ${currentBundleSha256}），` +
+    `引擎已在证据生成后变更，旧证据不适用，须重新确认挑战后晋级`,
+  );
+}
+if (!confirmation.codeCommit) {
+  console.error('警告：确认挑战证据缺少 codeCommit（代码版本），溯源能力降级；建议升级 evolve-cli 后重新生成证据');
 }
 // 样本量交叉核对：种子数、完成局数必须与逐种子证据自洽。
 const finishedPairs = seedPairs.filter(p => p.status === 'finished');
@@ -92,8 +131,9 @@ if (confirmation.seeds !== seedPairs.length) {
 if (confirmation.games !== finishedPairs.length * 2) {
   throw new Error(`自报完成局数 ${confirmation.games} 与配对证据（${finishedPairs.length} 种子 × 2 局 = ${finishedPairs.length * 2}）不一致，疑似篡改，禁止晋级`);
 }
-// 用晋级门槛（而非候选自报门槛）独立重算判定。
-const recalculated = pairedPromotionDecision({ seedPairs, minSeeds: minSeedsFloor });
+// 用晋级门槛（而非候选自报门槛）+ 按挑战序号收紧的检验阈值，独立重算判定。
+const threshold = alphaSpendingThreshold(challengeIndex, { alphaBudget });
+const recalculated = pairedPromotionDecision({ seedPairs, minSeeds: minSeedsFloor, z: threshold.z });
 if (!recalculated.promote) {
   throw new Error(`独立重算晋级判定未通过（${recalculated.verdict}）：${recalculated.reason}`);
 }
@@ -103,6 +143,10 @@ if (decision.ci && recalculated.ci && Math.abs(decision.ci.point - recalculated.
 }
 if (decision.verdict !== recalculated.verdict) {
   throw new Error(`自报判定 ${decision.verdict} 与重算 ${recalculated.verdict} 不一致，禁止晋级`);
+}
+// 自报检验阈值必须与按挑战序号重算的阈值一致（防自报宽松 z 混过判定）。
+if (Number.isFinite(decision.z) && Math.abs(decision.z - threshold.z) > 1e-6) {
+  throw new Error(`自报检验阈值 z=${decision.z} 与按挑战序号重算 z=${threshold.z.toFixed(6)} 不一致，禁止晋级`);
 }
 
 // ---- 归档候选（P0：目录不存在时必须先创建）----
@@ -120,7 +164,15 @@ const record = {
   provenance: {
     basedOn: candidate.basedOn ?? null,
     promotedAt: new Date().toISOString().slice(0, 10),
-    promotionEvidence: { ...confirmation, recalculated, recalculatedAt: new Date().toISOString() },
+    // 证据溯源（P1）：引擎/代码版本随冠军记录落盘，任何争议可按指纹重建复现。
+    engineBundleSha256: currentBundleSha256,
+    codeCommit: confirmation.codeCommit ?? null,
+    promotionEvidence: {
+      ...confirmation,
+      recalculated,
+      verified: { challengeIndex, alpha: threshold.alpha, z: threshold.z, ledgerCrossChecked: existsSync(siblingLedgerPath) },
+      recalculatedAt: new Date().toISOString(),
+    },
     candidateArchive: `candidates/${parameters.id}.json`,
   },
 };

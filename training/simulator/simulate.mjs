@@ -12,6 +12,7 @@
 
 import { createGame, applyAction, score, ranking, count } from '../../web-v1/dist/js/engine.js';
 import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
+import { ENGINE_SEED_MAX } from '../lib/seeds.mjs';
 
 export const DEFAULT_MAX_MOVES = 1200;
 export const DEFAULT_DEADLINE_MS = 60_000;
@@ -60,6 +61,10 @@ export function simulateGame(options) {
     collectReplay = false, collectActions = false,
   } = options;
   if (!Number.isSafeInteger(seed) || seed < 0) throw new Error('seed 必须为非负安全整数');
+  // P0 可靠性整改：引擎 generator 对种子做 `seed >>> 0`（mod 2^32 回绕），
+  // 超过 2^31-1 的名义种子会回绕成镜像值——名义与实际序列脱钩，破坏复现与审计，
+  // 且镜像可能落进验证种子池。训练系统所有种子分配必须留在安全范围内。
+  if (seed > ENGINE_SEED_MAX) throw new Error(`seed ${seed} 超出引擎安全种子上限 ${ENGINE_SEED_MAX}（mod 2^32 回绕会破坏复现与训练/验证隔离）`);
   if (versions && versions.length !== seatCount) throw new Error('versions 数组长度必须等于 seatCount');
 
   const started = performance.now();

@@ -37,6 +37,15 @@ test('版本配置长度不匹配时立即报错', () => {
   assert.throws(() => simulateGame({ seed: 1, versions: [null] }), /versions/);
 });
 
+test('种子超出引擎安全范围（≥ 2^31）必须拒绝（mod 2^32 回绕破坏复现与池隔离）', () => {
+  // 恰好 2^31：引擎 generator 的 seed >>> 0 会把它回绕成镜像值，名义与实际序列脱钩。
+  assert.throws(() => simulateGame({ seed: 2 ** 31, maxMoves: 0 }), /安全种子上限/);
+  assert.throws(() => simulateGame({ seed: 20_262_022_000, maxMoves: 0 }), /安全种子上限/, '旧缺陷的真实越界值必须被拦截');
+  // 边界内（2^31-1，即验证池上限以下）不因种子校验被拒。
+  const r = simulateGame({ seed: 2 ** 31 - 1, maxMoves: 0 });
+  assert.equal(r.status, 'anomaly'); // maxMoves=0 立即中止，仅验证种子校验通过
+});
+
 test('步数上限触发 anomaly 且不伪装成正常完成', () => {
   const r = simulateGame({ seed: 1, maxMoves: 3, deadlineMs: 60_000 });
   assert.equal(r.status, 'anomaly');

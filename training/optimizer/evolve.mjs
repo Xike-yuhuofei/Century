@@ -8,11 +8,19 @@
  * - 断点续训：状态对象可序列化；持久化与恢复由 CLI 层负责。
  * - 冠军切换防护（P0）：恢复断点时校验冠军身份指纹（id+结构+参数），
  *   冠军已换人则旧精英池/待定候选强制失效，从新冠军重新出发。
+ * - 训练种子分配（P0 可靠性整改）：每候选固定预留 1000 种子的块对齐块，
+ *   全部落在训练池 [0, 900M) 内（验证池 ≥ 900M 物理隔离、永不越界）；
+ *   候选生成 rng 与游戏种子分流（rngCursor / seedCursor 独立游标）；
+ *   旧版断点（游标×1000 语义）恢复时自动迁移，事件落盘可审计。
  */
 
 import { mulberry32, gaussian, clamp } from '../lib/rng.mjs';
 import { runChallenge } from '../tournament/challenge.mjs';
 import { PARAMETER_BOUNDS, validateAIParameters } from '../../web-v1/dist/js/ai/parameters.js';
+import {
+  alignToTrainingBlock, allocateTrainingBlock, migrateLegacyCursor,
+  TRAINING_POOL_MAX, TRAINING_SEED_BLOCK, ENGINE_SEED_MAX,
+} from '../lib/seeds.mjs';
 
 const TUNABLE_KEYS = Object.keys(PARAMETER_BOUNDS);
 
@@ -103,10 +111,26 @@ export function evolve({
     seedBase: seedBase ?? defaults.seedBase,
     sigma: sigma ?? defaults.sigma,
   };
+  if (!Number.isSafeInteger(opts.seedBase) || opts.seedBase < 0 || opts.seedBase > ENGINE_SEED_MAX) {
+    throw new Error(`seedBase 必须为 [0, 2^31) 内的安全整数，实际：${opts.seedBase}`);
+  }
+  // P0 可靠性整改（训练种子分配）：旧实现 candidateSeedBase = seedCursor++ × 1000，
+  // 日期基数（如工作流的 date +%Y%m%d ≈ 2e7）会把种子乘到 ≈ 2e10：
+  // 越过 2^31 引擎安全上限（engine.ts generator 按 mod 2^32 回绕，名义种子与实际
+  // 生效序列脱钩）、越过训练/验证池边界，且游标无界增长终将与验证种子镜像重叠。
+  // 新语义：
+  // - state.seedCursor = 下一个训练种子块起点（绝对种子，块对齐，每候选固定预留
+  //   TRAINING_SEED_BLOCK=1000 个种子，块完整落在训练池 [0, 900M) 内，越界抛错）；
+  // - state.rngCursor = 候选生成 rng 种子（独立游标，逐代 +1，与游戏种子分流）。
+  const alignedBase = alignToTrainingBlock(opts.seedBase);
+  if (alignedBase + TRAINING_SEED_BLOCK > TRAINING_POOL_MAX) {
+    throw new Error(`seedBase ${opts.seedBase} 过高：对齐后 ${alignedBase} 连一个 ${TRAINING_SEED_BLOCK} 种子的候选块都放不下（训练池上限 ${TRAINING_POOL_MAX}）`);
+  }
   const state = initialState ?? {
     generation: 0,
     sigma: opts.sigma,
-    seedCursor: opts.seedBase,
+    seedCursor: alignedBase,
+    rngCursor: opts.seedBase,
     elites: [],
     history: [],
     pendingCandidate: null,
@@ -114,6 +138,18 @@ export function evolve({
     championFingerprint: championFingerprint(champion),
   };
   state.interrupted = false;
+
+  // 旧版断点迁移：旧 state 只有混合语义的 seedCursor（块索引），无 rngCursor。
+  // 迁移规则见 lib/seeds.mjs migrateLegacyCursor——训练种子续接在旧已消费块之后，
+  // rng 流从旧游标续接，零重复；迁移事件落盘供审计。
+  // 注意 state === initialState（同一引用）：必须先捕获旧游标再就地改写。
+  if (initialState && initialState.rngCursor === undefined) {
+    const legacyCursor = initialState.seedCursor;
+    const migrated = migrateLegacyCursor(legacyCursor);
+    state.seedCursor = migrated.seedCursor;
+    state.rngCursor = migrated.rngCursor;
+    state.seedMigration = { from: legacyCursor, to: migrated.seedCursor, rngCursor: migrated.rngCursor, at: new Date().toISOString() };
+  }
 
   // P0 修复（冠军切换后的状态继承）：断点状态是围绕"当时的冠军"搜索的产物。
   // 冠军晋级换人后（id、结构或参数指纹任一变化），旧精英/待定候选继续作为
@@ -140,7 +176,7 @@ export function evolve({
 
   outer:
   for (let gen = 0; gen < opts.generations; gen++) {
-    const rng = mulberry32(state.seedCursor++);
+    const rng = mulberry32(state.rngCursor++);
     const parents = state.elites.length
       ? state.elites.map(e => e.parameters)
       : [champion];
@@ -158,7 +194,11 @@ export function evolve({
         sigma: state.sigma,
         rng,
       });
-      const candidateSeedBase = state.seedCursor++ * 1000;
+      // 训练种子块分配（P0 整改）：每候选固定预留 1000 种子的块，块对齐、
+      // 互不重叠、完整落在训练池 [0, 900M) 内；池耗尽抛错而非越界。
+      const block = allocateTrainingBlock(state.seedCursor);
+      const candidateSeedBase = block.base;
+      state.seedCursor = block.next;
       const evaluation = evaluateCandidate(champion, candidate, {
         seeds: opts.gamesPerCandidate,
         seedBase: candidateSeedBase,
