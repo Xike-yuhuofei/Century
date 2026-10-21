@@ -1,12 +1,15 @@
 /** 训练系统测试：统计工具、冠军挑战、参数进化。运行前需先构建 web-v1。 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { wilsonCI, meanCI, promotionDecision, pairedPromotionDecision } from '../evaluator/stats.mjs';
+import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { wilsonCI, meanCI, promotionDecision, pairedPromotionDecision, firstPlaceStats } from '../evaluator/stats.mjs';
 import { runChallenge, challengeWithDecision } from '../tournament/challenge.mjs';
-import { mutateCandidate, evolve, compareCandidates } from '../optimizer/evolve.mjs';
+import { mutateCandidate, evolve, compareCandidates, championFingerprint } from '../optimizer/evolve.mjs';
 import { mulberry32 } from '../lib/rng.mjs';
 import { buildOpponentPool, styleVariants, historicalChampions } from '../lib/opponents.mjs';
-import { nextValidationBase, consumeLedger, VALIDATION_POOL_BASE, VALIDATION_STRIDE } from '../lib/seeds.mjs';
+import { nextValidationBase, consumeLedger, assertBlockFree, VALIDATION_POOL_BASE, VALIDATION_STRIDE } from '../lib/seeds.mjs';
 import { BASELINE_PARAMETERS, validateAIParameters } from '../../web-v1/dist/js/ai/parameters.js';
 
 test('Wilson 区间数学性质', () => {
@@ -139,9 +142,9 @@ test('验证种子账本：种子块不可重复使用', () => {
   const second = nextValidationBase(null, { runId: '222' });
   assert.ok(first >= VALIDATION_POOL_BASE);
   assert.notEqual(first, second);
-  // 有账本：严格递增一个块，绝不与历史重叠。
+  // 有账本：下一块严格落在已消费块之后（旧式 lastBase 无 size 按整步长保守计）。
   const next = nextValidationBase({ lastBase: VALIDATION_POOL_BASE + 5 * VALIDATION_STRIDE }, { runId: '999' });
-  assert.equal(next, VALIDATION_POOL_BASE + 6 * VALIDATION_STRIDE);
+  assert.equal(next, VALIDATION_POOL_BASE + 7 * VALIDATION_STRIDE, 'lastBase 块按最大步长保守估计，下一块再空一个步长');
   // 消费记账保留历史。
   const ledger = consumeLedger(null, first);
   assert.equal(ledger.lastBase, first);
@@ -204,4 +207,204 @@ test('排序键：胜率优先，平均分差打破并列', () => {
   assert.equal(compareCandidates({ winRate: 0.4, meanScoreDiff: 9 }, { winRate: 0.6, meanScoreDiff: 0 }), 1);
   assert.equal(compareCandidates({ winRate: 0.5, meanScoreDiff: 3 }, { winRate: 0.5, meanScoreDiff: 1 }), -1);
   assert.equal(compareCandidates({ winRate: 0.5, meanScoreDiff: 2 }, { winRate: 0.5, meanScoreDiff: 2 }), 0);
+});
+
+// ---- P1 复审：指标命名与真实第一名率 ----
+
+test('配对判定的统计量是"配对得分优势率"，不是先名率（命名修正回归）', () => {
+  const pairs = Array.from({ length: 60 }, (_, i) => ({ seed: i + 1, status: 'finished', diff: i < 40 ? 3 : -2, anomalies: 0 }));
+  const decision = pairedPromotionDecision({ seedPairs: pairs, minSeeds: 60 });
+  // 判定文案不得再出现"先名率"字样（它衡量的是分差>0 的比例）。
+  assert.ok(!/先名/.test(decision.reason), `判定文案不得使用先名率：${decision.reason}`);
+  assert.ok(/得分优势率/.test(decision.reason), `判定文案必须标明得分优势率：${decision.reason}`);
+  assert.equal(decision.scoreAdvantageRate, 40 / 60, '必须显式输出 scoreAdvantageRate 字段');
+});
+
+test('firstPlaceStats：方向 A/B 与合并第一名率，合并期望 0.5', () => {
+  const games = [
+    { status: 'finished', direction: 'A', candidateWon: true },
+    { status: 'finished', direction: 'A', candidateWon: false },
+    { status: 'finished', direction: 'A', candidateWon: false },
+    { status: 'finished', direction: 'A', candidateWon: false },
+    { status: 'finished', direction: 'B', candidateWon: true },
+    { status: 'finished', direction: 'B', candidateWon: true },
+    { status: 'finished', direction: 'B', candidateWon: true },
+    { status: 'finished', direction: 'B', candidateWon: true },
+    { status: 'anomaly', direction: 'A', candidateWon: undefined },
+  ];
+  const stats = firstPlaceStats(games);
+  assert.equal(stats.directionA.wins, 1);
+  assert.equal(stats.directionA.games, 4);
+  assert.ok(Math.abs(stats.directionA.rate - 0.25) < 1e-9);
+  assert.equal(stats.directionB.wins, 4);
+  assert.equal(stats.directionB.games, 4);
+  assert.equal(stats.merged.wins, 5);
+  assert.equal(stats.merged.games, 8, '异常局不计入第一名率');
+  assert.ok(Math.abs(stats.merged.wilsonCI.point - 5 / 8) < 1e-9);
+  assert.ok(stats.merged.note, '局级区间必须标注配对近似免责说明');
+  // 空输入不抛错（rate 为 null）。
+  const empty = firstPlaceStats([]);
+  assert.equal(empty.merged.rate, null);
+});
+
+test('runChallenge：summary 必须携带 firstPlace 真实第一名率', () => {
+  const champion = { ...BASELINE_PARAMETERS, id: 'champ-fp' };
+  const candidate = { ...BASELINE_PARAMETERS, id: 'cand-fp' };
+  const { summary } = runChallenge({ champion, candidate, seeds: 3, seedBase: 600 });
+  assert.ok(summary.firstPlace, 'summary 必须包含 firstPlace 块');
+  assert.equal(summary.firstPlace.directionA.games, 3);
+  assert.equal(summary.firstPlace.directionB.games, 3);
+  assert.equal(summary.firstPlace.merged.games, 6);
+  assert.equal(summary.firstPlace.merged.wins, summary.candidateWins, '合并第一名数与 candidateWins 一致');
+  // 晋级判定文案不得混用"先名率"。
+  const { summary: withDecision } = challengeWithDecision({ champion, candidate, seeds: 3, seedBase: 601, minSeeds: 1 });
+  assert.ok(!/配对先名率/.test(withDecision.decision.reason), `晋级文案不得使用先名率：${withDecision.decision.reason}`);
+});
+
+// ---- P0 复审：训练种子基数透传 ----
+
+test('evolve：seedBase 必须真正驱动训练种子游标（P0 透传回归）', () => {
+  const champion = { ...BASELINE_PARAMETERS, id: 'evo-seedbase' };
+  // population 1 × 1 代：rng 消费 +1，候选种子块消费 +1 → 游标 = seedBase + 2。
+  const result = evolve({
+    champion, generations: 1, population: 1, gamesPerCandidate: 2, seedBase: 20261021,
+  });
+  assert.equal(result.state.seedCursor, 20261021 + 2, `seedBase 未透传：游标 ${result.state.seedCursor}`);
+  // 缺省时退回默认基数（行为不变，仅确认默认值仍生效）。
+  const fallback = evolve({ champion, generations: 1, population: 1, gamesPerCandidate: 2 });
+  assert.ok(fallback.state.seedCursor > 100000, '缺省 seedBase 应为 100000 起步');
+});
+
+// ---- P0 复审：冠军切换后的状态继承 ----
+
+test('evolve：冠军切换后旧精英池与待定候选必须失效（P0 回归）', () => {
+  const oldChampion = { ...BASELINE_PARAMETERS, id: 'old-champ' };
+  const newChampion = { ...BASELINE_PARAMETERS, id: 'new-champ', structure: 'beam-rollout' };
+  // 模拟旧冠军留下的断点：含旧结构精英与待定候选。
+  const staleState = {
+    generation: 7,
+    sigma: 0.05,
+    seedCursor: 123456,
+    elites: [
+      { parameters: { ...oldChampion, id: 'old-elite-1', structure: 'beam-lineage', engineWeight: 1.2 }, winRate: 0.6 },
+      { parameters: { ...oldChampion, id: 'old-elite-2', structure: 'beam-lineage', tempoWeight: 1.3 }, winRate: 0.58 },
+    ],
+    pendingCandidate: { ...oldChampion, id: 'old-pending', structure: 'beam-lineage' },
+    history: [{ generation: 6, bestId: 'old-elite-1', bestWinRate: 0.6 }],
+  };
+  const parentIds = [];
+  const result = evolve({
+    champion: newChampion,
+    initialState: staleState,
+    generations: 1,
+    population: 2,
+    gamesPerCandidate: 2,
+    seedBase: 20261022,
+    onGeneration: (state, candidates) => {
+      for (const c of candidates) parentIds.push(c.parentId);
+    },
+  });
+  // 旧精英必须被清空：全部候选的父代只能是新冠军。
+  assert.deepEqual(parentIds, ['new-champ', 'new-champ'], '冠军换人后不得继续沿旧精英进化');
+  assert.ok(result.state.eliteReset, '必须记录精英失效事件');
+  assert.equal(result.state.eliteReset.newChampionId, 'new-champ');
+  assert.equal(result.state.eliteReset.eliteCount, 2);
+  // 步长复位（0.18）后经 1 代收缩（×0.85，两个分支同率）→ 0.153，绝不残留旧值 0.05。
+  assert.equal(result.state.sigma, Number((0.18 * 0.85).toFixed(6)), '冠军切换后步长必须从初始值重新收缩，不得残留旧值');
+  // 游标从 123456 续接：1 代 × population 2 → rng +1、候选块 +2。
+  assert.equal(result.state.seedCursor, 123459, '种子游标保留，避免重复消费训练种子');
+  assert.equal(result.state.history.length, 2, '历史必须保留供审计');
+});
+
+test('evolve：同一冠军断点续训保留精英池；参数被手改后精英失效', () => {
+  const champion = { ...BASELINE_PARAMETERS, id: 'same-champ' };
+  const keptState = {
+    generation: 3,
+    sigma: 0.1,
+    seedCursor: 5000,
+    elites: [{ parameters: { ...champion, id: 'elite-keep', engineWeight: 1.1 }, winRate: 0.55 }],
+    pendingCandidate: null,
+    history: [],
+    championId: champion.id,
+    championFingerprint: championFingerprint(champion),
+  };
+  const parentIds = [];
+  evolve({
+    champion,
+    initialState: keptState,
+    generations: 1,
+    population: 1,
+    gamesPerCandidate: 2,
+    onGeneration: (state, candidates) => { for (const c of candidates) parentIds.push(c.parentId); },
+  });
+  assert.deepEqual(parentIds, ['elite-keep'], '同一冠军续训必须沿用精英池');
+  // 冠军参数被手改（id 不变但指纹变化）→ 精英同样失效。
+  const tampered = { ...champion, engineWeight: 1.4 };
+  const parentIds2 = [];
+  const result2 = evolve({
+    champion: tampered,
+    initialState: keptState,
+    generations: 1,
+    population: 1,
+    gamesPerCandidate: 2,
+    onGeneration: (state, candidates) => { for (const c of candidates) parentIds2.push(c.parentId); },
+  });
+  assert.deepEqual(parentIds2, ['same-champ'], '冠军参数被改动后旧精英必须失效');
+  assert.ok(result2.state.eliteReset);
+});
+
+// ---- P1 复审：历史冠军保底入池 ----
+
+test('对手池：历史冠军必须保底入池（P1 回归）', () => {
+  const archiveDir = join(mkdtempSync(join(tmpdir(), 'archive-')), 'candidates');
+  mkdirSync(archiveDir, { recursive: true });
+  const mk = (id, weight) => writeFileSync(join(archiveDir, `${id}.json`), JSON.stringify({
+    id, parameters: { ...BASELINE_PARAMETERS, id, engineWeight: weight },
+  }));
+  mk('hist-20261001', 1.1);
+  mk('hist-20261010', 1.2);
+  mk('hist-20261020', 1.3);
+  const champion = { ...BASELINE_PARAMETERS, id: 'champ-now' };
+  // 默认容量 5：此前历史冠军永远轮不到，修复后必须有历史版本入池。
+  const pool = buildOpponentPool({ champion, baseline: BASELINE_PARAMETERS, archiveDir, maxOpponents: 5 });
+  assert.ok(pool.some(p => p.id.startsWith('hist-')), `历史冠军必须入池：${pool.map(p => p.id).join(',')}`);
+  // 极小容量 2：基线与风格变体让位，历史冠军仍保底 1 席。
+  const tiny = buildOpponentPool({ champion, baseline: BASELINE_PARAMETERS, archiveDir, maxOpponents: 2 });
+  assert.equal(tiny.length, 2);
+  assert.ok(tiny.some(p => p.id.startsWith('hist-')), '容量 2 时历史冠军仍必须保底');
+  // 容量充足时更多历史版本按时间倒序补充。
+  const wide = buildOpponentPool({ champion, baseline: BASELINE_PARAMETERS, archiveDir, maxOpponents: 16 });
+  const histIds = wide.filter(p => p.id.startsWith('hist-')).map(p => p.id);
+  assert.equal(histIds.length, 3, '容量充足时三个历史版本都应入池');
+  for (const opponent of pool) assert.doesNotThrow(() => validateAIParameters(opponent));
+});
+
+// ---- P1 复审：种子账本防重 ----
+
+test('验证种子账本：下一块起点必须跳过全部已消费块（含大块历史）', () => {
+  // 历史里有一块 80 种子的消费记录 + lastBase 之外更晚的大块。
+  const ledger = consumeLedger(consumeLedger(null, VALIDATION_POOL_BASE, 80), VALIDATION_POOL_BASE + VALIDATION_STRIDE, 500);
+  const next = nextValidationBase(ledger, { runId: '1' });
+  assert.equal(next, VALIDATION_POOL_BASE + VALIDATION_STRIDE + 500 + VALIDATION_STRIDE,
+    '下一块必须落在最大已消费末端之后，而不是只看 lastBase');
+  // 旧格式账本（无 size）按最大步长保守处理。
+  const legacy = { lastBase: VALIDATION_POOL_BASE + 10 * VALIDATION_STRIDE, history: [{ base: VALIDATION_POOL_BASE + 10 * VALIDATION_STRIDE, at: '2026-01-01' }] };
+  assert.equal(
+    nextValidationBase(legacy, { runId: '1' }),
+    VALIDATION_POOL_BASE + 11 * VALIDATION_STRIDE + VALIDATION_STRIDE,
+    '旧账本无 size 时按 VALIDATION_STRIDE 保守估计',
+  );
+});
+
+test('验证种子账本：重叠消费必须被拒绝（防重复使用）', () => {
+  const ledger = consumeLedger(null, VALIDATION_POOL_BASE + 1000 * VALIDATION_STRIDE, 80);
+  // 与已消费块直接重叠。
+  assert.throws(() => assertBlockFree(VALIDATION_POOL_BASE + 1000 * VALIDATION_STRIDE + 10, 80, ledger), /重叠/);
+  // 账本缺 size 的旧条目按 2000 保守估计 → 落在其内部的块也要拒绝。
+  const legacy = { lastBase: VALIDATION_POOL_BASE, history: [{ base: VALIDATION_POOL_BASE, at: '2026-01-01' }] };
+  assert.throws(() => assertBlockFree(VALIDATION_POOL_BASE + 500, 80, legacy), /重叠/);
+  // 不重叠的下一块通过。
+  assert.ok(assertBlockFree(VALIDATION_POOL_BASE + 1000 * VALIDATION_STRIDE + VALIDATION_STRIDE, 80, ledger));
+  // 非法输入直接抛错。
+  assert.throws(() => assertBlockFree(VALIDATION_POOL_BASE, 0, null), /非法/);
 });

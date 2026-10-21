@@ -24,7 +24,7 @@ import { evolve } from './evolve.mjs';
 import { challengeWithDecision } from '../tournament/challenge.mjs';
 import { requireBuiltEngine, REPO_ROOT } from '../lib/paths.mjs';
 import { writeJSON, appendJSONL, readJSON, ensureDir } from '../lib/io.mjs';
-import { nextValidationBase, consumeLedger } from '../lib/seeds.mjs';
+import { nextValidationBase, consumeLedger, assertBlockFree } from '../lib/seeds.mjs';
 import { buildOpponentPool } from '../lib/opponents.mjs';
 import { BASELINE_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
 
@@ -63,12 +63,16 @@ if (championEntry.structure) champion.structure = championEntry.structure;
 const generations = Number(args.generations ?? 3);
 const population = Number(args.population ?? 8);
 const gamesPerCandidate = Number(args['games-per-candidate'] ?? 20);
-const confirmSeeds = Number(args['confirm-seeds'] ?? 50);
+// 默认 80：决定性种子下限 60，留出平局/异常余量，避免单次平局导致样本不足无法晋级。
+const confirmSeeds = Number(args['confirm-seeds'] ?? 80);
 // 兼容旧参数名 --min-games（按局计）：换算为按种子计的决定性样本下限。
 const minSeeds = args['min-seeds'] !== undefined
   ? Number(args['min-seeds'])
   : Math.ceil(Number(args['min-games'] ?? 120) / 2);
 const poolSize = Number(args['pool-size'] ?? 5);
+// 训练种子基数（审计整改 P0：此前读取了 --seed-base 却未传入 evolve()，
+// 导致断点缺失时总是退回默认值 100000，逐日重复同一批训练牌局）。
+const seedBase = args['seed-base'] !== undefined ? Number(args['seed-base']) : undefined;
 // 参数白名单校验：非法或越界的输入一律快速失败，绝不带病运行。
 for (const [name, value, low, high] of [
   ['--generations', generations, 1, 100],
@@ -81,6 +85,10 @@ for (const [name, value, low, high] of [
   if (!Number.isSafeInteger(value) || value < low || value > high) {
     throw new Error(`${name} 必须为 ${low}–${high} 之间的整数，实际：${String(value)}`);
   }
+}
+if (seedBase !== undefined && (!Number.isSafeInteger(seedBase) || seedBase < 0 || seedBase >= 900_000_000)) {
+  // 训练种子必须留在 [0, 900M) 训练池内：>= 900M 属于验证种子池，绝不能用于训练。
+  throw new Error(`--seed-base 必须为 [0, 900000000) 内的安全整数，实际：${String(seedBase)}`);
 }
 
 // 对手池（审计整改：训练对手多样化）；pool-size 1 退化为仅冠军。
@@ -119,6 +127,8 @@ const result = evolve({
   generations,
   population,
   gamesPerCandidate,
+  // P0 修复：训练种子基数必须真正传入进化器（此前只写进了报告）。
+  seedBase,
   eliteKeep: Number(args['elite-keep'] ?? 3),
   sigma: Number(args.sigma ?? 0.18),
   opponents,
@@ -145,12 +155,15 @@ const report = {
   bestCandidateId: result.bestCandidate?.id ?? null,
   interrupted: result.state.interrupted === true,
   opponents: opponents?.map(o => o.id) ?? [champion.id],
-  seedBase: args['seed-base'] ?? 'default(100000)',
+  // 报告记录实际生效的训练种子基数（断点续训时以 state.seedCursor 为准）。
+  seedBase: args['seed-base'] !== undefined ? seedBase : 'default(100000)',
 };
 
 // 时间预算允许时，用独立验证种子对最佳候选做确认挑战（训练/验证种子隔离 + 不可复用）。
 if (result.improved && remaining() > reserveMs * 0.6) {
   const validationSeedBase = nextValidationBase(previousLedger);
+  // 防重断言（P1 复审）：拟消费块与账本任何已消费块重叠时拒绝挑战，绝不复用种子。
+  assertBlockFree(validationSeedBase, confirmSeeds, previousLedger);
   const { summary } = challengeWithDecision({
     champion, candidate: result.bestCandidate,
     seeds: confirmSeeds, seedBase: validationSeedBase,
@@ -159,8 +172,8 @@ if (result.improved && remaining() > reserveMs * 0.6) {
   report.confirmation = summary;
   report.validationSeedBase = validationSeedBase;
   appendJSONL(logPath, { type: 'confirmation', candidateId: result.bestCandidate.id, seedBase: validationSeedBase, summary });
-  // 记账：该验证种子块已消费，写入 outDir 供工作流归档、下次续接。
-  const ledger = consumeLedger(previousLedger, validationSeedBase);
+  // 记账：该验证种子块已消费（记录块大小供防重校验），写入 outDir 供工作流归档、下次续接。
+  const ledger = consumeLedger(previousLedger, validationSeedBase, confirmSeeds);
   writeJSON(resolve(outDir, 'validation-ledger.json'), ledger);
   if (summary.decision.promote) {
     const candidateFile = resolve(outDir, 'candidate.json');
@@ -171,7 +184,11 @@ if (result.improved && remaining() > reserveMs * 0.6) {
       confirmation: {
         seeds: confirmSeeds, games: summary.finishedGames,
         seedBase: validationSeedBase,
-        winRate: summary.candidateWinRate, paired: summary.paired,
+        // 完整配对证据随候选归档：晋级脚本据此独立重算判定，不信任调用方给出的结论。
+        paired: summary.paired,
+        seedPairs: summary.seedPairs,
+        firstPlace: summary.firstPlace,
+        winRate: summary.candidateWinRate, pairedDiff: summary.pairedDiffCI,
         ci: summary.decision.ci, decision: summary.decision,
       },
       generatedAt: new Date().toISOString(),
@@ -185,6 +202,13 @@ if (result.improved && remaining() > reserveMs * 0.6) {
   console.error('时间预算不足，跳过确认挑战；候选仅完成快速筛选，状态已落盘可续训');
 } else if (result.state.interrupted) {
   console.error('时间预算将尽，进化安全退出；最后完整代状态已落盘，下次 --resume 续训');
+}
+
+// 账本持久化（P1 修复）：即使本次未触发确认挑战，也必须把已有账本原样落盘，
+// 否则工作流归集不到账本文件，下次运行会因账本丢失而重复消费验证种子块。
+if (!existsSync(resolve(outDir, 'validation-ledger.json'))) {
+  if (previousLedger) writeJSON(resolve(outDir, 'validation-ledger.json'), previousLedger);
+  else writeJSON(resolve(outDir, 'validation-ledger.json'), { lastBase: null, history: [] });
 }
 
 report.wallMs = Date.now() - startedAt;
