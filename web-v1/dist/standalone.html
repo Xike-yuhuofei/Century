@@ -959,6 +959,19 @@ html[data-century-mode="mobile"] .mobile-board {
 .replay-controls small { flex-basis:100%; line-height:1.5; overflow-wrap:anywhere; }
 .replay-controls button { white-space:normal; min-height:36px; }
 .result-card { max-height:94vh; overflow-y:auto; }
+
+/* 结算面板可关闭：右上角 ✕ 与底部「查看最终棋盘」，关闭后右下角提供浮层入口。 */
+.result-card { position:relative; }
+.result-actions { display:flex; flex-direction:column; gap:10px; margin-top:18px; }
+.result-actions .secondary-btn { padding:10px 18px; font-size:13px; }
+.result-fab {
+  position:fixed; right:18px; bottom:18px; z-index:8;
+  border:1px solid #e9c892; color:#11252c;
+  background:linear-gradient(125deg,#f2d7a6,#cbaa70);
+  border-radius:999px; padding:10px 18px;
+  font-size:13px; font-weight:800; box-shadow:0 12px 30px #0008;
+}
+.result-fab:active { filter:brightness(.94); }
 </style>
 </head>
 <body><div id="app"></div><script>
@@ -2234,6 +2247,7 @@ let showLog = false;
 let inspectedAI = null;
 let toast = '';
 let botPaused = false;
+let resultHidden = false;
 const humanNames = [];
 let botTimer = null;
 let viewState = { compact: true, players: {} };
@@ -2356,12 +2370,12 @@ function merchantCard(id, marketIndex, bonus, view = 'hand') {
   </${tag}>`;
 }
 function renderSetup() {
-    const botOptions = Array.from({ length: 5 }, (_, n) => `<option value="${n}" ${n === 1 ? 'selected' : ''}>${n} 名</option>`).join('');
+    const botOptions = Array.from({ length: 5 }, (_, n) => `<option value="${n}" ${n === 4 ? 'selected' : ''}>${n} 名</option>`).join('');
     return `<main class="layout landing focus-landing"><header class="topbar focus-setup-top"><strong>晶石回廊</strong>${pageVersionLink()}</header>
-  <section class="focus-setup-panel"><h1>开始对局</h1><p>两名真人固定左右两侧 · 最多 4 名 AI</p>
-    <div class="setup-players"><div><label for="humanCount">真人</label><select id="humanCount">${Array.from({ length: 5 }, (_, n) => `<option value="${n + 1}" ${n === 1 ? 'selected' : ''}>${n + 1} 名</option>`).join('')}</select></div><div><label for="botCount">AI</label><select id="botCount">${botOptions}</select></div></div>
-    <label for="nameInputs">玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1" /><input maxlength="20" aria-label="玩家 2" value="玩家 2" /></div>
-    <p class="setup-validation" id="setupValidation">共 3 人 · 标准模式</p>
+  <section class="focus-setup-panel"><h1>开始对局</h1><p>默认 1 名真人挑战 4 名 AI · 最多 4 名 AI</p>
+    <div class="setup-players"><div><label for="humanCount">真人</label><select id="humanCount">${Array.from({ length: 5 }, (_, n) => `<option value="${n + 1}" ${n === 0 ? 'selected' : ''}>${n + 1} 名</option>`).join('')}</select></div><div><label for="botCount">AI</label><select id="botCount">${botOptions}</select></div></div>
+    <label for="nameInputs">玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1" /></div>
+    <p class="setup-validation" id="setupValidation">共 5 人 · 标准模式</p>
     <button class="primary-btn big" data-action="start">开始游戏 <span>→</span></button>
     <small class="focus-notice">本地离线对局 · 6 人局为非官方扩展</small>
   </section></main>`;
@@ -2623,8 +2637,10 @@ function renderBoard(g) {
   ${finished ? renderResult(g) : ''}</main>`;
 }
 function renderResult(g) {
+    if (resultHidden)
+        return '';
     const result = ranking(g);
-    return `<div class="overlay cover"><section class="result-card"><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><b>${i + 1}. ${esc(p.name)}</b><span>${p.claimed.length} 张魔像</span><strong>${score(p)} 分</strong></div>`).join('')}</div>${replayControls(g)}<button class="primary-btn big" data-action="reset">开始新的一局 ↗</button></section></div>`;
+    return `<div class="overlay cover"><section class="result-card"><button class="close-modal" data-action="close-result" aria-label="关闭结算面板">✕</button><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><b>${i + 1}. ${esc(p.name)}</b><span>${p.claimed.length} 张魔像</span><strong>${score(p)} 分</strong></div>`).join('')}</div>${replayControls(g)}<div class="result-actions"><button class="primary-btn big" data-action="reset">开始新的一局 ↗</button><button class="secondary-btn" data-action="close-result">查看最终棋盘</button></div></section></div>`;
 }
 function modalBody() {
     if (!game || !modal)
@@ -2663,6 +2679,7 @@ function render() {
     root.querySelectorAll('[data-scroll-zone]').forEach(el => scrolls.set(el.dataset.scrollZone, { top: el.scrollTop, left: el.scrollLeft }));
     root.innerHTML = `${game ? renderBoard(game) : renderSetup()}
     ${modal && game && !handoff && game.phase !== 'finished' ? `<div class="overlay" data-overlay="modal"><section class="dialog">${game.phase !== 'overflow' ? '<button class="close-modal" data-action="cancel">✕</button>' : ''}${modalBody()}</section></div>` : ''}
+    ${game && game.phase === 'finished' && resultHidden ? '<button class="result-fab" data-action="show-result">查看结算</button>' : ''}
     ${showHelp ? renderRules() : ''}${toast ? `<div class="toast" role="alert">${esc(toast)}</div>` : ''}`;
     root.querySelectorAll('[data-scroll-zone]').forEach(el => { const at = scrolls.get(el.dataset.scrollZone); if (at) {
         el.scrollTop = at.top;
@@ -2711,6 +2728,7 @@ function start() {
         showHelp = false;
         showLog = false;
         inspectedAI = null;
+        resultHidden = false;
         mobileTab = 'golems';
         mobileHandExpanded = false;
         mobilePlayedOpen = false;
@@ -2773,6 +2791,7 @@ function control(target) {
         inspectedAI = null;
         modal = null;
         botPaused = false;
+        resultHidden = false;
         toast = '';
         viewState.players = {};
         mobileTab = 'golems';
@@ -2790,6 +2809,16 @@ function control(target) {
     }
     if (type === 'close-help') {
         showHelp = false;
+        render();
+        return;
+    }
+    if (type === 'close-result') {
+        resultHidden = true;
+        render();
+        return;
+    }
+    if (type === 'show-result') {
+        resultHidden = false;
         render();
         return;
     }
