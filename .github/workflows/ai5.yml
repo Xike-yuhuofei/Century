@@ -85,12 +85,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - name: 安装依赖（CPU torch + numpy）
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy
       - name: 种子政策测试（解析严格性/重复拒绝/区间布局）
         run: node --test ai5/openevolve/tests/seed-policy.test.mjs
       - name: 账本原子性与隔离验收（flock 并发分配/跨系统零交集）
-        run: |
-          pip install numpy
-          python -m unittest ai5.ppo.tests.python.test_seed_policy -v
+        run: python -m unittest ai5.ppo.tests.python.test_seed_policy -v
 
   openevolve-static-security:
     name: OpenEvolve 安全静态检查（恶意样例）

@@ -22,6 +22,7 @@
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import hashlib
@@ -42,7 +43,10 @@ STAGE2_SEEDS = list(range(300_000_000, 300_000_016))   # 16 种子（快筛）
 STAGE3_SEEDS = list(range(300_000_100, 300_000_148))   # 48 种子（深评）
 
 SANDBOX_ENV = {
-    "PATH": "/usr/bin:/bin:/usr/local/bin",
+    # PATH 必须包含当前 node 的目录：GitHub macOS Runner 的 node 在
+    # /opt/hostedtoolcache/...，硬编码 /usr/local/bin 会让沙箱内 execvp(node) 失败
+    # （CI 首跑实测暴露）。shutil.which 解析符号链接后取真实目录。
+    "PATH": f"{os.path.dirname(os.path.realpath(shutil.which('node') or '/usr/local/bin/node'))}:/usr/bin:/bin",
     "HOME": str(WORK_ROOT / "home"),
     "TMPDIR": str(WORK_ROOT / "tmp"),
     "LANG": "en_US.UTF-8",
