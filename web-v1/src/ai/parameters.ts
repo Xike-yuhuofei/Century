@@ -31,6 +31,13 @@ export type AIParameters = {
   endgameWeight: number;
   /** 结构变体（缺省 beam-lineage = 冠军基线）。 */
   structure?: 'beam-lineage' | 'beam-adaptive' | 'beam-rollout';
+  /** 商人卡获取估值变体（缺省 baseline = 冠军基线实现）。
+   * 'goal-remaining'：AI5 进化候选 66f6a296aa72（OpenEvolve 自动生成，两次独立
+   * 进化重复发现）——goalFit 只统计目标魔像还缺的水晶（max(0, cost−stock)），
+   * 其余项与基线逐字一致。变体经静态安全检查、3000 用例探针、沙箱对战与
+   * 100 新种子深度验证后按 AI 4.0 挑战流程参赛（挑战证据见
+   * training/reports/challenge-ai5-goal-remaining/）。 */
+  acquisitionVariant?: 'baseline' | 'goal-remaining';
 };
 
 /** 参数合法区间；超出即拒绝（防止进化产生无意义参数）。 */
@@ -87,6 +94,13 @@ export function validateAIParameters(input: unknown): AIParameters {
       throw new Error(`未知 AI 结构：${String(source.structure)}`);
     }
     result.structure = source.structure;
+  }
+  // 获取估值变体透传（可选）：与结构同为代码级版本轴，挑战流程按席位注入。
+  if (source.acquisitionVariant !== undefined) {
+    if (source.acquisitionVariant !== 'baseline' && source.acquisitionVariant !== 'goal-remaining') {
+      throw new Error(`未知获取估值变体：${String(source.acquisitionVariant)}`);
+    }
+    result.acquisitionVariant = source.acquisitionVariant;
   }
   return result as AIParameters;
 }

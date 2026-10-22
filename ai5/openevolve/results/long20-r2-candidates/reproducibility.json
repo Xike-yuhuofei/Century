@@ -1,0 +1,23 @@
+{
+  "experiment": "长预算复现轮（long20-r2，20 迭代）",
+  "question": "首轮长跑最优方向（b685bb5a167b，goal-remaining 算法族）能否被独立复现或被更强候选取代",
+  "answer": "复现成立，且未被取代：",
+  "evidence": {
+    "round2_unique_candidates": 95,
+    "byte_identical_rederivation": "b685bb5a167b（与首轮最优 SHA256 完全相同的函数在独立运行中再次被 LLM 推导）",
+    "reimplementation_same_behavior": "926472de7cf3（不同实现文本，3000 探针用例与 b685bb5a167b 逐位一致）",
+    "score_ceiling": "两轮同为 0.6229（配对胜率 0.6786、+1.385/种子，快筛口径）",
+    "round2_stats": {
+      "iterations": 20,
+      "tokens": 1547879,
+      "anomalous_candidates": 0,
+      "score_min_mean_max": [
+        0.3753,
+        0.5471,
+        0.6229
+      ]
+    },
+    "prior_deep_validation": "b685bb5a167b 在 100 唯一新种子上 +0.565/种子，inconclusive（CI [0.457,0.695]，见 deep_validation_long20_best.json）"
+  },
+  "conclusion": "方向真实可复现；统计上仍未脱离 inconclusive，晋级判定需正式挑战（建议 ≥150 种子）"
+}
