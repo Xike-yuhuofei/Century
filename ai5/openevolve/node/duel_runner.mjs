@@ -87,6 +87,8 @@ async function playOne(aiModules, candSeat, seed) {
   const started = performance.now();
   const seats = Array.from({ length: 5 }, () => ({
     decisionCount: 0, totalDecisionMs: 0, maxDecisionMs: 0,
+    acquireActions: 0, claimActions: 0, restActions: 0, playActions: 0,
+    golems: 0,
   }));
   const base = { seed, seatCount: 5, candidateSeat: candSeat, status: 'anomaly', reason: null };
   let game;
@@ -113,6 +115,12 @@ async function playOne(aiModules, candSeat, seed) {
       stats.decisionCount += 1;
       stats.totalDecisionMs += decisionMs;
       if (decisionMs > stats.maxDecisionMs) stats.maxDecisionMs = decisionMs;
+      // 行为特征（MAP-Elites 多样性维度）：按席位统计动作构成。
+      const actionType = response.action.type;
+      if (actionType === 'acquire') stats.acquireActions += 1;
+      else if (actionType === 'claim') stats.claimActions += 1;
+      else if (actionType === 'rest') stats.restActions += 1;
+      else stats.playActions += 1;
       game = applyAction(game, response.action); // 非法行动由正式引擎抛出 → 异常局
       moves += 1;
     }
@@ -124,6 +132,9 @@ async function playOne(aiModules, candSeat, seed) {
     return { ...base, reason: '终局各席位回合数不一致，违反终局结算规则', moves };
   }
   const ranked = ranking(game);
+  for (const player of ranked) {
+    seats[player.id].golems = player.claimed.length; // 终局魔像数按席位回填（行为特征用）
+  }
   return {
     ...base,
     status: 'finished',
@@ -131,6 +142,13 @@ async function playOne(aiModules, candSeat, seed) {
     wallMs: Number((performance.now() - started).toFixed(2)),
     winnerSeat: ranked[0].id,
     ranking: ranked.map(p => ({ seat: p.id, score: score(p), golems: p.claimed.length, crystals: count(p.stock) })),
+    seatActions: seats.map((s, seat) => ({
+      seat,
+      decisions: s.decisionCount,
+      acquire: s.acquireActions, claim: s.claimActions,
+      rest: s.restActions, play: s.playActions,
+      golems: s.golems,
+    })),
     metrics: {
       totalDecisionMs: Number(seats.reduce((s, x) => s + x.totalDecisionMs, 0).toFixed(2)),
       meanDecisionMs: Number((seats.reduce((s, x) => s + x.totalDecisionMs, 0) / Math.max(1, seats.reduce((s, x) => s + x.decisionCount, 0))).toFixed(3)),
@@ -206,6 +224,26 @@ async function main() {
   const diffs = seedPairs.filter(p => p.status === 'finished');
   if (diffs.length) {
     stats.meanScoreDiffPerSeed = Number((diffs.reduce((s, p) => s + p.diff, 0) / diffs.length).toFixed(3));
+  }
+
+  // 行为特征聚合（候选席位，仅统计 finished 局）：供 MAP-Elites 行为维度分桶。
+  // - behavior_acquire_share：候选席位 decisions 中 acquire 占比（引擎建设倾向，0-1）
+  // - behavior_claim_pace：候选席位每 100 步claim 的魔像数（得分节奏）
+  // - behavior_claim_share：候选席位 decisions 中 claim 占比（直接得分倾向，0-1）
+  const finishedWithActions = games.filter(g => g.status === 'finished' && g.seatActions);
+  if (finishedWithActions.length) {
+    const cand = finishedWithActions.map(g => ({
+      ...g.seatActions[g.candidateSeat],
+      moves: g.moves,
+    }));
+    const total = cand.reduce((s, x) => s + x.decisions, 0);
+    const golems = cand.reduce((s, x) => s + x.golems, 0);
+    const moves = cand.reduce((s, x) => s + x.moves, 0);
+    const acquire = cand.reduce((s, x) => s + x.acquire, 0);
+    const claim = cand.reduce((s, x) => s + x.claim, 0);
+    stats.behavior_acquire_share = Number((acquire / Math.max(1, total)).toFixed(4));
+    stats.behavior_claim_share = Number((claim / Math.max(1, total)).toFixed(4));
+    stats.behavior_claim_pace = Number((golems / Math.max(1, moves) * 100).toFixed(4));
   }
 
   const result = {

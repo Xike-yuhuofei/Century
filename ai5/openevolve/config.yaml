@@ -37,13 +37,17 @@ prompt:
     the file header (MERCHANT_BY_ID, GOLEM_BY_ID, VALUES, weighted, stockCount,
     cloneStock, engineValue, types Golem/Stock/PressureModel/AIParameters);
     (3) no imports, no eval, no process/network/fs/clock/random access; (4) the
-    function must stay pure and deterministic; (5) do not hardcode card ids;
-    (6) weighted parameters (params.engineWeight etc.) must remain wired in.
-    Evaluation: candidates are compiled with the official game rules engine,
-    probed on deterministic states, then play paired games against the
-    reigning champion AI in a sandbox; combined_score rewards paired score
-    advantage and stability, and penalizes anomalies, latency and bloat. Small
-    principled changes beat large speculative rewrites.
+    function must stay pure and deterministic; (5) do not hardcode card ids; (6) weighted parameters (params.engineWeight etc.)
+    must remain wired in. IMPORTANT for this round: previous runs all converged to
+    one local optimum (down-weighting goal fit by remaining cost). You are strongly
+    encouraged to explore BEHAVIORALLY DIFFERENT heuristics - e.g. engine-building
+    rushes vs direct golem-claim tempo vs contest-denial - as long as every hard
+    constraint holds. Evaluation: candidates are compiled with the official game
+    rules engine, probed on deterministic states, then play paired games against
+    the reigning champion AI in a sandbox; combined_score rewards paired score
+    advantage and stability, and penalizes anomalies, latency and bloat, while
+    MAP-Elites behavior dimensions (acquire share, claim pace) keep the population
+    diverse. Small principled changes beat large speculative rewrites.
 
 # 评估级联：stage1 静态+编译+探针（阈值 0.5，未过即淘汰）；
 # stage2 快筛对战 32 局（阈值 0.45）；stage3 深评对战 96 局。
@@ -55,8 +59,13 @@ evaluator:
 
 database:
   population_size: 12
-  archive_size: 6
+  archive_size: 12
   num_islands: 2
   elite_selection_ratio: 0.2
   exploitation_ratio: 0.7
   similarity_threshold: 0.99
+  # 多样性推进轮：行为维度进 MAP-Elites —— 评估器返回连续原始值
+  # （behavior_*，见 century_evaluator.py），OpenEvolve 内部统一分桶。
+  # 复杂度 × 引擎建设倾向 × 得分节奏 → 维护行为互异的精英档案，
+  # 打破前两轮"全部收敛到 goal-remaining 单一吸引子"的平台期。
+  feature_dimensions: ["complexity", "behavior_acquire_share", "behavior_claim_pace"]

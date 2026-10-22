@@ -39,8 +39,11 @@ RESULTS_ROOT = AI5_ROOT / "results" / "evaluations"
 # AI5 种子纪律：只用训练池 [300M, 400M) 的 AI5 专用子块；与 AI 4.0 日常进化
 # [0, 300M)、基准评测 [400M, 900M)、验证池 [900M, 1.06e9) 物理隔离，绝不触碰
 # 冠军验证账本（lib/seeds.mjs 管理的 900M 块）。
-STAGE2_SEEDS = list(range(300_000_000, 300_000_016))   # 16 种子（快筛）
-STAGE3_SEEDS = list(range(300_000_100, 300_000_148))   # 48 种子（深评）
+# 多样性推进轮（diversity-push）：快筛/深评种子轮换到 AI5 子块内的全新区段，
+# 与 long20/long20-r2（0-15、100-147）及全部深度验证区（300,001,000-299）物理隔离
+# —— 固定评估地貌会让进化收敛到同一吸引子（两轮长跑已实证），轮换种子即换地貌。
+STAGE2_SEEDS = list(range(300_000_200, 300_000_216))   # 16 种子（快筛）
+STAGE3_SEEDS = list(range(300_000_300, 300_000_348))   # 48 种子（深评）
 
 SANDBOX_ENV = {
     # PATH 必须包含当前 node 的目录：GitHub macOS Runner 的 node 在
@@ -240,6 +243,10 @@ def _stage_impl(program_path: str, stage: int) -> dict:
         "code_complexity": float(complexity),
         "function_sha256_head": float(int(fn_sha[:8], 16) / 0xFFFFFFFF),
         "seed_block": 300.0,  # 百万计（披露用）
+        # 行为特征（MAP-Elites 自定义维度，连续原始值；缺省中性值兜底）。
+        "behavior_acquire_share": float(stats.get("behavior_acquire_share", 0.5)),
+        "behavior_claim_share": float(stats.get("behavior_claim_share", 0.1)),
+        "behavior_claim_pace": float(stats.get("behavior_claim_pace", 5.0)),
     }
 
 
