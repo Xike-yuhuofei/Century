@@ -24,9 +24,13 @@ import numpy as np
 import torch
 
 from ..env.vec_env import DecisionRequest, GameResult, SeatSpec, VecEnv
+from ...lib.seed_policy import PPO_TRAINING_BLOCK
 from .rollout import RolloutBuffer
 
 LEARNER_POLICY = "learner"
+
+PPO_TRAINING_BLOCK_BASE, _PPO_TRAINING_BLOCK_END = PPO_TRAINING_BLOCK
+PPO_TRAINING_BLOCK_SIZE = _PPO_TRAINING_BLOCK_END - PPO_TRAINING_BLOCK_BASE
 
 
 def derive_rng(run_seed: int, kind: str, index: int) -> np.random.Generator:
@@ -55,6 +59,28 @@ class CollectorConfig:
     max_candidates: int = 512
     batch_wait_ms: float = 4.0
     seed_salt: int = 0
+    # P1 整改：快照席位解析策略——rotate（默认，轮转保证覆盖）/ random（按
+    # (run_seed, game_index) 确定性抽样）/ latest（旧行为：永远最新快照）。
+    snapshot_sampling: str = "rotate"
+
+
+def resolve_snapshot_seat(snapshot_ids: list[str], game_index: int, run_seed: int,
+                          sampling: str) -> str:
+    """把 "snapshot" 占位席位解析为具体快照 id（确定性）。
+
+    P1 整改：旧行为所有快照席位都经 "snap" 别名指向最新快照——历史快照池形同虚设，
+    对手池退化为单一策略。rotate 轮转保证池内每个快照均匀出场；random 用
+    稳定派生 rng（不用全局 random，避免影响其它随机源）。
+    """
+    if not snapshot_ids:
+        raise RuntimeError("快照池为空：snapshot 席位要求至少先 push 一个快照")
+    if sampling == "latest":
+        return snapshot_ids[-1]
+    if sampling == "rotate":
+        return snapshot_ids[game_index % len(snapshot_ids)]
+    if sampling == "random":
+        return snapshot_ids[int(derive_rng(run_seed, "snapshot_pick", game_index).integers(0, len(snapshot_ids)))]
+    raise ValueError(f"未知快照抽样策略：{sampling}")
 
 
 class PolicyBundle:
@@ -137,7 +163,8 @@ class Collector:
 
     def __init__(self, env: VecEnv, bundle: PolicyBundle, buffer: RolloutBuffer,
                  run_seed: int, layout: list[SeatSpec], cfg: CollectorConfig,
-                 learner_policy_id: str = LEARNER_POLICY, reward_cfg: dict | None = None):
+                 learner_policy_id: str = LEARNER_POLICY, reward_cfg: dict | None = None,
+                 snapshot_ids_provider=None):
         self.env = env
         self.bundle = bundle
         self.buffer = buffer
@@ -146,11 +173,14 @@ class Collector:
         self.cfg = cfg
         self.learner_policy_id = learner_policy_id
         self.reward_cfg = reward_cfg or {"mode": "rank_win"}
+        # P1 整改：snapshot 席位的池来源（返回当前池 id 列表，池增删后动态生效）。
+        self.snapshot_ids_provider = snapshot_ids_provider
         self.game_counter = 0
         self.decision_counter = 0
         self.pending: list[DecisionRequest] = []
         self.game_policies: dict[int, list[str]] = {}   # game_id → 每席位 policy_id
         self.active_workers: set[int] = set()           # 已派发对局且未收到终局的 worker
+        self._draining = False                          # 排水中：不再派发新局
         # 指标累计
         self.metrics = {
             "games": 0, "anomaly_games": 0, "learner_decisions": 0,
@@ -158,12 +188,46 @@ class Collector:
             "enum_full_sum": 0.0, "enum_kept_sum": 0.0, "enum_decisions": 0, "pruned_decisions": 0,
             "mlp_roundtrip_ms_sum": 0.0, "mlp_roundtrip_count": 0,
             "wall_s": 0.0,
+            "stale_discarded": 0,                        # 混代轨迹丢弃的转移数（on-policy 审计）
+            "opponentAppearances": {},                   # policy_id → 对局出场次数（对手池覆盖审计）
         }
 
+    def restore_state(self, game_counter: int, decision_counter: int,
+                      metrics: dict | None = None,
+                      buffer_stats: dict | None = None) -> None:
+        """断点恢复：续接对局/决策计数器与累计指标（P1 整改，旧版恢复时全部清零
+        ——训练种子从头重放、游戏数统计断档）。"""
+        self.game_counter = int(game_counter)
+        self.decision_counter = int(decision_counter)
+        if metrics:
+            for k, v in metrics.items():
+                if k in self.metrics:
+                    if k == "opponentAppearances":
+                        self.metrics[k] = dict(v)
+                    elif isinstance(v, (int, float)):
+                        self.metrics[k] = v
+        if buffer_stats:
+            for k, v in buffer_stats.items():
+                if k in self.buffer.stats:
+                    self.buffer.stats[k] = int(v)
+
     def _launch_game(self, worker_id: int) -> None:
+        if self._draining:
+            return
         layout = assign_seats(self.run_seed, self.game_counter, self.layout)
+        # 快照占位席位 → 具体历史快照 id（在洗牌后的布局上解析，保持身份）。
+        placeholders = [i for i, s in enumerate(layout) if s.policy_id == "snapshot"]
+        if placeholders:
+            ids = list(self.snapshot_ids_provider() if self.snapshot_ids_provider else [])
+            for i in placeholders:
+                layout[i] = SeatSpec.mlp(resolve_snapshot_seat(
+                    ids, self.game_counter, self.run_seed, self.cfg.snapshot_sampling))
         seed = derive_seed(self.run_seed, self.game_counter, self.cfg.seed_salt)
         self.game_policies[self.game_counter] = [spec.policy_id for spec in layout]
+        for spec in layout:
+            if spec.policy_id != self.learner_policy_id:
+                self.metrics["opponentAppearances"][spec.policy_id] = \
+                    self.metrics["opponentAppearances"].get(spec.policy_id, 0) + 1
         self.env.start_game(worker_id, self.game_counter, seed, layout)
         self.active_workers.add(worker_id)
         self.game_counter += 1
@@ -224,25 +288,37 @@ class Collector:
             # learner 轨迹回填奖励。
             scores = result.scores
             n = len(scores)
+            # P1 整改：终局 claimed（认领魔像数）由 bridge terminal 逐席位回传，
+            # 辅助奖励启用时走 finish_game_full 完整结算链（旧版 claimed 恒 0、
+            # 且从不调用 finish_game_full——辅助奖励实际不可用）。
             final_states = []
             for i in range(n):
                 st = result.seat_stats[i] if i < len(result.seat_stats) else {}
-                claimed = 0
-                # claimed 数来自 terminal 消息的 partial（仅异常局）——正常局通过轨迹推断：
-                # 用 buffer 中该席位轨迹的枚举上下文不可靠，这里从 ranks/scores 之外
-                # 无法直接取 claimed，因此辅助奖励用 claimed 需要协议补充；默认关闭。
-                final_states.append({"claimed": claimed, "score": scores[i],
+                final_states.append({"claimed": int(st.get("claimed", 0)),
+                                     "score": scores[i],
                                      "turns": st.get("decisionCount", 1)})
-            self.buffer.finish_game(result.game_id, seats, scores, result.ranks,
-                                    result.winner_seat, result.status,
-                                    self.reward_cfg, self.learner_policy_id)
-        # 立即派发下一局（worker 流水线不停）。
+            aux_cfg = self.reward_cfg.get("aux", {}) if isinstance(self.reward_cfg, dict) else {}
+            aux_enabled = any(isinstance(v, (int, float)) and v for v in aux_cfg.values())
+            if aux_enabled:
+                self.buffer.finish_game_full(result.game_id, seats, scores, result.ranks,
+                                             result.winner_seat, result.status,
+                                             self.reward_cfg, self.learner_policy_id,
+                                             final_states)
+            else:
+                self.buffer.finish_game(result.game_id, seats, scores, result.ranks,
+                                        result.winner_seat, result.status,
+                                        self.reward_cfg, self.learner_policy_id)
+        # 立即派发下一局（worker 流水线不停；排水阶段除外）。
         self._launch_game(result.worker_id)
 
     def collect(self, target_learner_decisions: int, max_wall_s: float | None = None) -> dict:
         """采集直到 learner 决策数达标（或墙钟预算耗尽）。返回本段指标。
 
         可重入：上次调用留下的进行中对局继续推进；只对空闲 worker 派发新局。
+        P1 整改（on-policy 迭代边界）：末尾排水——达到目标后不再派发新局，
+        等待全部进行中对局终局并结算完毕才返回。此后训练循环做 GAE + PPO 更新，
+        保证更新批内每条轨迹都完全由当前策略采集（同链不混代），
+        检查点也只在排水后的干净边界保存。
         """
         assert self.layout, "席位布局为空"
         t0 = time.perf_counter()
@@ -261,7 +337,18 @@ class Collector:
             if len(self.pending) >= self.env.n_workers or (
                     self.pending and len(self.pending) > 0 and _waited_long(self.pending)):
                 self._flush()
+        # —— 排水：不再派发新局，等全部在途对局终局 ——
+        self._draining = True
+        while self.active_workers:
+            msgs = self.env.drain(timeout=0.05)
+            if msgs:
+                for m in msgs:
+                    self._handle(m)
+            if self.pending and _waited_long(self.pending):
+                self._flush()
+        self._draining = False
         self._flush()
+        self.metrics["stale_discarded"] = self.buffer.stats.get("stale_discarded", 0)
         self.metrics["wall_s"] = round(time.perf_counter() - t0, 2)
         return dict(self.metrics)
 
@@ -274,7 +361,25 @@ def _waited_long(pending: list) -> bool:
 
 
 def derive_seed(run_seed: int, game_index: int, seed_salt: int) -> int:
-    """对局引擎种子：落在 [0, 2^31) 的确定性派生（训练池约定由调用方审计）。"""
+    """对局引擎种子：确定性派生，强制落在 PPO 训练子块 [300_100_000, 350_000_000)。
+
+    P0 可靠性整改：旧实现落在 [0, 2^31) 全域——实测历史训练约 13% 种子落入
+    验证池区间 [900M, 1.06e9)，破坏验证池完整性（幸而与已消费验证块无碰撞，
+    审计见 ai5/ppo/reports/seed-audit/）。新实现 (raw + salt) mod 块大小后加
+    块基址，保证任何 (run_seed, game_index, salt) 组合都绝不可能越界：
+    - 不进入验证池 [900M, 1.06e9)（AI4 确认挑战 + AI5 arena 独立验证）；
+    - 不进入 AI4 进化 [0, 300M) / 基准区 [400M, 900M)；
+    - 不进入 OpenEvolve 评测子块（stage2/stage3/深度验证均在 [300M, 300.1M)）。
+    历史检查点复现用旧公式：derive_seed_legacy（仅审计脚本使用）。
+    """
+    rng = derive_rng(run_seed, "game_seed", game_index)
+    raw = int(rng.integers(0, PPO_TRAINING_BLOCK_SIZE))
+    return PPO_TRAINING_BLOCK_BASE + (raw + (seed_salt & 0x7FFFFFFF)) % PPO_TRAINING_BLOCK_SIZE
+
+
+def derive_seed_legacy(run_seed: int, game_index: int, seed_salt: int = 0) -> int:
+    """旧版 derive_seed（[0, 2^31) 全域）——仅用于历史运行种子污染审计，
+    训练代码禁止调用（见 ai5/ppo/reports/seed-audit/audit_seed_pollution.py）。"""
     rng = derive_rng(run_seed, "game_seed", game_index)
     value = (int(rng.integers(0, 2**31 - 1)) ^ (seed_salt & 0x7FFFFFFF)) & 0x7FFFFFFF
     return max(0, value)

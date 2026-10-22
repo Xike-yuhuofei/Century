@@ -1,0 +1,147 @@
+# AI 5.0 专属 CI（P0 可靠性整改）：数据可信性、训练可靠性、种子纪律、安全边界。
+#
+# 任务书验收要求：
+# - PPO Python 单元与集成测试（含断点恢复确定性端到端）；
+# - Node 合法行动与信息公平性测试；
+# - 种子唯一性、隔离性和账本一致性测试；
+# - OpenEvolve 安全静态检查（恶意样例）；
+# - 短程端到端冒烟；
+# - macOS Seatbelt 验收只在 macOS Runner 上执行——Linux 通过不代表 Seatbelt 通过。
+# 任何关键测试失败，本工作流必须返回失败状态（默认行为）。
+name: AI 5.0 reliability tests
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'ai5/**'
+      - 'training/evaluator/stats.mjs'
+      - 'training/lib/seeds.mjs'
+      - '.github/workflows/ai5.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ai5/**'
+      - 'training/evaluator/stats.mjs'
+      - 'training/lib/seeds.mjs'
+      - '.github/workflows/ai5.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ppo-python-tests:
+    name: PPO Python 单元/集成/断点恢复
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 安装依赖（CPU torch + numpy）
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy
+      - name: 构建引擎与冠军 AI（web-v1/dist）
+        working-directory: web-v1
+        run: npm install --no-audit --no-fund && npm run build
+      - name: PPO 单元测试（GAE/PPO/奖励/softmax/种子约束）
+        run: python -m unittest ai5.ppo.tests.python.test_ai5_ppo ai5.ppo.tests.python.test_seed_policy ai5.ppo.tests.python.test_export_consistency -v
+      - name: 训练可靠性单元测试（对手池轮换/on-policy 边界/检查点 RNG）
+        run: python -m unittest ai5.ppo.tests.python.test_training_reliability.TestSnapshotPoolRotation ai5.ppo.tests.python.test_training_reliability.TestOnPolicyBoundary ai5.ppo.tests.python.test_training_reliability.TestAuxRewardChain ai5.ppo.tests.python.test_training_reliability.TestCheckpointRngRoundTrip -v
+      - name: 断点恢复确定性端到端（真实 Node worker + 引擎 + 冠军）
+        run: python -m unittest ai5.ppo.tests.python.test_training_reliability.TestResumeDeterminismE2E -v
+
+  node-tests:
+    name: Node 编码/合法行动/信息公平性
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 构建引擎与冠军 AI
+        working-directory: web-v1
+        run: npm install --no-audit --no-fund && npm run build
+      - name: PPO 编码/枚举合法性/信息公平性/worker 协议测试
+        run: node --test "ai5/ppo/tests/node/*.test.mjs"
+
+  seed-discipline:
+    name: 种子唯一性/隔离/账本一致性
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 安装依赖（CPU torch + numpy）
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy
+      - name: 种子政策测试（解析严格性/重复拒绝/区间布局）
+        run: node --test ai5/openevolve/tests/seed-policy.test.mjs
+      - name: 账本原子性与隔离验收（flock 并发分配/跨系统零交集）
+        run: python -m unittest ai5.ppo.tests.python.test_seed_policy -v
+
+  openevolve-static-security:
+    name: OpenEvolve 安全静态检查（恶意样例）
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 恶意样例静态拦截（无需沙箱的纯静态层）
+        run: node --test ai5/openevolve/tests/static-check.malicious.test.mjs
+
+  macos-seatbelt:
+    name: Seatbelt 沙箱验收（仅 macOS）
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 安装 web-v1 依赖（tsc + dist 编译产物用于候选编译/探针验收）
+        working-directory: web-v1
+        run: npm install --no-audit --no-fund && npm run build
+      - name: 沙箱全链路验收（静态/组装/编译/探针沙箱化 + 恶意样例 + 超时 + 越界/联网拒绝）
+        run: python3 ai5/openevolve/tests/test_security_sandbox.py -v
+
+  e2e-smoke:
+    name: 端到端冒烟（对局管线）
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 构建引擎与冠军 AI
+        working-directory: web-v1
+        run: npm install --no-audit --no-fund && npm run build
+      - name: 同局双版本对战冒烟（官方基线自对照，4 唯一种子）
+        run: |
+          node ai5/openevolve/node/duel_runner.mjs --candidate-official \
+            --seed-base 300000000 --seeds 4 --out /tmp/duel-smoke.json
+          node -e "
+            const r = require('/tmp/duel-smoke.json');
+            if (r.config.uniqueSeedCount !== 4) process.exit(1);
+            if (r.stats.anomalyGames !== 0) process.exit(1);
+            if (r.stats.meanScoreDiffPerSeed !== 0) { console.error('官方自对照分差必须为 0'); process.exit(1); }
+            console.log('duel smoke OK:', r.stats.totalGames, 'games,', r.config.uniqueSeedCount, 'unique seeds');
+          "

@@ -241,6 +241,28 @@ sandbox-exec）：默认全拒；**拒绝读取真实用户主目录**（~/.code
 
 ### 深度独立验证（关键诚实结论）
 
+> **⚠️ 2026-10-22 整改声明：本节的 v1 深度验证结论已废止（INVALID）。**
+> 事后审计发现 v1 的种子文件 101 行全部为同一种子 300001000（科学计数法
+> `3.00001e+08` 被旧解析静默接受），"100 个新种子"实为 **1 个唯一种子**——
+> 下表的 rejected 判定与 CI 是单种子伪影，不具备独立验证证据力。
+> 原始数据作为审计证据归档于
+> `results/audit/deep_validation_v1_invalid/`（含废止声明与根因链），
+> 种子 300001000 已在账本占位永不复用。**下方 v2 表格为整改后的有效结论**，
+> 统计判定标准未做任何修改（同一 `pairedPromotionDecision`）。
+>
+> **v2（100 个唯一种子，账本块 [300001003, 300001103)，404 局，0 异常）**：
+>
+> | 组 | 唯一种子 | 逐种子平均分差 | 配对得分优势率（95% CI） | 判定 |
+> |---|---|---|---|---|
+> | 最优候选 vs 冠军 | 100 | **+0.425** | 0.608（[0.471, 0.730]） | **inconclusive（不确定）** |
+> | 官方基线 vs 冠军（同种子对照） | 100 | 0（精确） | —（决定性种子 0） | 席位公平性确认 |
+>
+> 即：真实独立种子下候选呈轻微正优势但统计不确定（平局率 0.49）——v1 的
+> "反转并落败"结论不成立。详见 AI5-RELIABILITY-REMEDIATION-REPORT.md。
+
+<details>
+<summary>v1 原始记录（已废止，仅存档）</summary>
+
 对受控最优候选 66f6a296aa72，在**与快筛/深评种子完全隔离**的 100 个新种子
 （300,001,000-300,001,099，AI5 子块内）上做 202 局独立复检
 （`results/deep_validation_best.json`），并同种子跑官方基线对照
@@ -256,6 +278,8 @@ sandbox-exec）：默认全拒；**拒绝读取真实用户主目录**（~/.code
 胜率波动宣称更强算法"的实际证明。本阶段**不产生任何"AI 5.0 更强"的宣称**，
 最优候选仅登记为实验版本；任何晋级判定永远属于 AI 4.0 正式冠军挑战流程。
 
+</details>
+
 ### 评估证据存档（每个候选）
 
 `results/evaluations/<函数SHA256前12位>/`：
@@ -268,8 +292,10 @@ sandbox-exec）：默认全拒；**拒绝读取真实用户主目录**（~/.code
 
 - 本阶段**未晋级任何候选**，原冠军 `struct-beam-rollout` 完整保留、随时可回滚；
   `web-v1/src/ai/parameters.ts` 与网页游戏零改动（官方产物 SHA256 前后断言通过）；
-- 受控实验最优候选经 100 新种子深度独立验证为**劣势**（配对判定 rejected，见 §7
-  深度独立验证），已按纪律拒之门外 —— 候选筛选系统具备了自我否定的能力；
+- 受控实验最优候选的深度独立验证（见 §7）：v1"劣势"结论因种子重复事故已废止；
+  v2（100 唯一种子）判定为 **inconclusive（不确定）**——仍不构成晋级依据，
+  候选保持实验版本登记，验证流程的自我否定与谨慎放行机制有效（详见
+  AI5-RELIABILITY-REMEDIATION-REPORT.md）；
 - 晋级路径保持 AI 4.0 原样：候选若要挑战冠军，必须走 `training/tournament/challenge.mjs`
   独立验证种子 + `promote-champion.mjs` 证据核验 + `apply-champion.mjs` 落地 + PR 评审；
   AI5 只产出候选与证据，不触碰验证账本与 alpha 消耗机制。
@@ -336,7 +362,7 @@ sandbox-exec）：默认全拒；**拒绝读取真实用户主目录**（~/.code
 | 安全隔离与针对性测试 | `ai5/openevolve/sandbox/`、`experiments/isolation_test.mjs`（12/12） |
 | 三组验证实验 | `ai5/openevolve/experiments/exp_{a,b,c}*`、`results/exp_*.json` |
 | 候选算法与对局数据 | `ai5/openevolve/results/evaluations/`、`results/smoke-candidates/`、`results/controlled-candidates/` |
-| 深度独立验证 | `ai5/openevolve/results/deep_validation_{best,baseline}.json`（100 新种子 × 2 组 × 202 局） |
+| 深度独立验证 | v1 已废止归档：`results/audit/deep_validation_v1_invalid/`（种子重复事故）；v2 有效结论：`results/deep_validation_v2_best{,_baseline}.json`（100 唯一种子 × 2 组 × 404 局，账本留痕） |
 | 可复现实验报告 | 本文件（种子、参数、代码版本、逐局成绩全部落盘） |
 | 独立分支 | `feat/ai5-openevolve-poc`（PR 为准） |
 

@@ -27,6 +27,7 @@ import { createGame, applyAction, score, ranking, count } from '../../../web-v1/
 import * as officialAI from '../../../web-v1/dist/js/ai.js';
 import { pairedPromotionDecision, firstPlaceStats } from '../../../training/evaluator/stats.mjs';
 import { ENGINE_SEED_MAX } from '../../../training/lib/seeds.mjs';
+import { parseSeedList, AI5_BLOCK } from '../../lib/seed_policy.mjs';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const DEFAULT_MAX_MOVES = 1200;
@@ -50,23 +51,22 @@ if (!candidatePath && !candidateOfficial) { console.error('缺少 --candidate �
 
 // 种子纪律：AI5 快速筛选只使用训练池 [300M, 400M) 内的 AI5 专用子块，
 // 不触碰 AI 4.0 日常进化 [0, 300M)、基准评测 [400M, 900M) 与验证池 [900M, ∞)。
-const AI5_SEAT_BLOCK = [300_000_000, 400_000_000];
+// （常量定义移入 ai5/lib/seed_policy.mjs，与 Python 侧逐值对齐。）
 
+/** P0 可靠性整改：种子列表解析统一走 seed_policy.parseSeedList——
+ * 严格十进制整数（拒绝科学计数法）、区间校验、唯一种子强制。
+ * 事故背景：旧实现 Number() 会静默接受 "3.00001e+08"，101 行重复种子
+ * 让 101 个"独立"配对样本实为 1 个，独立验证结论失真（已废止归档）。 */
 function loadSeeds() {
   if (seedListFile) {
-    const list = readFileSync(seedListFile, 'utf8').split('\n').map(s => s.trim()).filter(Boolean).map(Number);
-    for (const s of list) {
-      if (!Number.isSafeInteger(s) || s < AI5_SEAT_BLOCK[0] || s > AI5_SEAT_BLOCK[1]) {
-        throw new Error(`种子 ${s} 超出 AI5 训练子块 ${AI5_SEAT_BLOCK.join('..')}（种子纪律违规）`);
-      }
-    }
-    return list;
+    const text = readFileSync(seedListFile, 'utf8');
+    return parseSeedList(text, { block: AI5_BLOCK, requireUnique: true });
   }
   const list = [];
   for (let i = 0; i < seedCount; i++) {
     const s = seedBase + i;
-    if (s < AI5_SEAT_BLOCK[0] || s > AI5_SEAT_BLOCK[1]) {
-      throw new Error(`种子 ${s} 超出 AI5 训练子块（调整 --seed-base）`);
+    if (s < AI5_BLOCK[0] || s >= AI5_BLOCK[1]) {
+      throw new Error(`种子 ${s} 超出 AI5 训练子块 ${AI5_BLOCK.join('..')}（调整 --seed-base）`);
     }
     list.push(s);
   }
@@ -188,6 +188,7 @@ async function main() {
 
   const stats = {
     totalGames: games.length,
+    uniqueSeedCount: seeds.length,
     finishedGames: finishedGames.length,
     anomalyGames,
     anomalyRate: Number((anomalyGames / Math.max(1, games.length)).toFixed(4)),
@@ -211,7 +212,9 @@ async function main() {
     config: {
       candidate: candidateOfficial ? 'official-baseline' : resolve(candidatePath),
       paired: true, seeds: seedListFile ? `file:${seedListFile}` : `${seedBase}..${seedBase + seedCount - 1}`,
-      seedBlock: AI5_SEAT_BLOCK, maxMoves, deadlineMs,
+      seedBlock: AI5_BLOCK,
+      uniqueSeedCount: seeds.length,
+      maxMoves, deadlineMs,
       championId: champion.id, championParameters: championParams,
     },
     modules: { engine: 'web-v1/dist/js/engine.js (official)', championAI: 'web-v1/dist/js/ai.js (official)', candidateAI: candidateOfficial ? 'official' : resolve(candidatePath) },

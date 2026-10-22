@@ -22,6 +22,7 @@
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import hashlib
@@ -42,7 +43,10 @@ STAGE2_SEEDS = list(range(300_000_000, 300_000_016))   # 16 种子（快筛）
 STAGE3_SEEDS = list(range(300_000_100, 300_000_148))   # 48 种子（深评）
 
 SANDBOX_ENV = {
-    "PATH": "/usr/bin:/bin:/usr/local/bin",
+    # PATH 必须包含当前 node 的目录：GitHub macOS Runner 的 node 在
+    # /opt/hostedtoolcache/...，硬编码 /usr/local/bin 会让沙箱内 execvp(node) 失败
+    # （CI 首跑实测暴露）。shutil.which 解析符号链接后取真实目录。
+    "PATH": f"{os.path.dirname(os.path.realpath(shutil.which('node') or '/usr/local/bin/node'))}:/usr/bin:/bin",
     "HOME": str(WORK_ROOT / "home"),
     "TMPDIR": str(WORK_ROOT / "tmp"),
     "LANG": "en_US.UTF-8",
@@ -57,17 +61,24 @@ def _ensure_dirs():
 
 
 def _render_sandbox_profile() -> Path:
-    profile = SANDBOX_TEMPLATE.read_text().replace("@WORKROOT@", str(WORK_ROOT)).replace("@HOME@", str(Path.home()))
+    profile = (SANDBOX_TEMPLATE.read_text()
+               .replace("@WORKROOT@", str(WORK_ROOT))
+               .replace("@REPOROOT@", str(REPO_ROOT))
+               .replace("@HOME@", str(Path.home())))
     out = WORK_ROOT / "sandbox-rendered.sb"
     out.write_text(profile)
     return out
 
 
 def _run(cmd, timeout, log_name, cwd=None):
-    """沙箱内执行一个命令；超时按失败处理（返回 returncode=-9 + 标记）。"""
+    """沙箱内执行一个命令；超时按失败处理（返回 returncode=-9 + 标记）。
+
+    默认 cwd 用 WORK_ROOT：GitHub Runner 的检出在 HOME 内，沙箱拒绝读 HOME
+    时 node 启动的 uv_cwd 会 EPERM（CI 实测）；所有沙箱化命令均用绝对路径，
+    不依赖仓库根 cwd。"""
     try:
         return subprocess.run(
-            cmd, cwd=str(cwd or REPO_ROOT), env=SANDBOX_ENV,
+            cmd, cwd=str(cwd or WORK_ROOT), env=SANDBOX_ENV,
             capture_output=True, text=True, timeout=timeout,
         )
     except subprocess.TimeoutExpired as e:
@@ -95,9 +106,12 @@ def _function_text(program_path: str) -> str | None:
     return fn_file.read_text() if fn_file.exists() else None
 
 
-def _run_static(program_path: str):
+def _run_static(program_path: str, profile: Path):
     out_json = WORK_ROOT / "static-check.json"
-    cmd = ["node", str(NODE_DIR / "static_check.mjs"), "--program", str(program_path), "--out", str(out_json)]
+    # P0 安全整改：静态检查处理不可信源码文本，同样在 Seatbelt 内执行
+    # （此前只有 probe/duel 沙箱化，与注释声称的"所有阶段沙箱"不符）。
+    cmd = ["/usr/bin/sandbox-exec", "-f", str(profile), "node",
+           str(NODE_DIR / "static_check.mjs"), "--program", str(program_path), "--out", str(out_json)]
     proc = _run(cmd, 60, "static")
     return proc.returncode == 0, out_json, proc
 
@@ -108,14 +122,17 @@ def _stage_impl(program_path: str, stage: int) -> dict:
     profile = _render_sandbox_profile()
 
     # ---------- stage 1：静态检查 → 组装 → 编译 → 探针 ----------
-    ok, static_json, proc = _run_static(program_path)
+    ok, static_json, proc = _run_static(program_path, profile)
     if not ok:
         detail = {}
         try:
             detail = json.loads(static_json.read_text())
         except Exception:
-            detail = {"stderr": proc.stderr[-400:]}
-        return _fail("static", detail.get("reason") or "static check failed")
+            detail = {"stderr": proc.stderr[-400:], "stdout": proc.stdout[-400:]}
+        # stderr/stdout 透出：沙箱环境差异（如 Runner 检出在 HOME 内）曾让静态
+        # 检查整体失败但原因被吞掉，无法诊断（CI 实测教训）。
+        return _fail("static", detail.get("reason") or detail.get("stderr")
+                     or detail.get("stdout") or "static check failed")
 
     fn_text_file = Path(str(static_json).replace(".json", ".fn.ts"))
     fn_text = fn_text_file.read_text()
@@ -124,16 +141,21 @@ def _stage_impl(program_path: str, stage: int) -> dict:
 
     workdir = CACHE_ROOT / fn_sha
     asm_json = WORK_ROOT / "assemble.json"
-    asm = _run(["node", str(NODE_DIR / "assemble_candidate.mjs"),
+    # P0 安全整改：候选树组装（复制不可信源码）同样沙箱化。
+    asm = _run(["/usr/bin/sandbox-exec", "-f", str(profile), "node",
+                str(NODE_DIR / "assemble_candidate.mjs"),
                 "--program", str(fn_text_file), "--out", str(workdir)], 60, "assemble")
     if asm.returncode != 0:
         return _fail("assemble", asm.stderr[-400:])
-    # 静态检查产物与组装记录归档（审计）
+    # 静态检查产物与组装记录归档（审计）。
     asm_json.write_text(asm.stdout)
 
     candidate_ai = workdir / "dist" / "js" / "ai.js"
     if not candidate_ai.exists():
-        tsc = _run(["node", str(REPO_ROOT / "web-v1/node_modules/typescript/bin/tsc"),
+        # P0 安全整改：tsc 编译不可信代码是本管线最靠前的执行型步骤，
+        # 必须沙箱化（禁网、禁读主目录、只允许写工作区）。
+        tsc = _run(["/usr/bin/sandbox-exec", "-f", str(profile),
+                    "node", str(REPO_ROOT / "web-v1/node_modules/typescript/bin/tsc"),
                     "-p", str(workdir / "tsconfig.json")], 120, "tsc", cwd=workdir)
         if tsc.returncode != 0:
             return _fail("compile", tsc.stderr[-800:] or tsc.stdout[-400:], compile_stderr=tsc.stderr[-400:])
