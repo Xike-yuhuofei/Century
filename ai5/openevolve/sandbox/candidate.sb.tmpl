@@ -1,0 +1,19 @@
+(version 1)
+;; AI5 候选执行沙箱（macOS Seatbelt / sandbox-exec）
+;; 模板变量：@WORKROOT@（AI5 工作区）、@HOME@（真实用户主目录，整体拒绝读取）
+;; 策略：
+;;   - 默认全拒；
+;;   - 允许读系统与仓库（编译需要 node/tsc/源码）；
+;;   - 只允许写 WORKROOT（候选工作目录与临时目录都在其中）；
+;;   - 拒绝读取真实用户主目录（.codex/.ssh/密钥/历史全部不可达）；
+;;   - 拒绝一切网络（connect/listen/remote 均禁止）。
+(deny default)
+(allow process-exec*)
+(allow process-fork)
+(allow file-read*)
+(allow file-write* (subpath "@WORKROOT@") (subpath "/private/var/folders/") (subpath "/private/tmp/") (subpath "/private/etc/"))
+(deny file-read* (subpath "@HOME@"))
+(deny network*)
+(allow sysctl-read)
+(allow mach-lookup)
+(allow iokit-open)

@@ -1,0 +1,71 @@
+{
+  "experiment": "B：算法修改有效性",
+  "timestamp": "2026-10-21T13:13:54.116Z",
+  "variant": "exp_b_variant.ts（移除协同项与抢牌竞争项）",
+  "seeds": [
+    300000050,
+    300000051,
+    300000052,
+    300000053,
+    300000054,
+    300000055,
+    300000056,
+    300000057,
+    300000058,
+    300000059,
+    300000060,
+    300000061
+  ],
+  "checks": [
+    {
+      "name": "变体通过静态安全检查",
+      "pass": true
+    },
+    {
+      "name": "探针：变体输出与官方显著不同（真实参与估值）",
+      "pass": true,
+      "detail": {
+        "mismatchCount": 1775,
+        "maxAbsDiff": 4.995074,
+        "probeErrors": 0
+      }
+    },
+    {
+      "name": "探针：官方实例输出不受候选模块共存影响（2100 用例无错误）",
+      "pass": true,
+      "detail": {
+        "probeErrors": 0
+      }
+    },
+    {
+      "name": "对局轨迹真实改变（12 种子中候选席位改变结局的种子数 > 0）",
+      "pass": true,
+      "detail": {
+        "divergentSeeds": 12
+      }
+    },
+    {
+      "name": "变体对局零异常（合法候选产生合法行动）",
+      "pass": true,
+      "detail": {
+        "anomalyRate": 0,
+        "games": 24
+      }
+    },
+    {
+      "name": "官方编译产物 SHA256 前后不变（冠军代码未被替换/污染）",
+      "pass": true,
+      "detail": {
+        "shaBefore": {
+          "ai": "4d6c1c55cfc27a38578a157a84c73e1ddddb94f3b99b173f3bcc59e8f64e14a2",
+          "engine": "2335d9fe4c921a952375e1394de39ffd7f0afd7268cd39020a45b53676a9e341"
+        },
+        "shaAfter": {
+          "ai": "4d6c1c55cfc27a38578a157a84c73e1ddddb94f3b99b173f3bcc59e8f64e14a2",
+          "engine": "2335d9fe4c921a952375e1394de39ffd7f0afd7268cd39020a45b53676a9e341"
+        }
+      }
+    }
+  ],
+  "allPass": true
+}
