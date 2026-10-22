@@ -56,13 +56,16 @@ def model_hash(model: torch.nn.Module) -> str:
 
 
 def build_layout(cfg: dict) -> list[SeatSpec]:
-    """席位布局（任务书第九节三种场景）。layout 数组每项："learner" | "snapshot" | "node:变体"。"""
+    """席位布局（任务书第九节三种场景）。layout 数组每项：
+    "learner" | "snapshot"（占位，派发时解析为池内具体快照） | "node:变体"。"""
     layout = []
     for item in cfg["seats"]["layout"]:
         if item == "learner":
             layout.append(SeatSpec.mlp("learner"))
         elif item == "snapshot":
-            layout.append(SeatSpec.mlp("snap"))
+            layout.append(SeatSpec.mlp("snapshot"))
+        elif item == "snap":
+            raise ValueError('"snap" 别名已废除（P1 对手池整改）：请改用 "snapshot" 占位')
         elif item.startswith("node:"):
             layout.append(SeatSpec.node(item.split(":", 1)[1]))
         else:
@@ -101,6 +104,13 @@ def save_checkpoint(path: Path, model, optimizer, state: dict) -> None:
             "actionEncoding": "ai5-action-v1",
             "interface": "ai5-inference-v1",
         },
+        # P1 整改：检查点携带完整随机源状态（旧版缺失 → 恢复后 randperm 等派生
+        # 序列与连续训练分叉，无法逐位续训复现）。
+        "rng": {
+            "python": random.getstate(),
+            "numpy": np.random.get_state(),
+            "torch": torch.get_rng_state(),
+        },
         **state,
     }
     tmp = path.with_suffix(".tmp")
@@ -118,8 +128,29 @@ def load_checkpoint(path: Path, model, optimizer=None) -> dict:
     return payload
 
 
+def restore_rng(payload: dict) -> bool:
+    """恢复全局随机源；旧格式检查点无 rng 字段时返回 False（降级为重新播种）。"""
+    rng = payload.get("rng")
+    if not rng:
+        return False
+    random.setstate(rng["python"])
+    np.random.set_state(rng["numpy"])
+    torch.set_rng_state(rng["torch"])
+    return True
+
+
 class SnapshotPool:
-    """learner 历史快照池（FIFO），供混合对手池场景 C 使用。"""
+    """learner 历史快照池（FIFO），供混合对手池场景使用。
+
+    P1 整改（对手池真实生效）：
+    - 旧实现经通用别名 "snap" 把所有快照席位指向最新快照——历史快照池形同虚设，
+      对手池退化为单一策略；
+    - 现在席位布局声明 "snapshot" 占位，派发对局时由 Collector 通过
+      resolve_snapshot_seat 按策略（rotate 轮转/random/latest）解析为池内具体
+      快照 id（如 snap-000010）——保留快照策略身份，绝不混入 learner 缓冲
+      （rollout 按 policy_id ≠ learner 过滤）；
+    - 每轮不同快照的实际出场次数由 Collector.metrics["opponentAppearances"] 记录。
+    """
 
     def __init__(self, bundle: PolicyBundle, out_dir: Path, max_size: int):
         self.bundle = bundle
@@ -128,20 +159,28 @@ class SnapshotPool:
         self.max_size = max_size
         self.ids: list[str] = []
 
-    def push(self, iteration: int, model) -> str:
-        snap_id = f"snap-{iteration:06d}"
+    def push(self, snap_id: str, model) -> str:
         path = self.out_dir / f"{snap_id}.pt"
         torch.save({"format": CHECKPOINT_FORMAT, "modelState": model.state_dict(),
-                    "arch": model.arch_kwargs(), "iteration": iteration}, path)
-        state = model.state_dict()
-        self.bundle.add_snapshot(snap_id, state)
-        # 席位布局引用的是通用 id "snap"：始终指向最新快照。
-        self.bundle.add_snapshot("snap", state)
+                    "arch": model.arch_kwargs()}, path)
+        self.bundle.add_snapshot(snap_id, model.state_dict())
         self.ids.append(snap_id)
         while len(self.ids) > self.max_size:
             old = self.ids.pop(0)
+            self.bundle.snapshots.pop(old, None)
             (self.out_dir / f"{old}.pt").unlink(missing_ok=True)
         return snap_id
+
+    def push_initial(self, model) -> str:
+        """初始（未训练）快照：保证 snapshot 席位从第一迭代起有对手。"""
+        return self.push("snap-init", model)
+
+    def push_iteration(self, iteration: int, model) -> str:
+        return self.push(f"snap-{iteration:06d}", model)
+
+    def snapshot_ids(self) -> list[str]:
+        """当前池内快照 id（插入序 = 时间序，供轮转解析）。"""
+        return list(self.ids)
 
     def restore(self, run_meta: dict) -> None:
         for snap_id in run_meta.get("snapshotIds", []):
@@ -149,11 +188,10 @@ class SnapshotPool:
             if path.exists():
                 payload = torch.load(path, map_location="cpu", weights_only=False)
                 self.bundle.add_snapshot(snap_id, payload["modelState"])
-                self.ids.append(snap_id)
-        if self.ids:
-            # 重建 "snap" 别名 → 最新快照。
-            payload = torch.load(self.out_dir / f"{self.ids[-1]}.pt", map_location="cpu", weights_only=False)
-            self.bundle.add_snapshot("snap", payload["modelState"])
+                if snap_id not in self.ids:
+                    self.ids.append(snap_id)
+            else:
+                print(f"警告：快照文件缺失，跳过 {snap_id}")
 
 
 def main() -> None:
@@ -205,7 +243,10 @@ def main() -> None:
         totals.update({k: int(resume_meta["totals"].get(k, 0)) for k in totals})
         if model_hash(model) != resume_meta.get("modelHash"):
             raise RuntimeError("恢复后模型哈希不一致——检查点损坏")
-        print(f"已恢复迭代 {resume_meta['iteration']}（decisions={totals['decisions']}）")
+        rng_ok = restore_rng(resume_meta)
+        print(f"已恢复迭代 {resume_meta['iteration']}（decisions={totals['decisions']}）"
+              + ("" if rng_ok else "；警告：旧格式检查点无随机源状态，全局 RNG 重新播种"
+                                    "（逐位续训确定性不保证，模型/优化器/计数器已恢复）"))
 
     env = VecEnv(
         workers=int(cfg["env"]["workers"]), max_moves=int(cfg["env"]["maxMoves"]),
@@ -217,9 +258,19 @@ def main() -> None:
         env, bundle, buffer, run_seed=run_seed, layout=layout,
         cfg=CollectorConfig(workers=int(cfg["env"]["workers"]),
                             batch_wait_ms=float(cfg["env"].get("batchWaitMs", 4.0)),
-                            max_candidates=int(cfg["env"]["maxCandidates"])),
+                            max_candidates=int(cfg["env"]["maxCandidates"]),
+                            snapshot_sampling=str(snapshot_cfg.get("sampling", "rotate"))),
         reward_cfg=cfg["reward"],
+        snapshot_ids_provider=snap_pool.snapshot_ids,
     )
+    if resume_meta:
+        # P1 整改：快照池与计数器/累计指标恢复（旧版从未调用 restore，
+        # 训练种子从头重放、对手池丢失历史快照）。
+        snap_pool.restore(resume_meta)
+        collector.restore_state(
+            int(resume_meta.get("gameCounter", 0)), int(resume_meta.get("decisionCounter", 0)),
+            metrics=resume_meta.get("collectorMetrics"), buffer_stats=resume_meta.get("bufferStats"),
+        )
 
     metrics_path = run_dir / "metrics.jsonl"
     if iteration_start == 0:
@@ -228,9 +279,12 @@ def main() -> None:
             "iteration": -1, "totals": totals, "runSeed": run_seed,
             "gitSha": git_sha(), "config": cfg,
         })
-    if any(s.policy_id == "snap" for s in layout):
-        # 初始快照（resume 时用恢复后的权重）：保证 snapshot 席位从第一迭代起有对手。
-        snap_pool.push(iteration_start - 1, model)
+    if any(s.policy_id == "snapshot" for s in layout):
+        # 初始快照（resume 时由 restore 提供历史池，不重复 push）。
+        if not snap_pool.ids:
+            snap_pool.push_initial(model)
+        else:
+            print(f"快照池已从检查点恢复：{snap_pool.ids}")
 
     iterations = int(cfg["train"]["iterations"])
     deadline = time.time() + time_budget_min * 60 if time_budget_min else None
@@ -242,12 +296,31 @@ def main() -> None:
 
     prev_metrics = dict(collector.metrics)
     interrupted = False
+
+    def write_last_checkpoint(it: int) -> None:
+        """P1 整改：检查点只保存在排水后的迭代边界（collect 末尾已无在途对局），
+        携带完整可恢复状态——模型/优化器/三套 RNG/计数器/快照池/累计统计。"""
+        save_checkpoint(run_dir / "last.pt", model, ppo.optimizer, {
+            "iteration": it, "totals": totals, "runSeed": run_seed,
+            "gitSha": git_sha(), "config": cfg,
+            "snapshotIds": list(snap_pool.ids),
+            "gameCounter": collector.game_counter,
+            "decisionCounter": collector.decision_counter,
+            "collectorMetrics": {k: v for k, v in collector.metrics.items()},
+            "bufferStats": dict(buffer.stats),
+            "policyEpoch": buffer.policy_epoch,
+        })
+
     for it in range(iteration_start, iterations):
         if deadline and time.time() > deadline:
             print(f"达到墙钟预算，安全退出于迭代 {it}")
             interrupted = True
+            write_last_checkpoint(it - 1)  # 上一迭代边界即当前状态（本迭代未开始）
             break
         t0 = time.perf_counter()
+        # P1 整改：策略世代递增 + 采集末尾排水（collect 内部实现）——
+        # 保证本迭代更新批内每条轨迹都完全由当前策略采集。
+        buffer.policy_epoch = it + 1
         collect_metrics = collector.collect(target_learner_decisions=int(cfg["train"]["rolloutSteps"]),
                                             max_wall_s=float(cfg["train"].get("collectWallMaxS", 900)))
         collect_s = time.perf_counter() - t0
@@ -259,8 +332,8 @@ def main() -> None:
 
         # 快照入池。
         snapshot_id = None
-        if snapshot_every and (it + 1) % snapshot_every == 0 and "snap" in [s.policy_id for s in layout]:
-            snapshot_id = snap_pool.push(it, model)
+        if snapshot_every and (it + 1) % snapshot_every == 0 and "snapshot" in [s.policy_id for s in layout]:
+            snapshot_id = snap_pool.push_iteration(it, model)
 
         # 累计指标（差分）。
         for key in ("games", "anomaly_games", "decisions", "pruned_decisions"):
@@ -292,6 +365,8 @@ def main() -> None:
             "enumPrunedFrac": round(collector.metrics["pruned_decisions"] / max(1, collector.metrics["enum_decisions"]), 4),
             "rssMb": round(env.rss_mb(), 1),
             "snapshot": snapshot_id,
+            "staleDiscarded": collect_metrics.get("stale_discarded", 0),
+            "opponentAppearances": collect_metrics.get("opponentAppearances", {}),
         }
         prev_metrics = dict(collector.metrics)
         with metrics_path.open("a") as fh:
@@ -301,13 +376,7 @@ def main() -> None:
 
         # 周期性断点（last.pt 覆盖写；best 由独立评估产出，绝不覆盖）。
         if (it + 1) % int(cfg["train"].get("checkpointEvery", 5)) == 0 or it == iterations - 1:
-            save_checkpoint(run_dir / "last.pt", model, ppo.optimizer, {
-                "iteration": it, "totals": totals, "runSeed": run_seed,
-                "gitSha": git_sha(), "config": cfg,
-                "snapshotIds": list(snap_pool.ids),
-                "gameCounter": collector.game_counter,
-                "decisionCounter": collector.decision_counter,
-            })
+            write_last_checkpoint(it)
 
     env.close()
     summary = {

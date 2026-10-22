@@ -133,10 +133,13 @@ function terminal(state, status, reason, moves, gameAtError) {
     scores, ranks: ranked ? ranked.map(p => p.id) : null,
     winnerSeat: ranked ? ranked[0].id : null,
     moves, wallMs: Number((performance.now() - state.started).toFixed(1)),
-    seatStats: seatStats.map(s => ({
+    seatStats: seatStats.map((s, i) => ({
       decisionCount: s.decisionCount,
       meanDecisionMs: s.decisionCount ? Number((s.totalDecisionMs / s.decisionCount).toFixed(3)) : null,
       maxDecisionMs: Number(s.maxDecisionMs.toFixed(3)),
+      // P1 整改：终局逐席位认领魔像数（辅助奖励 golemProgress 的结算依据）；
+      // 异常局用 error 时刻快照，与 partial 口径一致。
+      claimed: finalGame.players[i].claimed.length,
     })),
     enumAgg: {
       fullDecisions: agg.fullDecisions, prunedDecisions: agg.prunedDecisions,
