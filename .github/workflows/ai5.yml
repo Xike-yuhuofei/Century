@@ -116,9 +116,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: 安装 web-v1 依赖（tsc 用于候选编译验收）
+      - name: 安装 web-v1 依赖（tsc + dist 编译产物用于候选编译/探针验收）
         working-directory: web-v1
-        run: npm install --no-audit --no-fund
+        run: npm install --no-audit --no-fund && npm run build
       - name: 沙箱全链路验收（静态/组装/编译/探针沙箱化 + 恶意样例 + 超时 + 越界/联网拒绝）
         run: python3 ai5/openevolve/tests/test_security_sandbox.py -v
 
