@@ -7,3 +7,9 @@ web-v1/design-mobile/shots/
 
 # 训练模拟器逐局明细体积大且可由种子复现，不入库（summary/report 保留）
 training/reports/**/results.jsonl
+
+# AI5 PPO 训练产物（检查点与导出模型按交付需要入库；中间产物不入库）
+ai5/ppo/reports/**/snapshots/
+ai5/ppo/reports/**/*.tmp
+__pycache__/
+*.pyc

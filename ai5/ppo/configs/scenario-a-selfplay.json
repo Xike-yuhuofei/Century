@@ -1,0 +1,55 @@
+{
+  "train": {
+    "iterations": 60,
+    "rolloutSteps": 2048,
+    "runSeed": 20261022,
+    "device": "auto",
+    "checkpointEvery": 5,
+    "logEvery": 1,
+    "collectWallMaxS": 1800,
+    "timeBudgetMin": 0
+  },
+  "env": {
+    "workers": 4,
+    "maxMoves": 1200,
+    "deadlineMs": 60000,
+    "maxCandidates": 512,
+    "batchWaitMs": 4.0
+  },
+  "model": {
+    "obsDim": 1419,
+    "actDim": 84,
+    "hidden": [256, 256, 256],
+    "activation": "relu"
+  },
+  "ppo": {
+    "lr": 0.0003,
+    "lrSchedule": "constant",
+    "clip": 0.2,
+    "vfCoef": 0.5,
+    "entCoef": 0.01,
+    "epochs": 4,
+    "minibatch": 512,
+    "gamma": 0.999,
+    "gaeLambda": 0.95,
+    "maxGradNorm": 0.5,
+    "targetKl": 0.03,
+    "advantageNorm": true,
+    "valueClip": true
+  },
+  "reward": {
+    "mode": "rank_win",
+    "winWeight": 0.5,
+    "rankWeight": 0.5,
+    "scoreMarginWeight": 0.0,
+    "aux": { "golemProgress": 0.0, "turnEfficiency": 0.0 }
+  },
+  "seats": {
+    "layout": ["learner", "learner", "learner", "learner", "learner"],
+    "snapshots": { "every": 0, "poolSize": 2 }
+  },
+  "eval": {
+    "every": 0,
+    "games": 40
+  }
+}
