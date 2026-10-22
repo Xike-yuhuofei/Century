@@ -184,20 +184,30 @@ aux 启用时 `finish_game` 抛错（防御仍在）、检查点 RNG 往返逐�
 | node-tests | ubuntu | 编码/枚举合法性/信息公平性/worker 协议（17 用例） |
 | seed-discipline | ubuntu | 种子解析严格性/重复拒绝/区间布局（Node）+ 账本原子性/并发分配/隔离验收（Python） |
 | openevolve-static-security | ubuntu | 恶意样例静态拦截 + EVOLVE-BLOCK 成对性 + 牌库字段访问拒绝 |
-| macos-seatbelt | **macos-14** | Seatbelt 全链路：沙箱化 stage1 对合法候选放行、恶意样例拒绝、死循环超时淘汰、读主目录/越界写/联网 EPERM 拒绝 |
+| macos-seatbelt | **macos-14** | Seatbelt 全链路：沙箱化 stage1 对合法候选放行、恶意样例拒绝、死循环超时淘汰、HOME 探针读拒绝/越界写拒绝/联网 EPERM 拒绝 |
 | e2e-smoke | ubuntu | duel_runner 官方自对照冒烟（4 唯一种子，0 异常，分差必须为 0） |
 
 - 任何关键测试失败 → 工作流失败（GitHub Actions 默认语义，未用 continue-on-error）；
 - Seatbelt 验收只在 macOS Runner 执行；Linux 测试通过**不**冒充 Seatbelt 验证；
+- **CI 实测结果（PR #17 全部作业通过，6/6）**。CI 首跑暴露了 4 个本机无法
+  发现的环境缺陷，逐轮修复（这正是 CI 的价值）：
+  1. macOS Runner 的 node 在 `/opt/hostedtoolcache`（非 `/usr/local/bin`）——
+     SANDBOX_ENV PATH 改为 `shutil.which('node')` 实时解析；
+  2. Runner 检出位于 HOME 内（`/Users/runner/work/...`），`deny file-read* HOME`
+     连 node 启动的 `uv_cwd` 都会 EPERM——沙箱 cwd 移出 HOME + 显式放行读检出目录；
+  3. node 解析主模块需对 HOME 本身 `lstat`（`syscall=lstat path=/Users/runner`
+     EPERM）——HOME 拒绝细化为 `deny file-read-data`（内容/目录列举），
+     元数据放行；`~/.codex`、`~/.ssh` 等密钥内容仍不可读（安全目标不变）；
+  4. macOS 作业缺 web-v1 依赖与 dist 产物（tsc / 探针对照所需）——补
+     `npm install && npm run build`。
+  上述沙箱 profile 语义变更均以属性测试固化（HOME 探针文件读拒绝、
+  WORKROOT 写/仓库读放行、越界写拒绝、联网 connect EPERM 拒绝）；
 - 本地实测结果：
   - PPO Python 单元 + 种子政策：25/25；
   - 训练可靠性单元：12/12；断点恢复端到端：1/1（22s）；
   - Node 协议/编码/公平性：17/17；种子政策 Node：9/9；静态安全层：4/4；
-  - Seatbelt 安全验收（本机 macOS）：5/5（11s）；
+  - Seatbelt 安全验收（本机 macOS）：6/6（11s）；
   - AI4 回归：training/tests 全量通过（stats.mjs 加固无回归）。
-- 未覆盖风险：macos-14 Runner 上的实测以 CI 首跑为准（本机 macOS 已通过同一套用例）；
-  OpenEvolve 端到端 LLM 进化不在 CI 范围（需 ChatGPT 账户，成本高且非确定性），
-  其评估管线安全边界已由 stage 级测试覆盖。
 - **并行会话隔离教训**：整改期间检测到并行 OpenEvolve 会话
   （`run_openevolve.py --iterations 20`）与本仓库共享 work root，曾把安全测试
   遗留的候选文件纳入其评估队列并重写 `results/evaluations/9329531df196/` 归档
