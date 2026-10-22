@@ -128,8 +128,11 @@ def _stage_impl(program_path: str, stage: int) -> dict:
         try:
             detail = json.loads(static_json.read_text())
         except Exception:
-            detail = {"stderr": proc.stderr[-400:]}
-        return _fail("static", detail.get("reason") or "static check failed")
+            detail = {"stderr": proc.stderr[-400:], "stdout": proc.stdout[-400:]}
+        # stderr/stdout 透出：沙箱环境差异（如 Runner 检出在 HOME 内）曾让静态
+        # 检查整体失败但原因被吞掉，无法诊断（CI 实测教训）。
+        return _fail("static", detail.get("reason") or detail.get("stderr")
+                     or detail.get("stdout") or "static check failed")
 
     fn_text_file = Path(str(static_json).replace(".json", ".fn.ts"))
     fn_text = fn_text_file.read_text()

@@ -68,11 +68,10 @@ class TestSandboxSecurity(unittest.TestCase):
             path = fh.name
         try:
             ok, out_json, proc = _run_static(path, self.profile)
-            detail = {}
             try:
                 detail = json.loads(out_json.read_text())
             except Exception:
-                detail = {"stderr": proc.stderr[-300:]}
+                detail = {"stderr": proc.stderr[-400:], "stdout": proc.stdout[-400:]}
             return ok, detail
         finally:
             Path(path).unlink(missing_ok=True)
@@ -84,7 +83,8 @@ class TestSandboxSecurity(unittest.TestCase):
                 continue  # 死循环无静态特征 → 专测运行时超时
             ok, detail = self._static(sample.read_text())
             self.assertFalse(ok, f"{sample.name} 必须被静态检查拒绝（detail={detail}）")
-            self.assertTrue(detail.get("reason"), f"{sample.name} 必须给出拒绝原因")
+            reason = detail.get("reason") or detail.get("stderr") or detail.get("stdout")
+            self.assertTrue(reason, f"{sample.name} 必须给出拒绝原因（detail={detail}）")
 
     def test_benign_evolved_candidate_passes_sandboxed_stage1(self):
         """合法演化候选在全部沙箱化的 stage1（静态→组装→编译→探针）上必须通过。"""
@@ -167,6 +167,40 @@ process.stdout.write(JSON.stringify(results));
         finally:
             Path(path).unlink(missing_ok=True)
             Path(REPO / "ai5-sandbox-escape-test.txt").unlink(missing_ok=True)
+
+    def test_workroot_write_and_repo_read_allowed(self):
+        """沙箱白名单语义：写 WORKROOT、读仓库脚本必须被允许（pipeline 前提）。
+
+        Runner 上 static_check 连拒绝分支的 out 落盘都失败时，用本测试区分
+        「WORKROOT 写被拒」与「仓库读被拒」两类环境问题。"""
+        probe_src = """
+const fs = require('node:fs');
+const results = {};
+try {
+  fs.writeFileSync(process.argv[2] + '/sandbox-write-ok.txt', 'ok');
+  results.workrootWrite = 'ALLOWED';
+} catch (e) { results.workrootWrite = 'DENIED(' + e.code + ')'; }
+try {
+  const s = fs.readFileSync(process.argv[3], 'utf8');
+  results.repoRead = s.length > 0 ? 'ALLOWED' : 'EMPTY';
+} catch (e) { results.repoRead = 'DENIED(' + e.code + ')'; }
+process.stdout.write(JSON.stringify(results));
+"""
+        with tempfile.NamedTemporaryFile("w", suffix=".cjs", delete=False) as fh:
+            fh.write(probe_src)
+            path = fh.name
+        try:
+            proc = _run(["/usr/bin/sandbox-exec", "-f", str(self.profile), "node", path,
+                         str(century_evaluator.WORK_ROOT),
+                         str(REPO / "ai5" / "openevolve" / "node" / "static_check.mjs")],
+                        15, "sandbox-allow")
+            self.assertEqual(proc.returncode, 0, proc.stderr[-400:])
+            results = json.loads(proc.stdout.strip().splitlines()[-1])
+            self.assertEqual(results["workrootWrite"], "ALLOWED", f"WORKROOT 写必须放行：{results}")
+            self.assertEqual(results["repoRead"], "ALLOWED", f"仓库脚本读必须放行：{results}")
+        finally:
+            Path(path).unlink(missing_ok=True)
+            (Path(century_evaluator.WORK_ROOT) / "sandbox-write-ok.txt").unlink(missing_ok=True)
 
     def test_sandbox_blocks_network(self):
         """联网必须失败：socket connect 被 Seatbelt 拒绝返回 EPERM（与
