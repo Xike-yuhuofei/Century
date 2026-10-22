@@ -296,17 +296,21 @@ sandbox-exec）：默认全拒；**拒绝读取真实用户主目录**（~/.code
   v2（100 唯一种子）判定为 **inconclusive（不确定）**——仍不构成晋级依据，
   候选保持实验版本登记，验证流程的自我否定与谨慎放行机制有效（详见
   AI5-RELIABILITY-REMEDIATION-REPORT.md）；
-- **正式挑战流程消化验证（PR #15 合并后补充）**：受控最优候选 `66f6a296aa72` 已按
-  AI 4.0 惯例注册为官方 bundle 内的可选变体（`AIParameters.acquisitionVariant:
-  'goal-remaining'`，与冠军结构相同、隔离唯一变量，3000 用例与 AI5 候选实现逐位
-  一致），并以 challengeIndex=6（历史 5 次全部累计，α₆=5%/2⁶ 收紧）、验证种子块
-  [941500092, 941500152) 走完正式 60 种子双向配对挑战：120 局 0 异常，配对
-  23 胜 30 负 7 平，配对分差 −0.454/种子（95% CI [−1.80, +0.89] 跨 0），
-  判定 **insufficient（决定性种子 53 < 60，样本不足）→ 保留冠军**。produce 的
-  candidate.json 与续接账本（challengeCount=6）为 promote-champion 完全兼容格式
-  （`training/reports`→`ai5/openevolve/experiments/reports/challenge-ai5-goal-remaining/`）；
-  该候选正式登记为实验版本 —— AI5 产出物被 AI 4.0 冠军挑战流程端到端消化，
-  种子账本/多重检验/证据核验全链路未绕过；
+- **正式挑战流程消化验证（PR #15 合并后补充，两次正式挑战）**：受控最优候选
+  `66f6a296aa72` 已按 AI 4.0 惯例注册为官方 bundle 内的可选变体
+  （`AIParameters.acquisitionVariant: 'goal-remaining'`，与冠军结构相同、隔离唯一
+  变量，3000 用例与 AI5 候选实现逐位一致），并走完两次正式配对挑战：
+  ① challengeIndex=6、验证种子块 [941500092, 941500152)、60 种子 120 局 0 异常，
+  配对 23 胜 30 负 7 平、分差 −0.454/种子 → **insufficient（决定性 53 < 60）**；
+  ② challengeIndex=7（α₇=5%/2⁷ 收紧）、验证种子块 [941502152, 941502652)、
+  **500 种子 1000 局 0 异常**，配对 213 胜 213 负 74 平，优势率恰为 0.500
+  （CI [0.420, 0.580]）、先名率 0.498 → **inconclusive（与冠军统计不可区分）**。
+  两次证据（candidate.json + 续接账本，challengeCount 依次 6→7）均为
+  promote-champion 完全兼容格式
+  （`ai5/openevolve/experiments/reports/challenge-ai5-goal-remaining{,-500}/`）。
+  结论：快筛/深验的正向信号在验证池不成立，该方向是真实可复现的演化吸引子
+  但无竞技优势 —— AI5 产出物被 AI 4.0 冠军挑战流程端到端消化并给出统计定论，
+  种子账本/多重检验/证据核验全链路未绕过，候选永久登记为实验版本；
 - 晋级路径保持 AI 4.0 原样：候选若要挑战冠军，必须走 `training/tournament/challenge.mjs`
   独立验证种子 + `promote-champion.mjs` 证据核验 + `apply-champion.mjs` 落地 + PR 评审；
   AI5 只产出候选与证据，不触碰验证账本与 alpha 消耗机制。

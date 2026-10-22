@@ -22,6 +22,7 @@
 
 import json
 import os
+import shutil
 import subprocess
 import sys
 import hashlib
@@ -42,7 +43,10 @@ STAGE2_SEEDS = list(range(300_000_000, 300_000_016))   # 16 种子（快筛）
 STAGE3_SEEDS = list(range(300_000_100, 300_000_148))   # 48 种子（深评）
 
 SANDBOX_ENV = {
-    "PATH": "/usr/bin:/bin:/usr/local/bin",
+    # PATH 必须包含当前 node 的目录：GitHub macOS Runner 的 node 在
+    # /opt/hostedtoolcache/...，硬编码 /usr/local/bin 会让沙箱内 execvp(node) 失败
+    # （CI 首跑实测暴露）。shutil.which 解析符号链接后取真实目录。
+    "PATH": f"{os.path.dirname(os.path.realpath(shutil.which('node') or '/usr/local/bin/node'))}:/usr/bin:/bin",
     "HOME": str(WORK_ROOT / "home"),
     "TMPDIR": str(WORK_ROOT / "tmp"),
     "LANG": "en_US.UTF-8",
@@ -57,17 +61,24 @@ def _ensure_dirs():
 
 
 def _render_sandbox_profile() -> Path:
-    profile = SANDBOX_TEMPLATE.read_text().replace("@WORKROOT@", str(WORK_ROOT)).replace("@HOME@", str(Path.home()))
+    profile = (SANDBOX_TEMPLATE.read_text()
+               .replace("@WORKROOT@", str(WORK_ROOT))
+               .replace("@REPOROOT@", str(REPO_ROOT))
+               .replace("@HOME@", str(Path.home())))
     out = WORK_ROOT / "sandbox-rendered.sb"
     out.write_text(profile)
     return out
 
 
 def _run(cmd, timeout, log_name, cwd=None):
-    """沙箱内执行一个命令；超时按失败处理（返回 returncode=-9 + 标记）。"""
+    """沙箱内执行一个命令；超时按失败处理（返回 returncode=-9 + 标记）。
+
+    默认 cwd 用 WORK_ROOT：GitHub Runner 的检出在 HOME 内，沙箱拒绝读 HOME
+    时 node 启动的 uv_cwd 会 EPERM（CI 实测）；所有沙箱化命令均用绝对路径，
+    不依赖仓库根 cwd。"""
     try:
         return subprocess.run(
-            cmd, cwd=str(cwd or REPO_ROOT), env=SANDBOX_ENV,
+            cmd, cwd=str(cwd or WORK_ROOT), env=SANDBOX_ENV,
             capture_output=True, text=True, timeout=timeout,
         )
     except subprocess.TimeoutExpired as e:
@@ -117,8 +128,11 @@ def _stage_impl(program_path: str, stage: int) -> dict:
         try:
             detail = json.loads(static_json.read_text())
         except Exception:
-            detail = {"stderr": proc.stderr[-400:]}
-        return _fail("static", detail.get("reason") or "static check failed")
+            detail = {"stderr": proc.stderr[-400:], "stdout": proc.stdout[-400:]}
+        # stderr/stdout 透出：沙箱环境差异（如 Runner 检出在 HOME 内）曾让静态
+        # 检查整体失败但原因被吞掉，无法诊断（CI 实测教训）。
+        return _fail("static", detail.get("reason") or detail.get("stderr")
+                     or detail.get("stdout") or "static check failed")
 
     fn_text_file = Path(str(static_json).replace(".json", ".fn.ts"))
     fn_text = fn_text_file.read_text()
