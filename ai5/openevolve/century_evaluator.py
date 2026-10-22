@@ -95,9 +95,12 @@ def _function_text(program_path: str) -> str | None:
     return fn_file.read_text() if fn_file.exists() else None
 
 
-def _run_static(program_path: str):
+def _run_static(program_path: str, profile: Path):
     out_json = WORK_ROOT / "static-check.json"
-    cmd = ["node", str(NODE_DIR / "static_check.mjs"), "--program", str(program_path), "--out", str(out_json)]
+    # P0 安全整改：静态检查处理不可信源码文本，同样在 Seatbelt 内执行
+    # （此前只有 probe/duel 沙箱化，与注释声称的"所有阶段沙箱"不符）。
+    cmd = ["/usr/bin/sandbox-exec", "-f", str(profile), "node",
+           str(NODE_DIR / "static_check.mjs"), "--program", str(program_path), "--out", str(out_json)]
     proc = _run(cmd, 60, "static")
     return proc.returncode == 0, out_json, proc
 
@@ -108,7 +111,7 @@ def _stage_impl(program_path: str, stage: int) -> dict:
     profile = _render_sandbox_profile()
 
     # ---------- stage 1：静态检查 → 组装 → 编译 → 探针 ----------
-    ok, static_json, proc = _run_static(program_path)
+    ok, static_json, proc = _run_static(program_path, profile)
     if not ok:
         detail = {}
         try:
@@ -124,16 +127,21 @@ def _stage_impl(program_path: str, stage: int) -> dict:
 
     workdir = CACHE_ROOT / fn_sha
     asm_json = WORK_ROOT / "assemble.json"
-    asm = _run(["node", str(NODE_DIR / "assemble_candidate.mjs"),
+    # P0 安全整改：候选树组装（复制不可信源码）同样沙箱化。
+    asm = _run(["/usr/bin/sandbox-exec", "-f", str(profile), "node",
+                str(NODE_DIR / "assemble_candidate.mjs"),
                 "--program", str(fn_text_file), "--out", str(workdir)], 60, "assemble")
     if asm.returncode != 0:
         return _fail("assemble", asm.stderr[-400:])
-    # 静态检查产物与组装记录归档（审计）
+    # 静态检查产物与组装记录归档（审计）。
     asm_json.write_text(asm.stdout)
 
     candidate_ai = workdir / "dist" / "js" / "ai.js"
     if not candidate_ai.exists():
-        tsc = _run(["node", str(REPO_ROOT / "web-v1/node_modules/typescript/bin/tsc"),
+        # P0 安全整改：tsc 编译不可信代码是本管线最靠前的执行型步骤，
+        # 必须沙箱化（禁网、禁读主目录、只允许写工作区）。
+        tsc = _run(["/usr/bin/sandbox-exec", "-f", str(profile),
+                    "node", str(REPO_ROOT / "web-v1/node_modules/typescript/bin/tsc"),
                     "-p", str(workdir / "tsconfig.json")], 120, "tsc", cwd=workdir)
         if tsc.returncode != 0:
             return _fail("compile", tsc.stderr[-800:] or tsc.stdout[-400:], compile_stderr=tsc.stderr[-400:])
