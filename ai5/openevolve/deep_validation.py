@@ -107,7 +107,7 @@ def run_duel(seed_file: Path, out_json: Path, candidate: str | None, profile: Pa
         cmd += ["--candidate", str(candidate)]
     else:
         cmd += ["--candidate-official"]
-    proc = subprocess.run(cmd, cwd=str(REPO_ROOT), env=SANDBOX_ENV,
+    proc = subprocess.run(cmd, cwd=str(WORK_ROOT), env=SANDBOX_ENV,
                           capture_output=True, text=True, timeout=7200)
     if proc.returncode != 0:
         raise RuntimeError(f"duel_runner 失败（rc={proc.returncode}）：{proc.stderr[-800:]}")

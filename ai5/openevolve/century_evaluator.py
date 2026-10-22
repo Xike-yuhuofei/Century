@@ -61,17 +61,24 @@ def _ensure_dirs():
 
 
 def _render_sandbox_profile() -> Path:
-    profile = SANDBOX_TEMPLATE.read_text().replace("@WORKROOT@", str(WORK_ROOT)).replace("@HOME@", str(Path.home()))
+    profile = (SANDBOX_TEMPLATE.read_text()
+               .replace("@WORKROOT@", str(WORK_ROOT))
+               .replace("@REPOROOT@", str(REPO_ROOT))
+               .replace("@HOME@", str(Path.home())))
     out = WORK_ROOT / "sandbox-rendered.sb"
     out.write_text(profile)
     return out
 
 
 def _run(cmd, timeout, log_name, cwd=None):
-    """沙箱内执行一个命令；超时按失败处理（返回 returncode=-9 + 标记）。"""
+    """沙箱内执行一个命令；超时按失败处理（返回 returncode=-9 + 标记）。
+
+    默认 cwd 用 WORK_ROOT：GitHub Runner 的检出在 HOME 内，沙箱拒绝读 HOME
+    时 node 启动的 uv_cwd 会 EPERM（CI 实测）；所有沙箱化命令均用绝对路径，
+    不依赖仓库根 cwd。"""
     try:
         return subprocess.run(
-            cmd, cwd=str(cwd or REPO_ROOT), env=SANDBOX_ENV,
+            cmd, cwd=str(cwd or WORK_ROOT), env=SANDBOX_ENV,
             capture_output=True, text=True, timeout=timeout,
         )
     except subprocess.TimeoutExpired as e:
