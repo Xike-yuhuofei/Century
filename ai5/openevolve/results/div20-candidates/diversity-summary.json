@@ -1,0 +1,54 @@
+{
+  "experiment": "多样性推进轮（div20，20 迭代）：行为维度 MAP-Elites + 快筛种子轮换",
+  "question": "行为多样性 + 换评估地貌能否突破 goal-remaining 单一吸引子平台期",
+  "answer": "成立：18 个唯一候选中仅 1 个与旧方向重合（前两轮全部收敛到旧吸引子）；新天花板 0.6474；独立种子信号强度翻倍",
+  "evidence": {
+    "round_stats": {
+      "iterations": 20,
+      "tokens": 586919,
+      "anomalous_candidates": 0,
+      "score_min_mean_max": [
+        0.3321,
+        0.5523,
+        0.6474
+      ]
+    },
+    "behavior_spread": {
+      "acquire_share_min_max": [
+        0.0727,
+        0.1189
+      ],
+      "claim_pace_min_max": [
+        1.8956,
+        2.103
+      ]
+    },
+    "sha_overlap_with_previous_rounds": 1,
+    "best": {
+      "sha256_head": "17c6e43cae24",
+      "quick_screen": {
+        "combined_score": 0.6474,
+        "paired_win_rate": 0.667,
+        "mean_diff_per_seed": 2.208
+      }
+    },
+    "deep_validation": {
+      "seeds": "300,001,500-599（100 唯一）",
+      "games": 200,
+      "anomalies": 0,
+      "mean_diff_per_seed": 1.53,
+      "paired_rate": 0.595,
+      "ci": [
+        0.488,
+        0.694
+      ],
+      "verdict": "inconclusive",
+      "baseline_control_diff": 0
+    },
+    "comparison_to_goal_remaining": {
+      "b685_deep_validation": "+0.565/种子（rate 0.581）",
+      "div20_best": "+1.53/种子（rate 0.595）"
+    }
+  },
+  "conclusion": "多样性机制打破了平台期并产生更强候选；正式挑战（challengeIndex=8，α₈≈0.0195%）按 p≈0.595 需 n≳340，建议 500 种子"
+}
