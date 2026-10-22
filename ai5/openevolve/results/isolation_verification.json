@@ -1,0 +1,114 @@
+{
+  "verification": "安全隔离验证（静态检查 + Seatbelt 沙箱）",
+  "timestamp": "2026-10-21T13:11:30.673Z",
+  "checks": [
+    {
+      "name": "静态拒绝 m01_read_env.ts",
+      "pass": true,
+      "detail": {
+        "reason": "包含禁止构造：禁止访问 process（process）"
+      }
+    },
+    {
+      "name": "静态拒绝 m02_read_files.ts",
+      "pass": true,
+      "detail": {
+        "reason": "包含禁止构造：禁止 require（require(）；禁止文件系统/网络/进程模块（readFileSync）"
+      }
+    },
+    {
+      "name": "静态拒绝 m03_constructor_escape.ts",
+      "pass": true,
+      "detail": {
+        "reason": "包含禁止构造：禁止 Function 动态构造 / constructor 逃逸（constructor）"
+      }
+    },
+    {
+      "name": "静态拒绝 m04_self_report.ts",
+      "pass": true,
+      "detail": {
+        "reason": "包含禁止构造：禁止访问 globalThis（globalThis）"
+      }
+    },
+    {
+      "name": "静态拒绝 m06_network.ts",
+      "pass": true,
+      "detail": {
+        "reason": "包含禁止构造：禁止网络访问（fetch(）"
+      }
+    },
+    {
+      "name": "沙箱：读 ~/.codex/auth.json 被拒",
+      "pass": true,
+      "detail": "BLOCKED"
+    },
+    {
+      "name": "沙箱：读 ~/.ssh 私钥被拒",
+      "pass": true,
+      "detail": "BLOCKED"
+    },
+    {
+      "name": "沙箱：联网外传被拒",
+      "pass": true,
+      "detail": "BLOCKED"
+    },
+    {
+      "name": "沙箱：写工作区外被拒",
+      "pass": true,
+      "detail": "BLOCKED"
+    },
+    {
+      "name": "沙箱：工作区内写入正常（不破坏合法工作）",
+      "pass": true,
+      "detail": "OK"
+    },
+    {
+      "name": "死循环候选被超时击杀（不无限占用资源）",
+      "pass": true,
+      "detail": {
+        "status": null,
+        "killedByTimeout": true,
+        "elapsedMs": 20003
+      }
+    },
+    {
+      "name": "沙箱内对战运行器正常工作（合法负载不受沙箱阻碍）",
+      "pass": true,
+      "detail": {
+        "totalGames": 4,
+        "finishedGames": 4,
+        "anomalyGames": 0,
+        "anomalyRate": 0,
+        "paired": "insufficient",
+        "firstPlace": {
+          "definition": "候选阵营取得第一名（rank 1）的局占比；方向 A=候选 1 席，方向 B=候选 4 席；合并后零优势期望 0.5",
+          "directionA": {
+            "wins": 0,
+            "games": 2,
+            "rate": 0
+          },
+          "directionB": {
+            "wins": 0,
+            "games": 2,
+            "rate": 0
+          },
+          "merged": {
+            "wins": 0,
+            "games": 4,
+            "rate": 0,
+            "wilsonCI": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.4898908403969213
+            },
+            "note": "局级 Wilson 区间把配对局当独立样本，属近似，仅诊断用；晋级判定以 pairedPromotionDecision 为准"
+          }
+        },
+        "meanDecisionMs": 10.41,
+        "p95DecisionMs": 11.557,
+        "meanScoreDiffPerSeed": 0
+      }
+    }
+  ],
+  "allPass": true
+}
