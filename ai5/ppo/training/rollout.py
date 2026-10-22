@@ -36,6 +36,7 @@ class Transition:
     done: bool = False
     enum_stats: dict = field(default_factory=dict)
     turn_number: int = 0
+    policy_epoch: int = 0      # 采集时的策略世代（on-policy 边界审计用）
 
 
 @dataclass
@@ -47,7 +48,14 @@ class _OpenTrajectory:
 
 
 class RolloutBuffer:
-    """跨对局积累转移；按轨迹计算 GAE；输出 PPO 可用的扁平批量。"""
+    """跨对局积累转移；按轨迹计算 GAE；输出 PPO 可用的扁平批量。
+
+    P0/P1 整改（on-policy 边界）：
+    - `policy_epoch` 由训练循环在每次 PPO 更新前递增；每条转移记录采集时的世代；
+    - 终局轨迹若混含多个世代的转移（旧策略样本 + 新策略样本同链），整体丢弃并
+      计入 stats["stale_discarded"]——这是纵深防御：正常流程（collect 尾部排水）
+      不可能产生混代轨迹，一旦出现说明排水边界被绕过，宁可丢数据也不污染更新。
+    """
 
     def __init__(self, gamma: float = 0.999, gae_lambda: float = 0.95):
         if not (0.0 <= gamma <= 1.0):
@@ -56,9 +64,11 @@ class RolloutBuffer:
             raise ValueError("gae_lambda 必须在 [0,1]")
         self.gamma = gamma
         self.gae_lambda = gae_lambda
+        self.policy_epoch = 0
         self.open_traj: dict[tuple[int, int], _OpenTrajectory] = {}
         self.completed: list[list[Transition]] = []   # 已终局轨迹（转移列表）
-        self.stats = {"games": 0, "anomaly_games": 0, "decisions": 0, "pruned_decisions": 0}
+        self.stats = {"games": 0, "anomaly_games": 0, "decisions": 0,
+                      "pruned_decisions": 0, "stale_discarded": 0}
 
     def add_decision(self, req, policy_id: str, action_index: int, logp: float, value: float) -> None:
         key = (req.game_id, req.seat)
@@ -70,10 +80,22 @@ class RolloutBuffer:
             obs=req.obs.copy(), cand_mat=req.cand_mat.copy(),
             action_index=int(action_index), logp=float(logp), value=float(value),
             enum_stats=dict(req.enum_stats), turn_number=req.turn_number,
+            policy_epoch=self.policy_epoch,
         ))
         self.stats["decisions"] += 1
         if req.enum_stats.get("pruned"):
             self.stats["pruned_decisions"] += 1
+
+    def _settle(self, traj: _OpenTrajectory, reward: float) -> None:
+        """轨迹终局归属：世代纯净才进入训练缓冲，混代轨迹整体丢弃（on-policy 防御）。"""
+        epochs = {t.policy_epoch for t in traj.transitions}
+        if len(epochs) > 1:
+            self.stats["stale_discarded"] += len(traj.transitions)
+            return
+        last = traj.transitions[-1]
+        last.reward = reward
+        last.done = True
+        self.completed.append(traj.transitions)
 
     def finish_game(self, game_id: int, seats: list, scores: list, ranks, winner_seat,
                     status: str, reward_cfg: dict, learner_policy_id: str) -> None:
@@ -96,10 +118,7 @@ class RolloutBuffer:
                 continue
             if seat_spec.policy_id != learner_policy_id or status != "finished":
                 continue  # 冻结对手转移 / 异常对局一律不进入训练缓冲
-            last = traj.transitions[-1]
-            last.reward = terminal_reward(scores, ranks, seat_idx, winner_seat, reward_cfg)
-            last.done = True
-            self.completed.append(traj.transitions)
+            self._settle(traj, terminal_reward(scores, ranks, seat_idx, winner_seat, reward_cfg))
 
     def finish_game_full(self, game_id: int, seats: list, scores: list, ranks,
                          winner_seat: int | None, status: str, reward_cfg: dict,
@@ -115,12 +134,9 @@ class RolloutBuffer:
                 continue
             if seat_spec.policy_id != learner_policy_id or status != "finished":
                 continue
-            last = traj.transitions[-1]
             reward = terminal_reward(scores, ranks, seat_idx, winner_seat, reward_cfg)
             reward += auxiliary_reward(final_seat_states[seat_idx], reward_cfg.get("aux", {}))
-            last.reward = reward
-            last.done = True
-            self.completed.append(traj.transitions)
+            self._settle(traj, reward)
 
     def discard_game(self, game_id: int) -> None:
         """异常对局：丢弃全部相关轨迹（不进入训练）。"""

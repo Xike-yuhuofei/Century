@@ -241,6 +241,28 @@ class TestSeatAssignment(unittest.TestCase):
         self.assertTrue(0 <= s1 < 2**31)
         self.assertNotEqual(s1, s3)
 
+    def test_derive_seed_confined_to_training_block(self):
+        """P0 整改回归：训练种子必须全部落在 PPO 专用子块（旧版曾覆盖 [0,2^31)，
+        约 7% 落入验证池区间——见 ai5/ppo/reports/seed-audit/）。"""
+        from ai5.lib.seed_policy import PPO_TRAINING_BLOCK
+        lo, hi = PPO_TRAINING_BLOCK
+        for run_seed in (0, 1, 20261021, 20261023, 2**31 - 1):
+            seeds = {derive_seed(run_seed, i, salt) for i in range(2000) for salt in (0, 1, 2**31 - 1)}
+            self.assertTrue(all(lo <= s < hi for s in seeds),
+                f"run_seed={run_seed} 出现越界种子（应在 [{lo}, {hi})）")
+
+    def test_training_seeds_disjoint_from_reserved_zones(self):
+        """P0 整改验收：训练种子与验证池/OpenEvolve 评测种子交集为零。"""
+        from ai5.lib.seed_policy import (OPENEVOLVE_DEEP_VALIDATION_BLOCK, OPENEVOLVE_STAGE2_BLOCK,
+                                         OPENEVOLVE_STAGE3_BLOCK, VALIDATION_POOL_BLOCK)
+        reserved: set[int] = set()
+        for lo, hi in (VALIDATION_POOL_BLOCK, OPENEVOLVE_STAGE2_BLOCK,
+                       OPENEVOLVE_STAGE3_BLOCK, OPENEVOLVE_DEEP_VALIDATION_BLOCK):
+            reserved.update(range(lo, hi))
+        for run_seed in (20261021, 20261023):
+            training = {derive_seed(run_seed, i, 0) for i in range(20000)}
+            self.assertFalse(training & reserved, "训练种子不得进入验证池/OpenEvolve 评测块")
+
     def test_derive_rng_stable(self):
         a = derive_rng(2026, "decision", 3).integers(0, 100)
         b = derive_rng(2026, "decision", 3).integers(0, 100)
