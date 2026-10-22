@@ -130,6 +130,22 @@ export function promotionDecision({ wins, games, anomalyRate, minGames = 100, ma
  */
 export function pairedPromotionDecision({ seedPairs, minSeeds = 60, maxAnomalyRate = 0.02, z = Z_95 }) {
   if (!Array.isArray(seedPairs) || seedPairs.length === 0) throw new Error('seedPairs 不能为空');
+  // P0 可靠性整改：种子唯一性强制（每 seed 一个配对样本 = 统计单位）。
+  // 事故背景：OpenEvolve 深度验证曾因种子文件 101 行同值，把 1 个种子当
+  // 101 个独立样本计算 Wilson 区间——CI 被系统性低估，结论失真。
+  for (const p of seedPairs) {
+    if (!Number.isSafeInteger(p?.seed)) {
+      throw new Error(`seedPairs 条目缺少合法 seed 字段：${JSON.stringify(p)?.slice(0, 120)}`);
+    }
+  }
+  const seeds = seedPairs.map(p => p.seed);
+  const uniqueSeeds = new Set(seeds).size;
+  if (uniqueSeeds !== seeds.length) {
+    throw new Error(
+      `seedPairs 存在重复种子（${seeds.length} 条配对仅 ${uniqueSeeds} 个唯一种子）——` +
+      '重复配对样本破坏统计独立性，禁止判定；请修复种子分配后用唯一种子重验',
+    );
+  }
   const totalGames = seedPairs.length * 2;
   const anomalyGames = seedPairs.reduce((sum, p) => sum + (p.anomalies ?? 0), 0);
   const anomalyRate = totalGames ? anomalyGames / totalGames : 0;
