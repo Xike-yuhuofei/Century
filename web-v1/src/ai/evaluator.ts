@@ -63,11 +63,56 @@ export function trimStock(
   return { stock, discarded };
 }
 
+/** AI5 进化变体实现：goalFit 只统计目标魔像还缺的水晶（max(0, cost−stock)）。
+ * 来源：OpenEvolve 候选 66f6a296aa72（AI5 POC 冒烟与受控两轮独立进化重复收敛），
+ * 函数体与归档证据 ai5/openevolve/results/evaluations/66f6a296aa72/function.ts
+ * 逐字一致（除本注释外）；与基线的唯一差异即 goalFit 一行。
+ * 经静态安全检查、3000 用例探针、Seatbelt 沙箱对战与 100 新种子深度验证
+ * （验证结论：不显著优于冠军，作为可挑战变体保留），按 AI 4.0 流程参赛。 */
+export function acquisitionValueGoalRemaining(
+  state: { stock: readonly number[]; hand: readonly string[]; played: readonly string[] },
+  cardId: string,
+  preferred: string | null,
+  profile: { engine: number; contest: number },
+  pressure: PressureModel,
+  params: AIParameters,
+): number {
+  const card = MERCHANT_BY_ID[cardId];
+  if (!card) return 0;
+  const current = engineValue(state, preferred);
+  const added = { ...state, hand: [...state.hand, cardId] };
+  const raw = Math.max(0, engineValue(added, preferred) - current);
+  const target: Golem | null = preferred ? GOLEM_BY_ID[preferred] ?? null : null;
+  const engine = [...state.hand, ...state.played].map(id => MERCHANT_BY_ID[id]).filter(Boolean);
+  const supplied = engine.reduce((a, c) => {
+    if (c.output) c.output.forEach((n, i) => { a[i] += n; });
+    return a;
+  }, [0, 0, 0, 0] as Stock);
+  const synergy = card.kind === 'trade'
+    ? card.input!.reduce((n, amount, i) => n + Math.min(amount, supplied[i]) * VALUES[i], 0) / (weighted(card.input!) + 1)
+    : card.kind === 'create'
+      ? engine.filter(c => c.kind === 'trade').reduce((n, c) =>
+          n + c.input!.reduce((v, amount, i) => v + Math.min(amount, card.output![i]), 0), 0) * .18
+      : .5;
+  const goalFit = target && card.output
+    ? card.output.reduce((n, amount, i) =>
+        n + Math.min(amount, Math.max(0, target.cost[i] - state.stock[i])) * VALUES[i], 0
+      ) / (weighted(target.cost) + 1)
+    : 0;
+  const demand = pressure.mean[cardId] ?? 0;
+  const risk = pressure.peak[cardId] ?? 0;
+  // 被抢风险与目标契合叠加为紧迫度：越关键且越可能被抢，越值得立刻出手。
+  const urgency = 1 + (risk > 0 && goalFit > 0 ? goalFit : 0);
+  return profile.engine * (raw * .6 * params.engineWeight + synergy * 2 * params.synergyWeight + goalFit * 2 * params.goalWeight)
+    + profile.contest * params.contestWeight * (demand * .45 + risk * urgency * .55) * .9;
+}
+
 /** 商人卡获取价值：引擎增量 + 组合协同 + 目标契合 + 抢牌竞争。
  * engineWeight / synergyWeight / goalWeight / contestWeight 全部在此接入。
  * 抢牌竞争项（审计整改）：mean 为平均需求热度，peak 为最强对手需求——
  * 唯一急需该卡的对手不再被另外三名对手稀释；peak 高且高度契合当前
- * 目标的卡按"关键商人卡"加急处理，抢牌价值随紧迫度放大。 */
+ * 目标的卡按"关键商人卡"加急处理，抢牌价值随紧迫度放大。
+ * 获取估值变体按 params.acquisitionVariant 分派（缺省 baseline = 本函数体）。 */
 export function acquisitionValue(
   state: { stock: readonly number[]; hand: readonly string[]; played: readonly string[] },
   cardId: string,
@@ -76,6 +121,9 @@ export function acquisitionValue(
   pressure: PressureModel,
   params: AIParameters,
 ): number {
+  if (params.acquisitionVariant === 'goal-remaining') {
+    return acquisitionValueGoalRemaining(state, cardId, preferred, profile, pressure, params);
+  }
   const card = MERCHANT_BY_ID[cardId];
   if (!card) return 0;
   const current = engineValue(state, preferred);

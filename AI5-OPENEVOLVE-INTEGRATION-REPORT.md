@@ -270,6 +270,17 @@ sandbox-exec）：默认全拒；**拒绝读取真实用户主目录**（~/.code
   `web-v1/src/ai/parameters.ts` 与网页游戏零改动（官方产物 SHA256 前后断言通过）；
 - 受控实验最优候选经 100 新种子深度独立验证为**劣势**（配对判定 rejected，见 §7
   深度独立验证），已按纪律拒之门外 —— 候选筛选系统具备了自我否定的能力；
+- **正式挑战流程消化验证（PR #15 合并后补充）**：受控最优候选 `66f6a296aa72` 已按
+  AI 4.0 惯例注册为官方 bundle 内的可选变体（`AIParameters.acquisitionVariant:
+  'goal-remaining'`，与冠军结构相同、隔离唯一变量，3000 用例与 AI5 候选实现逐位
+  一致），并以 challengeIndex=6（历史 5 次全部累计，α₆=5%/2⁶ 收紧）、验证种子块
+  [941500092, 941500152) 走完正式 60 种子双向配对挑战：120 局 0 异常，配对
+  23 胜 30 负 7 平，配对分差 −0.454/种子（95% CI [−1.80, +0.89] 跨 0），
+  判定 **insufficient（决定性种子 53 < 60，样本不足）→ 保留冠军**。produce 的
+  candidate.json 与续接账本（challengeCount=6）为 promote-champion 完全兼容格式
+  （`training/reports`→`ai5/openevolve/experiments/reports/challenge-ai5-goal-remaining/`）；
+  该候选正式登记为实验版本 —— AI5 产出物被 AI 4.0 冠军挑战流程端到端消化，
+  种子账本/多重检验/证据核验全链路未绕过；
 - 晋级路径保持 AI 4.0 原样：候选若要挑战冠军，必须走 `training/tournament/challenge.mjs`
   独立验证种子 + `promote-champion.mjs` 证据核验 + `apply-champion.mjs` 落地 + PR 评审；
   AI5 只产出候选与证据，不触碰验证账本与 alpha 消耗机制。
