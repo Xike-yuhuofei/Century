@@ -37,7 +37,7 @@ export type AIParameters = {
    * 其余项与基线逐字一致。变体经静态安全检查、3000 用例探针、沙箱对战与
    * 100 新种子深度验证后按 AI 4.0 挑战流程参赛（挑战证据见
    * training/reports/challenge-ai5-goal-remaining/）。 */
-  acquisitionVariant?: 'baseline' | 'goal-remaining';
+  acquisitionVariant?: 'baseline' | 'goal-remaining' | 'readiness-efficiency';
 };
 
 /** 参数合法区间；超出即拒绝（防止进化产生无意义参数）。 */
@@ -97,7 +97,7 @@ export function validateAIParameters(input: unknown): AIParameters {
   }
   // 获取估值变体透传（可选）：与结构同为代码级版本轴，挑战流程按席位注入。
   if (source.acquisitionVariant !== undefined) {
-    if (source.acquisitionVariant !== 'baseline' && source.acquisitionVariant !== 'goal-remaining') {
+    if (source.acquisitionVariant !== 'baseline' && source.acquisitionVariant !== 'goal-remaining' && source.acquisitionVariant !== 'readiness-efficiency') {
       throw new Error(`未知获取估值变体：${String(source.acquisitionVariant)}`);
     }
     result.acquisitionVariant = source.acquisitionVariant;
