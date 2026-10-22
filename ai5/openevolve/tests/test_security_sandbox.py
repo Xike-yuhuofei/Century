@@ -134,18 +134,17 @@ class TestSandboxSecurity(unittest.TestCase):
             Path(path).unlink(missing_ok=True)
 
     def test_sandbox_blocks_home_read_and_out_of_workroot_write(self):
-        """沙箱属性直测：读真实主目录 / 写 WORKROOT 外都必须失败（EPERM）。
+        """沙箱属性直测：读真实主目录内容 / 写 WORKROOT 外都必须失败（EPERM）。
 
-        判别用错误码：目标存在时，若未被沙箱拦截，错误应为 EISDIR/ENOENT 之类
-        文件系统语义错误；被拦截时是 EPERM（Operation not permitted）。
-        （注：profile 白名单允许写 /private/tmp 与 /private/var/folders——
-        那是系统临时目录语义，不构成逃逸面；越界测试用仓库根路径。）"""
+        HOME 拒绝语义是 file-read-data（内容）：在 HOME 下创建真实探针文件，
+        读其内容必须被拒（目录/元数据语义差异不进入判定）。"""
         real_home = str(Path.home())
         repo_root = str(REPO)
+        probe_file = Path(real_home) / "ai5-sandbox-home-read-probe.txt"
+        probe_file.write_text("probe")
         probe_src = """
 const fs = require('node:fs');
 const results = {};
-// node 脚本参数：argv[2] = real_home，argv[3] = repo_root（argv[0]/[1] 是 node 与脚本自身）。
 try { fs.readFileSync(process.argv[2]); results.homeRead = 'ALLOWED'; }
 catch (e) { results.homeRead = e.code === 'EPERM' ? 'DENIED' : 'ALLOWED(' + e.code + ')'; }
 try { fs.writeFileSync(process.argv[3] + '/ai5-sandbox-escape-test.txt', 'x'); results.ooWrite = 'ALLOWED'; }
@@ -157,15 +156,16 @@ process.stdout.write(JSON.stringify(results));
             path = fh.name
         try:
             proc = _run(["/usr/bin/sandbox-exec", "-f", str(self.profile), "node", path,
-                         real_home, repo_root], 15, "sandbox-property")
+                         probe_file, repo_root], 15, "sandbox-property")
             self.assertEqual(proc.returncode, 0, proc.stderr[-300:])
             results = json.loads(proc.stdout.strip().splitlines()[-1])
             self.assertEqual(results["homeRead"], "DENIED",
-                             f"沙箱必须拒绝读取真实主目录：{results}")
+                             f"沙箱必须拒绝读取真实主目录内容：{results}")
             self.assertEqual(results["ooWrite"], "DENIED",
                              f"沙箱必须拒绝写 WORKROOT 外路径（仓库根）：{results}")
         finally:
             Path(path).unlink(missing_ok=True)
+            probe_file.unlink(missing_ok=True)
             Path(REPO / "ai5-sandbox-escape-test.txt").unlink(missing_ok=True)
 
     def test_workroot_write_and_repo_read_allowed(self):

@@ -5,18 +5,19 @@
 ;;   - 默认全拒；
 ;;   - 允许读系统与仓库（编译需要 node/tsc/源码）；
 ;;   - 只允许写 WORKROOT（候选工作目录与临时目录都在其中）；
-;;   - 拒绝读取真实用户主目录（.codex/.ssh/密钥/历史全部不可达）——但显式
-;;     重新允许读仓库检出目录：GitHub Runner 的检出位于 HOME 内（
-;;     /Users/runner/work/...），不放行则 node 启动时 uv_cwd 都会被拒
-;;     （CI 实测）；密钥目录（~/.codex、~/.ssh 等）不在检出内，仍被拒；
+;;   - 拒绝读取真实用户主目录的**内容**（.codex/.ssh/密钥/历史全部不可读）：
+;;     用 file-read-data 而非 file-read*——node 启动解析主模块时会对 HOME
+;;     本身 lstat（CI 实测 syscall=lstat path=/Users/runner EPERM），元数据
+;;     必须放行；目录列举（readdir）与文件内容读取都是 file-read-data，仍被拒；
+;;     仓库检出位于 HOME 内（GitHub Runner /Users/runner/work/...），显式放行；
 ;;   - 拒绝一切网络（connect/listen/remote 均禁止）。
 (deny default)
 (allow process-exec*)
 (allow process-fork)
 (allow file-read*)
 (allow file-write* (subpath "@WORKROOT@") (subpath "/private/var/folders/") (subpath "/private/tmp/") (subpath "/private/etc/"))
-(deny file-read* (subpath "@HOME@"))
-(allow file-read* (subpath "@REPOROOT@"))
+(deny file-read-data (subpath "@HOME@"))
+(allow file-read-data (subpath "@REPOROOT@"))
 (deny network*)
 (allow sysctl-read)
 (allow mach-lookup)
