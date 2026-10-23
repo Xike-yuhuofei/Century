@@ -315,6 +315,28 @@ sandbox-exec）：默认全拒；**拒绝读取真实用户主目录**（~/.code
   独立验证种子 + `promote-champion.mjs` 证据核验 + `apply-champion.mjs` 落地 + PR 评审；
   AI5 只产出候选与证据，不触碰验证账本与 alpha 消耗机制。
 
+### 冠军易主（2026-10-23，challengeIndex=9）：AI5 首个冠军诞生 ✅
+
+多样性机制（MAP-Elites 行为维度 + 快筛种子轮换，§7 末尾）突破平台期后，新方向
+`readiness-efficiency`（候选 `17c6e43cae24`）完成三级冲刺并**首次晋级**：
+
+1. **500 种子正式挑战（challengeIndex=8，PR #18）**：配对分差 +1.113/种子
+   显著为正，但优势率 0.567 未过 α₈ 门槛 → 保留冠军、登记最强实验版本；
+2. **1000 种子冲冠挑战（challengeIndex=9，α₉=0.00977%）**：验证种子块
+   [941507152, 941508152)，2000 局 0 异常，配对 **554 胜 418 负 28 平**
+   （决定性 972），优势率 **0.570**、Wilson CI **[0.510, 0.628] 下界>0.5**、
+   z=3.73 过收紧阈值，配对分差 **+1.093/种子** CI [0.734, 1.452] →
+   **PROMOTE**（`ai5/openevolve/experiments/reports/challenge-readiness-efficiency-1000/`）；
+3. **晋级落地（promote-champion → apply-champion → --check）**：脚本独立重算
+   证据一致、账本 challengeCount=9 交叉核对通过、引擎指纹一致；新冠军
+   `ai5-readiness-efficiency`（基于 struct-beam-rollout，structure=beam-rollout +
+   acquisitionVariant=readiness-efficiency）写入 `training/champions/champion.json`
+   与 `web-v1/src/ai/parameters.ts`，候选归档 `training/champions/candidates/`。
+   晋级过程暴露并修复晋级链路两处布局兼容缺陷（promote-champion 指纹核验、
+   apply-champion 变体字段透传），均先回归测试后修复；
+   全量回归 web-v1 64/64、training 62/62。旧冠军 `struct-beam-rollout`
+   完整保留于 git 历史与归档，随时可回滚。
+
 ## 9. 资源与成本（M4 / 16GB 实测）
 
 | 项 | 实测值 |
