@@ -23,15 +23,15 @@ import { requireBuiltEngine, engineBundleSha256, REPO_ROOT } from '../../../trai
 import { validateAIParameters } from '../../../web-v1/dist/js/ai/parameters.js';
 
 const here = fileURLToPath(import.meta.url);
-const outDir = resolve(here, '..', 'reports', 'challenge-ai5-goal-remaining-500');
+const outDir = resolve(here, '..', 'reports', 'challenge-readiness-efficiency-500');
 mkdirSync(outDir, { recursive: true });
 requireBuiltEngine();
 
-// ---- 候选版本：官方 bundle 中的 goal-remaining 变体（66f6a296aa72） ----
+// ---- 候选版本：官方 bundle 中的 readiness-efficiency 变体（div20 最优 17c6e43cae24） ----
 const candidateParameters = {
-  id: 'ai5-goal-remaining',
+  id: 'ai5-readiness-efficiency',
   structure: 'beam-rollout',                    // 与冠军同结构，隔离唯一变量
-  acquisitionVariant: 'goal-remaining',
+  acquisitionVariant: 'readiness-efficiency',
   engineWeight: 1, tempoWeight: 1, contestWeight: 1, synergyWeight: 1,
   goalWeight: 1, capacityWeight: 1, restWeight: 1, endgameWeight: 1,
 };
@@ -45,6 +45,7 @@ const ledgerSources = [
   'training/reports/structure-challenge-rollout-confirm/validation-ledger.json', // PR #11 晋级挑战（2 次）
   'training/reports/evolve-latest/validation-ledger.json',                       // 本地进化确认挑战（3 次）
   'ai5/openevolve/experiments/reports/challenge-ai5-goal-remaining/validation-ledger.json', // AI5 首次正式挑战 60 种子（1 次）
+  'ai5/openevolve/experiments/reports/challenge-ai5-goal-remaining-500/validation-ledger.json', // AI5 二次正式挑战 500 种子（1 次）
 ];
 const merged = { history: [] };
 for (const rel of ledgerSources) {
@@ -86,8 +87,8 @@ console.log(JSON.stringify({
 const ledger = consumeLedger(merged, seedBase, SEEDS);
 writeFileSync(resolve(outDir, 'candidate.json'), JSON.stringify({
   id: candidateParameters.id,
-  name: 'AI5 进化候选 goal-remaining（66f6a296aa72）',
-  description: 'OpenEvolve 自动进化的商人卡获取估值变体：goalFit 只统计目标魔像还缺的水晶。' +
+  name: 'AI5 多样性轮进化候选 readiness-efficiency（17c6e43cae24）',
+  description: 'OpenEvolve 多样性轮自动进化的商人卡获取估值变体：以 readiness（可负担度）为核心的多因子估值。' +
     '变体实现已注册进官方 bundle（acquisitionVariant 参数轴），挑战走 AI 4.0 正式流程。',
   basedOn: champion.id,
   parameters: candidateParameters,

@@ -107,6 +107,76 @@ export function acquisitionValueGoalRemaining(
     + profile.contest * params.contestWeight * (demand * .45 + risk * urgency * .55) * .9;
 }
 
+/** AI5 多样性轮演化变体（div20 最优 17c6e43cae24）：以 readiness（可负担度）为核心的多因子估值。
+ * 特征：missing→readiness 折减协同项、input/output 转换效率（tempoWeight 接线）、
+ * 水晶容量空间修正（capacityWeight）、引擎深度成本（restWeight）、终局项
+ * （endgameWeight）、竞赛项重塑（demand .3 / risk .7 + readiness/goalFit 增益）。
+ * 函数体与归档证据 ai5/openevolve/results/div20-candidates/iterx-17c6e43cae24.fn.ts
+ * 逐字一致；静态检查、3000 用例探针、沙箱对战、100 唯一新种子深验（+1.53/种子，
+ * inconclusive）后按 AI 4.0 流程参赛（challengeIndex=8，500 种子）。 */
+export function acquisitionValueReadinessEfficiency(
+  state: { stock: readonly number[]; hand: readonly string[]; played: readonly string[] },
+  cardId: string,
+  preferred: string | null,
+  profile: { engine: number; contest: number },
+  pressure: PressureModel,
+  params: AIParameters,
+): number {
+  const card = MERCHANT_BY_ID[cardId];
+  if (!card) return 0;
+  const current = engineValue(state, preferred);
+  const added = { ...state, hand: [...state.hand, cardId] };
+  const raw = Math.max(0, engineValue(added, preferred) - current);
+  const target: Golem | null = preferred ? GOLEM_BY_ID[preferred] ?? null : null;
+  const engine = [...state.hand, ...state.played].map(id => MERCHANT_BY_ID[id]).filter(Boolean);
+  const supplied = engine.reduce((a, c) => {
+    if (c.output) c.output.forEach((n, i) => { a[i] += n; });
+    return a;
+  }, [0, 0, 0, 0] as Stock);
+  const synergy = card.kind === 'trade'
+    ? card.input!.reduce((n, amount, i) => n + Math.min(amount, supplied[i]) * VALUES[i], 0) / (weighted(card.input!) + 1)
+    : card.kind === 'create'
+      ? engine.filter(c => c.kind === 'trade').reduce((n, c) =>
+          n + c.input!.reduce((v, amount, i) => v + Math.min(amount, card.output![i]), 0), 0) * .18
+      : .5;
+  const input = card.input;
+  const output = card.output;
+  const missing = input
+    ? input.reduce((n, amount, i) =>
+        n + Math.max(0, amount - state.stock[i]) * VALUES[i], 0)
+    : 0;
+  const readiness = 1 / (1 + missing);
+  const gain = output ? weighted(output) - (input ? weighted(input) : 0) : 2;
+  const efficiency = Math.max(0, gain) / ((input ? stockCount(input) : 0) + 1);
+  const goalFit = target && output
+    ? output.reduce((n, amount, i) =>
+        n + Math.min(amount, Math.max(0, target.cost[i] - state.stock[i])) * VALUES[i], 0
+      ) / (weighted(target.cost) + 1)
+    : 0;
+  const room = Math.max(0, 10 - stockCount(state.stock));
+  const growth = output
+    ? Math.max(0, stockCount(output) - (input ? stockCount(input) : 0))
+    : 0;
+  const capacity = output
+    ? growth === 0 ? 1 : Math.min(room, growth) / (growth + 1)
+    : 0;
+  const demand = pressure.mean[cardId] ?? 0;
+  const risk = pressure.peak[cardId] ?? 0;
+  const depth = state.hand.length + state.played.length;
+  return profile.engine * (
+      raw * .7 * params.engineWeight
+      + synergy * readiness * 1.6 * params.synergyWeight
+      + goalFit * .65 * params.goalWeight
+      + efficiency * readiness * .45 * params.tempoWeight
+      + capacity * .3 * params.capacityWeight
+      + (goalFit + efficiency) / (depth + 2) * params.endgameWeight
+      - Math.max(0, depth - 7) * .045 * params.restWeight
+    )
+    + profile.contest * params.contestWeight *
+      (demand * .3 + risk * .7) *
+      (1 + readiness * .12 + goalFit * .2);
+}
+
 /** 商人卡获取价值：引擎增量 + 组合协同 + 目标契合 + 抢牌竞争。
  * engineWeight / synergyWeight / goalWeight / contestWeight 全部在此接入。
  * 抢牌竞争项（审计整改）：mean 为平均需求热度，peak 为最强对手需求——
@@ -123,6 +193,9 @@ export function acquisitionValue(
 ): number {
   if (params.acquisitionVariant === 'goal-remaining') {
     return acquisitionValueGoalRemaining(state, cardId, preferred, profile, pressure, params);
+  }
+  if (params.acquisitionVariant === 'readiness-efficiency') {
+    return acquisitionValueReadinessEfficiency(state, cardId, preferred, profile, pressure, params);
   }
   const card = MERCHANT_BY_ID[cardId];
   if (!card) return 0;

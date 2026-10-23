@@ -9,7 +9,7 @@
  * 5. 公平性回归：CHAMPION_PARAMETERS 不携带新字段（冠军行为零变化）。
  */
 import assert from 'node:assert/strict';
-import { acquisitionValue, acquisitionValueGoalRemaining } from '../dist/js/ai/evaluator.js';
+import { acquisitionValue, acquisitionValueGoalRemaining, acquisitionValueReadinessEfficiency } from '../dist/js/ai/evaluator.js';
 import { chooseAIAction, validateAIParameters, CHAMPION_PARAMETERS, PROFILES, NEUTRAL_PROFILE } from '../dist/js/ai.js';
 import { createGame, applyAction } from '../dist/js/engine.js';
 
@@ -26,6 +26,14 @@ assert.equal(validateAIParameters({ ...baseParams, acquisitionVariant: 'goal-rem
 assert.equal(validateAIParameters({ ...baseParams, acquisitionVariant: 'baseline' }).acquisitionVariant, 'baseline');
 assert.equal(validateAIParameters(baseParams).acquisitionVariant, undefined, '缺省不注入变体字段');
 assert.throws(() => validateAIParameters({ ...baseParams, acquisitionVariant: 'cheat' }), /未知获取估值变体/);
+// 新变体 'readiness-efficiency'（AI5 多样性轮最优）的校验与分派。
+assert.equal(validateAIParameters({ ...baseParams, acquisitionVariant: 'readiness-efficiency' }).acquisitionVariant, 'readiness-efficiency');
+const stateMixed = { stock: [1, 0, 2, 0], hand: ['M01'], played: [] };
+const reBase = acquisitionValue(stateMixed, 'M14', 'G09', { engine: 1, contest: 1 }, pressure, baseParams);
+const reVariant = acquisitionValue(stateMixed, 'M14', 'G09', { engine: 1, contest: 1 }, pressure, { ...baseParams, acquisitionVariant: 'readiness-efficiency' });
+assert.equal(reVariant, acquisitionValueReadinessEfficiency(stateMixed, 'M14', 'G09', { engine: 1, contest: 1 }, pressure, baseParams), '分派必须命中 readiness-efficiency 实现');
+assert.notEqual(reVariant, reBase, 'readiness-efficiency 与基线输出必须不同');
+assert.equal(acquisitionValue(stateMixed, 'M14', 'G09', { engine: 1, contest: 1 }, pressure, { ...baseParams, acquisitionVariant: 'readiness-efficiency' }), reVariant, '变体必须确定性');
 
 // ---- 2/3. 分派与敏感性 ----
 // 状态 A：目标 G01 cost [2,1,0,1]，已持有 [2,1,0,1] 全部费用水晶 →
