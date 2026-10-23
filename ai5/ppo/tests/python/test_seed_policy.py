@@ -31,13 +31,15 @@ class TestSeedPolicyConstants(unittest.TestCase):
         for name in ("AI4_EVO_BLOCK", "AI5_BLOCK", "OPENEVOLVE_STAGE2_BLOCK",
                      "OPENEVOLVE_STAGE3_BLOCK", "OPENEVOLVE_DEEP_VALIDATION_BLOCK",
                      "PPO_TRAINING_BLOCK", "AI5_EVAL_TRAINING_BLOCK",
-                     "AI4_BENCHMARK_BLOCK", "VALIDATION_POOL_BLOCK"):
+                     "AI4_BENCHMARK_BLOCK", "VALIDATION_POOL_BLOCK",
+                     "AI6_BASELINE_BLOCK"):
             self.assertEqual(getattr(sp, name), grab(name), f"{name} 两侧不一致")
 
     def test_blocks_disjoint(self):
         blocks = [sp.AI4_EVO_BLOCK, sp.OPENEVOLVE_STAGE2_BLOCK, sp.OPENEVOLVE_STAGE3_BLOCK,
                   sp.OPENEVOLVE_DEEP_VALIDATION_BLOCK, sp.PPO_TRAINING_BLOCK,
-                  sp.AI5_EVAL_TRAINING_BLOCK, sp.AI4_BENCHMARK_BLOCK, sp.VALIDATION_POOL_BLOCK]
+                  sp.AI5_EVAL_TRAINING_BLOCK, sp.AI4_BENCHMARK_BLOCK, sp.VALIDATION_POOL_BLOCK,
+                  sp.AI6_BASELINE_BLOCK]
         for i, a in enumerate(blocks):
             for b in blocks[i + 1:]:
                 self.assertTrue(a[1] <= b[0] or b[1] <= a[0], f"{a} 与 {b} 重叠")

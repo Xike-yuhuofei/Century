@@ -15,6 +15,9 @@
  * - [400M, 900M)             AI 4.0 基准评测约定区（AI5 绝不使用）；
  * - [900M, 1.06e9)           验证池：AI4 确认挑战 + AI5 arena 独立验证共用，
  *   账本防重 + 原子分配（flock），AI5 对 AI4 账本只读核对。
+ * - [1.1e9, 1.2e9)           AI6 冠军基线冻结评测专用块（research/m4-baseline-freeze，
+ *   账本管理见 training/baseline/seed-ledger.json）：多人（2-5 人）第一名率基准、
+ *   性能基准与冻结复现对照，与训练/验证/进化各池物理隔离。
  *
  * 纪律：任何系统的种子消费不得越过自己的区间；训练种子与验证/评测种子交集
  * 必须为零。越界一律抛错（宁可终止也不污染）。
@@ -31,6 +34,9 @@ export const PPO_TRAINING_BLOCK = [300_100_000, 350_000_000];
 export const AI5_EVAL_TRAINING_BLOCK = [350_000_000, 400_000_000];
 export const AI4_BENCHMARK_BLOCK = [400_000_000, 900_000_000];
 export const VALIDATION_POOL_BLOCK = [900_000_000, 1_060_000_000];
+/** AI6 冠军基线冻结评测专用块：多人第一名率基准 / 性能基准 / 冻结复现对照。
+ * 与 AI4 进化区、AI5 专用块、验证池物理隔离，账本见 training/baseline/seed-ledger.json。 */
+export const AI6_BASELINE_BLOCK = [1_100_000_000, 1_200_000_000];
 
 /** 断言种子落在指定区间内（含头不含尾）。 */
 export function assertInBlock(seed, block, name = 'seed') {
