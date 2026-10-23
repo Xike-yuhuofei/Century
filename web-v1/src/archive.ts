@@ -42,6 +42,13 @@ export function pushArchive(entries: ArchiveEntry[], entry: ArchiveEntry): Archi
 
 type Store = { getItem(key: string): string | null; setItem(key: string, value: string): void };
 
+/** 安全取存储：拒绝访问的文档（隐私模式、嵌入式 about:blank 等）里
+ * `globalThis.localStorage` 的 getter 本身抛 SecurityError——必须在访问点兜住，
+ * 绝不让历史归档阻断页面初始化（应用顶层就调 loadArchive）。 */
+function safeStore(): Store | null {
+  try { return globalThis.localStorage ?? null; } catch { return null; }
+}
+
 /** 坏条目（字段缺失、对局结构损坏、复盘记录无效）直接剔除，不让历史脏数据阻断页面。 */
 function entryValid(e: unknown): boolean {
   if (!e || typeof e !== 'object') return false;
@@ -55,7 +62,7 @@ function entryValid(e: unknown): boolean {
 }
 
 export function loadArchive(store?: Store): ArchiveEntry[] {
-  const s = store ?? globalThis.localStorage;
+  const s = store ?? safeStore();
   if (!s) return [];
   try {
     const parsed = JSON.parse(s.getItem(ARCHIVE_KEY) || 'null');
@@ -66,7 +73,7 @@ export function loadArchive(store?: Store): ArchiveEntry[] {
 
 /** 存储配额不足时减半重试一次；最坏情况放弃本次写入，绝不影响对局本身。 */
 export function saveArchive(entries: ArchiveEntry[], store?: Store): void {
-  const s = store ?? globalThis.localStorage;
+  const s = store ?? safeStore();
   if (!s) return;
   const attempt = (n: number) => s.setItem(ARCHIVE_KEY, JSON.stringify({ version: 1, entries: entries.slice(0, Math.min(ARCHIVE_LIMIT, n)) }));
   try { attempt(ARCHIVE_LIMIT); }
