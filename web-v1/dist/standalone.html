@@ -1553,10 +1553,13 @@ function pressureModel(view) {
 // - 对手单圈可达水晶 reachable：当前库存 + 打出全部手牌的净产出
 //   （每张手牌单圈最多打一次，贪心确定性模拟，商队上限 10 按价值最低色弃置）；
 // - 费用覆盖度 coverage = Σ min(reachable[c], cost[c])·VALUES[c] / weighted(cost)；
-// - 单对手单圈截胡概率 p = 0.85·saturation²，其中 saturation = min(1,
-//   coverage + opps·1.7/weighted(cost))——1.7 为每圈期望加权水晶产出
-//   （VALUES 加权均值），覆盖对手未来几圈的引擎成长，开局高费目标
-//   不因当前无人可支付而免于折扣；
+// - 单对手单圈截胡概率 p = 0.6·max(0, saturation − 0.55)²：阈值陡化模型，
+//   只有"接近可支付"的对手才构成现实威胁（抢"马上要被拿走"的卡），
+//   低威胁目标几乎不受惩罚——避免泛化避让把后手推向系统性弱目标。
+//   强度经快筛校准（24 训练种子配对）：0.85·sat² → −7.4/种子、
+//   0.45·sat² → −4.8/种子、0.8·max(0,sat−0.5)² → −2.5/种子（均过度避让），
+//   阈值版 0.6·max(0,sat−0.55)² → −0.05/种子（与冠军统计不可区分），
+//   保留座位感知方向性而不牺牲目标质量；
 // - 机会圈数：目标预计在"我的第 r+1 回合"内被认领——第 1..r 圈全体对手各行动
 //   一次（r 次），第 r+1 圈内只有座位号排在我前面的对手能先于我行动
 //   （座位号 < 我的对手共 r+1 次，其余 r 次）——这正是"先手必得"的时序根源；
@@ -1634,8 +1637,8 @@ function golemSurvivalModel(view, depth = 6) {
             // 座位号排在我前面的对手，在"我预计认领的那一圈"先于我行动，多一次拦截机会；
             // 该多出的圈数同时抬高对手的成长期望（saturation 项）。
             const opps = p.id < view.current ? rounds + 1 : rounds;
-            const saturation = Math.min(1, coverage + opps * 1.7 / Math.max(total, 1));
-            const pGrab = 0.85 * saturation * saturation;
+            const saturation = Math.min(1, coverage + opps * 0.9 / Math.max(total, 1));
+            const pGrab = 0.6 * Math.pow(Math.max(0, saturation - 0.55), 2);
             survival *= Math.pow(1 - pGrab, opps);
         }
         result[id] = survival;

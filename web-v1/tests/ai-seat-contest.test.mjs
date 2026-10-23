@@ -63,18 +63,31 @@ test('存活模型:对手可达费用越高,目标存活系数越低', () => {
   assert.ok(strong < weak, `满覆盖对手(${strong})应比零覆盖对手(${weak})更压低存活系数`);
 });
 
-test('存活模型:同一局面下先手视角的存活系数高于后手视角(座位感知)', () => {
-  const game = probeGame(20261023);
-  const first = buildObservation(game, 0);
-  const last = buildObservation(game, 3);
-  const firstSurvival = golemSurvivalModel({ ...first, current: 0 }, 6);
-  const lastSurvival = golemSurvivalModel({ ...last, current: 3 }, 6);
-  for (const id of game.golemMarket) {
-    assert.ok(
-      firstSurvival[id] > lastSurvival[id],
-      `魔像 ${id}:先手视角 ${firstSurvival[id]} 应高于后手视角 ${lastSurvival[id]}`,
-    );
-  }
+test('存活模型:同一威胁对手排在我前面时存活系数更低(座位感知)', () => {
+  const target = 'G27';
+  const strong = [...GOLEM_BY_ID[target].cost];
+  const zero = [0, 0, 0, 0];
+  const mkPlayer = (id, stock) => ({
+    id, name: `P${id}`, isAI: true,
+    stock, hand: [], played: [], claimed: [],
+    copper: 0, silver: 0, turns: 0,
+  });
+  // 五席合成局面:只有席位 2 具备满覆盖能力,其余零覆盖(阈值模型下不构成威胁)。
+  // current=1 → 威胁对手在我后(2 次拦截机会);current=3 → 在我前(3 次)。
+  const view = (current) => ({
+    playerId: current,
+    players: [0, 1, 2, 3, 4].map(id => mkPlayer(id, id === 2 ? strong : zero)),
+    current,
+    merchantMarket: [],
+    golemMarket: [target],
+    copper: 0, silver: 0,
+    phase: 'turn',
+    triggerPlayer: null,
+    turnNumber: 1,
+  });
+  const behind = golemSurvivalModel(view(1), 6)[target];
+  const ahead = golemSurvivalModel(view(3), 6)[target];
+  assert.ok(ahead < behind, `威胁对手在我前(${ahead})应比在我后(${behind})更压低存活系数`);
 });
 
 test('存活模型:终局当步不做折扣(triggerPlayer 非 null 时全为 1)', () => {
