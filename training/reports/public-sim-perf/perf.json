@@ -1,0 +1,215 @@
+{
+  "environment": {
+    "nodeVersion": "v22.16.0",
+    "platform": "darwin arm64",
+    "cpuModel": "Apple M4",
+    "cpuCores": 10,
+    "memoryTotalGB": 16,
+    "loadavg1m": "3.49",
+    "workers": 1,
+    "repoCommit": "0b6c7c8775dc197862ed79cbc20ad3cf2eb2f58b",
+    "engineBundleSha256": "b0df3fc49bfe8589ae5f1b792270821c6f7a81183439c3bbe6a4e4a89193d0a8",
+    "measuredAt": "2026-10-23T12:38:16.619Z"
+  },
+  "methodology": {
+    "warmupRounds": 1,
+    "measuredRounds": 3,
+    "seedDiscipline": "PERF 诊断子块（非统计样本，不参与账本消费），与 AI6 第一阶段 perf 基准同源",
+    "口径声明": "纯转移吞吐与节点展开吞吐分开披露；节点展开 = 全量合法行动枚举 + 每行动 fork 状态复制 + tryStep"
+  },
+  "perSeatCount": [
+    {
+      "seatCount": 2,
+      "seed": 1109005002,
+      "recordedMoves": 104,
+      "pureTransitionThroughput": {
+        "engineReplay": {
+          "transitionsPerSec": 94949,
+          "msPerTransition": 0.0105
+        },
+        "publicSimReplay": {
+          "transitionsPerSec": 89180,
+          "msPerTransition": 0.0112
+        },
+        "simVsEngine": 0.94,
+        "口径": "纯转移吞吐（不含合法行动生成）；双侧同一行动序列 + 逐条合法性校验 + 到达终局"
+      },
+      "nodeExpansion": {
+        "expansionsPerSec": 626303,
+        "enumerationsPerSec": 18164,
+        "meanBranchingFactor": 34.5,
+        "memory": {
+          "heapUsedDeltaMB": 0.4,
+          "rssDeltaMB": 0.1
+        },
+        "measuredExpansions": 3586,
+        "口径": "含合法行动生成 + 每行动分支状态复制的节点展开吞吐；与纯转移吞吐分开披露"
+      },
+      "micro": {
+        "buildPublicSimState": {
+          "opsPerSec": 300272,
+          "usPerOp": 3.33
+        },
+        "beliefSampling": {
+          "samplesPerSec": 1945841,
+          "cardsPerSec": 132317176,
+          "cardsPerSample": 68
+        },
+        "legalActionGeneration": {
+          "enumerationsPerSec": 1113575,
+          "actionsPerSec": 11135753,
+          "meanActionsPerPosition": 10
+        },
+        "stateCopy": {
+          "forksPerSec": 4197639,
+          "usPerFork": 0.24
+        }
+      }
+    },
+    {
+      "seatCount": 3,
+      "seed": 1109005003,
+      "recordedMoves": 165,
+      "pureTransitionThroughput": {
+        "engineReplay": {
+          "transitionsPerSec": 87036,
+          "msPerTransition": 0.0115
+        },
+        "publicSimReplay": {
+          "transitionsPerSec": 83766,
+          "msPerTransition": 0.0119
+        },
+        "simVsEngine": 0.96,
+        "口径": "纯转移吞吐（不含合法行动生成）；双侧同一行动序列 + 逐条合法性校验 + 到达终局"
+      },
+      "nodeExpansion": {
+        "expansionsPerSec": 1031691,
+        "enumerationsPerSec": 25302,
+        "meanBranchingFactor": 40.8,
+        "memory": {
+          "heapUsedDeltaMB": 14.2,
+          "rssDeltaMB": 0
+        },
+        "measuredExpansions": 6728,
+        "口径": "含合法行动生成 + 每行动分支状态复制的节点展开吞吐；与纯转移吞吐分开披露"
+      },
+      "micro": {
+        "buildPublicSimState": {
+          "opsPerSec": 299310,
+          "usPerOp": 3.34
+        },
+        "beliefSampling": {
+          "samplesPerSec": 2051773,
+          "cardsPerSec": 139520564,
+          "cardsPerSample": 68
+        },
+        "legalActionGeneration": {
+          "enumerationsPerSec": 2498802,
+          "actionsPerSec": 24988018,
+          "meanActionsPerPosition": 10
+        },
+        "stateCopy": {
+          "forksPerSec": 3563183,
+          "usPerFork": 0.28
+        }
+      }
+    },
+    {
+      "seatCount": 4,
+      "seed": 1109005004,
+      "recordedMoves": 152,
+      "pureTransitionThroughput": {
+        "engineReplay": {
+          "transitionsPerSec": 87752,
+          "msPerTransition": 0.0114
+        },
+        "publicSimReplay": {
+          "transitionsPerSec": 78384,
+          "msPerTransition": 0.0128
+        },
+        "simVsEngine": 0.89,
+        "口径": "纯转移吞吐（不含合法行动生成）；双侧同一行动序列 + 逐条合法性校验 + 到达终局"
+      },
+      "nodeExpansion": {
+        "expansionsPerSec": 1165780,
+        "enumerationsPerSec": 21933,
+        "meanBranchingFactor": 53.2,
+        "memory": {
+          "heapUsedDeltaMB": 6.4,
+          "rssDeltaMB": 0
+        },
+        "measuredExpansions": 8079,
+        "口径": "含合法行动生成 + 每行动分支状态复制的节点展开吞吐；与纯转移吞吐分开披露"
+      },
+      "micro": {
+        "buildPublicSimState": {
+          "opsPerSec": 274362,
+          "usPerOp": 3.64
+        },
+        "beliefSampling": {
+          "samplesPerSec": 2071966,
+          "cardsPerSec": 138821737,
+          "cardsPerSample": 67
+        },
+        "legalActionGeneration": {
+          "enumerationsPerSec": 1333985,
+          "actionsPerSec": 14673839,
+          "meanActionsPerPosition": 11
+        },
+        "stateCopy": {
+          "forksPerSec": 3076726,
+          "usPerFork": 0.33
+        }
+      }
+    },
+    {
+      "seatCount": 5,
+      "seed": 1109005005,
+      "recordedMoves": 175,
+      "pureTransitionThroughput": {
+        "engineReplay": {
+          "transitionsPerSec": 78866,
+          "msPerTransition": 0.0127
+        },
+        "publicSimReplay": {
+          "transitionsPerSec": 79100,
+          "msPerTransition": 0.0126
+        },
+        "simVsEngine": 1,
+        "口径": "纯转移吞吐（不含合法行动生成）；双侧同一行动序列 + 逐条合法性校验 + 到达终局"
+      },
+      "nodeExpansion": {
+        "expansionsPerSec": 1112094,
+        "enumerationsPerSec": 20163,
+        "meanBranchingFactor": 55.2,
+        "memory": {
+          "heapUsedDeltaMB": 0.9,
+          "rssDeltaMB": 0
+        },
+        "measuredExpansions": 9652,
+        "口径": "含合法行动生成 + 每行动分支状态复制的节点展开吞吐；与纯转移吞吐分开披露"
+      },
+      "micro": {
+        "buildPublicSimState": {
+          "opsPerSec": 245623,
+          "usPerOp": 4.07
+        },
+        "beliefSampling": {
+          "samplesPerSec": 2280058,
+          "cardsPerSec": 143643632,
+          "cardsPerSample": 63
+        },
+        "legalActionGeneration": {
+          "enumerationsPerSec": 2177859,
+          "actionsPerSec": 21778588,
+          "meanActionsPerPosition": 10
+        },
+        "stateCopy": {
+          "forksPerSec": 2703327,
+          "usPerFork": 0.37
+        }
+      }
+    }
+  ],
+  "measuredAt": "2026-10-23T12:38:22.478Z"
+}
