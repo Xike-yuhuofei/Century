@@ -254,15 +254,21 @@ class JointPlannerV1 implements JointPlanner {
     });
 
     // 最终选优：仅在 trials ≥ 2 的行动中取 mean − λ·se 最大者（低样本行动的
-    // 单次幸运值不得赢得选优）；无 trials ≥ 2 行动时回退最高均值已试行动。
+    // 单次幸运值不得赢得选优）；无 trials ≥ 2 行动时回退最高均值已试行动；
+    // 全部行动零模拟完成时（慢机上筛选即耗尽极小预算）回退先验最优行动——
+    // 任务 F 要求超时/异常时回退已验证的合法决策，绝不抛错。
     const tried = evaluations.filter(e => e.trials > 0);
-    if (!tried.length) fail('无已完成模拟的根行动');
-    let bestEval = tried.reduce((best, e) => (e.mean > best.mean ? e : best), tried[0]);
-    let robustScore = -Infinity;
-    for (const e of tried) {
-      if (e.trials < 2 || e.se === null) continue;
-      const score = e.mean - ROBUST_LAMBDA * e.se;
-      if (score > robustScore) { robustScore = score; bestEval = e; }
+    let bestEval: RootActionEvaluation;
+    if (tried.length === 0) {
+      bestEval = evaluations[0]; // screened 已按先验降序；全部未试 = 先验最优
+    } else {
+      bestEval = tried.reduce((best, e) => (e.mean > best.mean ? e : best), tried[0]);
+      let robustScore = -Infinity;
+      for (const e of tried) {
+        if (e.trials < 2 || e.se === null) continue;
+        const score = e.mean - ROBUST_LAMBDA * e.se;
+        if (score > robustScore) { robustScore = score; bestEval = e; }
+      }
     }
 
     const rejected = evaluations

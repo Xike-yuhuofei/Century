@@ -105,6 +105,11 @@ test('预算耗尽回退：极端预算下决策仍合法', () => {
     // 1ms 极端预算：0-1 条轨迹完成也应返回合法行动。
     const r = chooseJointAction(g, { version: 'joint-js4', budgetMs: 1 });
     assert.doesNotThrow(() => applyAction(g, r.action), '极端预算下决策非法');
+    // 0 预算：筛选即耗尽预算（慢机上必然发生）→ 必须回退先验最优而非抛错。
+    const g2 = JSON.parse(JSON.stringify(g0));
+    const r0 = chooseJointAction(g2, { version: 'joint-js2', budgetMs: 0 });
+    assert.equal(r0.joint.stats.rollouts, 0, '0 预算应零轨迹完成（回退路径前提）');
+    assert.doesNotThrow(() => applyAction(g2, r0.action), '0 预算回退决策非法');
   }
 });
 
