@@ -38,6 +38,21 @@ export const VALIDATION_POOL_BLOCK = [900_000_000, 1_060_000_000];
  * 与 AI4 进化区、AI5 专用块、验证池物理隔离，账本见 training/baseline/seed-ledger.json。 */
 export const AI6_BASELINE_BLOCK = [1_100_000_000, 1_200_000_000];
 
+/** AI6 Joint Search V1（第四阶段）评测专用块：候选筛选消融与性能基准。
+ * 与全部既有块物理隔离；本阶段为候选筛选评测，不消费正式验证池。
+ * 子块布局（左右闭开）：
+ * - [1.30e9, 1.301e9)  版本一致性审计（training/joint/audit.mjs）；
+ * - [1.31e9, 1.32e9)   调参/开发种子（JS 消融调参，永不用于结论）；
+ * - [1.32e9, 1.33e9)   主测试种子（JS0-JS4 消融第一名率结论）；
+ * - [1.34e9, 1.35e9)   L3 叶子评价器校准（training/joint/calibrate.mjs）；
+ * - [1.35e9, 1.351e9)  性能基准（25/50/100/200ms、64-512 工作量）。 */
+export const AI6_JOINT_SEARCH_BLOCK = [1_300_000_000, 1_400_000_000];
+export const AI6_JOINT_AUDIT_SUBBLOCK = [1_300_000_000, 1_301_000_000];
+export const AI6_JOINT_TUNE_SUBBLOCK = [1_310_000_000, 1_320_000_000];
+export const AI6_JOINT_TEST_SUBBLOCK = [1_320_000_000, 1_330_000_000];
+export const AI6_JOINT_CALIB_SUBBLOCK = [1_340_000_000, 1_350_000_000];
+export const AI6_JOINT_PERF_SUBBLOCK = [1_350_000_000, 1_351_000_000];
+
 /** 断言种子落在指定区间内（含头不含尾）。 */
 export function assertInBlock(seed, block, name = 'seed') {
   if (!Number.isSafeInteger(seed)) {

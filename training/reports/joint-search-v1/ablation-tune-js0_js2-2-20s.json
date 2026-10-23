@@ -1,0 +1,238 @@
+{
+  "schema": "century-joint-search-ablation-v1",
+  "date": "2026-10-23T19:21:38.315Z",
+  "block": "tune",
+  "seedBase": 1310000000,
+  "seeds": 20,
+  "jointOptions": {
+    "budgetMs": 100
+  },
+  "note": "JS 编号为本阶段消融编号（JS0–JS4），非 PR #22 的 B0/B1/B2。",
+  "cells": [
+    {
+      "candidateId": "js0",
+      "seatCount": 2,
+      "totalGames": 40,
+      "finishedGames": 40,
+      "anomalies": 0,
+      "anomalyReasons": [],
+      "directionA": {
+        "games": 20,
+        "firstPlace": {
+          "point": 0.8,
+          "lower": 0.6,
+          "upper": 0.95,
+          "seeds": 20,
+          "games": 20,
+          "iterations": 2000,
+          "method": "seed-cluster-bootstrap-95"
+        },
+        "bySeat": {
+          "0": {
+            "games": 10,
+            "firstPlaceRate": 0.6,
+            "wilson": {
+              "point": 0.6,
+              "lower": 0.31267376973365824,
+              "upper": 0.8318196702937638
+            }
+          },
+          "1": {
+            "games": 10,
+            "firstPlaceRate": 1,
+            "wilson": {
+              "point": 1,
+              "lower": 0.7224672001371107,
+              "upper": 0.9999999999999999
+            }
+          }
+        }
+      },
+      "directionB": {
+        "games": 20,
+        "firstPlace": {
+          "point": 0.3,
+          "lower": 0.1,
+          "upper": 0.5,
+          "seeds": 20,
+          "games": 20,
+          "iterations": 2000,
+          "method": "seed-cluster-bootstrap-95"
+        },
+        "bySeat": {
+          "0": {
+            "games": 10,
+            "firstPlaceRate": 0.1,
+            "wilson": {
+              "point": 0.1,
+              "lower": 0.017876213095072868,
+              "upper": 0.4041500267952385
+            }
+          },
+          "1": {
+            "games": 10,
+            "firstPlaceRate": 0.5,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.236593090512564,
+              "upper": 0.7634069094874361
+            }
+          }
+        }
+      },
+      "firstPlaceCombined": {
+        "point": 0.55,
+        "lower": 0.45,
+        "upper": 0.65,
+        "seeds": 20,
+        "games": 40,
+        "iterations": 2000,
+        "method": "seed-cluster-bootstrap-95"
+      },
+      "meanRank": {
+        "mean": 1.45,
+        "se": 0.07966275068156915,
+        "lower": 1.2938638777547307,
+        "upper": 1.6061361222452692
+      },
+      "meanScoreDiff": {
+        "mean": 2.375,
+        "se": 2.9362210800226247,
+        "lower": -3.379887567491645,
+        "upper": 8.129887567491645
+      },
+      "pairedScoreAdvantage": {
+        "seeds": 20,
+        "meanDiff": 2.375,
+        "won": 8,
+        "lost": 4,
+        "tied": 8,
+        "advantageRate": 0.4
+      },
+      "latency": {
+        "count": 3600,
+        "meanMs": 10.627,
+        "p50Ms": 9.66,
+        "p95Ms": 21.28,
+        "p99Ms": 31.16,
+        "maxMs": 76.208
+      }
+    },
+    {
+      "candidateId": "js2",
+      "seatCount": 2,
+      "totalGames": 40,
+      "finishedGames": 40,
+      "anomalies": 0,
+      "anomalyReasons": [],
+      "directionA": {
+        "games": 20,
+        "firstPlace": {
+          "point": 0.25,
+          "lower": 0.1,
+          "upper": 0.45,
+          "seeds": 20,
+          "games": 20,
+          "iterations": 2000,
+          "method": "seed-cluster-bootstrap-95"
+        },
+        "bySeat": {
+          "0": {
+            "games": 10,
+            "firstPlaceRate": 0.1,
+            "wilson": {
+              "point": 0.1,
+              "lower": 0.017876213095072868,
+              "upper": 0.4041500267952385
+            }
+          },
+          "1": {
+            "games": 10,
+            "firstPlaceRate": 0.4,
+            "wilson": {
+              "point": 0.4,
+              "lower": 0.16818032970623614,
+              "upper": 0.6873262302663417
+            }
+          }
+        }
+      },
+      "directionB": {
+        "games": 20,
+        "firstPlace": {
+          "point": 0.2,
+          "lower": 0.05,
+          "upper": 0.4,
+          "seeds": 20,
+          "games": 20,
+          "iterations": 2000,
+          "method": "seed-cluster-bootstrap-95"
+        },
+        "bySeat": {
+          "0": {
+            "games": 10,
+            "firstPlaceRate": 0.2,
+            "wilson": {
+              "point": 0.2,
+              "lower": 0.05668215145437519,
+              "upper": 0.5098375284633583
+            }
+          },
+          "1": {
+            "games": 10,
+            "firstPlaceRate": 0.2,
+            "wilson": {
+              "point": 0.2,
+              "lower": 0.05668215145437519,
+              "upper": 0.5098375284633583
+            }
+          }
+        }
+      },
+      "firstPlaceCombined": {
+        "point": 0.225,
+        "lower": 0.125,
+        "upper": 0.35,
+        "seeds": 20,
+        "games": 40,
+        "iterations": 2000,
+        "method": "seed-cluster-bootstrap-95"
+      },
+      "meanRank": {
+        "mean": 1.775,
+        "se": 0.06686668711812967,
+        "lower": 1.6439437014829574,
+        "upper": 1.9060562985170424
+      },
+      "meanScoreDiff": {
+        "mean": -22.7,
+        "se": 3.589907505415132,
+        "lower": -29.736089418443687,
+        "upper": -15.663910581556312
+      },
+      "pairedScoreAdvantage": {
+        "seeds": 20,
+        "meanDiff": -22.7,
+        "won": 0,
+        "lost": 20,
+        "tied": 0,
+        "advantageRate": 0
+      },
+      "latency": {
+        "count": 3502,
+        "meanMs": 54.725,
+        "p50Ms": 51.91,
+        "p95Ms": 96.893,
+        "p99Ms": 97.512,
+        "maxMs": 100.031
+      },
+      "jointSearch": {
+        "decisions": 1736,
+        "meanRolloutsPerDecision": 394.48,
+        "meanTransitionsPerDecision": 2244.3,
+        "omTimeMsTotal": 0,
+        "omTimeShare": 0
+      }
+    }
+  ]
+}
