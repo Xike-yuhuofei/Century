@@ -22,6 +22,7 @@ import { ranking as engineRanking, score as engineScore, type Game, type Player 
 import { buildPublicSimState, type PublicSimState } from './state.js';
 import { randomBeliefSampler, type BeliefDeckSampler } from './sampler.js';
 import { cloneCore, stepCore, type SimCore } from './transition.js';
+import { appendEvent, derivePublicEvent, snapshotFromSimState, type PublicHistorySummary } from './history.js';
 import { SimulationMetrics } from './metrics.js';
 
 export type SimulationOptions = {
@@ -30,6 +31,8 @@ export type SimulationOptions = {
   sampler?: BeliefDeckSampler;
   /** 模拟随机流种子（采样器缺省时生效；相同公开状态 + 相同种子 ⇒ 相同模拟结果）。 */
   simSeed?: number;
+  /** 附加公开历史摘要（公开历史追踪器产物；深拷贝进入会话，缺省空摘要）。 */
+  historySummary?: PublicHistorySummary;
 };
 
 const fail = (message: string): never => { throw new Error(message); };
@@ -59,7 +62,7 @@ export class PublicSimulation {
   /** 从合法公开观察创建模拟会话。信念采样在创建时执行一次（root 采样），
    * 之后 fork 共享同一随机世界（CRN）。 */
   static create(observation: Parameters<typeof buildPublicSimState>[0], options?: SimulationOptions): PublicSimulation {
-    const state = buildPublicSimState(observation);
+    const state = buildPublicSimState(observation, { historySummary: options?.historySummary });
     const sampler = options?.sampler ?? randomBeliefSampler(options?.simSeed ?? 0);
     const queueMerchant = sampler.sampleMerchantDeck(state.unseenMerchants);
     const queueGolem = sampler.sampleGolemDeck(state.unseenGolems);
@@ -86,10 +89,15 @@ export class PublicSimulation {
     return this.#metrics;
   }
 
-  /** 执行一步公共状态转移。非法行动抛错（条件与正式 engine 一致）。 */
+  /** 执行一步公共状态转移。非法行动抛错（条件与正式 engine 一致）。
+   * 转移成功后由公开状态前后差分推导 PublicEvent 并增量追加到
+   * state.historySummary（任务 A）；事件推导失败立即抛错（规则层缺陷暴露）。 */
   step(action: Parameters<typeof stepCore>[1]): void {
+    const before = snapshotFromSimState(this.#core.state);
     try {
       stepCore(this.#core, action);
+      const event = derivePublicEvent(before, action, snapshotFromSimState(this.#core.state));
+      appendEvent(this.#core.state.historySummary, event);
       this.#metrics.recordTransition();
     } catch (error) {
       this.#metrics.recordIllegal();

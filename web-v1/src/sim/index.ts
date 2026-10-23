@@ -19,6 +19,16 @@
 export { buildPublicSimState, deriveUnseenMerchants, deriveUnseenGolems, removeFromUnseen } from './state.js';
 export type { PublicSimState, PublicSimPlayer, PublicMarketSlot, UnseenSet, PublicHistorySummary } from './state.js';
 
+export {
+  appendEvent, cloneHistory, createEmptyHistory, derivePublicEvent, historyDigest,
+  snapshotFromObservation, snapshotFromSimState, HISTORY_WINDOW_CAPACITY,
+} from './history.js';
+export type {
+  PublicEvent, PublicEventKind, PublicPlayerHistory, PublicSnapshot,
+  PlayEvent, AcquireEvent, RestEvent, ClaimEvent, DiscardEvent,
+  StockDelta, ListDelta,
+} from './history.js';
+
 export { randomBeliefSampler } from './sampler.js';
 export type { BeliefDeckSampler } from './sampler.js';
 
