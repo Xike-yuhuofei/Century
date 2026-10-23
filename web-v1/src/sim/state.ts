@@ -7,12 +7,13 @@
  * - 手牌内容在本游戏中是由公开历史可推导的合法信息（商人卡进入手牌均来自
  *   公开观察到的获取事件，见 ai/observation.ts 的信息边界说明）。
  *
- * 状态转移保留字段：本阶段不开发对手历史模型，但 PublicSimState 的字段布局
- * 预留 historySummary 扩展位（任务书 A：支持后续公共历史摘要扩展）。
+ * 状态转移：historySummary 由 PublicSimulation.step 增量追加公开事件
+ * （AI6 第三阶段·任务 A，见 ./history.ts）。
  */
 
 import { GOLEM_BY_ID, MERCHANT_BY_ID, MERCHANT_DECK, GOLEM_DECK, type Stock } from '../data.js';
 import type { AIObservation } from '../ai/observation.js';
+import { cloneHistory, createEmptyHistory, type PublicHistorySummary } from './history.js';
 
 const fail = (message: string): never => { throw new Error(message); };
 const requireThat = (condition: unknown, message: string) => { if (!condition) fail(message); };
@@ -38,8 +39,9 @@ export type PublicMarketSlot = { id: string; bonus: Stock };
  * 由固定卡表扣除已公开卡牌推导，随翻牌事件收缩。 */
 export type UnseenSet = string[];
 
-/** 后续公共历史摘要扩展位（本阶段不填充、不参与任何状态转移）。 */
-export type PublicHistorySummary = Record<string, never>;
+/** 公开历史摘要（AI6 第三阶段·任务 A）：由 PublicTransition 在每次 step 后增量追加。
+ * 类型与事件推导见 ./history.ts；此处仅承载。 */
+export type { PublicHistorySummary } from './history.js';
 
 export type PublicSimState = {
   readonly playerCount: number;
@@ -54,8 +56,9 @@ export type PublicSimState = {
   turnNumber: number;
   unseenMerchants: UnseenSet;
   unseenGolems: UnseenSet;
-  /** 预留：后续对手模型 / 公共历史摘要扩展位。本阶段恒为 undefined。 */
-  historySummary?: PublicHistorySummary;
+  /** 公开行为历史摘要（任务 A）：增量维护，随 step 追加事件；
+   * cloneCore/fork 深拷贝，模拟分支历史与正式对局历史严格隔离。 */
+  historySummary: PublicHistorySummary;
 };
 
 /** 从公开观察推导剩余未知商人卡集合（只利用固定卡表构成，不猜测任何顺序）。
@@ -127,8 +130,14 @@ function validateObservation(observation: AIObservation): void {
  *
  * - 只接受 AIObservation；真实隐藏牌序在结构上无法进入本函数（观察中不存在）。
  * - 逐字段显式深拷贝，输出状态与输入观察不共享任何可变引用。
- * - 未公开卡集合按排序 id 列表表示（规范形），保证相同公开信息 ⇒ 相同状态。 */
-export function buildPublicSimState(observation: AIObservation): PublicSimState {
+ * - 未公开卡集合按排序 id 列表表示（规范形），保证相同公开信息 ⇒ 相同状态。
+ * - historySummary 选项：附加已记录的公开历史（公开历史追踪器产物）；缺省
+ *   创建 origin='empty' 的空摘要（中途接入/旧存档降级口径）。附加摘要被
+ *   深拷贝，调用方对象与会话状态不共享引用。 */
+export function buildPublicSimState(
+  observation: AIObservation,
+  options?: { historySummary?: PublicHistorySummary },
+): PublicSimState {
   validateObservation(observation);
   const players: PublicSimPlayer[] = observation.players.map(p => ({
     id: p.id,
@@ -142,6 +151,11 @@ export function buildPublicSimState(observation: AIObservation): PublicSimState 
     silver: p.silver,
     turns: p.turns,
   }));
+  const attached = options?.historySummary;
+  const historySummary = attached ? cloneHistory(attached) : createEmptyHistory(players.length);
+  if (attached && attached.perPlayer.length !== players.length) {
+    throw new Error(`附加公开历史的席位数 ${attached.perPlayer.length} 与观察席位数 ${players.length} 不一致`);
+  }
   const state: PublicSimState = {
     playerCount: players.length,
     players,
@@ -155,6 +169,7 @@ export function buildPublicSimState(observation: AIObservation): PublicSimState 
     turnNumber: observation.turnNumber,
     unseenMerchants: deriveUnseenMerchants(observation.merchantMarket, players),
     unseenGolems: deriveUnseenGolems(observation.golemMarket, players),
+    historySummary,
   };
   return state;
 }

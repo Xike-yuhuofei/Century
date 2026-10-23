@@ -20,6 +20,7 @@
 import { COLOR_NAMES, count, has, type Action, type Color } from '../engine.js';
 import { GOLEM_BY_ID, MERCHANT_BY_ID, type Stock } from '../data.js';
 import { removeFromUnseen, type PublicSimState } from './state.js';
+import { cloneHistory } from './history.js';
 
 const fail = (message: string): never => { throw new Error(message); };
 const requireThat = (condition: unknown, message: string) => { if (!condition) fail(message); };
@@ -212,6 +213,7 @@ export function cloneCore(core: SimCore): SimCore {
       turnNumber: s.turnNumber,
       unseenMerchants: [...s.unseenMerchants],
       unseenGolems: [...s.unseenGolems],
+      historySummary: cloneHistory(s.historySummary),
     },
     queueMerchant: [...core.queueMerchant],
     queueGolem: [...core.queueGolem],
