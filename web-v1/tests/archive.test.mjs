@@ -73,3 +73,27 @@ test('saveArchive：存储配额不足时降级重试且不抛错', () => {
   saveArchive(Array.from({ length: ARCHIVE_LIMIT }, (_, i) => makeEntry({ ...make(), turnNumber: i + 1 }, `2026-10-23T10:0${i % 10}:00.000Z`)), alwaysFull);
   assert.equal(calls, 2);
 });
+
+test('存储拒绝访问（隐私模式 / 嵌入式 about:blank）：属性访问本身抛错时绝不阻断页面', () => {
+  // CI 复现根因：Playwright set_content 页面拒绝 localStorage——
+  // globalThis.localStorage 的 getter 本身抛 SecurityError（在 try 之外），
+  // loadArchive 在模块顶层调用，直接让整个应用初始化崩溃（设置屏不渲染）。
+  const original = Object.getOwnPropertyDescriptor(globalThis, 'localStorage');
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    get() { throw new Error("Failed to read the 'localStorage' property from 'Window': Access is denied for this document."); },
+  });
+  try {
+    assert.doesNotThrow(() => loadArchive(), 'loadArchive 必须兜住存储属性访问');
+    assert.deepEqual(loadArchive(), []);
+    const entry = makeEntry(make());
+    assert.doesNotThrow(() => saveArchive([entry]), 'saveArchive 必须兜住存储属性访问');
+  } finally {
+    if (original) Object.defineProperty(globalThis, 'localStorage', original);
+    else delete globalThis.localStorage;
+  }
+  // 恢复后既有行为不变：显式注入 store 仍正常工作。
+  const store = fakeStore();
+  saveArchive([makeEntry(make(), '2026-10-23T12:30:00.000Z')], store);
+  assert.equal(loadArchive(store).length, 1);
+});
