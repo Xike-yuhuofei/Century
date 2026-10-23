@@ -46,23 +46,25 @@ function parseArgs(argv) {
   return args;
 }
 
-/** 冻结校验（manifest 缺失时按需现场生成；存在时逐项核对）。 */
-export function ensureFreeze({ path = FREEZE_PATH, write = false } = {}) {
+/** 冻结校验（manifest 缺失时按需现场生成；存在时逐项核对）。
+ * championPath 可注入（测试用 fixture 冠军记录，避免依赖工作区构建状态）。 */
+export function ensureFreeze({ path = FREEZE_PATH, championPath = undefined, write = false } = {}) {
   if (!existsSync(path)) {
     if (!write) throw new Error(`冻结清单不存在（${path}）。首次使用请执行：node training/baseline/freeze.mjs`);
-    return writeChampionFreeze(path);
+    return writeChampionFreeze(path, championPath ? { championPath } : {});
   }
   const manifest = JSON.parse(readFileSync(path, 'utf8'));
-  const { ok, problems } = verifyChampionFreeze(manifest);
+  const { ok, problems } = verifyChampionFreeze(manifest, championPath ? { championPath } : {});
   if (!ok) throw new Error(`冠军冻结校验失败：\n- ${problems.join('\n- ')}`);
   return manifest;
 }
 
 /** 执行一轮完整基线（镜像 + 对抗 × 每个玩家数），返回报告对象。
- * ledgerPath / freezePath 可注入（测试用临时路径，避免消费正式种子账本）。 */
-export function runBaseline({ playerCounts = [2, 3, 4, 5], mirrorSeeds = 400, contestSeeds = 300, label = 'baseline', ledgerPath = BASELINE_LEDGER_PATH, freezePath = FREEZE_PATH } = {}) {
-  const freeze = ensureFreeze({ path: freezePath });
-  const champion = loadChampion();
+ * ledgerPath / freezePath / championPath 可注入（测试用临时路径 + fixture 冠军，
+ * 避免消费正式种子账本、避免依赖工作区 dist 与冠军指纹一致的环境假设）。 */
+export function runBaseline({ playerCounts = [2, 3, 4, 5], mirrorSeeds = 400, contestSeeds = 300, label = 'baseline', ledgerPath = BASELINE_LEDGER_PATH, freezePath = FREEZE_PATH, championPath = undefined } = {}) {
+  const freeze = ensureFreeze({ path: freezePath, championPath });
+  const champion = championPath ? loadChampion(championPath) : loadChampion();
   const environment = environmentInfo();
   const configs = [];
 

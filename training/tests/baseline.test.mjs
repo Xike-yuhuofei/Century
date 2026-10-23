@@ -14,6 +14,7 @@ import {
   allocateBaselineSeeds, loadLedger,
 } from '../baseline/seed-ledger.mjs';
 import { AI6_BASELINE_BLOCK, assertInBlock } from '../../ai5/lib/seed_policy.mjs';
+import { engineBundleSha256 } from '../lib/paths.mjs';
 import { freezeChampion, verifyChampionFreeze, loadChampion, writeChampionFreeze } from '../baseline/freeze.mjs';
 import {
   championVersion, baselineOpponentPool, versionsForSeats,
@@ -160,25 +161,67 @@ test('loadLedger：损坏 schema 拒绝加载', () => {
 
 // ---------- 冠军冻结 ----------
 
-test('冻结清单：正式冠军指纹核验通过，manifest 含复现入口', () => {
-  const manifest = freezeChampion();
+/** 构造环境无关的 fixture 冠军记录：provenance 指纹 = 当前构建产物。
+ * 冻结逻辑测试不得依赖"工作区 dist 恰好是冠军产物"——CI 从分支源码现场重建
+ * dist（指纹 = 分支源码），fixture 使逻辑测试在任何构建状态下都成立。 */
+function writeFixtureChampion(dir) {
+  const real = loadChampion();
+  const fixture = {
+    ...real,
+    provenance: {
+      ...real.provenance,
+      engineBundleSha256: engineBundleSha256(),
+    },
+  };
+  const path = join(dir, 'champion-fixture.json');
+  writeFileSync(path, JSON.stringify(fixture, null, 2));
+  return path;
+}
+
+test('真实冠军记录结构完整（不依赖构建状态）：id / 参数 / provenance 齐备', () => {
+  const champion = loadChampion();
+  assert.ok(champion.id.startsWith('ai5-'), `冠军 id：${champion.id}`);
+  assert.equal(champion.parameters.id, champion.id);
+  assert.match(champion.provenance.engineBundleSha256, /^[0-9a-f]{64}$/);
+  assert.ok(champion.provenance.promotionEvidence?.challengeIndex >= 1, '晋级证据必须带挑战序号');
+});
+
+test('冻结清单：fixture 指纹与当前构建一致 → 核验通过，manifest 含复现入口', () => {
+  const dir = tmp();
+  const championPath = writeFixtureChampion(dir);
+  const manifest = freezeChampion({ championPath });
   assert.equal(manifest.schema, 'century-champion-freeze-v1');
   assert.ok(manifest.champion.id.startsWith('ai5-'), `冠军 id：${manifest.champion.id}`);
   assert.equal(manifest.champion.fingerprint.length > 0, true);
-  assert.equal(manifest.version.engineBundleSha256, loadChampion().provenance.engineBundleSha256,
-    '冻结时的引擎产物指纹必须与冠军 provenance 一致（freezeChampion 内部已强校验）');
+  assert.equal(manifest.version.engineBundleSha256, engineBundleSha256(),
+    '冻结时的引擎产物指纹必须与 provenance 一致（freezeChampion 内部已强校验）');
   assert.match(manifest.reproduce.command, /npm run baseline/);
-  const { ok, problems } = verifyChampionFreeze(manifest);
+  const { ok, problems } = verifyChampionFreeze(manifest, { championPath });
   assert.deepEqual(problems, []);
   assert.equal(ok, true);
 });
 
+test('冻结清单：provenance 指纹与当前构建不一致 → 拒绝冻结（漂移防线）', () => {
+  const dir = tmp();
+  const real = loadChampion();
+  const drifted = {
+    ...real,
+    provenance: { ...real.provenance, engineBundleSha256: '0'.repeat(64) },
+  };
+  const championPath = join(dir, 'champion-drifted.json');
+  writeFileSync(championPath, JSON.stringify(drifted, null, 2));
+  assert.throws(() => freezeChampion({ championPath }), /冠军版本指纹不一致/,
+    '冠军证据生成后的引擎变更必须被拦截——这是冻结机制的核心防线');
+});
+
 test('冻结清单：参数被篡改时校验必须失败（防配置漂移）', () => {
-  const manifest = freezeChampion();
+  const dir = tmp();
+  const championPath = writeFixtureChampion(dir);
+  const manifest = freezeChampion({ championPath });
   const tampered = JSON.parse(JSON.stringify(manifest));
   const key = Object.keys(tampered.champion.parameters).find(k => k.endsWith('Weight'));
   tampered.champion.parameters[key] = 3.14; // 任意改动参数
-  const { ok, problems } = verifyChampionFreeze(tampered);
+  const { ok, problems } = verifyChampionFreeze(tampered, { championPath });
   assert.equal(ok, false);
   assert.ok(problems.some(p => /指纹|不一致|漂移/.test(p)), `应报指纹/漂移问题：${problems.join('; ')}`);
 });
@@ -309,14 +352,17 @@ test('runBaseline 端到端：报告结构与冻结/账本注入正确', async (
   const dir = tmp();
   const ledgerPath = join(dir, 'seed-ledger.json');
   const freezePath = join(dir, 'champion-freeze.json');
-  // 测试用冻结清单：写入临时路径（不触碰 training/baseline/champion-freeze.json）。
-  writeChampionFreeze(freezePath);
+  // 测试用 fixture 冠军记录 + 临时冻结清单：不依赖工作区 dist 与冠军指纹一致
+  //（CI 从分支源码现场重建 dist，任何依赖真实指纹的环境假设都会假失败）。
+  const championPath = writeFixtureChampion(dir);
+  writeChampionFreeze(freezePath, { championPath });
   const report = runBaseline({
     playerCounts: [2, 5],
     mirrorSeeds: 2,
     contestSeeds: 2,
     ledgerPath,
     freezePath,
+    championPath,
   });
   assert.equal(report.schema, 'century-baseline-report-v1');
   assert.equal(report.configs.length, 4, '2 个玩家数 × mirror+contest');

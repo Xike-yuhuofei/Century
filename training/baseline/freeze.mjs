@@ -102,7 +102,7 @@ export function verifyChampionFreeze(manifest, { championPath = CHAMPION_PATH } 
   if (manifest.version.engineBundleSha256 !== currentBundleSha256) {
     problems.push(`引擎产物指纹变更：${manifest.version.engineBundleSha256} → ${currentBundleSha256}`);
   }
-  const canonical = JSON.stringify(freezeChampion({ now: manifest.frozenAt }).champion);
+  const canonical = JSON.stringify(freezeChampion({ championPath, now: manifest.frozenAt }).champion);
   if (canonical !== JSON.stringify(manifest.champion)) {
     problems.push('冻结清单的 champion 段与当前冻结输出不一致（配置漂移）');
   }
