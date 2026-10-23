@@ -112,15 +112,19 @@ if (existsSync(siblingLedgerPath)) {
 }
 // 引擎指纹核验（P1 证据完整性）：证据必须产自与当前晋级环境一致的运行时产物。
 // 引擎在证据生成后变更过 → 旧证据不适用，必须用新引擎重新确认挑战。
+// 字段位置兼容：evolve-cli（权威生产者）把指纹/代码版本写在 candidate.json 顶层，
+// confirmation 内写入为合法兼容布局；两处都缺失时按证据缺失处理（核验必然失败）。
+const evidenceSha = confirmation.engineBundleSha256 ?? candidate.engineBundleSha256;
+const evidenceCommit = confirmation.codeCommit ?? candidate.codeCommit;
 const currentBundleSha256 = engineBundleSha256();
-if (confirmation.engineBundleSha256 !== currentBundleSha256) {
+if (evidenceSha !== currentBundleSha256) {
   throw new Error(
     `确认挑战证据的运行时产物指纹与当前编译产物不一致` +
-    `（证据 ${confirmation.engineBundleSha256 ?? '缺失'} ≠ 当前 ${currentBundleSha256}），` +
+    `（证据 ${evidenceSha ?? '缺失'} ≠ 当前 ${currentBundleSha256}），` +
     `引擎已在证据生成后变更，旧证据不适用，须重新确认挑战后晋级`,
   );
 }
-if (!confirmation.codeCommit) {
+if (!evidenceCommit) {
   console.error('警告：确认挑战证据缺少 codeCommit（代码版本），溯源能力降级；建议升级 evolve-cli 后重新生成证据');
 }
 // 样本量交叉核对：种子数、完成局数必须与逐种子证据自洽。
@@ -166,7 +170,7 @@ const record = {
     promotedAt: new Date().toISOString().slice(0, 10),
     // 证据溯源（P1）：引擎/代码版本随冠军记录落盘，任何争议可按指纹重建复现。
     engineBundleSha256: currentBundleSha256,
-    codeCommit: confirmation.codeCommit ?? null,
+    codeCommit: evidenceCommit ?? null,
     promotionEvidence: {
       ...confirmation,
       recalculated,

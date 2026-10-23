@@ -23,7 +23,7 @@ import { requireBuiltEngine, engineBundleSha256, REPO_ROOT } from '../../../trai
 import { validateAIParameters } from '../../../web-v1/dist/js/ai/parameters.js';
 
 const here = fileURLToPath(import.meta.url);
-const outDir = resolve(here, '..', 'reports', 'challenge-readiness-efficiency-500');
+const outDir = resolve(here, '..', 'reports', 'challenge-readiness-efficiency-1000');
 mkdirSync(outDir, { recursive: true });
 requireBuiltEngine();
 
@@ -46,6 +46,7 @@ const ledgerSources = [
   'training/reports/evolve-latest/validation-ledger.json',                       // 本地进化确认挑战（3 次）
   'ai5/openevolve/experiments/reports/challenge-ai5-goal-remaining/validation-ledger.json', // AI5 首次正式挑战 60 种子（1 次）
   'ai5/openevolve/experiments/reports/challenge-ai5-goal-remaining-500/validation-ledger.json', // AI5 二次正式挑战 500 种子（1 次）
+  'ai5/openevolve/experiments/reports/challenge-readiness-efficiency-500/validation-ledger.json', // AI5 三次正式挑战 readiness 500 种子（1 次）
 ];
 const merged = { history: [] };
 for (const rel of ledgerSources) {
@@ -61,9 +62,9 @@ const challengeIndex = merged.challengeCount + 1;
 console.log(`历史已消费块 ${merged.history.length} 个，累计确认挑战 ${merged.challengeCount} 次 → 本次 challengeIndex=${challengeIndex}`);
 
 // ---- 2. 分配并防重校验验证种子块 ----
-// 样本量论证：α₇ ≈ 0.039%（z≈3.35）下，按深度验证实测优势率 p≈0.58 反推，
-// Wilson 下界 > 0.5 需要 n ≳ 450；500 种子是该优势量级的最小充分样本。
-const SEEDS = 500;
+// 样本量论证：α₉ ≈ 0.00977%（z≈3.89）下，按上轮正式挑战实测优势率 p≈0.567 反推，
+// Wilson 下界 > 0.5 需要 n ≳ 830 决定性种子；1000 种子（含 ~2% 平局余量）是本次冲冠的最小充分样本。
+const SEEDS = 1000;
 const seedBase = nextValidationBase(merged);
 assertBlockFree(seedBase, SEEDS, merged);
 console.log(`本次验证种子块：[${seedBase}, ${seedBase + SEEDS})（验证池起点 ${VALIDATION_POOL_BASE}）`);

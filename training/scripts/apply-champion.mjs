@@ -46,6 +46,11 @@ const lines = ordered.map(key => {
 if (parameters.structure !== undefined) {
   lines.push(`  structure: ${JSON.stringify(parameters.structure)},`);
 }
+// AI5 收集变体同理：acquisitionVariant 决定 acquisitionValue 走哪个实现，
+// 缺失时网页端会静默回落 baseline 收集价值（回归：AI5 readiness-efficiency 晋级后被 fairness 测试拦截）。
+if (parameters.acquisitionVariant !== undefined) {
+  lines.push(`  acquisitionVariant: ${JSON.stringify(parameters.acquisitionVariant)},`);
+}
 const block = [
   `${BEGIN}（由 training/scripts/apply-champion.mjs 生成，勿手改） ===`,
   'export const CHAMPION_PARAMETERS: AIParameters = {',
