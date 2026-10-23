@@ -29,8 +29,9 @@ export type AIParameters = {
   restWeight: number;
   /** 终局紧迫程度：越接近终局引擎项衰减越快（stage 的指数）。 */
   endgameWeight: number;
-  /** 结构变体（缺省 beam-lineage = 冠军基线）。 */
-  structure?: 'beam-lineage' | 'beam-adaptive' | 'beam-rollout';
+  /** 结构变体（缺省 beam-lineage = 冠军基线）。
+   * 'beam-contest'（Issue #20）：beam-rollout + 座位感知目标存活折扣。 */
+  structure?: 'beam-lineage' | 'beam-adaptive' | 'beam-rollout' | 'beam-contest';
   /** 商人卡获取估值变体（缺省 baseline = 冠军基线实现）。
    * 'goal-remaining'：AI5 进化候选 66f6a296aa72（OpenEvolve 自动生成，两次独立
    * 进化重复发现）——goalFit 只统计目标魔像还缺的水晶（max(0, cost−stock)），
@@ -91,7 +92,7 @@ export function validateAIParameters(input: unknown): AIParameters {
   }
   // 结构标识透传（可选）：合法性在此统一校验，决策入口无需重复。
   if (source.structure !== undefined) {
-    if (source.structure !== 'beam-lineage' && source.structure !== 'beam-adaptive' && source.structure !== 'beam-rollout') {
+    if (source.structure !== 'beam-lineage' && source.structure !== 'beam-adaptive' && source.structure !== 'beam-rollout' && source.structure !== 'beam-contest') {
       throw new Error(`未知 AI 结构：${String(source.structure)}`);
     }
     result.structure = source.structure;
