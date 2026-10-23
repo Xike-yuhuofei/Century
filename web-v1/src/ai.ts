@@ -11,6 +11,7 @@ export {
   type AIParameters,
 } from './ai/parameters.js';
 export { buildObservation, type AIObservation, type ObservationPlayer } from './ai/observation.js';
+export { contestPressure, peakPressure, pressureModel, golemSurvivalModel, type PressureModel } from './ai/opponent-model.js';
 export { PROFILES, profileFor, NEUTRAL_PROFILE, type Profile } from './ai/profiles.js';
 export { choosePlan } from './ai/planner.js';
 export {

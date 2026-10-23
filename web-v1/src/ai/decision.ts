@@ -19,7 +19,7 @@ export type AIOptions = {
   parameters?: AIParameters | string;
   /** 显式人格：训练模拟器按正式游戏席位映射注入；缺省按席位结构自动推导。 */
   profile?: Profile;
-  /** 结构变体：beam-lineage（冠军基线）/ beam-adaptive / beam-rollout。 */
+  /** 结构变体：beam-lineage（冠军基线）/ beam-adaptive / beam-rollout / beam-contest。 */
   structure?: AIStructure | string;
 };
 

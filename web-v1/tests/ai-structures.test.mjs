@@ -13,8 +13,9 @@ test('结构标识归一化：缺省为冠军结构，非法值报错', () => {
   assert.equal(normalizeStructure(undefined), 'beam-lineage');
   assert.equal(normalizeStructure(null), 'beam-lineage');
   assert.equal(normalizeStructure('beam-rollout'), 'beam-rollout');
+  assert.equal(normalizeStructure('beam-contest'), 'beam-contest');
   assert.equal(DEFAULT_STRUCTURE, 'beam-lineage');
-  assert.deepEqual(AI_STRUCTURES, ['beam-lineage', 'beam-adaptive', 'beam-rollout']);
+  assert.deepEqual(AI_STRUCTURES, ['beam-lineage', 'beam-adaptive', 'beam-rollout', 'beam-contest']);
   assert.throws(() => normalizeStructure('monte-carlo-9000'), /未知 AI 结构/);
 });
 

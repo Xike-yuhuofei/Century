@@ -6,13 +6,17 @@
  * - 完全确定性：rollout 随机性来自状态哈希派生的种子，无 Math.random，
  *   同一种子与配置下决策逐位可复现；
  * - 行动合法性由 decision.ts 的正式引擎核验兜底，与主结构一致。
+ *
+ * 'beam-contest'（Issue #20）：beam-rollout + 座位感知目标存活折扣——
+ * 在 rollout 评估之外，用 golemSurvivalModel 依据座位顺序与对手可达费用
+ * 对每个目标的路线期望乘以存活系数，使后手 AI 不再与必被截胡的目标死磕。
  */
 
 import { mulberry32 } from './structures-rng.js';
 
-export type AIStructure = 'beam-lineage' | 'beam-adaptive' | 'beam-rollout';
+export type AIStructure = 'beam-lineage' | 'beam-adaptive' | 'beam-rollout' | 'beam-contest';
 
-export const AI_STRUCTURES: readonly AIStructure[] = ['beam-lineage', 'beam-adaptive', 'beam-rollout'];
+export const AI_STRUCTURES: readonly AIStructure[] = ['beam-lineage', 'beam-adaptive', 'beam-rollout', 'beam-contest'];
 
 export const DEFAULT_STRUCTURE: AIStructure = 'beam-lineage';
 

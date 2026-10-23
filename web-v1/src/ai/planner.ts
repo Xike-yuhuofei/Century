@@ -1,7 +1,8 @@
 /** 多回合束搜索规划器（V3.0 结构 + V4.0 参数化 + 结构变体框架）。
  *
  * 规划只使用 AIObservation 公开信息；未来对手回合和未知翻牌保持不确定，
- * 以当前公开市场作保守近似。搜索深度/宽度沿用基线结构：
+ * 以当前公开市场作保守近似（beam-contest 结构例外：目标魔像的截胡风险经
+ * golemSurvivalModel 进入目标定价，仍只用公开信息）。搜索深度/宽度沿用基线结构：
  * 触发终局后仅看当步，接近终局 3 层，其余 6 层；宽度 14/10。
  *
  * V4.0 变更：
@@ -9,7 +10,10 @@
  * - 修复束搜索"休息饿死"缺陷：血统救援（restFallback）逐层保留席位。
  * - 结构变体（structures.ts）：beam-lineage（冠军基线）/
  *   beam-adaptive（束宽度自适应：前置宽后置窄）/
- *   beam-rollout（蒙特卡洛 rollout 替代 prospective 期望公式）。
+ *   beam-rollout（蒙特卡洛 rollout 替代 prospective 期望公式）/
+ *   beam-contest（Issue #20：beam-rollout + 座位感知目标存活折扣——golemSurvivalModel
+ *   依据座位顺序与对手可达费用估计目标魔像在我认领前的存活概率，乘进该目标的
+ *   路线期望，使后手不再与必被截胡的目标死磕；其余结构行为逐位不变）。
  *   全部结构共用同一求值器与合法性核验，仅探索/评估策略不同。
  */
 
@@ -20,7 +24,7 @@ import type { AIObservation } from './observation.js';
 import { weighted, stockCount, cloneStock, engineValue, publicKnowledge, futureDeckSupport } from './knowledge.js';
 import { goalGap, keepValue, trimStock, acquisitionValue } from './evaluator.js';
 import { profileFor, type Profile } from './profiles.js';
-import { pressureModel, type PressureModel } from './opponent-model.js';
+import { pressureModel, golemSurvivalModel, type PressureModel } from './opponent-model.js';
 import { adaptiveWidth, structureRng, ROLLOUT_DEFAULTS, type AIStructure } from './structures.js';
 
 export type SearchState = {
@@ -293,6 +297,9 @@ export function choosePlan(
   // endgameWeight：越接近终局，引擎/新卡项衰减越快（stage 的指数）。
   const stage = Math.pow(rawStage, params.endgameWeight);
   const allowAcquire = view.triggerPlayer === null;
+  // beam-contest（Issue #20）：座位感知目标存活折扣。仅该结构启用，其余结构逐位不变。
+  const survival = structure === 'beam-contest' ? golemSurvivalModel(view, depth) : null;
+  const survivalOf = (preferred: string) => survival?.[preferred] ?? 1;
   let solved: ScoredState | null = null, prospective: ScoredState | null = null;
   const finalBeams: Array<{ preferred: string; futureSupport: number; beam: ScoredState[] }> = [];
   for (const preferred of initial.golemMarket) {
@@ -316,7 +323,7 @@ export function choosePlan(
           if (!next) continue;
           if (next.terminal && !completedFirstGoal(next, preferred)) continue;
           if (completedFirstGoal(next, preferred)) {
-            const quality = routeGrade(next, preferred, stage, profile, params);
+            const quality = routeGrade(next, preferred, stage, profile, params) * survivalOf(preferred);
             if (!solved || quality > solved.quality) solved = { ...next, preferred, quality };
             continue;
           }
@@ -348,18 +355,21 @@ export function choosePlan(
       rescue(lineagePlay ?? lineageRest ?? lineageOther);
       rescue(restFallback);
       for (const candidate of beam) {
-        const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport);
+        const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport)
+          * survivalOf(preferred);
         if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
       }
     }
     finalBeams.push({ preferred, futureSupport, beam: [...beam] });
   }
-  // beam-rollout：用确定性蒙特卡洛 rollout 评估最终束候选的"未来期望得分"，
+  // beam-rollout / beam-contest：用确定性蒙特卡洛 rollout 评估最终束候选的"未来期望得分"，
   // 与公式先验按权重混合后取代解析 prospective（solved 路线仍优先）。
-  if (structure === 'beam-rollout' && !solved && finalBeams.length) {
+  // beam-contest 下公式先验与混合分都乘座位感知存活系数（截胡风险进入候选排序与选优）。
+  if ((structure === 'beam-rollout' || structure === 'beam-contest') && !solved && finalBeams.length) {
     const ranked = finalBeams.flatMap(({ preferred, futureSupport, beam }) => beam.map(state => ({
       preferred, state,
-      formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport),
+      formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport)
+        * survivalOf(preferred),
     }))).sort((a, b) => b.formula - a.formula).slice(0, ROLLOUT_DEFAULTS.topK);
     let rolloutBest: ScoredState | null = null;
     for (const { preferred, state, formula } of ranked) {
@@ -379,7 +389,8 @@ export function choosePlan(
         total += cursor.gained;
       }
       const meanGained = total / ROLLOUT_DEFAULTS.rollouts;
-      const quality = ROLLOUT_DEFAULTS.blend * meanGained + (1 - ROLLOUT_DEFAULTS.blend) * formula;
+      const quality = (ROLLOUT_DEFAULTS.blend * meanGained + (1 - ROLLOUT_DEFAULTS.blend) * formula)
+        * survivalOf(preferred);
       if (!rolloutBest || quality > rolloutBest.quality) rolloutBest = { ...state, preferred, quality };
     }
     if (rolloutBest) prospective = rolloutBest;
