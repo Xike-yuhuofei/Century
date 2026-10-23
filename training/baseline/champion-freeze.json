@@ -1,0 +1,45 @@
+{
+  "schema": "century-champion-freeze-v1",
+  "frozenAt": "2026-10-23T08:03:18.671Z",
+  "champion": {
+    "id": "ai5-readiness-efficiency",
+    "name": "AI 4.0 冠军 ai5-readiness-efficiency",
+    "description": "由自动进化训练晋级（基于 struct-beam-rollout）；确认挑战证据见 provenance.promotionEvidence。",
+    "structure": "beam-rollout",
+    "acquisitionVariant": "readiness-efficiency",
+    "parameters": {
+      "id": "ai5-readiness-efficiency",
+      "structure": "beam-rollout",
+      "acquisitionVariant": "readiness-efficiency",
+      "engineWeight": 1,
+      "tempoWeight": 1,
+      "contestWeight": 1,
+      "synergyWeight": 1,
+      "goalWeight": 1,
+      "capacityWeight": 1,
+      "restWeight": 1,
+      "endgameWeight": 1
+    },
+    "fingerprint": "[\"ai5-readiness-efficiency\",\"beam-rollout\",[1,1,1,1,1,1,1,1]]"
+  },
+  "version": {
+    "championCodeCommit": "b0295670efa0aec7bae9c0de8f748bd6fb3c0582",
+    "promotedAt": "2026-10-23",
+    "engineBundleSha256": "c1dd8272ae15fb26d7724a9c1d1044bd2773bc13d898e3b937cd0c17d1acf8eb",
+    "frozenAtRepoCommit": "0cd9427be1a8bfe28f28bce4471e6bcc67cf5aa3"
+  },
+  "promotionEvidence": {
+    "challengeIndex": 9,
+    "seeds": 1000,
+    "games": 2000,
+    "seedBase": 941507152,
+    "winRate": 0.5225,
+    "alphaBudget": 0.05
+  },
+  "reproduce": {
+    "command": "npm run baseline -- --players 2,3,4,5 --freeze-check",
+    "simulator": "training/simulator/simulate.mjs#simulateGame（正式引擎 web-v1/dist/js 唯一编译产物）",
+    "runner": "training/baseline/runner.mjs",
+    "seedPolicy": "ai5/lib/seed_policy.mjs AI6_BASELINE_BLOCK [1.1e9, 1.2e9)（账本 training/baseline/seed-ledger.json）"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "schema": "century-search-probe-v1",
+  "measuredAt": "2026-10-23T10:06:54.628Z",
+  "method": "diagnostic-build（git archive 冠军注册源码 → 只读计数补丁 → 构建 → 行为等价验证 → 测量；正式冻结产物零改动）",
+  "sourceRef": "b0295670efa0aec7bae9c0de8f748bd6fb3c0582",
+  "patches": [
+    "counter-init",
+    "decision-count",
+    "beam-node-count",
+    "rollout-node-count"
+  ],
+  "behaviorEquivalence": {
+    "gameOutcomeIdentical": true,
+    "checks": 12,
+    "perDecisionActionIdentical": "60/60"
+  },
+  "nodeDefinition": "成功模拟一个行动产生一个后继状态的次数（beam 展开 step() + rollout 步进 step()）",
+  "probeSourceCommit": "e6e77bf24635ed1b2f10aa16cd2d73c2ae335f8c",
+  "frozenBundleSha256Note": "正式冻结产物仍为 c1dd8272…（champion-freeze.json），本探针不改变也不替代它",
+  "perSeatCount": [
+    {
+      "seatCount": 2,
+      "measuredGames": 5,
+      "nodesExpanded": 1370099,
+      "decisions": 488,
+      "nodesPerDecision": 2807.6,
+      "nodesExpandedPerSecond": 357552,
+      "wallMs": 3831.9,
+      "moves": 488,
+      "note": "含 applyAction 墙钟（AI 决策占比 99.8%，与 perf.json 口径一致）"
+    },
+    {
+      "seatCount": 3,
+      "measuredGames": 5,
+      "nodesExpanded": 2072206,
+      "decisions": 675,
+      "nodesPerDecision": 3069.9,
+      "nodesExpandedPerSecond": 312672,
+      "wallMs": 6627.4,
+      "moves": 677,
+      "note": "含 applyAction 墙钟（AI 决策占比 99.8%，与 perf.json 口径一致）"
+    },
+    {
+      "seatCount": 4,
+      "measuredGames": 5,
+      "nodesExpanded": 2230167,
+      "decisions": 732,
+      "nodesPerDecision": 3046.7,
+      "nodesExpandedPerSecond": 317985,
+      "wallMs": 7013.4,
+      "moves": 733,
+      "note": "含 applyAction 墙钟（AI 决策占比 99.8%，与 perf.json 口径一致）"
+    },
+    {
+      "seatCount": 5,
+      "measuredGames": 5,
+      "nodesExpanded": 2903739,
+      "decisions": 970,
+      "nodesPerDecision": 2993.5,
+      "nodesExpandedPerSecond": 313203,
+      "wallMs": 9271.1,
+      "moves": 970,
+      "note": "含 applyAction 墙钟（AI 决策占比 99.8%，与 perf.json 口径一致）"
+    }
+  ]
+}

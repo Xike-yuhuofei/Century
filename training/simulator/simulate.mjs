@@ -53,12 +53,14 @@ function emptyResult(seed, versions, seatCount) {
  * @param {number} [options.deadlineMs] 单局墙钟时间预算（毫秒，防长时间无进展）
  * @param {boolean} [options.collectReplay] 是否附带完整复盘数据
  * @param {boolean} [options.collectActions] 是否附带逐行动记录（诊断用）
+ * @param {boolean} [options.collectDecisions] 是否逐决策采样耗时（基线评测 p50/p95/p99 用；
+ *   纯遥测，默认关闭，不影响决策逻辑与对局结果）
  */
 export function simulateGame(options) {
   const {
     seed, versions = null, seatCount = 5,
     maxMoves = DEFAULT_MAX_MOVES, deadlineMs = DEFAULT_DEADLINE_MS,
-    collectReplay = false, collectActions = false,
+    collectReplay = false, collectActions = false, collectDecisions = false,
   } = options;
   if (!Number.isSafeInteger(seed) || seed < 0) throw new Error('seed 必须为非负安全整数');
   // P0 可靠性整改：引擎 generator 对种子做 `seed >>> 0`（mod 2^32 回绕），
@@ -84,6 +86,7 @@ export function simulateGame(options) {
 
   const seats = seatStats(seatCount);
   const actions = [];
+  const decisionSamples = collectDecisions ? [] : null;
   let moves = 0;
   const tick = () => performance.now() - started;
 
@@ -111,6 +114,7 @@ export function simulateGame(options) {
       stats.decisionCount += 1;
       stats.totalDecisionMs += decisionMs;
       if (decisionMs > stats.maxDecisionMs) stats.maxDecisionMs = decisionMs;
+      if (decisionSamples) decisionSamples.push(Number(decisionMs.toFixed(3)));
       if (collectActions) actions.push({ move: moves, seat, action: response.action, reason: response.reason });
 
       const type = response.action.type;
@@ -162,6 +166,7 @@ export function simulateGame(options) {
   };
   if (collectReplay) final.replay = game.replay;
   if (collectActions) final.actions = actions;
+  if (decisionSamples) final.decisionSamplesMs = decisionSamples;
   return final;
 }
 
