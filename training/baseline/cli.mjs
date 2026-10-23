@@ -27,7 +27,7 @@ const FREEZE_PATH = resolve(BASELINE_DIR, 'champion-freeze.json');
 const REPORTS_DIR = resolve(BASELINE_DIR, 'reports');
 
 function parseArgs(argv) {
-  const args = { players: '2,3,4,5', mirrorSeeds: 400, contestSeeds: 300, out: null, freezeCheck: false, replay: null };
+  const args = { players: '2,3,4,5', mirrorSeeds: 400, contestSeeds: 300, out: null, freezeCheck: false, replay: null, only: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--players') args.players = argv[++i];
@@ -36,6 +36,7 @@ function parseArgs(argv) {
     else if (arg === '--out') args.out = argv[++i];
     else if (arg === '--freeze-check') args.freezeCheck = true;
     else if (arg === '--replay') args.replay = argv[++i];
+    else if (arg === '--only') args.only = argv[++i];
     else throw new Error(`未知参数：${arg}`);
   }
   args.playerCounts = args.players.split(',').map(Number);
@@ -109,8 +110,9 @@ export function runBaseline({ playerCounts = [2, 3, 4, 5], mirrorSeeds = 400, co
   };
 }
 
-/** 复放校验：重跑报告中的每个配置（同种子区间），逐局 outcomeKey 必须一致。 */
-export function verifyReplay(reportPath) {
+/** 复放校验：重跑报告中的每个配置（同种子区间），逐局 outcomeKey 必须一致。
+ * onlyFilter（可选）：只复放匹配的配置（config 名或 `config-nN` 键），控制复放成本。 */
+export function verifyReplay(reportPath, { only = null } = {}) {
   const report = JSON.parse(readFileSync(reportPath, 'utf8'));
   if (report.schema !== 'century-baseline-report-v1') {
     throw new Error(`报告 schema 不识别：${report.schema}`);
@@ -118,7 +120,10 @@ export function verifyReplay(reportPath) {
   const champion = loadChampion();
   ensureFreeze();
   const problems = [];
-  for (const config of report.configs) {
+  const configs = report.configs.filter(c =>
+    !only || c.config === only || `${c.config}-n${c.seatCount}` === only);
+  if (configs.length === 0) throw new Error(`--only 过滤器未匹配任何配置：${only}`);
+  for (const config of configs) {
     const alloc = config.seedAllocation;
     if (!alloc) throw new Error(`报告配置 ${config.config} N=${config.seatCount} 缺少 seedAllocation，无法复放`);
     const run = config.config === 'mirror'
@@ -166,7 +171,7 @@ if (isMain) {
     console.log('冻结校验通过：冠军配置、参数指纹与引擎产物指纹全部一致');
     process.exitCode = 0;
   } else if (args.replay) {
-    const { ok, problems } = verifyReplay(resolve(process.cwd(), args.replay));
+    const { ok, problems } = verifyReplay(resolve(process.cwd(), args.replay), { only: args.only ?? null });
     console.log(ok ? '复放校验通过：全部配置逐局一致（确定性成立）' : `复放校验失败：\n${problems.join('\n')}`);
     process.exitCode = ok ? 0 : 1;
   } else {

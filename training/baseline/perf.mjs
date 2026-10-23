@@ -32,11 +32,12 @@ export const PERF_SEED_BASE = 1_109_000_000;
 export function engineReplayBenchmark({ seed, seatCount, warmup = 1, replays = 3 }) {
   requireBuiltEngine();
   // 录制：默认版本（当前冠军参数区）跑一局，collectActions 拿逐行动记录。
+  // 深拷贝防引擎原地修改行动对象（applyAction 可能改写字段），保证重放逐位一致。
   const recorded = simulateGame({ seed, seatCount, collectActions: true });
   if (recorded.status !== 'finished') {
     throw new Error(`录制局异常（${recorded.reason}），无法建立引擎重放基准`);
   }
-  const actions = recorded.actions.map(a => a.action);
+  const actions = recorded.actions.map(a => JSON.parse(JSON.stringify(a.action)));
   const names = Array.from({ length: seatCount }, (_, i) => `席位${i}`);
   const aiSeats = Array.from({ length: seatCount - 1 }, (_, i) => i + 1);
 
