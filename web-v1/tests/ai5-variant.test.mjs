@@ -6,9 +6,10 @@
  * 3. 行为敏感性：在目标费用被部分持有的状态上两实现输出不同（变体真实生效），
  *    在无目标或未持任何相关水晶的状态上两实现逐位一致（差异面精确受控）；
  * 4. 确定性：同输入同输出；
- * 5. 公平性回归：CHAMPION_PARAMETERS 不携带新字段（冠军行为零变化）。
+ * 5. 公平性回归：CHAMPION_PARAMETERS 的变体字段与冠军记录一致（训练与实战同参）。
  */
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { acquisitionValue, acquisitionValueGoalRemaining, acquisitionValueReadinessEfficiency } from '../dist/js/ai/evaluator.js';
 import { chooseAIAction, validateAIParameters, CHAMPION_PARAMETERS, PROFILES, NEUTRAL_PROFILE } from '../dist/js/ai.js';
 import { createGame, applyAction } from '../dist/js/engine.js';
@@ -86,8 +87,20 @@ for (let seed = 1; seed <= 20; seed++) {
 }
 assert.ok(divergentSeeds > 0, `变体必须在至少一个初始局面改变行动（实际 ${divergentSeeds}/20）`);
 
-// ---- 6. 公平性回归：冠军参数不携带变体字段 ----
-assert.equal(CHAMPION_PARAMETERS.acquisitionVariant, undefined, '冠军参数不得携带变体字段（行为零变化）');
+// ---- 6. 公平性回归：冠军参数与冠军记录的变体字段一致 ----
+// 此前冠军未携带变体时此处断言 acquisitionVariant === undefined（行为零变化）；
+// AI5 readiness-efficiency 经 challengeIndex=9 晋级后冠军本身即变体，
+// 正确不变量是：CHAMPION_PARAMETERS 必须与冠军记录逐字段一致（含变体字段），
+// 与 ai-fairness.test.mjs 的逐字段核对互为双向防线。
+{
+  const record = JSON.parse(readFileSync(new URL('../../training/champions/champion.json', import.meta.url), 'utf8'));
+  const recorded = record.parameters ?? record;
+  assert.equal(
+    CHAMPION_PARAMETERS.acquisitionVariant,
+    recorded.acquisitionVariant,
+    '冠军变体字段必须与冠军记录一致（训练与实战同参）',
+  );
+}
 // 变体行动合法性由正式引擎兜底：变体行动可被引擎接受。
 {
   const game = createGame(['A', 'B', 'C', 'D', 'E'], 3, [1, 2, 3, 4]);

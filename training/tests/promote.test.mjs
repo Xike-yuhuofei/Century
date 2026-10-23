@@ -231,6 +231,36 @@ test('晋级脚本：确认挑战证据的引擎指纹与当前产物不一致�
   assert.ok(!existsSync(join(sandbox, 'champion.json')));
 });
 
+test('晋级脚本：evolve-cli 顶层指纹布局的候选必须可正常晋级（回归：字段位置兼容）', () => {
+  // evolve-cli（权威生产者）把 engineBundleSha256/codeCommit 写在 candidate.json
+  // 顶层而非 confirmation 内；晋级脚本必须接受该布局，否则任何真实候选都会被
+  // 指纹核验误拒（缺陷实证：AI5 readiness-efficiency 冲冠晋级被 "证据 缺失" 拒绝）。
+  const sandbox = mkdtempSync(join(tmpdir(), 'promote-topsha-'));
+  const candidate = makeCandidate('evo-g9-topsha', true);
+  candidate.engineBundleSha256 = candidate.confirmation.engineBundleSha256;
+  candidate.codeCommit = candidate.confirmation.codeCommit;
+  delete candidate.confirmation.engineBundleSha256;
+  delete candidate.confirmation.codeCommit;
+  runPromote(sandbox, candidate);
+  const champion = JSON.parse(readFileSync(join(sandbox, 'champion.json'), 'utf8'));
+  assert.equal(champion.provenance.engineBundleSha256, REAL_ENGINE_SHA, '顶层布局指纹必须通过核验并随冠军记录落盘');
+  assert.equal(champion.provenance.codeCommit, candidate.codeCommit, '顶层布局 codeCommit 必须随冠军记录落盘');
+});
+
+test('晋级脚本：顶层布局指纹过期同样必须被拒绝（两处布局核验语义一致）', () => {
+  const sandbox = mkdtempSync(join(tmpdir(), 'promote-topstale-'));
+  const candidate = makeCandidate('evo-g9-topstale', true);
+  candidate.engineBundleSha256 = 'deadbeef'.repeat(8);
+  candidate.codeCommit = candidate.confirmation.codeCommit;
+  delete candidate.confirmation.engineBundleSha256;
+  assert.throws(
+    () => runPromote(sandbox, candidate),
+    /运行时产物指纹|engine/,
+    '顶层布局的过期指纹不得绕过证据失效核验',
+  );
+  assert.ok(!existsSync(join(sandbox, 'champion.json')));
+});
+
 test('晋级脚本：验证种子基数越过验证池上限必须被拒绝', () => {
   const sandbox = mkdtempSync(join(tmpdir(), 'promote-poolmax-'));
   assert.throws(
