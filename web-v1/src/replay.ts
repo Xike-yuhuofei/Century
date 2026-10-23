@@ -21,7 +21,7 @@ function playerPosition(p: Player): string {
 }
 
 export function replayMarkdown(g: Game): string {
-  const lines = ['# 晶石回廊 · 对局复盘', '', `状态：${g.phase === 'finished' ? '已结束' : g.phase === 'overflow' ? '进行中，当前回合待弃置' : '进行中'}；${g.players.length} 人${g.players.length === 6 ? '（非官方六人扩展）' : ''}`, '', replayCoverage(g), '', '## 玩家与当前成绩', '', ...ranking(g).map((p, i) => `${i + 1}. ${plainName(p.name)}（座位 ${p.id + 1}，${p.isAI ? 'AI' : '真人'}）：${score(p)} 分，${p.turns} 回合，${p.claimed.length} 张魔像，铜 ${p.copper}、银 ${p.silver}`), '', g.phase === 'finished' ? '平分时本轮后手优先。' : '对局尚未结束，以上为当前估分。', '', '## 记录起点', ''];
+  const lines = ['# 晶石回廊 · 对局复盘', '', `状态：${g.phase === 'finished' ? '已结束' : g.phase === 'overflow' ? '进行中，当前回合待弃置' : '进行中'}；${g.players.length} 人${g.players.length === 6 ? '（非官方六人扩展）' : ''}`, '', replayCoverage(g), '', '## 玩家与当前成绩', '', ...ranking(g).map((p, i) => `${i + 1}. ${plainName(p.name)}（座位 ${p.id + 1}，${p.isAI ? 'AI' : '真人'}）：${score(p)} 分，${p.turns} 回合，${p.claimed.length} 张魔像，铜 ${p.copper}、银 ${p.silver}、非黄水晶 ${p.stock[1] + p.stock[2] + p.stock[3]} 颗`), '', g.phase === 'finished' ? '平分时本轮后手优先。' : '对局尚未结束，以上为当前估分。', '', '## 记录起点', ''];
   const initial = g.replay?.initial ?? g;
   lines.push(...initial.players.map(p => `- ${plainName(p.name)}：${playerPosition(p)}`), '', `商人市场：${initial.merchantMarket.map(m => `${m.id}（奖励 ${readable(m.bonus)}）`).join('、')}`, `魔像市场：${initial.golemMarket.join('、')}`, '', '## 按回合的行动', '');
   for (const t of g.replay?.turns ?? []) {

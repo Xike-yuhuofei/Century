@@ -100,6 +100,17 @@ test('完整对局可从 JSON 起点和全部行动重放到相同结局，覆�
   assert.match(replayMarkdown(g), /触发终局/);
 });
 
+test('成绩行披露非黄水晶残值，终局统计分项完整（回归：非黄水晶分缺失）', () => {
+  const g = make();
+  g.players[0].stock = [2, 1, 1, 1];
+  const md = replayMarkdown(g);
+  assert.match(md, /非黄水晶 3 颗/);
+  // 总分仍由引擎 score() 计算：非黄水晶×1 计入总分。
+  const total = g.players[0].claimed.reduce((s, id) => s + GOLEM_BY_ID[id].points, 0)
+    + g.players[0].copper * 3 + g.players[0].silver + 3;
+  assert.match(md, new RegExp(`：${total} 分`));
+});
+
 test('导入拒绝损坏的历史字段和起点；姓名不会注入 Markdown 结构', () => {
   const g = applyAction(make(), {type:'rest'});
   for (const mutate of [r => r.turns = {}, r => r.initial.players = [], r => r.initial.replay = {}, r => r.turns[0].after.stock = [-1,0,0,0], r => r.turns[0].actions = [{type:'play',cardId:'FAKE'}], r => r.turns[0].playerId = 99]) {

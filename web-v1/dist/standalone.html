@@ -972,6 +972,11 @@ html[data-century-mode="mobile"] .mobile-board {
   font-size:13px; font-weight:800; box-shadow:0 12px 30px #0008;
 }
 .result-fab:active { filter:brightness(.94); }
+
+/* 结算面板分项行：名次与总分一行，魔像/铜/银/非黄水晶明细折行小字。 */
+.result-table > div { flex-wrap: wrap; row-gap: 5px; }
+.result-table .result-main { flex: 1 1 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.result-table > div > span { flex: 1 1 100%; font-size: 11px; color: #93a7ab; }
 </style>
 </head>
 <body><div id="app"></div><script>
@@ -2281,7 +2286,7 @@ function playerPosition(p) {
     return `水晶 ${readable(p.stock)}；铜 ${p.copper}、银 ${p.silver}；估分 ${score(p)}；手牌 ${p.hand.join('、') || '无'}；已打出 ${p.played.join('、') || '无'}；魔像 ${p.claimed.join('、') || '无'}`;
 }
 function replayMarkdown(g) {
-    const lines = ['# 晶石回廊 · 对局复盘', '', `状态：${g.phase === 'finished' ? '已结束' : g.phase === 'overflow' ? '进行中，当前回合待弃置' : '进行中'}；${g.players.length} 人${g.players.length === 6 ? '（非官方六人扩展）' : ''}`, '', replayCoverage(g), '', '## 玩家与当前成绩', '', ...ranking(g).map((p, i) => `${i + 1}. ${plainName(p.name)}（座位 ${p.id + 1}，${p.isAI ? 'AI' : '真人'}）：${score(p)} 分，${p.turns} 回合，${p.claimed.length} 张魔像，铜 ${p.copper}、银 ${p.silver}`), '', g.phase === 'finished' ? '平分时本轮后手优先。' : '对局尚未结束，以上为当前估分。', '', '## 记录起点', ''];
+    const lines = ['# 晶石回廊 · 对局复盘', '', `状态：${g.phase === 'finished' ? '已结束' : g.phase === 'overflow' ? '进行中，当前回合待弃置' : '进行中'}；${g.players.length} 人${g.players.length === 6 ? '（非官方六人扩展）' : ''}`, '', replayCoverage(g), '', '## 玩家与当前成绩', '', ...ranking(g).map((p, i) => `${i + 1}. ${plainName(p.name)}（座位 ${p.id + 1}，${p.isAI ? 'AI' : '真人'}）：${score(p)} 分，${p.turns} 回合，${p.claimed.length} 张魔像，铜 ${p.copper}、银 ${p.silver}、非黄水晶 ${p.stock[1] + p.stock[2] + p.stock[3]} 颗`), '', g.phase === 'finished' ? '平分时本轮后手优先。' : '对局尚未结束，以上为当前估分。', '', '## 记录起点', ''];
     const initial = g.replay?.initial ?? g;
     lines.push(...initial.players.map(p => `- ${plainName(p.name)}：${playerPosition(p)}`), '', `商人市场：${initial.merchantMarket.map(m => `${m.id}（奖励 ${readable(m.bonus)}）`).join('、')}`, `魔像市场：${initial.golemMarket.join('、')}`, '', '## 按回合的行动', '');
     for (const t of g.replay?.turns ?? []) {
@@ -2747,7 +2752,7 @@ function renderResult(g) {
     if (resultHidden)
         return '';
     const result = ranking(g);
-    return `<div class="overlay cover"><section class="result-card"><button class="close-modal" data-action="close-result" aria-label="关闭结算面板">✕</button><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><b>${i + 1}. ${esc(p.name)}</b><span>${p.claimed.length} 张魔像</span><strong>${score(p)} 分</strong></div>`).join('')}</div>${replayControls(g)}<div class="result-actions"><button class="primary-btn big" data-action="reset">开始新的一局 ↗</button><button class="secondary-btn" data-action="close-result">查看最终棋盘</button></div></section></div>`;
+    return `<div class="overlay cover"><section class="result-card"><button class="close-modal" data-action="close-result" aria-label="关闭结算面板">✕</button><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><div class="result-main"><b>${i + 1}. ${esc(p.name)}</b><strong>${score(p)} 分</strong></div><span>魔像 ${p.claimed.reduce((s, id) => s + GOLEM_BY_ID[id].points, 0)} 分 · 铜 ${p.copper * 3} · 银 ${p.silver} · 非黄水晶 ${p.stock[1] + p.stock[2] + p.stock[3]} 分</span></div>`).join('')}</div>${replayControls(g)}<div class="result-actions"><button class="primary-btn big" data-action="reset">开始新的一局 ↗</button><button class="secondary-btn" data-action="close-result">查看最终棋盘</button></div></section></div>`;
 }
 function modalBody() {
     if (!game || !modal)
