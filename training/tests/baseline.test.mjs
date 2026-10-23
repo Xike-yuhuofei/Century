@@ -378,6 +378,7 @@ test('runBaseline 端到端：报告结构与冻结/账本注入正确', async (
     contestSeeds: 2,
     ledgerPath: join(dir, 'seed-ledger-2.json'),
     freezePath,
+    championPath,
   });
   // 复放比较：同 seatCount 同 config 的种子区间不同（新账本），但用相同 base 重放验证确定性。
   for (const config of report.configs) {
