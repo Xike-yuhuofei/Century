@@ -43,7 +43,7 @@ test('内联产物顶层标识符无冲突（standalone 为共享作用域）', 
     .replace(/^export\s+(?=(const|function|class)\b)/gm, '')
     .replace(/^export\s*\{[^}]*\};?\s*$/gm, '');
   const decls = new Map();
-  for (const name of ['data','engine',...AI_MODULES,'organize','replay','app','mobile/storage','mobile/app','mobile/worker']) {
+  for (const name of ['data','engine',...AI_MODULES,'organize','replay','archive','app','mobile/storage','mobile/app','mobile/worker']) {
     const src = strip(name);
     const re = /^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/gm;
     let m;

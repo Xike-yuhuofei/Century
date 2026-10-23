@@ -1,6 +1,7 @@
 import { GOLEM_BY_ID, MERCHANT_BY_ID, type Merchant, type Stock } from './data.js';
 import { applyAction, count, createGame, has, ranking, readable, score, tradeLimit, type Action, type Color, type Game } from './engine.js';
-import { downloadReplay, replayCoverage, validateReplay } from './replay.js';
+import { downloadReplay, replayCoverage, replayMarkdown, validateReplay } from './replay.js';
+import { ARCHIVE_LIMIT, loadArchive, makeEntry, pushArchive, saveArchive, type ArchiveEntry } from './archive.js';
 import { chooseAIAction } from './ai.js';
 import { visibleOrder, moveInOrder, stepInOrder, groupOrder } from './organize.js';
 
@@ -18,6 +19,9 @@ let inspectedAI: number | null = null;
 let toast = '';
 let botPaused = false;
 let resultHidden = false;
+let archive: ArchiveEntry[] = loadArchive();
+let showHistory = false;
+let historyViewId: string | null = null;
 const humanNames:string[] = [];
 let botTimer: ReturnType<typeof setTimeout> | null = null;
 type PlayerView = { order:string[]; folded:boolean };
@@ -133,7 +137,7 @@ function merchantCard(id: string, marketIndex?: number, bonus?: Stock, view: 'ha
 }
 function renderSetup(): string {
   const botOptions=Array.from({length:5},(_,n)=>`<option value="${n}" ${n===4?'selected':''}>${n} 名</option>`).join('');
-  return `<main class="layout landing focus-landing"><header class="topbar focus-setup-top"><strong>晶石回廊</strong>${pageVersionLink()}</header>
+  return `<main class="layout landing focus-landing"><header class="topbar focus-setup-top"><strong>晶石回廊</strong><div class="top-actions">${pageVersionLink()}<button class="subtle-btn" data-action="history">对局历史</button></div></header>
   <section class="focus-setup-panel"><h1>开始对局</h1><p>默认 1 名真人挑战 4 名 AI · 最多 4 名 AI</p>
     <div class="setup-players"><div><label for="humanCount">真人</label><select id="humanCount">${Array.from({length:5},(_,n)=>`<option value="${n+1}" ${n===0?'selected':''}>${n+1} 名</option>`).join('')}</select></div><div><label for="botCount">AI</label><select id="botCount">${botOptions}</select></div></div>
     <label for="nameInputs">玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1" /></div>
@@ -224,10 +228,23 @@ function renderAIInspector(g:Game):string {
 }
 function minimalTopbar(g:Game):string {
   const finished = g.phase==='finished';
-  return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${pageVersionLink()}${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact?'▦':'▣'}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
+  return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${pageVersionLink()}${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact?'▦':'▣'}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="history" aria-label="对局历史" title="对局历史">⧉</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
 }
 function replayControls(g: Game): string {
   return `<div class="replay-controls"><small>${esc(replayCoverage(g))}</small><button class="subtle-btn" data-action="export-replay-md">导出复盘 Markdown</button><button class="subtle-btn" data-action="export-replay-json">导出复盘 JSON</button></div>`;
+}
+function historyTime(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+function renderHistory(): string {
+  const view = historyViewId !== null ? archive.find(e => e.id === historyViewId) : undefined;
+  const close = '<button class="close-modal" data-action="close-history" aria-label="关闭对局历史">✕</button>';
+  if (view) {
+    return `<div class="overlay" data-overlay="history"><section class="dialog history-dialog">${close}<div class="eyebrow">GAME ARCHIVE</div><h2>对局复盘</h2><p class="small-muted">${esc(historyTime(view.savedAt))} · ${view.players} 人 · ${view.turns} 手 · ${esc(view.title)}</p><div class="replay-view" tabindex="0">${esc(replayMarkdown(view.game))}</div><div class="modal-actions"><button class="secondary-btn" data-action="history-back">‹ 返回列表</button><div class="history-item-actions"><button class="subtle-btn" data-action="archive-export-md" data-id="${esc(view.id)}">导出 Markdown</button><button class="subtle-btn" data-action="archive-export-json" data-id="${esc(view.id)}">导出 JSON</button></div></div></section></div>`;
+  }
+  const list = archive.map(e => `<div class="history-item"><div class="history-item-main"><b>${e.finished ? '✦ ' : '◔ '}${esc(e.title)}</b><small>${esc(historyTime(e.savedAt))} · ${e.players} 人 · ${e.turns} 手</small></div><div class="history-item-actions"><button class="subtle-btn" data-action="history-view" data-id="${esc(e.id)}">复盘</button><button class="subtle-btn" data-action="archive-export-md" data-id="${esc(e.id)}">MD</button><button class="subtle-btn" data-action="archive-export-json" data-id="${esc(e.id)}">JSON</button><button class="subtle-btn" data-action="archive-delete" data-id="${esc(e.id)}">删除</button></div></div>`).join('');
+  return `<div class="overlay" data-overlay="history"><section class="dialog history-dialog">${close}<div class="eyebrow">GAME ARCHIVE</div><h2>对局历史</h2>${archive.length ? `<div class="history-list">${list}</div><p class="small-muted">对局结束或重新开局时自动归档，本地保留最近 ${ARCHIVE_LIMIT} 局。</p>` : '<p class="small-muted">暂无归档。对局结束或重新开局时会自动存入，本地保留最近 20 局。</p>'}<div class="modal-actions"><button class="primary-btn" data-action="close-history">关闭</button></div></section></div>`;
 }
 function logPopover(g:Game):string {
   return showLog?`<aside class="focus-log-popover" aria-label="行动记录"><div class="log-pop-head"><strong>行动记录</strong><button data-action="toggle-log" aria-label="关闭行动记录">✕</button></div>${replayControls(g)}${g.log.slice(0,10).map(t=>`<p>${esc(t)}</p>`).join('')}</aside>`:'';
@@ -331,6 +348,7 @@ function renderMobileBoard(g: Game): string {
     '<div class="mobile-more-menu">'+pageVersionLink()+aiPauseControl(g)+
     '<button type="button" data-action="card-size">'+(viewState.compact?'放大卡牌':'缩小卡牌')+'</button>'+
     '<button type="button" data-action="toggle-log">行动记录</button>'+
+    '<button type="button" data-action="history">对局历史</button>'+
     '<button type="button" data-action="help">游戏规则</button>'+
     '<button type="button" data-action="reset">新开一局</button></div></details></header>'+
     (g.triggerPlayer!==null&&!finished?'<div class="final-alert">终局已触发 · 本轮结束后计分</div>':'')+
@@ -368,7 +386,7 @@ function renderBoard(g: Game): string {
   const p = g.players[g.current];
   const target = g.players.length >= 4 ? 5 : 6;
   const finished = g.phase === 'finished';
-  return `<main class="layout board-layout ${viewState.compact?'compact-cards':'normal-cards'}"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span>${pageVersionLink()}${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+  return `<main class="layout board-layout ${viewState.compact?'compact-cards':'normal-cards'}"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span>${pageVersionLink()}${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="history">对局历史</button><button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
   <section class="players-strip">${g.players.map((x, i) => playerCard(x, i === g.current && !finished)).join('')}</section>
   ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发！本轮完成后结算。</div>' : ''}
   <section class="game-section"><div class="section-head"><div><span class="section-index">01 / THE GOLEMS</span><h2>魔像市场 <small>认领目标</small></h2></div><div class="section-meta">牌库剩余 ${g.golemDeck.length} 张 · 每人认领 ${target} 张触发终局</div></div>
@@ -385,7 +403,7 @@ function renderBoard(g: Game): string {
   ${finished ? renderResult(g) : ''}</main>`;
 }
 function renderResult(g: Game): string {
-  if (resultHidden) return '';
+  if (resultHidden || showHistory) return '';
   const result = ranking(g);
   return `<div class="overlay cover"><section class="result-card"><button class="close-modal" data-action="close-result" aria-label="关闭结算面板">✕</button><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><div class="result-main"><b>${i + 1}. ${esc(p.name)}</b><strong>${score(p)} 分</strong></div><span>魔像 ${p.claimed.reduce((s, id) => s + GOLEM_BY_ID[id].points, 0)} 分 · 铜 ${p.copper * 3} · 银 ${p.silver} · 非黄水晶 ${p.stock[1] + p.stock[2] + p.stock[3]} 分</span></div>`).join('')}</div>${replayControls(g)}<div class="result-actions"><button class="primary-btn big" data-action="reset">开始新的一局 ↗</button><button class="secondary-btn" data-action="close-result">查看最终棋盘</button></div></section></div>`;
 }
@@ -425,12 +443,18 @@ function render() {
   root.querySelectorAll<HTMLElement>('[data-scroll-zone]').forEach(el=>scrolls.set(el.dataset.scrollZone!,{top:el.scrollTop,left:el.scrollLeft}));
   root.innerHTML = `${game ? renderBoard(game) : renderSetup()}
     ${modal && game && !handoff && game.phase !== 'finished' ? `<div class="overlay" data-overlay="modal"><section class="dialog">${game.phase !== 'overflow' ? '<button class="close-modal" data-action="cancel">✕</button>' : ''}${modalBody()}</section></div>` : ''}
-    ${game && game.phase === 'finished' && resultHidden ? '<button class="result-fab" data-action="show-result">查看结算</button>' : ''}
+    ${showHistory ? renderHistory() : ''}
+    ${game && game.phase === 'finished' && resultHidden && !showHistory ? '<button class="result-fab" data-action="show-result">查看结算</button>' : ''}
     ${showHelp ? renderRules() : ''}${toast ? `<div class="toast" role="alert">${esc(toast)}</div>` : ''}`;
   root.querySelectorAll<HTMLElement>('[data-scroll-zone]').forEach(el=>{ const at=scrolls.get(el.dataset.scrollZone!); if(at){el.scrollTop=at.top;el.scrollLeft=at.left;} });
   scheduleBot();
 }
 function save() { try { if (game) localStorage.setItem(KEY, JSON.stringify(game)); else localStorage.removeItem(KEY); } catch { /* 可无存储运行 */ } }
+function archiveGame() {
+  if (!game) return;
+  archive = pushArchive(archive, makeEntry(game));
+  saveArchive(archive);
+}
 function notify(message: string) { toast = message; render(); }
 function action(a: Action) {
   if (!game) return;
@@ -441,6 +465,7 @@ function action(a: Action) {
     modal = game.phase === 'overflow' && !game.players[game.current].isAI ? { kind:'discard', colors:[] } : null;
     handoff = game.players.length > 2 && game.current !== previous && game.phase !== 'finished' && !game.players[game.current].isAI && game.players.filter(p=>!p.isAI).length > 2;
     toast = '';
+    if (game.phase === 'finished') archiveGame();
     save(); render();
   } catch(e) { notify(e instanceof Error ? e.message : '行动无法执行'); }
 }
@@ -468,9 +493,27 @@ function control(target: HTMLElement) {
   if (type === 'mobile-toggle-played') { mobilePlayedOpen=!mobilePlayedOpen; render(); return; }
   if (type === 'inspect-ai') { const id=Number(target.dataset.player); inspectedAI = inspectedAI===id ? null : id; render(); return; }
   if ((type === 'export-replay-md' || type === 'export-replay-json') && game) { downloadReplay(game, type === 'export-replay-md' ? 'md' : 'json'); return; }
+  if (type === 'history') { showHistory = true; historyViewId = null; render(); return; }
+  if (type === 'close-history') { showHistory = false; historyViewId = null; render(); return; }
+  if (type === 'history-back') { historyViewId = null; render(); return; }
+  if (type === 'history-view') { historyViewId = target.dataset.id || null; render(); return; }
+  if (type === 'archive-export-md' || type === 'archive-export-json') {
+    const entry = archive.find(e => e.id === target.dataset.id);
+    if (entry) downloadReplay(entry.game, type === 'archive-export-md' ? 'md' : 'json');
+    return;
+  }
+  if (type === 'archive-delete') {
+    if (!confirm('确定删除这条对局归档吗？')) return;
+    archive = archive.filter(e => e.id !== target.dataset.id);
+    saveArchive(archive);
+    if (historyViewId !== null && !archive.some(e => e.id === historyViewId)) historyViewId = null;
+    render();
+    return;
+  }
   if (type === 'toggle-log') { showLog=!showLog; render(); return; }
   if (type === 'reset') {
-    if (game?.phase !== 'finished' && !confirm('确定结束当前对局并重新开始吗？当前存档将被覆盖。')) return;
+    if (game?.phase !== 'finished' && !confirm('确定结束当前对局并重新开始吗？当前对局将自动存入对局历史。')) return;
+    archiveGame();
     game = null; handoff = false; showHelp = false; showLog=false; inspectedAI=null; modal = null; botPaused = false; resultHidden = false; toast = ''; viewState.players={}; mobileTab='golems'; mobileHandExpanded=false; mobilePlayedOpen=false; saveView(); save(); render(); return;
   }
   if (type === 'help') { showHelp = true; render(); return; }
@@ -484,7 +527,7 @@ function control(target: HTMLElement) {
   if (type === 'move-card') { if(!modal && !handoff){reorderHand(Number(target.dataset.player), target.dataset.id!,Number(target.dataset.direction) as -1|1);} return; }
   if (type === 'group-cards') { const id=Number(target.dataset.player); if(game?.players[id] && !modal && !handoff && !game.players[id].isAI) updateHandOrder(id,groupOrder(game.players[id].hand,sortedHand(game.players[id]),card=>MERCHANT_BY_ID[card].kind)); return; }
   if (type === 'cancel') { if (game?.phase === 'overflow') return; modal = null; toast = ''; render(); return; }
-  if (!game || game.phase === 'finished' || handoff || showHelp || game.players[game.current].isAI) return;
+  if (!game || game.phase === 'finished' || handoff || showHelp || showHistory || game.players[game.current].isAI) return;
   if (game.phase === 'overflow' && !modal) modal = {kind:'discard', colors:[]};
   const p = game.players[game.current];
   const idx = Number(target.dataset.index);
@@ -540,12 +583,12 @@ function control(target: HTMLElement) {
 }
 function scheduleBot() {
   if (botTimer !== null) { clearTimeout(botTimer); botTimer=null; }
-  if (!game || game.phase==='finished' || handoff || showHelp || modal || botPaused || !game.players[game.current]?.isAI) return;
+  if (!game || game.phase==='finished' || handoff || showHelp || showHistory || modal || botPaused || !game.players[game.current]?.isAI) return;
   const expectedTurn = game.turnNumber;
   const expectedPlayer = game.current;
   botTimer = setTimeout(() => {
     botTimer=null;
-    if (!game || game.turnNumber!==expectedTurn || game.current!==expectedPlayer || game.phase==='finished' || handoff || showHelp || botPaused || !game.players[game.current]?.isAI) return;
+    if (!game || game.turnNumber!==expectedTurn || game.current!==expectedPlayer || game.phase==='finished' || handoff || showHelp || showHistory || botPaused || !game.players[game.current]?.isAI) return;
     try {
       const choice = chooseAIAction(game);
       action(choice.action);

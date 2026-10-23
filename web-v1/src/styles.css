@@ -950,6 +950,16 @@ html[data-century-mode="mobile"] .mobile-board {
 .replay-controls { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
 .replay-controls small { flex-basis:100%; line-height:1.5; overflow-wrap:anywhere; }
 .replay-controls button { white-space:normal; min-height:36px; }
+.history-dialog { max-width:640px }
+.history-list { display:flex; flex-direction:column; gap:9px; margin:16px 0 12px }
+.history-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid #3a545f; border-radius:9px; background:#122735 }
+.history-item-main { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1 }
+.history-item-main b { font-size:13px; color:#efdda9; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
+.history-item-main small { font-size:11px; color:#9fb1b7 }
+.history-item-actions { display:flex; gap:6px; flex-shrink:0 }
+.history-item-actions .subtle-btn { padding:6px 9px; font-size:11px }
+.replay-view { margin-top:14px; padding:14px; border:1px solid #3e5966; border-radius:9px; background:#0e2231; max-height:54vh; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; font-size:12px; line-height:1.7; color:#c8d8d6 }
+@media(max-width:720px){ .history-item{flex-wrap:wrap} .history-item-actions{flex-basis:100%; justify-content:flex-end} }
 .result-card { max-height:94vh; overflow-y:auto; }
 
 /* 结算面板可关闭：右上角 ✕ 与底部「查看最终棋盘」，关闭后右下角提供浮层入口。 */
