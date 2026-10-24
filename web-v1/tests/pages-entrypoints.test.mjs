@@ -1,9 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 
-// 与 scripts/build.mjs 的 AI_MODULES 保持同步：AI 4.0 决策核心模块清单。
-const AI_MODULES = ['ai/parameters','ai/profiles','ai/observation','ai/knowledge','ai/opponent-model','ai/evaluator','ai/planner','ai/decision'];
+// 契约（build.mjs 已改用 esbuild 打包，见 PR 修复说明）：
+//  - standalone.html / mobile 离线页为 esbuild IIFE 自包含产物；
+//  - 决策链 ai/decision → js/adapter → js/*、om/*、sim/*（JS5）必须完整进入内联包
+//    （回归背景：旧手工清单漏加 js/* 模块 → AI 运行时 ReferenceError → 冒烟超时）；
+//  - mobile 在线模式经 assets/<digest>/ 拷贝 dist/js 原始模块（与桌面完全同源）。
 
 const desktop = readFileSync(new URL('../dist/standalone.html', import.meta.url), 'utf8');
 const mobile = readFileSync(new URL('../dist/mobile/index.html', import.meta.url), 'utf8');
@@ -15,8 +19,8 @@ test('GitHub Pages 手机与电脑入口均自包含，视图和存档相互独�
     assert.doesNotMatch(html, /<script type="module" src=/);
     assert.doesNotMatch(html, /<link rel="stylesheet" href=/);
   }
-  assert.match(desktop, /const KEY = ['"]crystal-corridor-game-v2-canonical['"]/);
-  assert.match(mobile, /const MOBILE_KEY = ['"]century-mobile-game-v2['"]/);
+  assert.match(desktop, /KEY = ['"]crystal-corridor-game-v2-canonical['"]/);
+  assert.match(mobile, /MOBILE_KEY = ['"]century-mobile-game-v2['"]/);
   assert.match(mobile, /id="mobile-app"/);
   assert.match(mobile, /viewport-fit=cover/);
   assert.doesNotMatch(mobile, /function renderMobileBoard/);
@@ -25,32 +29,36 @@ test('GitHub Pages 手机与电脑入口均自包含，视图和存档相互独�
   assert.match(desktop, /href="\.\/mobile\/"/);
 });
 
-test('手机与电脑嵌入同一份编译规则和 AI，不复制规则源码', () => {
-  const compiled = name => readFileSync(new URL(`../dist/js/${name}.js`, import.meta.url), 'utf8')
-    .replace(/^import\s.*?from\s+['"].*?['"];?\s*$/gm, '')
-    .replace(/^export\s+(?=(const|function|class)\b)/gm, '')
-    .replace(/^export\s*\{[^}]*\};?\s*$/gm, '').trim();
-  for (const name of ['data','engine',...AI_MODULES]) {
-    const code=compiled(name);
-    assert.ok(desktop.includes(code), `电脑缺少同源 ${name}`);
-    assert.ok(mobile.includes(code), `手机缺少同源 ${name}`);
+test('JS5 决策链（ai/decision → js/adapter → js/*、om/*、sim/*）完整进入内联包', () => {
+  // 这些函数分别来自 ai/planner、js/adapter、sim/session、om/policy、js/champion-guided：
+  // 任一缺失即意味着模块清单再次断链（AI 将在运行时 ReferenceError 并停摆）。
+  const markers = [
+    'function choosePlan(',
+    'function chooseJointAction(',
+    'function createSimulation(',
+    'function scoreAction(',
+  ];
+  for (const html of [desktop, mobile]) {
+    for (const marker of markers) {
+      assert.ok(html.includes(marker), `内联包缺少 JS5 链路标记：${marker}`);
+    }
+    assert.match(html, /joint-js5/, '内联包应包含 JS5 冠军版本标识');
   }
 });
 
-test('内联产物顶层标识符无冲突（standalone 为共享作用域）', () => {
-  const strip = name => readFileSync(new URL(`../dist/js/${name}.js`, import.meta.url), 'utf8')
-    .replace(/^import\s.*?from\s+['"].*?['"];?\s*$/gm, '')
-    .replace(/^export\s+(?=(const|function|class)\b)/gm, '')
-    .replace(/^export\s*\{[^}]*\};?\s*$/gm, '');
-  const decls = new Map();
-  for (const name of ['data','engine',...AI_MODULES,'organize','replay','archive','auto-export','app','mobile/storage','mobile/app','mobile/worker']) {
-    const src = strip(name);
-    const re = /^(?:const|let|var|function|class)\s+([A-Za-z_$][\w$]*)/gm;
-    let m;
-    while ((m = re.exec(src))) {
-      const id = m[1];
-      assert.ok(!decls.has(id), `顶层标识符 '${id}' 在 ${name}.js 与 ${decls.get(id)}.js 重复声明，内联包会 SyntaxError`);
-      decls.set(id, name);
+test('手机在线模式与桌面共享同一份编译规则和 AI（assets 拷贝，非复制源码）', () => {
+  const assetsRoot = new URL('../dist/mobile/assets/', import.meta.url);
+  const digestDirs = readdirSync(assetsRoot).filter(d => /^[0-9a-f]{12}$/.test(d));
+  assert.ok(digestDirs.length >= 1, '存在 assets/<digest> 资源目录');
+  for (const dir of digestDirs) {
+    for (const name of ['engine', 'data', 'ai/decision']) {
+      const asset = readFileSync(new URL(`../dist/mobile/assets/${dir}/${name}.js`, import.meta.url), 'utf8');
+      const origin = readFileSync(new URL(`../dist/js/${name}.js`, import.meta.url), 'utf8');
+      assert.equal(
+        createHash('sha256').update(asset).digest('hex'),
+        createHash('sha256').update(origin).digest('hex'),
+        `assets/${dir}/${name} 必须与 dist/js/${name} 逐字节同源`,
+      );
     }
   }
 });
