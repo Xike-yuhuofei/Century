@@ -14,6 +14,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, applyAction } from '../dist/js/engine.js';
 import { chooseAIAction, buildObservation } from '../dist/js/ai.js';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+// JS5 预算模式含墙钟计时方差：H10 的『冠军驱动两局逐位一致』断言显式钉定前任
+// 冠军（束搜索确定性）保持可判定。
+const LEGACY_CHAMPION = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/legacy-champion.json'), 'utf8'));
 import { buildPublicSimState } from '../dist/js/sim/index.js';
 import { createOpponentModel } from '../dist/js/om/index.js';
 
@@ -273,7 +279,7 @@ test('H10：同一策略的多个 AI 产生高度一致行为——同构状态�
     const actions = [];
     let moves = 0;
     while (game.phase !== 'finished' && moves < 60) {
-      const { action } = chooseAIAction(game);
+      const { action } = chooseAIAction(game, { parameters: LEGACY_CHAMPION });
       actions.push(action.type);
       game = applyAction(game, action);
       moves++;

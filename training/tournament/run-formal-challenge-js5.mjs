@@ -45,6 +45,10 @@ const candidateDescriptor = {
   adapter: 'champion-guided',
   jointVersion: 'joint-js5',
   budgetMs: 100, // 标准实时决策预算（与全部消融/验证块同口径）
+  // 血统保持：联合轨迹的贪心镜像消费 CHAMPION_PARAMETERS.acquisitionVariant——
+  // 挑战验证时的轨迹策略即 readiness-efficiency 收集估值，描述符必须冻结该配置，
+  // 否则晋级落地后轨迹策略漂移（S4 回归实测：丢失后 js3 认领被 0.001 均值差翻转）。
+  acquisitionVariant: 'readiness-efficiency',
 };
 if (candidateDescriptor.id !== 'joint-js5' || candidateDescriptor.adapter !== 'champion-guided') {
   throw new Error('JS5 候选描述符校验失败');
