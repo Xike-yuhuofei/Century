@@ -20,12 +20,41 @@ const clampBound = (key, value) => {
   return Math.min(high, Math.max(low, value));
 };
 
-/** 由冠军参数派生 3 个风格化对手（仅调整风格乘子，决策核心不变）。 */
+const ADAPTER_FIELDS = ['adapter', 'jointVersion', 'budgetMs'];
+
+/** 束搜索基座归一化（2026-10-24 audit 修复）：剥离适配器字段 + 补齐缺省权重 1.0。
+ *
+ * 背景：适配器冠军（CHAMPION_PARAMETERS.adapter='champion-guided'，AI6 第五阶段）
+ * 的权重乘子不参与决策且归档常缺省权重键。任何从当前冠军**浅拷贝**派生的风格
+ * 变体都会携带 adapter 字段，被 web-v1/src/ai/decision.ts 静默分派到联合搜索——
+ * 权重 100% 失效，变体行为 ≡ 冠军本体（行为探针：携带 adapter 变体与冠军行动
+ * 逐位一致 48/48）。本函数强制变体/历史归档走束搜索核心且权重真实生效：
+ * - 剥离 adapter/jointVersion/budgetMs；
+ * - 缺省权重键补 1.0（与适配器口径的隐含缺省一致）；
+ * - 结构：原参数携带 adapter 时缺省 beam-rollout（冠军引导核心的束搜索基座，
+ *   与 training/adversarial/registry.mjs championBaseParameters 同口径）；
+ *   非适配器冠军原样保留 structure（不改变既有行为）。
+ */
+export function beamBaseParameters(params) {
+  const wasAdapter = params?.adapter !== undefined;
+  const base = { ...params };
+  for (const key of ADAPTER_FIELDS) delete base[key];
+  for (const key of Object.keys(PARAMETER_BOUNDS)) {
+    if (base[key] === undefined) base[key] = 1;
+  }
+  if (wasAdapter && base.structure === undefined) base.structure = 'beam-rollout';
+  return base;
+}
+
+/** 由冠军参数派生 3 个风格化对手（束搜索基座 + 权重扰动，决策核心不随冠军分派）。
+ * audit 修复：基座经 beamBaseParameters 归一化——适配器冠军派生不再携带 adapter，
+ * 权重扰动真实生效。 */
 export function styleVariants(champion) {
+  const base = beamBaseParameters(champion);
   const raw = [
-    { ...champion, id: `${champion.id}@tempo`, tempoWeight: champion.tempoWeight * 1.35, restWeight: champion.restWeight * 0.8 },
-    { ...champion, id: `${champion.id}@contest`, contestWeight: champion.contestWeight * 1.4, goalWeight: champion.goalWeight * 1.15 },
-    { ...champion, id: `${champion.id}@engine`, engineWeight: champion.engineWeight * 1.3, endgameWeight: champion.endgameWeight * 1.1 },
+    { ...base, id: `${champion.id}@tempo`, tempoWeight: base.tempoWeight * 1.35, restWeight: base.restWeight * 0.8 },
+    { ...base, id: `${champion.id}@contest`, contestWeight: base.contestWeight * 1.4, goalWeight: base.goalWeight * 1.15 },
+    { ...base, id: `${champion.id}@engine`, engineWeight: base.engineWeight * 1.3, endgameWeight: base.endgameWeight * 1.1 },
   ];
   return raw.map(p => validateAIParameters({
     ...p,
@@ -51,7 +80,11 @@ export function historicalChampions(archiveDir, { excludeId = null, limit = 3 } 
     try {
       const data = JSON.parse(readFileSync(join(archiveDir, file), 'utf8'));
       const parameters = data.parameters ?? data;
-      if (parameters?.id && parameters.id !== excludeId) versions.push(validateAIParameters(parameters));
+      if (parameters?.id && parameters.id !== excludeId) {
+        // audit 修复：历史归档统一归一化为束搜索基座（适配器冠军归档不再以
+        // 适配器形态入场——历史对手的价值在行为差异，权重必须真实生效）。
+        versions.push(validateAIParameters(beamBaseParameters(parameters)));
+      }
     } catch {
       // 单个损坏档案跳过，不影响训练
     }
