@@ -256,6 +256,7 @@ function parseArgs() {
   const args = {
     candidates: ['js2', 'js3'], players: [2, 5], seeds: 40, block: 'test',
     budgetMs: undefined, workUnits: undefined, horizon: undefined, worlds: undefined,
+    gateMode: undefined, evaluator: undefined,
     outDir: resolve(REPO_ROOT, 'training/reports/joint-search-v1'),
   };
   const argv = process.argv.slice(2);
@@ -268,6 +269,8 @@ function parseArgs() {
     else if (argv[i] === '--work') args.workUnits = Number(argv[++i]);
     else if (argv[i] === '--horizon') args.horizon = Number(argv[++i]);
     else if (argv[i] === '--worlds') args.worlds = Number(argv[++i]);
+    else if (argv[i] === '--gate') args.gateMode = argv[++i];
+    else if (argv[i] === '--evaluator') args.evaluator = argv[++i];
     else if (argv[i] === '--out') args.outDir = resolve(argv[++i]);
   }
   return args;
@@ -285,6 +288,8 @@ async function main() {
     ...(args.workUnits !== undefined ? { workUnits: args.workUnits } : {}),
     ...(args.horizon !== undefined ? { horizon: args.horizon } : {}),
     ...(args.worlds !== undefined ? { worlds: args.worlds } : {}),
+    ...(args.gateMode !== undefined ? { gateMode: args.gateMode } : {}),
+    ...(args.evaluator !== undefined ? { evaluator: args.evaluator } : {}),
   };
   const cells = [];
   for (const candidateId of args.candidates) {

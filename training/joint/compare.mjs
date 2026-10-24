@@ -18,26 +18,28 @@ function loadGames(path) {
   const report = JSON.parse(readFileSync(path, 'utf8'));
   const games = [];
   for (const cell of report.cells) {
-    for (const g of cell.games ?? []) games.push(g);
+    for (const g of cell.games ?? []) games.push({ ...g, seatCount: cell.seatCount, candidateId: cell.candidateId });
   }
   return { report, games };
 }
 
-/** 从 ablation JSON 提取按 (seed, direction) 的胜局表。 */
-function winMap(path, seatCount) {
+/** 从 ablation JSON 提取按 (seed, direction) 的胜局表。
+ * candidateId 过滤：同文件多候选 cell 时只取指定候选（js5_js2 文件须分开比较）。 */
+function winMap(path, seatCount, candidateId) {
   const { report, games } = loadGames(path);
   const map = new Map();
   for (const g of games) {
     if (g.status !== 'finished' || g.seatCount !== seatCount) continue;
-    map.set(`${g.seed}:${g.direction}`, { won: g.won, scoreDiff: g.scoreDiff });
+    if (candidateId && g.candidateId !== candidateId) continue;
+    map.set(`${g.seed}:${g.direction}`, { won: g.won === true, scoreDiff: g.scoreDiff });
   }
   return map;
 }
 
 /** 配对比较：candidatePath 与 baselinePath 必须来自同一批 (seed, direction) 对局。 */
-export function pairedComparison(candidatePath, baselinePath, { seatCount = 2, iterations = 2000, rngSeed = 0x6a11e5 } = {}) {
-  const cand = winMap(candidatePath, seatCount);
-  const base = winMap(baselinePath, seatCount);
+export function pairedComparison(candidatePath, baselinePath, { seatCount = 2, candidateId, baselineId, iterations = 2000, rngSeed = 0x6a11e5 } = {}) {
+  const cand = winMap(candidatePath, seatCount, candidateId);
+  const base = winMap(baselinePath, seatCount, baselineId);
   const seeds = [...new Set([...cand.keys()].filter(k => base.has(k)).map(k => k.split(':')[0]))].map(Number).sort((a, b) => a - b);
   if (!seeds.length) throw new Error('无配对种子（两侧 ablation JSON 的 block/seeds/players 必须一致）');
   // 聚类：seed → [{direction, candWon, baseWon, candDiff, baseDiff}]（A/B 各一条）。
@@ -88,20 +90,28 @@ export function pairedComparison(candidatePath, baselinePath, { seatCount = 2, i
   };
 }
 
-// CLI：node training/joint/compare.mjs <candidate.json> <baseline.json> [--players 2] [--seat 5]
+// CLI：node training/joint/compare.mjs <candidate.json> <baseline.json> [--players=2] [--candidate=js5] [--baseline=js0]
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('compare.mjs')) {
-  const args = process.argv.slice(2).filter(a => !a.startsWith('--'));
-  const seatCount = Number(process.argv.find(a => a.startsWith('--players'))?.split('=')[1] ?? 2);
-  if (args.length < 2) {
-    console.error('用法：node training/joint/compare.mjs <candidate-ablation.json> <baseline-ablation.json> [--players=N]');
+  const positional = process.argv.slice(2).filter(a => !a.startsWith('--'));
+  const optOf = (name, dflt) => {
+    const hit = process.argv.slice(2).find(a => a.startsWith(`--${name}=`));
+    return hit ? hit.split('=')[1] : dflt;
+  };
+  const seatCounts = (optOf('players', '2,3,4,5')).split(',').map(Number);
+  const baselineId = optOf('baseline', 'js0');
+  const candidateIds = optOf('candidate', null);
+  if (positional.length < 2) {
+    console.error('用法：node training/joint/compare.mjs <candidate-ablation.json> <baseline-ablation.json> [--players=2,5] [--candidate=js5] [--baseline=js0]');
     process.exit(1);
   }
-  for (const n of [2, 3, 4, 5]) {
-    try {
-      const r = pairedComparison(args[0], args[1], { seatCount: n });
-      if (r.games > 0) {
-        console.log(`[${n}人] 配对 ${r.seeds} 种子 × ${r.games} 局：候选 ${(r.candidateFirstPlace * 100).toFixed(1)}% vs 基准 ${(r.baselineFirstPlace * 100).toFixed(1)}%｜差 ${(r.firstPlaceDiff * 100).toFixed(1)}pp CI [${(r.firstPlaceDiffCI[0] * 100).toFixed(1)},${(r.firstPlaceDiffCI[1] * 100).toFixed(1)}]｜分差 ${r.meanScoreDiff.toFixed(2)} CI [${r.meanScoreDiffCI[0].toFixed(2)},${r.meanScoreDiffCI[1].toFixed(2)}]｜${r.significance}`);
-      }
-    } catch { /* 该人数无数据则跳过 */ }
+  for (const n of seatCounts) {
+    for (const cid of candidateIds ? candidateIds.split(',') : [null]) {
+      try {
+        const r = pairedComparison(positional[0], positional[1], { seatCount: n, candidateId: cid, baselineId });
+        if (r.games > 0) {
+          console.log(`[${n}人][${cid ?? '全部候选'} vs ${baselineId}] 配对 ${r.seeds} 种子 × ${r.games} 局：${(r.candidateFirstPlace * 100).toFixed(1)}% vs ${(r.baselineFirstPlace * 100).toFixed(1)}%｜差 ${(r.firstPlaceDiff * 100).toFixed(1)}pp CI [${(r.firstPlaceDiffCI[0] * 100).toFixed(1)},${(r.firstPlaceDiffCI[1] * 100).toFixed(1)}]｜分差 ${r.meanScoreDiff.toFixed(2)} CI [${r.meanScoreDiffCI[0].toFixed(2)},${r.meanScoreDiffCI[1].toFixed(2)}]｜${r.significance}`);
+        }
+      } catch { /* 该 (人数,候选) 无数据则跳过 */ }
+    }
   }
 }

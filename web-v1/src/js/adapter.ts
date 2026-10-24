@@ -89,8 +89,14 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
 
   const observation = buildObservation(game, seat);
   const planner = plannerFor(versionId);
+  // profile → profileName 映射对全部 joint 版本一致（champion-guided 的冠军基座
+  // 与轨迹内策略都必须消费同一人格注入，否则评测席位人格失配——回归审计
+  // gate=never vs js0 逐决策一致性强制此项）。
   const decision = version.kind === 'champion-guided'
-    ? (planner as ReturnType<typeof createChampionGuidedPlanner>).decide(observation, options as ChampionGuidedSearchOptions)
+    ? (planner as ReturnType<typeof createChampionGuidedPlanner>).decide(observation, {
+        ...options,
+        profileName: options.profile?.name,
+      } as ChampionGuidedSearchOptions)
     : (planner as ReturnType<typeof createJointPlanner>).decide(observation, {
         ...options,
         profileName: options.profile?.name,

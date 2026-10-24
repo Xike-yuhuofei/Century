@@ -1,7 +1,7 @@
 /** Joint Search V1 性能基准（AI6 第四阶段·任务 F）。
  *
  * 测量矩阵：
- * - 决策预算 25/50/100/200ms × 版本 js2/js3/js4 × 人数 2/3/5；
+ * - 决策预算 25/50/100/200ms × 版本 js2/js3/js4/js5 × 人数 2/3/5；
  * - 固定工作量 64/128/256/512（确定性模式，逐位复放）；
  * - 指标：p50/p95/p99 决策延迟、rollouts/s、transitions/s、合法行动生成成本、
  *   对手预测耗时占比、状态复制（fork+step）成本、RSS/heap、预算耗尽返回行为。
@@ -86,7 +86,7 @@ async function main() {
 
   for (const players of [2, 3, 5]) {
     const observations = midgameObservations(players, 12);
-    for (const version of ['joint-js2', 'joint-js3', 'joint-js4']) {
+    for (const version of ['joint-js2', 'joint-js3', 'joint-js4', 'joint-js5']) {
       for (const budget of [25, 50, 100, 200]) {
         const samples = [];
         let budgetExhausted = 0;
