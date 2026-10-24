@@ -26,9 +26,15 @@ import { resolve } from 'node:path';
 import { createGame, applyAction, score as engineScore, ranking } from '../../web-v1/dist/js/engine.js';
 import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
 import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
-import { CHAMPION_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
+import { frozenVersion } from '../../web-v1/dist/js/ai/version-registry.js';
 import { assertInBlock } from '../../ai5/lib/seed_policy.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
+
+/** 历史冻结冠军（AI6 第六阶段 P0 修复）：审计对照的 js0 与对手席一律经
+ * 不可变注册表解析 legacy-js0——此前引用 CHAMPION_PARAMETERS，PR #30 晋级后
+ * 该常量携带 adapter 字段，js0 侧静默变成 JS5，审计退化为 JS5 vs JS5 自比
+ * （gate=never 等价审计失去鉴别力）。 */
+const LEGACY = frozenVersion('legacy-js0');
 
 /** 席位人格映射（与 training/simulator/simulate.mjs 完全一致 + 可选平移）。 */
 function seatProfile(seat, shift) {
@@ -37,8 +43,8 @@ function seatProfile(seat, shift) {
 }
 
 function candidateVersion(id) {
+  if (id === 'js0') return { kind: 'frozen', id: LEGACY.id, parameters: LEGACY.parameters, structure: LEGACY.structure };
   const jointId = id.startsWith('joint-') ? id : `joint-${id}`;
-  if (id === 'js0') return { kind: 'champion', id: 'js0-frozen-champion' };
   return { kind: 'joint', id: jointId, joint: jointId };
 }
 
@@ -46,7 +52,7 @@ function candidateVersion(id) {
 function runGame({ seed, seatCount, candidateSeat, candidate, jointOptions, profileShift, maxMoves = 1200, deadlineMs = 120_000 }) {
   const versions = Array.from({ length: seatCount }, (_, seat) => {
     if (seat === candidateSeat) return { candidate: true, ...candidate };
-    return { candidate: false, id: 'opponent-frozen-champion', parameters: CHAMPION_PARAMETERS, structure: CHAMPION_PARAMETERS.structure };
+    return { candidate: false, id: 'legacy-js0-opponent', parameters: LEGACY.parameters, structure: LEGACY.structure };
   });
   let game;
   game = createGame(
@@ -71,13 +77,13 @@ function runGame({ seed, seatCount, candidateSeat, candidate, jointOptions, prof
       action = r.action;
       decisions.push(action);
       decisionMeta.push({ gated: r.joint?.gated ?? null, phase: game.phase });
-    } else if (version.candidate && version.kind === 'champion') {
-      const r = chooseAIAction(game, { parameters: CHAMPION_PARAMETERS, profile });
+    } else if (version.candidate && version.kind === 'frozen') {
+      const r = chooseAIAction(game, { parameters: version.parameters, ...(version.structure ? { structure: version.structure } : {}), profile });
       action = r.action;
       decisions.push(action);
       decisionMeta.push({ gated: null, phase: game.phase });
     } else {
-      const r = chooseAIAction(game, { parameters: CHAMPION_PARAMETERS, structure: CHAMPION_PARAMETERS.structure, profile });
+      const r = chooseAIAction(game, { parameters: LEGACY.parameters, structure: LEGACY.structure, profile });
       action = r.action;
     }
     game = applyAction(game, action);

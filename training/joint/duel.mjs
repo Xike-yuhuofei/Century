@@ -19,18 +19,30 @@
  * 训练-测试隔离由调用方通过 --block 指定；断言越界即抛错。
  */
 
-import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { createGame, applyAction, score as engineScore, ranking } from '../../web-v1/dist/js/engine.js';
 import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
 import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
-import { CHAMPION_PARAMETERS, BASELINE_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
-import { assertInBlock, AI6_JS5_CONFIRM_SUBBLOCK, AI6_JS5_TUNE2_SUBBLOCK } from '../../ai5/lib/seed_policy.mjs';
+import { BASELINE_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
+import { frozenVersion } from '../../web-v1/dist/js/ai/version-registry.js';
+import { POOLS } from './pools.mjs';
+import { assertInBlock, AI6_JS5_CONFIRM_SUBBLOCK, AI6_JS5_TUNE2_SUBBLOCK,
+  AI6_PHASE6_DEV_SUBBLOCK, AI6_PHASE6_TUNE_SUBBLOCK, AI6_PHASE6_PERF_SUBBLOCK,
+  AI6_PHASE6_2P_SUBBLOCK, AI6_PHASE6_BUDGET_SUBBLOCK, AI6_PHASE6_CONFIRM_SUBBLOCK } from '../../ai5/lib/seed_policy.mjs';
 import { firstPlaceClusterCI, pairedDiffSummary, latencySummary } from '../baseline/stats.mjs';
 import { wilsonCI, meanCI } from '../evaluator/stats.mjs';
 import { REPO_ROOT, engineBundleSha256 } from '../lib/paths.mjs';
 import { mulberry32 } from '../lib/rng.mjs';
 import { enumerateLegalActions } from '../../web-v1/dist/js/sim/legal.js';
+
+/** 进程启动时捕获代码版本（证据纪律：codeCommit 必须在启动时而非落盘时记录）。 */
+function gitHead() {
+  try { return execSync('git rev-parse HEAD', { cwd: REPO_ROOT, encoding: 'utf8' }).trim(); }
+  catch { return null; }
+}
+const GIT_HEAD = gitHead();
 
 const MAX_SEAT_COUNT = 5;
 
@@ -39,55 +51,35 @@ function seatProfile(seat) {
   return seat === 0 ? NEUTRAL_PROFILE : PROFILES[(seat - 1) % PROFILES.length];
 }
 
-/** 候选席位版本描述（kind 决定决策分派路径）。接受 js2 / joint-js2 两种写法。 */
+/** 候选席位版本描述（AI6 第六阶段 P0 版本身份修复）。
+ * 历史版本经不可变注册表解析，CHAMPION_PARAMETERS 不再充当历史冠军：
+ * - js0 → legacy-js0（历史束搜索冠军 ai5-readiness-efficiency，冻结快照）；
+ *   修复前此路径传 CHAMPION_PARAMETERS——晋级后该常量携带 adapter 字段，
+ *   适配器分派使"js0"静默运行 JS5（confirm-replay-check 重放 24/24 → 1/12）；
+ * - js1 → legacy-js1（同参数 + beam-contest，冻结快照）；
+ * - js6 → joint-js6-experimental（实验候选；算法实现注册后可解析）；
+ * - 其余 → 联合适配器版本（显式 version 注入）。
+ * kind='frozen'：束搜索路径 + 注册表显式参数；kind='joint'：联合适配器。 */
 function candidateVersion(id) {
+  if (id === 'js0') {
+    const v = frozenVersion('legacy-js0');
+    return { kind: 'frozen', id: v.id, versionId: v.id, parameters: v.parameters, structure: v.structure };
+  }
+  if (id === 'js1') {
+    const v = frozenVersion('legacy-js1');
+    return { kind: 'frozen', id: v.id, versionId: v.id, parameters: v.parameters, structure: v.structure };
+  }
+  if (id === 'js6') {
+    const v = frozenVersion('joint-js6-experimental');
+    return { kind: 'frozen', id: v.id, versionId: v.id, parameters: v.parameters, structure: v.structure };
+  }
   const jointId = id.startsWith('joint-') ? id : `joint-${id}`;
-  if (id === 'js0' || id === 'joint-js0') {
-    return { kind: 'champion', id: 'js0-frozen-champion', joint: null };
-  }
-  if (id === 'js1' || id === 'joint-js1') {
-    return { kind: 'champion', id: 'js1-beam-contest', joint: null, structure: 'beam-contest' };
-  }
   return { kind: 'joint', id: jointId, joint: jointId };
 }
 
-/** 对手池（不含候选本体）：冻结冠军 + 中立基线 + 风格变体。全部经
- * 正式冠军入口运行（对手行为与 PR #22 基准完全同口径）。
- *
- * 第五阶段任务 D2：对手池分两套，作为独立评测维度披露——
- * - classic（缺省，与 PR #26/27 一致）：冠军同族风格变体；
- * - diverse：算法结构更多样的对手——历史冠军（AI4 struct-beam-rollout 归档参数）、
- *   手调 rush/engine/balanced 风格、随机合法策略（uniform-legal，与冠军
- *   算法结构完全不同）。历史冠军参数从 training/champions/candidates/ 读取。 */
-function historicalChampionParameters() {
-  const path = resolve(REPO_ROOT, 'training/champions/candidates/struct-beam-rollout.json');
-  const doc = JSON.parse(readFileSync(path, 'utf8'));
-  const params = doc.parameters ?? doc;
-  if (!params?.id) throw new Error(`历史冠军归档缺少 parameters.id：${path}`);
-  return params;
-}
-
-function classicPool() {
-  const c = CHAMPION_PARAMETERS;
-  return [
-    { id: c.id, parameters: c, structure: c.structure },
-    { id: 'neutral-baseline', parameters: BASELINE_PARAMETERS, structure: BASELINE_PARAMETERS.structure },
-    { id: `${c.id}@tempo`, parameters: { ...c, tempoWeight: Math.min(1.5, c.tempoWeight * 1.35), restWeight: Math.max(0.5, c.restWeight * 0.8) }, structure: c.structure },
-    { id: `${c.id}@contest`, parameters: { ...c, contestWeight: Math.min(2, c.contestWeight * 1.4), goalWeight: Math.min(1.5, c.goalWeight * 1.15) }, structure: c.structure },
-    { id: `${c.id}@engine`, parameters: { ...c, engineWeight: Math.min(1.5, c.engineWeight * 1.3), endgameWeight: Math.min(1.5, c.endgameWeight * 1.1) }, structure: c.structure },
-  ];
-}
-
-function diversePool() {
-  const c = CHAMPION_PARAMETERS;
-  return [
-    { id: c.id, parameters: c, structure: c.structure },
-    { id: 'ai4-struct-beam-rollout', parameters: historicalChampionParameters(), structure: historicalChampionParameters().structure },
-    { id: 'style-rush', parameters: { ...c, tempoWeight: 1.6, restWeight: 0.5, engineWeight: 0.5, endgameWeight: 0.6 }, structure: c.structure },
-    { id: 'style-engine', parameters: { ...c, engineWeight: 1.6, capacityWeight: 1.4, tempoWeight: 0.7 }, structure: c.structure },
-    { id: 'random-legal', parameters: BASELINE_PARAMETERS, structure: BASELINE_PARAMETERS.structure, randomLegal: true },
-  ];
-}
+/** 对手池（AI6 第六阶段 P0 修复）：池构造移至 ./pools.mjs 单一事实来源——
+ * 冠军席 = joint-js5-frozen；风格变体以 legacy-js0 为基座（束搜索路径真实
+ * 消费权重修改；修复前变体继承 adapter 字段被适配器忽略，≡ 冠军本体）。 */
 
 /** 随机合法对手（D2-7：与冠军算法结构完全不同的基线）：逐决策确定性均匀采样
  * 合法行动。合法集合经 sim/legal 全量枚举（与规则引擎逐条对齐的正确性基准口径）；
@@ -191,9 +183,10 @@ function runGame({ seed, seatCount, candidateSeats, candidate, opponents, jointO
             candidateSeats,
           });
         }
-      } else if (version.candidate && version.kind === 'champion') {
+      } else if (version.candidate && version.kind === 'frozen') {
+        // 冻结版本（P0 修复）：显式注册表参数，禁止 CHAMPION_PARAMETERS 充当历史冠军。
         const r = chooseAIAction(game, {
-          parameters: CHAMPION_PARAMETERS,
+          parameters: version.parameters,
           ...(version.structure ? { structure: version.structure } : {}),
           profile: seatProfile(seat),
         });
@@ -249,9 +242,14 @@ export function runAblationCell({ candidateId, seatCount, seeds, seedBase, joint
     : seedBase < 1_330_000_000 ? [1_320_000_000, 1_330_000_000]
     : seedBase < 1_340_000_000 ? [1_330_000_000, 1_340_000_000]
     : seedBase < AI6_JS5_TUNE2_SUBBLOCK[1] ? AI6_JS5_TUNE2_SUBBLOCK
-    : AI6_JS5_CONFIRM_SUBBLOCK, 'seedBase');
+    : seedBase < AI6_PHASE6_DEV_SUBBLOCK[1] ? AI6_PHASE6_DEV_SUBBLOCK
+    : seedBase < AI6_PHASE6_TUNE_SUBBLOCK[1] ? AI6_PHASE6_TUNE_SUBBLOCK
+    : seedBase < AI6_PHASE6_PERF_SUBBLOCK[1] ? AI6_PHASE6_PERF_SUBBLOCK
+    : seedBase < AI6_PHASE6_2P_SUBBLOCK[1] ? AI6_PHASE6_2P_SUBBLOCK
+    : seedBase < AI6_PHASE6_BUDGET_SUBBLOCK[1] ? AI6_PHASE6_BUDGET_SUBBLOCK
+    : AI6_PHASE6_CONFIRM_SUBBLOCK, 'seedBase');
   const candidate = candidateVersion(candidateId);
-  const opponents = pool === 'diverse' ? diversePool() : classicPool();
+  const opponents = (pool === 'diverse' ? POOLS.diverse : POOLS.classic)();
   const games = [];
   const seedPairs = [];
   for (let i = 0; i < seeds; i++) {
@@ -362,6 +360,7 @@ function parseArgs() {
     gateMode: undefined, evaluator: undefined, overrideMargin: undefined,
     contestThreshold: undefined, candidateCap: undefined, claimRanking: undefined,
     outDir: resolve(REPO_ROOT, 'training/reports/joint-search-v1'), diagnostics: undefined,
+    seedBase: undefined,
   };
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
@@ -369,6 +368,7 @@ function parseArgs() {
     else if (argv[i] === '--players') args.players = argv[++i].split(',').map(Number);
     else if (argv[i] === '--seeds') args.seeds = Number(argv[++i]);
     else if (argv[i] === '--block') args.block = argv[++i];
+    else if (argv[i] === '--seed-base') args.seedBase = Number(argv[++i]);
     else if (argv[i] === '--pool') args.pool = argv[++i];
     else if (argv[i] === '--budget') args.budgetMs = Number(argv[++i]);
     else if (argv[i] === '--work') args.workUnits = Number(argv[++i]);
@@ -398,6 +398,24 @@ export function confirmSeedBase(seatCount, pool) {
   return blockStart + (seatCount - 2) * 1_000_000 + (pool === 'diverse' ? 500_000 : 0);
 }
 
+/** 第六阶段确认块分区（AI6_PHASE6_CONFIRM_SUBBLOCK [1.382e9,1.4e9)）：
+ * seedBase = 1.382e9 + (人数−2)×3e6 + (diverse 池 ? 1.5e6 : 0)——每
+ * (人数, 对手池) 组合独占 150 万种子（本阶段实验单元更多，分区加大）。 */
+export function phase6ConfirmSeedBase(seatCount, pool) {
+  if (!Number.isSafeInteger(seatCount) || seatCount < 2 || seatCount > 5) {
+    throw new Error(`phase6-confirm 块人数必须为 2..5，实际：${seatCount}`);
+  }
+  const [blockStart] = AI6_PHASE6_CONFIRM_SUBBLOCK;
+  return blockStart + (seatCount - 2) * 3_000_000 + (pool === 'diverse' ? 1_500_000 : 0);
+}
+
+/** 第六阶段双人专项块分区（AI6_PHASE6_2P_SUBBLOCK [1.37e9,1.372e9)）：
+ * 仅 2 人局；seedBase = 1.37e9 + (diverse 池 ? 1e6 : 0)。 */
+export function phase6TwoPlayerSeedBase(pool) {
+  const [blockStart] = AI6_PHASE6_2P_SUBBLOCK;
+  return blockStart + (pool === 'diverse' ? 1_000_000 : 0);
+}
+
 async function main() {
   const args = parseArgs();
   if (args.block === 'confirm') {
@@ -407,12 +425,21 @@ async function main() {
   }
   const seedBase = args.block === 'confirm'
     ? null // 按 (人数, 池) 逐 cell 决定
-    : args.block === 'tune2' ? 1_351_000_000
-    : args.block === 'tune' ? 1_310_000_000
-    : args.block === 'test' ? 1_320_000_000
-    : args.block === 'audit' ? 1_300_000_000
-    : args.block === 'verify' ? 1_330_000_000
-    : (() => { throw new Error(`--block 必须是 tune|tune2|test|audit|verify|confirm，实际：${args.block}`); })();
+    : args.block === 'phase6-confirm'
+      ? null // 按 (人数, 池) 逐 cell 决定（phase6ConfirmSeedBase）
+      : args.block === 'phase6-2p'
+        ? null // 按 池 逐 cell 决定（phase6TwoPlayerSeedBase）
+        : args.seedBase !== undefined ? args.seedBase
+        : args.block === 'phase6-budget' ? null // 预算矩阵由运行脚本计算分区后经 --seed-base 传入
+        : args.block === 'tune2' ? 1_351_000_000
+        : args.block === 'phase6-dev' ? 1_352_000_000
+        : args.block === 'phase6-tune' ? 1_353_000_000
+        : args.block === 'phase6-perf' ? 1_354_000_000
+        : args.block === 'tune' ? 1_310_000_000
+        : args.block === 'test' ? 1_320_000_000
+        : args.block === 'audit' ? 1_300_000_000
+        : args.block === 'verify' ? 1_330_000_000
+        : (() => { throw new Error(`--block 必须是 tune|tune2|test|audit|verify|confirm|phase6-dev|phase6-tune|phase6-perf|phase6-2p|phase6-budget|phase6-confirm，实际：${args.block}`); })();
   const jointOptions = {
     ...(args.budgetMs !== undefined ? { budgetMs: args.budgetMs } : {}),
     ...(args.workUnits !== undefined ? { workUnits: args.workUnits } : {}),
@@ -429,7 +456,10 @@ async function main() {
   const cells = [];
   for (const candidateId of args.candidates) {
     for (const seatCount of args.players) {
-      const cellSeedBase = args.block === 'confirm' ? confirmSeedBase(seatCount, args.pool) : seedBase;
+      const cellSeedBase = args.block === 'confirm' ? confirmSeedBase(seatCount, args.pool)
+        : args.block === 'phase6-confirm' ? phase6ConfirmSeedBase(seatCount, args.pool)
+        : args.block === 'phase6-2p' ? phase6TwoPlayerSeedBase(args.pool)
+        : seedBase;
       process.stdout.write(`运行 ${candidateId} ${seatCount}人 ${args.seeds}种子(${args.block},${args.pool}) ...\n`);
       const t0 = performance.now();
       const cell = runAblationCell({ candidateId, seatCount, seeds: args.seeds, seedBase: cellSeedBase, jointOptions, pool: args.pool, diagnostics });
@@ -441,7 +471,12 @@ async function main() {
   const report = {
     schema: 'century-joint-search-ablation-v1',
     date: new Date().toISOString(),
+    codeCommit: GIT_HEAD,
     engineBundleSha256: engineBundleSha256(),
+    versionRegistry: Object.fromEntries(['legacy-js0', 'legacy-js1', 'joint-js5-frozen'].map(id => {
+      const v = frozenVersion(id);
+      return [id, { id: v.id, algorithm: v.algorithm, parameters: v.parameters, structure: v.structure }];
+    })),
     block: args.block, seedBase: args.block === 'confirm' ? 'partitioned-by-(players,pool)' : seedBase, seeds: args.seeds,
     pool: args.pool,
     jointOptions, note: 'JS 编号为本阶段消融编号（JS0–JS5），非 PR #22 的 B0/B1/B2。confirm 块分区见 seed_policy.mjs AI6_JS5_CONFIRM_SUBBLOCK。',

@@ -66,6 +66,24 @@ export const AI6_JOINT_PERF_SUBBLOCK = [1_350_000_000, 1_351_000_000];
 export const AI6_JS5_TUNE2_SUBBLOCK = [1_351_000_000, 1_352_000_000];
 export const AI6_JS5_CONFIRM_SUBBLOCK = [1_360_000_000, 1_370_000_000];
 
+/** AI6 第六阶段（胜率优先的 JS5 深度强化与搜索算力扩展）子块
+ *（与全部既有块物理隔离；[1.352e9,1.353e9) 与 [1.353e9,1.354e9)、
+ * [1.354e9,1.355e9) 此前预留未消费，2026-10-24 登记）：
+ * - [1.352e9, 1.353e9)  开发/冒烟种子（管线调试，永不用于结论）；
+ * - [1.353e9, 1.354e9)  参数调优/机制消融种子（JS6 机制开发，永不用于结论）；
+ * - [1.354e9, 1.355e9)  性能专用种子（固定工作量复现、负载剖面）；
+ * - [1.37e9, 1.372e9)   任务 A2 双人专项独立验证（全新种子，预注册）；
+ * - [1.372e9, 1.382e9)  任务 B 预算矩阵（分区：seedBase = 1.372e9 +
+ *   (人数−2)×2e6 + (比较类型偏移)；比较类型：0=同算法预算阶梯、1e6=同预算算法对照）；
+ * - [1.382e9, 1.4e9)    独立确认块（F 协议终局确认；分区 = 1.382e9 +
+ *   (人数−2)×3e6 + (池 diverse ? 1.5e6 : 0)，每 (人数,池) 独占 150 万种子）。 */
+export const AI6_PHASE6_DEV_SUBBLOCK = [1_352_000_000, 1_353_000_000];
+export const AI6_PHASE6_TUNE_SUBBLOCK = [1_353_000_000, 1_354_000_000];
+export const AI6_PHASE6_PERF_SUBBLOCK = [1_354_000_000, 1_355_000_000];
+export const AI6_PHASE6_2P_SUBBLOCK = [1_370_000_000, 1_372_000_000];
+export const AI6_PHASE6_BUDGET_SUBBLOCK = [1_372_000_000, 1_382_000_000];
+export const AI6_PHASE6_CONFIRM_SUBBLOCK = [1_382_000_000, 1_400_000_000];
+
 /** 断言种子落在指定区间内（含头不含尾）。 */
 export function assertInBlock(seed, block, name = 'seed') {
   if (!Number.isSafeInteger(seed)) {

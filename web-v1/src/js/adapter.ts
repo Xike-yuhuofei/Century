@@ -19,6 +19,7 @@ import type { Game, Action, Color } from '../engine.js';
 import { applyAction } from '../engine.js';
 import { buildObservation } from '../ai/observation.js';
 import { CHAMPION_PARAMETERS, type AIParameters } from '../ai/parameters.js';
+import { FROZEN_VERSIONS } from '../ai/version-registry.js';
 import { trimStock } from '../ai/evaluator.js';
 import { chooseAIAction } from '../ai/decision.js';
 import type { Profile } from '../ai/profiles.js';
@@ -35,6 +36,10 @@ export type JointAdapterOptions = JointSearchOptions & {
   profile?: Profile;
   /** 决策席位（缺省 game.current；非当前席位抛错）。 */
   playerId?: number;
+  /** 冠军基座参数（AI6 第六阶段 P0 版本身份透传）：决策入口把完整参数对象
+   * 传入适配器——冠军本体传自身（行为不变），风格变体的权重修改经此真实
+   * 影响冠军基座规划；缺省时 champion-guided 使用 CHAMPION_PARAMETERS。 */
+  championParameters?: AIParameters;
 };
 
 export type JointAdapterDecision = {
@@ -71,9 +76,14 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
 
   // JS1：冠军 + 静态目标存活折扣 = beam-contest 结构（冠军 beam-rollout +
   // golemSurvivalModel），委托正式冠军入口，保证与冠军代码逐位同源。
+  // AI6 第六阶段 P0 版本身份修复：JS1 的"冠军"指冻结历史冠军
+  // legacy-js0（ai5-readiness-efficiency）。此前委托 CHAMPION_PARAMETERS——
+  // PR #30 晋级后该常量携带 adapter 字段，决策入口适配器分支优先于
+  // structure，JS1 会静默运行 JS5（修复前失败证据：confirm-replay-check
+  // js0/js1 重放 24/24 → 1-2/12）。冻结参数从版本注册表取，与当前冠军解耦。
   if (version.kind === 'champion-contest') {
     const response = chooseAIAction(game, {
-      parameters: CHAMPION_PARAMETERS,
+      parameters: FROZEN_VERSIONS['legacy-js0'].parameters,
       structure: 'beam-contest',
       profile: options.profile,
     });
