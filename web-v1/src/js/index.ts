@@ -9,7 +9,8 @@ export type {
   RootActionEvaluation, DecisionTrace, JointVersionSpec,
 } from './types.js';
 export { JOINT_VERSIONS } from './types.js';
-export { createJointPlanner } from './planner.js';
+export { createJointPlanner, worldSeed } from './planner.js';
+export { createChampionGuidedPlanner, competitionRisk, type ChampionGuidedDecision, type ChampionGuidedOptions, type ChampionGuidedSearchOptions } from './champion-guided.js';
 export { chooseJointAction, jointVersionIds, type JointAdapterOptions, type JointAdapterDecision } from './adapter.js';
 export { evaluateLeaf, leafVector, logisticWin, evaluateL0, evaluateL1, evaluateL2, evaluateL3, type LeafVector } from './evaluators.js';
 export { playJointTrajectory, runJointRollout, firstPlaceOf } from './joint-rollout.js';

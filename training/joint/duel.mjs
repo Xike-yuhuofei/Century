@@ -48,7 +48,6 @@ function candidateVersion(id) {
   }
   return { kind: 'joint', id: jointId, joint: jointId };
 }
-
 /** 对手池（不含候选本体）：冻结冠军 + 中立基线 + 风格变体。全部经
  * 正式冠军入口运行（对手行为与 PR #22 基准完全同口径）。 */
 function opponentPool() {
@@ -158,7 +157,9 @@ function runGame({ seed, seatCount, candidateSeats, candidate, opponents, jointO
 export function runAblationCell({ candidateId, seatCount, seeds, seedBase, jointOptions }) {
   assertInBlock(seedBase, seedBase < 1_310_000_000
     ? [1_300_000_000, 1_310_000_000]
-    : seedBase < 1_320_000_000 ? [1_310_000_000, 1_320_000_000] : [1_320_000_000, 1_330_000_000], 'seedBase');
+    : seedBase < 1_320_000_000 ? [1_310_000_000, 1_320_000_000]
+    : seedBase < 1_330_000_000 ? [1_320_000_000, 1_330_000_000]
+    : [1_330_000_000, 1_340_000_000], 'seedBase');
   const candidate = candidateVersion(candidateId);
   const opponents = opponentPool();
   const games = [];
@@ -181,7 +182,9 @@ export function runAblationCell({ candidateId, seatCount, seeds, seedBase, joint
   return summarizeCell({ candidateId, seatCount, games, seedPairs });
 }
 
-/** 汇总一个消融单元（对齐 runner.mjs 指标口径；方向分开披露）。 */
+/** 汇总一个消融单元（对齐 runner.mjs 指标口径；方向分开披露）。
+ * games 数组逐局披露（seed/direction/firstPlace/scoreDiff）——配对比较
+ * （compare.mjs 的种子级配对 bootstrap）与审计复算必需。 */
 function summarizeCell({ candidateId, seatCount, games, seedPairs }) {
   const finished = games.filter(g => g.status === 'finished');
   const anomalies = games.length - finished.length;
@@ -193,6 +196,12 @@ function summarizeCell({ candidateId, seatCount, games, seedPairs }) {
       acc[key] = (acc[key] ?? 0) + 1;
       return acc;
     }, {})),
+    games: games.map(g => ({
+      seed: g.seed, direction: g.direction, candidateSeats: g.candidateSeats,
+      status: g.status, won: g.won === true ? true : g.won === false ? false : null,
+      meanRank: g.meanRank, meanScore: g.meanScore, scoreDiff: g.scoreDiff,
+      winnerSeat: g.winnerSeat, moves: g.moves, versionsIds: g.versionsIds,
+    })),
   };
   if (finished.length) {
     const gamesForCI = finished.map(g => ({ seed: g.seed, firstPlace: g.won, direction: g.direction, candidateSeats: g.candidateSeats }));
@@ -246,7 +255,8 @@ function summarizeCell({ candidateId, seatCount, games, seedPairs }) {
 function parseArgs() {
   const args = {
     candidates: ['js2', 'js3'], players: [2, 5], seeds: 40, block: 'test',
-    budgetMs: undefined, workUnits: undefined, horizon: undefined,
+    budgetMs: undefined, workUnits: undefined, horizon: undefined, worlds: undefined,
+    gateMode: undefined, evaluator: undefined, overrideMargin: undefined,
     outDir: resolve(REPO_ROOT, 'training/reports/joint-search-v1'),
   };
   const argv = process.argv.slice(2);
@@ -258,6 +268,10 @@ function parseArgs() {
     else if (argv[i] === '--budget') args.budgetMs = Number(argv[++i]);
     else if (argv[i] === '--work') args.workUnits = Number(argv[++i]);
     else if (argv[i] === '--horizon') args.horizon = Number(argv[++i]);
+    else if (argv[i] === '--worlds') args.worlds = Number(argv[++i]);
+    else if (argv[i] === '--gate') args.gateMode = argv[++i];
+    else if (argv[i] === '--evaluator') args.evaluator = argv[++i];
+    else if (argv[i] === '--margin') args.overrideMargin = Number(argv[++i]);
     else if (argv[i] === '--out') args.outDir = resolve(argv[++i]);
   }
   return args;
@@ -266,14 +280,18 @@ function parseArgs() {
 async function main() {
   const args = parseArgs();
   const seedBaseByBlock = {
-    tune: 1_310_000_000, test: 1_320_000_000, audit: 1_300_000_000,
+    tune: 1_310_000_000, test: 1_320_000_000, audit: 1_300_000_000, verify: 1_330_000_000,
   };
   const seedBase = seedBaseByBlock[args.block]
-    ?? (() => { throw new Error(`--block 必须是 tune|test|audit，实际：${args.block}`); })();
+    ?? (() => { throw new Error(`--block 必须是 tune|test|audit|verify，实际：${args.block}`); })();
   const jointOptions = {
     ...(args.budgetMs !== undefined ? { budgetMs: args.budgetMs } : {}),
     ...(args.workUnits !== undefined ? { workUnits: args.workUnits } : {}),
     ...(args.horizon !== undefined ? { horizon: args.horizon } : {}),
+    ...(args.worlds !== undefined ? { worlds: args.worlds } : {}),
+    ...(args.gateMode !== undefined ? { gateMode: args.gateMode } : {}),
+    ...(args.evaluator !== undefined ? { evaluator: args.evaluator } : {}),
+    ...(args.overrideMargin !== undefined ? { overrideMargin: args.overrideMargin } : {}),
   };
   const cells = [];
   for (const candidateId of args.candidates) {
@@ -290,7 +308,7 @@ async function main() {
     schema: 'century-joint-search-ablation-v1',
     date: new Date().toISOString(),
     block: args.block, seedBase, seeds: args.seeds,
-    jointOptions, note: 'JS 编号为本阶段消融编号（JS0–JS4），非 PR #22 的 B0/B1/B2。',
+    jointOptions, note: 'JS 编号为本阶段消融编号（JS0–JS5），非 PR #22 的 B0/B1/B2。',
     cells,
   };
   mkdirSync(args.outDir, { recursive: true });

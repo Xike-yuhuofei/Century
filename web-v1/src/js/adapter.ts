@@ -10,7 +10,9 @@
  *   委托正式冠军决策入口——零新搜索代码，行为口径与冠军逐位同源）；
  * - joint-js2：JS2 = 本模块联合 rollout + 规则对手；
  * - joint-js3：JS3 = JS2 + Opponent Model V1 对手采样；
- * - joint-js4：JS4 = JS3 + Selective Joint Tree。
+ * - joint-js4：JS4 = JS3 + Selective Joint Tree；
+ * - joint-js5：JS5 = 冠军引导选择性联合搜索（champion-guided.ts：竞争门控 +
+ *   保守覆盖，PR #26 修复后的第二阶段新架构）。
  */
 
 import type { Game, Action, Color } from '../engine.js';
@@ -23,6 +25,7 @@ import type { Profile } from '../ai/profiles.js';
 import { createSimulation } from '../sim/session.js';
 import { enumerateLegalActions } from '../sim/legal.js';
 import { createJointPlanner } from './planner.js';
+import { createChampionGuidedPlanner, type ChampionGuidedSearchOptions } from './champion-guided.js';
 import { JOINT_VERSIONS, type JointDecision, JointSearchOptions, JointVersionId } from './types.js';
 
 export type JointAdapterOptions = JointSearchOptions & {
@@ -42,11 +45,16 @@ export type JointAdapterDecision = {
   version: string;
 };
 
-/** planner 实例按版本缓存（无状态；decide 每次独立）。 */
-const planners = new Map<string, ReturnType<typeof createJointPlanner>>();
+/** planner 实例按版本缓存（无状态；decide 每次独立）。
+ * js5（champion-guided）与 joint 版本共用同一显式注入纪律。 */
+const planners = new Map<string, ReturnType<typeof createJointPlanner> | ReturnType<typeof createChampionGuidedPlanner>>();
 function plannerFor(versionId: string) {
   let p = planners.get(versionId);
-  if (!p) { p = createJointPlanner(versionId); planners.set(versionId, p); }
+  if (!p) {
+    const version = JOINT_VERSIONS[versionId as JointVersionId];
+    p = version?.kind === 'champion-guided' ? createChampionGuidedPlanner() : createJointPlanner(versionId);
+    planners.set(versionId, p);
+  }
   return p;
 }
 
@@ -80,10 +88,19 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   }
 
   const observation = buildObservation(game, seat);
-  const decision = plannerFor(versionId).decide(observation, {
-    ...options,
-    profileName: options.profile?.name,
-  });
+  const planner = plannerFor(versionId);
+  // profile → profileName 映射对全部 joint 版本一致（champion-guided 的冠军基座
+  // 与轨迹内策略都必须消费同一人格注入，否则评测席位人格失配——回归审计
+  // gate=never vs js0 逐决策一致性强制此项）。
+  const decision = version.kind === 'champion-guided'
+    ? (planner as ReturnType<typeof createChampionGuidedPlanner>).decide(observation, {
+        ...options,
+        profileName: options.profile?.name,
+      } as ChampionGuidedSearchOptions)
+    : (planner as ReturnType<typeof createJointPlanner>).decide(observation, {
+        ...options,
+        profileName: options.profile?.name,
+      });
   const action = decision.action;
   // 第一步合法性复核（与 chooseAIAction 同纪律）：搜索模型非法时回退全量合法集。
   try {

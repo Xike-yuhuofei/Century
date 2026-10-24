@@ -1,6 +1,6 @@
 {
-  "schema": "century-joint-issue20-traces-v1",
-  "date": "2026-10-23T18:03:26.778Z",
+  "schema": "century-joint-issue20-traces-v2",
+  "date": "2026-10-24T01:56:12.894Z",
   "traces": [
     {
       "scenario": "S1 威胁盘面",
@@ -8,226 +8,7 @@
         "turnNumber": 1,
         "current": 0,
         "golemMarket": [
-          "G08",
-          "G05",
-          "G23"
-        ],
-        "phase": "turn"
-      },
-      "evaluations": [
-        {
-          "action": {
-            "type": "acquire",
-            "index": 4,
-            "payment": [
-              1,
-              0,
-              0,
-              1
-            ]
-          },
-          "mean": 0.866,
-          "trials": 1,
-          "prior": 1.14
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 4,
-            "payment": [
-              0,
-              1,
-              1,
-              0
-            ]
-          },
-          "mean": 0.8477,
-          "trials": 1,
-          "prior": 1.14
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 4,
-            "payment": [
-              0,
-              0,
-              1,
-              1
-            ]
-          },
-          "mean": 0.8232,
-          "trials": 15,
-          "prior": 1.14
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 4,
-            "payment": [
-              0,
-              1,
-              0,
-              1
-            ]
-          },
-          "mean": 0.6992,
-          "trials": 15,
-          "prior": 1.14
-        },
-        {
-          "action": {
-            "type": "claim",
-            "index": 0
-          },
-          "mean": 0.6952,
-          "trials": 16,
-          "prior": 4.59
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 1,
-            "payment": [
-              1
-            ]
-          },
-          "mean": 0.69,
-          "trials": 15,
-          "prior": 1.18
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 2,
-            "payment": [
-              1,
-              0
-            ]
-          },
-          "mean": 0.6605,
-          "trials": 16,
-          "prior": 1.92
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 2,
-            "payment": [
-              1,
-              1
-            ]
-          },
-          "mean": 0.5809,
-          "trials": 16,
-          "prior": 1.82
-        }
-      ],
-      "chosen": {
-        "type": "acquire",
-        "index": 4,
-        "payment": [
-          0,
-          0,
-          1,
-          1
-        ]
-      },
-      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.823（15 条联合轨迹，se=0.037）",
-      "opponentSamples": [
-        {
-          "seat": 1,
-          "family": "play",
-          "action": "play:S02",
-          "p": 0.9999999998398643
-        },
-        {
-          "seat": 1,
-          "family": "rest",
-          "action": "rest",
-          "p": 0.6831226137152072
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.7235202122442641
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.7709791660708005
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.8124577246763284
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.8480418249659676
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.864098233798622
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.9232017984702854
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.520184703730079
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.3663541236746092
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.9549030417795185
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.6459986636902165
-        }
-      ],
-      "marketEvents": [],
-      "stats": {
-        "rollouts": 160,
-        "transitions": 8960,
-        "elapsedMs": 342.65833299999997,
-        "budgetExhausted": false,
-        "omTimeMs": 0,
-        "cloneMs": 339.4339159999997,
-        "legalGenMs": 0.14220900000000114,
-        "rootActions": 29,
-        "candidateCount": 10
-      }
-    },
-    {
-      "scenario": "S1 无威胁盘面",
-      "root": {
-        "turnNumber": 1,
-        "current": 0,
-        "golemMarket": [
-          "G08",
+          "G01",
           "G05",
           "G23"
         ],
@@ -243,35 +24,9 @@
               0
             ]
           },
-          "mean": 0.8807,
+          "mean": 0.8499,
           "trials": 16,
-          "prior": 2.01
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 2,
-            "payment": [
-              1,
-              1
-            ]
-          },
-          "mean": 0.7929,
-          "trials": 16,
-          "prior": 1.82
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 2,
-            "payment": [
-              0,
-              1
-            ]
-          },
-          "mean": 0.6347,
-          "trials": 16,
-          "prior": 1.92
+          "prior": 2.23
         },
         {
           "action": {
@@ -282,48 +37,48 @@
               0
             ]
           },
-          "mean": 0.6308,
+          "mean": 0.8499,
+          "trials": 16,
+          "prior": 2.14
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
+              3,
+              0
+            ]
+          },
+          "mean": 0.8499,
           "trials": 16,
           "prior": 1.92
         },
         {
           "action": {
             "type": "acquire",
-            "index": 4,
+            "index": 2,
             "payment": [
               0,
-              1,
-              0,
-              1
+              3
             ]
           },
-          "mean": 0.6087,
+          "mean": 0.8458,
           "trials": 16,
-          "prior": 1.14
+          "prior": 1.92
         },
         {
           "action": {
             "type": "acquire",
-            "index": 1,
+            "index": 2,
             "payment": [
-              0
-            ]
-          },
-          "mean": 0.5917,
-          "trials": 16,
-          "prior": 1.26
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 1,
-            "payment": [
+              0,
               1
             ]
           },
-          "mean": 0.5477,
+          "mean": 0.679,
           "trials": 16,
-          "prior": 1.18
+          "prior": 2.14
         },
         {
           "action": {
@@ -331,9 +86,35 @@
             "index": 0,
             "payment": []
           },
-          "mean": 0.524,
+          "mean": 0.6521,
           "trials": 16,
-          "prior": 1.37
+          "prior": 1.86
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
+              3,
+              1
+            ]
+          },
+          "mean": 0.6222,
+          "trials": 16,
+          "prior": 1.82
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
+              1,
+              3
+            ]
+          },
+          "mean": 0.5666,
+          "trials": 16,
+          "prior": 1.82
         }
       ],
       "chosen": {
@@ -344,7 +125,214 @@
           0
         ]
       },
-      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.881（16 条联合轨迹，se=0.028）",
+      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.850（16 条联合轨迹 × 4 世界，se=0.028）",
+      "opponentSamples": [
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:S02",
+          "p": 0.9999999998397171
+        },
+        {
+          "seat": 1,
+          "family": "claim",
+          "action": "claim@0",
+          "p": 1
+        },
+        {
+          "seat": 1,
+          "family": "rest",
+          "action": "rest",
+          "p": 0.7022399896441394
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@0",
+          "p": 0.7235202170607782
+        },
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:S01",
+          "p": 0.22902083292952563
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@0",
+          "p": 0.8525559487308852
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@0",
+          "p": 0.39124414921638007
+        },
+        {
+          "seat": 1,
+          "family": "rest",
+          "action": "rest",
+          "p": 0.3929397898234557
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@0",
+          "p": 0.6604088834496238
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@0",
+          "p": 0.7708377547813277
+        },
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:S01",
+          "p": 0.26700179682247244
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@1",
+          "p": 0.15611039816691483
+        }
+      ],
+      "marketEvents": [],
+      "stats": {
+        "rollouts": 160,
+        "transitions": 8960,
+        "elapsedMs": 313.928542,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 310.19641799999954,
+        "legalGenMs": 0.13829199999999986,
+        "rootActions": 44,
+        "candidateCount": 10,
+        "worldsUsed": 4
+      }
+    },
+    {
+      "scenario": "S1 无威胁盘面",
+      "root": {
+        "turnNumber": 1,
+        "current": 0,
+        "golemMarket": [
+          "G01",
+          "G05",
+          "G23"
+        ],
+        "phase": "turn"
+      },
+      "evaluations": [
+        {
+          "action": {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
+              0,
+              0
+            ]
+          },
+          "mean": 0.959,
+          "trials": 16,
+          "prior": 2.23
+        },
+        {
+          "action": {
+            "type": "claim",
+            "index": 0
+          },
+          "mean": 0.8585,
+          "trials": 16,
+          "prior": 7.86
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
+              3,
+              1
+            ]
+          },
+          "mean": 0.8173,
+          "trials": 16,
+          "prior": 1.82
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          },
+          "mean": 0.7878,
+          "trials": 16,
+          "prior": 1.86
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
+          },
+          "mean": 0.7738,
+          "trials": 16,
+          "prior": 1.48
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
+              1,
+              3
+            ]
+          },
+          "mean": 0.7608,
+          "trials": 16,
+          "prior": 1.82
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
+              0,
+              1
+            ]
+          },
+          "mean": 0.7331,
+          "trials": 16,
+          "prior": 2.14
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
+              1,
+              0
+            ]
+          },
+          "mean": 0.73,
+          "trials": 16,
+          "prior": 2.14
+        }
+      ],
+      "chosen": {
+        "type": "acquire",
+        "index": 2,
+        "payment": [
+          0,
+          0
+        ]
+      },
+      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.959（16 条联合轨迹 × 4 世界，se=0.007）",
       "opponentSamples": [
         {
           "seat": 1,
@@ -362,84 +350,85 @@
           "seat": 1,
           "family": "rest",
           "action": "rest",
-          "p": 0.999463051276477
+          "p": 0.9990420457479225
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:S02",
-          "p": 0.9999953793052205
+          "p": 0.9999953793057297
+        },
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:S01",
+          "p": 0.045033535383819566
+        },
+        {
+          "seat": 1,
+          "family": "rest",
+          "action": "rest",
+          "p": 0.9981001116021749
+        },
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:S02",
+          "p": 0.9999999998392977
+        },
+        {
+          "seat": 1,
+          "family": "claim",
+          "action": "claim@0",
+          "p": 1
+        },
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:S01",
+          "p": 0.999963424992574
+        },
+        {
+          "seat": 1,
+          "family": "rest",
+          "action": "rest",
+          "p": 0.9966594773092546
         },
         {
           "seat": 1,
           "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.9536035377512219
+          "action": "acquire@1",
+          "p": 0.9269290146625607
         },
         {
           "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.6616521143278067
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.5324346339157012
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.8159177678807774
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.7234802493561119
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.7613342591668137
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.32829441779967494
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.890465446847371
+          "family": "play",
+          "action": "play:S02",
+          "p": 0.9999999998398643
         }
       ],
       "marketEvents": [],
       "stats": {
         "rollouts": 160,
         "transitions": 8960,
-        "elapsedMs": 281.746916,
+        "elapsedMs": 247.38045800000003,
         "budgetExhausted": false,
         "omTimeMs": 0,
-        "cloneMs": 281.18046100000043,
-        "legalGenMs": 0.025959000000000287,
-        "rootActions": 29,
-        "candidateCount": 10
+        "cloneMs": 246.4072479999998,
+        "legalGenMs": 0.029875000000004093,
+        "rootActions": 44,
+        "candidateCount": 10,
+        "worldsUsed": 4
       }
     },
     {
       "scenario": "S1 价值差",
-      "gapT": -0.12807019379020212,
-      "gapN": -0.5641914185290899,
-      "claimT": 0.695174477152243,
-      "bestAcqT": 0.8232446709424451,
-      "claimN": 0.3164738813164181,
-      "bestAcqN": 0.880665299845508
+      "gapT": -0.3401679522513522,
+      "gapN": -0.10048324947707687,
+      "claimT": 0.50969803904117,
+      "bestAcqT": 0.8498659912925222,
+      "claimN": 0.8584926008308097,
+      "bestAcqN": 0.9589758503078866
     },
     {
       "scenario": "S4 无竞争认领可达（joint-js2）",
@@ -456,34 +445,56 @@
       "evaluations": [
         {
           "action": {
-            "type": "play",
-            "cardId": "S01"
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
           },
-          "mean": 0.9093,
+          "mean": 0.8075,
           "trials": 16,
-          "prior": 1.28
+          "prior": 1.35
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          },
+          "mean": 0.7997,
+          "trials": 16,
+          "prior": 1.95
         },
         {
           "action": {
             "type": "claim",
             "index": 0
           },
-          "mean": 0.9017,
+          "mean": 0.7951,
           "trials": 16,
-          "prior": 7.79
+          "prior": 7.86
         },
         {
           "action": {
             "type": "play",
-            "cardId": "S02",
-            "steps": [
+            "cardId": "S01"
+          },
+          "mean": 0.7951,
+          "trials": 16,
+          "prior": 1.28
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
               0,
               1
             ]
           },
-          "mean": 0.8216,
+          "mean": 0.7683,
           "trials": 16,
-          "prior": 1.22
+          "prior": 1.28
         },
         {
           "action": {
@@ -494,19 +505,9 @@
               2
             ]
           },
-          "mean": 0.8108,
+          "mean": 0.7132,
           "trials": 16,
           "prior": 1.24
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 0,
-            "payment": []
-          },
-          "mean": 0.7776,
-          "trials": 16,
-          "prior": 1.95
         },
         {
           "action": {
@@ -514,12 +515,12 @@
             "index": 2,
             "payment": [
               0,
-              1
+              0
             ]
           },
-          "mean": 0.7265,
+          "mean": 0.6718,
           "trials": 16,
-          "prior": 1.28
+          "prior": 1.35
         },
         {
           "action": {
@@ -530,28 +531,19 @@
               0
             ]
           },
-          "mean": 0.7032,
+          "mean": 0.6415,
           "trials": 16,
           "prior": 1.28
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 1,
-            "payment": [
-              0
-            ]
-          },
-          "mean": 0.6741,
-          "trials": 16,
-          "prior": 1.35
         }
       ],
       "chosen": {
-        "type": "play",
-        "cardId": "S01"
+        "type": "acquire",
+        "index": 1,
+        "payment": [
+          0
+        ]
       },
-      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.909（16 条联合轨迹，se=0.021）",
+      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.807（16 条联合轨迹 × 4 世界，se=0.034）",
       "opponentSamples": [
         {
           "seat": 1,
@@ -585,58 +577,59 @@
         },
         {
           "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.5377554061664771
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.899758761264363
-        },
-        {
-          "seat": 1,
           "family": "rest",
           "action": "rest",
-          "p": 0.2417936743723454
+          "p": 0.3744127065703051
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:S02",
-          "p": 0.9999953794666986
+          "p": 0.9999420686477829
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:S01",
-          "p": 0.9999732295501665
+          "p": 0.9999738150975717
         },
         {
           "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.09562368815596872
+          "family": "rest",
+          "action": "rest",
+          "p": 0.9612067612109896
         },
         {
           "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.6653973658153715
+          "family": "play",
+          "action": "play:S01",
+          "p": 0.9999928515588256
+        },
+        {
+          "seat": 1,
+          "family": "claim",
+          "action": "claim@2",
+          "p": 0.9999999999999947
+        },
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:S02",
+          "p": 0.9999999745188941
         }
       ],
       "marketEvents": [],
       "stats": {
         "rollouts": 160,
         "transitions": 8960,
-        "elapsedMs": 268.294,
+        "elapsedMs": 243.99004200000002,
         "budgetExhausted": false,
         "omTimeMs": 0,
-        "cloneMs": 267.7577940000002,
-        "legalGenMs": 0.048499999999989996,
+        "cloneMs": 243.44942999999932,
+        "legalGenMs": 0.0688750000000482,
         "rootActions": 44,
-        "candidateCount": 10
+        "candidateCount": 10,
+        "worldsUsed": 4
       }
     },
     {
@@ -657,31 +650,20 @@
             "type": "claim",
             "index": 0
           },
-          "mean": 0.9997,
+          "mean": 0.9989,
           "trials": 16,
-          "prior": 7.79
+          "prior": 7.86
         },
         {
           "action": {
             "type": "acquire",
-            "index": 1,
+            "index": 2,
             "payment": [
-              1
-            ]
-          },
-          "mean": 0.9997,
-          "trials": 16,
-          "prior": 1.32
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 1,
-            "payment": [
+              0,
               0
             ]
           },
-          "mean": 0.9997,
+          "mean": 0.9987,
           "trials": 16,
           "prior": 1.35
         },
@@ -694,16 +676,51 @@
               1
             ]
           },
-          "mean": 0.9996,
+          "mean": 0.9983,
           "trials": 16,
           "prior": 1.28
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
+              1,
+              0
+            ]
+          },
+          "mean": 0.9983,
+          "trials": 16,
+          "prior": 1.28
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          },
+          "mean": 0.9983,
+          "trials": 16,
+          "prior": 1.95
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
+          },
+          "mean": 0.9981,
+          "trials": 16,
+          "prior": 1.35
         },
         {
           "action": {
             "type": "play",
             "cardId": "S01"
           },
-          "mean": 0.9996,
+          "mean": 0.9981,
           "trials": 16,
           "prior": 1.28
         },
@@ -716,42 +733,16 @@
               2
             ]
           },
-          "mean": 0.9996,
+          "mean": 0.9979,
           "trials": 16,
           "prior": 1.24
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 2,
-            "payment": [
-              0,
-              0
-            ]
-          },
-          "mean": 0.9995,
-          "trials": 16,
-          "prior": 1.35
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 2,
-            "payment": [
-              1,
-              0
-            ]
-          },
-          "mean": 0.9995,
-          "trials": 16,
-          "prior": 1.28
         }
       ],
       "chosen": {
         "type": "claim",
         "index": 0
       },
-      "reason": "joint-js3 joint-rollout/om-v1/L2：预期第一名率 1.000（16 条联合轨迹，se=0.000）（G01，9 分）",
+      "reason": "joint-js3 joint-rollout/om-v1/L2：预期第一名率 0.999（16 条联合轨迹 × 4 世界，se=0.000）（G01，9 分）",
       "opponentSamples": [
         {
           "seat": 1,
@@ -761,82 +752,83 @@
         },
         {
           "seat": 1,
-          "family": "play",
-          "action": "play:S01",
-          "p": 0.14362131795630426
-        },
-        {
-          "seat": 1,
           "family": "acquire",
-          "action": "acquire@2",
-          "p": 0.1149696439142951
+          "action": "acquire@1",
+          "p": 0.2741009599744165
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:S02",
-          "p": 0.04348608453765783
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@1",
-          "p": 0.6173877786103874
-        },
-        {
-          "seat": 1,
-          "family": "rest",
-          "action": "rest",
-          "p": 0.07115754297832837
+          "p": 0.1796194354093255
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:S01",
-          "p": 0.05057773082859414
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@2",
-          "p": 0.07326842625053241
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@1",
-          "p": 0.2712553241159082
-        },
-        {
-          "seat": 1,
-          "family": "play",
-          "action": "play:M36",
-          "p": 0.23819055137056314
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@1",
-          "p": 0.2664445705020912
+          "p": 0.34334512772159237
         },
         {
           "seat": 1,
           "family": "acquire",
           "action": "acquire@0",
-          "p": 0.6502035089116199
+          "p": 0.13959112452805045
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@1",
+          "p": 0.3388599185450153
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@1",
+          "p": 0.6045339288139678
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@1",
+          "p": 0.34014930905271945
+        },
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:M41",
+          "p": 0.35526510245130266
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@0",
+          "p": 0.3050321207457631
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@2",
+          "p": 0.2268140849920703
+        },
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:M38",
+          "p": 0.3652778393265073
         }
       ],
       "marketEvents": [],
       "stats": {
         "rollouts": 160,
         "transitions": 8960,
-        "elapsedMs": 465.73891600000013,
+        "elapsedMs": 456.613875,
         "budgetExhausted": false,
-        "omTimeMs": 268.13428600000475,
-        "cloneMs": 464.9242939999988,
-        "legalGenMs": 0.029583000000002357,
+        "omTimeMs": 262.6282529999951,
+        "cloneMs": 456.0288820000002,
+        "legalGenMs": 0.030749999999898137,
         "rootActions": 44,
-        "candidateCount": 10
+        "candidateCount": 10,
+        "worldsUsed": 4
       }
     },
     {
@@ -854,34 +846,24 @@
       "evaluations": [
         {
           "action": {
-            "type": "claim",
-            "index": 1
-          },
-          "mean": 0.9553,
-          "trials": 4,
-          "prior": 6.79
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 0,
-            "payment": []
-          },
-          "mean": 0.4868,
-          "trials": 4,
-          "prior": 3.21
-        },
-        {
-          "action": {
             "type": "acquire",
             "index": 1,
             "payment": [
               1
             ]
           },
-          "mean": 0.3043,
+          "mean": 0.7751,
           "trials": 4,
           "prior": 2.75
+        },
+        {
+          "action": {
+            "type": "claim",
+            "index": 1
+          },
+          "mean": 0.764,
+          "trials": 4,
+          "prior": 8.8
         },
         {
           "action": {
@@ -891,9 +873,19 @@
               0
             ]
           },
-          "mean": 0.1663,
+          "mean": 0.7414,
           "trials": 4,
           "prior": 2.84
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          },
+          "mean": 0.6801,
+          "trials": 4,
+          "prior": 3.21
         },
         {
           "action": {
@@ -951,95 +943,99 @@
         }
       ],
       "chosen": {
-        "type": "claim",
-        "index": 1
+        "type": "acquire",
+        "index": 1,
+        "payment": [
+          1
+        ]
       },
-      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.955（4 条联合轨迹，se=0.027）（G05，12 分）",
+      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.775（4 条联合轨迹 × 4 世界，se=0.163）",
       "opponentSamples": [
         {
           "seat": 1,
           "family": "play",
           "action": "play:S02",
-          "p": 0.372851736041871
+          "p": 0.9999819074296814
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@0",
+          "p": 0.9387474881658552
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@1",
+          "p": 0.22197239690457674
         },
         {
           "seat": 1,
           "family": "play",
-          "action": "play:S01",
-          "p": 0.9999999996753053
+          "action": "play:M40",
+          "p": 0.99999999218379
+        },
+        {
+          "seat": 1,
+          "family": "acquire",
+          "action": "acquire@0",
+          "p": 0.377700744576538
+        },
+        {
+          "seat": 1,
+          "family": "rest",
+          "action": "rest",
+          "p": 0.8701786419802414
+        },
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:M40",
+          "p": 0.78583498165425
         },
         {
           "seat": 1,
           "family": "claim",
-          "action": "claim@2",
-          "p": 0.9999999691966178
-        },
-        {
-          "seat": 1,
-          "family": "rest",
-          "action": "rest",
-          "p": 0.999836158306148
+          "action": "claim@1",
+          "p": 0.9999999999997395
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:S02",
-          "p": 0.9996410657481591
-        },
-        {
-          "seat": 1,
-          "family": "rest",
-          "action": "rest",
-          "p": 0.40501656190669477
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.8726134042884673
+          "p": 0.9982649368030465
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:S01",
-          "p": 0.04445093254579229
-        },
-        {
-          "seat": 1,
-          "family": "play",
-          "action": "play:S02",
-          "p": 0.9999911490942396
+          "p": 0.9998285875321042
         },
         {
           "seat": 1,
           "family": "rest",
           "action": "rest",
-          "p": 0.9225780811451699
+          "p": 0.9731596874778682
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:S02",
-          "p": 0.9999781775900336
-        },
-        {
-          "seat": 1,
-          "family": "acquire",
-          "action": "acquire@0",
-          "p": 0.5145773299052651
+          "p": 0.9999999924416599
         }
       ],
       "marketEvents": [],
       "stats": {
         "rollouts": 16,
-        "transitions": 1258,
-        "elapsedMs": 57.985374999999976,
+        "transitions": 1244,
+        "elapsedMs": 54.534374999999955,
         "budgetExhausted": false,
         "omTimeMs": 0,
-        "cloneMs": 54.60458399999993,
-        "legalGenMs": 0.02525000000014188,
+        "cloneMs": 51.44970900000021,
+        "legalGenMs": 0.026625000000194632,
         "rootActions": 687,
-        "candidateCount": 4
+        "candidateCount": 4,
+        "worldsUsed": 4
       }
     },
     {
@@ -1058,38 +1054,31 @@
         {
           "action": {
             "type": "acquire",
-            "index": 3,
+            "index": 1,
             "payment": [
-              0,
-              0,
               0
             ]
           },
-          "mean": 1,
-          "trials": 1,
-          "prior": 2.4
+          "mean": 0.619,
+          "trials": 4,
+          "prior": 2.57
         },
         {
           "action": {
-            "type": "acquire",
-            "index": 3,
-            "payment": [
-              0,
-              0,
-              1
-            ]
+            "type": "claim",
+            "index": 2
           },
-          "mean": 1,
-          "trials": 1,
-          "prior": 2.31
+          "mean": 0.4392,
+          "trials": 4,
+          "prior": 6.32
         },
         {
           "action": {
             "type": "claim",
             "index": 0
           },
-          "mean": 0.6705,
-          "trials": 3,
+          "mean": 0.18,
+          "trials": 4,
           "prior": 10.04
         },
         {
@@ -1098,8 +1087,8 @@
             "index": 0,
             "payment": []
           },
-          "mean": 0.5971,
-          "trials": 3,
+          "mean": 0.18,
+          "trials": 4,
           "prior": 2.93
         },
         {
@@ -1110,30 +1099,23 @@
               1
             ]
           },
-          "mean": 0.5849,
-          "trials": 1,
+          "mean": 0.577,
+          "trials": 0,
           "prior": 2.48
         },
         {
           "action": {
-            "type": "claim",
-            "index": 2
-          },
-          "mean": 0.455,
-          "trials": 3,
-          "prior": 6.32
-        },
-        {
-          "action": {
             "type": "acquire",
-            "index": 1,
+            "index": 3,
             "payment": [
+              0,
+              0,
               0
             ]
           },
-          "mean": 0.2656,
-          "trials": 3,
-          "prior": 2.57
+          "mean": 0.5745,
+          "trials": 0,
+          "prior": 2.4
         },
         {
           "action": {
@@ -1143,16 +1125,33 @@
               2
             ]
           },
-          "mean": 0,
-          "trials": 1,
+          "mean": 0.5738,
+          "trials": 0,
           "prior": 2.38
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 3,
+            "payment": [
+              0,
+              0,
+              1
+            ]
+          },
+          "mean": 0.5717,
+          "trials": 0,
+          "prior": 2.31
         }
       ],
       "chosen": {
-        "type": "claim",
-        "index": 0
+        "type": "acquire",
+        "index": 1,
+        "payment": [
+          0
+        ]
       },
-      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.670（3 条联合轨迹，se=0.166）（G05，12 分）",
+      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.619（4 条联合轨迹 × 4 世界，se=0.171）",
       "opponentSamples": [
         {
           "seat": 1,
@@ -1170,74 +1169,75 @@
           "seat": 1,
           "family": "rest",
           "action": "rest",
-          "p": 0.9998372200414585
+          "p": 0.9998386547289395
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:S02",
-          "p": 0.6570104618654544
+          "p": 0.9999819074306802
         },
         {
           "seat": 1,
           "family": "acquire",
           "action": "acquire@0",
-          "p": 0.5057652212339853
+          "p": 0.29237443819618253
         },
         {
           "seat": 1,
           "family": "acquire",
           "action": "acquire@0",
-          "p": 0.5453955551010733
+          "p": 0.7072202405856125
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:M40",
-          "p": 0.9999999984374508
+          "p": 0.999999998343758
         },
         {
           "seat": 1,
           "family": "acquire",
-          "action": "acquire@1",
-          "p": 0.01829765200909715
+          "action": "acquire@0",
+          "p": 0.2166459098766864
+        },
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:M36",
+          "p": 0.036779549762747395
         },
         {
           "seat": 1,
           "family": "rest",
           "action": "rest",
-          "p": 0.45501988760031176
+          "p": 0.9721214153938403
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:S02",
-          "p": 0.3505228402433377
+          "p": 0.9999999987194661
         },
         {
           "seat": 1,
-          "family": "play",
-          "action": "play:M40",
-          "p": 0.9999999975298566
-        },
-        {
-          "seat": 1,
-          "family": "rest",
-          "action": "rest",
-          "p": 0.7106732358984268
+          "family": "claim",
+          "action": "claim@2",
+          "p": 0.9999999999999918
         }
       ],
       "marketEvents": [],
       "stats": {
         "rollouts": 16,
-        "transitions": 1233,
-        "elapsedMs": 40.45895799999994,
+        "transitions": 1214,
+        "elapsedMs": 36.483999999999924,
         "budgetExhausted": false,
         "omTimeMs": 0,
-        "cloneMs": 37.2501229999998,
-        "legalGenMs": 0.04349999999999454,
+        "cloneMs": 33.39754300000027,
+        "legalGenMs": 0.04545800000005329,
         "rootActions": 688,
-        "candidateCount": 4
+        "candidateCount": 4,
+        "worldsUsed": 4
       }
     },
     {
@@ -1258,29 +1258,11 @@
         {
           "action": {
             "type": "claim",
-            "index": 1
+            "index": 0
           },
           "mean": 1,
           "trials": 16,
-          "prior": 6.01
-        },
-        {
-          "action": {
-            "type": "claim",
-            "index": 3
-          },
-          "mean": 1,
-          "trials": 16,
-          "prior": 5.85
-        },
-        {
-          "action": {
-            "type": "claim",
-            "index": 2
-          },
-          "mean": 1,
-          "trials": 16,
-          "prior": 5.15
+          "prior": 9.73
         },
         {
           "action": {
@@ -1289,7 +1271,7 @@
           },
           "mean": 1,
           "trials": 16,
-          "prior": 1.61
+          "prior": 1.62
         },
         {
           "action": {
@@ -1302,78 +1284,92 @@
           },
           "mean": 1,
           "trials": 16,
-          "prior": 1.59
+          "prior": 1.6
         },
         {
           "action": {
             "type": "play",
             "cardId": "S02",
             "steps": [
-              1,
               2
             ]
           },
           "mean": 1,
           "trials": 16,
-          "prior": 1.57
+          "prior": 1.48
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          },
+          "mean": 1,
+          "trials": 16,
+          "prior": 1.43
         },
         {
           "action": {
             "type": "play",
             "cardId": "S02",
-            "steps": [
-              0,
+            "steps": []
+          },
+          "mean": 1,
+          "trials": 16,
+          "prior": 1.36
+        },
+        {
+          "action": {
+            "type": "rest"
+          },
+          "mean": 1,
+          "trials": 16,
+          "prior": 1.36
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
               2
             ]
           },
           "mean": 1,
           "trials": 16,
-          "prior": 1.56
-        },
-        {
-          "action": {
-            "type": "play",
-            "cardId": "S02",
-            "steps": [
-              1,
-              1
-            ]
-          },
-          "mean": 1,
-          "trials": 16,
-          "prior": 1.56
+          "prior": 1.01
         }
       ],
       "chosen": {
         "type": "claim",
-        "index": 1
+        "index": 0
       },
-      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 1.000（16 条联合轨迹，se=0.000）（G20，9 分）",
+      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 1.000（16 条联合轨迹 × 4 世界，se=0.000）（G14，12 分）",
       "opponentSamples": [
         {
           "seat": 3,
           "family": "play",
           "action": "play:S02",
-          "p": 0.38817263099825694
+          "p": 0.9999999993398554
         },
         {
           "seat": 4,
           "family": "play",
           "action": "play:S02",
-          "p": 0.38817263099825694
+          "p": 0.9999999993398554
         }
       ],
       "marketEvents": [],
       "stats": {
         "rollouts": 160,
-        "transitions": 1200,
-        "elapsedMs": 32.339291,
+        "transitions": 1360,
+        "elapsedMs": 33.249458000000004,
         "budgetExhausted": false,
         "omTimeMs": 0,
-        "cloneMs": 30.469341999999187,
-        "legalGenMs": 0.025249999999914507,
-        "rootActions": 256,
-        "candidateCount": 10
+        "cloneMs": 32.974666000000525,
+        "legalGenMs": 0.0058330000001660665,
+        "rootActions": 12,
+        "candidateCount": 10,
+        "worldsUsed": 4
       }
     },
     {
@@ -1413,60 +1409,23 @@
             "type": "play",
             "cardId": "S02",
             "steps": [
-              0
-            ]
-          },
-          "mean": 0.588,
-          "trials": 1,
-          "prior": 1.24
-        },
-        {
-          "action": {
-            "type": "play",
-            "cardId": "S02",
-            "steps": [
               0,
               1
             ]
           },
-          "mean": 0.446,
-          "trials": 15,
+          "mean": 0.4928,
+          "trials": 16,
           "prior": 1.35
         },
         {
           "action": {
-            "type": "claim",
-            "index": 0
-          },
-          "mean": 0.3893,
-          "trials": 16,
-          "prior": 1.67
-        },
-        {
-          "action": {
             "type": "acquire",
-            "index": 2,
-            "payment": [
-              1,
-              0
-            ]
+            "index": 0,
+            "payment": []
           },
-          "mean": 0.3586,
-          "trials": 1,
-          "prior": 1.3
-        },
-        {
-          "action": {
-            "type": "play",
-            "cardId": "S02",
-            "steps": [
-              0,
-              0
-            ]
-          },
-          "mean": 0.2788,
-          "trials": 15,
-          "prior": 1.33
+          "mean": 0.4191,
+          "trials": 16,
+          "prior": 2.95
         },
         {
           "action": {
@@ -1477,9 +1436,18 @@
               2
             ]
           },
-          "mean": 0.2778,
-          "trials": 15,
+          "mean": 0.3671,
+          "trials": 16,
           "prior": 1.37
+        },
+        {
+          "action": {
+            "type": "claim",
+            "index": 0
+          },
+          "mean": 0.3207,
+          "trials": 16,
+          "prior": 7.89
         },
         {
           "action": {
@@ -1489,9 +1457,31 @@
               1
             ]
           },
-          "mean": 0.2772,
+          "mean": 0.3163,
           "trials": 16,
           "prior": 2.25
+        },
+        {
+          "action": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          },
+          "mean": 0.3083,
+          "trials": 16,
+          "prior": 1.33
+        },
+        {
+          "action": {
+            "type": "play",
+            "cardId": "S01"
+          },
+          "mean": 0.2396,
+          "trials": 16,
+          "prior": 1.41
         },
         {
           "action": {
@@ -1501,7 +1491,7 @@
               0
             ]
           },
-          "mean": 0.2514,
+          "mean": 0.209,
           "trials": 16,
           "prior": 2.34
         }
@@ -1514,92 +1504,93 @@
           1
         ]
       },
-      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.446（15 条联合轨迹，se=0.032）",
+      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.493（16 条联合轨迹 × 4 世界，se=0.019）",
       "opponentSamples": [
         {
           "seat": 0,
-          "family": "claim",
-          "action": "claim@0",
-          "p": 0.9999999999989633
+          "family": "play",
+          "action": "play:S02",
+          "p": 0.9999999998363018
         },
         {
           "seat": 1,
           "family": "play",
           "action": "play:S02",
-          "p": 0.999999999839327
+          "p": 0.9999999998363018
         },
         {
           "seat": 2,
           "family": "play",
           "action": "play:S02",
-          "p": 0.999999999839327
+          "p": 0.9999999998363018
         },
         {
           "seat": 3,
           "family": "play",
           "action": "play:S02",
-          "p": 0.999999999839327
+          "p": 0.9999999998363018
         },
         {
           "seat": 0,
-          "family": "play",
-          "action": "play:S01",
-          "p": 0.9999999996599744
+          "family": "claim",
+          "action": "claim@0",
+          "p": 0.9999999999999998
         },
         {
           "seat": 1,
-          "family": "claim",
-          "action": "claim@0",
-          "p": 1
+          "family": "acquire",
+          "action": "acquire@0",
+          "p": 0.91486986728723
         },
         {
           "seat": 2,
           "family": "acquire",
           "action": "acquire@0",
-          "p": 0.8223177001976515
-        },
-        {
-          "seat": 3,
-          "family": "play",
-          "action": "play:S01",
-          "p": 0.06458475191366364
-        },
-        {
-          "seat": 0,
-          "family": "play",
-          "action": "play:S02",
-          "p": 0.9999415137970845
-        },
-        {
-          "seat": 1,
-          "family": "play",
-          "action": "play:S01",
-          "p": 0.9999999999073388
-        },
-        {
-          "seat": 2,
-          "family": "play",
-          "action": "play:M36",
-          "p": 0.13269923780075737
+          "p": 0.8621202144427503
         },
         {
           "seat": 3,
           "family": "rest",
           "action": "rest",
-          "p": 0.999730401989805
+          "p": 0.3442702400369393
+        },
+        {
+          "seat": 0,
+          "family": "play",
+          "action": "play:S01",
+          "p": 0.9999999999099589
+        },
+        {
+          "seat": 1,
+          "family": "play",
+          "action": "play:M43",
+          "p": 0.9999999903509479
+        },
+        {
+          "seat": 2,
+          "family": "rest",
+          "action": "rest",
+          "p": 0.2487075489556906
+        },
+        {
+          "seat": 3,
+          "family": "play",
+          "action": "play:S02",
+          "p": 0.999999993287314
         }
       ],
       "marketEvents": [],
       "stats": {
         "rollouts": 160,
         "transitions": 8960,
-        "elapsedMs": 297.9910829999999,
+        "elapsedMs": 285.4489159999998,
         "budgetExhausted": false,
         "omTimeMs": 0,
-        "cloneMs": 297.402878000001,
-        "legalGenMs": 0.010333999999829757,
+        "cloneMs": 284.7117860000003,
+        "legalGenMs": 0.00874999999996362,
         "rootActions": 73,
-        "candidateCount": 10
+        "candidateCount": 10,
+        "worldsUsed": 4
       }
     },
     {
@@ -1619,6 +1610,16 @@
       "evaluations": [
         {
           "action": {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          },
+          "mean": 0.8307,
+          "trials": 16,
+          "prior": 2.95
+        },
+        {
+          "action": {
             "type": "play",
             "cardId": "S02",
             "steps": [
@@ -1626,43 +1627,9 @@
               2
             ]
           },
-          "mean": 0.8202,
+          "mean": 0.7877,
           "trials": 16,
           "prior": 1.37
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 0,
-            "payment": []
-          },
-          "mean": 0.785,
-          "trials": 16,
-          "prior": 2.95
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 1,
-            "payment": [
-              0
-            ]
-          },
-          "mean": 0.617,
-          "trials": 16,
-          "prior": 2.34
-        },
-        {
-          "action": {
-            "type": "acquire",
-            "index": 1,
-            "payment": [
-              1
-            ]
-          },
-          "mean": 0.5676,
-          "trials": 16,
-          "prior": 2.25
         },
         {
           "action": {
@@ -1673,51 +1640,72 @@
               1
             ]
           },
-          "mean": 0.5091,
+          "mean": 0.5553,
           "trials": 16,
           "prior": 1.35
         },
         {
           "action": {
             "type": "play",
+            "cardId": "S01"
+          },
+          "mean": 0.5553,
+          "trials": 16,
+          "prior": 1.41
+        },
+        {
+          "action": {
+            "type": "play",
             "cardId": "S02",
             "steps": [
               0,
               0
             ]
           },
-          "mean": 0.4291,
+          "mean": 0.5553,
           "trials": 16,
           "prior": 1.33
-        },
-        {
-          "action": {
-            "type": "play",
-            "cardId": "S01"
-          },
-          "mean": 0.4092,
-          "trials": 16,
-          "prior": 1.41
         },
         {
           "action": {
             "type": "claim",
             "index": 0
           },
-          "mean": 0.4022,
+          "mean": 0.5481,
           "trials": 16,
-          "prior": 5.71
+          "prior": 7.89
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              1
+            ]
+          },
+          "mean": 0.5176,
+          "trials": 16,
+          "prior": 2.25
+        },
+        {
+          "action": {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
+          },
+          "mean": 0.4354,
+          "trials": 16,
+          "prior": 2.34
         }
       ],
       "chosen": {
-        "type": "play",
-        "cardId": "S02",
-        "steps": [
-          1,
-          2
-        ]
+        "type": "acquire",
+        "index": 0,
+        "payment": []
       },
-      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.820（16 条联合轨迹，se=0.004）",
+      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.831（16 条联合轨迹 × 4 世界，se=0.024）",
       "opponentSamples": [
         {
           "seat": 0,
@@ -1796,23 +1784,24 @@
       "stats": {
         "rollouts": 160,
         "transitions": 8960,
-        "elapsedMs": 253.3912499999999,
+        "elapsedMs": 249.2532080000001,
         "budgetExhausted": false,
         "omTimeMs": 0,
-        "cloneMs": 252.61324999999965,
-        "legalGenMs": 0.008916999999883046,
+        "cloneMs": 248.62137400000165,
+        "legalGenMs": 0.016416000000162967,
         "rootActions": 73,
-        "candidateCount": 10
+        "candidateCount": 10,
+        "worldsUsed": 4
       }
     },
     {
       "scenario": "S5b 价值差",
-      "gapT": -0.05672772465286757,
-      "gapN": -0.41792298576054343,
-      "claimT": 0.3892733943053034,
-      "altT": 0.44600111895817096,
-      "claimN": 0.4022420091034029,
-      "altN": 0.8201649948639463
+      "gapT": -0.17217399392022287,
+      "gapN": -0.2826520937502729,
+      "claimT": 0.3206759244468684,
+      "altT": 0.49284991836709124,
+      "claimN": 0.5480770915254323,
+      "altN": 0.8307291852757052
     },
     {
       "scenario": "S6 休息节奏",
@@ -1831,7 +1820,7 @@
           "action": {
             "type": "rest"
           },
-          "mean": 0.3751,
+          "mean": 0.3412,
           "trials": 12,
           "prior": 2.4
         }
@@ -1839,7 +1828,7 @@
       "chosen": {
         "type": "rest"
       },
-      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.375（12 条联合轨迹，se=0.004）",
+      "reason": "joint-js2 joint-rollout/rule/L2：预期第一名率 0.341（12 条联合轨迹 × 3 世界，se=0.048）",
       "opponentSamples": [
         {
           "seat": 1,
@@ -1905,7 +1894,7 @@
           "seat": 1,
           "family": "play",
           "action": "play:S02",
-          "p": 0.9999911490942396
+          "p": 0.9999999998398643
         },
         {
           "seat": 1,
@@ -1918,13 +1907,14 @@
       "stats": {
         "rollouts": 12,
         "transitions": 720,
-        "elapsedMs": 3.4299590000000535,
+        "elapsedMs": 3.724792000000207,
         "budgetExhausted": false,
         "omTimeMs": 0,
-        "cloneMs": 3.3177479999999377,
-        "legalGenMs": 0.00258399999984249,
+        "cloneMs": 3.5806659999993826,
+        "legalGenMs": 0.003500000000030923,
         "rootActions": 1,
-        "candidateCount": 1
+        "candidateCount": 1,
+        "worldsUsed": 3
       }
     }
   ]

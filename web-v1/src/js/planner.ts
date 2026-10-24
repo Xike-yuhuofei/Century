@@ -26,10 +26,9 @@ import type { AIObservation } from '../ai/observation.js';
 import { CHAMPION_PARAMETERS } from '../ai/parameters.js';
 import { createSimulation, type PublicSimulation } from '../sim/session.js';
 import { enumerateLegalActions } from '../sim/legal.js';
-import { mulberry32 } from '../sim/rng.js';
 import { createOpponentModel, type OpponentModel } from '../om/index.js';
 import { heuristicContext, screenRootActions, rootSurvival, discardDecision } from './rollout-policy.js';
-import { runJointRollout, type RolloutContext } from './joint-rollout.js';
+import { runJointRollout, trialRngSeed, type RolloutContext } from './joint-rollout.js';
 import { runJointTreeTrial, type TreeContext } from './joint-tree.js';
 import { NEUTRAL_PROFILE } from '../ai/profiles.js';
 import {
@@ -38,6 +37,11 @@ import {
 } from './types.js';
 
 const fail = (message: string): never => { throw new Error(message); };
+
+/** 信念世界种子派生（P1-1 多世界采样）：world w 的未知牌序独立采样。 */
+export function worldSeed(simSeed: number, world: number): number {
+  return ((simSeed >>> 0) ^ Math.imul(world + 1, 0xC2B2AE3D)) >>> 0;
+}
 
 /** 共享对手模型单例（进程级）：状态键 LRU 缓存跨决策复用（任务 E.2/5）。
  * 配置为轻量档：rollouts 仅用于意外触发的 ETA/Survival 保护上限，
@@ -53,13 +57,6 @@ function sharedOpponentModel(): OpponentModel {
   }
   return sharedOM;
 }
-
-/** UCB 探索系数（保留常数；当前分配为 top-M 均匀轮转 + 有界晋升，
- * UCB 方案因小样本过度集中已被替换——实测记录见报告 §搜索算法设计）。 */
-const UCB_C = 0.6;
-
-/** 未试行动的晋升加成（归一先验之上；有界探索，避免预算被均匀摊薄）。 */
-const UNTRIED_BONUS = 0.25;
 
 /** 决策聚合的稳健性惩罚系数（最终选优 = mean − λ·se；λ=0.25 折中噪声与贪心）。 */
 const ROBUST_LAMBDA = 0.25;
@@ -78,12 +75,23 @@ function resolveOptions(versionId: string | undefined, options: JointSearchOptio
     workUnits: o.workUnits,
     simSeed: o.simSeed ?? 0,
     horizon: o.horizon ?? 56,
+    worlds: o.worlds,
     treeBranching: o.treeBranching ?? 2,
     treeDepth: o.treeDepth ?? 1,
     historySummary: o.historySummary,
     opponentModel: o.opponentModel ?? null,
     profileName: o.profileName,
+    collectTrials: o.collectTrials === true,
   };
+}
+
+/** 多世界数解析（P1-1）：缺省 4（预算与固定工作量模式同）；
+ * 固定工作量模式下以 ≥1 次/候选/世界 为约束收缩：W ≤ floor(workUnits / M)。 */
+function resolveWorldCount(worldsOption: number | undefined, workUnits: number | undefined): number {
+  const requested = worldsOption ?? 4;
+  const clamped = Math.max(1, Math.min(8, Math.floor(requested)));
+  if (!workUnits) return clamped;
+  return Math.max(1, Math.min(clamped, Math.floor(workUnits / 4)));
 }
 
 /** 候选分配上限：先验前 M 个获得保底 trial（M 随工作量伸缩；÷16 保证
@@ -113,13 +121,20 @@ class JointPlannerV1 implements JointPlanner {
         evaluations: [],
         chosen: { action, prior: 0, trials: 1, mean: 1, se: null },
         trace: { root: { turnNumber: observation.turnNumber, current: observation.current, golemMarket: observation.golemMarket, phase: observation.phase }, evaluations: [], rejected: [] },
-        stats: { rollouts: 0, transitions: 0, elapsedMs: performance.now() - t0, budgetExhausted: false, omTimeMs: 0, cloneMs: 0, legalGenMs: 0, rootActions: 0, candidateCount: 1 },
+        stats: { rollouts: 0, transitions: 0, elapsedMs: performance.now() - t0, budgetExhausted: false, omTimeMs: 0, cloneMs: 0, legalGenMs: 0, rootActions: 0, candidateCount: 1, worldsUsed: 0 },
       };
     }
     if (observation.current !== mySeat) fail('观察席位不是当前行动者（失去行动机会后禁止规划）');
 
-    // 根模拟：信念采样一次（CRN 世界）。
-    const root = createSimulation(observation, { simSeed: opts.simSeed, historySummary: opts.historySummary });
+    // 根模拟（P1-1 多世界采样）：W 个独立信念世界（不同未知牌序采样），
+    // 同一根行动的多次试验分布到不同世界 ⇒ 估值不再绑定单一翻牌世界；
+    // 同一 (world, replica) 跨根行动共享对手采样随机流 ⇒ CRN 配对比较。
+    const worldCount = resolveWorldCount(opts.worlds, opts.workUnits);
+    const roots: PublicSimulation[] = [];
+    for (let w = 0; w < worldCount; w++) {
+      roots.push(createSimulation(observation, { simSeed: worldSeed(opts.simSeed, w), historySummary: opts.historySummary }));
+    }
+    const root = roots[0];
     const legalGenStart = performance.now();
     const legalRootActions = enumerateLegalActions(root.view, { dedupe: true });
     const legalGenMs = performance.now() - legalGenStart;
@@ -150,6 +165,8 @@ class JointPlannerV1 implements JointPlanner {
     let transitions = 0;
     let rollouts = 0;
     let finishedTrajectories = 0;
+    /** 逐试验记录（collectTrials=true 时；配对统计与 CRN 验证用）。 */
+    const trials: { actionIndex: number; world: number; replica: number; value: number }[] = [];
 
     // 轨迹内墙钟硬上限（预算模式）：deadline = 总预算尾部留 5% 余量给聚合与回退。
     // 每条轨迹额外保证 PER_TRIAL_FLOOR_MS 的最小深度窗口：预算尾端启动的轨迹
@@ -160,7 +177,7 @@ class JointPlannerV1 implements JointPlanner {
     const trialDeadline = opts.workUnits || opts.budgetMs === undefined ? undefined : t0 + opts.budgetMs * 0.95;
     /** 首条轨迹的行动日志（对手采样解释输出）。 */
     let firstTrialActorLog: RolloutContext['actorLog'] | undefined;
-    const runTrial = (index: number, trialIndex: number, withEvents: boolean): number => {
+    const runTrial = (index: number, world: number, replica: number, withEvents: boolean): number => {
       const entry = aggregates[index];
       const forkStart = performance.now();
       const events = withEvents ? ([] as NonNullable<RolloutContext['events']>) : undefined;
@@ -168,15 +185,16 @@ class JointPlannerV1 implements JointPlanner {
       const trialEnd = trialDeadline === undefined ? undefined : Math.max(trialDeadline, forkStart + PER_TRIAL_FLOOR_MS);
       const ctx: RolloutContext = { ...baseCtx, events, omTimeMs, deadline: trialEnd, actorLog };
       if (withEvents) firstTrialActorLog = actorLog;
+      const sim = roots[world % roots.length];
       let value: number;
       let used: number;
       if (opts.variant === 'joint-tree') {
         const treeCtx: TreeContext = { ...ctx, treeBranching: opts.treeBranching, treeDepth: opts.treeDepth };
-        const outcome = runJointTreeTrial(root, entry.action, trialIndex, opts.simSeed, treeCtx);
+        const outcome = runJointTreeTrial(sim, entry.action, world, replica, opts.simSeed, treeCtx);
         value = outcome.value;
         used = outcome.transitions;
       } else {
-        const outcome = runJointRollout(root, entry.action, trialIndex, opts.simSeed, ctx);
+        const outcome = runJointRollout(sim, entry.action, world, replica, opts.simSeed, ctx);
         value = outcome.value;
         used = outcome.transitions;
         if (outcome.finished) finishedTrajectories += 1;
@@ -188,6 +206,7 @@ class JointPlannerV1 implements JointPlanner {
       entry.sum += value;
       entry.sqSum += value * value;
       if (events) chosenEventsRef.push(...events);
+      trials.push({ actionIndex: index, world, replica, value });
       return value;
     };
 
@@ -197,42 +216,40 @@ class JointPlannerV1 implements JointPlanner {
     const deadline = opts.workUnits ? Infinity : (opts.budgetMs !== undefined ? t0 + opts.budgetMs : Infinity);
     const trialTarget = opts.workUnits ?? Infinity;
     const M = topMFor(opts.workUnits, aggregates.length);
-
-    // 阶段 1：top-M 候选保底各 1 次（首条轨迹挂事件采集）。
-    // 终止用 trialDeadline：保底轨迹必须在轨迹级硬上限前启动，否则会孵化
-    // 零转移轨迹（实测缺陷，见阶段 2 注释）。
     const trialLaunchDeadline = trialDeadline ?? deadline;
-    for (let i = 0; i < M; i++) {
-      if (rollouts >= trialTarget || performance.now() > trialLaunchDeadline) break;
-      runTrial(i, rollouts, i === 0);
-    }
 
-    // 阶段 2：top-M 均匀轮转（round-robin）。设计说明：单条联合轨迹的叶值方差
-    // 大（σ≈0.2-0.3），在 ≤64 trial 的现实预算下 UCB 的探索项会向早期幸运行动
-    // 过度集中（实测）；均匀轮转在同等预算下给出更低的比较噪声，符合任务 C.5
-    // "按潜力分配预算"的意图（潜力筛选 = 先验 top-M）。未试高先验行动的
-    // 晋升窗口保留（M+4 名内、σ(prior/8)+0.25 超过当前最佳已试均值时晋升一次）。
-    // 循环终止用 trialDeadline（轨迹级硬上限）而非总 deadline——否则最后 5%
-    // 窗口会孵化数百条零转移轨迹并把根状态叶子值灌进聚合（实测缺陷）。
-    const normalizedPriorOf = (p: number) => 1 / (1 + Math.exp(-p / 8));
-    const promotionEligible = Math.min(aggregates.length, M + 4);
-    let guard = 0;
-    let cursor = 0;
-    while (rollouts < trialTarget && performance.now() < trialLaunchDeadline && guard < 100_000) {
-      guard += 1;
-      // 晋升检查：资格窗口内未试行动的归一先验显著超过已试最佳均值时插入。
-      let promoteIndex = -1;
-      let bestTriedMean = -Infinity;
-      for (let i = 0; i < M; i++) {
-        if (aggregates[i].trials > 0) bestTriedMean = Math.max(bestTriedMean, aggregates[i].sum / aggregates[i].trials);
+    // 平衡试验调度（P1-1）：一轮 pass = {replica r × world w × top-M 候选各 1 次}。
+    // 每个候选在相同 (world, replica) 网格上取值 ⇒ CRN 配对 + 多世界覆盖，
+    // 试验数在候选间严格均衡（round-robin 漂移与晋升启发式已移除——实测
+    // 均衡设计的比较噪声更低且逐位可复现）。
+    const replicasPlanned = opts.workUnits
+      ? Math.max(1, Math.floor(opts.workUnits / (worldCount * M)))
+      : Infinity;
+    let pass = 0;
+    let launched = 0;
+    for (let r = 0; r < replicasPlanned; r++) {
+      for (let w = 0; w < worldCount; w++) {
+        for (let i = 0; i < M; i++) {
+          if (rollouts >= trialTarget || performance.now() > trialLaunchDeadline) break;
+          runTrial(i, w, r, launched === 0);
+          launched += 1;
+        }
+        if (rollouts >= trialTarget || performance.now() > trialLaunchDeadline) break;
       }
-      for (let i = M; i < promotionEligible; i++) {
-        const a = aggregates[i];
-        if (a.trials === 0 && normalizedPriorOf(a.prior) + UNTRIED_BONUS > bestTriedMean) { promoteIndex = i; break; }
+      if (rollouts >= trialTarget || performance.now() > trialLaunchDeadline) break;
+      pass = r + 1;
+    }
+    // 预算模式：剩余时间继续完整 pass（不破坏 CRN 配对结构）。
+    while (opts.workUnits === undefined && rollouts < trialTarget && performance.now() < trialLaunchDeadline && pass < 100_000) {
+      for (let w = 0; w < worldCount; w++) {
+        for (let i = 0; i < M; i++) {
+          if (rollouts >= trialTarget || performance.now() > trialLaunchDeadline) break;
+          runTrial(i, w, pass, launched === 0);
+          launched += 1;
+        }
+        if (rollouts >= trialTarget || performance.now() > trialLaunchDeadline) break;
       }
-      const index = promoteIndex >= 0 ? promoteIndex : cursor % M;
-      runTrial(index, rollouts, false);
-      cursor = promoteIndex >= 0 ? cursor : cursor + 1;
+      pass += 1;
     }
 
     // 聚合输出：已试行动（trials>0）按 mean 降序在前；未试行动按先验降序随其后。
@@ -314,7 +331,7 @@ class JointPlannerV1 implements JointPlanner {
     const golemTag = (a: Action) => (a.type === 'claim' && GOLEM_BY_ID[observation.golemMarket[a.index]] ? `（${observation.golemMarket[a.index]}，${GOLEM_BY_ID[observation.golemMarket[a.index]].points} 分）` : '');
     return {
       action: bestEval.action,
-      reason: `${this.versionId ?? 'joint'} ${opts.variant}/${opts.opponentMode}/${opts.evaluator}：预期第一名率 ${(bestEval.trials > 0 ? bestEval.mean : bestEval.prior).toFixed(3)}（${bestEval.trials} 条联合轨迹，se=${bestEval.se?.toFixed(3) ?? 'n/a'}）${golemTag(bestEval.action)}`,
+      reason: `${this.versionId ?? 'joint'} ${opts.variant}/${opts.opponentMode}/${opts.evaluator}：预期第一名率 ${(bestEval.trials > 0 ? bestEval.mean : bestEval.prior).toFixed(3)}（${bestEval.trials} 条联合轨迹 × ${worldCount} 世界，se=${bestEval.se?.toFixed(3) ?? 'n/a'}）${golemTag(bestEval.action)}`,
       evaluations,
       chosen: bestEval,
       trace,
@@ -328,7 +345,9 @@ class JointPlannerV1 implements JointPlanner {
         legalGenMs,
         rootActions: legalRootActions.length,
         candidateCount: M,
+        worldsUsed: worldCount,
       },
+      ...(opts.collectTrials ? { trials } : {}),
     };
   }
 }
