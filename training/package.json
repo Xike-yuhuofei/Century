@@ -15,7 +15,10 @@
     "baseline": "node baseline/cli.mjs",
     "baseline:perf": "node baseline/perf.mjs",
     "baseline:freeze": "node baseline/freeze.mjs",
-    "baseline:freeze-check": "node baseline/freeze.mjs --check"
+    "baseline:freeze-check": "node baseline/freeze.mjs --check",
+    "scenarios": "node --test --test-concurrency=2 scenarios/tests/*.test.mjs",
+    "scenarios:generate": "node scenarios/scripts/generate.mjs",
+    "scenarios:compare": "node scenarios/scripts/compare-budgets.mjs"
   },
   "engines": {
     "node": ">=20"

@@ -32,6 +32,10 @@ AI5_EVAL_TRAINING_BLOCK = (350_000_000, 400_000_000)
 AI4_BENCHMARK_BLOCK = (400_000_000, 900_000_000)
 VALIDATION_POOL_BLOCK = (900_000_000, 1_060_000_000)
 AI6_BASELINE_BLOCK = (1_100_000_000, 1_200_000_000)
+# AI6 战术基准局面库专用块（research/overnight-tactical-benchmark）：
+# 仅用于基准局面的引擎 replay 种子与固定工作量测试，不用于胜率/晋级统计。
+# 原拟 [1.4e9,1.5e9) 与对抗性联赛块重叠，按块不重叠纪律改登记 [1.5e9,1.6e9)。
+AI6_SCENARIO_BLOCK = (1_500_000_000, 1_600_000_000)
 
 
 def assert_in_block(seed: int, block: tuple[int, int], name: str = "seed") -> int:
