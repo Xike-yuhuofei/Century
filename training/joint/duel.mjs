@@ -366,7 +366,7 @@ function parseArgs() {
     budgetMs: undefined, workUnits: undefined, horizon: undefined, worlds: undefined,
     gateMode: undefined, evaluator: undefined, overrideMargin: undefined,
     contestThreshold: undefined, candidateCap: undefined, claimRanking: undefined,
-    allocation: undefined, racingDelta: undefined, endgameMode: undefined,
+    allocation: undefined, racingDelta: undefined, endgameMode: undefined, opponentMode: undefined,
     outDir: resolve(REPO_ROOT, 'training/reports/joint-search-v1'), diagnostics: undefined,
     seedBase: undefined,
   };
@@ -391,6 +391,7 @@ function parseArgs() {
     else if (argv[i] === '--allocation') args.allocation = argv[++i];
     else if (argv[i] === '--racing-delta') args.racingDelta = Number(argv[++i]);
     else if (argv[i] === '--endgame') args.endgameMode = argv[++i];
+    else if (argv[i] === '--opponent-mode') args.opponentMode = argv[++i];
     else if (argv[i] === '--diagnostics') args.diagnostics = resolve(argv[++i]);
     else if (argv[i] === '--out') args.outDir = resolve(argv[++i]);
   }
@@ -465,6 +466,7 @@ async function main() {
     ...(args.allocation !== undefined ? { allocation: args.allocation } : {}),
     ...(args.racingDelta !== undefined ? { racingDelta: args.racingDelta } : {}),
     ...(args.endgameMode !== undefined ? { endgameMode: args.endgameMode } : {}),
+    ...(args.opponentMode !== undefined ? { opponentMode: args.opponentMode } : {}),
   };
   const diagnostics = args.diagnostics ? [] : null;
   const cells = [];

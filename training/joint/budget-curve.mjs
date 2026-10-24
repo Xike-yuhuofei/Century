@@ -46,12 +46,13 @@ async function main() {
   const cells = loadCells(dir);
   if (!cells.length) throw new Error(`${dir} 无 ablation 产物`);
 
-  // 文件组织：<players>p/<candidate>-b<budget>-<seeds>s.json（一文件一 cell）。
+  // 文件组织：<players>p/b<budget>ms/ablation-phase6-budget-<candidate>-<players>-<seeds>s.json
+  //（每格独立子目录——duel 文件名固定，共用目录会同名覆盖，第五阶段教训）。
   const byKey = new Map();
   for (const { doc, cell, file } of cells) {
-    const m = file.match(/^(\d)p\/([a-z0-9-]+)-b(\d+)-(\d+)s\.json$/);
+    const m = file.match(/^(\d)p\/b(\d+)ms\/ablation-phase6-budget-([a-z0-9-]+)-\1-(\d+)s\.json$/);
     if (!m) continue;
-    byKey.set(`${m[1]}p:${m[2]}:b${m[3]}`, { doc, cell, players: Number(m[1]), candidate: m[2], budget: Number(m[3]) });
+    byKey.set(`${m[1]}p:${m[3]}:b${m[2]}`, { doc, cell, players: Number(m[1]), candidate: m[3], budget: Number(m[2]) });
   }
 
   const lines = [];
@@ -116,12 +117,12 @@ async function main() {
 }
 
 function pathOf(dir, players, candidate, budget) {
-  const p = resolve(dir, `${players}p`, `${candidate}-b${budget}-` + seedTag(dir, players, candidate, budget) + '.json');
+  const p = resolve(dir, `${players}p`, `b${budget}ms`, `ablation-phase6-budget-${candidate}-${players}-${seedTag(dir, players, candidate, budget)}s.json`);
   if (!existsSync(p)) throw new Error(`缺产物 ${p}`);
   return p;
 }
 function seedTag(dir, players, candidate, budget) {
-  const f = readdirSync(resolve(dir, `${players}p`)).find(x => x.startsWith(`${candidate}-b${budget}-`) && x.endsWith('.json'));
+  const f = readdirSync(resolve(dir, `${players}p`, `b${budget}ms`)).find(x => x.startsWith(`ablation-phase6-budget-${candidate}-`) && x.endsWith('.json'));
   if (!f) throw new Error(`缺产物 ${candidate}-b${budget}`);
   return f.match(/-(\d+)s\.json$/)[1];
 }

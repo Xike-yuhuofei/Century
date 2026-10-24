@@ -73,9 +73,12 @@ function buildCells(args) {
 function runCell(cell, args) {
   const [blockStart] = AI6_PHASE6_BUDGET_SUBBLOCK;
   const seedBase = blockStart + (cell.players - 2) * 2_000_000;
-  const outDir = resolve(args.outDir, `${cell.players}p`);
+  // 每格独立子目录（duel --out 只接受目录、文件名固定为
+  // ablation-<block>-<candidates>-<players>-<seeds>s.json——同 (人数,候选)
+  // 不同预算的格子若共用目录会同名互相覆盖，第五阶段已有同款教训）。
+  const outDir = resolve(args.outDir, `${cell.players}p`, `b${cell.budget}ms`);
   mkdirSync(outDir, { recursive: true });
-  const out = resolve(outDir, `${cell.candidate}-b${cell.budget}-${args.seeds}s.json`);
+  const out = resolve(outDir, `ablation-phase6-budget-${cell.candidate}-${cell.players}-${args.seeds}s.json`);
   const cmdArgs = [
     'training/joint/duel.mjs',
     '--candidates', cell.candidate,
