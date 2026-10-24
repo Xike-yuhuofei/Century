@@ -49,9 +49,14 @@ export function latencySummary(samples) {
  * @param {object} [options]
  * @param {number} [options.iterations] 重抽样次数（默认 2000）
  * @param {number} [options.rngSeed] bootstrap 自身 RNG 种子（确定性；与对局种子无关）
- * @returns {{point:number, lower:number, upper:number, seeds:number, iterations:number}}
+ * @returns {{point:number, lower:number, upper:number, seeds:number, iterations:number,
+ *   zeroWinsExactUpper?:number, oneWinsExactLower?:number}}
  * 空样本或全部同值时退化为点估计（区间 = 点）。
- */
+ *
+ * PR #26 修复（P0-3）：零胜场时 bootstrap 重抽样恒为 0 ⇒ 退化区间 [0,0]——
+ * 该区间只反映"观测样本内无胜场"，把它当真实胜率上界是误用。此处补充
+ * Clopper–Pearson 精确上界（95% 单侧）：0/n 胜时 P(first) 的 97.5% 上界 =
+ * 1 − 0.025^(1/n)（n=40 时 ≈ 8.8%）。全胜场时对称补充精确下界。 */
 export function firstPlaceClusterCI(games, { iterations = 2000, rngSeed = 0x6a11e5 } = {}) {
   if (!Array.isArray(games) || games.length === 0) throw new Error('games 不能为空');
   for (const g of games) {
@@ -83,7 +88,7 @@ export function firstPlaceClusterCI(games, { iterations = 2000, rngSeed = 0x6a11
   }
   rates.sort((a, b) => a - b);
   // 退化保护：全部重抽样同值（如每局都第一名）时 percentile 退化正常。
-  return {
+  const result = {
     point: Number(point.toFixed(4)),
     lower: Number(percentile(rates, 0.025).toFixed(4)),
     upper: Number(percentile(rates, 0.975).toFixed(4)),
@@ -92,6 +97,14 @@ export function firstPlaceClusterCI(games, { iterations = 2000, rngSeed = 0x6a11
     iterations,
     method: 'seed-cluster-bootstrap-95',
   };
+  // P0-3：零胜/全胜场的退化区间必须附精确边界（Clopper–Pearson），
+  // 防止 [0,0] 被误读为真实胜率上界。
+  if (totalWins === 0) {
+    result.zeroWinsExactUpper = Number((1 - Math.pow(0.025, 1 / totalGames)).toFixed(4));
+  } else if (totalWins === totalGames) {
+    result.oneWinsExactLower = Number(Math.pow(0.025, 1 / totalGames).toFixed(4));
+  }
+  return result;
 }
 
 /** 把 bootstrap 区间格式化为带审计信息的对象（报告直接引用）。 */

@@ -8,6 +8,11 @@ import {
   chooseAIAction, BASELINE_PARAMETERS, buildObservation,
   AI_STRUCTURES, DEFAULT_STRUCTURE, normalizeStructure, adaptiveWidth,
 } from '../dist/js/ai.js';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+// 晋级后默认冠军是 JS5 适配器：本文件断言 AI4/AI5 束搜索行为回归，显式钉定前任冠军。
+const LEGACY_CHAMPION = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/legacy-champion.json'), 'utf8'));
 
 test('结构标识归一化：缺省为冠军结构，非法值报错', () => {
   assert.equal(normalizeStructure(undefined), 'beam-lineage');
@@ -42,7 +47,7 @@ function midgamePositions(count) {
     let moves = 0;
     while (g.phase !== 'finished' && moves < 400 && positions.length < count) {
       if (g.phase === 'turn' && g.turnNumber % 4 === 2) positions.push(JSON.parse(JSON.stringify(g)));
-      const { action } = chooseAIAction(g);
+      const { action } = chooseAIAction(g, { parameters: LEGACY_CHAMPION });
       g = applyAction(g, action);
       moves++;
     }

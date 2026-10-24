@@ -6,8 +6,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createGame, applyAction } from '../dist/js/engine.js';
 import { chooseAIAction, buildObservation, CHAMPION_PARAMETERS } from '../dist/js/ai.js';
+// 晋级后默认冠军是 JS5 适配器：本文件断言 AI4/AI5 束搜索冠军的公平性/金标准
+// 回归，显式钉定前任冠军参数（fixtures/legacy-champion.json）。
+const LEGACY_CHAMPION = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/legacy-champion.json'), 'utf8'));
 
 const shuffle = (array, random) => {
   const result = [...array];
@@ -39,7 +44,7 @@ function midgamePositions(count) {
       if (g.phase === 'turn' && g.turnNumber % 7 === 3 && g.players[g.current].claimed.length === 0) {
         positions.push(JSON.parse(JSON.stringify(g)));
       }
-      const { action } = chooseAIAction(g);
+      const { action } = chooseAIAction(g, { parameters: LEGACY_CHAMPION });
       g = applyAction(g, action);
       moves++;
     }
@@ -52,13 +57,13 @@ test('随机化隐藏牌库顺序不改变 AI 决策（多位置 × 多种打乱
   assert.ok(positions.length >= 8, `采集中局位置不足：${positions.length}`);
   for (let pi = 0; pi < positions.length; pi++) {
     const base = positions[pi];
-    const baseDecision = chooseAIAction(base);
+    const baseDecision = chooseAIAction(base, { parameters: LEGACY_CHAMPION });
     for (let variant = 1; variant <= 4; variant++) {
       const shuffled = JSON.parse(JSON.stringify(base));
       const random = mulberry32(pi * 100 + variant);
       shuffled.merchantDeck = shuffle(shuffled.merchantDeck, random);
       shuffled.golemDeck = shuffle(shuffled.golemDeck, random);
-      const decision = chooseAIAction(shuffled);
+      const decision = chooseAIAction(shuffled, { parameters: LEGACY_CHAMPION });
       assert.deepEqual(
         decision.action, baseDecision.action,
         `位置 ${pi} 变体 ${variant}：隐藏牌库顺序改变不应影响决策`,
@@ -100,14 +105,20 @@ test('静态扫描：AI 决策源码对隐藏牌库字段的引用必须为零',
   }
 });
 
-test('决策不修改输入局面且与冠军参数显式传入结果一致', () => {
+test('决策不修改输入局面且默认冠军与显式冠军参数同路（JS5 适配器）', () => {
   const positions = midgamePositions(5);
   for (const original of positions) {
     const snapshot = JSON.stringify(original);
     const implicit = chooseAIAction(original);
     assert.equal(JSON.stringify(original), snapshot, 'chooseAIAction 不得修改输入局面');
+    // 默认激活参数与显式传入 CHAMPION_PARAMETERS 必须同路（同为 JS5 适配器）。
+    // JS5 预算模式含墙钟计时方差：断言决策核心标识与行动合法性，不做逐位对比
+    // （逐位确定性由固定工作量模式（workUnits）的专项测试承担）。
     const explicit = chooseAIAction(original, { parameters: CHAMPION_PARAMETERS });
-    assert.deepEqual(implicit.action, explicit.action);
+    assert.ok(implicit.reason.includes('js5'), '默认冠军应走 JS5 适配器：' + implicit.reason);
+    assert.ok(explicit.reason.includes('js5'), '显式冠军参数应走 JS5 适配器：' + explicit.reason);
+    assert.doesNotThrow(() => applyAction(JSON.parse(JSON.stringify(original)), implicit.action));
+    assert.doesNotThrow(() => applyAction(JSON.parse(JSON.stringify(original)), explicit.action));
   }
 });
 

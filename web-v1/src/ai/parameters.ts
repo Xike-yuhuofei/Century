@@ -39,6 +39,16 @@ export type AIParameters = {
    * 100 新种子深度验证后按 AI 4.0 挑战流程参赛（挑战证据见
    * training/reports/challenge-ai5-goal-remaining/）。 */
   acquisitionVariant?: 'baseline' | 'goal-remaining' | 'readiness-efficiency';
+  /** 显式适配器冠军（AI6 第五阶段）：结构候选（非参数变体）晋级后，决策入口
+   * 按此分派到对应决策核心。携带 adapter 时 8 个权重乘子不参与决策（决策核心
+   * 在适配器内，可缺省——validateAIParameters 会补默认值 1.0 保持类型完备）。
+   * 'champion-guided'：JS5 冠军引导选择性联合搜索（web-v1/src/js/champion-guided.ts，
+   * challengeIndex=10 晋级证据见 training/reports/js5-formal-challenge/）。 */
+  adapter?: 'champion-guided';
+  /** 适配器决策核心的版本 id（adapter='champion-guided' 时为联合规划版本）。 */
+  jointVersion?: string;
+  /** 适配器每决策墙钟预算（毫秒；缺省 100）。 */
+  budgetMs?: number;
 };
 
 /** 参数合法区间；超出即拒绝（防止进化产生无意义参数）。 */
@@ -58,7 +68,7 @@ export const BASELINE_PARAMETERS: AIParameters = {
 
 // === CHAMPION-PARAMETERS-BEGIN（由 training/scripts/apply-champion.mjs 生成，勿手改） ===
 export const CHAMPION_PARAMETERS: AIParameters = {
-  id: "ai5-readiness-efficiency",
+  id: "joint-js5",
   engineWeight: 1,
   tempoWeight: 1,
   contestWeight: 1,
@@ -67,14 +77,19 @@ export const CHAMPION_PARAMETERS: AIParameters = {
   capacityWeight: 1,
   restWeight: 1,
   endgameWeight: 1,
-  structure: "beam-rollout",
   acquisitionVariant: "readiness-efficiency",
+  adapter: "champion-guided",
+  jointVersion: "joint-js5",
+  budgetMs: 100,
 };
 // === CHAMPION-PARAMETERS-END ===
 
 const PARAM_KEYS = Object.keys(PARAMETER_BOUNDS) as Array<keyof typeof PARAMETER_BOUNDS>;
 
-/** 校验并归一化参数对象；非法输入抛出明确错误。 */
+/** 校验并归一化参数对象；非法输入抛出明确错误。
+ * 适配器冠军（source.adapter 存在）：权重乘子可缺省（补默认 1.0 保持类型完备），
+ * jointVersion/budgetMs 按适配器口径校验；无 adapter 字段的输入校验行为与
+ * 历史版本逐字节一致（同样的必填要求与错误文案）。 */
 export function validateAIParameters(input: unknown): AIParameters {
   if (typeof input !== 'object' || input === null) throw new Error('AI 参数必须为对象');
   const source = input as Record<string, unknown>;
@@ -82,8 +97,17 @@ export function validateAIParameters(input: unknown): AIParameters {
     throw new Error('AI 参数缺少合法的 id');
   }
   const result: Partial<AIParameters> = { id: source.id };
+  // 显式适配器冠军：决策核心在适配器内，权重乘子不参与决策（可缺省）。
+  const adapterMode = source.adapter === 'champion-guided';
+  if (source.adapter !== undefined) {
+    if (source.adapter !== 'champion-guided') {
+      throw new Error(`未知适配器冠军类型：${String(source.adapter)}`);
+    }
+    result.adapter = source.adapter;
+  }
   for (const key of PARAM_KEYS) {
     const value = source[key];
+    if (adapterMode && value === undefined) { result[key] = 1; continue; }
     const [low, high] = PARAMETER_BOUNDS[key];
     if (typeof value !== 'number' || !Number.isFinite(value) || value < low || value > high) {
       throw new Error(`参数 ${key} 必须为 ${low}–${high} 之间的有限数值，实际：${String(value)}`);
@@ -103,6 +127,23 @@ export function validateAIParameters(input: unknown): AIParameters {
       throw new Error(`未知获取估值变体：${String(source.acquisitionVariant)}`);
     }
     result.acquisitionVariant = source.acquisitionVariant;
+  }
+  // 适配器冠军的版本与预算透传：jointVersion 交由决策入口对照联合规划版本
+  // 注册表校验（此处只做形状校验，避免 parameters → js/adapter 循环依赖）。
+  if (source.jointVersion !== undefined) {
+    if (typeof source.jointVersion !== 'string' || !/^joint-js\d+$/.test(source.jointVersion)) {
+      throw new Error(`适配器冠军的 jointVersion 非法：${String(source.jointVersion)}`);
+    }
+    result.jointVersion = source.jointVersion;
+  }
+  if (source.budgetMs !== undefined) {
+    if (typeof source.budgetMs !== 'number' || !Number.isFinite(source.budgetMs) || source.budgetMs < 1 || source.budgetMs > 10_000) {
+      throw new Error(`适配器冠军的 budgetMs 必须为 1–10000 的有限数值，实际：${String(source.budgetMs)}`);
+    }
+    result.budgetMs = source.budgetMs;
+  }
+  if (result.adapter && !result.jointVersion) {
+    throw new Error('适配器冠军缺少 jointVersion');
   }
   return result as AIParameters;
 }

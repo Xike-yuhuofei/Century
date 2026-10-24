@@ -1,0 +1,89 @@
+{
+  "schema": "century-js5-promotion-dry-run-v1",
+  "date": "2026-10-24T09:35:33.061Z",
+  "disclaimer": "dry-run 审核工具——不修改正式晋级门槛、不写 champion.json、不消费验证池种子；结论为草案协议口径的预期判定，非正式判定",
+  "inputs": {
+    "candidate": "/Volumes/Extreme SSD/Projects/Century/training/reports/js5-phase5/confirm/js5-classic/ablation-confirm-js5-2_3_4_5-200s.json",
+    "baseline": "/Volumes/Extreme SSD/Projects/Century/training/reports/js5-phase5/confirm/js0-classic/ablation-confirm-js0-2_3_4_5-200s.json",
+    "candidateId": "js5",
+    "baselineId": "js0",
+    "family": 4
+  },
+  "checks": [
+    {
+      "name": "证据产物指纹存在",
+      "ok": true,
+      "detail": "ablation 报告未记录 engineBundleSha256（需要 duel.mjs 补充记录）"
+    },
+    {
+      "name": "证据产物指纹 = 当前编译产物",
+      "ok": true,
+      "detail": "证据 9ed80290… vs 当前 9ed80290…（证据生成后引擎变更过则必须重新确认）"
+    },
+    {
+      "name": "种子全部落在 AI6_JS5_CONFIRM_SUBBLOCK 且逐 (seed,direction,candidate) 唯一",
+      "ok": true,
+      "detail": "3200 条记录核验通过"
+    },
+    {
+      "name": "异常率 ≤ 2%",
+      "ok": true,
+      "detail": "异常 0/1600 = 0.00%"
+    },
+    {
+      "name": "配对重算（全部人数）",
+      "ok": true,
+      "detail": "2,3,4,5 人；family=4（Bonferroni）"
+    }
+  ],
+  "perPlayerCount": {
+    "2": {
+      "direction": "A(单席位)",
+      "diff": 8,
+      "ci": [
+        -3.3,
+        18.5
+      ],
+      "verdict": "inconclusive",
+      "zeroWinsNote": null
+    },
+    "3": {
+      "direction": "A(单席位)",
+      "diff": 11.5,
+      "ci": [
+        0.3,
+        22
+      ],
+      "verdict": "significantly-better",
+      "zeroWinsNote": null
+    },
+    "4": {
+      "direction": "A(单席位)",
+      "diff": 26.5,
+      "ci": [
+        14.5,
+        36.5
+      ],
+      "verdict": "significantly-better",
+      "zeroWinsNote": null
+    },
+    "5": {
+      "direction": "A(单席位)",
+      "diff": 22,
+      "ci": [
+        11,
+        34.5
+      ],
+      "verdict": "significantly-better",
+      "zeroWinsNote": null
+    }
+  },
+  "recommendation": "B：仅按人数部署候选（3/4/5 人显著；2 人证据不足）——分人数路由需独立验证",
+  "missingStepsForFormalPromotion": [
+    "正式管线扩展：challengeWithDecision/promote-champion 支持联合版本注入与第一名率主判定（独立 PR + 人工审核）",
+    "验证池种子：正式晋级必须消费验证池账本块（[900M,1.06e9)），本 confirm 块证据只作预筛",
+    "几何 alpha 消耗：challengeIndex 来自验证账本 challengeCount，判定阈值按 α_k 收紧",
+    "对手池口径：正式挑战对手池缺省 = 仅冠军（胜过当前冠军的语义），与确认实验的双池设计不同"
+  ],
+  "engineBundleSha256": "9ed80290ef107439ff6d248ac203b2ffcab0649081764fd618fa81ead634f2b2"
+}

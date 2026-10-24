@@ -35,7 +35,13 @@ export function versionsFor(candidateSeats, candidate, opponents, seedIndex) {
   const poolSize = opponents.length;
   return Array.from({ length: SEAT_COUNT }, (_, seat) => {
     if (candidateSeats.includes(seat)) {
-      return { id: candidate.id, parameters: candidate, structure: candidate.structure };
+      // 显式适配器候选（AI6：champion-guided 联合搜索等）：adapter/budgetMs 等
+      // 注入字段透传到 version 顶层（模拟器按 version.adapter 分派）；无 adapter
+      // 字段的参数/结构候选行为逐字节不变。
+      return {
+        id: candidate.id, parameters: candidate, structure: candidate.structure,
+        ...(candidate.adapter ? { adapter: candidate.adapter, jointVersion: candidate.jointVersion, budgetMs: candidate.budgetMs, gateMode: candidate.gateMode } : {}),
+      };
     }
     const opponentIndex = (poolSize - 1) * ((seedIndex + seat) % poolSize) % poolSize;
     const opponent = opponents[opponentIndex];

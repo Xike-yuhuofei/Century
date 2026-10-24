@@ -165,7 +165,7 @@ test('loadLedger：损坏 schema 拒绝加载', () => {
  * 冻结逻辑测试不得依赖"工作区 dist 恰好是冠军产物"——CI 从分支源码现场重建
  * dist（指纹 = 分支源码），fixture 使逻辑测试在任何构建状态下都成立。 */
 function writeFixtureChampion(dir) {
-  const real = loadChampion();
+  const real = legacyChampion();
   const fixture = {
     ...real,
     provenance: {
@@ -179,8 +179,11 @@ function writeFixtureChampion(dir) {
 }
 
 test('真实冠军记录结构完整（不依赖构建状态）：id / 参数 / provenance 齐备', () => {
+  // 本测试验证【实时】champion.json 记录结构（随冠军易主演进）：
+  // AI6 第五阶段起冠军可为结构候选（adapter 描述符 + 血统字段），id 前缀不限定。
   const champion = loadChampion();
-  assert.ok(champion.id.startsWith('ai5-'), `冠军 id：${champion.id}`);
+  // AI6 第五阶段起冠军可为结构候选（adapter 描述符），id 前缀不再限定 ai5-。
+  assert.ok(champion.id.length > 0, `冠军 id：${champion.id}`);
   assert.equal(champion.parameters.id, champion.id);
   assert.match(champion.provenance.engineBundleSha256, /^[0-9a-f]{64}$/);
   assert.ok(champion.provenance.promotionEvidence?.challengeIndex >= 1, '晋级证据必须带挑战序号');
@@ -191,7 +194,7 @@ test('冻结清单：fixture 指纹与当前构建一致 → 核验通过，mani
   const championPath = writeFixtureChampion(dir);
   const manifest = freezeChampion({ championPath });
   assert.equal(manifest.schema, 'century-champion-freeze-v1');
-  assert.ok(manifest.champion.id.startsWith('ai5-'), `冠军 id：${manifest.champion.id}`);
+  assert.ok(manifest.champion.id.length > 0, `冠军 id：${manifest.champion.id}`);
   assert.equal(manifest.champion.fingerprint.length > 0, true);
   assert.equal(manifest.version.engineBundleSha256, engineBundleSha256(),
     '冻结时的引擎产物指纹必须与 provenance 一致（freezeChampion 内部已强校验）');
@@ -203,7 +206,7 @@ test('冻结清单：fixture 指纹与当前构建一致 → 核验通过，mani
 
 test('冻结清单：provenance 指纹与当前构建不一致 → 拒绝冻结（漂移防线）', () => {
   const dir = tmp();
-  const real = loadChampion();
+  const real = legacyChampion();
   const drifted = {
     ...real,
     provenance: { ...real.provenance, engineBundleSha256: '0'.repeat(64) },
@@ -229,7 +232,7 @@ test('冻结清单：参数被篡改时校验必须失败（防配置漂移）',
 // ---------- 运行器：席位版本分配与对手池 ----------
 
 test('versionsForSeats：任意 N 与池大小下确定性轮换且覆盖全池', () => {
-  const champion = loadChampion();
+  const champion = legacyChampion();
   const candidate = championVersion(champion);
   const pool = baselineOpponentPool(champion);
   assert.ok(!pool.some(o => o.id === candidate.id), '对手池不得包含冠军本体');
@@ -264,9 +267,22 @@ test('versionsForSeats：任意 N 与池大小下确定性轮换且覆盖全池'
   assert.throws(() => versionsForSeats([0], candidate, pool, 0, 1), /seatCount/);
 });
 
+
+// 晋级后实时冠军为 JS5 适配器（预算模式，决策含墙钟方差）：本文件验证
+// 冻结/runner/outcomeKey 等【基础设施】，统一使用前任冠军 fixture
+// （权重参数 + 束搜索确定性）保证断言可判定，不随冠军易主漂移。
+const LEGACY_CHAMPION_RECORD = {
+  id: 'ai5-readiness-efficiency',
+  parameters: {
+    id: 'ai5-readiness-efficiency', structure: 'beam-rollout', acquisitionVariant: 'readiness-efficiency',
+    engineWeight: 1, tempoWeight: 1, contestWeight: 1, synergyWeight: 1,
+    goalWeight: 1, capacityWeight: 1, restWeight: 1, endgameWeight: 1,
+  },
+};
+const legacyChampion = () => LEGACY_CHAMPION_RECORD;
 // ---------- 运行器：小规模冒烟（2-5 人真实对局） ----------
 
-const CHAMPION = loadChampion();
+const CHAMPION = legacyChampion();
 
 test('镜像基准 N=2..5：全部完成、座位公平性结构与吞吐/延迟字段齐全', () => {
   for (const seatCount of [2, 3, 4, 5]) {
@@ -327,7 +343,14 @@ test('对抗基准：种子数少于席位数时座位覆盖断言按 min(N, see
 });
 
 test('outcomeKey：同种子同配置逐位一致，剔除计时字段后跨运行稳定', () => {
-  const run = () => runContestBaseline({ champion: CHAMPION, seatCount: 2, seeds: 2, seedBase: 1_199_030_000, collectDecisions: false });
+  // JS5 晋级后默认冠军是 100ms 墙钟预算适配器（同种子两次运行的预算截止点不同，
+  // 逐位一致性不成立）；本测试验证 outcomeKey 的确定性属性，显式钉定前任束搜索
+  // 冠军（确定性决策核心）。
+  const legacy = {
+    id: 'ai5-readiness-efficiency',
+    parameters: { id: 'ai5-readiness-efficiency', structure: 'beam-rollout', acquisitionVariant: 'readiness-efficiency', engineWeight: 1, tempoWeight: 1, contestWeight: 1, synergyWeight: 1, goalWeight: 1, capacityWeight: 1, restWeight: 1, endgameWeight: 1 },
+  };
+  const run = () => runContestBaseline({ champion: legacy, seatCount: 2, seeds: 2, seedBase: 1_199_030_000, collectDecisions: false });
   const a = run();
   const b = run();
   assert.equal(a.games.length, b.games.length);
@@ -337,7 +360,7 @@ test('outcomeKey：同种子同配置逐位一致，剔除计时字段后跨运�
 });
 
 test('对抗基准：对手池含冠军本体时立即报错', () => {
-  const champion = loadChampion();
+  const champion = legacyChampion();
   const version = championVersion(champion);
   assert.throws(
     () => runContestBaseline({ champion, seatCount: 3, seeds: 1, seedBase: 1_199_040_000, opponents: [version] }),
@@ -388,7 +411,7 @@ test('runBaseline 端到端：报告结构与冻结/账本注入正确', async (
   }
   // outcomeKey 级确定性：直接用相同种子区间重跑。
   for (const config of report.configs) {
-    const champion = loadChampion();
+    const champion = legacyChampion();
     const rerun = config.config === 'mirror'
       ? runMirrorBaseline({ champion, seatCount: config.seatCount, seeds: config.seedAllocation.count, seedBase: config.seedAllocation.base, collectDecisions: false })
       : runContestBaseline({ champion, seatCount: config.seatCount, seeds: config.seedAllocation.count, seedBase: config.seedAllocation.base, collectDecisions: false });

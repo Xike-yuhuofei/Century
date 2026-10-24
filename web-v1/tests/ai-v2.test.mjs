@@ -2,6 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, applyAction } from '../dist/js/engine.js';
 import { chooseAIAction } from '../dist/js/ai.js';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+// 晋级后默认冠军是 JS5 适配器（无 plan 字段）：本文件测试 AI4/AI5 束搜索
+// 行为回归，显式钉定前任冠军参数。
+const LEGACY_CHAMPION = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/legacy-champion.json'), 'utf8'));
 
 function scenario({ stock=[4,0,0,0], hand=['M20','M23','S01','S02'], played=[] } = {}) {
   const g=createGame(['人类','AI'],20261019,[1]);
@@ -22,7 +28,7 @@ function scenario({ stock=[4,0,0,0], hand=['M20','M23','S01','S02'], played=[] }
 test('V2.0 发现两张真实交易卡的三步认领路线',()=>{
   const g=scenario();
   const before=JSON.stringify(g);
-  const {action,plan}=chooseAIAction(g);
+  const {action,plan}=chooseAIAction(g, { parameters: LEGACY_CHAMPION });
   assert.deepEqual(action,{type:'play',cardId:'M20',repeats:2});
   assert.equal(plan.goal,'G14');
   assert.equal(plan.steps,3);
@@ -42,7 +48,7 @@ test('V2.0 发现两张真实交易卡的三步认领路线',()=>{
 
 test('V2.0 将休息回合计入认领路线',()=>{
   const g=scenario({hand:[],played:['M20','M23']});
-  const chosen=chooseAIAction(g);
+  const chosen=chooseAIAction(g, { parameters: LEGACY_CHAMPION });
   assert.deepEqual(chosen.action,{type:'rest'});
   assert.equal(chosen.plan.goal,'G14');
   assert.equal(chosen.plan.steps,4);
@@ -59,7 +65,7 @@ test('更换隐藏牌库顺序不改变离线 AI 首步',()=>{
 test('终局轮次不规划不存在的后续回合',()=>{
   const g=scenario({stock:[0,0,4,0]});
   g.triggerPlayer=0;
-  const chosen=chooseAIAction(g);
+  const chosen=chooseAIAction(g, { parameters: LEGACY_CHAMPION });
   assert.deepEqual(chosen.action,{type:'claim',index:0});
   assert.equal(chosen.plan.steps,1);
 });
