@@ -165,6 +165,10 @@ class ChampionGuidedPlanner {
     }
 
     // 4. 候选构造：冠军行动 ∪ 立即认领 ∪ 先验 top（≤ candidateCap）。
+    //    根筛选维持 'all' 全目标口径（与 JS2-4 同语义，保证消融可比性）。
+    //    实测记录：3p 中局慢决策的尾部成本来自冠军束搜索本身（choosePlan
+    //    72-103ms，状态依赖；js0 同样承担），根筛选仅 3-10ms——预算尾部
+    //    不足以试验时自然回退冠军行动（保守覆盖语义的退化情形）。
     const ctxRoot = heuristicContext(root.view, CHAMPION_PARAMETERS, NEUTRAL_PROFILE);
     const survival = golemSurvivalModel(observation, 6);
     const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival);
