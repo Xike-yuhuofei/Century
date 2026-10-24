@@ -18,6 +18,12 @@ import {
   normalizeStructure,
 } from '../dist/js/ai.js';
 import { golemSurvivalModel } from '../dist/js/ai/opponent-model.js';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+// 晋级后默认冠军是 JS5 适配器：金标准断言针对 beam-rollout 冠军行为回归，
+// 显式钉定前任冠军参数（fixtures/legacy-champion.json）。
+const LEGACY_CHAMPION = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/legacy-champion.json'), 'utf8'));
 
 /** 与训练/duel_runner 一致的五席对局(人类席位由 AI 代理)。 */
 function probeGame(seed) {
@@ -109,7 +115,7 @@ test('金标准:冠军结构(beam-rollout)决策序列逐位不变(seed=20261023
   const steps = [];
   for (let i = 0; i < GOLDEN.length && game.phase !== 'finished'; i++) {
     const seat = game.current;
-    const d = chooseAIAction(game); // 默认路径 = 冠军参数,行为必须与基线逐位一致
+    const d = chooseAIAction(game, { parameters: LEGACY_CHAMPION }); // 钉定 beam-rollout 冠军，行为与基线逐位一致
     const a = d.action;
     steps.push(
       a.type === 'claim' ? `${seat}:claim:${game.golemMarket[a.index]}`

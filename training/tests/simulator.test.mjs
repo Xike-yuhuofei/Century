@@ -3,9 +3,21 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { simulateGame, summarizeResults, deterministicKey, seatProfile } from '../simulator/simulate.mjs';
 
+
+// 晋级后默认冠军为 JS5 适配器（预算模式，决策含墙钟计时方差；决策理由格式
+// 亦不同）：可复现性/人格理由两类断言显式钉定前任冠军（束搜索确定性）。
+const LEGACY_VERSIONS = Array.from({ length: 5 }, () => ({
+  id: 'ai5-readiness-efficiency',
+  parameters: {
+    id: 'ai5-readiness-efficiency', structure: 'beam-rollout', acquisitionVariant: 'readiness-efficiency',
+    engineWeight: 1, tempoWeight: 1, contestWeight: 1, synergyWeight: 1,
+    goalWeight: 1, capacityWeight: 1, restWeight: 1, endgameWeight: 1,
+  },
+  structure: 'beam-rollout',
+}));
 test('相同种子与配置的对局完全可复现（剔除计时字段后逐位一致）', () => {
-  const a = simulateGame({ seed: 2026, collectActions: true });
-  const b = simulateGame({ seed: 2026, collectActions: true });
+  const a = simulateGame({ seed: 2026, versions: LEGACY_VERSIONS, collectActions: true });
+  const b = simulateGame({ seed: 2026, versions: LEGACY_VERSIONS, collectActions: true });
   assert.equal(deterministicKey(a), deterministicKey(b));
   assert.deepEqual(a.actions, b.actions);
   assert.equal(a.winnerSeat, b.winnerSeat);
@@ -86,7 +98,7 @@ test('席位人格与正式游戏逐席一致（审计整改：代理席不再�
 });
 
 test('对局中实际人格经决策理由可验证（端到端对齐）', () => {
-  const r = simulateGame({ seed: 42, collectActions: true });
+  const r = simulateGame({ seed: 42, versions: LEGACY_VERSIONS, collectActions: true });
   assert.equal(r.status, 'finished');
   const expected = ['中立代理', '引擎大师', '速攻专家', '精算大师', '战术大师'];
   expected.forEach((profile, seat) => {

@@ -14,13 +14,15 @@ import { createGame, applyAction } from '../dist/js/engine.js';
 import { chooseAIAction } from '../dist/js/ai.js';
 import { chooseJointAction } from '../dist/js/js/adapter.js';
 import { validateAIParameters } from '../dist/js/ai/parameters.js';
-import { writeFileSync, unlinkSync } from 'node:fs';
+import { writeFileSync, unlinkSync, readFileSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
 const js5Descriptor = { id: 'joint-js5', adapter: 'champion-guided', jointVersion: 'joint-js5', budgetMs: 100 };
+// 前任冠军（权重参数，无 adapter）：分派零干扰断言用。
+const LEGACY_CHAMPION = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/legacy-champion.json'), 'utf8'));
 
 test('validateAIParameters：适配器描述符权重缺省补 1.0，jointVersion/budgetMs 校验', () => {
   const validated = validateAIParameters(js5Descriptor);
@@ -62,7 +64,7 @@ test('chooseAIAction：无 adapter 字段的冠军路径行为不变（分派零
   g.players[0].isAI = true;
   g.players[0].stock = [2, 2, 0, 0];
   g.golemMarket = ['G08', 'G05', 'G23'];
-  const r = chooseAIAction(g); // 当前激活参数 = 权重冠军（无 adapter）
+  const r = chooseAIAction(g, { parameters: LEGACY_CHAMPION }); // 显式权重冠军（无 adapter）
   assert.ok(!r.reason.includes('js5'), `冠军路径不得被适配器分派劫持：${r.reason}`);
   assert.doesNotThrow(() => applyAction(g, r.action));
 });
