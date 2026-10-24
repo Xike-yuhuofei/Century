@@ -29,7 +29,7 @@ import { challengeWithDecision } from './challenge.mjs';
 import { requireBuiltEngine, engineBundleSha256, REPO_ROOT } from '../lib/paths.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const outDir = resolve(REPO_ROOT, 'training/reports/js5-formal-challenge');
+const outDir = resolve(REPO_ROOT, 'training/reports/js5-promotion-challenge');
 mkdirSync(outDir, { recursive: true });
 requireBuiltEngine();
 
@@ -60,7 +60,8 @@ const ledgerSources = [
   'ai5/openevolve/experiments/reports/challenge-ai5-goal-remaining/validation-ledger.json',
   'ai5/openevolve/experiments/reports/challenge-ai5-goal-remaining-500/validation-ledger.json',
   'ai5/openevolve/experiments/reports/challenge-readiness-efficiency-500/validation-ledger.json',
-  'ai5/openevolve/experiments/reports/challenge-readiness-efficiency-1000/validation-ledger.json', // challengeIndex=9（现任冠军晋级）
+  'ai5/openevolve/experiments/reports/challenge-readiness-efficiency-1000/validation-ledger.json', // challengeIndex=9（前任冠军晋级）
+  'training/reports/js5-formal-challenge/validation-ledger.json', // challengeIndex=10（JS5 首次正式挑战；bundle 含接线前代码）
 ];
 const merged = { history: [] };
 for (const rel of ledgerSources) {
