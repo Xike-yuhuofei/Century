@@ -66,6 +66,21 @@ export const AI6_JOINT_PERF_SUBBLOCK = [1_350_000_000, 1_351_000_000];
 export const AI6_JS5_TUNE2_SUBBLOCK = [1_351_000_000, 1_352_000_000];
 export const AI6_JS5_CONFIRM_SUBBLOCK = [1_360_000_000, 1_370_000_000];
 
+/** AI6 对抗性联赛（overnight-adversarial-league，research/overnight-adversarial-league）
+ * 评测专用块：独立于 JS6 搜索研发的高水平对手池 / 自动联赛 / 防过拟合双轴评估。
+ * 与全部既有块物理隔离；本阶段不消费正式验证池（[900M,1.06e9)）。
+ * 子块布局（左右闭开；沿用 PR #26 先例只登记 .mjs）：
+ * - [1.40e9, 1.401e9)  开发/审计探针（注册表行为探针、注入审计，永不用于结论）；
+ * - [1.401e9, 1.402e9) 联赛端到端冒烟（2–5 人少量种子，框架验收）；
+ * - [1.402e9, 1.403e9) 夜间开发用小型胜率矩阵（候选初筛读数，非结论）；
+ * - [1.403e9, 1.41e9)  预注册大规模联赛（只生成方案不夜间执行，人工批准后消费）。
+ * [1.41e9, 1.5e9) 预留。 */
+export const AI6_ADVERSARIAL_LEAGUE_BLOCK = [1_400_000_000, 1_500_000_000];
+export const AI6_LEAGUE_DEV_SUBBLOCK = [1_400_000_000, 1_401_000_000];
+export const AI6_LEAGUE_SMOKE_SUBBLOCK = [1_401_000_000, 1_402_000_000];
+export const AI6_LEAGUE_MATRIX_DEV_SUBBLOCK = [1_402_000_000, 1_403_000_000];
+export const AI6_LEAGUE_PREREG_SUBBLOCK = [1_403_000_000, 1_410_000_000];
+
 /** 断言种子落在指定区间内（含头不含尾）。 */
 export function assertInBlock(seed, block, name = 'seed') {
   if (!Number.isSafeInteger(seed)) {
