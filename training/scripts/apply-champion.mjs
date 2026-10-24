@@ -36,8 +36,11 @@ if (beginIndex < 0 || endIndex < 0 || endIndex < beginIndex) {
 
 const round = value => Number(value.toFixed(6));
 const ordered = ['id', 'engineWeight', 'tempoWeight', 'contestWeight', 'synergyWeight', 'goalWeight', 'capacityWeight', 'restWeight', 'endgameWeight'];
+// 适配器冠军（AI6：结构候选晋级，如 JS5 champion-guided）：决策核心在适配器内，
+// 权重乘子不参与决策——缺省补 1.0 保持 AIParameters 类型完备，并透传适配器字段。
+const adapterMode = parameters.adapter !== undefined;
 const lines = ordered.map(key => {
-  const value = parameters[key];
+  const value = parameters[key] ?? (adapterMode ? 1 : undefined);
   if (value === undefined) throw new Error(`冠军参数缺少 ${key}`);
   return `  ${key}: ${typeof value === 'string' ? JSON.stringify(value) : round(value)},`;
 });
@@ -50,6 +53,15 @@ if (parameters.structure !== undefined) {
 // 缺失时网页端会静默回落 baseline 收集价值（回归：AI5 readiness-efficiency 晋级后被 fairness 测试拦截）。
 if (parameters.acquisitionVariant !== undefined) {
   lines.push(`  acquisitionVariant: ${JSON.stringify(parameters.acquisitionVariant)},`);
+}
+// 适配器冠军字段：决策入口（decision.ts）按 adapter 分派到适配器决策核心。
+if (adapterMode) {
+  if (!parameters.jointVersion) throw new Error('适配器冠军缺少 jointVersion');
+  lines.push(`  adapter: ${JSON.stringify(parameters.adapter)},`);
+  lines.push(`  jointVersion: ${JSON.stringify(parameters.jointVersion)},`);
+  if (parameters.budgetMs !== undefined) {
+    lines.push(`  budgetMs: ${parameters.budgetMs},`);
+  }
 }
 const block = [
   `${BEGIN}（由 training/scripts/apply-champion.mjs 生成，勿手改） ===`,
