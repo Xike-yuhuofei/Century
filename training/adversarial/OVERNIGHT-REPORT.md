@@ -257,13 +257,21 @@ OpenEvolve 集成路径：搜索器产出 spec JSON → `registerCandidates(buil
 
 ---
 
-## 11. CI 状态与既有损坏取证（PR #35 触发的 ai5.yml Seatbelt 失败）
+## 11. CI 状态与既有损坏取证（PR #35 触发的 ai5.yml 失败）
 
-**结论：ai5.yml「Seatbelt 沙箱验收」失败是 main 上的既有损坏，非本 PR 引入。**
+**结论：ai5.yml 四个失败 job（Seatbelt / 端到端冒烟 / PPO / Node 编码超时取消）全部是 main 上的
+既有损坏，非本 PR 引入。两条独立证据：**
 
-- **取证**：在干净 `origin/main@e7d3bfa` 独立 worktree 重建 dist 后本地复现
-  `python3 ai5/openevolve/tests/test_security_sandbox.py`——**3 项失败**（本分支同套件 2 项失败，
-  均含同一编译错误）。
+1. **运行历史**：ai5.yml 在 `main` 分支的最近一次运行（2026-10-24 13:26，PR #26 合并推送）结论
+   **failure，且失败 job 清单与本 PR 逐 job 完全一致**（PPO failure / Node cancelled /
+   e2e failure / Seatbelt failure；seed-discipline 与静态检查通过）。该工作流此前最后一次
+   success 是 2026-10-24 04:57（JS5 接线合入前）。本 PR 只是接线合入后第一个再触发该工作流
+   的分支（因登记 `ai5/lib/seed_policy.mjs` 属 `ai5/**` 路径）。
+2. **干净 main 本地复现**：在 `origin/main@e7d3bfa` 独立 worktree 重建 dist 后——
+   - `python3 ai5/openevolve/tests/test_security_sandbox.py`：**3 项失败**（本分支同套件 2 项，
+     同根因编译错误）；
+   - `duel_runner.mjs --candidate-official` 自对照：`meanScoreDiffPerSeed = 2.375 ≠ 0`
+     （本分支 1.625 ≠ 0）——「端到端冒烟」断言在 main 上同样不可能通过。
 - **根因**：[ai5/openevolve/node/assemble_candidate.mjs](../../ai5/openevolve/node/assemble_candidate.mjs)
   第 34 行 `COPIED_PATHS = ['data.ts', 'engine.ts', 'ai.ts', 'ai']`——候选编译树只拷贝
   `src/data.ts / src/engine.ts / src/ai.ts / src/ai/**`，**不含 `src/js/**`**。AI6 第四/五阶段
@@ -278,5 +286,14 @@ OpenEvolve 集成路径：搜索器产出 spec JSON → `registerCandidates(buil
 - **修复建议（属 ai5/openevolve 维护者范围，本 PR 不越权）**：`COPIED_PATHS` 与 manifest
   校验 include 增补 `src/js/**`（或改为按 import 闭包拷贝），并复核沙箱策略对新文件的
   读边界；同套件中 `test_infinite_loop_killed_by_probe_timeout` 失败与同根因（基线编译失败）。
-- 本 PR 自身范围内的 CI 检查（种子唯一性/隔离/账本一致性、validate、OpenEvolve 安全静态检查）
-  全部通过。
+- **同类既有损坏（e2e 冒烟 / PPO 断点恢复）**：ai5.yml「端到端冒烟」断言"官方自对照分差必须
+  为 0"与 PPO `TestResumeDeterminismE2E` 的逐位确定性口径，均建立在"冠军行为逐位可复现"
+  的前提上；PR #30 使冠军变为墙钟预算（budgetMs=100）的 JS5 后该前提失效（PR #30 仅迁移了
+  web-v1 测试口径——"逐位断言钉前任冠军或改同路口径"，ai5 侧两条未迁移）。取证：干净 main
+  自对照分差 2.375 ≠ 0。修复建议：自对照/断点恢复断言改"同路标识"口径（workUnits 确定性
+  模式）或钉确定性冠军 fixture，与本 PR 无关但建议同批处理。
+- **Node 编码 job（15m16s）为超时取消而非用例失败**：日志显示 14 项用例全过后进程挂起至
+  job 15 分钟上限被取消（main 上同 job 同为 cancelled）。疑与墙钟预算冠军的 worker 协议
+  测试在 CI 负载下的耗时/挂起有关，归入同批 ai5 管线修复。
+- 本 PR 自身范围内的 CI 检查全部通过：**test（training 全量 129 项）✅、test-and-build
+  （web-v1 全量）✅、validate ✅、种子唯一性/隔离/账本一致性 ✅、OpenEvolve 安全静态检查 ✅**。
