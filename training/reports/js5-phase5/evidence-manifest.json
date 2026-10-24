@@ -1,0 +1,107 @@
+{
+  "schema": "century-js5-phase5-evidence-manifest-v1",
+  "date": "2026-10-24",
+  "phase": "AI6 第五阶段：JS5 稳健性验证、性能优化与冠军晋级准备",
+  "branch": "research/js5-robustness-and-promotion-readiness",
+
+  "baseline": {
+    "commit": "c2053a8",
+    "commitNote": "origin/feat/joint-search-v1 tip = PR #27 合并提交（含 PR #26 修复 + JS5 全部代码，bd16915 为其祖先）",
+    "upstreamPrs": {
+      "pr22": { "title": "AI6 冠军基线冻结", "state": "MERGED", "base": "main" },
+      "pr24": { "title": "Public Belief Simulator", "state": "MERGED", "base": "main" },
+      "pr25": { "title": "Opponent Model V1", "state": "MERGED", "base": "main" },
+      "pr26": { "title": "Joint Search V1", "state": "OPEN", "base": "main", "note": "未合入 main；本阶段分支基于 feat/joint-search-v1，保持正确依赖 PR 关系" },
+      "pr27": { "title": "PR #26 修复 + JS5", "state": "MERGED", "base": "feat/joint-search-v1", "mergeCommit": "c2053a8", "note": "合并目标是 feat/joint-search-v1，未触碰 main" }
+    }
+  },
+
+  "champion": {
+    "id": "ai5-readiness-efficiency",
+    "structure": "beam-rollout",
+    "acquisitionVariant": "readiness-efficiency",
+    "fingerprint": "[\"ai5-readiness-efficiency\",\"beam-rollout\",[1,1,1,1,1,1,1,1]]",
+    "championCodeCommit": "b0295670efa0aec7bae9c0de8f748bd6fb3c0582",
+    "frozenEngineBundleSha256": "c1dd8272ae15fb26d7724a9c1d1044bd2773bc13d898e3b937cd0c17d1acf8eb",
+    "promotionEvidence": { "challengeIndex": 9, "seeds": 1000, "games": 2000, "seedBase": 941507152 }
+  },
+
+  "engineBuild": {
+    "currentHeadBundleSha256": "b0df3fc49bfe8589ae5f1b792270821c6f7a81183439c3bbe6a4e4a89193d0a8",
+    "driftDisclosure": "HEAD 产物指纹 ≠ 冠军冻结指纹（已知既有风险，自 PR #21 beam-contest 变体进入 ai 闭包起存在；PR #26/27 未恶化）。本阶段公平性由两层补偿证据保证：(1) PR #27 审计——冠军执行路径在 HEAD dist 上 72 配对零决策不一致；(2) js0/js1 重跑与 PR #26 历史数字逐位一致。本阶段任务 A1 将把 gate=never ≡ JS0 逐决策审计扩展到 3/4 人。",
+    "ruleEngineDisclosure": "engine.ts 自冠军提交 b029567 起零变更（PR #26/27 git 佐证 + joint-fairness 测试强制 engineBundleSha256 不变性语义）"
+  },
+
+  "environment": {
+    "node": "v22.16.0",
+    "os": "macOS Apple Silicon（开发机 10 核；目标环境 Mac mini M4 16GB）",
+    "build": "esbuild + tsc（web-v1）；training 为 Node ESM .mjs",
+    "baselineTests": "168/168 绿（c2053a8 全量 npm test，2026-10-24 实测 220s）"
+  },
+
+  "js5FrozenConfig": {
+    "source": "web-v1/src/js/champion-guided.ts resolveChampionGuidedOptions",
+    "championStructure": "beam-rollout",
+    "gateMode": "auto",
+    "overrideMargin": 0.02,
+    "candidateCap": 4,
+    "contestThreshold": 0.85,
+    "worlds": 4,
+    "horizon": 48,
+    "opponentMode": "rule",
+    "evaluator": "L2",
+    "budgetMs": 100,
+    "robustLambda": 0.25,
+    "note": "试验调度 = replica × world × candidate 平衡网格（trialRngSeed(simSeed, world, replica) CRN）"
+  },
+
+  "seedRanges": {
+    "authority": "ai5/lib/seed_policy.mjs（.py 镜像）",
+    "consumedOrRegistered": {
+      "AI4_EVO_BLOCK [0,300M)": "AI4 进化（不触碰）",
+      "AI5_BLOCK [300M,400M)": "PPO/arena/OpenEvolve（不触碰）",
+      "AI4_BENCHMARK_BLOCK [400M,900M)": "AI4 基准（不触碰）",
+      "VALIDATION_POOL_BLOCK [900M,1.06e9)": "正式验证池（本阶段不消费；正式晋级才可用）",
+      "AI6_BASELINE_BLOCK [1.1e9,1.2e9)": "PR #22 基线（已消费；测试种子尾 [1.199e9,1.2e9)）",
+      "OM_EVAL_BLOCK [1.25e9,1.26e9)": "PR #25 OM 评测（已消费）",
+      "AI6_JOINT_AUDIT_SUBBLOCK [1.30e9,1.301e9)": "版本一致性审计（已消费）",
+      "AI6_JOINT_TUNE_SUBBLOCK [1.31e9,1.32e9)": "PR #27 JS5 调参（已消费——不得作为本阶段独立确认依据）",
+      "AI6_JOINT_TEST_SUBBLOCK [1.32e9,1.33e9)": "PR #27 主测试消融（已消费）",
+      "AI6_JOINT_VERIFY_SUBBLOCK [1.33e9,1.34e9)": "PR #27 held-out 验证（已消费——本阶段不得重复用作新版本独立确认）",
+      "AI6_JOINT_CALIB_SUBBLOCK [1.34e9,1.35e9)": "L3 校准（已消费）",
+      "AI6_JOINT_PERF_SUBBLOCK [1.35e9,1.351e9)": "性能基准（已消费）"
+    },
+    "newlyRegisteredThisPhase": {
+      "AI6_JS5_TUNE2_SUBBLOCK [1.351e9,1.352e9)": "本阶段调参/敏感性分析（js5-opt 开发专用，永不用于结论）",
+      "AI6_JS5_CONFIRM_SUBBLOCK [1.36e9,1.37e9)": "本阶段独立确认（全新种子，未消费）",
+      "confirmPartition": "duel.mjs --block confirm：seedBase = 1.36e9 + (N−2)×1e6 + (对手池 diverse ? 5e5 : 0)；每 (人数, 对手池) 子区间 50 万种子，本阶段最多消费 500/子区间"
+    }
+  },
+
+  "existingEvidenceSummary": {
+    "heldOutVerifyBlock60Seeds": {
+      "js5_vs_js0_5p": "+21.7pp CI [13.3, 29.2]（显著）",
+      "js5_vs_js0_2p": "+0.8pp CI [-10.0, 12.5]（平价）",
+      "js5_vs_js1_5p": "+28.3pp CI [18.3, 39.2]（显著）"
+    },
+    "testBlock40Seeds": {
+      "3p": "+12.5pp（分差 CI 正、胜率差 CI 触 0）",
+      "4p": "+2.5pp（inconclusive）"
+    },
+    "gateNeverEquivalence": "2p+5p 1582 决策零不一致（3p/4p 本阶段补齐）",
+    "perfFlags": "5p p95 98.8ms；3p p95 141.1ms（尾部来自冠军 choosePlan 72-103ms，js0 同样承担）"
+  },
+
+  "plannedDeliverables": [
+    "A1: gate=never ≡ JS0 逐决策等价审计扩展至 3/4 人（audit.mjs）",
+    "A2: compare.mjs 严格配对验证（重复/缺失/异常/版本不一致拒绝 + 方向分列 + 零胜精确界 + 多重检验）+ 回归测试",
+    "A3: 叶子分数语义修正（'预期第一名率'→'联合模拟评价值（未校准）'）",
+    "B: 分阶段性能画像（perf-phases.mjs）+ 预算扫描（25/50/100/200ms）+ 无行为变化的延迟优化（root 延迟创建/survival 缓存）",
+    "C1: 平衡批次提交修复预算截断候选偏差 + 回归测试",
+    "C2/C3: 门控可靠性检查 + TUNE2 块参数敏感性（js5-opt）",
+    "D: confirm 块独立复验（js0/js1/js5/js5-opt × 2-5 人 × classic/diverse 对手池 × ≥200 全新配对种子）",
+    "E: 门控策略分析（触发率/覆盖命中率/分人数）",
+    "F: 第一名率晋级协议草案 + js5-promotion-dry-run 工具（不改正式门槛）",
+    "G: 真人验证诊断记录器（training/joint/diagnostics.mjs，不改默认 AI）"
+  ]
+}

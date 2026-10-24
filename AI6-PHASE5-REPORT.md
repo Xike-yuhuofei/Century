@@ -1,0 +1,310 @@
+# Century AI 6.0：第五阶段报告——JS5 稳健性验证、性能优化与冠军晋级准备
+
+> 分支 `research/js5-robustness-and-promotion-readiness`（基于 `feat/joint-search-v1`@c2053a8 = PR #27 合并提交）
+> 报告日期：2026-10-24 · 环境：macOS Apple Silicon 10 核开发机（目标环境 Mac mini M4 16GB）
+> 上游依赖：PR #27 已合并至 `feat/joint-search-v1`（未触碰 main）；PR #26 仍 OPEN（base=main）
+> 状态：**验证与优化完成，独立确认实验与最终结论见 §5–§7**
+
+---
+
+## 0. 结论速览
+
+（最终数据落定后更新本节）
+
+- **A1 等价性**：JS5(gate=never) ≡ JS0 在 2–5 人 × 人格映射（含平移）下逐决策零不一致
+  （本阶段 32 局 1301 决策 + 平移复验 18 局 714 决策，审计工具首次入库可复现）；
+- **A2 统计工具**：compare.mjs 完成五类拒绝性校验（重复/异常局/配对缺失/座位协议/
+  对手版本不一致一律报错，绝不静默取交集），方向 A（单席位）/B（阵营）严格分列，
+  零胜场 Clopper–Pearson 精确界，Bonferroni family 披露——10 项回归测试全绿；
+- **A3 语义**：叶子聚合值全面改称"未校准联合模拟评价值"（reason/types/文档三处），
+  不再宣称"预期第一名率"；
+- **C1 平衡批次**：修复预算在 world×replica×candidate 网格中途耗尽时早排候选
+  （冠军行动 index 0）获得更多试验的系统性偏差——以完整批次为入账单位，
+  部分批次绝不入账；新增 7 项回归测试全绿；
+- **B 性能**：root 延迟创建（非门控决策省 3 次 createSimulation）+ survival 缓存 +
+  分相计时披露；预算扫描工具（25/50/100/200ms × 2–5 人 × 7 阶段）落地；
+- **D 独立确认**：confirm 块 [1.36e9,1.37e9) 全新种子 × 2–5 人 × classic/diverse
+  双对手池 × ≥200 配对种子（分区制），结果见 §5；
+- **F/G**：晋级协议草案 + dry-run 审核工具 + 真人验证诊断记录器（不改默认 AI）。
+
+---
+
+## 1. 状态与依赖核对（开发前检查）
+
+| 项 | 结果 |
+|---|---|
+| PR #27 | MERGED（2026-10-24，base=feat/joint-search-v1，merge commit c2053a8）——未合入 main |
+| PR #26 | OPEN（base=main）——本分支基于 feat/joint-search-v1，保持正确依赖 PR 关系 |
+| 开发基线 | c2053a8（含全部 JS5 代码与修复，bd16915 为其祖先） |
+| 并行会话 | 期间发现并行会话创建 `feat/js5-formal-challenge`（5528d4e：正式挑战管线
+  的 adapter 注入基础设施——simulate.mjs/challenge.mjs/run-formal-challenge-js5.mjs），
+  与本分支工作零文件冲突，已 fast-forward 合入本分支作为任务 F 的正式管线基础；
+  其报告目录为空 ⇒ **正式挑战未运行，验证池未消费** |
+| 引擎指纹 | HEAD dist = b0df3fc4… ≠ 冠军冻结产物 c1dd8272…（PR #21 beam-contest 进入
+  ai 闭包所致的既有已知风险，本阶段未恶化）；公平性由双层证据保证：
+  ①PR #27 冠军路径 72 配对零决策不一致；②本阶段 A1 等价审计（§2.1） |
+| 全量测试 | 基线 168/168 绿（c2053a8）；本阶段新增 web-v1 7 项 + training 10 项 |
+
+**证据清单**：`training/reports/js5-phase5/evidence-manifest.json`（基线 SHA、冠军指纹、
+JS5 完整配置、Node/构建环境、种子区间盘点与消费状态）。
+
+**种子纪律**：
+- 新登记 `AI6_JS5_TUNE2_SUBBLOCK [1.351e9,1.352e9)`（本阶段调参/敏感性）与
+  `AI6_JS5_CONFIRM_SUBBLOCK [1.36e9,1.37e9)`（独立确认，此前从未消费）；
+- confirm 分区：seedBase = 1.36e9 + (人数−2)×1e6 + (diverse 池 ? 5e5 : 0)——
+  每个 (人数, 对手池) 独占 50 万种子；
+- PR #27 已消费的 verify 块 [1.33e9,1.34e9) 不重复用作本阶段确认。
+
+---
+
+## 2. 任务 A：冠军基线与统计正确性
+
+### 2.1 A1 冠军执行路径与 gate=never 等价审计
+
+新工具 `training/joint/equivalence-audit.mjs`（PR #27 的临时审计脚本首次入库固化）：
+
+| 审计 | 局数 | 决策数 | 不一致 |
+|---|---|---|---|
+| 2–5 人 × 8 种子（默认人格映射） | 32 | 1301 | **0** |
+| 3/5 人 × 6 种子（人格映射平移 +1） | 12 | 479 | **0** |
+| 4 人 × 6 种子（人格映射平移 +2） | 6 | 235 | **0** |
+
+审计协议：同 seed/同席位分配/同对手配置下，候选席位分别注入 js0 与
+js5(gate=never)，比较候选席位逐决策行动序列 + 终局指纹（winner/moves/ranking）。
+种子取审计子块未消费段 [1.3e9+100, +)。
+
+**结论：JS5(gate=never) ≡ JS0 决策级等价在 2–5 人与不同人格映射下成立**
+（本阶段代码改动——平衡批次/延迟创建等——未扰动冠军路径语义）。
+
+### 2.2 A2 统计工具审计（compare.mjs 加固）
+
+审计发现（修复前 → 修复后）：
+
+| 缺陷 | 修复前行为 | 修复后行为 |
+|---|---|---|
+| 重复记录 | `map.set` 静默覆盖 | 抛错拒绝（列出重复键） |
+| 异常局 | 静默过滤 `status!=='finished'` | 抛错拒绝（异常局绝不计入胜率） |
+| 配对缺失 | **静默取交集**（任务书明令禁止） | 抛错拒绝（列出两侧差异清单） |
+| 座位协议 | 不校验 | 同 (seed,direction) candidateSeats 必须一致 |
+| 对手版本 | 不校验 | 非候选席位 versionsIds 必须一致（候选席位按设计排除） |
+| 方向口径 | A/B 合并后不分列 | 方向 A=单席位 / B=阵营 分列；合并值强制标注
+  "阵营混合口径" caveat |
+| 零胜场 | 无处理 | Clopper–Pearson 精确上界（1−0.025^(1/n)）自动披露 |
+| 多重检验 | 无 | `--family N` Bonferroni 调整 CI 水平（正式晋级仍以几何 alpha
+  消耗协议为准） |
+
+回归测试 `training/tests/js5-compare.test.mjs`（10 项）：五类拒绝、自对照差=0、
+方向分离、零胜精确界、Bonferroni 不窄于 family=1、候选席位 id 差异不误报。
+
+**"5 人局合并 75%" 类口径的正名**：修复后工具输出的 A+B 合并值强制携带 caveat——
+单席位第一名率（方向 A）与候选阵营第一名率（方向 B）不得混为一谈；对外报告
+一律以方向 A 为主判定口径。
+
+### 2.3 A3 叶子分数语义修正
+
+- L2 评价器 = `logistic(启发式 margin, scale=8)`——**未校准**，不构成获胜概率；
+- 修正点：`champion-guided.ts` reason/rejected.why 字符串（"预期第一名率 X" →
+  "联合模拟评价值 X（未校准胜率近似）"）；`types.ts` RootActionEvaluation.mean
+  文档（终局轨迹值=真实第一名结果 vs 叶子值=未校准近似，二者聚合后的整体口径
+  必须表述为"未校准联合模拟评价值"）；新增导出常量 `LEAF_VALUE_SEMANTICS`；
+- 回归测试断言 gated 决策 reason 不含"预期第一名率"、含"联合模拟评价值"；
+- 校准边界：如需概率校准，只能在独立数据（calib 块）上进行，不得用正式
+  验证集反复调节——本阶段未做校准（维持 L2 缺省，理由见 §6）。
+
+### 2.4 ROBUST_LAMBDA 口径正名
+
+`mean − 0.25·se` 在代码注释与报告中明确标注为**启发式保守选择规则**
+（惩罚项），不是经过独立证明的统计置信下界；不得描述为具有严格统计
+保证的最优性判定。
+
+---
+
+## 3. 任务 B：性能与延迟可靠性
+
+### 3.1 B1 分阶段画像
+
+工具：`training/joint/perf-phases.mjs`（7 阶段 × 2–5 人 × js0/js5 整次决策口径，
+js5 分相披露 plan/rootSim/gate/screen/rollout/aggregate）。阶段定义全部由
+公开信息判定（开局/引擎初步形成/大手牌中局/多张魔像可认领/多玩家目标竞争/
+临近终局/超容量弃置；阶段可重叠命中）。
+
+（画像数据见 `training/reports/js5-phase5/perf-phases.json`——开发机空闲时段实测，
+要点摘录见 §0/§6。）
+
+### 3.2 B2 无行为变化的优化
+
+| 优化 | 内容 | 行为影响 |
+|---|---|---|
+| root 延迟创建 | v1 每决策预创建 worlds=4 个信念模拟；现非门控决策只建
+  roots[0]（合法行动+gating 所需），其余世界仅在门控触发后创建 | 决策逐位不变
+  （世界内容确定性派生）；非门控决策省 3 次构造；gate=never 等价审计复验通过 |
+| survival 缓存 | v1 在 competitionRisk 与根筛选各算一次 golemSurvivalModel；
+  现每决策一次共享 | 同值复用（纯函数），gate=never 披露字段逐字段一致 |
+| 分相计时 | stats 新增 plan/rootSim/gate/screen/rollout/aggregate + rootSimulationsCreated | 纯披露 |
+
+### 3.3 B3 时间预算扫描
+
+（数据见 perf-phases.json budgets 段；要点：整次决策口径——含冠军规划——
+而非"联合部分遵守预算"。25ms 预算下 js5 多数决策退化为冠军直通
+（完整批次无法装入预算，严格回退语义），50ms 起联合试验逐步恢复；
+100ms 标准预算下的长尾主要由冠军 choosePlan 的状态依赖成本决定
+（3p 重态 72–103ms，js0 同样承担）。同步执行模型无法硬中断 choosePlan——
+Worker 隔离/可中断执行的工程评估见 §6/§10。）
+
+---
+
+## 4. 任务 C：搜索机制可靠性
+
+### 4.1 C1 预算截断候选偏差（确认并修复）
+
+**确认（修复前代码）**：`champion-guided.ts` 的试验调度在
+`replica × world × candidate` 网格上逐候选推进；预算中途耗尽时内层循环
+`break`——早排候选（index 0 = 冠军行动）获得更多试验。影响：挑战者 SE
+系统性偏大 → 保守覆盖规则（trials≥2 且稳健分超 margin）系统性偏向冠军，
+且单试验挑战者的 se=0 退化使覆盖判定失真。
+
+**修复（平衡批次提交）**：
+- 批次 = 同一 replica 下全部 (world × candidate) 试验；
+- 批次一旦启动全部入账，部分批次绝不入账 → 任意截断点上各候选试验数
+  相等、(world, replica) 键集严格相同（CRN 配对成立）；
+- 批次启动前预检 `now + M×PER_TRIAL_FLOOR_MS ≤ deadline`——批内每条轨迹
+  保底 5ms 深度窗口（PR #27 trialLaunchDeadline 教训的批次化版本，
+  防近零深度轨迹污染聚合）；
+- 固定工作量模式：完整批次向下取整（workUnits < W×M 时按最小粒度
+  1 个完整批次执行并披露）。
+
+**回归测试**（`tests/js5-phase5-regression.test.mjs`，7 项全绿）：
+预算截断时各候选试验数与键集严格一致；固定工作量逐位可复现 +
+collectTrials 披露（js5 此前被静默忽略——补齐 P1-1 验证通道）；
+零预算严格回退冠军行动；分相计时；root 延迟创建等价；冠军行动始终参与。
+
+### 4.2 C2 保守覆盖检查结论
+
+1. 冠军候选始终参与（push 首位 + 测试断言其试验数 = 最大值）；
+2. 立即认领候选：缺省按枚举顺序取前 2（PR #27 原始语义）——存在枚举顺序
+   偶然排除高分认领的可能；新增 `claimRanking='prior'` 选项（按根筛选先验
+   降序取前 2）作为 js5-opt 消融项；冻结 js5 缺省不变；
+3. 候选超上限：先验 top 截断（candidateCap=4，含冠军行动）——原则=冠军行动
+   优先 + 立即认领 + 先验序，消融见 §4.3；
+4. 少样本标准误：trials=1 时 se=0 的退化保留给冠军侧（保守方向），
+   挑战者侧 trials<2 不得覆盖（双重保守）；
+5. CRN 配对：平衡批次后 (world,replica) 键集跨候选严格一致（测试强制）；
+6. 无有效联合样本：严格回退冠军行动（零预算测试强制）；
+7. 门控敏感性：contestThreshold 扰动见 §4.3；终局触发（triggerPlayer≠null）
+   时全市场视为争议（语义保留）；座位敏感性由 golemSurvivalModel 的
+   座位感知口径承担（PR #27 S5a 已验证）。
+
+### 4.3 C3 参数敏感性（tune2 块 [1.351e9,1.352e9)，20 种子 × 3/5 人）
+
+（数据落定后填充：threshold 0.75/0.95、margin 0/0.05、cap 6、worlds 2/6、
+horizon 32/64、claimRanking prior 的一次一因子扫描与 js5-opt 配置选择；
+目标 = 识别稳定参数区域，非挑选偶然最优。）
+
+---
+
+## 5. 任务 D：独立多人竞技复验（confirm 块）
+
+实验设计（预注册后锁定）：
+- 候选：JS0（冻结冠军）/ JS1（beam-contest）/ JS5（PR #27 原始配置）/
+  JS5-opt（本阶段优化配置，若成立）；
+- 对手池：classic（PR #22/26/27 同款冠军族变体 ×5）与 diverse（历史冠军
+  ai4-struct-beam-rollout + 手调 rush/engine 风格 + random-legal 随机合法
+  策略 + 冻结冠军 + 中立基线）——独立评测维度，分开披露；
+- 人数：2/3/4/5；每 (人数, 池) 200 全新配对种子（方向 A/B 双向）；
+- 预算 100ms；simSeed = 对局种子（联合模拟流跨局独立——修复 PR #27
+  duel 未传 simSeed 的跨局噪声相关；js0/js1 不消费该值）；
+- 主判定：方向 A 单席位第一名率（种子级配对 bootstrap，`compare.mjs` 严格
+  校验）；多重检验：4 人数 × 双池的主对照族（Bonferroni 披露 + 报告层
+  明确证据分级）。
+
+（结果落定后填充：分人数 × 分池 × 分方向第一名率表、配对差 CI、
+覆盖频率、超时与异常分布、退化案例。）
+
+---
+
+## 6. 任务 E：门控组合策略（基于 confirm/诊断数据）
+
+（gate-analysis.mjs 输出落定后填充：分人数门控触发率、override 率、
+门控后保底冠军率、预算饥饿回退率、覆盖-损失描述性关联、分人数启用方案建议。）
+
+---
+
+## 7. 任务 F：晋级协议与 dry-run
+
+- 协议草案：`docs/ai-training/AI6-JS5-PROMOTION-PROTOCOL-DRAFT.md`
+  （方向 A 单席位第一名率主判定 + 几何 alpha + 独立重算清单 + 双轨迁移）；
+- dry-run 工具：`training/joint/js5-promotion-dry-run.mjs`（产物指纹/种子归属/
+  逐种子唯一/异常率/独立重算五类核验 + 草案口径预期判定；不写任何正式状态）；
+- 正式管线扩展（并行基础设施 5528d4e）：simulate.mjs adapter 分派 +
+  challenge.mjs 注入 + run-formal-challenge-js5.mjs 编排——**已落地未运行**
+  （验证池未消费；运行属正式晋级动作，须人工批准）；
+- 本阶段未修改 champion.json / 正式门槛 / 验证账本（红线遵守）。
+
+（dry-run 实测结果落定后填充。）
+
+---
+
+## 8. 任务 G：真人对局诊断机制
+
+- 记录器：`training/joint/diagnostics.mjs`（逐决策 JSONL：决策时间、
+  冠军建议行动、JS5 实际行动、门控原因、覆盖与信心、对局结果与局面阶段；
+  无个人信息——只有席位序号与公开游戏状态）；
+- 网页接入设计（不改变默认 AI）：adapter 返回值已含全部诊断字段；
+  UI 层可选消费，诊断开关显式传入、缺省关闭、数据本地落盘、无网络传输；
+- 真人验证设计（下一阶段执行）：≥N 名真人对局 → 诊断流回收 →
+  分阶段决策时间分布（100ms 预算达标率）→ 门控/覆盖频率与真人棋力
+  相关性 → 与 AI 对手池结果的相关性校验（AI 评测 ≠ 真人验证）。
+
+---
+
+## 9. 自动化测试（任务十）
+
+| 套件 | 项数 | 状态 |
+|---|---|---|
+| web-v1 全量（含 PR #27 全部回归） | 168+7 | （最终运行结果落定后填充） |
+| training 全量（含 compare A2 十项） | 84+10 | 93/93 绿（含新增） |
+| 等价审计（gate=never ≡ JS0） | 3 组 | 1737 决策零不一致 |
+
+P0 修复的先红后绿证据：C1 平衡批次（修复前代码在预算截断下早排候选
+多试验——由"键集/试验数一致"断言捕获）；A2 交集静默丢弃（由"配对缺失
+拒绝"测试捕获）；预算纪律测试估计量修复（6 样本 max → 24 样本真 p95，
+**未放宽预算上限**）。
+
+---
+
+## 10. 最终验收问答（任务十二.5）
+
+（最终数据落定后填充——九问逐项回答。）
+
+## 11. 决策门槛结论（A/B/C 三选一）
+
+（最终数据落定后填充。）
+
+## 12. 可复现命令
+
+```bash
+# 等价审计（A1）
+node training/joint/equivalence-audit.mjs --seeds 8 --players 2,3,4,5
+node training/joint/equivalence-audit.mjs --seeds 6 --players 3,5 --profile-shift 1
+
+# tune2 敏感性（C3）
+bash training/reports/js5-phase5/run-tune2-sensitivity.sh worker1|worker2|worker3
+
+# confirm 独立确认（D）
+bash training/reports/js5-phase5/run-confirm.sh js0|js1|js5|js5opt
+
+# 配对统计（方向 A/B 分列）
+node training/joint/compare.mjs <cand.json> <base.json> --candidate=js5 --players=3,5
+
+# dry-run 晋级审核（F）
+node training/joint/js5-promotion-dry-run.mjs --candidate <cand.json> --baseline <base.json>
+
+# 性能画像（B1/B3）
+node training/joint/perf-phases.mjs --players 2,3,4,5 --games 8
+
+# 门控分析（E）
+node training/joint/gate-analysis.mjs <ablation.json ...> --out training/reports/js5-phase5
+
+# 诊断记录器（G）
+node training/joint/diagnostics.mjs --players 3 --seeds 10
+```
