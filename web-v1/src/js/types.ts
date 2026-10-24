@@ -46,7 +46,10 @@ export type RootActionEvaluation = {
   /** 根行动先验（冠军启发式筛选分，未归一）。 */
   prior: number;
   trials: number;
-  /** 联合模拟聚合值（终局第一名率或叶子估值的均值，值域约 [0,1]）。 */
+  /** 联合模拟聚合值（均值，值域约 [0,1]）。语义（A3，不得混淆）：
+   * 到达终局的轨迹值 = 真实第一名结果（1/0）；未到终局的叶子值 = L0–L3
+   * 启发式胜率近似（logistic 映射，未校准）——整体是"未校准联合模拟
+   * 评价值"，不是经校准的预期第一名率。 */
   mean: number;
   /** 均值标准误（trials=0 时为 null）。 */
   se: number | null;
@@ -80,6 +83,15 @@ export type JointDecisionStats = {
   candidateCount: number;
   /** 信念世界数（P1-1 多世界采样）。 */
   worldsUsed: number;
+  /** 分相计时（第五阶段 B1 画像；champion-guided 填写，planner 路径缺省为 undefined）。 */
+  planMs?: number;
+  rootSimMs?: number;
+  gateMs?: number;
+  screenMs?: number;
+  rolloutMs?: number;
+  aggregateMs?: number;
+  /** 实际创建的根信念模拟数（B 优化披露：非门控决策 = 1，门控 = worlds）。 */
+  rootSimulationsCreated?: number;
 };
 
 export type JointDecision = {
@@ -139,8 +151,10 @@ export interface JointPlanner {
 // === 版本化算法适配器（任务书 §二：新候选使用明确版本化的算法适配器） ===
 
 /** JS 编号为本阶段消融编号（JS0–JS5），与 PR #22 评测阶段 B0/B1/B2 无关。
- * JS5 = PR #26 修复后的 Champion-Guided Joint Search（champion-guided 结构）。 */
-export type JointVersionId = 'joint-js1' | 'joint-js2' | 'joint-js3' | 'joint-js4' | 'joint-js5';
+ * JS5 = PR #26 修复后的 Champion-Guided Joint Search（champion-guided 结构）。
+ * joint-js5-opt = AI6 第五阶段优化配置（champion-guided 结构 + tune2 块
+ * 选出的选项覆盖；配置经评测选项显式注入并记录于报告 jointOptions）。 */
+export type JointVersionId = 'joint-js1' | 'joint-js2' | 'joint-js3' | 'joint-js4' | 'joint-js5' | 'joint-js5-opt';
 
 export type JointVersionSpec = {
   id: JointVersionId;
@@ -171,6 +185,10 @@ export const JOINT_VERSIONS: Record<JointVersionId, JointVersionSpec> = {
   },
   'joint-js5': {
     id: 'joint-js5', label: 'JS5 冠军引导选择性联合搜索（竞争门控+保守覆盖）', kind: 'champion-guided',
+    defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
+  },
+  'joint-js5-opt': {
+    id: 'joint-js5-opt', label: 'JS5-opt 第五阶段优化配置（champion-guided + tune2 选项覆盖）', kind: 'champion-guided',
     defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
   },
 };
