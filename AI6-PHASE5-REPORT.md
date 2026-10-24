@@ -157,7 +157,11 @@ js5 分相披露 plan/rootSim/gate/screen/rollout/aggregate）。阶段定义全
 
 分相（3p 大手牌中局均值）：plan 17.8ms + rollout 92.1ms + 其余 <1ms——
 联合试验是增量成本主体；冠军规划本身的重态尾部（PR #27 实测 72–103ms）
-仍是 3p/5p 长尾来源（js0 同样承担）。
+仍是 3p/5p 长尾来源（js0 同样承担）。分相归属说明（任务 B1 九个计量点）：
+叶子评价包含于 rollout 相内（每轨迹终点一次，微秒级）、最终合法性确认在
+adapter 层（applyAction 试探，微秒级）——两者均非成本主体，故未单列；
+其余七相（观察构建含于 rootSim、plan、legalGen、gate、screen、rollout、
+aggregate）全部独立计量披露。
 
 ### 3.2 B2 无行为变化的优化
 
