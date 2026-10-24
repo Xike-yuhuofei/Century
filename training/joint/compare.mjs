@@ -61,6 +61,8 @@ function winMap(path, seatCount, candidateId) {
 }
 
 /** 配对完整性核验（A2）：键集相等、座位分配协议一致、对手版本配置一致。
+ * 对手配置比较只针对非候选席位（候选席位 id 按实验设计必然不同——
+ * 候选正是被比较的对象）；候选席位本身允许不同。
  * 返回排序后的配对种子列表；任何不一致抛错并列出具体差异。 */
 function validatePairing(cand, base, labelCand, labelBase) {
   const candKeys = [...cand.keys()].sort();
@@ -76,8 +78,13 @@ function validatePairing(cand, base, labelCand, labelBase) {
     if (JSON.stringify(c.candidateSeats) !== JSON.stringify(b.candidateSeats)) {
       throw new Error(`座位分配协议不一致 @${k}：${labelCand}=${JSON.stringify(c.candidateSeats)} vs ${labelBase}=${JSON.stringify(b.candidateSeats)}`);
     }
-    if (JSON.stringify(c.versionsIds) !== JSON.stringify(b.versionsIds)) {
-      throw new Error(`对手版本配置不一致 @${k}：${labelCand}=${JSON.stringify(c.versionsIds)} vs ${labelBase}=${JSON.stringify(b.versionsIds)}——两侧必须使用同一对手池与轮换协议`);
+    // 对手配置 = 非候选席位的 versionsIds（候选席位按设计排除）。
+    const candSeats = new Set(c.candidateSeats ?? []);
+    const candOpp = (c.versionsIds ?? []).filter((_, i) => !candSeats.has(i));
+    const baseSeats = new Set(b.candidateSeats ?? []);
+    const baseOpp = (b.versionsIds ?? []).filter((_, i) => !baseSeats.has(i));
+    if (JSON.stringify(candOpp) !== JSON.stringify(baseOpp)) {
+      throw new Error(`对手版本配置不一致 @${k}：${labelCand}=${JSON.stringify(candOpp)} vs ${labelBase}=${JSON.stringify(baseOpp)}——两侧必须使用同一对手池与轮换协议`);
     }
   }
   return [...new Set(candKeys.map(k => k.split(':')[0]))].map(Number).sort((a, b) => a - b);

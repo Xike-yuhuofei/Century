@@ -21,12 +21,15 @@ import { pairedComparison, pairedComparisonByDirection, pairedComparisonDirectio
 import { clopperPearsonBound } from '../joint/exact-bounds.mjs';
 
 function fixtureGame(seed, direction, over = {}) {
+  const candidateSeats = direction === 'A' ? [seed % 2] : [0, 1].filter(s => s !== seed % 2);
+  // versionsIds 候选 id 放在候选席位索引（镜像真实 duel 数据结构）。
+  const versionsIds = candidateSeats.includes(0) ? ['cand', 'op1'] : ['op1', 'cand'];
   return {
-    seed, direction, candidateSeats: direction === 'A' ? [seed % 2] : [0, 1].filter(s => s !== seed % 2),
+    seed, direction, candidateSeats,
     status: 'finished', won: over.won ?? false, meanRank: over.meanRank ?? 1,
     meanScore: over.meanScore ?? 10, scoreDiff: over.scoreDiff ?? 0,
     winnerSeat: over.winnerSeat ?? 0, moves: 90,
-    versionsIds: over.versionsIds ?? ['cand', 'op1', 'op2'],
+    versionsIds: over.versionsIds ?? versionsIds,
     ...over,
   };
 }
@@ -107,8 +110,26 @@ test('A2 拒绝座位分配协议不一致', () => {
 test('A2 拒绝对手版本配置不一致', () => {
   const dir = mkdtempSync(join(tmpdir(), 'js5cmp-'));
   try {
-    const { candPath, basePath } = makePair(dir, { mutate: { base: (seed) => (seed === 1_400_000_002 ? { versionsIds: ['cand', 'opX', 'op2'] } : {}) } });
+    // seed 1400000002 为偶数 → 方向 A candidateSeats=[0]，index 0 为候选席位
+    // （按设计排除）；变异施加在 index 1（对手席位）→ 必须被拒绝。
+    const { candPath, basePath } = makePair(dir, { mutate: { base: (seed, direction) => (seed === 1_400_000_002 && direction === 'A' ? { versionsIds: ['cand', 'opX'] } : {}) } });
     assert.throws(() => pairedComparison(candPath, basePath, { seatCount: 2, candidateId: 'js5' }), /对手版本配置不一致/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+test('A2 候选席位 id 差异不构成配置不一致（候选按设计不同）', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'js5cmp-'));
+  try {
+    // 模拟真实情形：两侧候选 id 不同（cand 文件 'cand' vs base 文件
+    // 'js0-frozen-champion'），对手席位 id 一致 → 配对必须通过。
+    const { candPath, basePath } = makePair(dir);
+    const doc = JSON.parse(readFileSync(basePath, 'utf8'));
+    for (const g of doc.cells[0].games) {
+      g.versionsIds = g.versionsIds.map((id, i) => (g.candidateSeats.includes(i) ? 'js0-frozen-champion' : id));
+    }
+    writeFileSync(basePath, JSON.stringify(doc));
+    const r = pairedComparison(candPath, basePath, { seatCount: 2, candidateId: 'js5', baselineId: 'js0', iterations: 200 });
+    assert.equal(r.seeds, 20);
   } finally { rmSync(dir, { recursive: true, force: true }); }
 });
 
