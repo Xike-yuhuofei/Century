@@ -48,16 +48,22 @@ test('C1 平衡批次：预算截断时各候选试验数与 (world,replica) 键
     const g = JSON.parse(JSON.stringify(g0));
     // 60ms 预算：通常完成 ≥1 个完整批次且在网格中途截断（v1 在此产生偏差）。
     const r = chooseJointAction(g, { version: 'joint-js5', budgetMs: 60, worlds: 4, collectTrials: true, simSeed: 17 });
+    // evaluations 通道的均衡断言（不依赖 collectTrials——v1 代码也可观察，
+    // 构成 C1 修复"先红后绿"证据：修复前代码在预算中途截断时为红）。
+    const evalTrials = (r.joint.evaluations ?? []).filter(e => e.trials > 0).map(e => e.trials);
+    if (evalTrials.length >= 2) {
+      for (const t of evalTrials) assert.equal(t, evalTrials[0], `评估通道候选试验数不等：${evalTrials.join(',')}（C1 平衡批次违规）`);
+    }
     const trials = r.joint.trials ?? [];
-    if (!trials.length) continue; // 预算不足零批次（严格回退语义）时无可断言
+    if (!trials.length) continue; // 无披露（v1）或零批次（严格回退）时跳过细粒度断言
     const byCandidate = new Map();
     for (const t of trials) {
       const key = `${t.world}:${t.replica}`;
       if (!byCandidate.has(t.actionIndex)) byCandidate.set(t.actionIndex, new Set());
       byCandidate.get(t.actionIndex).add(key);
     }
-    const counts = [...byCandidate.values()].map(s => s.size);
     assert.equal(r.joint.stats.rollouts, trials.length, 'rollouts 与披露试验数不一致');
+    const counts = [...byCandidate.values()].map(s => s.size);
     for (const c of counts) assert.equal(c, counts[0], `批次截断后候选试验数不等：${counts.join(',')}（C1 平衡批次违规）`);
     // 键集跨候选完全一致（CRN 配对成立的前提）。
     const keysets = [...byCandidate.values()].map(s => [...s].sort().join(','));

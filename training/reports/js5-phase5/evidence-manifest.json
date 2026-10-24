@@ -27,8 +27,9 @@
   },
 
   "engineBuild": {
-    "currentHeadBundleSha256": "b0df3fc49bfe8589ae5f1b792270821c6f7a81183439c3bbe6a4e4a89193d0a8",
-    "driftDisclosure": "HEAD 产物指纹 ≠ 冠军冻结指纹（已知既有风险，自 PR #21 beam-contest 变体进入 ai 闭包起存在；PR #26/27 未恶化）。本阶段公平性由两层补偿证据保证：(1) PR #27 审计——冠军执行路径在 HEAD dist 上 72 配对零决策不一致；(2) js0/js1 重跑与 PR #26 历史数字逐位一致。本阶段任务 A1 将把 gate=never ≡ JS0 逐决策审计扩展到 3/4 人。",
+    "currentHeadBundleSha256": "9ed80290ef107439ff6d248ac203b2ffcab0649081764fd618fa81ead634f2b2",
+    "fingerprintSemanticsChange": "第五阶段发现：并行会话 4147439（15:17）把 adapter 接线进 ai/decision.ts 后，engineBundleSha256 闭包包含 js/ 全部模块（此前 b0df3fc4 时代闭包不含 js/）。js/ 模块改动自此进入指纹。",
+    "driftDisclosure": "当前 9ed80290 ≠ 冠军冻结指纹 c1dd8272（b029567 构建；PR #21 beam-contest 进入 ai 闭包所致的既有已知风险，本阶段未恶化）。本阶段公平性证据链：(1) PR #27 审计——冠军执行路径在 HEAD dist 上 72 配对零决策不一致；(2) 本阶段 A1 等价审计——gate=never ≡ JS0 共 2532 决策零不一致（5 组人格映射 × 2-5 人）；(3) confirm 对局重放取证——js0 双池 24/24 逐位复现（含跨 4147439 重建），js5 重放不稳定（4-6/12）且同代码连续重放自身不稳（4/12、4/12、5/12、6/12）⇒ 预算模式墙钟截断本质负载敏感而非代码错配",
     "ruleEngineDisclosure": "engine.ts 自冠军提交 b029567 起零变更（PR #26/27 git 佐证 + joint-fairness 测试强制 engineBundleSha256 不变性语义）"
   },
 

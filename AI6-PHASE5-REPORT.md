@@ -36,13 +36,19 @@
 | PR #27 | MERGED（2026-10-24，base=feat/joint-search-v1，merge commit c2053a8）——未合入 main |
 | PR #26 | OPEN（base=main）——本分支基于 feat/joint-search-v1，保持正确依赖 PR 关系 |
 | 开发基线 | c2053a8（含全部 JS5 代码与修复，bd16915 为其祖先） |
-| 并行会话 | 期间发现并行会话创建 `feat/js5-formal-challenge`（5528d4e：正式挑战管线
-  的 adapter 注入基础设施——simulate.mjs/challenge.mjs/run-formal-challenge-js5.mjs），
-  与本分支工作零文件冲突，已 fast-forward 合入本分支作为任务 F 的正式管线基础；
-  其报告目录为空 ⇒ **正式挑战未运行，验证池未消费** |
-| 引擎指纹 | HEAD dist = b0df3fc4… ≠ 冠军冻结产物 c1dd8272…（PR #21 beam-contest 进入
-  ai 闭包所致的既有已知风险，本阶段未恶化）；公平性由双层证据保证：
-  ①PR #27 冠军路径 72 配对零决策不一致；②本阶段 A1 等价审计（§2.1） |
+| 并行会话 | 两次活跃贡献，均已合入本分支：①5528d4e（13:21）正式挑战管线 adapter
+  注入基础设施（simulate.mjs/challenge.mjs/run-formal-challenge-js5.mjs）；
+  ②4147439（15:17）适配器冠军休眠式接线（decision.ts 分派 + parameters.ts 校验
+  + 测试并发钉定 --test-concurrency=2——顺带解决墙钟测试的并发争用误报）。
+  其接线为休眠式（参数无 adapter 字段时冠军路径逐字节不变，其测试 + 本阶段
+  A1 审计 + js0 24/24 重放三重验证）；**正式挑战未运行，验证池未消费** |
+| 引擎指纹 | 本阶段发现指纹语义变化：并行会话 4147439（15:17）把 adapter 接线进
+  `ai/decision.ts`，此后指纹闭包**包含 js/ 全部模块**。b0df3fc4…（PR-25 时代，
+  闭包不含 js/）→ 9ed80290…（当前，含 js/）。公平性证据链：
+  ①PR #27 冠军路径 72 配对零决策不一致；②本阶段 A1 等价审计 2532 决策零不一致；
+  ③**confirm 对局重放取证**——js0 在 classic/diverse 双池 24/24 逐位复现
+  （含跨 4147439 重建）；js5 重放 4–6/12 且同代码连续重放自身 4/12、4/12、
+  5/12、6/12 不稳 ⇒ 预算模式墙钟截断本质负载敏感（非代码错配） |
 | 全量测试 | 基线 168/168 绿（c2053a8）；本阶段新增 web-v1 7 项 + training 10 项 |
 
 **证据清单**：`training/reports/js5-phase5/evidence-manifest.json`（基线 SHA、冠军指纹、
@@ -280,6 +286,11 @@ cap 6 一致负向（否决）。**js5-opt 冻结 = 冻结参数 + claimRanking=
 
 零异常（js0/js1/js5/js5-opt × 2–5 人 × 双向 = 12,800 局全部 finished）。
 
+负载不对称披露：classic 轮在 4 个对局进程并发下运行、diverse 轮在 2 个下运行
+——js5 为墙钟预算敏感算法，classic 池的 js5 试验预算更紧（其优势估计因此
+**偏保守**）；js0/js1 为负载不敏感算法；池内配对比较不受影响，跨池数值
+不直接可比（池本身即不同实验维度）。
+
 **js5（PR #27 配置 + C1 平衡批次修复）vs js0（冻结冠军）**：
 
 | 人数 | 方向A 差 (95% CI) | 方向A (family=4 校正 98.75% CI) | 方向B 差 (95% CI) | 平均分差 A (95% CI) | 判定 |
@@ -334,7 +345,10 @@ cap 6 一致负向（否决）。**js5-opt 冻结 = 冻结参数 + claimRanking=
 - 协议草案：`docs/ai-training/AI6-JS5-PROMOTION-PROTOCOL-DRAFT.md`
   （方向 A 单席位第一名率主判定 + 几何 alpha + 独立重算清单 + 双轨迁移）；
 - dry-run 工具：`training/joint/js5-promotion-dry-run.mjs`（产物指纹/种子归属/
-  逐种子唯一/异常率/独立重算五类核验 + 草案口径预期判定；不写任何正式状态）；
+  逐种子唯一/异常率/独立重算五类核验 + 草案口径预期判定；不写任何正式状态）。
+  已知边界：ablation 报告中的 engineBundleSha256 记录于**报告落盘时刻**的 dist
+  （进程启动时刻的 dist 可能不同）——本阶段以 confirm-replay-check.mjs 的
+  逐局重放取证补足该缺口（js0 24/24 逐位一致）。
 - 正式管线扩展（并行基础设施 5528d4e）：simulate.mjs adapter 分派 +
   challenge.mjs 注入 + run-formal-challenge-js5.mjs 编排——**已落地未运行**
   （验证池未消费；运行属正式晋级动作，须人工批准）；
