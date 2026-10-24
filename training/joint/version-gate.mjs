@@ -100,9 +100,10 @@ const POOL_MEMBERS = Object.fromEntries(
 
 function canaryDigests() {
   const digests = {};
-  const ids = [...Object.keys(FROZEN_VERSIONS).filter(id => {
-    try { frozenVersion(id); return true; } catch { return false; } // 实验占位跳过
-  }), ...Object.keys(POOL_MEMBERS)];
+  // 只登记冻结版本（frozen=true）+ 池成员——实验候选（js6）代码仍在演化，
+  // 其决策摘要不钉定（由单因子消融与确认实验约束），冻结版本漂移才拒绝实验。
+  const ids = [...Object.values(FROZEN_VERSIONS).filter(v => v.frozen).map(v => v.id),
+    ...Object.keys(POOL_MEMBERS)];
   for (const versionId of ids) {
     const perGame = [];
     for (const [seatCount, seeds] of Object.entries(CANARY_SEEDS)) {
@@ -252,8 +253,11 @@ async function main() {
       fail('canary-present', `${CANARY_PATH} 不存在——先运行 --bootstrap 登记并人工审查`);
     }
   } else {
-    const fpDiffs = Object.keys(recorded.fingerprints).filter(id => recorded.fingerprints[id] !== fingerprints[id]);
-    (fpDiffs.length ? fail : pass)('frozen-fingerprints', fpDiffs.length ? `冻结版本参数指纹漂移：${fpDiffs.join(',')}` : `${Object.keys(fingerprints).length} 个冻结版本指纹一致`);
+    // 指纹检查只约束冻结版本（frozen=true）——实验候选（js6）参数快照在研发期
+    // 有意可变（其行为由单因子消融与确认实验约束）；实验指纹仍记录于报告供溯源。
+    const frozenIds = Object.values(FROZEN_VERSIONS).filter(v => v.frozen).map(v => v.id);
+    const fpDiffs = frozenIds.filter(id => recorded.fingerprints[id] !== fingerprints[id]);
+    (fpDiffs.length ? fail : pass)('frozen-fingerprints', fpDiffs.length ? `冻结版本参数指纹漂移：${fpDiffs.join(',')}` : `${frozenIds.length} 个冻结版本指纹一致`);
     const digestDiffs = Object.keys(recorded.digests).filter(id => digests[id] !== undefined && recorded.digests[id] !== digests[id]);
     (digestDiffs.length ? fail : pass)('canary-digests', digestDiffs.length ? `决策级行为漂移：${digestDiffs.join(',')}（身份或实现被改动）` : `${Object.keys(digests).length} 个版本决策摘要一致`);
 

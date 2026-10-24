@@ -102,8 +102,13 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   // profile → profileName 映射对全部 joint 版本一致（champion-guided 的冠军基座
   // 与轨迹内策略都必须消费同一人格注入，否则评测席位人格失配——回归审计
   // gate=never vs js0 逐决策一致性强制此项）。
+  // 版本化 guided 缺省（AI6 第六阶段）：JOINT_VERSIONS[version].guided 在
+  // 显式注入之前合并（显式选项优先）——使 joint-js5-opt / joint-js6 等
+  // champion-guided 版本自描述（版本身份不依赖调用方记得传对选项）。
+  const guidedDefaults = (version as { guided?: Record<string, unknown> }).guided ?? {};
   const decision = version.kind === 'champion-guided'
     ? (planner as ReturnType<typeof createChampionGuidedPlanner>).decide(observation, {
+        ...guidedDefaults,
         ...options,
         profileName: options.profile?.name,
       } as ChampionGuidedSearchOptions)

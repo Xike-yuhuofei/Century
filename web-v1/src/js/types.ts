@@ -92,6 +92,8 @@ export type JointDecisionStats = {
   aggregateMs?: number;
   /** 实际创建的根信念模拟数（B 优化披露：非门控决策 = 1，门控 = worlds）。 */
   rootSimulationsCreated?: number;
+  /** racing 淘汰的非冠军候选累计数（C2 allocation=racing 披露；balanced 恒 0）。 */
+  racingEliminated?: number;
 };
 
 export type JointDecision = {
@@ -154,7 +156,7 @@ export interface JointPlanner {
  * JS5 = PR #26 修复后的 Champion-Guided Joint Search（champion-guided 结构）。
  * joint-js5-opt = AI6 第五阶段优化配置（champion-guided 结构 + tune2 块
  * 选出的选项覆盖；配置经评测选项显式注入并记录于报告 jointOptions）。 */
-export type JointVersionId = 'joint-js1' | 'joint-js2' | 'joint-js3' | 'joint-js4' | 'joint-js5' | 'joint-js5-opt';
+export type JointVersionId = 'joint-js1' | 'joint-js2' | 'joint-js3' | 'joint-js4' | 'joint-js5' | 'joint-js5-opt' | 'joint-js6';
 
 export type JointVersionSpec = {
   id: JointVersionId;
@@ -164,6 +166,9 @@ export type JointVersionSpec = {
    * + golemSurvivalModel 静态目标存活折扣，即 JS1 定义）；kind=joint：本模块联合搜索；
    * kind=champion-guided：JS5 冠军引导选择性联合搜索（champion-guided.ts）。 */
   defaults: Required<Pick<JointSearchOptions, 'variant' | 'opponentMode' | 'evaluator'>>;
+  /** champion-guided 专属缺省（AI6 第六阶段：JS6 版本化组合；显式注入可逐项覆盖）。
+   * Record 形态避免与 champion-guided.ts 的循环类型依赖；键 = ChampionGuidedOptions。 */
+  guided?: Record<string, unknown>;
 };
 
 export const JOINT_VERSIONS: Record<JointVersionId, JointVersionSpec> = {
@@ -190,5 +195,15 @@ export const JOINT_VERSIONS: Record<JointVersionId, JointVersionSpec> = {
   'joint-js5-opt': {
     id: 'joint-js5-opt', label: 'JS5-opt 第五阶段优化配置（champion-guided + tune2 选项覆盖）', kind: 'champion-guided',
     defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
+    guided: { claimRanking: 'prior' },
+  },
+  'joint-js6': {
+    id: 'joint-js6', label: 'JS6 第六阶段实验候选（champion-guided + C2 racing 预算分配 + C4 终局认领聚焦）',
+    kind: 'champion-guided',
+    defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
+    // JS6 组合 = JS5 语义 + racing 自适应预算分配 + 终局认领聚焦。
+    // worlds/candidateCap 保持 JS5 缺省（4/4）——单因子消融（任务 C1/C3）决定是否升级；
+    // 任何组件若无独立正向证据则从组合中移除（任务 E 纪律：只合并可靠正向证据）。
+    guided: { allocation: 'racing', endgameMode: 'claimFocus' },
   },
 };

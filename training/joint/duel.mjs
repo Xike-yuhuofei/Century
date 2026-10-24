@@ -70,8 +70,10 @@ function candidateVersion(id) {
     return { kind: 'frozen', id: v.id, versionId: v.id, parameters: v.parameters, structure: v.structure };
   }
   if (id === 'js6') {
-    const v = frozenVersion('joint-js6-experimental');
-    return { kind: 'frozen', id: v.id, versionId: v.id, parameters: v.parameters, structure: v.structure };
+    // JS6 实验候选：经联合适配器注入（jointOptions 的预算/选项覆盖对 joint
+    // 版本生效——预算矩阵与消融都走此路径）；版本身份 = JOINT_VERSIONS['joint-js6']
+    // （guided 缺省自描述）+ 注册表 joint-js6-experimental 溯源。
+    return { kind: 'joint', id: 'joint-js6', joint: 'joint-js6' };
   }
   const jointId = id.startsWith('joint-') ? id : `joint-${id}`;
   return { kind: 'joint', id: jointId, joint: jointId };
@@ -172,6 +174,8 @@ function runGame({ seed, seatCount, candidateSeats, candidate, opponents, jointO
           }
         }
         if (diagnostics) {
+          // 任务 H：诊断流含保守仲裁分数（覆盖过度/预算不足分类必需）。
+          const chosen = r.joint?.chosen ?? null;
           diagnostics.push({
             seed, seatCount, direction: candidateSeats.length === 1 ? 'A' : 'B', seat,
             turnNumber: game.turnNumber, phase: game.phase,
@@ -179,6 +183,9 @@ function runGame({ seed, seatCount, candidateSeats, candidate, opponents, jointO
             rollouts: r.joint?.stats?.rollouts ?? 0,
             gated: r.joint?.gated ?? null,
             action: r.action, championAction: r.joint?.championAction ?? null,
+            chosenMean: chosen?.mean ?? null, chosenSe: chosen?.se ?? null, chosenTrials: chosen?.trials ?? null,
+            candidateCount: r.joint?.stats?.candidateCount ?? null,
+            racingEliminated: r.joint?.stats?.racingEliminated ?? null,
             reason: r.reason,
             candidateSeats,
           });
@@ -359,6 +366,7 @@ function parseArgs() {
     budgetMs: undefined, workUnits: undefined, horizon: undefined, worlds: undefined,
     gateMode: undefined, evaluator: undefined, overrideMargin: undefined,
     contestThreshold: undefined, candidateCap: undefined, claimRanking: undefined,
+    allocation: undefined, racingDelta: undefined, endgameMode: undefined,
     outDir: resolve(REPO_ROOT, 'training/reports/joint-search-v1'), diagnostics: undefined,
     seedBase: undefined,
   };
@@ -380,6 +388,9 @@ function parseArgs() {
     else if (argv[i] === '--threshold') args.contestThreshold = Number(argv[++i]);
     else if (argv[i] === '--cap') args.candidateCap = Number(argv[++i]);
     else if (argv[i] === '--claim-ranking') args.claimRanking = argv[++i];
+    else if (argv[i] === '--allocation') args.allocation = argv[++i];
+    else if (argv[i] === '--racing-delta') args.racingDelta = Number(argv[++i]);
+    else if (argv[i] === '--endgame') args.endgameMode = argv[++i];
     else if (argv[i] === '--diagnostics') args.diagnostics = resolve(argv[++i]);
     else if (argv[i] === '--out') args.outDir = resolve(argv[++i]);
   }
@@ -451,6 +462,9 @@ async function main() {
     ...(args.contestThreshold !== undefined ? { contestThreshold: args.contestThreshold } : {}),
     ...(args.candidateCap !== undefined ? { candidateCap: args.candidateCap } : {}),
     ...(args.claimRanking !== undefined ? { claimRanking: args.claimRanking } : {}),
+    ...(args.allocation !== undefined ? { allocation: args.allocation } : {}),
+    ...(args.racingDelta !== undefined ? { racingDelta: args.racingDelta } : {}),
+    ...(args.endgameMode !== undefined ? { endgameMode: args.endgameMode } : {}),
   };
   const diagnostics = args.diagnostics ? [] : null;
   const cells = [];

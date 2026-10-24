@@ -142,12 +142,12 @@ export const FROZEN_VERSIONS: Record<FrozenVersionId, FrozenVersion> = {
   },
   'joint-js6-experimental': {
     id: 'joint-js6-experimental',
-    label: '第六阶段实验候选（占位：算法实现注册后才能解析；禁止未验证晋级）',
-    algorithm: 'experimental',
-    parameters: { id: 'joint-js6-experimental' } as AIParameters,
+    label: '第六阶段实验候选（champion-guided 结构 + joint-js6 组合：C2 racing + C4 claimFocus）',
+    algorithm: 'champion-guided-joint-search',
+    parameters: { ...JOINT_JS5_FROZEN_PARAMETERS, id: 'joint-js6-experimental', jointVersion: 'joint-js6' },
     structure: null,
-    originCommit: 'research/ai6-phase6-winrate-scaling（进行中）',
-    originEvidence: '待第六阶段实验填充（无证据前不得晋级）',
+    originCommit: 'research/ai6-phase6-winrate-scaling（进行中；机制组合见 JOINT_VERSIONS.joint-js6）',
+    originEvidence: '待第六阶段实验填充（无证据前不得晋级）；参数快照 = js5 冻结描述符 + jointVersion=joint-js6',
     frozen: false,
   },
 };

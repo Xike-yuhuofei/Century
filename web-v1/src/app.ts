@@ -170,7 +170,7 @@ function syncSetup() {
   if(submit) submit.disabled = !valid;
 }
 function playerCard(p: Game['players'][number], active: boolean): string {
-  return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${p.isAI ? 'AI' : p.id + 1}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
+  return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${p.isAI ? (aiThinking && active ? 'AI…' : 'AI') : p.id + 1}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
 }
 function golemCard(id: string, index: number, g: Game, stock = g.players[g.current].stock): string {
   const golem = GOLEM_BY_ID[id];
@@ -595,6 +595,30 @@ function control(target: HTMLElement) {
     if (type === 'confirm-discard') {action({type:'discard',colors:modal.colors});return;}
   }
 }
+/** AI 决策 Worker（AI6 第六阶段·任务 G2）：搜索预算 ≥500ms 时主线程同步
+ * 决策会冻结 UI——AI 思考移入 Worker（移动端既有模式），主线程保持响应。
+ * 纪律：一次决策只提交一次合法行动（Worker 回调一次性作废）；游戏状态
+ * 更新后不提交过期决策（game 引用 + 回合数 + 行动者三重过期守卫）；
+ * Worker 不可用（file:// 无 module Worker、构造失败）时回退同步决策。 */
+let botWorker: Worker | null = null;
+let botWorkerURL: string | null = null;
+let aiThinking = false;
+function stopBotWorker() {
+  if (botTimer !== null) { clearTimeout(botTimer); botTimer = null; }
+  botWorker?.terminate();
+  botWorker = null;
+  if (botWorkerURL) URL.revokeObjectURL(botWorkerURL);
+  botWorkerURL = null;
+  aiThinking = false;
+}
+function syncBotDecision(expectedTurn: number, expectedPlayer: number) {
+  stopBotWorker();
+  if (!game || game.turnNumber!==expectedTurn || game.current!==expectedPlayer || game.phase==='finished' || handoff || showHelp || showHistory || botPaused || !game.players[game.current]?.isAI) return;
+  try {
+    const choice = chooseAIAction(game);
+    action(choice.action);
+  } catch(e) { botPaused=true; notify(`AI 行动异常，已暂停：${e instanceof Error ? e.message : String(e)}`); }
+}
 function scheduleBot() {
   if (botTimer !== null) { clearTimeout(botTimer); botTimer=null; }
   if (!game || game.phase==='finished' || handoff || showHelp || showHistory || modal || botPaused || !game.players[game.current]?.isAI) return;
@@ -603,10 +627,34 @@ function scheduleBot() {
   botTimer = setTimeout(() => {
     botTimer=null;
     if (!game || game.turnNumber!==expectedTurn || game.current!==expectedPlayer || game.phase==='finished' || handoff || showHelp || showHistory || botPaused || !game.players[game.current]?.isAI) return;
+    const decisionGame = game;
     try {
-      const choice = chooseAIAction(game);
-      action(choice.action);
-    } catch(e) { botPaused=true; notify(`AI 行动异常，已暂停：${e instanceof Error ? e.message : String(e)}`); }
+      const embedded = document.getElementById('offline-ai-worker');
+      const url = embedded && embedded.textContent
+        ? URL.createObjectURL(new Blob([embedded.textContent], {type:'text/javascript'}))
+        : new URL('./js/ai-worker.js', import.meta.url).href;
+      if (embedded && embedded.textContent) botWorkerURL = url;
+      aiThinking = true;
+      render();
+      botWorker = new Worker(url, { type: embedded && embedded.textContent ? 'classic' : 'module' });
+      botWorker.onmessage = (event: MessageEvent) => {
+        stopBotWorker();
+        render();
+        // 过期决策守卫：对局对象已换代 / 回合已推进 / 行动者已变 → 丢弃。
+        if (!game || game !== decisionGame || game.turnNumber!==expectedTurn || game.current!==expectedPlayer || game.phase==='finished' || handoff || showHelp || showHistory || botPaused) return;
+        if (event.data?.error) { botPaused=true; notify(`AI 行动异常，已暂停：${event.data.error}`); render(); return; }
+        if (!event.data?.action) throw new Error('AI Worker 返回空行动');
+        action(event.data.action);
+      };
+      botWorker.onerror = (event: ErrorEvent) => {
+        event.preventDefault();
+        // Worker 不可用 → 回退主线程同步决策（保持正确性，牺牲响应性）。
+        syncBotDecision(expectedTurn, expectedPlayer);
+      };
+      botWorker.postMessage(decisionGame);
+    } catch {
+      syncBotDecision(expectedTurn, expectedPlayer);
+    }
   }, 480);
 }
 root.addEventListener('click', event => {

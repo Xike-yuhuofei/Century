@@ -24,19 +24,40 @@ import { mulberry32 } from '../lib/rng.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
 
 const CONFIRM_DIR = resolve(REPO_ROOT, 'training/reports/js5-phase5/confirm');
-const FILES = {
+const DEFAULT_FILES = {
   'js5-classic': 'js5-classic/ablation-confirm-js5-2_3_4_5-200s.json',
   'js0-classic': 'js0-classic/ablation-confirm-js0-2_3_4_5-200s.json',
   'js5-diverse': 'js5-diverse/ablation-confirm-js5-2_3_4_5-200s-div.json',
   'js0-diverse': 'js0-diverse/ablation-confirm-js0-2_3_4_5-200s-div.json',
 };
 
-function loadGames(rel) {
-  const doc = JSON.parse(readFileSync(resolve(CONFIRM_DIR, rel), 'utf8'));
-  const cell = doc.cells.find(c => c.seatCount === 2);
-  if (!cell) throw new Error(`${rel} 缺少 2p cell`);
-  const games = cell.games.filter(g => g.status === 'finished');
-  if (games.length !== cell.games.length) throw new Error(`${rel} 含异常局（拒绝静默过滤）`);
+/** CLI 文件覆盖（AI6 第六阶段任务 A2）：值格式 `<path>@<candidateId>`
+ * （同一 ablation JSON 可含多个候选 cell，必须按 candidateId 过滤）。
+ * --classic-cand/--classic-base/--diverse-cand/--diverse-base。 */
+function fileOverrides() {
+  const argv = process.argv;
+  const get = flag => {
+    const i = argv.indexOf(flag);
+    if (i < 0) return null;
+    const [pathPart, candId] = String(argv[i + 1]).split('@');
+    return { path: pathPart.startsWith('/') ? pathPart : resolve(REPO_ROOT, pathPart), candidateId: candId || null };
+  };
+  const wrap = v => v ? v : { path: resolve(CONFIRM_DIR, ''), candidateId: null };
+  return {
+    'js5-classic': wrap(get('--classic-cand')) ?? { path: resolve(CONFIRM_DIR, DEFAULT_FILES['js5-classic']), candidateId: null },
+    'js0-classic': wrap(get('--classic-base')) ?? { path: resolve(CONFIRM_DIR, DEFAULT_FILES['js0-classic']), candidateId: null },
+    'js5-diverse': wrap(get('--diverse-cand')) ?? { path: resolve(CONFIRM_DIR, DEFAULT_FILES['js5-diverse']), candidateId: null },
+    'js0-diverse': wrap(get('--diverse-base')) ?? { path: resolve(CONFIRM_DIR, DEFAULT_FILES['js0-diverse']), candidateId: null },
+  };
+}
+const FILES = fileOverrides();
+
+function loadGames(spec) {
+  const doc = JSON.parse(readFileSync(spec.path, 'utf8'));
+  const cells = doc.cells.filter(c => c.seatCount === 2 && (!spec.candidateId || c.candidateId === spec.candidateId));
+  if (cells.length !== 1) throw new Error(`${spec.path} 2p cell（candidate=${spec.candidateId ?? '任意'}）数量=${cells.length}，必须恰为 1`);
+  const games = cells[0].games.filter(g => g.status === 'finished');
+  if (games.length !== cells[0].games.length) throw new Error(`${spec.path} 含异常局（拒绝静默过滤）`);
   return games;
 }
 
@@ -197,5 +218,6 @@ for (const pool of ['classic', 'diverse']) {
 
 const outDir = resolve(REPO_ROOT, process.argv.includes('--out') ? process.argv[process.argv.indexOf('--out') + 1] : 'training/reports/phase6-task-a');
 mkdirSync(outDir, { recursive: true });
-writeFileSync(resolve(outDir, 'two-player-merged-analysis.json'), JSON.stringify(results, null, 2));
-console.log(`\n结果已写入：${resolve(outDir, 'two-player-merged-analysis.json')}`);
+const suffix = process.argv.includes('--suffix') ? `-${process.argv[process.argv.indexOf('--suffix') + 1]}` : '';
+writeFileSync(resolve(outDir, `two-player-merged-analysis${suffix}.json`), JSON.stringify(results, null, 2));
+console.log(`\n结果已写入：${resolve(outDir, `two-player-merged-analysis${suffix}.json`)}`);
