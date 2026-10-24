@@ -52,8 +52,9 @@ export type ChampionGuidedOptions = {
   /** 冠军参数（缺省冻结冠军参数集；消融用）。 */
   championParameters?: AIParameters;
   /** 竞争门控：auto=按风险开启（缺省）；always=消融对照（始终联合评估）；
-   * never=纯冠军直通（消融下界）。 */
-  gateMode?: 'auto' | 'always' | 'never';
+   * never=纯冠军直通（消融下界）；rerank=路线1"冠军候选+竞争风险重排序"
+   * （无模拟：候选按存活调整先验取 argmax——任务书 §四四路线消融对照）。 */
+  gateMode?: 'auto' | 'always' | 'never' | 'rerank';
   /** 保守覆盖边际（挑战候选须超过冠军候选的稳健分幅度；缺省 0.02）。 */
   overrideMargin?: number;
   /** 联合评估候选上限（含冠军行动；缺省 4）。 */
@@ -173,6 +174,7 @@ class ChampionGuidedPlanner {
     const survival = golemSurvivalModel(observation, 6);
     const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival);
     const candidates: Action[] = [];
+    const priorOf = new Map<string, number>();
     const seen = new Set<string>();
     const push = (a: Action | null | undefined) => {
       if (!a) return;
@@ -183,11 +185,42 @@ class ChampionGuidedPlanner {
     };
     push(championAction);
     for (const a of legalRootActions.filter(x => x.type === 'claim').slice(0, 2)) push(a);
-    for (const { action } of screened) {
+    for (const { action, prior } of screened) {
       if (candidates.length >= (o.candidateCap ?? 4)) break;
       push(action);
     }
     if (!candidates.length) fail('候选构造为空（规则层缺陷）');
+    // 候选先验表（rerank 路线与冠军行动缺省回退用；screened 覆盖全部合法行动）。
+    for (const { action, prior } of screened) priorOf.set(actionKey(action), prior);
+    const championKey = championAction ? actionKey(championAction) : null;
+
+    // 路线 1（gateMode='rerank'）：无模拟——候选按存活调整先验取 argmax，
+    // 冠军行动以自身先验参与竞争（不享受任何特殊保护）。成本 ≈ 冠军规划 + 筛选。
+    if (o.gateMode === 'rerank') {
+      let bestIdx = 0;
+      let bestPrior = -Infinity;
+      candidates.forEach((a, i) => {
+        const p = priorOf.get(actionKey(a)) ?? -Infinity;
+        if (p > bestPrior) { bestPrior = p; bestIdx = i; }
+      });
+      const chosen = candidates[bestIdx];
+      const elapsedRerank = performance.now() - t0;
+      return {
+        action: chosen,
+        reason: `js5 rerank（路线1：先验重排序，无模拟）：先验 ${(bestPrior).toFixed(3)}${actionKey(chosen) === championKey ? '（=冠军行动）' : '（覆盖冠军）'}`,
+        evaluations: candidates.map(a => ({ action: a, prior: priorOf.get(actionKey(a)) ?? -Infinity, trials: 0, mean: 0, se: null })),
+        chosen: { action: chosen, prior: bestPrior, trials: 0, mean: 0, se: null },
+        trace: { root: { turnNumber: observation.turnNumber, current: observation.current, golemMarket: [...observation.golemMarket], phase: observation.phase }, evaluations: [], rejected: [] },
+        stats: {
+          rollouts: 0, transitions: 0, elapsedMs: elapsedRerank, budgetExhausted: false,
+          omTimeMs: 0, cloneMs: 0, legalGenMs: 0, rootActions: legalRootActions.length,
+          candidateCount: candidates.length, worldsUsed: worldCount,
+        },
+        championAction,
+        gated: true,
+        contestedGoals: risk.contestedGoals,
+      };
+    }
 
     // 5. 联合评估（多世界 CRN 平衡调度；与 planner 同纪律）。
     const opponentMode: JointOpponentMode = o.opponentMode ?? 'rule';
@@ -252,7 +285,6 @@ class ChampionGuidedPlanner {
     }
 
     // 6. 聚合 + 保守覆盖。
-    const championKey = championAction ? actionKey(championAction) : null;
     const evaluations: RootActionEvaluation[] = aggregates.map(a => {
       const mean = a.trials > 0 ? a.sum / a.trials : 0;
       const variance = a.trials > 1 ? Math.max(0, (a.sqSum - a.sum * a.sum / a.trials) / (a.trials - 1)) : null;
