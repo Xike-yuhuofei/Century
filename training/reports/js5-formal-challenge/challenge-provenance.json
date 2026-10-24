@@ -1,0 +1,33 @@
+{
+  "schema": "century-js5-formal-challenge-provenance-v1",
+  "generatedAt": "2026-10-24T14:55:00+08:00",
+  "correctionOf": "candidate.json.codeCommit",
+  "correctionReason": "挑战进程于 13:21 启动并一次性加载当时代码快照；证据文件在 14:43 写出时 git rev-parse HEAD 已被并行会话移动到 research 分支的 fa3fc33，该值不对应挑战实际执行的代码。本文件以 git reflog 时间线还原真实代码快照。",
+  "actualCodeSnapshot": {
+    "baseBranchState": "c2053a8 (Merge pull request #27 from fix/pr26-joint-search-correctness)",
+    "webV1SrcJsContent": "与 PR #27 合并内容逐字节一致（champion-guided.ts 为 PR #27 版本，不含后续 research 分支的 claimRanking/js5-opt 改动）",
+    "distLoadedAtStart": "web-v1/dist 在 [13:04, 13:53] 窗口内未发生内容变化（期间工作区 HEAD 恒为 c2053a8 内容；并行会话于 13:53 才提交核心修复、14:44 才重建 dist，均晚于模块加载时刻）"
+  },
+  "timeline": [
+    { "at": "2026-10-24 12:52:53+08:00", "event": "bd16915 四路线消融补全（PR #27 最终内容）" },
+    { "at": "2026-10-24 13:04:16+08:00", "event": "并行会话检出 research/js5-robustness-and-promotion-readiness（起点 = c2053a8，内容与 PR #27 相同）" },
+    { "at": "2026-10-24 13:21:22+08:00", "event": "挑战编排方检出 feat/js5-formal-challenge（= c2053a8）" },
+    { "at": "2026-10-24 13:21:48+08:00", "event": "5528d4e 挑战基础设施提交；挑战进程随后启动（约 13:21），加载 c2053a8 内容的 dist 与已写入磁盘的 simulate.mjs/challenge.mjs 适配器分派" },
+    { "at": "2026-10-24 13:53:38+08:00", "event": "并行会话提交 94d285c（晚于挑战模块加载，对运行中进程无影响）" },
+    { "at": "2026-10-24 14:36:11+08:00", "event": "fa3fc33 提交（js5-opt/claimRanking，未参与本次挑战）" },
+    { "at": "2026-10-24 14:43:00+08:00", "event": "挑战完成；证据写出（此刻 HEAD=fa3fc33，被记入 codeCommit——已由本文件更正）" },
+    { "at": "2026-10-24 14:44:00+08:00", "event": "并行会话重建 dist（挑战已结束，无影响）" }
+  ],
+  "challengeFacts": {
+    "challengeIndex": 10,
+    "alpha": 4.883e-5,
+    "z": 3.896,
+    "seeds": 250,
+    "seedBlock": [941510152, 941510402],
+    "games": 500,
+    "anomalies": 0,
+    "pairedAdvantageRate": 0.7671,
+    "wilsonLower": 0.6492,
+    "verdict": "promote"
+  }
+}
