@@ -1,0 +1,1117 @@
+{
+  "schema": "century-js5-perf-phases-v1",
+  "date": "2026-10-24T06:55:52.099Z",
+  "note": "开发机实测（Apple Silicon 10 核）；M4 绝对值以目标机复测为准。阶段可重叠命中（分别计入）。预算口径 = 整次决策（含冠军规划）。",
+  "stageDefs": {
+    "opening": "turnNumber ≤ 2",
+    "engine-forming": "有人认领≥1 且 turnNumber ≤ 6",
+    "bighand-mid": "6 < turnNumber ≤ 12 且有人手牌 ≥5",
+    "multi-claim": "行动者可支付 ≥2 个市场目标",
+    "multi-rival": "≥2 个对手各认领 ≥1",
+    "endgame": "triggerPlayer ≠ null",
+    "overflow": "phase=overflow"
+  },
+  "standardBudgetMs": 100,
+  "phases": {
+    "2p/opening": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 11.497,
+        "p50Ms": 11.382,
+        "p95Ms": 14.109,
+        "p99Ms": 14.171,
+        "maxMs": 14.186
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 73.41,
+        "p50Ms": 92.133,
+        "p95Ms": 116.731,
+        "p99Ms": 117.321,
+        "maxMs": 117.468
+      },
+      "js5DeltaP50": 80.751,
+      "js5PhasesMean": {
+        "planMs": 15.235,
+        "rootSimMs": 0.266,
+        "gateMs": 0.051,
+        "screenMs": 0.109,
+        "rolloutMs": 57.53,
+        "aggregateMs": 0.023
+      },
+      "gateRate": 0.6667,
+      "starvedRate": 0,
+      "meanRollouts": 20
+    },
+    "2p/engine-forming": {
+      "samples": 2,
+      "js0": {
+        "count": 2,
+        "meanMs": 10.756,
+        "p50Ms": 10.756,
+        "p95Ms": 15.026,
+        "p99Ms": 15.405,
+        "maxMs": 15.5
+      },
+      "js5": {
+        "count": 2,
+        "meanMs": 57.676,
+        "p50Ms": 57.676,
+        "p95Ms": 94.79,
+        "p99Ms": 98.089,
+        "maxMs": 98.914
+      },
+      "js5DeltaP50": 46.92,
+      "js5PhasesMean": {
+        "planMs": 11.743,
+        "rootSimMs": 0.126,
+        "gateMs": 0.021,
+        "screenMs": 0.064,
+        "rolloutMs": 45.618,
+        "aggregateMs": 0.007
+      },
+      "gateRate": 0.5,
+      "starvedRate": 0,
+      "meanRollouts": 18
+    },
+    "2p/bighand-mid": {
+      "samples": 1,
+      "js0": {
+        "count": 1,
+        "meanMs": 20.67,
+        "p50Ms": 20.67,
+        "p95Ms": 20.67,
+        "p99Ms": 20.67,
+        "maxMs": 20.67
+      },
+      "js5": {
+        "count": 1,
+        "meanMs": 75.638,
+        "p50Ms": 75.638,
+        "p95Ms": 75.638,
+        "p99Ms": 75.638,
+        "maxMs": 75.638
+      },
+      "js5DeltaP50": 54.968,
+      "js5PhasesMean": {
+        "planMs": 17.566,
+        "rootSimMs": 0.15,
+        "gateMs": 0.018,
+        "screenMs": 0.122,
+        "rolloutMs": 57.662,
+        "aggregateMs": 0.012
+      },
+      "gateRate": 1,
+      "starvedRate": 0,
+      "meanRollouts": 16
+    },
+    "2p/multi-claim": {
+      "samples": 5,
+      "js0": {
+        "count": 5,
+        "meanMs": 31.062,
+        "p50Ms": 23.834,
+        "p95Ms": 49.65,
+        "p99Ms": 50.569,
+        "maxMs": 50.799
+      },
+      "js5": {
+        "count": 5,
+        "meanMs": 42.111,
+        "p50Ms": 22.207,
+        "p95Ms": 84.272,
+        "p99Ms": 89.688,
+        "maxMs": 91.042
+      },
+      "js5DeltaP50": -1.627,
+      "js5PhasesMean": {
+        "planMs": 32.192,
+        "rootSimMs": 0.143,
+        "gateMs": 0.029,
+        "screenMs": 0.953,
+        "rolloutMs": 8.69,
+        "aggregateMs": 0.002
+      },
+      "gateRate": 0.2,
+      "starvedRate": 0,
+      "meanRollouts": 3.2
+    },
+    "2p/endgame": {
+      "samples": 5,
+      "js0": {
+        "count": 5,
+        "meanMs": 0.934,
+        "p50Ms": 1.009,
+        "p95Ms": 1.31,
+        "p99Ms": 1.312,
+        "maxMs": 1.312
+      },
+      "js5": {
+        "count": 5,
+        "meanMs": 76.187,
+        "p50Ms": 75.16,
+        "p95Ms": 79.18,
+        "p99Ms": 79.925,
+        "maxMs": 80.111
+      },
+      "js5DeltaP50": 74.151,
+      "js5PhasesMean": {
+        "planMs": 0.91,
+        "rootSimMs": 0.115,
+        "gateMs": 0.009,
+        "screenMs": 0.42,
+        "rolloutMs": 74.607,
+        "aggregateMs": 0.016
+      },
+      "gateRate": 1,
+      "starvedRate": 0,
+      "meanRollouts": 23326.4
+    },
+    "2p/overflow": {
+      "samples": 1,
+      "js0": {
+        "count": 1,
+        "meanMs": 0.023,
+        "p50Ms": 0.023,
+        "p95Ms": 0.023,
+        "p99Ms": 0.023,
+        "maxMs": 0.023
+      },
+      "js5": {
+        "count": 1,
+        "meanMs": 0.008,
+        "p50Ms": 0.008,
+        "p95Ms": 0.008,
+        "p99Ms": 0.008,
+        "maxMs": 0.008
+      },
+      "js5DeltaP50": -0.015,
+      "js5PhasesMean": {
+        "planMs": null,
+        "rootSimMs": null,
+        "gateMs": null,
+        "screenMs": null,
+        "rolloutMs": null,
+        "aggregateMs": null
+      },
+      "gateRate": 0,
+      "starvedRate": 0,
+      "meanRollouts": 0
+    },
+    "3p/opening": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 12.796,
+        "p50Ms": 12.747,
+        "p95Ms": 14.502,
+        "p99Ms": 14.651,
+        "maxMs": 14.689
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 67.153,
+        "p50Ms": 85.249,
+        "p95Ms": 108.875,
+        "p99Ms": 113.111,
+        "maxMs": 114.17
+      },
+      "js5DeltaP50": 72.502,
+      "js5PhasesMean": {
+        "planMs": 12.39,
+        "rootSimMs": 0.107,
+        "gateMs": 0.023,
+        "screenMs": 0.056,
+        "rolloutMs": 54.482,
+        "aggregateMs": 0.007
+      },
+      "gateRate": 0.6667,
+      "starvedRate": 0,
+      "meanRollouts": 21.33
+    },
+    "3p/engine-forming": {
+      "samples": 2,
+      "js0": {
+        "count": 2,
+        "meanMs": 15.046,
+        "p50Ms": 15.046,
+        "p95Ms": 16.205,
+        "p99Ms": 16.308,
+        "maxMs": 16.334
+      },
+      "js5": {
+        "count": 2,
+        "meanMs": 15.075,
+        "p50Ms": 15.075,
+        "p95Ms": 16.832,
+        "p99Ms": 16.988,
+        "maxMs": 17.027
+      },
+      "js5DeltaP50": 0.029,
+      "js5PhasesMean": {
+        "planMs": 14.864,
+        "rootSimMs": 0.099,
+        "gateMs": 0.03,
+        "screenMs": 0,
+        "rolloutMs": 0,
+        "aggregateMs": 0
+      },
+      "gateRate": 0,
+      "starvedRate": 0,
+      "meanRollouts": 0
+    },
+    "3p/bighand-mid": {
+      "samples": 3,
+      "js0": {
+        "count": 3,
+        "meanMs": 18.876,
+        "p50Ms": 17.347,
+        "p95Ms": 24.2,
+        "p99Ms": 24.809,
+        "maxMs": 24.961
+      },
+      "js5": {
+        "count": 3,
+        "meanMs": 110.338,
+        "p50Ms": 106.81,
+        "p95Ms": 117.238,
+        "p99Ms": 118.165,
+        "maxMs": 118.397
+      },
+      "js5DeltaP50": 89.463,
+      "js5PhasesMean": {
+        "planMs": 17.833,
+        "rootSimMs": 0.138,
+        "gateMs": 0.021,
+        "screenMs": 0.185,
+        "rolloutMs": 92.054,
+        "aggregateMs": 0.012
+      },
+      "gateRate": 1,
+      "starvedRate": 0,
+      "meanRollouts": 32
+    },
+    "3p/multi-claim": {
+      "samples": 8,
+      "js0": {
+        "count": 8,
+        "meanMs": 28.169,
+        "p50Ms": 25.853,
+        "p95Ms": 49.492,
+        "p99Ms": 53.407,
+        "maxMs": 54.386
+      },
+      "js5": {
+        "count": 8,
+        "meanMs": 39.175,
+        "p50Ms": 27.97,
+        "p95Ms": 91.139,
+        "p99Ms": 97,
+        "maxMs": 98.465
+      },
+      "js5DeltaP50": 2.117,
+      "js5PhasesMean": {
+        "planMs": 29.184,
+        "rootSimMs": 0.09,
+        "gateMs": 0.029,
+        "screenMs": 2.508,
+        "rolloutMs": 7.253,
+        "aggregateMs": 0.003
+      },
+      "gateRate": 0.25,
+      "starvedRate": 0,
+      "meanRollouts": 4
+    },
+    "3p/multi-rival": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 19.164,
+        "p50Ms": 19.463,
+        "p95Ms": 30.255,
+        "p99Ms": 33.902,
+        "maxMs": 34.813
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 74.627,
+        "p50Ms": 89.388,
+        "p95Ms": 97.564,
+        "p99Ms": 98.957,
+        "maxMs": 99.306
+      },
+      "js5DeltaP50": 69.925,
+      "js5PhasesMean": {
+        "planMs": 18.573,
+        "rootSimMs": 0.105,
+        "gateMs": 0.021,
+        "screenMs": 0.232,
+        "rolloutMs": 55.597,
+        "aggregateMs": 0.009
+      },
+      "gateRate": 0.75,
+      "starvedRate": 0,
+      "meanRollouts": 24.33
+    },
+    "3p/endgame": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 0.71,
+        "p50Ms": 0.686,
+        "p95Ms": 1.2,
+        "p99Ms": 1.324,
+        "maxMs": 1.355
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 75.351,
+        "p50Ms": 75.231,
+        "p95Ms": 75.833,
+        "p99Ms": 75.976,
+        "maxMs": 76.012
+      },
+      "js5DeltaP50": 74.545,
+      "js5PhasesMean": {
+        "planMs": 0.55,
+        "rootSimMs": 0.138,
+        "gateMs": 0.006,
+        "screenMs": 1.258,
+        "rolloutMs": 73.256,
+        "aggregateMs": 0.015
+      },
+      "gateRate": 1,
+      "starvedRate": 0,
+      "meanRollouts": 12737.33
+    },
+    "3p/overflow": {
+      "samples": 1,
+      "js0": {
+        "count": 1,
+        "meanMs": 0.014,
+        "p50Ms": 0.014,
+        "p95Ms": 0.014,
+        "p99Ms": 0.014,
+        "maxMs": 0.014
+      },
+      "js5": {
+        "count": 1,
+        "meanMs": 0.005,
+        "p50Ms": 0.005,
+        "p95Ms": 0.005,
+        "p99Ms": 0.005,
+        "maxMs": 0.005
+      },
+      "js5DeltaP50": -0.009,
+      "js5PhasesMean": {
+        "planMs": null,
+        "rootSimMs": null,
+        "gateMs": null,
+        "screenMs": null,
+        "rolloutMs": null,
+        "aggregateMs": null
+      },
+      "gateRate": 0,
+      "starvedRate": 0,
+      "meanRollouts": 0
+    },
+    "4p/opening": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 13.497,
+        "p50Ms": 13.405,
+        "p95Ms": 15.559,
+        "p99Ms": 15.864,
+        "maxMs": 15.94
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 92.192,
+        "p50Ms": 94.502,
+        "p95Ms": 110.306,
+        "p99Ms": 110.343,
+        "maxMs": 110.353
+      },
+      "js5DeltaP50": 81.097,
+      "js5PhasesMean": {
+        "planMs": 13.567,
+        "rootSimMs": 0.169,
+        "gateMs": 0.029,
+        "screenMs": 0.101,
+        "rolloutMs": 78.223,
+        "aggregateMs": 0.011
+      },
+      "gateRate": 0.9167,
+      "starvedRate": 0,
+      "meanRollouts": 29.33
+    },
+    "4p/multi-claim": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 30.194,
+        "p50Ms": 28.644,
+        "p95Ms": 51.187,
+        "p99Ms": 53.427,
+        "maxMs": 53.987
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 67.035,
+        "p50Ms": 80.376,
+        "p95Ms": 114.659,
+        "p99Ms": 117.564,
+        "maxMs": 118.29
+      },
+      "js5DeltaP50": 51.732,
+      "js5PhasesMean": {
+        "planMs": 30.374,
+        "rootSimMs": 0.136,
+        "gateMs": 0.034,
+        "screenMs": 3.006,
+        "rolloutMs": 33.327,
+        "aggregateMs": 0.008
+      },
+      "gateRate": 0.5833,
+      "starvedRate": 0,
+      "meanRollouts": 34.67
+    },
+    "4p/multi-rival": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 18.774,
+        "p50Ms": 19.519,
+        "p95Ms": 29.223,
+        "p99Ms": 30.395,
+        "maxMs": 30.688
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 89.635,
+        "p50Ms": 98.811,
+        "p95Ms": 112.812,
+        "p99Ms": 113.005,
+        "maxMs": 113.053
+      },
+      "js5DeltaP50": 79.292,
+      "js5PhasesMean": {
+        "planMs": 18.372,
+        "rootSimMs": 0.13,
+        "gateMs": 0.022,
+        "screenMs": 0.866,
+        "rolloutMs": 70.126,
+        "aggregateMs": 0.009
+      },
+      "gateRate": 0.8333,
+      "starvedRate": 0,
+      "meanRollouts": 25.67
+    },
+    "4p/endgame": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 0.597,
+        "p50Ms": 0.52,
+        "p95Ms": 1.165,
+        "p99Ms": 1.222,
+        "maxMs": 1.237
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 75.287,
+        "p50Ms": 75.219,
+        "p95Ms": 75.544,
+        "p99Ms": 75.597,
+        "maxMs": 75.61
+      },
+      "js5DeltaP50": 74.699,
+      "js5PhasesMean": {
+        "planMs": 0.613,
+        "rootSimMs": 0.15,
+        "gateMs": 0.006,
+        "screenMs": 0.413,
+        "rolloutMs": 73.968,
+        "aggregateMs": 0.016
+      },
+      "gateRate": 1,
+      "starvedRate": 0,
+      "meanRollouts": 7442.67
+    },
+    "4p/overflow": {
+      "samples": 2,
+      "js0": {
+        "count": 2,
+        "meanMs": 0.01,
+        "p50Ms": 0.01,
+        "p95Ms": 0.012,
+        "p99Ms": 0.012,
+        "maxMs": 0.012
+      },
+      "js5": {
+        "count": 2,
+        "meanMs": 0.005,
+        "p50Ms": 0.005,
+        "p95Ms": 0.006,
+        "p99Ms": 0.006,
+        "maxMs": 0.006
+      },
+      "js5DeltaP50": -0.005,
+      "js5PhasesMean": {
+        "planMs": null,
+        "rootSimMs": null,
+        "gateMs": null,
+        "screenMs": null,
+        "rolloutMs": null,
+        "aggregateMs": null
+      },
+      "gateRate": 0,
+      "starvedRate": 0,
+      "meanRollouts": 0
+    },
+    "5p/opening": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 12.723,
+        "p50Ms": 12.772,
+        "p95Ms": 14.177,
+        "p99Ms": 14.66,
+        "maxMs": 14.781
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 107.165,
+        "p50Ms": 107.39,
+        "p95Ms": 115.028,
+        "p99Ms": 118.782,
+        "maxMs": 119.72
+      },
+      "js5DeltaP50": 94.618,
+      "js5PhasesMean": {
+        "planMs": 12.922,
+        "rootSimMs": 0.118,
+        "gateMs": 0.019,
+        "screenMs": 0.095,
+        "rolloutMs": 93.899,
+        "aggregateMs": 0.013
+      },
+      "gateRate": 1,
+      "starvedRate": 0,
+      "meanRollouts": 32
+    },
+    "5p/multi-claim": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 29.765,
+        "p50Ms": 33.574,
+        "p95Ms": 51.411,
+        "p99Ms": 53.927,
+        "maxMs": 54.556
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 93.438,
+        "p50Ms": 96.523,
+        "p95Ms": 117.17,
+        "p99Ms": 124.15,
+        "maxMs": 125.895
+      },
+      "js5DeltaP50": 62.949,
+      "js5PhasesMean": {
+        "planMs": 36.594,
+        "rootSimMs": 0.166,
+        "gateMs": 0.029,
+        "screenMs": 5.222,
+        "rolloutMs": 51.209,
+        "aggregateMs": 0.015
+      },
+      "gateRate": 0.9167,
+      "starvedRate": 0.0833,
+      "meanRollouts": 44
+    },
+    "5p/multi-rival": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 27.831,
+        "p50Ms": 27.872,
+        "p95Ms": 37.82,
+        "p99Ms": 40.13,
+        "maxMs": 40.708
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 78.833,
+        "p50Ms": 83.665,
+        "p95Ms": 96.227,
+        "p99Ms": 97.791,
+        "maxMs": 98.182
+      },
+      "js5DeltaP50": 55.793,
+      "js5PhasesMean": {
+        "planMs": 26.505,
+        "rootSimMs": 0.116,
+        "gateMs": 0.018,
+        "screenMs": 0.781,
+        "rolloutMs": 51.293,
+        "aggregateMs": 0.012
+      },
+      "gateRate": 0.9167,
+      "starvedRate": 0,
+      "meanRollouts": 14.67
+    },
+    "5p/endgame": {
+      "samples": 12,
+      "js0": {
+        "count": 12,
+        "meanMs": 0.738,
+        "p50Ms": 0.687,
+        "p95Ms": 1.187,
+        "p99Ms": 1.217,
+        "maxMs": 1.225
+      },
+      "js5": {
+        "count": 12,
+        "meanMs": 75.868,
+        "p50Ms": 75.412,
+        "p95Ms": 78.052,
+        "p99Ms": 80.07,
+        "maxMs": 80.575
+      },
+      "js5DeltaP50": 74.725,
+      "js5PhasesMean": {
+        "planMs": 0.668,
+        "rootSimMs": 0.118,
+        "gateMs": 0.008,
+        "screenMs": 1.105,
+        "rolloutMs": 73.828,
+        "aggregateMs": 0.016
+      },
+      "gateRate": 1,
+      "starvedRate": 0,
+      "meanRollouts": 4640
+    }
+  },
+  "budgets": {
+    "2p@25ms": {
+      "samples": 30,
+      "budgetMs": 25,
+      "js0": {
+        "count": 30,
+        "meanMs": 13.539,
+        "p50Ms": 13.012,
+        "p95Ms": 37.092,
+        "p99Ms": 52.158,
+        "maxMs": 53.71
+      },
+      "js5": {
+        "count": 30,
+        "meanMs": 15.526,
+        "p50Ms": 12.778,
+        "p95Ms": 45.142,
+        "p99Ms": 54.007,
+        "maxMs": 54.641
+      },
+      "js5DeltaP50": -0.234,
+      "overBudgetRatio": 0.1,
+      "starvedFallbackRate": 0.4,
+      "gatedRate": 0.5667,
+      "meanEffectiveTrials": 162.8,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "2p@50ms": {
+      "samples": 30,
+      "budgetMs": 50,
+      "js0": {
+        "count": 30,
+        "meanMs": 13.879,
+        "p50Ms": 13.245,
+        "p95Ms": 39.313,
+        "p99Ms": 53.642,
+        "maxMs": 53.984
+      },
+      "js5": {
+        "count": 30,
+        "meanMs": 35.997,
+        "p50Ms": 27.65,
+        "p95Ms": 68.651,
+        "p99Ms": 72.191,
+        "maxMs": 72.884
+      },
+      "js5DeltaP50": 14.405,
+      "overBudgetRatio": 0.4,
+      "starvedFallbackRate": 0.0333,
+      "gatedRate": 0.5667,
+      "meanEffectiveTrials": 1490.27,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "2p@100ms": {
+      "samples": 30,
+      "budgetMs": 100,
+      "js0": {
+        "count": 30,
+        "meanMs": 16.011,
+        "p50Ms": 13.46,
+        "p95Ms": 51.063,
+        "p99Ms": 60.79,
+        "maxMs": 61.552
+      },
+      "js5": {
+        "count": 30,
+        "meanMs": 64.319,
+        "p50Ms": 75.171,
+        "p95Ms": 116.145,
+        "p99Ms": 122.681,
+        "maxMs": 124.558
+      },
+      "js5DeltaP50": 61.711,
+      "overBudgetRatio": 0.3,
+      "starvedFallbackRate": 0,
+      "gatedRate": 0.5667,
+      "meanEffectiveTrials": 3946.67,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "2p@200ms": {
+      "samples": 30,
+      "budgetMs": 200,
+      "js0": {
+        "count": 30,
+        "meanMs": 13.788,
+        "p50Ms": 12.406,
+        "p95Ms": 37.702,
+        "p99Ms": 55.703,
+        "maxMs": 58.5
+      },
+      "js5": {
+        "count": 30,
+        "meanMs": 112.71,
+        "p50Ms": 170.195,
+        "p95Ms": 209.179,
+        "p99Ms": 212.088,
+        "maxMs": 212.673
+      },
+      "js5DeltaP50": 157.789,
+      "overBudgetRatio": 0.1,
+      "starvedFallbackRate": 0,
+      "gatedRate": 0.5667,
+      "meanEffectiveTrials": 9700.67,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "3p@25ms": {
+      "samples": 40,
+      "budgetMs": 25,
+      "js0": {
+        "count": 40,
+        "meanMs": 13.648,
+        "p50Ms": 12.864,
+        "p95Ms": 25.022,
+        "p99Ms": 29.69,
+        "maxMs": 31.44
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 15.97,
+        "p50Ms": 13.415,
+        "p95Ms": 31.736,
+        "p99Ms": 36.458,
+        "maxMs": 36.633
+      },
+      "js5DeltaP50": 0.551,
+      "overBudgetRatio": 0.125,
+      "starvedFallbackRate": 0.4,
+      "gatedRate": 0.525,
+      "meanEffectiveTrials": 40.6,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "3p@50ms": {
+      "samples": 40,
+      "budgetMs": 50,
+      "js0": {
+        "count": 40,
+        "meanMs": 13.869,
+        "p50Ms": 12.493,
+        "p95Ms": 23.905,
+        "p99Ms": 29.272,
+        "maxMs": 30.951
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 33.04,
+        "p50Ms": 27.726,
+        "p95Ms": 59.794,
+        "p99Ms": 62.421,
+        "maxMs": 63.773
+      },
+      "js5DeltaP50": 15.233,
+      "overBudgetRatio": 0.325,
+      "starvedFallbackRate": 0,
+      "gatedRate": 0.525,
+      "meanEffectiveTrials": 429.8,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "3p@100ms": {
+      "samples": 40,
+      "budgetMs": 100,
+      "js0": {
+        "count": 40,
+        "meanMs": 13.88,
+        "p50Ms": 13.181,
+        "p95Ms": 22.781,
+        "p99Ms": 30.126,
+        "maxMs": 31.844
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 58.289,
+        "p50Ms": 75.159,
+        "p95Ms": 107.69,
+        "p99Ms": 116.969,
+        "maxMs": 122.784
+      },
+      "js5DeltaP50": 61.978,
+      "overBudgetRatio": 0.125,
+      "starvedFallbackRate": 0.025,
+      "gatedRate": 0.525,
+      "meanEffectiveTrials": 1193.5,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "3p@200ms": {
+      "samples": 40,
+      "budgetMs": 200,
+      "js0": {
+        "count": 40,
+        "meanMs": 14.288,
+        "p50Ms": 13.276,
+        "p95Ms": 24.197,
+        "p99Ms": 33.278,
+        "maxMs": 34.829
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 105.37,
+        "p50Ms": 170.139,
+        "p95Ms": 203.469,
+        "p99Ms": 206.235,
+        "maxMs": 207.834
+      },
+      "js5DeltaP50": 156.863,
+      "overBudgetRatio": 0.1,
+      "starvedFallbackRate": 0,
+      "gatedRate": 0.525,
+      "meanEffectiveTrials": 2777.6,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "4p@25ms": {
+      "samples": 40,
+      "budgetMs": 25,
+      "js0": {
+        "count": 40,
+        "meanMs": 16.929,
+        "p50Ms": 16.696,
+        "p95Ms": 26.747,
+        "p99Ms": 36.423,
+        "maxMs": 42.215
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 17.863,
+        "p50Ms": 17.685,
+        "p95Ms": 30.746,
+        "p99Ms": 41.29,
+        "maxMs": 47.849
+      },
+      "js5DeltaP50": 0.989,
+      "overBudgetRatio": 0.1,
+      "starvedFallbackRate": 0.775,
+      "gatedRate": 0.9,
+      "meanEffectiveTrials": 22.5,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "4p@50ms": {
+      "samples": 40,
+      "budgetMs": 50,
+      "js0": {
+        "count": 40,
+        "meanMs": 16.093,
+        "p50Ms": 16.312,
+        "p95Ms": 26.431,
+        "p99Ms": 37.612,
+        "maxMs": 42.952
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 47.684,
+        "p50Ms": 50.803,
+        "p95Ms": 64.742,
+        "p99Ms": 72.036,
+        "maxMs": 72.097
+      },
+      "js5DeltaP50": 34.491,
+      "overBudgetRatio": 0.55,
+      "starvedFallbackRate": 0.1,
+      "gatedRate": 0.9,
+      "meanEffectiveTrials": 191.3,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "4p@100ms": {
+      "samples": 40,
+      "budgetMs": 100,
+      "js0": {
+        "count": 40,
+        "meanMs": 16.316,
+        "p50Ms": 15.73,
+        "p95Ms": 29.725,
+        "p99Ms": 35.792,
+        "maxMs": 37.817
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 87.67,
+        "p50Ms": 90.388,
+        "p95Ms": 117.716,
+        "p99Ms": 119.994,
+        "maxMs": 121.165
+      },
+      "js5DeltaP50": 74.658,
+      "overBudgetRatio": 0.3,
+      "starvedFallbackRate": 0,
+      "gatedRate": 0.9,
+      "meanEffectiveTrials": 503.7,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "4p@200ms": {
+      "samples": 40,
+      "budgetMs": 200,
+      "js0": {
+        "count": 40,
+        "meanMs": 15.72,
+        "p50Ms": 15.32,
+        "p95Ms": 27.336,
+        "p99Ms": 35.558,
+        "maxMs": 39.351
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 171.682,
+        "p50Ms": 186.167,
+        "p95Ms": 208.17,
+        "p99Ms": 218.499,
+        "maxMs": 221.4
+      },
+      "js5DeltaP50": 170.847,
+      "overBudgetRatio": 0.2,
+      "starvedFallbackRate": 0,
+      "gatedRate": 0.9,
+      "meanEffectiveTrials": 1116.9,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "5p@25ms": {
+      "samples": 40,
+      "budgetMs": 25,
+      "js0": {
+        "count": 40,
+        "meanMs": 18.487,
+        "p50Ms": 19.377,
+        "p95Ms": 38.079,
+        "p99Ms": 46.643,
+        "maxMs": 47.923
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 19.699,
+        "p50Ms": 19.026,
+        "p95Ms": 39.635,
+        "p99Ms": 48.323,
+        "maxMs": 50.923
+      },
+      "js5DeltaP50": -0.351,
+      "overBudgetRatio": 0.25,
+      "starvedFallbackRate": 0.8,
+      "gatedRate": 0.975,
+      "meanEffectiveTrials": 28.9,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "5p@50ms": {
+      "samples": 40,
+      "budgetMs": 50,
+      "js0": {
+        "count": 40,
+        "meanMs": 18.461,
+        "p50Ms": 18.41,
+        "p95Ms": 36.665,
+        "p99Ms": 53.876,
+        "maxMs": 64.531
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 51.16,
+        "p50Ms": 57.098,
+        "p95Ms": 80.819,
+        "p99Ms": 85.526,
+        "maxMs": 87.845
+      },
+      "js5DeltaP50": 38.688,
+      "overBudgetRatio": 0.575,
+      "starvedFallbackRate": 0.175,
+      "gatedRate": 0.975,
+      "meanEffectiveTrials": 261.9,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "5p@100ms": {
+      "samples": 40,
+      "budgetMs": 100,
+      "js0": {
+        "count": 40,
+        "meanMs": 18.195,
+        "p50Ms": 18.724,
+        "p95Ms": 40.948,
+        "p99Ms": 41.327,
+        "maxMs": 41.339
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 94.331,
+        "p50Ms": 94.103,
+        "p95Ms": 119.188,
+        "p99Ms": 122.059,
+        "maxMs": 123.681
+      },
+      "js5DeltaP50": 75.379,
+      "overBudgetRatio": 0.4,
+      "starvedFallbackRate": 0,
+      "gatedRate": 0.975,
+      "meanEffectiveTrials": 760.2,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    },
+    "5p@200ms": {
+      "samples": 40,
+      "budgetMs": 200,
+      "js0": {
+        "count": 40,
+        "meanMs": 18.601,
+        "p50Ms": 19.932,
+        "p95Ms": 38.406,
+        "p99Ms": 42.192,
+        "maxMs": 44.064
+      },
+      "js5": {
+        "count": 40,
+        "meanMs": 186.62,
+        "p50Ms": 187.978,
+        "p95Ms": 215.674,
+        "p99Ms": 224.515,
+        "maxMs": 228.018
+      },
+      "js5DeltaP50": 168.046,
+      "overBudgetRatio": 0.375,
+      "starvedFallbackRate": 0,
+      "gatedRate": 0.975,
+      "meanEffectiveTrials": 1694.7,
+      "legalityNote": "全部决策经 applyAction 试探校验（duel 纪律）——本工具只计时不落对局，合法性由回归测试与 duel 保证"
+    }
+  }
+}
