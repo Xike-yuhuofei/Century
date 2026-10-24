@@ -63,7 +63,7 @@ export function renderGameReport(analysis) {
     lines.push(`| 计算 | 总分构成 | 魔像 ${c.golemPoints} + 铜币 ${c.coinPoints} + 非黄水晶 ${c.crystalPoints} = ${c.totalScore} |`);
     lines.push(`| 计算 | 容量利用 | 平均 ${c.avgCapacityUtil ?? '—'}，峰值 ${c.maxCapacity ?? '—'}/10 |`);
     lines.push(`| 计算 | 休息 | ${c.restCount} 次，低价值（≤1 张打出）休息 ${o.rests.filter(r => r.playedSize <= 1).length} 次 |`);
-    lines.push(`| 计算 | 节奏 | 首次认领第 ${c.firstClaimTurn ?? '—'} 手；每 10 手认领 ${c.claimsPer10Turns}；每 10 手取卡 ${c.acquiresPer10Turns} |`);
+    lines.push(`| 计算 | 节奏 | 首次认领第 ${c.firstClaimTurn ?? '—'} 手；每 10 手认领 ${c.claimsPer10Turns}；每 10 手取卡 ${c.acquiresPer10Turns}；引擎建设持续 ${c.engineActiveRounds} 轮（第 ${c.firstPlayRound ?? '—'}–${c.lastPlayRound ?? '—'} 轮） |`);
     lines.push(`| 计算 | 竞争 | 被抢目标 ${c.contestedLosses.length} 次；错过认领 ${c.missedClaims.length} 次；「大商队无目标」${c.bigIdleTurns.length} 手 |`);
     lines.push(`| 推测 | 倾向 | ${p.kind.inferred.archetypeHint}（仅供参考，不作失败判定证据） |`);
     lines.push('');

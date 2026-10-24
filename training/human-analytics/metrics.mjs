@@ -47,11 +47,13 @@ function playerProfile(seat, ctx) {
   const playedSizeSeries = []; // [turnNumber, 已打出引擎卡数]
   const stockSeries = [];      // [turnNumber, 黄,绿,蓝,粉]（自己每手行动后）
   let overflowCount = 0;
+  const playRoundSet = new Set(); // 有打出行动的轮次（引擎建设持续轮数）
 
   for (const entry of own) {
     const t = entry.turn;
     const timeline = timelineByIndex.get(entry.index);
     for (const a of t.actions) actionsByType[a.type]++;
+    if (t.actions.some(a => a.type === 'play')) playRoundSet.add(t.round);
     for (const a of t.actions) {
       if (a.type === 'acquire') {
         const marketCard = timeline.merchantMarket[a.index];
@@ -139,6 +141,12 @@ function playerProfile(seat, ctx) {
         finalSilver: silver,
         firstTurn: ownTurnNumbers[0] ?? null,
         lastTurn: ownTurnNumbers[ownTurnNumbers.length - 1] ?? null,
+        lastActions: own.length ? { // 最后行动（终局触发与收尾评估用，可观察事实）
+          turn: own[own.length - 1].turn.turnNumber,
+          round: own[own.length - 1].turn.round,
+          actions: own[own.length - 1].turn.actions.map(a =>
+            `${a.type}${a.cardId ? ` ${a.cardId}` : ''}${a.type === 'discard' ? `×${crystalTotal(a.colors)}` : ''}`),
+        } : null,
       },
       computed: {
         golemPoints,
@@ -162,6 +170,9 @@ function playerProfile(seat, ctx) {
         avgRestPlayedSize: rests.length ? avg(rests.map(r => r.playedSize)) : null,
         medianRestGap: restGaps.length ? restGaps.slice().sort((a, b) => a - b)[Math.floor(restGaps.length / 2)] : null,
         maxEngineSize: playedSizeSeries.length ? Math.max(...playedSizeSeries.map(x => x[1])) : 0,
+        engineActiveRounds: playRoundSet.size, // 引擎建设持续轮数（有打出行动的轮次）
+        firstPlayRound: playRoundSet.size ? Math.min(...playRoundSet) : null,
+        lastPlayRound: playRoundSet.size ? Math.max(...playRoundSet) : null,
         lateAcquires,
         affordableButNotClaimed,
         bigIdleTurns,
