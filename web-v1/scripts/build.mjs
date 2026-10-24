@@ -9,7 +9,7 @@ copyFileSync(resolve(base,'src/styles.css'),resolve(base,'dist/styles.css'));
 // AI 4.0：决策核心拆分为 ai/ 目录；'ai' 为兼容桶（mobile/app 与 worker 经 '../ai.js' 引用）。
 // 内联顺序满足运行时依赖：参数 → 人格 → 观察 → 知识 → 对手模型 → 结构变体 → 求值 → 规划 → 决策。
 const AI_MODULES = ['ai/parameters','ai/profiles','ai/observation','ai/knowledge','ai/opponent-model','ai/structures-rng','ai/structures','ai/evaluator','ai/planner','ai/decision'];
-const modules = ['data','engine',...AI_MODULES,'organize','replay','archive','app'].map(n => read(`dist/js/${n}.js`)
+const modules = ['data','engine',...AI_MODULES,'organize','replay','archive','auto-export','app'].map(n => read(`dist/js/${n}.js`)
   .replace(/^import\s.*?from\s+['"].*?['"];?\s*$/gm, '')
   .replace(/^export\s+(?=(const|function|class)\b)/gm, '')
   .replace(/^export\s*\{[^}]*\};?\s*$/gm, ''));
