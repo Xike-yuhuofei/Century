@@ -78,6 +78,8 @@ export type JointDecisionStats = {
   legalGenMs: number;
   rootActions: number;
   candidateCount: number;
+  /** 信念世界数（P1-1 多世界采样）。 */
+  worldsUsed: number;
 };
 
 export type JointDecision = {
@@ -88,6 +90,9 @@ export type JointDecision = {
   chosen: RootActionEvaluation;
   trace: DecisionTrace;
   stats: JointDecisionStats;
+  /** 逐试验原始值（collectTrials=true 时披露；配对统计/CRN 验证用）。
+   * actionIndex 对应 evaluations 中同 action 的条目。 */
+  trials?: { actionIndex: number; world: number; replica: number; value: number }[];
 };
 
 // === 搜索选项 ===
@@ -107,6 +112,12 @@ export type JointSearchOptions = {
   simSeed?: number;
   /** 单条轨迹最大转移步数（防长尾；缺省 90）。 */
   horizon?: number;
+  /** 信念世界数（P1-1 多世界采样；缺省 4，固定工作量模式按预算收缩）。
+   * 同一根行动的试验分布到不同未知牌序世界；同一 (world, replica) 跨根行动
+   * 共享对手采样随机流（CRN 配对）。 */
+  worlds?: number;
+  /** 逐试验值披露（配对统计/CRN 验证；缺省 false）。 */
+  collectTrials?: boolean;
   /** joint-tree 每个己方决策点展开的分支数（缺省 2）。 */
   treeBranching?: number;
   /** joint-tree 己方决策点展开深度（缺省 1）。 */
@@ -127,15 +138,17 @@ export interface JointPlanner {
 
 // === 版本化算法适配器（任务书 §二：新候选使用明确版本化的算法适配器） ===
 
-/** JS 编号为本阶段消融编号（JS0–JS4），与 PR #22 评测阶段 B0/B1/B2 无关。 */
-export type JointVersionId = 'joint-js1' | 'joint-js2' | 'joint-js3' | 'joint-js4';
+/** JS 编号为本阶段消融编号（JS0–JS5），与 PR #22 评测阶段 B0/B1/B2 无关。
+ * JS5 = PR #26 修复后的 Champion-Guided Joint Search（champion-guided 结构）。 */
+export type JointVersionId = 'joint-js1' | 'joint-js2' | 'joint-js3' | 'joint-js4' | 'joint-js5';
 
 export type JointVersionSpec = {
   id: JointVersionId;
   label: string;
-  kind: 'champion-contest' | 'joint';
+  kind: 'champion-contest' | 'joint' | 'champion-guided';
   /** kind=champion-contest：委托正式冠军决策入口 + beam-contest 结构（冠军 beam-rollout
-   * + golemSurvivalModel 静态目标存活折扣，即 JS1 定义）；kind=joint：本模块联合搜索。 */
+   * + golemSurvivalModel 静态目标存活折扣，即 JS1 定义）；kind=joint：本模块联合搜索；
+   * kind=champion-guided：JS5 冠军引导选择性联合搜索（champion-guided.ts）。 */
   defaults: Required<Pick<JointSearchOptions, 'variant' | 'opponentMode' | 'evaluator'>>;
 };
 
@@ -155,5 +168,9 @@ export const JOINT_VERSIONS: Record<JointVersionId, JointVersionSpec> = {
   'joint-js4': {
     id: 'joint-js4', label: 'JS4 JS3+Selective Joint Tree', kind: 'joint',
     defaults: { variant: 'joint-tree', opponentMode: 'om-v1', evaluator: 'L2' },
+  },
+  'joint-js5': {
+    id: 'joint-js5', label: 'JS5 冠军引导选择性联合搜索（竞争门控+保守覆盖）', kind: 'champion-guided',
+    defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
   },
 };

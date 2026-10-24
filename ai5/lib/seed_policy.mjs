@@ -44,12 +44,15 @@ export const AI6_BASELINE_BLOCK = [1_100_000_000, 1_200_000_000];
  * - [1.30e9, 1.301e9)  版本一致性审计（training/joint/audit.mjs）；
  * - [1.31e9, 1.32e9)   调参/开发种子（JS 消融调参，永不用于结论）；
  * - [1.32e9, 1.33e9)   主测试种子（JS0-JS4 消融第一名率结论）；
+ * - [1.33e9, 1.34e9)   独立验证种子（PR #26 修复后 JS5 最终验证，与调参/主测试
+ *                      物理隔离；此前未消费，2026-10-24 登记）；
  * - [1.34e9, 1.35e9)   L3 叶子评价器校准（training/joint/calibrate.mjs）；
  * - [1.35e9, 1.351e9)  性能基准（25/50/100/200ms、64-512 工作量）。 */
 export const AI6_JOINT_SEARCH_BLOCK = [1_300_000_000, 1_400_000_000];
 export const AI6_JOINT_AUDIT_SUBBLOCK = [1_300_000_000, 1_301_000_000];
 export const AI6_JOINT_TUNE_SUBBLOCK = [1_310_000_000, 1_320_000_000];
 export const AI6_JOINT_TEST_SUBBLOCK = [1_320_000_000, 1_330_000_000];
+export const AI6_JOINT_VERIFY_SUBBLOCK = [1_330_000_000, 1_340_000_000];
 export const AI6_JOINT_CALIB_SUBBLOCK = [1_340_000_000, 1_350_000_000];
 export const AI6_JOINT_PERF_SUBBLOCK = [1_350_000_000, 1_351_000_000];
 

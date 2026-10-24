@@ -49,6 +49,10 @@ export type RolloutContext = {
   actorLog?: { seat: number; action: Action; transition: number; family?: string; p?: number; label?: string }[];
   /** 对手预测耗时记账（stats.omTimeMs）。 */
   omTimeMs?: { value: number };
+  /** 逐步执行日志（PR #26 修复回归测试与逐回合复盘用）：
+   * 每次成功 step 后追加 { 实际行动者 = step 前的 state.current, 行动 }。
+   * 观测性钩子，不参与决策语义。 */
+  stepLog?: { seat: number; action: Action }[];
 };
 
 /** 轨迹执行结果。 */
@@ -117,6 +121,7 @@ export function playJointTrajectory(
     if (!action) break;
     const events = ctx.events;
     const actorLog = ctx.actorLog;
+    const stepLog = ctx.stepLog;
     const logEntry = () => {
       if (!actorLog) return;
       actorLog.push(opponentMeta
@@ -141,6 +146,7 @@ export function playJointTrajectory(
         break;
       }
     }
+    stepLog?.push({ seat: actor, action });
     transitions += 1;
     opponentMeta = null;
   }
@@ -150,18 +156,28 @@ export function playJointTrajectory(
   return { value, transitions, finished, finalRank };
 }
 
+/** 试验随机流派生（PR #26 P1-1 修复：多世界采样 + Common Random Numbers）。
+ * - world：信念世界索引（0..W-1）——不同 world = 不同未知牌序采样（多世界覆盖）；
+ * - replica：同一世界内的对手采样重复索引。
+ * 同一 (world, replica) 对跨根行动派生同一随机流 ⇒ 配对比较（CRN）：
+ * 根行动间价值差来自行动本身而非对手/翻牌噪声。 */
+export function trialRngSeed(simSeed: number, world: number, replica: number): number {
+  return ((simSeed >>> 0) ^ Math.imul(world + 1, 0x9E3779B9) ^ Math.imul(replica + 1, 0x85EBCA6B)) >>> 0;
+}
+
 /** 根行动联合评估：fork root → 执行根行动 → 推进联合轨迹。
- * trialIndex 驱动对手采样随机流（同一 trialIndex 跨根行动共享流索引 = CRN）。 */
+ * world/replica 经 trialRngSeed 派生对手采样随机流（CRN 语义见上）。 */
 export function runJointRollout(
   root: PublicSimulation,
   rootAction: Action,
-  trialIndex: number,
+  world: number,
+  replica: number,
   simSeed: number,
   ctx: RolloutContext,
 ): RolloutOutcome {
   const branch = root.fork();
   branch.step(rootAction); // 根行动来自合法枚举；非法立即抛错（暴露缺陷）。
-  const rng = mulberry32((simSeed ^ (trialIndex * 0x9E3779B9)) >>> 0);
+  const rng = mulberry32(trialRngSeed(simSeed, world, replica));
   return playJointTrajectory(branch, rng, ctx);
 }
 

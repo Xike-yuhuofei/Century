@@ -210,8 +210,12 @@ export function myRankedActions(
 }
 
 /** 根行动先验筛选分（任务 C.3：冠军启发式候选排序）。
- * claim 乘座位感知目标存活系数（golemSurvivalModel，冠军 M1 模型）——
- * 让"下一家就能抢走的目标"在先验中提前于"必被截胡的目标"。 */
+ * claim 分两种情形（PR #26 P0-2 修复）：
+ * - 立即认领（本回合即可执行）：对手没有插足机会，存活系数 = 1——绝不以
+ *   "未来被抢概率"惩罚当步可完成的认领（v1 缺陷：立即认领被 golemSurvivalModel
+ *   的未来存活折扣压低，S1/S5b 类盘面下高价值认领在先验中被系统性推迟）；
+ * - 未来目标规划（非 claim 行动）：按 0.6 + 0.4×survival 弱折扣保持路线相关性，
+ *   把"目标可能被截胡"的风险计入长线 acquire/转配决策。 */
 export function screenRootActions(
   view: AIObservation,
   rootActions: readonly Action[],
@@ -219,8 +223,10 @@ export function screenRootActions(
   survival: Record<string, number>,
 ): { action: Action; prior: number }[] {
   const search = initialState(view);
-  // 根筛选逐行动对其最相关目标取最好值；claim 直接乘该目标存活系数，
-  // 其余行动按 0.6 + 0.4×survival 弱折扣保持路线相关性。
+  // 立即认领判定：观察者是当前行动者且库存足额（合法枚举保证 claim 均可支付）。
+  const iAmCurrent = view.current === view.playerId;
+  const myStock = iAmCurrent ? view.players[view.playerId].stock : null;
+  // 根筛选逐行动对其最相关目标取最好值。
   const scored = rootActions.map(action => {
     let best = -Infinity;
     const goals: (string | null)[] = action.type === 'claim' ? [view.golemMarket[action.index]] : [null, ...view.golemMarket];
@@ -228,8 +234,12 @@ export function screenRootActions(
       const value = actionValue(search, action, preferred, ctx);
       if (!Number.isFinite(value)) continue;
       let adjusted = value;
-      if (action.type === 'claim' && preferred) adjusted *= survival[preferred] ?? 1;
-      else if (preferred) adjusted *= 0.6 + 0.4 * (survival[preferred] ?? 1);
+      if (action.type === 'claim' && preferred) {
+        const immediate = !!myStock && payableClaim(myStock, preferred);
+        adjusted *= immediate ? 1 : (survival[preferred] ?? 1);
+      } else if (preferred) {
+        adjusted *= 0.6 + 0.4 * (survival[preferred] ?? 1);
+      }
       if (adjusted > best) best = adjusted;
     }
     return { action, prior: Number.isFinite(best) ? best : -Infinity };
