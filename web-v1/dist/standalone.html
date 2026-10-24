@@ -1279,7 +1279,7 @@ const BASELINE_PARAMETERS = {
 };
 // === CHAMPION-PARAMETERS-BEGIN（由 training/scripts/apply-champion.mjs 生成，勿手改） ===
 const CHAMPION_PARAMETERS = {
-    id: "ai5-readiness-efficiency",
+    id: "joint-js5",
     engineWeight: 1,
     tempoWeight: 1,
     contestWeight: 1,
@@ -1288,12 +1288,17 @@ const CHAMPION_PARAMETERS = {
     capacityWeight: 1,
     restWeight: 1,
     endgameWeight: 1,
-    structure: "beam-rollout",
     acquisitionVariant: "readiness-efficiency",
+    adapter: "champion-guided",
+    jointVersion: "joint-js5",
+    budgetMs: 100,
 };
 // === CHAMPION-PARAMETERS-END ===
 const PARAM_KEYS = Object.keys(PARAMETER_BOUNDS);
-/** 校验并归一化参数对象；非法输入抛出明确错误。 */
+/** 校验并归一化参数对象；非法输入抛出明确错误。
+ * 适配器冠军（source.adapter 存在）：权重乘子可缺省（补默认 1.0 保持类型完备），
+ * jointVersion/budgetMs 按适配器口径校验；无 adapter 字段的输入校验行为与
+ * 历史版本逐字节一致（同样的必填要求与错误文案）。 */
 function validateAIParameters(input) {
     if (typeof input !== 'object' || input === null)
         throw new Error('AI 参数必须为对象');
@@ -1302,8 +1307,20 @@ function validateAIParameters(input) {
         throw new Error('AI 参数缺少合法的 id');
     }
     const result = { id: source.id };
+    // 显式适配器冠军：决策核心在适配器内，权重乘子不参与决策（可缺省）。
+    const adapterMode = source.adapter === 'champion-guided';
+    if (source.adapter !== undefined) {
+        if (source.adapter !== 'champion-guided') {
+            throw new Error(`未知适配器冠军类型：${String(source.adapter)}`);
+        }
+        result.adapter = source.adapter;
+    }
     for (const key of PARAM_KEYS) {
         const value = source[key];
+        if (adapterMode && value === undefined) {
+            result[key] = 1;
+            continue;
+        }
         const [low, high] = PARAMETER_BOUNDS[key];
         if (typeof value !== 'number' || !Number.isFinite(value) || value < low || value > high) {
             throw new Error(`参数 ${key} 必须为 ${low}–${high} 之间的有限数值，实际：${String(value)}`);
@@ -1323,6 +1340,23 @@ function validateAIParameters(input) {
             throw new Error(`未知获取估值变体：${String(source.acquisitionVariant)}`);
         }
         result.acquisitionVariant = source.acquisitionVariant;
+    }
+    // 适配器冠军的版本与预算透传：jointVersion 交由决策入口对照联合规划版本
+    // 注册表校验（此处只做形状校验，避免 parameters → js/adapter 循环依赖）。
+    if (source.jointVersion !== undefined) {
+        if (typeof source.jointVersion !== 'string' || !/^joint-js\d+$/.test(source.jointVersion)) {
+            throw new Error(`适配器冠军的 jointVersion 非法：${String(source.jointVersion)}`);
+        }
+        result.jointVersion = source.jointVersion;
+    }
+    if (source.budgetMs !== undefined) {
+        if (typeof source.budgetMs !== 'number' || !Number.isFinite(source.budgetMs) || source.budgetMs < 1 || source.budgetMs > 10_000) {
+            throw new Error(`适配器冠军的 budgetMs 必须为 1–10000 的有限数值，实际：${String(source.budgetMs)}`);
+        }
+        result.budgetMs = source.budgetMs;
+    }
+    if (result.adapter && !result.jointVersion) {
+        throw new Error('适配器冠军缺少 jointVersion');
     }
     return result;
 }
@@ -2317,8 +2351,25 @@ function choosePlan(view, params, profileOverride, structureInput) {
 
 
 
+
 function chooseAIAction(game, options) {
     const params = resolveAIParameters(options?.parameters);
+    // 结构化冠军分派（AI6 第五阶段）：激活参数携带 adapter 字段时，决策核心在
+    // 适配器内（如 JS5 冠军引导选择性联合搜索）——信息边界、溢出口径与"正式引擎
+    // 复核"纪律由适配器承担；无 adapter 字段的参数走束搜索路径（行为逐字节不变）。
+    if (params.adapter === 'champion-guided') {
+        if (game.phase === 'finished')
+            throw new Error('游戏结束，AI 无法行动');
+        const p = game.players[game.current];
+        if (!p?.isAI)
+            throw new Error('当前行动者不是 AI');
+        const joint = chooseJointAction(game, {
+            version: params.jointVersion ?? 'joint-js5',
+            ...(params.budgetMs !== undefined ? { budgetMs: params.budgetMs } : {}),
+            profile: options?.profile,
+        });
+        return { action: joint.action, reason: joint.reason };
+    }
     // 结构来源优先级：显式 options.structure > 参数内嵌 structure > 冠军基线。
     const structure = normalizeStructure((options?.structure ?? params.structure));
     if (game.phase === 'finished')

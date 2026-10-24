@@ -3,6 +3,12 @@ import assert from 'node:assert/strict';
 import { createGame, applyAction, count } from '../dist/js/engine.js';
 import { MERCHANT_BY_ID, MERCHANT_DECK, GOLEM_DECK } from '../dist/js/data.js';
 import { chooseAIAction } from '../dist/js/ai.js';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+// JS5 预算模式决策含墙钟计时方差：H10 断言同构状态决策一致，显式钉定前任
+// 冠军（束搜索确定性）保持断言可判定。
+const LEGACY_CHAMPION = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/legacy-champion.json'), 'utf8'));
 
 const duelWithAI=(bots,seed=99)=>createGame(['玩家 1','玩家 2',...Array.from({length:bots},(_,i)=>`AI ${i+1}`)],seed,Array.from({length:bots},(_,i)=>i+2));
 test('2 位真人 + 1–4 AI：真人索引固定在左右座次（0、1）',()=>{
@@ -51,7 +57,7 @@ test('2 人类 + 4 AI：60 组全自动合法行动可正常触发终局',()=>{
     g.players[0].isAI=true;g.players[1].isAI=true;
     let steps=0;
     while(g.phase!=='finished' && steps<750) {
-      g=applyAction(g,chooseAIAction(g).action);
+      g=applyAction(g,chooseAIAction(g, { parameters: LEGACY_CHAMPION }).action);
       steps++;
     }
     assert.equal(g.phase,'finished',`seed=${seed} steps=${steps}`);

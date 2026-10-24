@@ -65,7 +65,9 @@ requireBuiltEngine();
 const candidate = readJSONSafe(candidatePath);
 const parameters = candidate.parameters ?? candidate;
 if (!parameters?.id) throw new Error('候选文件缺少 parameters.id');
-validateAIParameters(parameters); // 参数越界/缺字段一律拒绝，绝不带病晋级
+// 参数越界/缺字段一律拒绝，绝不带病晋级；写入冠军记录用归一化后的参数
+// （适配器冠军的权重乘子由校验器补默认值，保证下游 runner/对手池的乘法运算安全）。
+const validatedParameters = validateAIParameters(parameters);
 
 const confirmation = candidate.confirmation;
 const decision = confirmation?.decision;
@@ -164,7 +166,7 @@ const record = {
   id: parameters.id,
   name: `AI 4.0 冠军 ${parameters.id}`,
   description: `由自动进化训练晋级（基于 ${candidate.basedOn ?? '上一冠军'}）；确认挑战证据见 provenance.promotionEvidence。`,
-  parameters,
+  parameters: validatedParameters,
   provenance: {
     basedOn: candidate.basedOn ?? null,
     promotedAt: new Date().toISOString().slice(0, 10),

@@ -12,6 +12,7 @@ import { resolveAIParameters, type AIParameters } from './parameters.js';
 import { choosePlan, initialState, actions } from './planner.js';
 import { trimStock } from './evaluator.js';
 import { normalizeStructure, type AIStructure } from './structures.js';
+import { chooseJointAction } from '../js/adapter.js';
 import type { Profile } from './profiles.js';
 
 export type AIOptions = {
@@ -31,6 +32,20 @@ export type AIDecision = {
 
 export function chooseAIAction(game: Game, options?: AIOptions): AIDecision {
   const params = resolveAIParameters(options?.parameters);
+  // 结构化冠军分派（AI6 第五阶段）：激活参数携带 adapter 字段时，决策核心在
+  // 适配器内（如 JS5 冠军引导选择性联合搜索）——信息边界、溢出口径与"正式引擎
+  // 复核"纪律由适配器承担；无 adapter 字段的参数走束搜索路径（行为逐字节不变）。
+  if (params.adapter === 'champion-guided') {
+    if (game.phase === 'finished') throw new Error('游戏结束，AI 无法行动');
+    const p = game.players[game.current];
+    if (!p?.isAI) throw new Error('当前行动者不是 AI');
+    const joint = chooseJointAction(game, {
+      version: params.jointVersion ?? 'joint-js5',
+      ...(params.budgetMs !== undefined ? { budgetMs: params.budgetMs } : {}),
+      profile: options?.profile,
+    });
+    return { action: joint.action, reason: joint.reason };
+  }
   // 结构来源优先级：显式 options.structure > 参数内嵌 structure > 冠军基线。
   const structure = normalizeStructure((options?.structure ?? params.structure) as string | undefined);
   if (game.phase === 'finished') throw new Error('游戏结束，AI 无法行动');

@@ -12,6 +12,7 @@
 
 import { createGame, applyAction, score, ranking, count } from '../../web-v1/dist/js/engine.js';
 import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
+import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
 import { ENGINE_SEED_MAX } from '../lib/seeds.mjs';
 
 export const DEFAULT_MAX_MOVES = 1200;
@@ -47,7 +48,7 @@ function emptyResult(seed, versions, seatCount) {
  * 模拟一局完整对局。
  * @param {object} options
  * @param {number} options.seed 引擎随机种子（洗牌与起始配置全部由此决定）
- * @param {Array<{id?:string, parameters?:object, structure?:string}|null>} [options.versions] 每席位 AI 版本（可带结构变体）；null 使用当前激活参数
+ * @param {Array<{id?:string, parameters?:object, structure?:string, adapter?:'champion-guided', jointVersion?:string, budgetMs?:number, gateMode?:string}|null>} [options.versions] 每席位 AI 版本（可带结构变体或显式适配器）；null 使用当前激活参数
  * @param {number} [options.seatCount] 席位数，默认 5（1 人类代理席 + 4 AI）
  * @param {number} [options.maxMoves] 单局行动步数上限（防死循环）
  * @param {number} [options.deadlineMs] 单局墙钟时间预算（毫秒，防长时间无进展）
@@ -104,11 +105,22 @@ export function simulateGame(options) {
       // 人格按正式游戏席位映射显式注入（席位 0 为中立人类代理），
       // 结构变体按版本配置透传（beam-lineage/beam-adaptive/beam-rollout），
       // 决策核心与正式游戏共用同一实现。
-      const response = chooseAIAction(game, {
-        ...(version?.parameters ? { parameters: version.parameters } : {}),
-        ...(version?.structure ? { structure: version.structure } : {}),
-        profile: seatProfile(seat),
-      });
+      // 显式适配器分派（AI6 第五阶段）：version.adapter === 'champion-guided' 时
+      // 该席位走联合规划适配器（joint-js5：冠军引导选择性联合搜索，budgetMs 缺省
+      // 100ms 墙钟）——与结构变体同一"一等公民候选"注入模式；冠军路径（无
+      // adapter 字段）的决策分派逐字节不变，两版本同进程按席位隔离。
+      const response = version?.adapter === 'champion-guided'
+        ? chooseJointAction(game, {
+            version: version.jointVersion ?? 'joint-js5',
+            ...(version.gateMode !== undefined ? { gateMode: version.gateMode } : {}),
+            ...(version.budgetMs !== undefined ? { budgetMs: version.budgetMs } : {}),
+            profile: seatProfile(seat),
+          })
+        : chooseAIAction(game, {
+            ...(version?.parameters ? { parameters: version.parameters } : {}),
+            ...(version?.structure ? { structure: version.structure } : {}),
+            profile: seatProfile(seat),
+          });
       const decisionMs = performance.now() - decisionStart;
       const stats = seats[seat];
       stats.decisionCount += 1;
