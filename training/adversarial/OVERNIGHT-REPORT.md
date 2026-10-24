@@ -239,7 +239,11 @@ OpenEvolve 集成路径：搜索器产出 spec JSON → `registerCandidates(buil
    少量 champion-guided 门控变体），走 evaluate 模式（种子块 `matrix-dev`，随后 `prereg`）；
 3. 强对手（`strong` 档）进入第六阶段对手清单：对 JS6 候选的"单席位第一名率"评测复用本注册表
    （`--versions` 注入，对手席位从强对手清单轮换）；
-4. 独立 PR 修复 §2.3 既有对手池（strip-adapter + 决策核心显式化），并以本注册表替换手写池。
+4. 独立 PR 修复 §2.3 既有对手池（strip-adapter + 决策核心显式化），并以本注册表替换手写池；
+5. 独立 PR 修复 §11 的 OpenEvolve 沙箱快照缺 `src/js/**`（main 既有损坏）。
+
+---
+
 
 ---
 
@@ -250,3 +254,29 @@ OpenEvolve 集成路径：搜索器产出 spec JSON → `registerCandidates(buil
 - 预注册方案：`training/reports/adversarial-league/prereg/prereg-plan-{15s,30s}.json`
 - 测试：`training/tests/adversarial-{registry,audit,candidate,league,evaluate}.test.mjs`（35 项）
 - 种子登记：`ai5/lib/seed_policy.mjs`（`AI6_ADVERSARIAL_LEAGUE_BLOCK` 及 4 子块）
+
+---
+
+## 11. CI 状态与既有损坏取证（PR #35 触发的 ai5.yml Seatbelt 失败）
+
+**结论：ai5.yml「Seatbelt 沙箱验收」失败是 main 上的既有损坏，非本 PR 引入。**
+
+- **取证**：在干净 `origin/main@e7d3bfa` 独立 worktree 重建 dist 后本地复现
+  `python3 ai5/openevolve/tests/test_security_sandbox.py`——**3 项失败**（本分支同套件 2 项失败，
+  均含同一编译错误）。
+- **根因**：[ai5/openevolve/node/assemble_candidate.mjs](../../ai5/openevolve/node/assemble_candidate.mjs)
+  第 34 行 `COPIED_PATHS = ['data.ts', 'engine.ts', 'ai.ts', 'ai']`——候选编译树只拷贝
+  `src/data.ts / src/engine.ts / src/ai.ts / src/ai/**`，**不含 `src/js/**`**。AI6 第四/五阶段
+  （PR #26/#27/#30）把 `import { chooseJointAction } from '../js/adapter.js'` 接线进
+  `web-v1/src/ai/decision.ts`（第 15 行）后，沙箱内候选树编译必然失败：
+  `TS2307: Cannot find module '../js/adapter.js'`。
+- **为何现在才暴露**：ai5.yml 只在 `ai5/**`、`training/evaluator/stats.mjs`、`training/lib/seeds.mjs`
+  路径变化时触发；PR #26/#30 的接线未触发该工作流，损坏自接线合入起潜伏。本 PR 因登记
+  `ai5/lib/seed_policy.mjs`（属 `ai5/**`）触发运行而暴露。
+- **影响面**：OpenEvolve 候选编译/探针验收链路在当前 main 上不可用（与本任务无关，但阻塞
+  后续 OpenEvolve 对接本任务候选协议——见 §9.2，修复需先行）。
+- **修复建议（属 ai5/openevolve 维护者范围，本 PR 不越权）**：`COPIED_PATHS` 与 manifest
+  校验 include 增补 `src/js/**`（或改为按 import 闭包拷贝），并复核沙箱策略对新文件的
+  读边界；同套件中 `test_infinite_loop_killed_by_probe_timeout` 失败与同根因（基线编译失败）。
+- 本 PR 自身范围内的 CI 检查（种子唯一性/隔离/账本一致性、validate、OpenEvolve 安全静态检查）
+  全部通过。
