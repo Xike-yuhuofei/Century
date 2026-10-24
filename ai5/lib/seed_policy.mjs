@@ -81,6 +81,14 @@ export const AI6_LEAGUE_SMOKE_SUBBLOCK = [1_401_000_000, 1_402_000_000];
 export const AI6_LEAGUE_MATRIX_DEV_SUBBLOCK = [1_402_000_000, 1_403_000_000];
 export const AI6_LEAGUE_PREREG_SUBBLOCK = [1_403_000_000, 1_410_000_000];
 
+/** AI6 战术基准局面库专用块（research/overnight-tactical-benchmark，PR 合并时换块）：
+ * 原拟 [1.4e9,1.5e9) 与对抗性联赛块重叠（并行会话先合并），按块不重叠纪律改登记
+ * [1.5e9,1.6e9)，语料随之用新种子确定性重生成（见 training/scenarios/data/）。
+ * 仅用于基准局面的引擎 replay 种子与固定工作量测试，不用于任何胜率/晋级统计；
+ * 与训练/验证/进化/基线/联合搜索/对抗联赛各池物理隔离。种子消耗清单随语料落盘
+ * （training/scenarios/data/generation-summary.json），逐局顺序分配、可审计。 */
+export const AI6_SCENARIO_BLOCK = [1_500_000_000, 1_600_000_000];
+
 /** 断言种子落在指定区间内（含头不含尾）。 */
 export function assertInBlock(seed, block, name = 'seed') {
   if (!Number.isSafeInteger(seed)) {
