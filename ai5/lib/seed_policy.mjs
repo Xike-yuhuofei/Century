@@ -56,6 +56,16 @@ export const AI6_JOINT_VERIFY_SUBBLOCK = [1_330_000_000, 1_340_000_000];
 export const AI6_JOINT_CALIB_SUBBLOCK = [1_340_000_000, 1_350_000_000];
 export const AI6_JOINT_PERF_SUBBLOCK = [1_350_000_000, 1_351_000_000];
 
+/** AI6 第五阶段（JS5 稳健性验证与晋级准备）子块（与全部既有块物理隔离；
+ * 沿用 PR #26 先例：Joint Search 阶段子块只登记 .mjs，.py 镜像至基线块为止）：
+ * - [1.351e9, 1.352e9)  本阶段调参/敏感性分析（js5-opt 开发专用，永不用于结论）；
+ * - [1.36e9, 1.37e9)    独立确认块（全新种子，此前从未消费）。duel.mjs --block confirm
+ *   分区：seedBase = 1.36e9 + (人数−2)×1e6 + (对手池 diverse ? 5e5 : 0)——每个
+ *   (人数, 对手池) 组合独占 50 万种子，配对候选共享同一种子（配对设计），
+ *   不同实验阶段/对手池绝不共享种子。[1.353e9,1.36e9) 与 [1.37e9,1.4e9) 预留。 */
+export const AI6_JS5_TUNE2_SUBBLOCK = [1_351_000_000, 1_352_000_000];
+export const AI6_JS5_CONFIRM_SUBBLOCK = [1_360_000_000, 1_370_000_000];
+
 /** 断言种子落在指定区间内（含头不含尾）。 */
 export function assertInBlock(seed, block, name = 'seed') {
   if (!Number.isSafeInteger(seed)) {

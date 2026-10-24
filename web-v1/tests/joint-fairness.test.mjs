@@ -82,8 +82,30 @@ test('随机化隐藏牌库顺序不改变联合规划决策（多位置 × 多�
   }
 });
 
+/** 采集预算纪律测试位置（较宽种子段取更多样本：p95 需要足够样本量才是
+ * 真分位数——6 样本的"p95"实为 max，被单次调度噪声主导而间歇误报；
+ * 24 样本允许 1 个离群点，统计语义与断言一致。不放宽预算上限本身。） */
+function budgetTestPositions(count) {
+  const positions = [];
+  for (let seed = 5000; seed <= 5120 && positions.length < count; seed++) {
+    let g = createGame(['A', 'B', 'C', 'D', 'E'], seed, [1, 2, 3, 4]);
+    g.players[0].isAI = true;
+    let moves = 0;
+    while (g.phase !== 'finished' && moves < 400 && positions.length < count) {
+      if (g.phase === 'turn' && g.turnNumber % 9 === 4 && g.players[g.current].claimed.length === 0) {
+        positions.push(JSON.parse(JSON.stringify(g)));
+      }
+      const r = chooseJointAction(g, { version: 'joint-js2', workUnits: 3, horizon: 30 });
+      g = applyAction(g, r.action);
+      moves++;
+    }
+  }
+  return positions;
+}
+
 test('预算纪律：25/50/100/200ms 预算下决策延迟 p95 ≤ 预算 + 5ms', () => {
-  const positions = midgamePositions(6);
+  const positions = budgetTestPositions(24);
+  assert.ok(positions.length >= 20, `预算测试位置不足：${positions.length}`);
   for (const budget of [25, 50, 100, 200]) {
     const samples = [];
     for (const g0 of positions) {
@@ -94,7 +116,7 @@ test('预算纪律：25/50/100/200ms 预算下决策延迟 p95 ≤ 预算 + 5ms'
     }
     samples.sort((a, b) => a - b);
     const p95 = samples[Math.min(samples.length - 1, Math.floor(samples.length * 0.95))];
-    assert.ok(p95 <= budget + 5, `预算 ${budget}ms：p95=${p95.toFixed(1)}ms 超限`);
+    assert.ok(p95 <= budget + 5, `预算 ${budget}ms：p95=${p95.toFixed(1)}ms 超限（${positions.length} 样本）`);
   }
 });
 
