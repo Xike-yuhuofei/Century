@@ -1,29 +1,48 @@
 {
   "schema": "century-tactical-benchmark-index-v1",
-  "generatedAt": "2026-10-24T14:45:36.859Z",
+  "generatedAt": "2026-10-24T17:24:32.794Z",
   "count": 50,
   "byCategory": {
-    "acquire-vs-score": 7,
-    "trade-chain-rest": 7,
     "conversion-efficiency": 7,
+    "acquire-vs-score": 6,
+    "trade-chain-rest": 7,
     "caravan-pressure": 7,
-    "opponent-ending": 6,
-    "final-round": 7,
+    "multi-claim": 4,
+    "opponent-ending": 4,
     "contested-claim": 7,
-    "multi-claim": 2
+    "final-round": 7,
+    "engine-overinvest": 1
   },
   "byPlayerCount": {
-    "2": 13,
+    "2": 14,
     "3": 14,
     "4": 14,
-    "5": 9
+    "5": 8
   },
   "byStage": {
-    "midgame": 35,
-    "endgame": 13,
-    "opening": 2
+    "midgame": 33,
+    "endgame": 11,
+    "opening": 6
   },
   "scenarios": [
+    {
+      "id": "TS-2P-CNV-001",
+      "category": "conversion-efficiency",
+      "tags": [
+        "conversion-efficiency"
+      ],
+      "playerCount": 2,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "S",
+      "legalActionCount": 5,
+      "turnNumber": 8,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000000
+    },
     {
       "id": "TS-2P-AVS-001",
       "category": "acquire-vs-score",
@@ -35,12 +54,30 @@
       "competition": "low",
       "targetCount": 1,
       "difficulty": "M",
-      "legalActionCount": 42,
-      "turnNumber": 6,
-      "allAgree": false,
-      "uniqueActions": 2,
+      "legalActionCount": 37,
+      "turnNumber": 9,
+      "allAgree": true,
+      "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000000
+      "gameSeed": 1500000000
+    },
+    {
+      "id": "TS-2P-CNV-002",
+      "category": "conversion-efficiency",
+      "tags": [
+        "conversion-efficiency"
+      ],
+      "playerCount": 2,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "S",
+      "legalActionCount": 9,
+      "turnNumber": 10,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000000
     },
     {
       "id": "TS-2P-AVS-002",
@@ -54,12 +91,12 @@
       "competition": "low",
       "targetCount": 1,
       "difficulty": "M",
-      "legalActionCount": 37,
-      "turnNumber": 7,
+      "legalActionCount": 29,
+      "turnNumber": 12,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000000
+      "gameSeed": 1500000000
     },
     {
       "id": "TS-2P-TCR-001",
@@ -71,49 +108,52 @@
       "stage": "midgame",
       "competition": "low",
       "targetCount": 0,
-      "difficulty": "S",
-      "legalActionCount": 11,
-      "turnNumber": 16,
+      "difficulty": "M",
+      "legalActionCount": 37,
+      "turnNumber": 25,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000000
+      "gameSeed": 1500000000
     },
     {
-      "id": "TS-2P-CNV-001",
-      "category": "conversion-efficiency",
+      "id": "TS-2P-TCR-002",
+      "category": "trade-chain-rest",
       "tags": [
+        "trade-chain-rest",
         "conversion-efficiency"
       ],
       "playerCount": 2,
       "stage": "midgame",
       "competition": "low",
       "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 44,
-      "turnNumber": 19,
-      "allAgree": true,
-      "uniqueActions": 1,
+      "difficulty": "L",
+      "legalActionCount": 92,
+      "turnNumber": 27,
+      "allAgree": false,
+      "uniqueActions": 2,
       "oracleStatus": null,
-      "gameSeed": 1400000000
+      "gameSeed": 1500000000
     },
     {
       "id": "TS-2P-CAR-001",
       "category": "caravan-pressure",
       "tags": [
-        "caravan-pressure"
+        "caravan-pressure",
+        "trade-chain-rest",
+        "conversion-efficiency"
       ],
       "playerCount": 2,
       "stage": "midgame",
       "competition": "low",
       "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 57,
-      "turnNumber": 22,
+      "difficulty": "L",
+      "legalActionCount": 66,
+      "turnNumber": 53,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000000
+      "gameSeed": 1500000000
     },
     {
       "id": "TS-2P-CAR-002",
@@ -125,71 +165,89 @@
       "stage": "midgame",
       "competition": "low",
       "targetCount": 0,
-      "difficulty": "L",
-      "legalActionCount": 65,
-      "turnNumber": 24,
+      "difficulty": "M",
+      "legalActionCount": 16,
+      "turnNumber": 65,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000000
+      "gameSeed": 1500000000
     },
     {
-      "id": "TS-2P-TCR-002",
-      "category": "trade-chain-rest",
+      "id": "TS-2P-MCL-001",
+      "category": "multi-claim",
       "tags": [
-        "trade-chain-rest"
+        "multi-claim",
+        "acquire-vs-score",
+        "conversion-efficiency"
       ],
       "playerCount": 2,
       "stage": "midgame",
       "competition": "low",
-      "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 18,
-      "turnNumber": 38,
-      "allAgree": true,
-      "uniqueActions": 1,
+      "targetCount": 2,
+      "difficulty": "S",
+      "legalActionCount": 12,
+      "turnNumber": 71,
+      "allAgree": false,
+      "uniqueActions": 2,
       "oracleStatus": null,
-      "gameSeed": 1400000000
+      "gameSeed": 1500000000
     },
     {
       "id": "TS-2P-OPP-001",
       "category": "opponent-ending",
       "tags": [
-        "opponent-ending",
-        "caravan-pressure",
-        "conversion-efficiency"
+        "opponent-ending"
+      ],
+      "playerCount": 2,
+      "stage": "endgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "S",
+      "legalActionCount": 6,
+      "turnNumber": 73,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000000
+    },
+    {
+      "id": "TS-2P-OPP-002",
+      "category": "opponent-ending",
+      "tags": [
+        "opponent-ending"
       ],
       "playerCount": 2,
       "stage": "endgame",
       "competition": "low",
       "targetCount": 0,
       "difficulty": "M",
-      "legalActionCount": 55,
-      "turnNumber": 58,
+      "legalActionCount": 20,
+      "turnNumber": 75,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000000
+      "gameSeed": 1500000000
     },
     {
-      "id": "TS-2P-OPP-002",
-      "category": "opponent-ending",
+      "id": "TS-2P-CON-001",
+      "category": "contested-claim",
       "tags": [
-        "opponent-ending",
-        "acquire-vs-score",
-        "conversion-efficiency"
+        "contested-claim",
+        "seat-race",
+        "acquire-vs-score"
       ],
       "playerCount": 2,
-      "stage": "endgame",
-      "competition": "low",
+      "stage": "midgame",
+      "competition": "medium",
       "targetCount": 1,
       "difficulty": "M",
-      "legalActionCount": 51,
-      "turnNumber": 60,
-      "allAgree": true,
-      "uniqueActions": 1,
+      "legalActionCount": 36,
+      "turnNumber": 5,
+      "allAgree": false,
+      "uniqueActions": 2,
       "oracleStatus": null,
-      "gameSeed": 1400000000
+      "gameSeed": 1500000001
     },
     {
       "id": "TS-2P-FIN-001",
@@ -203,72 +261,30 @@
       "competition": "low",
       "targetCount": 0,
       "difficulty": "S",
-      "legalActionCount": 8,
-      "turnNumber": 76,
+      "legalActionCount": 11,
+      "turnNumber": 100,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": "exact",
-      "gameSeed": 1400000000
+      "gameSeed": 1500000001
     },
     {
-      "id": "TS-2P-CON-001",
-      "category": "contested-claim",
+      "id": "TS-2P-ENG-001",
+      "category": "engine-overinvest",
       "tags": [
-        "contested-claim",
-        "seat-race",
-        "acquire-vs-score"
-      ],
-      "playerCount": 2,
-      "stage": "opening",
-      "competition": "medium",
-      "targetCount": 1,
-      "difficulty": "M",
-      "legalActionCount": 22,
-      "turnNumber": 4,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": null,
-      "gameSeed": 1400000001
-    },
-    {
-      "id": "TS-2P-MCL-001",
-      "category": "multi-claim",
-      "tags": [
-        "multi-claim",
-        "acquire-vs-score",
-        "trade-chain-rest",
-        "conversion-efficiency"
-      ],
-      "playerCount": 2,
-      "stage": "midgame",
-      "competition": "low",
-      "targetCount": 2,
-      "difficulty": "XL",
-      "legalActionCount": 248,
-      "turnNumber": 55,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": null,
-      "gameSeed": 1400000001
-    },
-    {
-      "id": "TS-2P-CNV-002",
-      "category": "conversion-efficiency",
-      "tags": [
-        "engine-overinvest",
-        "conversion-efficiency"
+        "engine-overinvest"
       ],
       "playerCount": 2,
       "stage": "midgame",
       "competition": "low",
       "targetCount": 0,
-      "difficulty": "L",
-      "legalActionCount": 67,
-      "turnNumber": 29,
+      "difficulty": "S",
+      "legalActionCount": 3,
+      "turnNumber": 25,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000005
+      "gameSeed": 1500000002
     },
     {
       "id": "TS-3P-CON-001",
@@ -277,16 +293,16 @@
         "contested-claim"
       ],
       "playerCount": 3,
-      "stage": "midgame",
+      "stage": "opening",
       "competition": "medium",
       "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 50,
-      "turnNumber": 12,
-      "allAgree": false,
-      "uniqueActions": 2,
+      "difficulty": "S",
+      "legalActionCount": 11,
+      "turnNumber": 4,
+      "allAgree": true,
+      "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000006
+      "gameSeed": 1500000003
     },
     {
       "id": "TS-3P-CON-002",
@@ -297,34 +313,52 @@
         "acquire-vs-score"
       ],
       "playerCount": 3,
-      "stage": "midgame",
-      "competition": "high",
+      "stage": "opening",
+      "competition": "medium",
       "targetCount": 1,
       "difficulty": "M",
-      "legalActionCount": 37,
-      "turnNumber": 13,
+      "legalActionCount": 22,
+      "turnNumber": 5,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000006
+      "gameSeed": 1500000003
     },
     {
-      "id": "TS-3P-TCR-001",
-      "category": "trade-chain-rest",
+      "id": "TS-3P-CNV-001",
+      "category": "conversion-efficiency",
       "tags": [
-        "trade-chain-rest"
+        "conversion-efficiency"
+      ],
+      "playerCount": 3,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "M",
+      "legalActionCount": 42,
+      "turnNumber": 21,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000003
+    },
+    {
+      "id": "TS-3P-CNV-002",
+      "category": "conversion-efficiency",
+      "tags": [
+        "conversion-efficiency"
       ],
       "playerCount": 3,
       "stage": "midgame",
       "competition": "low",
       "targetCount": 0,
       "difficulty": "S",
-      "legalActionCount": 8,
-      "turnNumber": 26,
+      "legalActionCount": 5,
+      "turnNumber": 23,
       "allAgree": false,
       "uniqueActions": 2,
       "oracleStatus": null,
-      "gameSeed": 1400000006
+      "gameSeed": 1500000003
     },
     {
       "id": "TS-3P-AVS-001",
@@ -337,13 +371,32 @@
       "stage": "midgame",
       "competition": "low",
       "targetCount": 1,
-      "difficulty": "XL",
-      "legalActionCount": 247,
+      "difficulty": "L",
+      "legalActionCount": 184,
       "turnNumber": 27,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000006
+      "gameSeed": 1500000003
+    },
+    {
+      "id": "TS-3P-TCR-001",
+      "category": "trade-chain-rest",
+      "tags": [
+        "trade-chain-rest",
+        "conversion-efficiency"
+      ],
+      "playerCount": 3,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "S",
+      "legalActionCount": 6,
+      "turnNumber": 35,
+      "allAgree": false,
+      "uniqueActions": 2,
+      "oracleStatus": null,
+      "gameSeed": 1500000003
     },
     {
       "id": "TS-3P-TCR-002",
@@ -356,68 +409,12 @@
       "competition": "low",
       "targetCount": 0,
       "difficulty": "S",
-      "legalActionCount": 8,
-      "turnNumber": 29,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": null,
-      "gameSeed": 1400000006
-    },
-    {
-      "id": "TS-3P-CNV-001",
-      "category": "conversion-efficiency",
-      "tags": [
-        "conversion-efficiency"
-      ],
-      "playerCount": 3,
-      "stage": "midgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "L",
-      "legalActionCount": 106,
-      "turnNumber": 38,
+      "legalActionCount": 6,
+      "turnNumber": 55,
       "allAgree": false,
       "uniqueActions": 2,
       "oracleStatus": null,
-      "gameSeed": 1400000006
-    },
-    {
-      "id": "TS-3P-CAR-001",
-      "category": "caravan-pressure",
-      "tags": [
-        "caravan-pressure",
-        "conversion-efficiency"
-      ],
-      "playerCount": 3,
-      "stage": "midgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 43,
-      "turnNumber": 51,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": null,
-      "gameSeed": 1400000006
-    },
-    {
-      "id": "TS-3P-CAR-002",
-      "category": "caravan-pressure",
-      "tags": [
-        "caravan-pressure",
-        "conversion-efficiency"
-      ],
-      "playerCount": 3,
-      "stage": "midgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 43,
-      "turnNumber": 54,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": null,
-      "gameSeed": 1400000006
+      "gameSeed": 1500000003
     },
     {
       "id": "TS-3P-MCL-001",
@@ -425,7 +422,63 @@
       "tags": [
         "multi-claim",
         "acquire-vs-score",
+        "conversion-efficiency"
+      ],
+      "playerCount": 3,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 2,
+      "difficulty": "L",
+      "legalActionCount": 184,
+      "turnNumber": 60,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000003
+    },
+    {
+      "id": "TS-3P-CAR-001",
+      "category": "caravan-pressure",
+      "tags": [
+        "caravan-pressure"
+      ],
+      "playerCount": 3,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "M",
+      "legalActionCount": 43,
+      "turnNumber": 71,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000003
+    },
+    {
+      "id": "TS-3P-CAR-002",
+      "category": "caravan-pressure",
+      "tags": [
         "caravan-pressure",
+        "trade-chain-rest"
+      ],
+      "playerCount": 3,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "M",
+      "legalActionCount": 44,
+      "turnNumber": 74,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000003
+    },
+    {
+      "id": "TS-3P-MCL-002",
+      "category": "multi-claim",
+      "tags": [
+        "multi-claim",
+        "acquire-vs-score",
         "trade-chain-rest",
         "conversion-efficiency"
       ],
@@ -433,52 +486,13 @@
       "stage": "midgame",
       "competition": "low",
       "targetCount": 2,
-      "difficulty": "XL",
-      "legalActionCount": 245,
-      "turnNumber": 105,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": null,
-      "gameSeed": 1400000006
-    },
-    {
-      "id": "TS-3P-OPP-001",
-      "category": "opponent-ending",
-      "tags": [
-        "opponent-ending",
-        "acquire-vs-score",
-        "conversion-efficiency"
-      ],
-      "playerCount": 3,
-      "stage": "endgame",
-      "competition": "low",
-      "targetCount": 1,
       "difficulty": "M",
-      "legalActionCount": 30,
-      "turnNumber": 126,
+      "legalActionCount": 42,
+      "turnNumber": 116,
       "allAgree": false,
       "uniqueActions": 2,
       "oracleStatus": null,
-      "gameSeed": 1400000006
-    },
-    {
-      "id": "TS-3P-OPP-002",
-      "category": "opponent-ending",
-      "tags": [
-        "opponent-ending",
-        "conversion-efficiency"
-      ],
-      "playerCount": 3,
-      "stage": "endgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 47,
-      "turnNumber": 127,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": null,
-      "gameSeed": 1400000006
+      "gameSeed": 1500000003
     },
     {
       "id": "TS-4P-CON-001",
@@ -491,12 +505,12 @@
       "competition": "medium",
       "targetCount": 0,
       "difficulty": "M",
-      "legalActionCount": 29,
-      "turnNumber": 8,
-      "allAgree": false,
-      "uniqueActions": 2,
+      "legalActionCount": 23,
+      "turnNumber": 4,
+      "allAgree": true,
+      "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000007
+      "gameSeed": 1500000004
     },
     {
       "id": "TS-4P-CON-002",
@@ -505,34 +519,16 @@
         "contested-claim"
       ],
       "playerCount": 4,
-      "stage": "midgame",
+      "stage": "opening",
       "competition": "medium",
       "targetCount": 0,
       "difficulty": "S",
       "legalActionCount": 11,
-      "turnNumber": 9,
-      "allAgree": false,
-      "uniqueActions": 2,
-      "oracleStatus": null,
-      "gameSeed": 1400000007
-    },
-    {
-      "id": "TS-4P-TCR-001",
-      "category": "trade-chain-rest",
-      "tags": [
-        "trade-chain-rest"
-      ],
-      "playerCount": 4,
-      "stage": "midgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 44,
-      "turnNumber": 17,
+      "turnNumber": 5,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000007
+      "gameSeed": 1500000004
     },
     {
       "id": "TS-4P-CNV-001",
@@ -544,13 +540,13 @@
       "stage": "midgame",
       "competition": "low",
       "targetCount": 0,
-      "difficulty": "L",
-      "legalActionCount": 131,
-      "turnNumber": 20,
+      "difficulty": "M",
+      "legalActionCount": 21,
+      "turnNumber": 15,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000007
+      "gameSeed": 1500000004
     },
     {
       "id": "TS-4P-CNV-002",
@@ -563,33 +559,55 @@
       "competition": "low",
       "targetCount": 0,
       "difficulty": "M",
-      "legalActionCount": 21,
-      "turnNumber": 21,
-      "allAgree": true,
-      "uniqueActions": 1,
+      "legalActionCount": 29,
+      "turnNumber": 19,
+      "allAgree": false,
+      "uniqueActions": 2,
       "oracleStatus": null,
-      "gameSeed": 1400000007
+      "gameSeed": 1500000004
     },
     {
-      "id": "TS-4P-AVS-001",
-      "category": "acquire-vs-score",
+      "id": "TS-4P-CAR-001",
+      "category": "caravan-pressure",
       "tags": [
-        "acquire-vs-score"
+        "caravan-pressure",
+        "trade-chain-rest",
+        "conversion-efficiency"
       ],
       "playerCount": 4,
       "stage": "midgame",
       "competition": "low",
-      "targetCount": 1,
-      "difficulty": "S",
-      "legalActionCount": 7,
-      "turnNumber": 38,
+      "targetCount": 0,
+      "difficulty": "XL",
+      "legalActionCount": 428,
+      "turnNumber": 43,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000007
+      "gameSeed": 1500000004
     },
     {
-      "id": "TS-4P-AVS-002",
+      "id": "TS-4P-MCL-001",
+      "category": "multi-claim",
+      "tags": [
+        "multi-claim",
+        "acquire-vs-score",
+        "conversion-efficiency"
+      ],
+      "playerCount": 4,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 2,
+      "difficulty": "M",
+      "legalActionCount": 52,
+      "turnNumber": 47,
+      "allAgree": false,
+      "uniqueActions": 2,
+      "oracleStatus": null,
+      "gameSeed": 1500000004
+    },
+    {
+      "id": "TS-4P-AVS-001",
       "category": "acquire-vs-score",
       "tags": [
         "acquire-vs-score",
@@ -599,16 +617,16 @@
       "stage": "midgame",
       "competition": "low",
       "targetCount": 1,
-      "difficulty": "L",
-      "legalActionCount": 184,
-      "turnNumber": 44,
-      "allAgree": true,
-      "uniqueActions": 1,
+      "difficulty": "M",
+      "legalActionCount": 23,
+      "turnNumber": 50,
+      "allAgree": false,
+      "uniqueActions": 2,
       "oracleStatus": null,
-      "gameSeed": 1400000007
+      "gameSeed": 1500000004
     },
     {
-      "id": "TS-4P-TCR-002",
+      "id": "TS-4P-TCR-001",
       "category": "trade-chain-rest",
       "tags": [
         "trade-chain-rest"
@@ -618,15 +636,15 @@
       "competition": "low",
       "targetCount": 0,
       "difficulty": "S",
-      "legalActionCount": 7,
-      "turnNumber": 58,
+      "legalActionCount": 11,
+      "turnNumber": 63,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000007
+      "gameSeed": 1500000004
     },
     {
-      "id": "TS-4P-CAR-001",
+      "id": "TS-4P-CAR-002",
       "category": "caravan-pressure",
       "tags": [
         "caravan-pressure",
@@ -637,15 +655,39 @@
       "competition": "low",
       "targetCount": 0,
       "difficulty": "L",
-      "legalActionCount": 151,
-      "turnNumber": 105,
-      "allAgree": true,
-      "uniqueActions": 1,
+      "legalActionCount": 66,
+      "turnNumber": 117,
+      "allAgree": false,
+      "uniqueActions": 2,
       "oracleStatus": null,
-      "gameSeed": 1400000007
+      "gameSeed": 1500000004
     },
     {
       "id": "TS-4P-OPP-001",
+      "category": "opponent-ending",
+      "tags": [
+        "opponent-ending",
+        "contested-claim",
+        "seat-race",
+        "acquire-vs-score",
+        "caravan-pressure",
+        "trade-chain-rest",
+        "conversion-efficiency"
+      ],
+      "playerCount": 4,
+      "stage": "endgame",
+      "competition": "medium",
+      "targetCount": 1,
+      "difficulty": "XL",
+      "legalActionCount": 234,
+      "turnNumber": 121,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000004
+    },
+    {
+      "id": "TS-4P-OPP-002",
       "category": "opponent-ending",
       "tags": [
         "opponent-ending",
@@ -657,31 +699,12 @@
       "competition": "low",
       "targetCount": 0,
       "difficulty": "M",
-      "legalActionCount": 43,
-      "turnNumber": 114,
+      "legalActionCount": 22,
+      "turnNumber": 122,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000007
-    },
-    {
-      "id": "TS-4P-OPP-002",
-      "category": "opponent-ending",
-      "tags": [
-        "opponent-ending",
-        "conversion-efficiency"
-      ],
-      "playerCount": 4,
-      "stage": "endgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "S",
-      "legalActionCount": 8,
-      "turnNumber": 115,
-      "allAgree": false,
-      "uniqueActions": 2,
-      "oracleStatus": null,
-      "gameSeed": 1400000007
+      "gameSeed": 1500000004
     },
     {
       "id": "TS-5P-CON-001",
@@ -690,16 +713,16 @@
         "contested-claim"
       ],
       "playerCount": 5,
-      "stage": "midgame",
+      "stage": "opening",
       "competition": "medium",
       "targetCount": 0,
       "difficulty": "M",
-      "legalActionCount": 17,
-      "turnNumber": 14,
-      "allAgree": true,
-      "uniqueActions": 1,
+      "legalActionCount": 37,
+      "turnNumber": 9,
+      "allAgree": false,
+      "uniqueActions": 3,
       "oracleStatus": null,
-      "gameSeed": 1400000008
+      "gameSeed": 1500000005
     },
     {
       "id": "TS-5P-CON-002",
@@ -708,106 +731,16 @@
         "contested-claim"
       ],
       "playerCount": 5,
-      "stage": "midgame",
+      "stage": "opening",
       "competition": "medium",
       "targetCount": 0,
       "difficulty": "M",
-      "legalActionCount": 20,
-      "turnNumber": 15,
-      "allAgree": false,
-      "uniqueActions": 3,
-      "oracleStatus": null,
-      "gameSeed": 1400000008
-    },
-    {
-      "id": "TS-5P-CAR-001",
-      "category": "caravan-pressure",
-      "tags": [
-        "caravan-pressure"
-      ],
-      "playerCount": 5,
-      "stage": "midgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "L",
-      "legalActionCount": 78,
-      "turnNumber": 19,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": null,
-      "gameSeed": 1400000008
-    },
-    {
-      "id": "TS-5P-CAR-002",
-      "category": "caravan-pressure",
-      "tags": [
-        "caravan-pressure"
-      ],
-      "playerCount": 5,
-      "stage": "midgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "L",
-      "legalActionCount": 86,
-      "turnNumber": 24,
+      "legalActionCount": 37,
+      "turnNumber": 10,
       "allAgree": false,
       "uniqueActions": 2,
       "oracleStatus": null,
-      "gameSeed": 1400000008
-    },
-    {
-      "id": "TS-5P-CNV-001",
-      "category": "conversion-efficiency",
-      "tags": [
-        "conversion-efficiency"
-      ],
-      "playerCount": 5,
-      "stage": "midgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 21,
-      "turnNumber": 30,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": null,
-      "gameSeed": 1400000008
-    },
-    {
-      "id": "TS-5P-CNV-002",
-      "category": "conversion-efficiency",
-      "tags": [
-        "conversion-efficiency"
-      ],
-      "playerCount": 5,
-      "stage": "midgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 36,
-      "turnNumber": 31,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": null,
-      "gameSeed": 1400000008
-    },
-    {
-      "id": "TS-5P-TCR-001",
-      "category": "trade-chain-rest",
-      "tags": [
-        "trade-chain-rest"
-      ],
-      "playerCount": 5,
-      "stage": "midgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 23,
-      "turnNumber": 44,
-      "allAgree": false,
-      "uniqueActions": 2,
-      "oracleStatus": null,
-      "gameSeed": 1400000008
+      "gameSeed": 1500000005
     },
     {
       "id": "TS-5P-AVS-001",
@@ -821,12 +754,49 @@
       "competition": "low",
       "targetCount": 1,
       "difficulty": "L",
-      "legalActionCount": 183,
-      "turnNumber": 55,
-      "allAgree": false,
-      "uniqueActions": 2,
+      "legalActionCount": 68,
+      "turnNumber": 20,
+      "allAgree": true,
+      "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000008
+      "gameSeed": 1500000005
+    },
+    {
+      "id": "TS-5P-CNV-001",
+      "category": "conversion-efficiency",
+      "tags": [
+        "conversion-efficiency"
+      ],
+      "playerCount": 5,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "M",
+      "legalActionCount": 38,
+      "turnNumber": 24,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000005
+    },
+    {
+      "id": "TS-5P-CAR-001",
+      "category": "caravan-pressure",
+      "tags": [
+        "caravan-pressure",
+        "conversion-efficiency"
+      ],
+      "playerCount": 5,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "M",
+      "legalActionCount": 51,
+      "turnNumber": 34,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000005
     },
     {
       "id": "TS-5P-AVS-002",
@@ -839,53 +809,71 @@
       "stage": "midgame",
       "competition": "low",
       "targetCount": 1,
-      "difficulty": "L",
-      "legalActionCount": 183,
-      "turnNumber": 67,
+      "difficulty": "XL",
+      "legalActionCount": 249,
+      "turnNumber": 36,
       "allAgree": true,
       "uniqueActions": 1,
       "oracleStatus": null,
-      "gameSeed": 1400000008
+      "gameSeed": 1500000005
+    },
+    {
+      "id": "TS-5P-TCR-001",
+      "category": "trade-chain-rest",
+      "tags": [
+        "trade-chain-rest"
+      ],
+      "playerCount": 5,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "S",
+      "legalActionCount": 8,
+      "turnNumber": 48,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000005
+    },
+    {
+      "id": "TS-5P-TCR-002",
+      "category": "trade-chain-rest",
+      "tags": [
+        "trade-chain-rest"
+      ],
+      "playerCount": 5,
+      "stage": "midgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "S",
+      "legalActionCount": 9,
+      "turnNumber": 53,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": null,
+      "gameSeed": 1500000005
     },
     {
       "id": "TS-3P-FIN-001",
       "category": "final-round",
       "tags": [
-        "final-round"
-      ],
-      "playerCount": 3,
-      "stage": "endgame",
-      "competition": "low",
-      "targetCount": 0,
-      "difficulty": "S",
-      "legalActionCount": 10,
-      "turnNumber": 141,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": "exact",
-      "gameSeed": 1400000009
-    },
-    {
-      "id": "TS-3P-FIN-002",
-      "category": "final-round",
-      "tags": [
         "final-round",
-        "conversion-efficiency"
+        "trade-chain-rest"
       ],
       "playerCount": 3,
       "stage": "endgame",
       "competition": "low",
       "targetCount": 0,
       "difficulty": "M",
-      "legalActionCount": 35,
-      "turnNumber": 159,
-      "allAgree": true,
-      "uniqueActions": 1,
+      "legalActionCount": 28,
+      "turnNumber": 137,
+      "allAgree": false,
+      "uniqueActions": 2,
       "oracleStatus": "exact",
-      "gameSeed": 1400000010
+      "gameSeed": 1500000007
     },
     {
-      "id": "TS-3P-FIN-003",
+      "id": "TS-3P-FIN-002",
       "category": "final-round",
       "tags": [
         "final-round"
@@ -896,42 +884,38 @@
       "targetCount": 0,
       "difficulty": "S",
       "legalActionCount": 6,
-      "turnNumber": 128,
-      "allAgree": true,
-      "uniqueActions": 1,
+      "turnNumber": 138,
+      "allAgree": false,
+      "uniqueActions": 2,
       "oracleStatus": "exact",
-      "gameSeed": 1400000012
+      "gameSeed": 1500000007
+    },
+    {
+      "id": "TS-3P-FIN-003",
+      "category": "final-round",
+      "tags": [
+        "final-round",
+        "caravan-pressure",
+        "trade-chain-rest",
+        "conversion-efficiency"
+      ],
+      "playerCount": 3,
+      "stage": "endgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "M",
+      "legalActionCount": 37,
+      "turnNumber": 143,
+      "allAgree": false,
+      "uniqueActions": 2,
+      "oracleStatus": "exact",
+      "gameSeed": 1500000008
     },
     {
       "id": "TS-4P-FIN-001",
       "category": "final-round",
       "tags": [
         "final-round",
-        "contested-claim",
-        "seat-race",
-        "acquire-vs-score",
-        "caravan-pressure",
-        "trade-chain-rest",
-        "conversion-efficiency"
-      ],
-      "playerCount": 4,
-      "stage": "endgame",
-      "competition": "medium",
-      "targetCount": 1,
-      "difficulty": "XL",
-      "legalActionCount": 588,
-      "turnNumber": 183,
-      "allAgree": true,
-      "uniqueActions": 1,
-      "oracleStatus": "exact",
-      "gameSeed": 1400000059
-    },
-    {
-      "id": "TS-4P-FIN-002",
-      "category": "final-round",
-      "tags": [
-        "final-round",
-        "trade-chain-rest",
         "conversion-efficiency"
       ],
       "playerCount": 4,
@@ -939,12 +923,30 @@
       "competition": "low",
       "targetCount": 0,
       "difficulty": "M",
-      "legalActionCount": 23,
-      "turnNumber": 184,
-      "allAgree": false,
-      "uniqueActions": 2,
+      "legalActionCount": 37,
+      "turnNumber": 131,
+      "allAgree": true,
+      "uniqueActions": 1,
       "oracleStatus": "exact",
-      "gameSeed": 1400000059
+      "gameSeed": 1500000057
+    },
+    {
+      "id": "TS-4P-FIN-002",
+      "category": "final-round",
+      "tags": [
+        "final-round"
+      ],
+      "playerCount": 4,
+      "stage": "endgame",
+      "competition": "low",
+      "targetCount": 0,
+      "difficulty": "S",
+      "legalActionCount": 3,
+      "turnNumber": 132,
+      "allAgree": true,
+      "uniqueActions": 1,
+      "oracleStatus": "exact",
+      "gameSeed": 1500000057
     },
     {
       "id": "TS-4P-FIN-003",
@@ -956,13 +958,13 @@
       "stage": "endgame",
       "competition": "low",
       "targetCount": 0,
-      "difficulty": "M",
-      "legalActionCount": 21,
-      "turnNumber": 122,
-      "allAgree": true,
-      "uniqueActions": 1,
+      "difficulty": "S",
+      "legalActionCount": 9,
+      "turnNumber": 171,
+      "allAgree": false,
+      "uniqueActions": 2,
       "oracleStatus": "exact",
-      "gameSeed": 1400000060
+      "gameSeed": 1500000059
     }
   ]
 }
