@@ -10,17 +10,26 @@
  *    未校准联合模拟评价值；
  * 5. B root 延迟创建：非门控决策只建 1 个根模拟（决策不变、省 W−1 次构造），
  *    gate=never ≡ js0 逐决策一致（training/joint/equivalence-audit.mjs 的
- *    单元级快查版）；
+ *    单元级快查版；js0 = 前任束搜索冠军，显式钉定 legacy-champion.json——
+ *    JS5 晋级后 CHAMPION_PARAMETERS 走适配器分派，不再是束搜索基线）；
  * 6. B 分相计时：plan/rootSim/gate/screen/rollout/aggregate 披露；
  * 7. C2 冠军行动始终参与竞争 + claimRanking 选项合法性。
  */
 
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createGame, applyAction } from '../dist/js/engine.js';
 import { chooseAIAction, NEUTRAL_PROFILE } from '../dist/js/ai.js';
 import { chooseJointAction } from '../dist/js/js/adapter.js';
 import { CHAMPION_PARAMETERS } from '../dist/js/ai/parameters.js';
+
+// 前任冠军（束搜索权重参数，无 adapter）：gate=never 等价性断言的 js0 基线。
+// 晋级后默认 CHAMPION_PARAMETERS 携带 adapter='champion-guided'，chooseAIAction
+// 会分派到 JS5 auto——与本断言的"束搜索逐位一致"语义不同路，禁止混用。
+const LEGACY_CHAMPION = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/legacy-champion.json'), 'utf8'));
 
 /** 采集中局位置（champion 快速推进采样；与 joint-fairness 同法，种子段独立）。 */
 function midgamePositions(count, seedStart = 7100) {
@@ -127,7 +136,7 @@ test('B root 延迟创建 + gate=never ≡ js0（单元级快查）', () => {
     const seat = g0.current;
     const g1 = JSON.parse(JSON.stringify(g0));
     const g2 = JSON.parse(JSON.stringify(g0));
-    const r0 = chooseAIAction(g1, { parameters: CHAMPION_PARAMETERS, profile: NEUTRAL_PROFILE });
+    const r0 = chooseAIAction(g1, { parameters: LEGACY_CHAMPION, profile: NEUTRAL_PROFILE });
     const r5 = chooseJointAction(g2, { version: 'joint-js5', gateMode: 'never', simSeed: 3, profile: NEUTRAL_PROFILE });
     assert.deepEqual(r5.action, r0.action, `gate=never 决策与 js0 不一致：${JSON.stringify(r5.action)} vs ${JSON.stringify(r0.action)}`);
     // B 优化披露：非门控决策只创建 1 个根模拟（v1 预创建 worlds=4 个）。
