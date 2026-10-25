@@ -119,3 +119,43 @@ node training/redteam/audit-gate.mjs --tier dev
 node training/redteam/audit-gate.mjs --tier research
 node training/redteam/audit-gate.mjs --tier promotion
 ```
+
+---
+
+## 七、补充更正（2026-10-25，合并 main 后审计新增：PR #42 引擎轴候选评估）
+
+> 本节为 PR #42（research/engine-axis-candidates-v1，merge cb0fb98）合并后按本任务
+> 「审计对抗联赛同一问题」要求的补充复核。PR #42 的评估运行于 v1 合并矩阵代码，
+> 其 axisA.cells 携带与 PR #40 相同的跨人数合并伪影。
+
+### 7.1 伪影证据
+
+`engine-axis-screen-v1` / `engine-axis-confirm-v1` 的评估报告中，h2h 单元与首个
+field 单元的 games/率/CI **逐位相同**（如 screen cand-eng-18：h2h 20 局 40%
+CI[0.219,0.613] ≡ field 20 局 40% CI[0.219,0.613]）——该数字实为 10 局 2p h2h +
+10 局 5p field 的合并单元被重复标注到两个 match 行；第二 field 行为冠军视角互补
+单元（亦为跨协议合并）。verdict（selectStrongOpponents）消费的正是合并 Wilson 下界。
+
+### 7.2 分层重算结论（`engine-axis-stratified-corrections.json` 同目录）
+
+- **全部候选的原 verdict（screen 12×reject / confirm 2×reject / 1×weak-vs-champion）
+  在分层后仍然成立**——没有任何候选在任一分层达到「轴 A Wilson 下界 ≥ 0.5」门槛；
+  无晋级相关反转。
+- 但报告的**逐人数数字需要替换**：如 cand-eng-18 的 2p 头对头实为 70.0% [39.7, 89.2]
+  （非合并读数 40%）；cand-eng-baseline-acq 2p 实为 80.0% [49.0, 94.3]。
+- 5p 有向场相对 1/5 机会基准：confirm 两候选（baseline-acq 33.3% [22.7,45.9]、
+  cap-12 40.0% [28.6,52.6]）**显著高于机会基准**——「引擎型方向在多人局有真实竞争力」
+  的方向性信号分层后成立（与 PR #42 的定性判断一致，但证据结构按本分层表述）。
+- 2p 头对头全部不显著（含 50% 基准）；引用任何引擎轴读数时必须用本分层表。
+
+### 7.3 种子消费账本补录（历史只读事实）
+
+PR #42 以手动 `--seed-offset` 方案消费（无账本时代），已导入账本：
+
+| 实验 | 块 | 区间 | 说明 |
+|---|---|---|---|
+| engine-axis-screen-v1 | matrix-dev | [1402000000, 1402000050) | 12 候选 CRN 共享（fast 档） |
+| engine-axis-confirm-v1 | prereg | [1403001620, 1403001770) | 2 候选 CRN 共享（official 档），紧随 prereg-15s-official |
+
+合并后 `run-league.mjs` 保留 `--seed-offset` 兼容旗标，但一切起点（含手工偏移）
+均经账本校验与登记——手工偏移不再是绕过防重的旁路。

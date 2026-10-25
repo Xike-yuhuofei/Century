@@ -1,0 +1,99 @@
+[
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-18",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "engineWeight": 1.8 },
+    "notes": "引擎轴批次 v1：engine 1.6→1.8 加深"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-20",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "engineWeight": 2.0 },
+    "notes": "引擎轴批次 v1：engine 2.0 上界探索"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-14",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "engineWeight": 1.4 },
+    "notes": "引擎轴批次 v1：engine 回撤至 1.4"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-cap-16",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "capacityWeight": 1.6 },
+    "notes": "引擎轴批次 v1：商队容量加权（保留水晶供引擎扩张）"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-cap-12",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "capacityWeight": 1.2 },
+    "notes": "引擎轴批次 v1：容量回撤对照"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-18-cap-16",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "engineWeight": 1.8, "capacityWeight": 1.6 },
+    "notes": "引擎轴批次 v1：engine×capacity 双轴叠加"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-tempo-1",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "tempoWeight": 1.0 },
+    "notes": "引擎轴批次 v1：tempo 回归中性（隔离引擎项贡献）"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-rest-04",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "restWeight": 0.4 },
+    "notes": "引擎轴批次 v1：降低休息惩罚（容忍攒水晶回合）"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-synergy-14",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "synergyWeight": 1.4 },
+    "notes": "引擎轴批次 v1：商人卡协同加权"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-goal-08",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "goalWeight": 0.8 },
+    "notes": "引擎轴批次 v1：弱化魔像目标匹配（纯引擎积累）"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-endgame-08",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "endgameWeight": 0.8 },
+    "notes": "引擎轴批次 v1：终局衰减放缓（后期继续建设）"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-baseline-acq",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "engineWeight": 1.7 },
+    "acquisitionVariant": "baseline",
+    "notes": "引擎轴批次 v1：换 baseline 获取估值（解耦 readiness 血统贡献）"
+  }
+]

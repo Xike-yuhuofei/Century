@@ -2,7 +2,7 @@
  *
  * 信息边界：完整 Game 只在入口处用于构造 AIObservation 与合法性核验；
  * 决策本身只消费公开观察，无法访问隐藏牌库顺序。
- * 正式网页版（桌面/手机/Worker）与训练模拟器共用本函数。
+ * 正式网页版（桌面/Worker）与训练模拟器共用本函数。
  */
 
 import type { Game, Action, Color } from '../engine.js';

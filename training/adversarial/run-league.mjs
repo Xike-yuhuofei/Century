@@ -49,10 +49,11 @@ function parseArgs() {
     players: [2, 5], seeds: 4, block: 'smoke', joint: 'fast',
     out: resolve('training/reports/adversarial-league'), label: null,
     registryJoint: null,
-    // P0-4 种子账本：experimentId（缺省 = label）；--seed-base 显式起点
-    //（缺省 = 块内下一个未消费起点）；--ledger-path 仅供测试注入；
-    //--crn-group 声明有意 CRN 配对复用；--purpose 用途披露。
-    experimentId: null, seedBase: null, ledgerPath: null, crnGroup: null, purpose: null,
+    // P0-4 种子账本：experimentId（缺省 = label）；--seed-base 显式绝对起点或
+    // --seed-offset 块内相对起点（PR #42 引入，向后兼容；两者都经账本校验）；
+    // 缺省 = 块内下一个未消费起点；--ledger-path 仅供测试注入；
+    // --crn-group 声明有意 CRN 配对复用；--purpose 用途披露。
+    experimentId: null, seedBase: null, seedOffset: null, ledgerPath: null, crnGroup: null, purpose: null,
   };
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
@@ -69,29 +70,41 @@ function parseArgs() {
     else if (flag === '--label') args.label = argv[++i];
     else if (flag === '--experiment-id') args.experimentId = argv[++i];
     else if (flag === '--seed-base') args.seedBase = Number(argv[++i]);
+    else if (flag === '--seed-offset') args.seedOffset = Number(argv[++i]);
     else if (flag === '--ledger-path') args.ledgerPath = resolve(argv[++i]);
     else if (flag === '--crn-group') args.crnGroup = argv[++i];
     else if (flag === '--purpose') args.purpose = argv[++i];
     else throw new Error(`未知参数：${flag}`);
   }
+  if (args.seedBase !== null && args.seedOffset !== null) {
+    throw new Error('--seed-base 与 --seed-offset 互斥（前者为绝对起点，后者为块内相对起点）');
+  }
+  if (args.seedOffset !== null && (!Number.isSafeInteger(args.seedOffset) || args.seedOffset < 0)) {
+    throw new Error(`--seed-offset 必须为非负安全整数，实际：${args.seedOffset}`);
+  }
   return args;
 }
 
 /** P0-4 种子账本登记：fail-closed（缺账本/区间重叠/越块一律抛错）。
- * 返回 {seedBase, seedEnd, ledgerEntry}。注册发生在对局开始前——账本先记账后消费。 */
-function allocateSeeds(args, needSeeds, fingerprints) {
+ * 种子起点解析优先级：--seed-base（绝对）> --seed-offset（块内相对，兼容 PR #42
+ * 手动偏移方案）> nextSeedBase（块内下一个未消费起点）。全部路径都经账本校验与
+ * 登记——手工偏移不再是绕过防重的旁路。
+ * 返回 {seedBase, seedEnd, experimentId, ledgerPath}。注册发生在对局开始前。 */
+function allocateSeeds(args, block, needSeeds, fingerprints) {
   const ledgerPath = args.ledgerPath ?? undefined;
   const ledger = loadLedger(ledgerPath);
   const defects = verifyLedger(ledger);
   if (defects.length) throw new Error(`联赛种子账本存在结构缺陷（fail-closed）：\n- ${defects.join('\n- ')}`);
-  const seedBase = args.seedBase ?? nextSeedBase(args.block, { ledgerPath });
+  const seedBase = args.seedBase
+    ?? (args.seedOffset !== null ? block[0] + args.seedOffset : undefined)
+    ?? nextSeedBase(args.block, { ledgerPath });
   const experimentId = args.experimentId ?? `${args.label ?? `${args.mode}-${args.block}-${args.seeds}s-${args.joint}`}`;
   const registered = registerExperiment({
     experimentId,
     blockName: args.block,
     seedBase,
     seedCount: needSeeds,
-    purpose: args.purpose ?? `${args.mode}（${args.joint} 档）`,
+    purpose: args.purpose ?? `${args.mode}（${args.joint} 档${args.seedOffset !== null ? `，seed-offset=${args.seedOffset}` : ''}）`,
     crnGroup: args.crnGroup,
     algorithmFingerprints: fingerprints,
     ledgerPath,
@@ -174,9 +187,9 @@ async function main() {
     const seatCounts = args.players;
     const pairCount = seatCounts.reduce((s, n) => s + (n === 2 ? 1 : 2), 0) * (versionIds.length * (versionIds.length - 1) / 2);
     const needSeeds = pairCount * args.seeds;
-    const allocation = allocateSeeds(args, needSeeds, versionIds.map(id => registry.versions[id].fingerprint));
+    const allocation = allocateSeeds(args, block, needSeeds, versionIds.map(id => registry.versions[id].fingerprint));
     const plan = planMatrix({
-      versionIds, seatCounts, seedsPerPair: args.seeds,
+      versionIds, seatCounts: args.players, seedsPerPair: args.seeds,
       seedBase: allocation.seedBase, block,
     });
     process.stdout.write(`赛程：${plan.matches.length} 场，${plan.matches.reduce((s, m) => s + m.seeds.length, 0)} 局，种子 [${plan.seedBase}, ${plan.seedEnd})（账本实验 ${allocation.experimentId}）\n`);
@@ -193,19 +206,20 @@ async function main() {
   } else {
     const candidateIds = args.candidateIds ?? (registry.snapshot.candidates ?? []);
     if (!candidateIds.length) throw new Error('evaluate 模式需要 --candidates + --candidate-ids（或候选文件中的候选）');
-    // 双轴种子分区（块内：轴 A 前段，轴 G 后段，绝不重叠）。
+    // 双轴种子分区（块内：轴 A 前段，轴 G 后段，绝不重叠；显式 --seed-offset 时
+    // 前段保留给既定方案，轴 A 从 offset 起步——全部经账本校验）。
     const axisAGamesPerCell = args.players.reduce((s, n) => s + (n === 2 ? 1 : 2), 0);
     const axisANeed = axisAGamesPerCell * args.seeds;
     const axisGNeed = args.players.length * args.seeds;
-    if (axisANeed + axisGNeed > block[1] - block[0]) {
-      throw new Error(`种子需求 ${axisANeed + axisGNeed} 超出块容量 ${block[1] - block[0]}`);
+    if (args.seedOffset !== null && args.seedOffset + axisANeed + axisGNeed > block[1] - block[0]) {
+      throw new Error(`种子需求 offset ${args.seedOffset} + ${axisANeed} + ${axisGNeed} 超出块容量 ${block[1] - block[0]}`);
     }
     // P0-4：多候选共享同一轴 A/轴 G 种子 = 有意 CRN 配对（跨候选配对比较），
     // 必须显式声明 crnGroup；缺省拒绝静默共享（fail-closed）。
     const crnGroup = args.crnGroup ?? (() => {
       throw new Error('evaluate 模式的多候选共享种子属有意 CRN 配对，必须显式声明 --crn-group（防意外重复消费）');
     })();
-    const allocation = allocateSeeds(args, axisANeed + axisGNeed, candidateIds.map(id => registry.versions[id]?.fingerprint).filter(Boolean));
+    const allocation = allocateSeeds(args, block, axisANeed + axisGNeed, candidateIds.map(id => registry.versions[id]?.fingerprint).filter(Boolean));
     const evaluations = [];
     for (const candidateId of candidateIds) {
       process.stdout.write(`评估候选 ${candidateId}（轴 A ${axisANeed} 局 + 轴 G ${axisGNeed} 局）...\n`);
@@ -226,6 +240,7 @@ async function main() {
       engineBundleSha256: baseRegistry.snapshot.engineBundleSha256,
       block: [...block], jointOverrides, seedsPerCell: args.seeds, players: args.players,
       seedLedger: { experimentId: allocation.experimentId, seedStart: allocation.seedBase, seedEnd: allocation.seedEnd, crnGroup, ledgerPath: allocation.ledgerPath ?? 'training/adversarial/seed-ledger.json' },
+      ...(args.seedOffset !== null ? { seedOffset: args.seedOffset } : {}),
       generalityPool: GENERALITY_POOL,
       selection,
       evaluations: evaluations.map(e => ({

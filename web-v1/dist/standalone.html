@@ -571,389 +571,6 @@
 @media(max-width:640px) {.focus-setup-panel {padding:21px;}.layout.focus-landing {padding:14px;}.focus-landing .topbar.focus-setup-top {margin-bottom:42px;}}
 
 
-/* MOBILE GAME V1 — 独立触屏牌桌；桌面 UWQHD 布局保持不变。 */
-@media (max-width:980px) {
-  .layout.mobile-board {
-    box-sizing:border-box;
-    display:flex;
-    flex-direction:column;
-    gap:0;
-    width:100%;
-    max-width:none;
-    height:100vh;
-    height:100dvh;
-    min-height:0;
-    margin:0;
-    padding:env(safe-area-inset-top, 0px) 0 0;
-    overflow:hidden;
-    background:#0b1923;
-  }
-  .mobile-board button,.mobile-board summary {touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
-  .mobile-board button:focus-visible,.mobile-board summary:focus-visible {outline:2px solid #e8c891;outline-offset:2px;}
-  .mobile-board .mobile-topbar {
-    height:48px;
-    flex:0 0 48px;
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:0 15px;
-    border-bottom:1px solid #29434b;
-    background:#112532;
-    position:relative;
-    z-index:30;
-  }
-  .mobile-board .mobile-brand {font-size:15px;font-weight:750;letter-spacing:.08em;color:#f2e2c5;white-space:nowrap;}
-  .mobile-board .mobile-turn {margin-left:auto;font-size:12px;color:#b7cecd;white-space:nowrap;}
-  .mobile-board .mobile-more {position:relative;flex:0 0 auto;}
-  .mobile-board .mobile-more>summary {
-    display:grid;
-    place-items:center;
-    list-style:none;
-    height:40px;
-    width:44px;
-    color:#e8d6b2;
-    font-size:18px;
-    background:#1b3843;
-    border:1px solid #365660;
-    border-radius:10px;
-    cursor:pointer;
-  }
-  .mobile-board .mobile-more>summary::-webkit-details-marker {display:none;}
-  .mobile-board .mobile-more-menu {
-    position:absolute;
-    top:44px;
-    right:0;
-    width:180px;
-    display:grid;
-    padding:7px;
-    gap:4px;
-    background:#203843;
-    border:1px solid #54717b;
-    border-radius:12px;
-    box-shadow:0 16px 35px #000a;
-  }
-  .mobile-board .mobile-more-menu button {
-    min-height:43px;
-    width:100%;
-    padding:8px 12px;
-    border:0;
-    border-radius:7px;
-    text-align:left;
-    color:#e3eeed;
-    background:transparent;
-    font-size:13px;
-  }
-  .mobile-board .mobile-more-menu button:active {background:#35505d;}
-  .mobile-board .final-alert {font-size:11px;border-radius:0;margin:0;padding:7px 12px;}
-  .mobile-board .mobile-overview {
-    flex:0 0 auto;
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    padding:11px 15px 12px;
-    background:#112632;
-  }
-  .mobile-board .mobile-player-line {display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:25px;}
-  .mobile-board .mobile-player-line>div {display:flex;align-items:center;gap:10px;min-width:0;}
-  .mobile-board .mobile-player-line strong {max-width:40vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:17px;font-weight:750;}
-  .mobile-board .mobile-activity {font-size:11px;white-space:nowrap;color:#b5cfb3;max-width:35vw;overflow:hidden;text-overflow:ellipsis;}
-  .mobile-board .mobile-score {color:#efcea2;font-size:24px;font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap;}
-  .mobile-board .mobile-score small {font-size:11px;font-weight:500;}
-  .mobile-board .mobile-resource-line {
-    display:flex;
-    align-items:center;
-    gap:7px;
-    min-height:27px;
-    min-width:0;
-    overflow-x:auto;
-    scrollbar-width:none;
-    -webkit-overflow-scrolling:touch;
-  }
-  .mobile-board .mobile-resource-line::-webkit-scrollbar {display:none;}
-  .mobile-board .mobile-resource-line .gem {width:14px;height:14px;margin:1px;}
-  .mobile-board .mobile-resource-line .stone-gems {gap:4px;}
-  .mobile-board .mobile-resource-line .stone-group {flex:0 0 auto;}
-  .mobile-board .mobile-capacity {
-    margin-left:auto;
-    padding:5px 7px;
-    border-radius:5px;
-    font-size:11px;
-    font-variant-numeric:tabular-nums;
-    color:#bed1d0;
-    background:#213946;
-    white-space:nowrap;
-    flex:0 0 auto;
-  }
-  .mobile-board .mobile-tabs {
-    flex:0 0 48px;
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:5px;
-    align-items:center;
-    padding:5px 12px 0;
-    background:#112632;
-    border-bottom:1px solid #28444b;
-  }
-  .mobile-board .mobile-tab {
-    height:42px;
-    min-width:0;
-    border:0;
-    border-bottom:3px solid transparent;
-    border-radius:6px 6px 0 0;
-    color:#a9bcc0;
-    background:transparent;
-    font-size:14px;
-    font-weight:600;
-  }
-  .mobile-board .mobile-tab span {font-size:10px;opacity:.75;padding-left:3px;}
-  .mobile-board .mobile-tab-current {color:#f2d39e;border-bottom-color:#d4b073;background:#213641;}
-  .mobile-board .mobile-stage {
-    flex:1 1 0;
-    min-height:0;
-    overflow-x:hidden;
-    overflow-y:auto;
-    overscroll-behavior-y:contain;
-    -webkit-overflow-scrolling:touch;
-    padding:10px 12px 24px;
-  }
-  .mobile-board .mobile-market h2,.mobile-board .mobile-rivals h2 {
-    display:flex;align-items:baseline;gap:8px;margin:0 2px 11px;font-size:15px;font-weight:750;color:#f0e1c6;
-  }
-  .mobile-board .mobile-market h2 small {font-size:10px;font-weight:400;color:#8eabb1;}
-  .mobile-board .mobile-market-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;}
-  .mobile-board .mobile-market-grid>* {min-width:0;width:100%;touch-action:manipulation;}
-  .mobile-board .mobile-golems .golem-card {
-    min-height:168px;
-    height:168px;
-    padding:11px 7px 9px;
-    gap:5px;
-    justify-content:center;
-    box-shadow:none;
-    border-radius:9px;
-  }
-  .mobile-board .golem-card:before,.mobile-board .golem-emblem,.mobile-board .golem-action,.mobile-board .golem-tag,.mobile-board .golem-points small {display:none;}
-  .mobile-board .mobile-golems .golem-top {min-height:20px;}
-  .mobile-board .golem-num {display:inline;font-size:10px;color:#aec7c2;}
-  .mobile-board .golem-points strong {font:750 37px system-ui,sans-serif;}
-  .mobile-board .golem-cost {gap:3px;margin:5px 0 0;}
-  .mobile-board .golem-cost .stone-gems {gap:4px;}
-  .mobile-board .golem-cost .gem {width:13px;height:13px;margin:1px;}
-  .mobile-board .coin {font-size:10px;padding:3px 5px;}
-  .mobile-board .golem-card.affordable {border-color:#eccb89;box-shadow:inset 0 0 0 1px #e0bc78;}
-  .mobile-board .mobile-merchants .merchant-card {
-    min-height:165px;
-    height:165px;
-    padding:9px 7px;
-    border-radius:9px;
-    box-shadow:none;
-  }
-  .mobile-board .mobile-merchants .merchant-effect {min-height:0;gap:4px;}
-  .mobile-board .mobile-merchants .effect-label {display:none;}
-  .mobile-board .mobile-merchants .card-head {font-size:12px;}
-  .mobile-board .mobile-merchants .card-foot {display:flex!important;border-top:1px solid #5669706b;font-size:11px;padding-top:5px;}
-  .mobile-board .mobile-merchants .card-foot b {font-size:11px;}
-  .mobile-board .mobile-merchants .gem {width:12px;height:12px;margin:1px;}
-  .mobile-board .mobile-merchants .stone-gems {gap:3px;}
-  .mobile-board .mobile-merchants .stone-line {gap:4px;}
-  .mobile-board .mobile-merchants .market-bonus .gem {width:10px;height:10px;}
-  .mobile-board .mobile-dock {
-    position:relative;
-    z-index:12;
-    flex:0 0 232px;
-    display:flex;
-    flex-direction:column;
-    gap:5px;
-    padding:6px 12px max(7px,env(safe-area-inset-bottom, 0px));
-    min-height:0;
-    border-top:1px solid #ae936d;
-    background:#19313d;
-    box-shadow:0 -8px 24px #0005;
-    transition:flex-basis .2s ease;
-  }
-  .mobile-board.mobile-hand-expanded .mobile-dock {flex-basis:min(68dvh,540px);}
-  .mobile-board .mobile-dock-toolbar {display:flex;align-items:center;gap:7px;flex:0 0 38px;}
-  .mobile-board .mobile-dock-toolbar button {height:38px;min-width:61px;border-radius:7px;font-size:12px;font-weight:650;border:1px solid #48616c;background:#24424d;color:#ebf1ee;padding:4px 10px;}
-  .mobile-board .mobile-expand {margin-right:auto;text-align:left;min-width:91px!important;background:transparent!important;border:0!important;color:#f2dcae!important;}
-  .mobile-board .mobile-rest {background:#305b52!important;border-color:#619080!important;color:#edfae5!important;}
-  .mobile-board .mobile-dock-toolbar button:disabled {opacity:.38;}
-  .mobile-board .mobile-dock-cards {
-    display:flex;
-    align-items:stretch;
-    gap:8px;
-    flex:1 1 0;
-    min-height:0;
-    padding:1px 1px 4px;
-    overflow-x:auto;
-    overflow-y:hidden;
-    scrollbar-width:thin;
-    overscroll-behavior-x:contain;
-    -webkit-overflow-scrolling:touch;
-    touch-action:pan-x;
-  }
-  .mobile-board .mobile-dock-cards .hand-tile {
-    flex:0 0 122px;
-    height:100%;
-    min-height:0;
-    cursor:default;
-    touch-action:pan-x;
-  }
-  .mobile-board.normal-cards .mobile-dock-cards .hand-tile {flex-basis:145px;}
-  .mobile-board .mobile-dock-cards .hand-tile .merchant-card {
-    width:100%;
-    height:100%;
-    min-height:0;
-    padding:6px 6px 35px;
-    border-radius:7px;
-    box-shadow:none;
-  }
-  .mobile-board .mobile-dock-cards .merchant-effect {min-height:0;gap:2px;}
-  .mobile-board .mobile-dock-cards .card-head {font-size:11px;padding-bottom:4px;}
-  .mobile-board .mobile-dock-cards .card-head small {font-size:9px;}
-  .mobile-board .mobile-dock-cards .effect-label,.mobile-board .mobile-dock-cards .card-foot,.mobile-board .mobile-dock-cards .tile-grip {display:none;}
-  .mobile-board .mobile-dock-cards .effect-large {font-size:21px;}
-  .mobile-board .mobile-dock-cards .trade-arrow {font-size:13px;line-height:1;}
-  .mobile-board .mobile-dock-cards .stone-line {gap:2px;}
-  .mobile-board .mobile-dock-cards .stone-gems {gap:2px;}
-  .mobile-board .mobile-dock-cards .gem {width:11px;height:11px;margin:0;}
-  .mobile-board .mobile-dock-cards .tile-move {
-    position:absolute;
-    bottom:3px;
-    left:4px;
-    right:4px;
-    display:flex;
-    padding:0;
-    min-height:31px;
-    z-index:2;
-    pointer-events:none;
-  }
-  .mobile-board .mobile-dock-cards .tile-move span {display:none;}
-  .mobile-board .mobile-dock-cards .tile-move button {
-    pointer-events:auto;
-    opacity:1;
-    width:33px;
-    height:31px;
-    border:1px solid #78949b;
-    border-radius:6px;
-    background:#2d4d56;
-    color:#f5eddc;
-    line-height:1;
-    font-size:21px;
-  }
-  .mobile-board .mobile-dock-cards .tile-move button:disabled {opacity:.3;}
-  .mobile-board .mobile-played {flex:0 0 23px;min-height:0;}
-  .mobile-board .mobile-played-label {display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#a2babc;min-height:23px;}
-  .mobile-board .mobile-played-label .fold-btn {border:0;background:transparent;color:#d1e0db;min-height:23px;padding:1px 8px;font-size:11px;}
-  .mobile-board .mobile-played:not(.mobile-played-closed) {
-    position:absolute;
-    left:10px;
-    right:10px;
-    bottom:calc(100% - 15px);
-    z-index:2;
-    min-height:120px;
-    max-height:min(185px,35dvh);
-    display:flex;
-    flex-direction:column;
-    padding:7px;
-    border:1px solid #7d947f;
-    border-radius:9px;
-    background:#1c3740;
-    box-shadow:0 -8px 26px #0009;
-  }
-  .mobile-board .mobile-played-cards {display:flex;flex:1;min-height:0;overflow:auto;gap:5px;}
-  .mobile-board .mobile-played-cards .merchant-card {flex:0 0 100px;height:108px;min-height:0;padding:5px;}
-  .mobile-board .mobile-played-cards .merchant-effect {min-height:0;gap:1px;}
-  .mobile-board .mobile-played-cards .effect-label,.mobile-board .mobile-played-cards .card-foot {display:none;}
-  .mobile-board .mobile-played-cards .gem {width:10px;height:10px;margin:0;}
-  .mobile-board .mobile-rivals {padding-bottom:25px;}
-  .mobile-board .mobile-rival {margin:0 0 9px;border:1px solid #35545c;background:#17313b;border-radius:10px;overflow:hidden;}
-  .mobile-board .mobile-rival>summary {min-height:60px;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:7px;padding:12px;cursor:pointer;}
-  .mobile-board .mobile-rival>summary::-webkit-details-marker {display:none;}
-  .mobile-board .mobile-rival>summary strong {font-size:13px;max-width:42%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .mobile-board .mobile-rival>summary>span {color:#bed0d0;font-size:11px;}
-  .mobile-board .mobile-chevron {font-size:17px;color:#e2bd86;margin-left:2px;}
-  .mobile-board .mobile-rival[open] {padding-bottom:12px;}
-  .mobile-board .mobile-rival-stock {display:flex;align-items:center;gap:5px;margin:2px 12px 11px;flex-wrap:wrap;}
-  .mobile-board .mobile-rival-stock .gem {width:12px;height:12px;margin:1px;}
-  .mobile-board .mobile-rival-stock .stone-gems {gap:2px;}
-  .mobile-board .mobile-rival-stock>span:last-child {margin-left:auto;font-size:11px;color:#a9c3c2;}
-  .mobile-board .mobile-rival h3 {font-size:12px;color:#d5d7c2;margin:13px 12px 6px;}
-  .mobile-board .mobile-rival p {font-size:11px;color:#9db9b7;margin:10px 12px 0;}
-  .mobile-board .mobile-rival-cards {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:0 12px;}
-  .mobile-board .mobile-rival-cards .merchant-card {min-height:143px;height:143px;padding:6px;box-shadow:none;}
-  .mobile-board .mobile-rival-cards .merchant-effect {min-height:0;}
-  .mobile-board .mobile-rival-cards .effect-label {display:none;}
-  .mobile-board .mobile-rival-cards .gem {width:11px;height:11px;margin:0;}
-  .mobile-board .mobile-rival-cards .card-foot {font-size:10px;}
-  .mobile-board .mobile-empty {align-self:center;color:#99b2b6;font-size:12px;padding:12px;}
-  .mobile-board .focus-log-popover {left:12px;right:12px;top:56px;width:auto;max-height:65dvh;z-index:45;}
-  .overlay {padding:max(12px,env(safe-area-inset-top, 0px)) 12px max(12px,env(safe-area-inset-bottom, 0px));}
-  .overlay .dialog {width:100%;max-height:calc(100dvh - 24px);padding:20px 16px;border-radius:14px;}
-  .overlay .dialog h2 {font-size:21px;}
-  .overlay .dialog .choice-btn {min-height:44px;}
-  .overlay .dialog .modal-actions button {min-height:45px;}
-  .overlay .dialog .stepper button {height:44px;width:44px;}
-  .overlay .handoff-card,.overlay .result-card {padding:24px 15px;width:100%;}
-}
-@media (max-width:360px) {
-  .mobile-board .mobile-overview {padding:8px 10px;}
-  .mobile-board .mobile-tabs {padding-inline:7px;}
-  .mobile-board .mobile-stage {padding-inline:8px;}
-  .mobile-board .mobile-market-grid {gap:6px;}
-  .mobile-board .mobile-dock {padding-inline:8px;flex-basis:218px;}
-  .mobile-board .mobile-dock-cards .hand-tile {flex-basis:110px;}
-}
-
-/* 横屏手机：缩短固定区域，优先保留可滚动的市场。 */
-@media (max-width:980px) and (orientation:landscape) and (max-height:550px) {
-  .mobile-board .mobile-topbar {height:38px;flex-basis:38px;}
-  .mobile-board .mobile-more>summary {height:32px;}
-  .mobile-board .mobile-more-menu {top:36px;}
-  .mobile-board .mobile-overview {padding:4px 13px 5px;gap:3px;}
-  .mobile-board .mobile-player-line {min-height:23px;}
-  .mobile-board .mobile-score {font-size:19px;}
-  .mobile-board .mobile-resource-line {min-height:19px;}
-  .mobile-board .mobile-resource-line .gem {width:11px;height:11px;}
-  .mobile-board .mobile-tabs {flex-basis:35px;padding-top:0;}
-  .mobile-board .mobile-tab {height:34px;font-size:12px;}
-  .mobile-board .mobile-stage {padding-top:6px;}
-  .mobile-board .mobile-market-grid {grid-template-columns:repeat(3,minmax(0,1fr));}
-  .mobile-board .mobile-golems .golem-card {min-height:143px;height:143px;}
-  .mobile-board .mobile-merchants .merchant-card {min-height:145px;height:145px;}
-  .mobile-board .mobile-dock {flex-basis:145px!important;gap:2px;padding-top:3px;padding-bottom:max(3px,env(safe-area-inset-bottom, 0px));}
-  .mobile-board.mobile-hand-expanded .mobile-dock {flex-basis:min(65dvh,250px)!important;}
-  .mobile-board .mobile-dock-toolbar {flex-basis:30px;}
-  .mobile-board .mobile-dock-toolbar button {height:30px;}
-  .mobile-board .mobile-dock-cards .hand-tile .merchant-card {padding-bottom:26px;}
-  .mobile-board .mobile-dock-cards .tile-move button {height:24px;}
-  .mobile-board .mobile-played {flex-basis:20px;}
-  .mobile-board .mobile-played-label {min-height:20px;}
-}
-
-
-/* 电脑/手机页面的独立入口：链接不影响原有桌面网格。 */
-.page-version-link {
-  display:inline-flex;align-items:center;justify-content:center;
-  min-height:34px;padding:6px 11px;
-  border:1px solid #47616a;border-radius:8px;
-  background:#213b47;color:#e7d6b9;
-  font-size:12px;font-weight:650;text-decoration:none;white-space:nowrap;
-}
-.page-version-link:hover,.page-version-link:focus-visible {border-color:#cfb07c;color:#fff1cf;}
-.focus-setup-top .page-version-link {margin-left:auto;}
-.mobile-board .mobile-more-menu .page-version-link {
-  width:100%;justify-content:flex-start;min-height:43px;
-  border:0;border-radius:7px;background:transparent;
-  padding:8px 12px;color:#e3eeed;font-size:13px;
-}
-.mobile-board .mobile-more-menu .page-version-link:active {background:#35505d;}
-
-/* 专属 /mobile/ 页面在桌面浏览器也保持手机宽度，便于预览。 */
-html[data-century-mode="mobile"] body {background:#07131c;}
-html[data-century-mode="mobile"] .mobile-board {
-  max-width:640px;margin-inline:auto;
-  box-shadow:0 0 55px #0006;
-}
-
 /* 复盘导出放在按需展开的记录中，长姓名和窄屏均可换行。 */
 .replay-controls { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
 .replay-controls small { flex-basis:100%; line-height:1.5; overflow-wrap:anywhere; }
@@ -1299,12 +916,11 @@ html[data-century-mode="mobile"] .mobile-board {
   function replayJSON(g) {
     return JSON.stringify({ format: "century-replay", version: 1, coverage: replayCoverage(g), replay: g.replay ?? null, current: { ...g, replay: void 0 } }, null, 2);
   }
-  function downloadReplay(g, format) {
-    const content = format === "md" ? replayMarkdown(g) : replayJSON(g);
-    const url = URL.createObjectURL(new Blob([content], { type: format === "md" ? "text/markdown;charset=utf-8" : "application/json;charset=utf-8" }));
+  function downloadReplay(g) {
+    const url = URL.createObjectURL(new Blob([replayJSON(g)], { type: "application/json;charset=utf-8" }));
     const link = document.createElement("a");
     link.href = url;
-    link.download = `century-replay-${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}.${format}`;
+    link.download = `century-replay-${(/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-")}.json`;
     document.body.append(link);
     link.click();
     link.remove();
@@ -1438,8 +1054,7 @@ html[data-century-mode="mobile"] .mobile-board {
     const plan = autoExportPlan(g, { enabled: autoExportEnabled(), exported: autoExported });
     if (plan.kind === "skip") return null;
     autoExported.add(archiveKey(g));
-    downloadReplay(g, "md");
-    downloadReplay(g, "json");
+    downloadReplay(g);
     return "download";
   }
 
@@ -5522,17 +5137,6 @@ html[data-century-mode="mobile"] .mobile-board {
   }
   var dragging = null;
   var suppressPlayUntil = 0;
-  var mobileMedia = window.matchMedia("(max-width: 980px)");
-  var dedicatedMobilePage = document.documentElement.dataset.centuryMode === "mobile";
-  function usesMobileLayout() {
-    return dedicatedMobilePage || mobileMedia.matches;
-  }
-  function pageVersionLink() {
-    return dedicatedMobilePage ? '<a class="page-version-link" href="../">电脑版</a>' : '<a class="page-version-link" href="./mobile/">手机版</a>';
-  }
-  var mobileTab = "golems";
-  var mobileHandExpanded = false;
-  var mobilePlayedOpen = false;
   function pref(id) {
     const key = String(id);
     const saved = viewState.players[key];
@@ -5566,7 +5170,7 @@ html[data-century-mode="mobile"] .mobile-board {
   }
   function handTile(p, id, active, index, ordered) {
     if (p.isAI) return merchantCard(id, void 0, void 0, "inactive");
-    return `<div class="hand-tile" draggable="${usesMobileLayout() ? "false" : "true"}" data-drag-player="${p.id}" data-card-id="${id}" aria-label="${esc(merchantDescription(MERCHANT_BY_ID[id]))}，可拖动排序">
+    return `<div class="hand-tile" draggable="true" data-drag-player="${p.id}" data-card-id="${id}" aria-label="${esc(merchantDescription(MERCHANT_BY_ID[id]))}，可拖动排序">
     <div class="tile-grip" aria-hidden="true">⠿</div>
     ${merchantCard(id, void 0, void 0, active ? "hand" : "inactive")}
     <div class="tile-move"><button type="button" aria-label="将 ${id} 向前移动" title="向前移动" data-action="move-card" data-player="${p.id}" data-id="${id}" data-direction="-1" ${index === 0 ? "disabled" : ""}>‹</button><span>拖动排序</span><button type="button" aria-label="将 ${id} 向后移动" title="向后移动" data-action="move-card" data-player="${p.id}" data-id="${id}" data-direction="1" ${index === ordered.length - 1 ? "disabled" : ""}>›</button></div>
@@ -5621,7 +5225,7 @@ html[data-century-mode="mobile"] .mobile-board {
   }
   function renderSetup() {
     const botOptions = Array.from({ length: 5 }, (_, n) => `<option value="${n}" ${n === 4 ? "selected" : ""}>${n} 名</option>`).join("");
-    return `<main class="layout landing focus-landing"><header class="topbar focus-setup-top"><strong>晶石回廊</strong><div class="top-actions">${pageVersionLink()}<button class="subtle-btn" data-action="history">对局历史</button></div></header>
+    return `<main class="layout landing focus-landing"><header class="topbar focus-setup-top"><strong>晶石回廊</strong><div class="top-actions"><button class="subtle-btn" data-action="history">对局历史</button></div></header>
   <section class="focus-setup-panel"><h1>开始对局</h1><p>默认 1 名真人挑战 4 名 AI · 最多 4 名 AI</p>
     <div class="setup-players"><div><label for="humanCount">真人</label><select id="humanCount">${Array.from({ length: 5 }, (_, n) => `<option value="${n + 1}" ${n === 0 ? "selected" : ""}>${n + 1} 名</option>`).join("")}</select></div><div><label for="botCount">AI</label><select id="botCount">${botOptions}</select></div></div>
     <label for="nameInputs">玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1" /></div>
@@ -5715,10 +5319,10 @@ html[data-century-mode="mobile"] .mobile-board {
   }
   function minimalTopbar(g) {
     const finished = g.phase === "finished";
-    return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished ? "对局结束" : `第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${pageVersionLink()}${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact ? "▦" : "▣"}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="history" aria-label="对局历史" title="对局历史">⧉</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
+    return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished ? "对局结束" : `第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact ? "▦" : "▣"}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="history" aria-label="对局历史" title="对局历史">⧉</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
   }
   function replayControls(g) {
-    return `<div class="replay-controls"><small>${esc(replayCoverage(g))}</small><button class="subtle-btn" data-action="export-replay-md">导出复盘 Markdown</button><button class="subtle-btn" data-action="export-replay-json">导出复盘 JSON</button></div>`;
+    return `<div class="replay-controls"><small>${esc(replayCoverage(g))}</small></div>`;
   }
   function historyTime(iso) {
     const d = new Date(iso);
@@ -5727,15 +5331,15 @@ html[data-century-mode="mobile"] .mobile-board {
   function autoExportPanel() {
     const status = autoExportEnabled() ? "自动导出：已开启" : "自动导出：已关闭";
     const buttons = autoExportEnabled() ? '<button class="subtle-btn" data-action="auto-export-disable">关闭自动导出</button>' : '<button class="subtle-btn" data-action="auto-export-enable">开启自动导出</button>';
-    return `<div class="auto-export-panel"><p class="small-muted">${status} · 结束的对局自动下载复盘 Markdown 与 JSON 到浏览器默认下载文件夹（~/Downloads）。</p><p class="small-muted">如需固定到专属文件夹，可在浏览器设置中把下载目录改为 /Volumes/Extreme SSD/Projects/Century/century-replays。</p><div class="history-item-actions">${buttons}</div></div>`;
+    return `<div class="auto-export-panel"><p class="small-muted">${status} · 结束的对局自动下载复盘 JSON 到浏览器默认下载文件夹（~/Downloads）。</p><p class="small-muted">如需固定到专属文件夹，可在浏览器设置中把下载目录改为 /Volumes/Extreme SSD/Projects/Century/century-replays。</p><div class="history-item-actions">${buttons}</div></div>`;
   }
   function renderHistory() {
     const view = historyViewId !== null ? archive.find((e) => e.id === historyViewId) : void 0;
     const close = '<button class="close-modal" data-action="close-history" aria-label="关闭对局历史">✕</button>';
     if (view) {
-      return `<div class="overlay" data-overlay="history"><section class="dialog history-dialog">${close}<div class="eyebrow">GAME ARCHIVE</div><h2>对局复盘</h2><p class="small-muted">${esc(historyTime(view.savedAt))} · ${view.players} 人 · ${view.turns} 手 · ${esc(view.title)}</p><div class="replay-view" tabindex="0">${esc(replayMarkdown(view.game))}</div><div class="modal-actions"><button class="secondary-btn" data-action="history-back">‹ 返回列表</button><div class="history-item-actions"><button class="subtle-btn" data-action="archive-export-md" data-id="${esc(view.id)}">导出 Markdown</button><button class="subtle-btn" data-action="archive-export-json" data-id="${esc(view.id)}">导出 JSON</button></div></div></section></div>`;
+      return `<div class="overlay" data-overlay="history"><section class="dialog history-dialog">${close}<div class="eyebrow">GAME ARCHIVE</div><h2>对局复盘</h2><p class="small-muted">${esc(historyTime(view.savedAt))} · ${view.players} 人 · ${view.turns} 手 · ${esc(view.title)}</p><div class="replay-view" tabindex="0">${esc(replayMarkdown(view.game))}</div><div class="modal-actions"><button class="secondary-btn" data-action="history-back">‹ 返回列表</button></div></section></div>`;
     }
-    const list = archive.map((e) => `<div class="history-item"><div class="history-item-main"><b>${e.finished ? "✦ " : "◔ "}${esc(e.title)}</b><small>${esc(historyTime(e.savedAt))} · ${e.players} 人 · ${e.turns} 手</small></div><div class="history-item-actions"><button class="subtle-btn" data-action="history-view" data-id="${esc(e.id)}">复盘</button><button class="subtle-btn" data-action="archive-export-md" data-id="${esc(e.id)}">MD</button><button class="subtle-btn" data-action="archive-export-json" data-id="${esc(e.id)}">JSON</button><button class="subtle-btn" data-action="archive-delete" data-id="${esc(e.id)}">删除</button></div></div>`).join("");
+    const list = archive.map((e) => `<div class="history-item"><div class="history-item-main"><b>${e.finished ? "✦ " : "◔ "}${esc(e.title)}</b><small>${esc(historyTime(e.savedAt))} · ${e.players} 人 · ${e.turns} 手</small></div><div class="history-item-actions"><button class="subtle-btn" data-action="history-view" data-id="${esc(e.id)}">复盘</button><button class="subtle-btn" data-action="archive-delete" data-id="${esc(e.id)}">删除</button></div></div>`).join("");
     return `<div class="overlay" data-overlay="history"><section class="dialog history-dialog">${close}<div class="eyebrow">GAME ARCHIVE</div><h2>对局历史</h2>${archive.length ? `<div class="history-list">${list}</div><p class="small-muted">对局结束或重新开局时自动归档，本地保留最近 ${ARCHIVE_LIMIT} 局。</p>` : '<p class="small-muted">暂无归档。对局结束或重新开局时会自动存入，本地保留最近 20 局。</p>'}${autoExportPanel()}<div class="modal-actions"><button class="primary-btn" data-action="close-history">关闭</button></div></section></div>`;
   }
   function logPopover(g) {
@@ -5789,7 +5393,7 @@ html[data-century-mode="mobile"] .mobile-board {
     const bots = g.players.filter((p) => p.isAI);
     const finished = g.phase === "finished";
     const target = g.players.length >= 4 ? 5 : 6;
-    return `<main class="layout duel-layout ai-board-layout ${viewState.compact ? "compact-cards" : "normal-cards"}"><header class="topbar duel-topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR · AI ARENA</span></div><div class="duel-now">${finished ? "对局结束" : `第 ${g.turnNumber} 手 · ${esc(g.players[g.current].name)} 行动中`}</div><div class="top-actions">${pageVersionLink()}${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+    return `<main class="layout duel-layout ai-board-layout ${viewState.compact ? "compact-cards" : "normal-cards"}"><header class="topbar duel-topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR · AI ARENA</span></div><div class="duel-now">${finished ? "对局结束" : `第 ${g.turnNumber} 手 · ${esc(g.players[g.current].name)} 行动中`}</div><div class="top-actions">${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
     ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发，本轮结束后结算</div>' : ""}
     <div class="ai-arena">
       ${renderDuelPlayer(g, human.id)}
@@ -5801,26 +5405,14 @@ html[data-century-mode="mobile"] .mobile-board {
       <aside class="ai-seat-grid ${bots.length === 2 ? "ai-seat-grid-two" : ""}">${bots.map((p) => renderAISeat(g, p)).join("")}</aside>
     </div>${finished ? renderResult(g) : ""}</main>`;
   }
-  function renderMobileBoard(g) {
-    const player = g.players[g.current].isAI ? g.players.find((p) => !p.isAI) : g.players[g.current];
-    const active = g.current === player.id && g.phase === "turn";
-    const current = g.players[g.current];
-    const rivals = g.players.filter((p) => p.id !== player.id);
-    const finished = g.phase === "finished";
-    const tab = (id, title, number) => '<button type="button" class="mobile-tab ' + (mobileTab === id ? "mobile-tab-current" : "") + '" data-action="mobile-tab" data-tab="' + id + '" aria-pressed="' + (mobileTab === id) + '">' + title + " <span>" + number + "</span></button>";
-    const board = mobileTab === "golems" ? '<section class="mobile-market" aria-label="魔像市场"><h2>魔像 <small>符合水晶条件的卡牌高亮</small></h2><div class="mobile-market-grid mobile-golems">' + g.golemMarket.map((id, i) => golemCard(id, i, g, player.stock)).join("") + "</div></section>" : mobileTab === "merchants" ? '<section class="mobile-market" aria-label="商人市场"><h2>商人 <small>按左到右顺序收取位置费用</small></h2><div class="mobile-market-grid mobile-merchants">' + g.merchantMarket.map((m, i) => merchantCard(m.id, i, m.bonus)).join("") + "</div></section>" : '<section class="mobile-rivals" aria-label="对手信息"><h2>玩家与对手</h2>' + rivals.map((p) => '<details class="mobile-rival"><summary><strong>' + esc(p.name) + "</strong><span>" + score(p) + " 分 · 魔像 " + p.claimed.length + " · 手牌 " + p.hand.length + ' <span class="mobile-chevron">⌄</span></span></summary><div class="mobile-rival-stock">' + stones(p.stock, true) + " <span>" + count(p.stock) + "/10</span></div><h3>手牌 · " + p.hand.length + '</h3><div class="mobile-rival-cards">' + (p.hand.map((id) => merchantCard(id, void 0, void 0, "inactive")).join("") || '<span class="mobile-empty">无手牌</span>') + "</div><h3>已打出 · " + p.played.length + '</h3><div class="mobile-rival-cards">' + (p.played.map((id) => merchantCard(id, void 0, void 0, "played")).join("") || '<span class="mobile-empty">无已打出卡</span>') + "</div><p>铜币 " + p.copper + " · 银币 " + p.silver + "</p></details>").join("") + "</section>";
-    const hand = sortedHand(player);
-    return '<main class="layout focus-board mobile-board ' + (viewState.compact ? "compact-cards" : "normal-cards") + (mobileHandExpanded ? " mobile-hand-expanded" : "") + '"><header class="mobile-topbar"><span class="mobile-brand">晶石回廊</span><span class="mobile-turn">' + (finished ? "对局结束" : "第 " + g.turnNumber + " 手") + '</span><details class="mobile-more"><summary aria-label="更多设置与规则" title="更多">•••</summary><div class="mobile-more-menu">' + pageVersionLink() + aiPauseControl(g) + '<button type="button" data-action="card-size">' + (viewState.compact ? "放大卡牌" : "缩小卡牌") + '</button><button type="button" data-action="toggle-log">行动记录</button><button type="button" data-action="history">对局历史</button><button type="button" data-action="help">游戏规则</button><button type="button" data-action="reset">新开一局</button></div></details></header>' + (g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发 · 本轮结束后计分</div>' : "") + '<section class="mobile-overview" aria-label="当前玩家与水晶"><div class="mobile-player-line"><div><strong>' + esc(player.name) + '</strong><span class="mobile-activity">' + (finished ? "已结束" : active ? "你的回合" : "等待 " + esc(current.name) + " 行动") + '</span></div><span class="mobile-score">' + score(player) + ' <small>分</small></span></div><div class="mobile-resource-line">' + stones(player.stock) + '<span class="mobile-capacity">' + count(player.stock) + '/10</span></div></section><nav class="mobile-tabs" aria-label="切换游戏区域">' + tab("golems", "魔像", g.golemMarket.length) + tab("merchants", "商人", g.merchantMarket.length) + tab("opponents", "对手", rivals.length) + '</nav><div class="mobile-stage" data-scroll-zone="mobile-stage">' + board + '</div><section class="mobile-dock" aria-label="' + esc(player.name) + '手牌操作"><div class="mobile-dock-toolbar"><button type="button" class="mobile-expand" data-action="mobile-expand-hand" aria-expanded="' + mobileHandExpanded + '" aria-label="' + (mobileHandExpanded ? "收起手牌" : "展开手牌") + '">' + (mobileHandExpanded ? "⌄" : "⌃") + " 手牌 " + hand.length + '</button><button type="button" class="mobile-sort" data-action="group-cards" data-player="' + player.id + '" ' + (!active ? "disabled" : "") + '>整理</button><button type="button" class="mobile-rest" data-action="rest" ' + (!active ? "disabled" : "") + '>↶ 休息</button></div><div class="mobile-dock-cards" data-scroll-zone="mobile-hand-' + player.id + '">' + (hand.length ? hand.map((id, i) => handTile(player, id, active, i, hand)).join("") : '<span class="mobile-empty">无可用手牌 · 可休息收回</span>') + '</div><div class="mobile-played ' + (mobilePlayedOpen ? "" : "mobile-played-closed") + '"><div class="mobile-played-label"><span>已打出 ' + player.played.length + '</span><button type="button" class="fold-btn" data-action="mobile-toggle-played" aria-expanded="' + mobilePlayedOpen + '">' + (mobilePlayedOpen ? "▾ 折叠" : "▸ 展开") + "</button></div>" + (mobilePlayedOpen ? '<div class="mobile-played-cards" data-scroll-zone="mobile-played-' + player.id + '">' + player.played.map((id) => merchantCard(id, void 0, void 0, "played")).join("") + "</div>" : "") + "</div></section>" + logPopover(g) + (finished ? renderResult(g) : "") + "</main>";
-  }
   function renderBoard(g) {
-    if (usesMobileLayout()) return renderMobileBoard(g);
     if (g.players.filter((p2) => !p2.isAI).length === 2 && g.players.length > 2 && g.players.some((p2) => p2.isAI)) return renderHumanAIBoard(g);
     if (g.players.length === 2) return renderDuelBoard(g);
     if (g.players.filter((p2) => !p2.isAI).length === 1 && g.players.some((p2) => p2.isAI)) return renderSoloAIBoard(g);
     const p = g.players[g.current];
     const target = g.players.length >= 4 ? 5 : 6;
     const finished = g.phase === "finished";
-    return `<main class="layout board-layout ${viewState.compact ? "compact-cards" : "normal-cards"}"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span>${pageVersionLink()}${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="history">对局历史</button><button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+    return `<main class="layout board-layout ${viewState.compact ? "compact-cards" : "normal-cards"}"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span>${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="history">对局历史</button><button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
   <section class="players-strip">${g.players.map((x, i) => playerCard(x, i === g.current && !finished)).join("")}</section>
   ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发！本轮完成后结算。</div>' : ""}
   <section class="game-section"><div class="section-head"><div><span class="section-index">01 / THE GOLEMS</span><h2>魔像市场 <small>认领目标</small></h2></div><div class="section-meta">牌库剩余 ${g.golemDeck.length} 张 · 每人认领 ${target} 张触发终局</div></div>
@@ -5910,13 +5502,12 @@ html[data-century-mode="mobile"] .mobile-board {
     try {
       const previous = game.current;
       game = applyAction(game, a);
-      if (game.current !== previous) mobilePlayedOpen = false;
       modal = game.phase === "overflow" && !game.players[game.current].isAI ? { kind: "discard", colors: [] } : null;
       handoff = game.players.length > 2 && game.current !== previous && game.phase !== "finished" && !game.players[game.current].isAI && game.players.filter((p) => !p.isAI).length > 2;
       toast = "";
       if (game.phase === "finished") {
         archiveGame();
-        if (maybeAutoExport(game)) notify("已自动下载复盘 Markdown 与 JSON（浏览器默认下载文件夹）");
+        if (maybeAutoExport(game)) notify("已自动下载复盘 JSON（浏览器默认下载文件夹）");
       }
       save();
       render();
@@ -5939,9 +5530,6 @@ html[data-century-mode="mobile"] .mobile-board {
       showLog = false;
       inspectedAI = null;
       resultHidden = false;
-      mobileTab = "golems";
-      mobileHandExpanded = false;
-      mobilePlayedOpen = false;
       toast = "";
       viewState.players = {};
       saveView();
@@ -5957,31 +5545,10 @@ html[data-century-mode="mobile"] .mobile-board {
       start();
       return;
     }
-    if (type === "mobile-tab" && (target.dataset.tab === "golems" || target.dataset.tab === "merchants" || target.dataset.tab === "opponents")) {
-      mobileTab = target.dataset.tab;
-      render();
-      const stage = root.querySelector(".mobile-stage");
-      if (stage) stage.scrollTop = 0;
-      return;
-    }
-    if (type === "mobile-expand-hand") {
-      mobileHandExpanded = !mobileHandExpanded;
-      render();
-      return;
-    }
-    if (type === "mobile-toggle-played") {
-      mobilePlayedOpen = !mobilePlayedOpen;
-      render();
-      return;
-    }
     if (type === "inspect-ai") {
       const id = Number(target.dataset.player);
       inspectedAI = inspectedAI === id ? null : id;
       render();
-      return;
-    }
-    if ((type === "export-replay-md" || type === "export-replay-json") && game) {
-      downloadReplay(game, type === "export-replay-md" ? "md" : "json");
       return;
     }
     if (type === "history") {
@@ -6004,11 +5571,6 @@ html[data-century-mode="mobile"] .mobile-board {
     if (type === "history-view") {
       historyViewId = target.dataset.id || null;
       render();
-      return;
-    }
-    if (type === "archive-export-md" || type === "archive-export-json") {
-      const entry = archive.find((e) => e.id === target.dataset.id);
-      if (entry) downloadReplay(entry.game, type === "archive-export-md" ? "md" : "json");
       return;
     }
     if (type === "auto-export-enable") {
@@ -6049,9 +5611,6 @@ html[data-century-mode="mobile"] .mobile-board {
       resultHidden = false;
       toast = "";
       viewState.players = {};
-      mobileTab = "golems";
-      mobileHandExpanded = false;
-      mobilePlayedOpen = false;
       saveView();
       save();
       render();
@@ -6311,14 +5870,6 @@ html[data-century-mode="mobile"] .mobile-board {
     const element = e.target;
     if (element.id !== "humanCount" && element.id !== "botCount") return;
     syncSetup();
-  });
-  mobileMedia.addEventListener("change", () => {
-    if (!dedicatedMobilePage) {
-      mobileTab = "golems";
-      mobileHandExpanded = false;
-      mobilePlayedOpen = false;
-      render();
-    }
   });
   render();
 })();

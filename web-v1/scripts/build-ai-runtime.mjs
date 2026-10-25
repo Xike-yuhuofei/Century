@@ -1,6 +1,6 @@
 /** ai-runtime 构建步骤：把 opt-in 验收页复制进 dist（跟随 npm run build）。
- * 不参与 dist/index.html / standalone.html / mobile 的任何内联产物——
- * 默认桌面/移动/离线单文件行为完全不变。 */
+ * 不参与 dist/index.html / standalone.html 的任何内联产物——
+ * 默认桌面/离线单文件行为完全不变。 */
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
