@@ -53,6 +53,9 @@ export function verifyWorkflows(repoRoot) {
   if (!/permissions:\s*\n\s{2}contents:\s*read/.test(ci)) issues.push('ci.yml 顶层必须声明最小权限 contents: read');
   if (/^\s{2}paths:/m.test(ci)) issues.push('ci.yml 的 PR 触发不允许 paths 过滤（会导致必需检查缺失）；请用变更分类器');
   if (/persist-credentials:\s*true/.test(ci)) issues.push('ci.yml 不应持久化 checkout 凭据');
+  if (!/include-hidden-files:\s*true/.test(ci)) {
+    issues.push('web-v1-dist 上传必须包含隐藏文件（.nojekyll 在 AI7 dist 部署闭包内，缺失会导致 fail-closed）');
+  }
 
   const runsOn = (ci.match(/^\s{4}runs-on:/gm) ?? []).length;
   const timeouts = (ci.match(/^\s{4}timeout-minutes:/gm) ?? []).length;

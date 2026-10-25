@@ -417,6 +417,16 @@ PR 首跑（run 40176731716，attempt 1）暴露两个基础设施问题：
 
 `web-unit` 在 run 40193187465 首跑失败于 `tests/js5-budget.test.mjs` 的“墙钟 balanced”用例（断言“至少应观察到一次有效的墙钟批次”）。该用例依赖 `performance.now` 批次准入，属于时序敏感测试。处理：**只重跑失败作业**，`web-unit` 15m15s 通过、`ci-summary` success。未修改 AI 逻辑、未加 `continue-on-error`、未降低断言强度。
 
+### 9.7 合并 main 后的集成回归（构建清单 fail-closed）
+
+合并 `origin/main@42a9391` 后首个 PR CI（run 40200109330，head `aa95df4`）在 build 成功后，`audit-gate`、`simulation`、`training-unit`、`web-unit` 同时失败。根因不是 AI/游戏回归，而是 CI 产物传递：
+
+- AI7-A3 的 `dist/build-manifest.json` 把 `dist/.nojekyll` 计入 dist 部署闭包；
+- `actions/upload-artifact` 默认 `include-hidden-files: false`，导致下载到测试作业的 `web-v1-dist` 缺少 `.nojekyll`；
+- `requireBuiltEngine` 复核 dist 闭包哈希不一致 → 所有依赖编译产物的作业按设计 fail-closed。
+
+修复：`build` 上传产物显式 `include-hidden-files: true`；`verify-workflows.mjs` 新增断言，防止该配置被回退。该失败被 CI 如实暴露（没有用 `continue-on-error` 或缓存旧 dist 绕过），属于构建清单门禁按预期工作。修复后的 PR head CI 结果见 PR #45 检查列表。
+
 ---
 
 ## 10. 回滚

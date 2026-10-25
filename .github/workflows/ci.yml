@@ -135,6 +135,9 @@ jobs:
           path: web-v1/dist
           if-no-files-found: error
           retention-days: 7
+          # AI7 构建清单的 dist 部署闭包包含 .nojekyll；默认 hidden=false 会丢文件，
+          # 导致下载后的 dist 与清单不一致（simulation/audit/training 均 fail-closed）。
+          include-hidden-files: true
 
   web-unit:
     name: web-unit
