@@ -321,7 +321,7 @@ PR #45（`fix/ai7-ci-governance`）的完整 CI：
 - `research-node`、`research-python`、`research-seatbelt`、`promotion-gate`、`promotion-approval`、`pages-deploy` 为 `skipped`，属于“变更范围不适用”，`ci-summary` 表格中明确标注，未当作必需检查。
 - 普通开发 PR 不触发 promotion 作业：历史晋级的 2 项 `REQUIRES_APPROVAL` 不会阻断本 PR。
 
-本报告回填提交为纯文档变更，预期只触发 `changes`、`governance-tests`、`rules-cards`、`ci-summary`；该提交的最新检查结果直接显示在 PR #45 中，可作为路径过滤生效的现场证据。
+路径过滤作用于整个 PR 的 diff（`base...head`），而不是单个提交。若某个 PR 的整体变更只有文档，则只触发 `changes`、`governance-tests`、`rules-cards`、`ci-summary`（分类矩阵由 `scope.test.mjs` 覆盖）；本 PR 自身包含 CI 代码，因此每次 head 更新仍按全代码范围执行，这是“共享/CI 自身变更不得跳过必要测试”的预期行为。
 
 ### 9.4 CI 首跑发现的真实问题（已修复，未伪装为成功）
 
