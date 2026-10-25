@@ -241,7 +241,7 @@ measured({
     id: 'R09', title: '连续 12 小时真实自主训练压力测试',
     status: artifact ? 'PASS' : 'NOT_RUN',
     source: 'training/evolution/autonomous-run.mjs + training/scripts/run-12h-stress.sh',
-    testCommand: 'screen -dmS century12h /bin/zsh -f -c "cd <repo> && caffeinate -is training/scripts/run-12h-stress.sh"',
+    testCommand: 'screen -dmS century12h-v2 /bin/zsh -f -c "cd <repo> && caffeinate -is training/scripts/run-12h-stress.sh"',
     evidence: artifact
       ? `12h 产物=${artifact.path}；elapsedHours=${artifact.elapsedHours}；status=${artifact.status}；` +
         `rounds=${artifact.rounds}；games=${artifact.games}；budgetWallMs=${artifact.wallMs}`
