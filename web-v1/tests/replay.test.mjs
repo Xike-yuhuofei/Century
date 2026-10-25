@@ -4,7 +4,6 @@ import { createGame, applyAction } from '../dist/js/engine.js';
 import { GOLEM_BY_ID } from '../dist/js/data.js';
 import { chooseAIAction } from '../dist/js/ai.js';
 import { replayMarkdown, replayJSON, validateReplay } from '../dist/js/replay.js';
-import { parseMobileSave } from '../dist/js/mobile/storage.js';
 
 const make = () => createGame(['甲', '乙'], 71);
 const position = ({replay, ...g}) => g;
@@ -19,7 +18,7 @@ test('完整保存超过 45 条的玩家回合，轮次正确且不修改先前�
   assert.equal(g.replay.turns.length, 72);
   assert.ok(g.replay.turns.every((t,i) => t.turnNumber === i+1 && t.playerId === i%6 && t.round === Math.floor(i/6)+1 && t.playerTurn === Math.floor(i/6)+1));
   assert.ok(g.players.every(p => p.turns === 12));
-  assert.equal(parseMobileSave(JSON.stringify(g)).replay.turns.length, 72);
+  assert.equal(JSON.parse(JSON.stringify(g)).replay.turns.length, 72);
   assert.match(replayMarkdown(g), /第 12 轮 · 第 72 手/);
 });
 
@@ -31,7 +30,7 @@ test('超额弃置并入同一回合，支持中途存档和导出，错误行�
   assert.equal(g.replay.turns.length, 1);
   assert.throws(() => applyAction(g, {type:'discard',colors:[3,3]}));
   assert.equal(JSON.stringify(g), pending);
-  const next = applyAction(parseMobileSave(pending), {type:'discard',colors:[0,0]});
+  const next = applyAction(JSON.parse(pending), {type:'discard',colors:[0,0]});
   assert.equal(JSON.stringify(g), pending);
   const t = next.replay.turns[0];
   assert.equal(next.replay.turns.length, 1);
@@ -115,7 +114,7 @@ test('导入拒绝损坏的历史字段和起点；姓名不会注入 Markdown �
   const g = applyAction(make(), {type:'rest'});
   for (const mutate of [r => r.turns = {}, r => r.initial.players = [], r => r.initial.replay = {}, r => r.turns[0].after.stock = [-1,0,0,0], r => r.turns[0].actions = [{type:'play',cardId:'FAKE'}], r => r.turns[0].playerId = 99]) {
     const broken = structuredClone(g); mutate(broken.replay);
-    assert.throws(() => parseMobileSave(JSON.stringify(broken)), /复盘|存档/);
+    assert.throws(() => validateReplay(broken.replay, broken), /复盘|存档/);
   }
   const named = createGame(['<script>|甲', '乙'], 71);
   assert.ok(!replayMarkdown(named).includes('<script>'));

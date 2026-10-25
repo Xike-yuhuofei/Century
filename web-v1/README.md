@@ -6,19 +6,6 @@
 
 直接双击 `dist/standalone.html`。Chrome / Edge / Safari 可离线运行。推荐 3440×1440 (UWQHD / 21:9)，默认 2 名真人 + 1 名 AI，可选 0–4 名 AI。2 真人 + 4 AI 是单独注明的非官方六人扩展局。
 
-## 独立触屏手机版
-
-- 手机地址：https://xike-yuhuofei.github.io/Century/mobile/
-- 电脑地址：https://xike-yuhuofei.github.io/Century/
-
-构建后访问 `/mobile/`；GitHub Pages 项目地址为 `/Century/mobile/`。手机 UI 使用 `src/mobile/`，独立于桌面样式和视图，复用同一引擎与 AI 2.0。手机与电脑分别自动保存 version 2 存档，可导入/导出备份。
-
-`dist/mobile/standalone.html` 为完整离线入口，`dist/mobile/modules.html` 为指纹模块调试入口。两真人在同一设备轮流行动，六人局明确为非官方扩展，不支持跨设备实时联网。
-
-设计、截图、测试与发布边界见 [手机交付报告](../docs/mobile/DELIVERY.md)。浏览器回归：`python scripts/smoke_mobile.py`（需要 Playwright 1.56 的 Chromium 与 WebKit）。
-
-需求逐项自查与修正证据见 [自查报告](../docs/mobile/SELF-AUDIT.md)。补充边界回归：`python scripts/audit_mobile.py`，覆盖 AI 回合恢复隐私、长姓名、触控尺寸、排序、备份和离线文件启动。
-
 ## V1.5 设计决策
 
 **始终展示：** 双真人左右固定面板、商队水晶及容量、可打出的商人卡、正面已打出商人卡（回收区可折叠）、个人分数及硬币、魔像分数与支付要求、商人市场真实卡面和左侧支付成本、当前回合。AI 在公共桌面下部横向轨道中公开展示正面手牌、水晶、分数与已打出张数。
@@ -35,16 +22,13 @@
 
 复盘文件仅提供 **JSON** 一种格式（Markdown 导出已移除）：
 
-- **JSON**：`format: century-replay`、`version: 1`，包含 `replay.initial` 起点、`replay.turns` 全部回合和 `current` 导出时局面。依次将每条回合的 `actions` 交给正式 `applyAction`，即可从起点重放。此文件用于分析；手机首页导入仍使用菜单中的「本局备份」。
+- **JSON**：`format: century-replay`、`version: 1`，包含 `replay.initial` 起点、`replay.turns` 全部回合和 `current` 导出时局面。依次将每条回合的 `actions` 交给正式 `applyAction`，即可从起点重放。此文件用于分析。
 
-导出途径：
+导出途径：**桌面端**对局历史（⧉）面板中的「自动导出」。开启后对局结束自动把 JSON 下载到浏览器默认下载文件夹，无需手动操作；手动导出按钮已移除。
 
-- **桌面端**：对局历史（⧉）面板中的「自动导出」。开启后对局结束自动把 JSON 下载到浏览器默认下载文件夹，无需手动操作；手动导出按钮已移除。
-- **手机端**：「菜单 → 行动记录与复盘导出 → 导出复盘 JSON」。
+新局从开局完整记录，覆盖全部真人和 AI，不受近期日志 45 条限制；记录随本地存档保存。超额弃置合并到对应回合，尚未弃置的回合标记为未完成。旧版 v2 存档可继续使用，首次新行动从接续局面开始记录，导出会注明历史缺失，无法恢复旧版已经丢弃的行动。新局会覆盖本局，复盘需要先导出保存。
 
-新局从开局完整记录，覆盖全部真人和 AI，不受近期日志 45 条限制；记录随本地存档及手机备份保存。超额弃置合并到对应回合，尚未弃置的回合标记为未完成。旧版 v2 存档可继续使用，首次新行动从接续局面开始记录，导出会注明历史缺失，无法恢复旧版已经丢弃的行动。新局会覆盖本局，复盘需要先导出保存。
-
-复盘回归：`node --test tests/replay.test.mjs`（先构建）；`python scripts/smoke_replay.py` 验证 Chromium/WebKit 的电脑、手机、离线下载及刷新续局。设置 `CENTURY_TEST_URL` 可对部署地址进行同样检查。
+复盘回归：`node --test tests/replay.test.mjs`（先构建）；`python scripts/smoke_replay.py` 验证 Chromium/WebKit 的自动导出开关与刷新续局。设置 `CENTURY_TEST_URL` 可对部署地址进行同样检查。
 
 ```bash
 npm install

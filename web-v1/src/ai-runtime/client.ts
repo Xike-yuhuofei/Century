@@ -9,7 +9,7 @@
  * - AI 异常不卡页面：所有等待都有看门狗；任何路径最终要么给行动、要么给
  *   回退行动、要么显式报告取消——永不悬挂。
  *
- * 接入纪律：本客户端不接入默认页面（desktop app.ts / mobile app.ts 不 import）。
+ * 接入纪律：本客户端不接入默认页面（desktop app.ts 不 import）。
  * 使用方式为显式 opt-in（见 ai-runtime/harness.html 与 OVERNIGHT-REPORT.md）。
  */
 
