@@ -10,7 +10,9 @@
  * 说明：
  * - 使用 AI7 开发池 [1.61e9, 1.63e9)，中央登记原子分配；绝不消费验证池；
  * - 训练/快筛/深验种子互不重叠；checkpoint/恢复/停止/预算上限全部走控制器；
- * - 冠军晋级不在这里发生：候选进入机器门禁队列，需预注册第一名率正式挑战。
+ * - 候选进入机器门禁队列后，默认由 promotion-handler 自动评估「是否值得发起
+ *   预注册第一名率正式挑战」；alpha/功效不足时明确 BLOCKED，不消费验证种子；
+ * - 晋级落地/发布仍由 CI 的 promotion-machine-gate 独立复核并 auto-merge。
  */
 
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
@@ -20,6 +22,7 @@ import { REPO_ROOT } from '../lib/paths.mjs';
 import { assertResourceBudget, evaluateCapacity, resourceSnapshot } from '../lib/resource-scheduler.mjs';
 import { CampaignController } from './campaign-controller.mjs';
 import { createLiveGovernanceProvider, createAutonomousGovernanceAdapter } from './governance-provider-v2.mjs';
+import { createPromotionHandler } from './promotion-handler.mjs';
 
 function parseArgs(argv) {
   const values = { _: [] };
@@ -115,20 +118,26 @@ async function main() {
     process.exit(3);
   }
 
+  const autoChallenge = args['no-auto-challenge'] !== true;
   const controller = new CampaignController({
     campaignId,
     rootDir,
     governance,
     config: configFromArgs(),
+    ...(autoChallenge ? { promotionHandler: createPromotionHandler() } : {}),
   });
   const started = Date.now();
   const results = await controller.run({ resume: command === 'resume' });
+  // 总墙钟从 campaign 创建时刻计（resume 不得把已运行时长清零，否则 12h
+  // 压力测试可通过重启伪造时长）。
+  const stateDoc = JSON.parse(readFileSync(resolve(rootDir, 'state.json'), 'utf8'));
+  const campaignStartedAt = stateDoc.createdAt ?? new Date(started).toISOString();
   const summary = {
     schema: 'century-autonomous-run-summary-v1',
     campaignId,
     command,
-    startedAt: new Date(started).toISOString(),
-    elapsedMs: Date.now() - started,
+    startedAt: campaignStartedAt,
+    elapsedMs: Math.max(0, Date.now() - Date.parse(campaignStartedAt)),
     status: results.status,
     phase: results.phase,
     rounds: results.rounds.length,
@@ -142,7 +151,8 @@ async function main() {
       deep: c.deep?.metrics ?? null,
     })),
     resourceAfter: resourceSnapshot(),
-    note: '候选进入机器门禁队列；冠军晋级需预注册第一名率正式挑战，本 CLI 不直接改冠军',
+    autoChallenge,
+    note: '候选进入机器门禁队列后自动评估正式挑战资格；冠军落地/发布由 CI 机器门禁完成，本 CLI 不直接改冠军',
   };
   writeJSON(resolve(rootDir, 'run-summary.json'), summary);
   console.log(JSON.stringify(summary, null, 2));

@@ -1,0 +1,53 @@
+{
+  "schema": "century-promotion-e2e-drill-v1",
+  "generatedAt": "2026-10-25T21:22:10.501Z",
+  "verdict": "PASS",
+  "checks": [
+    {
+      "id": "promotion-gate-dry-run",
+      "status": "PASS",
+      "evidence": "{\n  \"verdict\": \"PROMOTE\",\n  \"candidateId\": \"drill-candidate-mvoc2lm0\",\n  \"planHash\": \"459d4dc6e65666c97b0c8fb05ca3d7af1470cbc9811982b75dc9c421b2c41f6e\",\n  \"challengeIndex\": 12,\n  \"dryRun\": true,\n  \"record\": {\n    \"id\": \"drill-candidate-mvoc2lm0\",\n    \"name\": \"Century AI 冠军 drill-candidate-mvoc2lm0\","
+    },
+    {
+      "id": "promotion-gate-applied",
+      "status": "PASS",
+      "evidence": "{\n  \"verdict\": \"PROMOTE\",\n  \"candidateId\": \"drill-candidate-mvoc2lm0\",\n  \"planHash\": \"459d4dc6e65666c97b0c8fb05ca3d7af1470cbc9811982b75dc9c421b2c41f6e\",\n  \"challengeIndex\": 12\n}\n冠军记录：/var/folders/mq/_2m0mslx2pl08p1gg_n65g040000gn/T/century-promotion-e2e-J0tvPm/repo/training/champions/champion.json\n候"
+    },
+    {
+      "id": "apply-champion",
+      "status": "PASS",
+      "evidence": "parameters.ts 含 drill-candidate-mvoc2lm0"
+    },
+    {
+      "id": "build-embeds-champion",
+      "status": "PASS",
+      "evidence": "index.html 含新冠军 id/adapter；artifact=b02836477fc2"
+    },
+    {
+      "id": "deploy-verify-new-champion",
+      "status": "PASS",
+      "evidence": "[{\"id\":\"build-manifest-available\",\"status\":\"PASS\",\"evidence\":\"build-manifest.json 可解析\"},{\"id\":\"artifact-identity\",\"status\":\"PASS\",\"evidence\":\"部署 artifact=b02836477fc2d522 期望=b02836477fc2d522\"},{\"id\":\"manifest-schema\",\"status\":\"PASS\",\"evidence\":\"schema=century-web-build-manifest-v2\"}]"
+    },
+    {
+      "id": "corrupt-deploy-rejected",
+      "status": "PASS",
+      "evidence": "Command failed: /usr/local/bin/node /private/tmp/century-next/scripts/ci/verify-deploy.mjs --url http://127.0.0.1:61362/ --expected-artifact b02836477fc2d5221b581b73f72e4edf2470751588f1ca6c57f8bccb88373d84 --expected-champion drill-candidate-mvoc2lm0\n"
+    },
+    {
+      "id": "rollback-restores-previous",
+      "status": "PASS",
+      "evidence": "恢复后 index.html 冠军=joint-js5"
+    },
+    {
+      "id": "rollback-deploy-verified",
+      "status": "PASS",
+      "evidence": "回滚版本 verify-deploy 放行"
+    }
+  ],
+  "candidateId": "drill-candidate-mvoc2lm0",
+  "previousChampion": "joint-js5",
+  "challengeIndex": 12,
+  "alpha": 0.00001220703125,
+  "worktreeCleaned": true,
+  "note": "隔离 git worktree 内执行完整机器晋级/落地/构建/发布核验/回滚；候选与统计证据为合成夹具，正式冠军与正式仓库文件未被修改"
+}

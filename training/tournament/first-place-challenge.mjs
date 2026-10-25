@@ -38,16 +38,15 @@ export function toSeatVersion(descriptor, { seatCount = null, workUnits = DEFAUL
     if (descriptor.jointVersion !== undefined) version.jointVersion = descriptor.jointVersion;
     if (descriptor.budgetMs !== undefined) version.budgetMs = descriptor.budgetMs;
     if (descriptor.gateMode !== undefined) version.gateMode = descriptor.gateMode;
-    // 正式挑战强制固定 workUnits：候选与冠军在同一搜索工作量下比较，
-    // 不允许墙钟预算决定展开顺序；候选按人数覆盖的显式 workUnits 优先。
+    // 正式挑战强制固定 workUnits：候选与冠军必须在同一搜索工作量下比较。
+    // 候选按人数配置中的 workUnits 是研究调参轴，正式挑战必须归一化，
+    // 否则候选 32 vs 冠军 64 会把搜索资源差异混入第一名率结论。
     const perCount = descriptor.jointOptionsByPlayerCount;
     const explicit = perCount && seatCount !== null
       ? (perCount[String(seatCount)] ?? perCount[seatCount] ?? {})
       : {};
-    version.jointOptions = {
-      workUnits: explicit.workUnits ?? workUnits,
-      ...explicit,
-    };
+    const { workUnits: _candidateWorkUnits, ...fairOptions } = explicit ?? {};
+    version.jointOptions = { workUnits, ...fairOptions };
   }
   return version;
 }
