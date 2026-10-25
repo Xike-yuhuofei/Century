@@ -85,9 +85,18 @@ test('席位版本：search-control 候选的联合搜索配置按人数注入',
     goalWeight: 1, capacityWeight: 1, restWeight: 1, endgameWeight: 1,
     adapter: 'champion-guided', jointVersion: 'joint-js5', budgetMs: 100,
     jointOptionsByPlayerCount: { '2': { workUnits: 8 }, '5': { overrideMargin: 0.05 } },
-  }, { seatCount: 2 });
+  }, { seatCount: 2, workUnits: 64 });
   assert.equal(version.adapter, 'champion-guided');
-  assert.deepEqual(version.jointOptions, { workUnits: 8 });
+  // 正式挑战必须同预算：候选研究配置的 workUnits 被归一化为正式 workUnits。
+  assert.deepEqual(version.jointOptions, { workUnits: 64 });
+  const five = toSeatVersion({
+    id: 'cand-joint', engineWeight: 1, tempoWeight: 1, contestWeight: 1, synergyWeight: 1,
+    goalWeight: 1, capacityWeight: 1, restWeight: 1, endgameWeight: 1,
+    adapter: 'champion-guided', jointVersion: 'joint-js5', budgetMs: 100,
+    jointOptionsByPlayerCount: { '5': { workUnits: 8, overrideMargin: 0.05 } },
+  }, { seatCount: 5, workUnits: 64 });
+  assert.deepEqual(five.jointOptions, { workUnits: 64, overrideMargin: 0.05 },
+    '非 workUnits 的候选行为开关必须保留，但搜索预算必须与冠军一致');
   const noOptions = toSeatVersion({ id: 'plain', engineWeight: 1 }, { seatCount: 2 });
   assert.equal(noOptions.jointOptions, undefined);
 });
