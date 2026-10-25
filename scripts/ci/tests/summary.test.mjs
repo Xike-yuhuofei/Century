@@ -38,6 +38,8 @@ const docsNeeds = () => baseNeeds({
   'ui-smoke': job('skipped'),
   'audit-gate': job('skipped'),
   'research-node': job('skipped'),
+  'research-worker': job('skipped'),
+  'research-e2e': job('skipped'),
   'research-python': job('skipped'),
   'research-seatbelt': job('skipped'),
   'promotion-gate': job('skipped'),
@@ -193,13 +195,27 @@ test('研究 PR 必需研究检查', () => {
   const scope = { ...fullScope, web: false, training: false, ui: false, simulation: false, audit: true, research: true, pages: false };
   const needs = baseNeeds({
     build: job(), 'audit-gate': job(),
-    'research-node': job('success'), 'research-python': job('success'), 'research-seatbelt': job('success'),
+    'research-node': job('success'), 'research-worker': job('success'), 'research-e2e': job('success'),
+    'research-python': job('success'), 'research-seatbelt': job('success'),
     'web-unit': job('skipped'), 'training-unit': job('skipped'), 'ui-smoke': job('skipped'), 'simulation': job('skipped'),
   });
   const result = evaluateSummary({ needs, scope, eventName: 'pull_request' });
   assert.equal(result.ok, true, result.failures.join('; '));
-  assert.deepEqual(
-    requiredJobs(scope, { eventName: 'pull_request' }).has('research-seatbelt'),
-    true,
-  );
+  for (const required of ['research-node', 'research-worker', 'research-e2e', 'research-python', 'research-seatbelt']) {
+    assert.equal(requiredJobs(scope, { eventName: 'pull_request' }).has(required), true, required);
+  }
+});
+
+test('研究 worker / 端到端门禁失败 → 汇总失败（不得静默跳过）', () => {
+  const scope = { ...fullScope, web: false, training: false, ui: false, simulation: false, audit: true, research: true, pages: false };
+  const needs = baseNeeds({
+    build: job(), 'audit-gate': job(),
+    'research-node': job('success'), 'research-worker': job('failure'), 'research-e2e': job('failure'),
+    'research-python': job('success'), 'research-seatbelt': job('success'),
+    'web-unit': job('skipped'), 'training-unit': job('skipped'), 'ui-smoke': job('skipped'), 'simulation': job('skipped'),
+  });
+  const result = evaluateSummary({ needs, scope, eventName: 'pull_request' });
+  assert.equal(result.ok, false);
+  assert.ok(result.failures.some(f => f.startsWith('research-worker: failure')));
+  assert.ok(result.failures.some(f => f.startsWith('research-e2e: failure')));
 });

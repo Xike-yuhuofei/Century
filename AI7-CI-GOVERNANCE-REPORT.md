@@ -66,7 +66,9 @@ changes ────────────────┐
                                   ├─ simulation（100 局 / 4 分片并行，种子连续不重叠）
                                   ├─ ui-smoke（Chromium + WebKit）
                                   ├─ audit-gate（dev 或 research 层，二选一）
-                                  ├─ research-node
+                                  ├─ research-node（编码/合法性/公平性/种子静态）
+                                  ├─ research-worker（worker 协议 3 条用例并发）
+                                  ├─ research-e2e（官方自对照端到端）
                                   ├─ research-python
                                   ├─ research-seatbelt（仅 macOS）
                                   └─ promotion-gate ──→ promotion-approval（Environment + 标签）
@@ -167,11 +169,11 @@ JSON: { verdict, summary, checks }
 | Pages `build`（web 单测 + 复盘冒烟 + 部署） | `pages-deploy`（复用 dist，且依赖 `ui-smoke` 成功） | 保留；`smoke_replay.py` 在 `ui-smoke` 中执行 |
 | `ai-training` PR `test`（web + training + 100 局 + 审计） | `web-unit` + `training-unit` + `simulation` + `audit-gate` | 保留 |
 | AI5 `ppo-python-tests` | `research-python` | 保留（含 `test_seed_policy`） |
-| AI5 `node-tests` | `research-node` | 保留 |
+| AI5 `node-tests` | `research-node`（编码/合法行动/公平性）+ `research-worker`（worker 协议，3 条用例并发） | 保留；worker 协议单文件串行会顶到 15m 旧超时，按用例并发后仍全部运行 |
 | AI5 `seed-discipline` | `research-node`（Node 种子政策）+ `research-python`（Python 账本隔离） | 保留 |
 | AI5 `openevolve-static-security` | `research-node` | 保留 |
 | AI5 `macos-seatbelt` | `research-seatbelt`（macos-14） | 保留 |
-| AI5 `e2e-smoke`（`duel_runner` 官方自对照 4 种子） | `research-node` 新增同名步骤 | **首版遗漏，已补齐**（CI 元测试新增断言防止再次丢失） |
+| AI5 `e2e-smoke`（`duel_runner` 官方自对照 4 种子） | `research-e2e`（独立作业） | **首版遗漏，已补齐**（CI 元测试新增断言防止再次丢失） |
 | 卡牌校验 | `rules-cards` | 保留 |
 
 > 首版重构在对照旧 `ai5.yml` 时发现 `e2e-smoke` 未被迁移，且该旧作业在改造前基线中已经失败（run 40171122478）。根因是旧断言要求“官方自对照分差 = 0”，但 AI 搜索预算按 `performance.now` 墙钟分配，两局顺序执行时决策数不同即产生非零分差；这是断言本身不成立，不是管线缺陷。
@@ -264,9 +266,9 @@ CONFIRM_APPLY_MAIN_PROTECTION=yes \
 | 审计失败 | `audit-gate` / `promotion-gate` 失败 → summary 失败 | summary audit failure 用例 |
 | 测试超时 | `cancelled` 不得视为通过 | summary cancelled 用例 |
 | 静默跳过 | 必需作业 `skipped` → summary 失败 | summary skipped / missing 用例 |
-| 研究变更 | 三个 research 作业 + research 层审计 | scope/summary 用例 |
+| 研究变更 | `research-node` + `research-worker` + `research-e2e` + `research-python` + `research-seatbelt` + research 层审计 | scope/summary 用例 |
 
-单元测试共 **54 项**，另有工作流结构不变量：
+单元测试共 **55 项**，另有工作流结构不变量：
 
 - 只有一个工作流含 `pull_request` 且必须是 `ci.yml`；
 - `ai-training.yml` 不得在 PR 触发；
@@ -332,7 +334,7 @@ web 单测从 3 份（Focus 14m58s + V2 14m02s + ai-training 内串行 12m31s）
 
 - `npm ci && npm run build`：通过
 - `node scripts/ci/verify-dist.mjs --dist web-v1/dist`：通过
-- `node --test scripts/ci/tests/*.test.mjs`：54/54 通过
+- `node --test scripts/ci/tests/*.test.mjs`：55/55 通过
 - `node scripts/ci/verify-workflows.mjs`：通过
 - `run-audit-gate --tier dev`：PASS（约 7.5s）
 - `run-audit-gate --tier research`：PASS（约 7.7s）

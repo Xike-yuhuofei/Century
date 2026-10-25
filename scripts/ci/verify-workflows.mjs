@@ -42,6 +42,7 @@ export function verifyWorkflows(repoRoot) {
   for (const needle of [
     'ci-summary', 'promotion-gate', 'promotion-approval', 'promotion-approved',
     'web-v1-dist', 'governance-tests', 'rules-cards', 'run-audit-gate.mjs',
+    'research-worker', 'research-e2e', 'worker-protocol.test.mjs',
     'ai5/openevolve/node/duel_runner.mjs', 'ai5.ppo.tests.python.test_seed_policy',
     'npm ci', 'actions/upload-artifact', 'actions/download-artifact',
   ]) {

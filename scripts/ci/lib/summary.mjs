@@ -21,6 +21,8 @@ export function requiredJobs(scope, { eventName = '', ref = '', promotionVerdict
   if (scope.ui) required.add('ui-smoke');
   if (scope.research) {
     required.add('research-node');
+    required.add('research-worker');
+    required.add('research-e2e');
     required.add('research-python');
     required.add('research-seatbelt');
   }

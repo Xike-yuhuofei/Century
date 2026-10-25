@@ -327,10 +327,73 @@ jobs:
         with:
           name: web-v1-dist
           path: web-v1/dist
-      - name: PPO 编码/合法行动/信息公平性/worker 协议
-        run: node --test ai5/ppo/tests/node/*.test.mjs
+      - name: PPO 编码/合法行动/信息公平性（不含 worker 协议）
+        run: node --test ai5/ppo/tests/node/encoding.test.mjs ai5/ppo/tests/node/enum-legality.test.mjs ai5/ppo/tests/node/enum-fairness.test.mjs
       - name: 种子政策与恶意样例静态拦截
         run: node --test ai5/openevolve/tests/seed-policy.test.mjs ai5/openevolve/tests/static-check.malicious.test.mjs
+
+  research-worker:
+    name: research-worker
+    needs: [changes, build]
+    if: needs.changes.outputs.research == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      # worker-protocol 单文件含 3 个完整对局，串行会顶到 job 超时；
+      # 按测试名并发执行（独立进程、固定种子），三条用例全部真实运行，任一失败即失败。
+      - name: 对局宿主协议（3 条用例并发）
+        run: |
+          set -u
+          pids=()
+          logs=()
+          run_case() {
+            local pattern="$1" log
+            log="$(mktemp)"
+            node --test --test-name-pattern="$pattern" ai5/ppo/tests/node/worker-protocol.test.mjs > "$log" 2>&1 &
+            pids+=("$!")
+            logs+=("$log")
+          }
+          run_case "全 node 席位完整对局并按种子复现"
+          run_case "MLP 席位往返"
+          run_case "回传越界序号被如实记为异常对局"
+          status=0
+          for i in "${!pids[@]}"; do
+            wait "${pids[$i]}" || status=1
+            cat "${logs[$i]}"
+            # 防止测试名漂移导致 --test-name-pattern 匹配空集而静默通过。
+            grep -q '^# pass 1$' "${logs[$i]}" || {
+              echo "用例未执行或未通过：${logs[$i]}"; status=1;
+            }
+          done
+          exit "$status"
+
+  research-e2e:
+    name: research-e2e
+    needs: [changes, build]
+    if: needs.changes.outputs.research == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
       - name: 端到端冒烟：同局双版本对战（官方自对照，4 唯一种子）
         run: |
           node ai5/openevolve/node/duel_runner.mjs --candidate-official \
@@ -578,6 +641,8 @@ jobs:
       - ui-smoke
       - audit-gate
       - research-node
+      - research-worker
+      - research-e2e
       - research-python
       - research-seatbelt
       - promotion-gate
