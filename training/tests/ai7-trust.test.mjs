@@ -30,6 +30,7 @@ import { verifyVersionLock, VERSION_LOCK_PATH, LOCKED_FILES } from '../lib/versi
 import {
   loadSeedGovernance, querySeed, queryInterval, nextFormalValidationBase,
   formalChallengeCount, assertFormalChallengeAllocation, reserveConsumption,
+  assertPromotionEvidenceRegistered, HISTORICAL_FORMAL_CHALLENGE_COUNT,
 } from '../lib/seed-governance.mjs';
 import {
   createBuildManifest, verifyBuildManifest, BUILD_MANIFEST_PATH,
@@ -100,6 +101,57 @@ test('A1 历史：PPO 900M 验证块被识别；long20 未入账区间被保守�
   assert.equal(long20.uncertain, true);
   assert.equal(long20.status, 'historical-unverified');
   assert.equal(long20.countsTowardChallengeIndex, false, '深验不得计入正式挑战 alpha');
+});
+
+test('A1/A4 负向：历史正式挑战基线被删除/截断 → 晋级 fail-closed', () => {
+  const truncated = {
+    complete: true,
+    conflicts: [],
+    entries: Array.from({ length: HISTORICAL_FORMAL_CHALLENGE_COUNT - 1 }, (_, i) => ({
+      sourceId: 'js5-formal-challenge',
+      base: VALIDATION_POOL_BASE + i * 10_000,
+      size: 100,
+      purposeClass: 'formal-challenge',
+      countsTowardChallengeIndex: true,
+      challengeIndex: i + 1,
+      status: 'consumed',
+    })),
+  };
+  assert.throws(
+    () => assertPromotionEvidenceRegistered({ registry: truncated, seatEvidence: [] }),
+    /历史正式挑战基线不完整/,
+    '内建账本被删除/截断时不得按更低的“历史基线”放行晋级',
+  );
+});
+
+test('A1/A4 负向：账本截断导致验证池高水位回退 → 挑战与晋级均拒绝', () => {
+  const truncated = {
+    complete: true,
+    conflicts: [],
+    entries: Array.from({ length: HISTORICAL_FORMAL_CHALLENGE_COUNT }, (_, i) => ({
+      sourceId: 'js5-formal-challenge',
+      base: VALIDATION_POOL_BASE + i * 10_000,
+      size: 100,
+      purposeClass: 'formal-challenge',
+      countsTowardChallengeIndex: true,
+      challengeIndex: i + 1,
+      status: 'consumed',
+    })),
+  };
+  const rolledBackBase = VALIDATION_POOL_BASE + HISTORICAL_FORMAL_CHALLENGE_COUNT * 10_000 + 2_000;
+  assert.throws(
+    () => assertFormalChallengeAllocation({
+      registry: truncated, base: rolledBackBase, size: 100,
+      challengeIndex: HISTORICAL_FORMAL_CHALLENGE_COUNT + 1,
+    }),
+    /高水位|基线/,
+    '挑战次数仍为 11 但验证池高水位回退 = 账本被截断，必须拒绝新挑战',
+  );
+  assert.throws(
+    () => assertPromotionEvidenceRegistered({ registry: truncated, seatEvidence: [] }),
+    /高水位|基线/,
+    '高水位回退同样禁止晋级',
+  );
 });
 
 test('A3 负向：修改源码但保留旧 dist → 构建一致性 fail-closed', () => {

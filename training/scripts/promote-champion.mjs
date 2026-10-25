@@ -17,7 +17,8 @@
  * 用法：
  *   node training/scripts/promote-champion.mjs --candidate <候选文件> \
  *     [--seat-evidence <另一人数的证据文件> ...] \
- *     [--champion training/champions/champion.json] [--min-seeds 60]
+ *     [--champion training/champions/champion.json] [--min-seeds 60] \
+ *     [--governance-central training/governance/seed-consumption-registry.json]
  *
  * 候选文件可以是：
  * - run-formal-challenge-js5.mjs 产出的单人数证据（seatEvidence 数组 1 条）；
@@ -65,6 +66,10 @@ if (!Number.isSafeInteger(minSeedsFloor) || minSeedsFloor < 1) {
 }
 const championPath = resolve(args.champion !== undefined ? process.cwd() : REPO_ROOT, args.champion ?? 'training/champions/champion.json');
 const candidatePath = resolve(process.cwd(), args.candidate);
+// 中央种子登记路径（隔离工作区/回归测试可注入；缺省为仓库正式登记）。
+const centralRegistryPath = args['governance-central'] !== undefined
+  ? resolve(process.cwd(), String(args['governance-central']))
+  : undefined;
 
 const built = requireBuiltEngine();
 const currentProvenance = buildProvenance();
@@ -166,7 +171,11 @@ const extraLedgers = [...new Set(ledgerPaths)].map((ledgerPath, i) => ({
   path: ledgerPath,
   required: true,
 }));
-const governance = loadSeedGovernance({ strict: true, extraLedgers });
+const governance = loadSeedGovernance({
+  strict: true,
+  extraLedgers,
+  ...(centralRegistryPath ? { centralRegistryPath } : {}),
+});
 const seatEvidence = verifiedSeats.map(v => ({
   seatCount: v.seatCount,
   seeds: v.seeds,
@@ -180,17 +189,30 @@ if (governanceCheck.totalChallenges !== expectedMaxIndex) {
     `治理层累计正式挑战 ${governanceCheck.totalChallenges} ≠ 证据最大 challengeIndex ${expectedMaxIndex}；证据账本不完整，禁止晋级`,
   );
 }
-// 至少一份随附账本必须合并到本次最终挑战序号（完整累计账本）。
-// 早先人数的单次账本可以只到自己的 challengeIndex；它们仍参与逐区间登记校验。
-const ledgerCounts = extraLedgers.map(entry => ({
-  path: entry.path,
-  count: validationChallengeCount(readJSON(entry.path)),
-}));
-if (!ledgerCounts.some(entry => entry.count === expectedMaxIndex)) {
+// 至少一份随附账本必须是完整累计账本：history 覆盖全部正式挑战区间，
+// 且 challengeCount 等于证据最大序号。早先人数的单次账本可以只到自己的
+// challengeIndex（它们仍参与逐区间登记校验），但最终挑战的账本必须合并全局历史。
+const formalEntries = governance.entries.filter(e => e.countsTowardChallengeIndex === true);
+const ledgerReports = [...new Set(ledgerPaths)].map(path => {
+  const ledger = readJSON(path);
+  const seen = new Set((ledger.history ?? [])
+    .filter(e => Number.isSafeInteger(Number(e?.base)) && Number.isSafeInteger(Number(e?.size)))
+    .map(e => `${Number(e.base)}:${Number(e.size)}`));
+  const covered = formalEntries.filter(e => seen.has(`${e.base}:${e.size}`)).length;
+  return {
+    path,
+    count: validationChallengeCount(ledger),
+    covered,
+    required: formalEntries.length,
+    complete: covered === formalEntries.length && validationChallengeCount(ledger) === expectedMaxIndex,
+  };
+});
+if (!ledgerReports.some(entry => entry.complete)) {
   throw new Error(
-    `随附账本没有任何一份累计到证据最大 challengeIndex=${expectedMaxIndex}：` +
-    `${ledgerCounts.map(e => `${e.path}=${e.count}`).join('，')}；` +
-    '必须随附合并全局正式挑战历史的最终账本（禁止用局部小账本伪造低序号）',
+    `随附账本没有任何一份是完整累计账本（必须覆盖全部 ${formalEntries.length} 个正式挑战区间，` +
+    `且 challengeCount=${expectedMaxIndex}）：` +
+    `${ledgerReports.map(e => `${e.path}（覆盖 ${e.covered}/${e.required}，challengeCount=${e.count}）`).join('，')}；` +
+    '禁止用局部/重建的小账本伪造低序号',
   );
 }
 
@@ -381,6 +403,17 @@ function verifySeatEvidence({ entry, seatCount, sourcePath, candidateId, current
   if (!Number.isSafeInteger(entry.seeds) || entry.seeds !== seedPairs.length) {
     throw new Error(`${seatCount}p 自报种子数 ${entry.seeds} 与配对证据 ${seedPairs.length} 不一致`);
   }
+  // AI7-A4：逐种子证据必须落在声明的验证块内（挑战协议使用连续种子
+  // seedBase..seedBase+seeds-1）。否则可用训练/历史种子伪造一份"新块"证据。
+  for (const pair of seedPairs) {
+    if (pair.seed < seedBase || pair.seed >= seedBase + entry.seeds) {
+      throw new Error(
+        `${seatCount}p 证据种子 ${pair.seed} 不在声明区间 [${seedBase}, ${seedBase + entry.seeds})；` +
+        '逐种子证据与账本登记区间不一致，禁止晋级',
+      );
+    }
+  }
+  // 唯一性由 pairedPromotionDecision 强制；长度相等 + 区间内 + 唯一 ⇒ 恰好覆盖整块。
   if (entry.games !== finishedPairs.length * 2) {
     throw new Error(`${seatCount}p 自报完成局数 ${entry.games} 与配对证据不一致`);
   }

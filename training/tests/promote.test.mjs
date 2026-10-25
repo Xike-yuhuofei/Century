@@ -114,10 +114,12 @@ function makeCandidate(id, overrides = {}) {
 }
 
 /** 合并全局正式挑战历史 + 4 个新人数的账本（每个新条目记录 challengeIndex）。 */
-function writeLedger(sandbox, seatEvidence = SEAT_BLOCKS.map(b => makeSeatEvidence(b))) {
-  const formal = GOVERNANCE.entries
+function writeLedger(sandbox, seatEvidence = SEAT_BLOCKS.map(b => makeSeatEvidence(b)), {
+  includeHistory = true, extraEntries = [],
+} = {}) {
+  const formal = includeHistory ? GOVERNANCE.entries
     .filter(e => e.countsTowardChallengeIndex === true)
-    .map(e => ({ base: e.base, size: e.size, at: e.rawAt ?? null, challengeIndex: e.challengeIndex ?? undefined }));
+    .map(e => ({ base: e.base, size: e.size, at: e.rawAt ?? null, challengeIndex: e.challengeIndex ?? undefined })) : [];
   const additions = seatEvidence.map(e => ({
     base: e.seedBase,
     size: e.seeds,
@@ -126,7 +128,7 @@ function writeLedger(sandbox, seatEvidence = SEAT_BLOCKS.map(b => makeSeatEviden
     purpose: `test@${e.seatCount}p`,
   }));
   const byBase = new Map();
-  for (const entry of [...formal, ...additions]) {
+  for (const entry of [...formal, ...additions, ...extraEntries]) {
     if (!byBase.has(entry.base)) byBase.set(entry.base, entry);
   }
   const history = [...byBase.values()].sort((a, b) => a.base - b.base);
@@ -137,7 +139,33 @@ function writeLedger(sandbox, seatEvidence = SEAT_BLOCKS.map(b => makeSeatEviden
   }, null, 2));
 }
 
-function runPromote(sandbox, candidate, { writeLedgerFile = true, extraArgs = [] } = {}) {
+/** 中央种子登记夹具：新证据（challengeIndex > 历史累计）必须在此有已完成记录。 */
+function writeCentralRegistry(sandbox, seatEvidence, { status = 'completed', omitSeatCounts = [] } = {}) {
+  const entries = seatEvidence
+    .filter(e => !omitSeatCounts.includes(e.seatCount))
+    .map(e => ({
+      experimentId: `test-central-${e.seatCount}p-${e.challengeIndex}`,
+      base: e.seedBase,
+      size: e.seeds,
+      purposeClass: 'formal-challenge',
+      purpose: `test@${e.seatCount}p`,
+      status,
+      countsTowardChallengeIndex: true,
+      challengeIndex: e.challengeIndex,
+    }));
+  const path = join(sandbox, 'central-registry.json');
+  writeFileSync(path, JSON.stringify({
+    schema: 'century-seed-consumption-registry-v1',
+    createdAt: new Date().toISOString(),
+    entries,
+  }, null, 2));
+  return path;
+}
+
+function runPromote(sandbox, candidate, {
+  writeLedgerFile = true, writeCentralFile = true, extraArgs = [],
+  ledgerOptions = {}, centralOptions = {},
+} = {}) {
   const candidateFile = join(sandbox, 'candidate.json');
   // 测试夹具：为未显式覆盖参数哈希的 seatEvidence 绑定主候选参数哈希；
   // 针对参数哈希的负向用例会显式提供错误值，不会被覆盖。
@@ -151,20 +179,22 @@ function runPromote(sandbox, candidate, { writeLedgerFile = true, extraArgs = []
   };
   bound.confirmation = bound.seatEvidence.find(e => e.seatCount === 5) ?? bound.seatEvidence[0] ?? bound.confirmation;
   writeFileSync(candidateFile, JSON.stringify(bound, null, 2));
-  if (writeLedgerFile) {
-    let evidence = candidate.seatEvidence ?? [];
-    for (let i = 0; i < extraArgs.length; i++) {
-      if (extraArgs[i] !== '--seat-evidence') continue;
-      const doc = JSON.parse(readFileSync(extraArgs[i + 1], 'utf8'));
-      evidence = [...evidence, ...(doc.seatEvidence ?? [])];
-    }
-    writeLedger(sandbox, evidence);
+  let evidence = candidate.seatEvidence ?? [];
+  for (let i = 0; i < extraArgs.length; i++) {
+    if (extraArgs[i] !== '--seat-evidence') continue;
+    const doc = JSON.parse(readFileSync(extraArgs[i + 1], 'utf8'));
+    evidence = [...evidence, ...(doc.seatEvidence ?? [])];
   }
+  if (writeLedgerFile) writeLedger(sandbox, evidence, ledgerOptions);
+  const centralArgs = writeCentralFile
+    ? ['--governance-central', writeCentralRegistry(sandbox, evidence, centralOptions)]
+    : [];
   return execFileSync(process.execPath, [
     join(TRAINING_ROOT, 'scripts', 'promote-champion.mjs'),
     '--candidate', candidateFile,
     '--champion', join(sandbox, 'champion.json'),
     ...extraArgs,
+    ...centralArgs,
   ], { stdio: 'pipe' });
 }
 
@@ -238,6 +268,23 @@ test('晋级：自报种子数/局数与证据不一致必须被拒绝', () => {
   assert.throws(() => runPromote(sandbox, candidate), /种子数/, '自报种子数必须与逐种子证据一致');
 });
 
+test('晋级：逐种子证据替换为声明区间之外的种子必须被拒绝', () => {
+  const sandbox = mkdtempSync(join(tmpdir(), 'promote-seed-substitute-'));
+  const candidate = makeCandidate('evo-g9-seed-substitute');
+  const seat = candidate.seatEvidence[0];
+  candidate.seatEvidence[0] = {
+    ...seat,
+    seedPairs: seat.seedPairs.map((pair, i) => ({ ...pair, seed: seat.seedBase + 10_000 + i })),
+  };
+  candidate.confirmation = candidate.seatEvidence.find(e => e.seatCount === 5);
+  assert.throws(
+    () => runPromote(sandbox, candidate),
+    /不在声明区间|账本登记区间不一致/,
+    '声明的验证块与逐种子证据必须一致，禁止用其它种子冒充新块',
+  );
+  assert.ok(!existsSync(join(sandbox, 'champion.json')));
+});
+
 test('晋级：训练种子上的证据无效（必须来自验证池）', () => {
   const sandbox = mkdtempSync(join(tmpdir(), 'promote-pool-'));
   const candidate = makeCandidate('evo-g9-train');
@@ -268,12 +315,55 @@ test('晋级：伪造 challengeIndex（小于全局累计）必须被拒绝', ()
   assert.throws(() => runPromote(sandbox, candidate), /challengeIndex|治理层/, '禁止伪造小序号换宽松阈值');
 });
 
-test('晋级：challengeIndex 与随附账本累计不一致必须被拒绝', () => {
-  const sandbox = mkdtempSync(join(tmpdir(), 'promote-ledger-count-'));
-  const candidate = makeCandidate('evo-g9-ledger');
-  runPromote(sandbox, candidate);
-  const champion = JSON.parse(readFileSync(join(sandbox, 'champion.json'), 'utf8'));
-  assert.equal(champion.provenance.promotionEvidence.verified.challengeIndex, FIRST_INDEX + 3);
+test('晋级：随附账本只有局部新条目（未合并全局正式挑战历史）必须被拒绝', () => {
+  const sandbox = mkdtempSync(join(tmpdir(), 'promote-ledger-partial-'));
+  const candidate = makeCandidate('evo-g9-ledger-partial');
+  assert.throws(
+    () => runPromote(sandbox, candidate, { ledgerOptions: { includeHistory: false } }),
+    /累计|治理层|challengeIndex/,
+    '局部小账本不得把全局累计挑战次数伪装成本次证据',
+  );
+  assert.ok(!existsSync(join(sandbox, 'champion.json')));
+});
+
+test('晋级：随附账本累计到比证据更大的 challengeIndex 必须被拒绝', () => {
+  const sandbox = mkdtempSync(join(tmpdir(), 'promote-ledger-ahead-'));
+  const candidate = makeCandidate('evo-g9-ledger-ahead');
+  const extraBase = SEAT_BLOCKS[3].base + SEAT_BLOCKS[3].size + VALIDATION_STRIDE;
+  assert.throws(
+    () => runPromote(sandbox, candidate, {
+      ledgerOptions: {
+        extraEntries: [{
+          base: extraBase, size: 100, at: new Date().toISOString(), challengeIndex: FIRST_INDEX + 4,
+        }],
+      },
+    }),
+    /累计|challengeIndex|治理层/,
+    '账本领先于证据 = 证据不完整，必须拒绝',
+  );
+  assert.ok(!existsSync(join(sandbox, 'champion.json')));
+});
+
+test('晋级：新证据未在中央种子登记（重建/改名本地账本）必须被拒绝', () => {
+  const sandbox = mkdtempSync(join(tmpdir(), 'promote-no-central-'));
+  const candidate = makeCandidate('evo-g9-no-central');
+  assert.throws(
+    () => runPromote(sandbox, candidate, { writeCentralFile: false }),
+    /中央|governance-central|没有该次挑战/,
+    '仅靠本地账本（可重建/改名）不得登记新正式挑战',
+  );
+  assert.ok(!existsSync(join(sandbox, 'champion.json')));
+});
+
+test('晋级：中央登记状态为 voided 的挑战证据必须被拒绝', () => {
+  const sandbox = mkdtempSync(join(tmpdir(), 'promote-voided-'));
+  const candidate = makeCandidate('evo-g9-voided');
+  assert.throws(
+    () => runPromote(sandbox, candidate, { centralOptions: { status: 'voided' } }),
+    /中央|已完成|governance-central/,
+    '作废挑战继续占用种子，但不得作为晋级证据',
+  );
+  assert.ok(!existsSync(join(sandbox, 'champion.json')));
 });
 
 test('晋级：alphaBudget 被篡改必须被拒绝', () => {

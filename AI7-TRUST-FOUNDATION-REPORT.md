@@ -11,11 +11,11 @@
 
 | 验收项 | 状态 | 证据 |
 |---|---|---|
-| 关键失败模式全部 fail-closed | **完成** | A5 负向测试逐项阻断；`promote.test.mjs` 20 项、`ai7-trust.test.mjs` 9 项 |
+| 关键失败模式全部 fail-closed | **完成** | A5 负向测试逐项阻断；`promote.test.mjs` **25** 项、`ai7-trust.test.mjs` **12** 项（含中央登记/历史基线截断/高水位回退/逐种子区间） |
 | 历史数据不被覆盖 | **完成** | 所有历史账本只读扫描；`historical-seed-claims.json` 保留 long20 未入账区间与不确定状态；未改写任何 `validation-ledger.json` / `champion.json` |
 | 当前正式冠军决策行为不被本任务改变 | **完成** | `champion.json`、`CHAMPION_PARAMETERS` 参数值、`decision.ts` 默认路由均未改；仅把「实际消费的参数」显式注入并纳入身份 |
 | 统一证据/身份校验可复用 | **完成** | `training/lib/seed-governance.mjs`、`training/lib/version-lock.mjs`、`web-v1/scripts/build-hash.mjs` + CLI |
-| 所有相关测试通过 | **完成** | 见 §7（web-v1 与 training 全量） |
+| 所有相关测试通过 | **完成（本地全量）** | 见 §7（web-v1 220/220、training 175/175）；CI 既有红灯与 main 同源，见 §7.2 |
 | 验证池零消费 / 未执行正式挑战 | **完成** | `training/governance/seed-consumption-registry.json` entries=0；下一块仍为 `941514652`，下一 challengeIndex=12 |
 
 **最重要的一句话**：本次没有让任何旧证据"变绿"，而是把"缺账本、缺人数、缺源码指纹、序号可伪造、产物可陈旧"的路径全部改成显式拒绝；既有 `joint-js5` 冠军证据仍按治理状态标记为**待重新验证**，没有重新晋级，也没有改写历史 provenance。
@@ -40,12 +40,12 @@
 
 | 能力 | 接口 |
 |---|---|
-| 全来源只读归一化 | `loadSeedGovernance({ root, strict, extraLedgers })` |
+| 全来源只读归一化 | `loadSeedGovernance({ root, strict, extraLedgers, centralRegistryPath })` |
 | 种子/区间冲突查询 | `querySeed(registry, seed)`、`queryInterval(registry, base, size)` |
 | 下一正式挑战块 | `nextFormalValidationBase(registry)` |
 | 累计正式挑战次数 | `formalChallengeCount(registry)`（唯一区间数，不信任任一账本自报 `challengeCount`） |
 | 正式挑战启动校验 | `assertFormalChallengeAllocation({ base, size, challengeIndex })` |
-| 晋级证据登记校验 | `assertPromotionEvidenceRegistered({ seatEvidence })` |
+| 晋级证据登记校验 | `assertPromotionEvidenceRegistered({ seatEvidence })`（含中央登记强制） |
 | 新消费原子登记 | `reserveConsumption(...)`（O_EXCL 文件锁；作废继续占用区间） |
 | 收尾 | `completeConsumption(experimentId, { status })` |
 | CLI | `node training/scripts/seed-governance-cli.mjs status|check|next|query|reserve|complete` |
@@ -71,7 +71,9 @@
 | 审计问题 | 修复前 | 修复后 |
 |---|---|---|
 | P1-1 evolve-cli 缺账本 fail-open | `nextValidationBase(null)` 按 `GITHUB_RUN_ID` / 当前小时派生起点；`assertBlockFree(..., null)` 直接放行 | `evolve-cli` 必须显式 `--seed-ledger` 且文件存在；`nextValidationBase(null)` / 空账本直接抛错；分配经统一治理层 |
-| P1-2 promote 账本条件性核对 | 无 sibling `validation-ledger.json` 时仅记录 `ledgerCrossChecked:false` 仍可晋级 | 账本强制存在；必须累计到本次最大 `challengeIndex`；统一治理层复核全部来源 |
+| P1-2 promote 账本条件性核对 | 无 sibling `validation-ledger.json` 时仅记录 `ledgerCrossChecked:false` 仍可晋级 | 账本强制存在；至少一份必须是**完整累计账本**（history 覆盖全部正式挑战区间且 `challengeCount` = 最大序号）；统一治理层复核全部来源 |
+| 本地账本重建/改名绕过中央登记 | 晋级只校验区间重叠，未登记中央的新区间仍可作为证据 | `challengeIndex > 历史正式挑战累计` 时，证据必须能在中央登记找到 `status=completed` 的同序号记录；`reserveConsumption` 是唯一合法登记入口 |
+| 账本截断/重建导致种子复用 | strict 只发现文件缺失；history 被截断后 `nextValidationBase` 回退，可复用旧块 | 治理常量 `HISTORICAL_FORMAL_CHALLENGE_COUNT=11` 与 `HISTORICAL_NEXT_FORMAL_BASE=941514652` 双基线；次数或高水位任一回退 → 新正式挑战/晋级/登记全部拒绝 |
 | P2-8 显式 `--resume` 缺失静默重跑 | 不存在则 `initialState=null` 从头开始 | `--resume` 指向缺失文件直接抛错（禁止重复消费训练种子块） |
 | PPO 900M 验证块未被正式账本识别 | 正式挑战只合并 `validation-ledger.json` | 统一治理层从 PPO 账本识别 `[900000000, 900000040)`（arena 用途），计入防重但不计入正式 alpha |
 | long20 深验未入账 | 下一次 100 种子分配 `[300001103,300001203)` 与 `[300001200,300001299)` 重叠 | `historical-seed-claims.json` 只读声明该区间，`occupiesRange=true`、`status=historical-unverified`，继续占用；不伪造账本条目 |
@@ -85,13 +87,16 @@
 - 基线：`training/baseline/seed-ledger.mjs` 分配前登记；正式账本缺失 fail-closed。
 - PPO arena / OpenEvolve 深验：Python 侧新增 `ai5/lib/seed_governance_bridge.py`，在写本地账本前调用 Node 治理 CLI；拒绝即中止。
 - 深验账本 / PPO 正式账本缺失：不再按空账本继续分配。
+- **晋级侧闭环**：`promote-champion` 对 `challengeIndex > 历史正式挑战累计` 的证据，强制要求中央登记中存在同序号、区间覆盖、`status=completed` 的记录；只改本地账本/目录名无法伪造。隔离测试可用 `--governance-central <path>` 注入临时登记，正式流程不得改写默认路径。
 
 ### 2.4 历史迁移与兼容性
 
 - 历史账本**未修改**；所有旧条目按原文件读入，缺 `size` 的 `924140000/924142000` 按保守 2000 步长占用，并标注不确定状态。
 - 旧候选/旧账本没有 `challengeIndex` 元数据：仍计入历史累计，但不能作为"新证据的登记覆盖"（新证据必须带匹配 `challengeIndex` 的账本条目）。
+- 历史正式挑战（`challengeIndex ≤ 11`）仍可由仓库内建账本证明；AI7 之后的新证据（`challengeIndex ≥ 12`）必须经中央登记，否则晋级 fail-closed。这是有意的兼容性收紧，不影响既有冠军记录。
 - `nextValidationBase(null)` 从"可用"变为"抛错"：旧调用方必须迁移到治理层；这是有意的兼容性破坏。
 - `evolve-cli --no-confirm` 为诊断/测试显式跳过确认挑战，不消费验证种子；正式流程不得使用。
+- 深验分配在 `[300001103, 300001203)` 与 long20 历史声明重叠时会由治理层拒绝。当前代码不会自动跳过历史占用区间：操作者必须先显式把深验游标推进到 `[300001300)` 之后（或在治理层登记新的深验块），否则深验保持 fail-closed。宁可停跑，也不静默复用。
 
 ---
 
@@ -118,6 +123,8 @@ node training/scripts/version-lock.mjs --check   # 不一致 exit 2
 node training/scripts/version-lock.mjs --write --note "有意变更原因"
 ```
 `resolveAlgorithmVersion` 在解析 `legacy-js0/js1/joint-js5-frozen` 前强制校验版本锁；`live-champion` 明确不锁（活动别名由晋级流程治理）。
+
+注意：版本锁覆盖 `web-v1/src/ai/parameters.ts` 的完整字节（含 `CHAMPION-PARAMETERS` 生成区），因此任何**有意**的冠军参数落地都会使锁失效，必须随晋级 PR 显式执行 `--write`（记录原因）后重建 dist。这是刻意的审计闸门：禁止参数块与历史版本身份一起静默漂移。
 
 ---
 
@@ -174,8 +181,8 @@ node training/scripts/version-lock.mjs --write --note "有意变更原因"
 ### 5.1 `promote-champion.mjs` 新规则（全部收紧）
 
 1. **账本强制**：主候选与每个 `--seat-evidence` 文件同目录必须有 `validation-ledger.json`。
-2. **统一治理**：全部账本来源（含 PPO/deep/league/baseline）加载；证据区间必须已登记、不得与其它用途重叠。
-3. **累计序号**：`challengeIndex` 必须唯一、连续，覆盖最近 N 次挑战，最大序号 = 治理层累计正式挑战数；至少一份随附账本累计到该最大序号。
+2. **统一治理**：全部账本来源（含 PPO/deep/league/baseline）加载；证据区间必须已登记、不得与其它用途重叠；`challengeIndex > 历史累计` 的新证据必须在中央登记中匹配到 `completed` 记录。
+3. **累计序号**：`challengeIndex` 必须唯一、连续，覆盖最近 N 次挑战，最大序号 = 治理层累计正式挑战数；至少一份随附账本必须是完整累计账本（history 覆盖全部正式挑战区间，且 `challengeCount` = 最大序号）。
 4. **人数覆盖**：必须提供 2/3/4/5 人各自独立成次证据；缺任一人数、任一人数非 `promote`、证据重复 → 拒绝。
 5. **身份校验（规范化 + 旧布局兜底）**：
    - 新证据必须携带 `decisionSourceSha256`、`decisionArtifactSha256`、`championParametersSha256`：
@@ -237,17 +244,31 @@ node training/scripts/promote-champion.mjs --candidate seat5.json \
 | 同名归档内容不同 | `promote.test.mjs` | 历史归档不可变 → 拒绝 |
 | 仅改参数块（预期晋级落地） | `ai7-trust.test.mjs` | 决策核心身份不变；参数身份变化；未重建仍 stale |
 | 候选参数哈希与待发布参数不一致 | `promote.test.mjs` | 拒绝 |
+| 随附账本只有局部新条目（重建小账本） | `promote.test.mjs` | 未覆盖全局正式历史 → 拒绝 |
+| 随附账本累计到比证据更大的序号 | `promote.test.mjs` | 证据不完整 → 拒绝 |
+| 新证据只在本地账本、中央无记录 | `promote.test.mjs` | 中央登记缺失 → 拒绝 |
+| 中央登记为 voided 的挑战证据 | `promote.test.mjs` | 作废证据不得晋级 → 拒绝 |
+| 逐种子证据替换为声明区间之外的种子 | `promote.test.mjs` | 种子与登记块不一致 → 拒绝 |
+| 内建历史账本被截断（次数不足或高水位回退） | `ai7-trust.test.mjs` | 次数 <11 或下一块 <941514652 → 挑战/晋级均拒绝 |
 
 ### 6.2 测试前后差异
 
 | 维度 | 修复前 | 修复后 |
 |---|---|---|
 | 账本缺失 | `nextValidationBase(null)` 返回派生起点（测试曾断言该行为） | 断言抛错（`ai7-trust` / `tournament` / `cli.e2e`） |
-| 晋级账本 | 无 sibling 账本也可晋级 | 无账本 / 账本未累计到最大序号 → 拒绝 |
+| 晋级账本 | 无 sibling 账本也可晋级 | 无账本 / 账本未累计到最大序号 / 未覆盖全局正式历史 → 拒绝 |
+| 中央登记 | 本地账本可自成证据 | `challengeIndex > 历史累计` 必须匹配中央已完成记录 → 否则拒绝 |
 | 人数覆盖 | 5p 单份证据即可晋级 | 2–5 人缺一不可 |
 | 产物一致性 | `requireBuiltEngine` 只查存在性 | 源码闭包 + 产物闭包 + Git 元数据三方一致 |
 | JS5 身份 | 根筛选读活动 `CHAMPION_PARAMETERS` | 显式 `championParameters` + 版本锁 |
 | 构建测试副作用 | `apply-champion` 测试改写真实 `parameters.ts` 并依赖恢复 | 新增 `--target`，测试写临时文件，不再污染仓库源码 |
+
+测试数量差异（同一测试文件）：
+
+| 套件 | 修复前 | 修复后 |
+|---|---|---|
+| `promote.test.mjs` | 21 项（无中央登记 / 完整账本 / 逐种子区间断言） | 25 项（+4 个 fail-closed 负向用例） |
+| `ai7-trust.test.mjs` | 10 项 | 12 项（+历史基线截断 / 高水位回退） |
 
 ---
 
@@ -258,8 +279,8 @@ node training/scripts/promote-champion.mjs --candidate seat5.json \
 | 套件 | 结果 |
 |---|---|
 | `web-v1` 全量 `npm test`（内含重新构建） | **220/220 pass，0 fail**（本次实测；规范化身份改造后复跑） |
-| `training` 全量 `npm test` | **169/169 pass，0 fail**（最终复跑） |
-| `training` 新增/改写测试 | `promote` **21/21**、`ai7-trust` **10/10**、`cli.e2e` 4/4、`seed-ledger/tournament` 相关全绿 |
+| `training` 全量 `npm test` | **175/175 pass，0 fail**（最终复跑） |
+| `training` 新增/改写测试 | `promote` **25/25**、`ai7-trust` **12/12**、`cli.e2e` 4/4、`seed-ledger/tournament` 相关全绿 |
 | `audit-gate --tier dev` | `dist-freshness` / `version-lock` / `version-identity` / `redteam-regression` 全 PASS |
 | `audit-gate --tier research` | PASS（含 `seed-governance`：15 来源、正式挑战 11 次、PPO 900M 已识别、long20 已占用） |
 | `audit-gate --tier promotion` | 预期 `REQUIRES_APPROVAL`（历史指纹漂移 + 待重新验证），**不伪造 PASS** |
@@ -267,12 +288,27 @@ node training/scripts/promote-champion.mjs --candidate seat5.json \
 ### 7.1 全量实测记录
 
 - `web-v1`：`npm test` → **220 tests / 220 pass / 0 fail**（含 `tsc + esbuild + build-manifest` 与 Playwright/Node 测试）。
-- `training`：`npm test` → **169 tests / 169 pass / 0 fail**（含新增 AI7 信任测试与全量既有回归）。
-- 规范化身份改造后的针对性复跑：`promote` 21/21、`ai7-trust` 10/10、`cli.e2e` 4/4。
-- duel JS5 冻结参数注入后针对性复跑：`js5-compare + version-identity + ai7-trust` **31/31 pass**（该变更仅训练侧，不触及 `web-v1/src`）。
+- `training`：`npm test` → **175 tests / 175 pass / 0 fail**（含新增 AI7 信任测试、中央登记强制、历史高水位、逐种子区间校验与全量既有回归）。
+- 针对性复跑：`promote` 25/25、`ai7-trust` 12/12、`cli.e2e` 4/4。
+- duel JS5 冻结参数注入后针对性复跑：`js5-compare + version-identity + ai7-trust` 全绿（该变更仅训练侧，不触及 `web-v1/src`）。
 - `audit-gate --tier dev`：`dist-freshness`、`version-lock`、`version-identity`、`redteam-regression` 全 PASS。
 - `audit-gate --tier research`：PASS；`seed-governance` 识别 15 个来源、11 次正式挑战、PPO 900M 块、long20 占用区间。
 - `audit-gate --tier promotion`：3 项 `REQUIRES_APPROVAL`（V7b / promotion-governance / champion-revalidation），0 FAIL / 0 BLOCKED。这是如实治理状态，不是测试失败。
+
+### 7.2 GitHub Actions 现状（预存失败，非本分支引入）
+
+PR #47 的 CI 有 4 项红/取消；**同样的失败可在 main 的既有运行 `40171122478`（提交 `69ec14c`，早于本分支）中复现**，因此不是 AI7 引入：
+
+| 检查 | 现象 | main 既有运行 |
+|---|---|---|
+| PPO Python 单元/集成/断点恢复 | `TestResumeDeterminismE2E.test_resume_matches_continuous_run` 模型哈希不一致 | 同一 job 失败 |
+| 端到端冒烟（对局管线） | 官方自对照 `meanScoreDiffPerSeed=-4.125`（墙钟预算下不可逐位复现） | 同一 job 失败 |
+| Node 编码/合法行动/信息公平性 | `cancelled`（未执行完成，非断言失败） | 同样 `cancelled` |
+| test（30m16s） | CI job 超时（30 分钟上限） | 同类 test job 亦红 |
+
+同批通过的关键检查：`test-and-build`（15m15s）、`audit-gate`（24s，research 层）、种子唯一性/隔离/账本一致性（45s）、Seatbelt 沙箱验收（27s）、OpenEvolve 安全静态检查（8s）。
+
+本分支**没有**为了变绿而放宽任何断言（例如未把自对照零分差改成容忍区间，也未延长/跳过超时检查）。这些失败是既有的评估确定性/基础设施缺陷，应另立任务修复；它们不改变本地全量测试结论，也不能被当作"冠军证据可信"的替代。
 
 ---
 
@@ -297,6 +333,12 @@ node training/scripts/promote-champion.mjs --candidate seat5.json \
 5. **人工批准**：`promote-champion` 产出待审记录后，仍需 PR 审核 + `apply-champion.mjs` 落地；`audit-gate --tier promotion` 在完成新挑战前保持 `REQUIRES_APPROVAL`。
 
 在此之前，任何"当前部署的 JS5 已被全人数证明"的表述都不成立。
+
+### 9.1 不由正式挑战关闭、但必须单独处理的遗留项
+
+- **深验历史冲突**：long20 声明区间 `[300001200, 300001300)` 与深验账本末端 `300001103` 的下一次 100 种子分配重叠。治理层会持续 fail-closed；操作者必须显式把深验游标推进到 `300001300` 之后（或登记新的深验块）。不得用"删除声明/重建账本"绕过。
+- **CI 既有红灯**：PPO resume 确定性、e2e 自对照零分差、30 分钟 job 超时、Node 公平性 job 取消，均可在 main 既有运行复现（§7.2）。需要单独修复评估确定性/CI 基础设施，不能用放宽断言的方式变绿。
+- **版本锁随晋级更新**：冠军参数块落地会改变 `parameters.ts` 字节，晋级 PR 必须显式 `version-lock.mjs --write --note` 并重建 dist；否则冻结版本解析与 audit-gate 会 fail-closed。
 
 ---
 

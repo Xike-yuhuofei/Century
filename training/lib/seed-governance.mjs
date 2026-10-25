@@ -71,6 +71,26 @@ function source(id, path, format, forcePurposeClass, extra = {}) {
   return Object.freeze({ id, path, format, forcePurposeClass, ...extra });
 }
 
+/** 仓库内建的正式挑战账本来历（历史只读导入）。
+ * 只有这些来源的条目可以证明「AI7 之前的正式挑战」；新证据必须能在
+ * 中央登记中找到已完成的正式挑战记录（防账本重建/改名绕过中央登记）。 */
+const BUILTIN_FORMAL_SOURCE_IDS = Object.freeze(new Set(
+  LEDGER_SOURCES.filter(item => item.format === 'validation-ledger').map(item => item.id),
+));
+
+/** AI7 基准时的历史正式挑战次数（challengeIndex=11 为最后一个已归档挑战）。
+ * 这是治理常量，不从可修改的账本动态重算：
+ * - 若内建账本少于该值 → 历史基线被删除/截断，晋级 fail-closed；
+ * - 若内建账本被人为追加 → 只会让中央登记要求更严，不会放宽；
+ * - 更新该常量必须经 PR 审核（等同于承认新的历史基线）。 */
+export const HISTORICAL_FORMAL_CHALLENGE_COUNT = 11;
+
+/** AI7 基准时验证池的高水位（challenge-11 之后的下一个合法正式挑战起点）。
+ * 若账本被截断/重建导致 nextFormalValidationBase 回退到更低的块，说明
+ * 已消费区间从治理视图中消失，可能静默复用历史验证种子——必须拒绝。
+ * 新增正式挑战只会抬高该值；更新常量必须经 PR 审核。 */
+export const HISTORICAL_NEXT_FORMAL_BASE = 941_514_652;
+
 const LOCK_STALE_MS = 60_000;
 
 function sha256(text) {
@@ -279,6 +299,9 @@ function normalizeCentralRegistry(path, ledger) {
       purposeClass: raw?.purposeClass ?? 'formal-challenge',
       status: raw?.status ?? 'reserved',
       countsTowardChallengeIndex: raw?.countsTowardChallengeIndex === true,
+      // challengeIndex 是中央登记的身份字段：晋级证据必须能在此匹配到
+      // 「第 k 次挑战」的已完成记录（缺失/伪造一律拒绝）。
+      challengeIndex: isInt(raw?.challengeIndex) ? raw.challengeIndex : null,
       uncertain: false,
       codeCommit: raw?.codeCommit ?? null,
       evidencePath: raw?.evidencePath ?? null,
@@ -295,7 +318,9 @@ export function loadSeedGovernance({
   extraLedgers = [],
   includeCentral = true,
   includeHistorical = true,
+  centralRegistryPath = null,
 } = {}) {
+  const centralPath = centralRegistryPath ?? resolve(root, 'training/governance/seed-consumption-registry.json');
   const sources = [];
   const entries = [];
   const uncertainties = [];
@@ -326,7 +351,7 @@ export function loadSeedGovernance({
   for (const definition of LEDGER_SOURCES) loadOne(definition);
 
   if (includeCentral) {
-    const absolute = resolve(root, 'training/governance/seed-consumption-registry.json');
+    const absolute = resolve(centralPath);
     if (!existsSync(absolute)) {
       missing.push('governance-central');
     } else {
@@ -519,6 +544,28 @@ export function nextFormalValidationBase(registry) {
   return next;
 }
 
+/** 历史基线完整性（fail-closed）：正式挑战次数与验证池高水位都不得回退。
+ * 账本文件存在但 history 被截断/重建时，strict 模式无法发现缺失条目；
+ * 该检查确保「已消费区间从治理视图消失」不能换来更低的分配起点。 */
+function assertHistoricalBaselineIntact(registry) {
+  const builtinFormal = registry.entries
+    .filter(e => e.countsTowardChallengeIndex === true && BUILTIN_FORMAL_SOURCE_IDS.has(e.sourceId))
+    .length;
+  if (builtinFormal < HISTORICAL_FORMAL_CHALLENGE_COUNT) {
+    throw new Error(
+      `历史正式挑战基线不完整（内建账本仅 ${builtinFormal} 次 < 治理基线 ${HISTORICAL_FORMAL_CHALLENGE_COUNT} 次）——` +
+      '账本被删除/截断或被重建；禁止分配新正式挑战或晋级，先恢复历史账本原始证据',
+    );
+  }
+  const nextBase = nextFormalValidationBase(registry);
+  if (nextBase < HISTORICAL_NEXT_FORMAL_BASE) {
+    throw new Error(
+      `历史验证池高水位被回退（下一块 ${nextBase} < 治理基线 ${HISTORICAL_NEXT_FORMAL_BASE}）——` +
+      '账本被截断/重建，已消费区间从治理视图消失；禁止分配新正式挑战或晋级，否则会静默复用验证种子',
+    );
+  }
+}
+
 /** 区间冲突查询：返回与 [base, base+size) 重叠的全部已登记区间。 */
 export function queryInterval(registry, base, size) {
   validateInterval(base, size);
@@ -567,6 +614,7 @@ export function assertFormalChallengeAllocation({ registry, base, size, challeng
   if (base < VALIDATION_POOL_BASE || base + size > VALIDATION_POOL_MAX) {
     throw new Error(`正式挑战区间 [${base}, ${base + size}) 不在验证池 [${VALIDATION_POOL_BASE}, ${VALIDATION_POOL_MAX})`);
   }
+  assertHistoricalBaselineIntact(registry);
   const expectedBase = nextFormalValidationBase(registry);
   if (base !== expectedBase) {
     throw new Error(
@@ -605,6 +653,10 @@ export function assertPromotionEvidenceRegistered({ registry, seatEvidence }) {
   }
   const problems = [];
   const indexes = [];
+  // AI7 之前的正式挑战由仓库内建账本证明；其后的新证据必须来自中央登记。
+  // 同时要求「次数 + 验证池高水位」都不低于治理基线（防账本截断/重建）。
+  assertHistoricalBaselineIntact(registry);
+  const historicalFormalChallenges = HISTORICAL_FORMAL_CHALLENGE_COUNT;
   for (const evidence of seatEvidence) {
     const base = Number(evidence.seedBase);
     const size = Number(evidence.seeds);
@@ -634,6 +686,19 @@ export function assertPromotionEvidenceRegistered({ registry, seatEvidence }) {
         `人数 ${evidence.seatCount}：区间 [${base}, ${base + size}) 的账本条目未记录 challengeIndex=${challengeIndex}` +
         '（复用历史块或伪造序号均被拒绝）',
       );
+    }
+    if (challengeIndex > historicalFormalChallenges) {
+      const centrallyRegistered = covering.some(e =>
+        e.sourceId === 'governance-central'
+        && e.challengeIndex === challengeIndex
+        && e.status === 'completed');
+      if (!centrallyRegistered) {
+        problems.push(
+          `人数 ${evidence.seatCount}：challengeIndex=${challengeIndex} 超过历史正式挑战 ${historicalFormalChallenges} 次，` +
+          '但中央种子登记（governance-central）中没有该次挑战的已完成记录' +
+          '（新证据必须由 run-formal-challenge/evolve 在动用种子前登记；禁止用重建/改名后的本地账本伪造）',
+        );
+      }
     }
     const foreign = registry.entries.filter(e =>
       e.purposeClass !== 'formal-challenge' && overlaps({ base, size }, e));
@@ -739,7 +804,9 @@ export function reserveConsumption({
       throw new Error(`登记区间 [${base}, ${base + size}) 与统一登记中已有区间重叠（种子复用）`);
     }
     // 读取全部来源（含中央当前内容）做跨系统防重。
-    const governance = loadSeedGovernance({ root, strict: true, includeHistorical: true });
+    const governance = loadSeedGovernance({
+      root, strict: true, includeHistorical: true, centralRegistryPath: registryPath,
+    });
     if (!governance.complete || governance.conflicts.length) {
       throw new Error(
         `种子治理层不完整或存在冲突（missing=${governance.missingSources.join(',') || '无'}，` +
@@ -754,6 +821,7 @@ export function reserveConsumption({
       );
     }
     if (purposeClass === 'formal-challenge') {
+      assertHistoricalBaselineIntact(governance);
       const expectedIndex = formalChallengeCount(governance) + 1;
       if (!isInt(challengeIndex) || challengeIndex !== expectedIndex) {
         throw new Error(`正式挑战 challengeIndex ${challengeIndex} ≠ 治理层累计+1 ${expectedIndex}`);
