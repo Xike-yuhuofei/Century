@@ -347,7 +347,7 @@ PR #47 的 CI 有 4 项红/取消；**同样的失败可在 main 的既有运行
 - 分支：`fix/ai7-trust-foundation`
 - 基准：`19fa564`
 - 功能提交：`50faccd29456c82a84a15e13d96541707d644356`（中央登记/完整账本/双基线/逐种子区间加强）
-- 最新提交：`8bd9c5d`（本报告 PR 状态回填）
+- 文档提交：`8bd9c5d`、`2f7d944`（PR 状态回填）；PR head 以 GitHub 为准
 - PR：https://github.com/Xike-yuhuofei/Century/pull/47
 - 合并策略：**不自动合并 main**，等待人工审查。
 - 说明：本任务复用既有独立 PR #47（同一分支、同一基准），未创建重复 PR；本轮通过新提交更新其内容。
