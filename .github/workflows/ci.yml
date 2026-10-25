@@ -350,6 +350,8 @@ jobs:
         run: node --test ai5/ppo/tests/node/encoding.test.mjs ai5/ppo/tests/node/enum-legality.test.mjs ai5/ppo/tests/node/enum-fairness.test.mjs
       - name: 种子政策与恶意样例静态拦截
         run: node --test ai5/openevolve/tests/seed-policy.test.mjs ai5/openevolve/tests/static-check.malicious.test.mjs
+      - name: 研究 fitness 第一名率模式（焦点席位配对）
+        run: node --test ai5/openevolve/tests/duel-first-place.test.mjs
 
   research-worker:
     name: research-worker

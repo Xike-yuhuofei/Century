@@ -26,6 +26,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createGame, applyAction, score, ranking, count } from '../../../web-v1/dist/js/engine.js';
 import * as officialAI from '../../../web-v1/dist/js/ai.js';
 import { pairedPromotionDecision, firstPlaceStats } from '../../../training/evaluator/stats.mjs';
+import { analyzeSeatStratum } from '../../../training/evaluator/first-place.mjs';
 import { ENGINE_SEED_MAX } from '../../../training/lib/seeds.mjs';
 import { parseSeedList, AI5_BLOCK } from '../../lib/seed_policy.mjs';
 
@@ -47,6 +48,14 @@ const seedListFile = arg('seed-list');           // 可选：显式种子列表�
 const outPath = arg('out');
 const maxMoves = Number(arg('max-moves', String(DEFAULT_MAX_MOVES)));
 const deadlineMs = Number(arg('deadline-ms', String(DEFAULT_DEADLINE_MS)));
+// P0 迁移：研究 fitness 的主指标也改为「焦点席位配对第一名率增量」。
+// score-advantage 保留为历史复现/诊断口径。
+const primary = arg('primary', 'score-advantage');
+if (!['score-advantage', 'first-place'].includes(primary)) {
+  console.error(`--primary 必须为 score-advantage|first-place，实际：${primary}`);
+  process.exit(2);
+}
+const firstPlaceMode = primary === 'first-place';
 if (!candidatePath && !candidateOfficial) { console.error('缺少 --candidate 或 --candidate-official'); process.exit(2); }
 
 // 种子纪律：AI5 快速筛选只使用训练池 [300M, 400M) 内的 AI5 专用子块，
@@ -158,9 +167,42 @@ async function main() {
   const seeds = loadSeeds();
   const games = [];
   const seedPairs = [];
+  const firstPlacePairs = [];
   const decisionMs = [];
 
-  for (const seed of seeds) {
+  for (const [seedIndex, seed] of seeds.entries()) {
+    if (firstPlaceMode) {
+      // 焦点席位配对：A=候选控制焦点席位，B=冻结冠军控制同一焦点席位；
+      // 其余席位在两局中都是官方冠军，种子/对手/席位完全一致。
+      const focusSeat = seedIndex % 5;
+      const gA = await playOne(modulesOf(focusSeat), focusSeat, seed);
+      const gB = await playOne(Array.from({ length: 5 }, () => officialAI), focusSeat, seed);
+      games.push({ direction: 'A', arm: 'candidate', focusSeat, ...gA },
+        { direction: 'B', arm: 'champion', focusSeat, ...gB });
+      const anomalies = (gA.status !== 'finished' ? 1 : 0) + (gB.status !== 'finished' ? 1 : 0);
+      firstPlacePairs.push({
+        seed,
+        focusSeat,
+        candidateFirst: gA.status === 'finished' && gA.winnerSeat === focusSeat ? 1 : 0,
+        championFirst: gB.status === 'finished' && gB.winnerSeat === focusSeat ? 1 : 0,
+        anomalies,
+      });
+      if (gA.status === 'finished' && gB.status === 'finished') {
+        decisionMs.push(gA.metrics.meanDecisionMs, gB.metrics.meanDecisionMs);
+        seedPairs.push({
+          seed, status: 'finished',
+          diff: seatScore(gA, focusSeat) - seatScore(gB, focusSeat),
+          anomalies: 0,
+          detail: { focusSeat },
+        });
+      } else {
+        seedPairs.push({
+          seed, status: 'anomaly', diff: 0, anomalies,
+          reason: [gA.reason, gB.reason].filter(Boolean).join(' | '),
+        });
+      }
+      continue;
+    }
     // 局 1：候选@席位 0（中立代理位）；冠军占席位 1-4（各自人格位）。
     const g1 = await playOne(modulesOf(0), 0, seed);
     // 局 2：候选@席位 4（战术大师位）；冠军占席位 0-3（含中立位）。
@@ -203,6 +245,19 @@ async function main() {
   try {
     stats.firstPlace = firstPlaceStats(games.filter(g => g.status === 'finished'), { z: 1.959964 });
   } catch (e) { stats.firstPlace = { error: e.message }; }
+  if (firstPlaceMode) {
+    try {
+      stats.firstPlaceDelta = analyzeSeatStratum({
+        pairs: firstPlacePairs, minSeeds: 2, maxAnomalyRate: 0.5, seatCount: 5,
+      });
+    } catch (e) {
+      stats.firstPlaceDelta = { status: 'error', reason: e.message };
+    }
+    stats.firstPlacePairs = firstPlacePairs;
+    stats.primaryMetric = 'pairedFirstPlaceRateDelta';
+  } else {
+    stats.primaryMetric = 'pairedScoreAdvantage';
+  }
   const diffs = seedPairs.filter(p => p.status === 'finished');
   if (diffs.length) {
     stats.meanScoreDiffPerSeed = Number((diffs.reduce((s, p) => s + p.diff, 0) / diffs.length).toFixed(3));
@@ -211,7 +266,8 @@ async function main() {
   const result = {
     config: {
       candidate: candidateOfficial ? 'official-baseline' : resolve(candidatePath),
-      paired: true, seeds: seedListFile ? `file:${seedListFile}` : `${seedBase}..${seedBase + seedCount - 1}`,
+      paired: true, primary,
+      seeds: seedListFile ? `file:${seedListFile}` : `${seedBase}..${seedBase + seedCount - 1}`,
       seedBlock: AI5_BLOCK,
       uniqueSeedCount: seeds.length,
       maxMoves, deadlineMs,
