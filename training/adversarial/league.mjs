@@ -28,7 +28,7 @@ import { firstPlaceClusterCI } from '../baseline/stats.mjs';
 
 export const MIN_SEAT_COUNT = 2;
 export const MAX_SEAT_COUNT = 5; // 引擎约束：1 人类代理席 + 最多 4 AI 席
-export const LEAGUE_REPORT_SCHEMA = 'century-adversarial-league-v1';
+export const LEAGUE_REPORT_SCHEMA = 'century-adversarial-league-v2';
 
 /** 席位人格映射（与 training/simulator/simulate.mjs 逐字一致）。 */
 function seatProfile(seat) {
@@ -228,31 +228,52 @@ export function runPlan(plan, registry, { jointOverrides = null, maxMoves = 1200
   return games;
 }
 
-/** 胜率矩阵（来自 runPlan 的对局行）。
- * - 'h2h'（2p）：cell(A,B) += winnerSeat===focusSeat；cell(B,A) += winnerSeat!==focusSeat；
- * - 'field'（≥3p）：cell(focus, opponent) += winnerSeat===focusSeat。
- * 异常局不计入任何 cell（games/wins 只统计 finished）。 */
+/** 胜率矩阵（来自 runPlan 的对局行）——P0-3 整改：按 (seatCount, matchProtocol)
+ * 严格分层，禁止跨人数/跨协议合并。
+ *
+ * 缺陷背景（PR #40 实锤）：v1 矩阵以 (焦点版本, 对手版本) 为汇总键——同一对的
+ * 2p 头对头（h2h）与 5p 有向场（field）被合并进同一 cell（如 js5 vs style-engine
+ * n=30 = 15 h2h + 15 field）。不同人数下第一名机会基准不同（1/2 vs 1/5），
+ * 合并 Wilson 区间不可作强度判据（PR #40 报告因此误读 style-engine 显著性）。
+ *
+ * v2 结构：matrix[A][B].byProtocol[`${direction}@${seatCount}`] =
+ * { protocol, seatCount, games, wins, firstPlaceRate, wilson, bySeat,
+ *   anomalies, focusFingerprints }。2p h2h 仍互补填充 A→B 与 B→A（同一组对局、
+ * 各自独立统计）；≥3p field 只计焦点→对手方向。异常局不计入 games/wins，
+ * 但按层披露 anomalies 计数。 */
 export function buildWinRateMatrix(plan, games) {
-  const cells = new Map(); // `${A}\u0000${B}` → {A, B, games, wins, seats: {seatKey: {games, wins}}}
-  const cellOf = (A, B) => {
-    const key = `${A}\u0000${B}`;
-    if (!cells.has(key)) cells.set(key, { A, B, games: 0, wins: 0, seats: {} });
+  const cells = new Map(); // `${A}\u0000${B}\u0000${direction}@${seatCount}` → cell
+  const cellOf = (A, B, direction, seatCount) => {
+    const key = `${A}\u0000${B}\u0000${direction}@${seatCount}`;
+    if (!cells.has(key)) {
+      cells.set(key, {
+        A, B, direction, seatCount, protocol: `${direction}@${seatCount}`,
+        games: 0, wins: 0, anomalies: 0, seats: {}, focusFingerprints: new Set(),
+      });
+    }
     return cells.get(key);
   };
   for (const g of games) {
-    if (g.status !== 'finished') continue;
-    const cell = cellOf(g.focusId, g.opponentId);
+    const cell = cellOf(g.focusId, g.opponentId, g.direction, g.seatCount);
+    const won = g.status === 'finished' && g.winnerSeat === g.focusSeat;
+    if (g.status !== 'finished') {
+      // 异常局：不计入 games/wins；h2h 局双方视角都披露该异常。
+      cell.anomalies += 1;
+      if (g.direction === 'h2h') cellOf(g.opponentId, g.focusId, 'h2h', g.seatCount).anomalies += 1;
+      continue;
+    }
     cell.games += 1;
-    const won = g.winnerSeat === g.focusSeat;
     if (won) cell.wins += 1;
+    if (Array.isArray(g.fingerprints) && g.fingerprints[0]) cell.focusFingerprints.add(g.fingerprints[0]);
     const seatKey = String(g.focusSeat);
     (cell.seats[seatKey] ??= { games: 0, wins: 0 });
     cell.seats[seatKey].games += 1;
     if (won) cell.seats[seatKey].wins += 1;
     if (g.direction === 'h2h') {
-      const reverse = cellOf(g.opponentId, g.focusId);
+      const reverse = cellOf(g.opponentId, g.focusId, 'h2h', g.seatCount);
       reverse.games += 1;
       if (!won) reverse.wins += 1;
+      if (Array.isArray(g.fingerprints) && g.fingerprints[0]) reverse.focusFingerprints.add(g.fingerprints[0]);
       const rSeatKey = String(g.seatCount - 1 - g.focusSeat); // 2p 对手席 = 1 - focusSeat
       (reverse.seats[rSeatKey] ??= { games: 0, wins: 0 });
       reverse.seats[rSeatKey].games += 1;
@@ -262,16 +283,38 @@ export function buildWinRateMatrix(plan, games) {
   const matrix = {};
   for (const cell of cells.values()) {
     const rate = cell.games ? cell.wins / cell.games : null;
-    (matrix[cell.A] ??= {})[cell.B] = {
-      games: cell.games, wins: cell.wins,
-      firstPlaceRate: rate === null ? null : Number(rate.toFixed(4)),
-      wilson: cell.games ? wilsonCI(cell.wins, cell.games) : null,
-      bySeat: Object.fromEntries(Object.entries(cell.seats).map(([seat, s]) => [
-        seat, { games: s.games, wins: s.wins, firstPlaceRate: Number((s.wins / s.games).toFixed(4)) },
-      ])),
+    const entry = {
+      A: cell.A, B: cell.B,
+      byProtocol: {
+        [cell.protocol]: {
+          protocol: cell.protocol, direction: cell.direction, seatCount: cell.seatCount,
+          games: cell.games, wins: cell.wins,
+          firstPlaceRate: rate === null ? null : Number(rate.toFixed(4)),
+          wilson: cell.games ? wilsonCI(cell.wins, cell.games) : null,
+          anomalies: cell.anomalies,
+          focusFingerprints: [...cell.focusFingerprints].sort(),
+          bySeat: Object.fromEntries(Object.entries(cell.seats).map(([seat, s]) => [
+            seat, { games: s.games, wins: s.wins, firstPlaceRate: Number((s.wins / s.games).toFixed(4)) },
+          ])),
+        },
+      },
     };
+    // 合并同 (A,B) 的多个协议层（同方向同人数只会有一层；不同 seatCount 分层披露）。
+    if (!matrix[cell.A]) matrix[cell.A] = {};
+    if (!matrix[cell.A][cell.B]) {
+      matrix[cell.A][cell.B] = entry;
+    } else {
+      Object.assign(matrix[cell.A][cell.B].byProtocol, entry.byProtocol);
+    }
   }
   return matrix;
+}
+
+/** 读取分层矩阵单元（协议键 = `${direction}@${seatCount}`）；不存在返回 null。 */
+export function matrixCell(matrix, A, B, direction, seatCount) {
+  const entry = matrix?.[A]?.[B];
+  if (!entry) return null;
+  return entry.byProtocol[`${direction}@${seatCount}`] ?? null;
 }
 
 /** 联赛汇总报告（完整实验元数据）。 */

@@ -26,9 +26,9 @@ import { resolve } from 'node:path';
 import { createGame, applyAction, score as engineScore, ranking } from '../../web-v1/dist/js/engine.js';
 import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
 import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
-import { CHAMPION_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
 import { assertInBlock } from '../../ai5/lib/seed_policy.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
+import { resolveAlgorithmVersion, decisionOptions } from '../lib/version-registry.mjs';
 
 /** 席位人格映射（与 training/simulator/simulate.mjs 完全一致 + 可选平移）。 */
 function seatProfile(seat, shift) {
@@ -36,17 +36,26 @@ function seatProfile(seat, shift) {
   return PROFILES[((seat - 1 + (shift || 0)) % PROFILES.length + PROFILES.length) % PROFILES.length];
 }
 
-function candidateVersion(id) {
+/** 候选版本（P0-1 整改：js0 = 冻结 legacy-js0 归档身份，绝不读活动冠军别名）。
+ * 修复前缺陷：js0 侧传 CHAMPION_PARAMETERS（晋级后携带 adapter）→ 实际执行
+ * JS5-auto——审计退化成「JS5-auto vs JS5-never」自比较，失去归因效力。 */
+export function candidateVersion(id) {
+  if (id === 'js0') {
+    return { kind: 'champion', id: 'js0-frozen-champion', descriptor: resolveAlgorithmVersion('legacy-js0') };
+  }
   const jointId = id.startsWith('joint-') ? id : `joint-${id}`;
-  if (id === 'js0') return { kind: 'champion', id: 'js0-frozen-champion' };
   return { kind: 'joint', id: jointId, joint: jointId };
 }
 
-/** 单局（镜像 duel.runGame，只保留候选席位决策序列 + 终局指纹）。 */
-function runGame({ seed, seatCount, candidateSeat, candidate, jointOptions, profileShift, maxMoves = 1200, deadlineMs = 120_000 }) {
+/** 单局（镜像 duel.runGame，只保留候选席位决策序列 + 终局指纹）。
+ * 对手席位 = 冻结 legacy-js0（修复前为 CHAMPION_PARAMETERS——晋级后是 JS5，
+ * 与历史「全员冻结冠军基线」协议不符）。 */
+export function runGame({ seed, seatCount, candidateSeat, candidate, jointOptions, profileShift, maxMoves = 1200, deadlineMs = 120_000 }) {
+  const js0 = resolveAlgorithmVersion('legacy-js0');
+  const js0Opts = decisionOptions(js0);
   const versions = Array.from({ length: seatCount }, (_, seat) => {
     if (seat === candidateSeat) return { candidate: true, ...candidate };
-    return { candidate: false, id: 'opponent-frozen-champion', parameters: CHAMPION_PARAMETERS, structure: CHAMPION_PARAMETERS.structure };
+    return { candidate: false, id: 'opponent-frozen-js0', parameters: js0.parameters, structure: js0.structure };
   });
   let game;
   game = createGame(
@@ -72,12 +81,12 @@ function runGame({ seed, seatCount, candidateSeat, candidate, jointOptions, prof
       decisions.push(action);
       decisionMeta.push({ gated: r.joint?.gated ?? null, phase: game.phase });
     } else if (version.candidate && version.kind === 'champion') {
-      const r = chooseAIAction(game, { parameters: CHAMPION_PARAMETERS, profile });
+      const r = chooseAIAction(game, { ...js0Opts.beam, profile });
       action = r.action;
       decisions.push(action);
       decisionMeta.push({ gated: null, phase: game.phase });
     } else {
-      const r = chooseAIAction(game, { parameters: CHAMPION_PARAMETERS, structure: CHAMPION_PARAMETERS.structure, profile });
+      const r = chooseAIAction(game, { ...js0Opts.beam, profile });
       action = r.action;
     }
     game = applyAction(game, action);
@@ -154,8 +163,9 @@ async function main() {
   const report = {
     schema: 'century-js5-equivalence-audit-v1',
     date: new Date().toISOString(),
-    protocol: 'js5(gate=never) vs js0 逐决策对照；种子=审计子块未消费段 [1.305e9,+)；人格映射 shift=' + profileShift,
+    protocol: 'js5(gate=never) vs 冻结 js0（legacy-js0 归档身份）逐决策对照；对手席位同冻结 js0；种子=审计子块未消费段 [1.305e9,+)；人格映射 shift=' + profileShift,
     jointOptions, seeds, players, profileShift,
+    js0Descriptor: (() => { const d = resolveAlgorithmVersion('legacy-js0'); return { registryId: d.registryId, core: d.core, structure: d.structure, fingerprint: d.fingerprint, source: d.source }; })(),
     totalPairs: rows.length, mismatches, anomalies, totalDecisions,
     verdict,
     rows,
@@ -168,4 +178,6 @@ async function main() {
   if (mismatches > 0 || anomalies > 0) process.exitCode = 2;
 }
 
-main().catch(error => { console.error(error); process.exit(1); });
+if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith('equivalence-audit.mjs')) {
+  main().catch(error => { console.error(error); process.exit(1); });
+}

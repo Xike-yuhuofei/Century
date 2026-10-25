@@ -50,6 +50,29 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  audit-gate:
+    # P0-2 整改：第六阶段审计门禁 CI 入口（开发层）。研究/晋级层需要本地完整
+    # 环境（种子账本、引擎产物）与人工授权，不在 PR CI 强制。
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'test')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build web-v1（行为学审计需要编译产物）
+        working-directory: web-v1
+        run: npm install --no-audit --no-fund && npm run build
+      - name: 红队审计门禁（dev 层：版本身份 / 信息公平 / 正向不变量回归）
+        run: node training/redteam/audit-gate.mjs --tier dev --json training/reports/audit-gate.json --md training/reports/audit-gate.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: audit-gate-report
+          path: |
+            training/reports/audit-gate.json
+            training/reports/audit-gate.md
+
   test:
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'test')
     runs-on: ubuntu-latest

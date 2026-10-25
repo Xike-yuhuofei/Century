@@ -16,6 +16,10 @@
     "baseline:perf": "node baseline/perf.mjs",
     "baseline:freeze": "node baseline/freeze.mjs",
     "baseline:freeze-check": "node baseline/freeze.mjs --check",
+    "gate": "node redteam/audit-gate.mjs --tier dev",
+    "gate:research": "node redteam/audit-gate.mjs --tier research",
+    "gate:promotion": "node redteam/audit-gate.mjs --tier promotion",
+    "redteam": "node --test --test-concurrency=2 redteam/tests/redteam.test.mjs",
     "scenarios": "node --test --test-concurrency=2 scenarios/tests/*.test.mjs",
     "scenarios:generate": "node scenarios/scripts/generate.mjs",
     "scenarios:compare": "node scenarios/scripts/compare-budgets.mjs"

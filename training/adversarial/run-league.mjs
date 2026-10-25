@@ -29,6 +29,9 @@ import { registerCandidates, CANDIDATE_SCHEMA } from './candidate.mjs';
 import { planMatrix, runPlan, summarizeLeague } from './league.mjs';
 import { evaluateCandidate, selectStrongOpponents, GENERALITY_POOL } from './evaluate.mjs';
 import {
+  loadLedger, registerExperiment, setExperimentStatus, nextSeedBase, verifyLedger,
+} from './seed-ledger.mjs';
+import {
   AI6_LEAGUE_DEV_SUBBLOCK, AI6_LEAGUE_SMOKE_SUBBLOCK,
   AI6_LEAGUE_MATRIX_DEV_SUBBLOCK, AI6_LEAGUE_PREREG_SUBBLOCK,
 } from '../../ai5/lib/seed_policy.mjs';
@@ -46,6 +49,10 @@ function parseArgs() {
     players: [2, 5], seeds: 4, block: 'smoke', joint: 'fast',
     out: resolve('training/reports/adversarial-league'), label: null,
     registryJoint: null,
+    // P0-4 种子账本：experimentId（缺省 = label）；--seed-base 显式起点
+    //（缺省 = 块内下一个未消费起点）；--ledger-path 仅供测试注入；
+    //--crn-group 声明有意 CRN 配对复用；--purpose 用途披露。
+    experimentId: null, seedBase: null, ledgerPath: null, crnGroup: null, purpose: null,
   };
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
@@ -60,9 +67,36 @@ function parseArgs() {
     else if (flag === '--joint') args.joint = argv[++i];
     else if (flag === '--out') args.out = resolve(argv[++i]);
     else if (flag === '--label') args.label = argv[++i];
+    else if (flag === '--experiment-id') args.experimentId = argv[++i];
+    else if (flag === '--seed-base') args.seedBase = Number(argv[++i]);
+    else if (flag === '--ledger-path') args.ledgerPath = resolve(argv[++i]);
+    else if (flag === '--crn-group') args.crnGroup = argv[++i];
+    else if (flag === '--purpose') args.purpose = argv[++i];
     else throw new Error(`未知参数：${flag}`);
   }
   return args;
+}
+
+/** P0-4 种子账本登记：fail-closed（缺账本/区间重叠/越块一律抛错）。
+ * 返回 {seedBase, seedEnd, ledgerEntry}。注册发生在对局开始前——账本先记账后消费。 */
+function allocateSeeds(args, needSeeds, fingerprints) {
+  const ledgerPath = args.ledgerPath ?? undefined;
+  const ledger = loadLedger(ledgerPath);
+  const defects = verifyLedger(ledger);
+  if (defects.length) throw new Error(`联赛种子账本存在结构缺陷（fail-closed）：\n- ${defects.join('\n- ')}`);
+  const seedBase = args.seedBase ?? nextSeedBase(args.block, { ledgerPath });
+  const experimentId = args.experimentId ?? `${args.label ?? `${args.mode}-${args.block}-${args.seeds}s-${args.joint}`}`;
+  const registered = registerExperiment({
+    experimentId,
+    blockName: args.block,
+    seedBase,
+    seedCount: needSeeds,
+    purpose: args.purpose ?? `${args.mode}（${args.joint} 档）`,
+    crnGroup: args.crnGroup,
+    algorithmFingerprints: fingerprints,
+    ledgerPath,
+  });
+  return { seedBase, seedEnd: registered.seedEnd, experimentId, ledgerPath };
 }
 
 function jointOverridesFor(joint) {
@@ -82,17 +116,35 @@ function loadCandidateSpecs(path) {
   return specs;
 }
 
+/** 分层矩阵展示（P0-3 整改：按 (seatCount, protocol) 分节打印，绝不跨人数合并）。
+ * 单元格 = 焦点第一名率(局数)；异常局以 +aN 后缀披露。 */
 function printMatrix(matrix, versionIds) {
-  const header = [''].concat(versionIds);
-  process.stdout.write(`${'胜率矩阵（行=焦点版本，列=对手版本，单元格=焦点第一名率）'}\n`);
-  process.stdout.write(`${header.map(h => h.slice(0, 24).padStart(24)).join('')}\n`);
-  for (const row of versionIds) {
-    const cells = [row.slice(0, 24).padStart(24)];
-    for (const col of versionIds) {
-      const cell = matrix[row]?.[col];
-      cells.push(cell ? `${(cell.firstPlaceRate * 100).toFixed(1)}%(${cell.games})`.padStart(24) : '-'.padStart(24));
+  // 收集全部协议层（保持数字人数升序）。
+  const protocols = new Set();
+  for (const row of Object.values(matrix)) {
+    for (const entry of Object.values(row)) {
+      for (const p of Object.keys(entry.byProtocol)) protocols.add(p);
     }
-    process.stdout.write(`${cells.join('')}\n`);
+  }
+  const ordered = [...protocols].sort((a, b) => {
+    const sa = Number(a.split('@')[1]) || 0;
+    const sb = Number(b.split('@')[1]) || 0;
+    return sa - sb || a.localeCompare(b);
+  });
+  for (const protocol of ordered) {
+    process.stdout.write(`\n胜率矩阵（${protocol}｜行=焦点版本，列=对手版本，单元格=焦点第一名率(局数)）\n`);
+    const header = [''].concat(versionIds);
+    process.stdout.write(`${header.map(h => h.slice(0, 24).padStart(24)).join('')}\n`);
+    for (const row of versionIds) {
+      const cells = [row.slice(0, 24).padStart(24)];
+      for (const col of versionIds) {
+        const cell = matrix[row]?.[col]?.byProtocol[protocol];
+        cells.push(cell
+          ? `${(cell.firstPlaceRate * 100).toFixed(1)}%(${cell.games})${cell.anomalies ? `+异常${cell.anomalies}` : ''}`.padStart(24)
+          : '-'.padStart(24));
+      }
+      process.stdout.write(`${cells.join('')}\n`);
+    }
   }
 }
 
@@ -118,16 +170,23 @@ async function main() {
   if (args.mode === 'matrix') {
     const versionIds = args.versions ?? Object.keys(registry.versions);
     for (const id of versionIds) resolveVersion(registry, id);
+    // P0-4：先按赛程总量登记种子消费（fail-closed），再从账本起点生成赛程。
+    const seatCounts = args.players;
+    const pairCount = seatCounts.reduce((s, n) => s + (n === 2 ? 1 : 2), 0) * (versionIds.length * (versionIds.length - 1) / 2);
+    const needSeeds = pairCount * args.seeds;
+    const allocation = allocateSeeds(args, needSeeds, versionIds.map(id => registry.versions[id].fingerprint));
     const plan = planMatrix({
-      versionIds, seatCounts: args.players, seedsPerPair: args.seeds,
-      seedBase: block[0], block,
+      versionIds, seatCounts, seedsPerPair: args.seeds,
+      seedBase: allocation.seedBase, block,
     });
-    process.stdout.write(`赛程：${plan.matches.length} 场，${plan.matches.reduce((s, m) => s + m.seeds.length, 0)} 局，种子 [${plan.seedBase}, ${plan.seedEnd})\n`);
+    process.stdout.write(`赛程：${plan.matches.length} 场，${plan.matches.reduce((s, m) => s + m.seeds.length, 0)} 局，种子 [${plan.seedBase}, ${plan.seedEnd})（账本实验 ${allocation.experimentId}）\n`);
     const t0 = performance.now();
     const games = runPlan(plan, registry, { jointOverrides });
     const report = summarizeLeague({ plan, games, registry, jointOverrides });
+    report.seedLedger = { experimentId: allocation.experimentId, seedStart: allocation.seedBase, seedEnd: allocation.seedEnd, ledgerPath: allocation.ledgerPath ?? 'training/adversarial/seed-ledger.json' };
     const out = resolve(outDir, 'league-report.json');
     writeFileSync(out, JSON.stringify(report, null, 2));
+    setExperimentStatus(allocation.experimentId, 'completed', { ledgerPath: allocation.ledgerPath });
     printMatrix(report.matrix, versionIds);
     process.stdout.write(`异常局：${report.totals.anomalies}/${report.totals.games}；总耗时 ${Math.round((performance.now() - t0) / 1000)}s\n`);
     process.stdout.write(`报告已写入：${out}\n`);
@@ -141,13 +200,19 @@ async function main() {
     if (axisANeed + axisGNeed > block[1] - block[0]) {
       throw new Error(`种子需求 ${axisANeed + axisGNeed} 超出块容量 ${block[1] - block[0]}`);
     }
+    // P0-4：多候选共享同一轴 A/轴 G 种子 = 有意 CRN 配对（跨候选配对比较），
+    // 必须显式声明 crnGroup；缺省拒绝静默共享（fail-closed）。
+    const crnGroup = args.crnGroup ?? (() => {
+      throw new Error('evaluate 模式的多候选共享种子属有意 CRN 配对，必须显式声明 --crn-group（防意外重复消费）');
+    })();
+    const allocation = allocateSeeds(args, axisANeed + axisGNeed, candidateIds.map(id => registry.versions[id]?.fingerprint).filter(Boolean));
     const evaluations = [];
     for (const candidateId of candidateIds) {
       process.stdout.write(`评估候选 ${candidateId}（轴 A ${axisANeed} 局 + 轴 G ${axisGNeed} 局）...\n`);
       const t0 = performance.now();
       const evaluation = evaluateCandidate({
         registry, candidateId, seatCounts: args.players, seedsPerCell: args.seeds,
-        axisASeedBase: block[0], axisGSeedBase: block[0] + axisANeed, block,
+        axisASeedBase: allocation.seedBase, axisGSeedBase: allocation.seedBase + axisANeed, block,
         jointOverrides,
       });
       process.stdout.write(`  完成 ${Math.round(performance.now() - t0) / 1000}s｜轴A ${evaluation.axisA.cells.map(c => `${(c.firstPlaceRate * 100).toFixed(1)}%(${c.games})`).join(' ')}｜轴G ${evaluation.axisG.cells.map(c => `${(c.firstPlaceRate * 100).toFixed(1)}%(${c.games})`).join(' ')}\n`);
@@ -155,11 +220,12 @@ async function main() {
     }
     const selection = selectStrongOpponents(evaluations);
     const report = {
-      schema: 'century-adversarial-evaluation-v1',
+      schema: 'century-adversarial-evaluation-v2',
       date: new Date().toISOString(),
       registryFingerprint: registryFingerprint(registry),
       engineBundleSha256: baseRegistry.snapshot.engineBundleSha256,
       block: [...block], jointOverrides, seedsPerCell: args.seeds, players: args.players,
+      seedLedger: { experimentId: allocation.experimentId, seedStart: allocation.seedBase, seedEnd: allocation.seedEnd, crnGroup, ledgerPath: allocation.ledgerPath ?? 'training/adversarial/seed-ledger.json' },
       generalityPool: GENERALITY_POOL,
       selection,
       evaluations: evaluations.map(e => ({
@@ -170,6 +236,7 @@ async function main() {
     };
     const out = resolve(outDir, 'evaluation-report.json');
     writeFileSync(out, JSON.stringify(report, null, 2));
+    setExperimentStatus(allocation.experimentId, 'completed', { ledgerPath: allocation.ledgerPath });
     for (const row of selection.all) {
       process.stdout.write(`${row.candidateId}: ${row.verdict}（轴A ${row.axisA.firstPlaceRate} 下界 ${row.axisA.wilsonLower?.toFixed(3)}；轴G 下界 ${row.axisG.wilsonLowerMin?.toFixed(3)} 分差 ${row.axisG.scoreDiffMin}）\n`);
     }

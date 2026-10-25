@@ -31,6 +31,8 @@ import { wilsonCI, meanCI } from '../evaluator/stats.mjs';
 import { REPO_ROOT, engineBundleSha256 } from '../lib/paths.mjs';
 import { mulberry32 } from '../lib/rng.mjs';
 import { beamBaseParameters } from '../lib/opponents.mjs';
+import { resolveAlgorithmVersion, decisionOptions, describeVersionRegistry } from '../lib/version-registry.mjs';
+import { deriveSimStreamSeed, DEFAULT_SIM_SALT } from '../lib/sim-stream.mjs';
 import { enumerateLegalActions } from '../../web-v1/dist/js/sim/legal.js';
 
 const MAX_SEAT_COUNT = 5;
@@ -40,14 +42,20 @@ function seatProfile(seat) {
   return seat === 0 ? NEUTRAL_PROFILE : PROFILES[(seat - 1) % PROFILES.length];
 }
 
-/** 候选席位版本描述（kind 决定决策分派路径）。接受 js2 / joint-js2 两种写法。 */
-function candidateVersion(id) {
+/** 候选席位版本描述（P0-1 整改：身份经不可变版本注册表解析，禁止读活动冠军别名）。
+ * - js0 = legacy-js0：冻结冠军基线（ai5-readiness-efficiency 晋级归档，beam-rollout）；
+ * - js1 = legacy-js1：同一冻结基座 + beam-contest 结构；
+ * - js2..js5：joint 适配器版本（显式 version 注入）。
+ * 接受 js0 / joint-js0 两种写法。修复前缺陷：js0/js1 传 CHAMPION_PARAMETERS
+ * （晋级后携带 adapter='champion-guided'）→ decision.ts 适配器分支先于 structure
+ * 生效 → 基线实际执行 JS5（audit-versions V2/V3 实锤）。 */
+export function candidateVersion(id) {
   const jointId = id.startsWith('joint-') ? id : `joint-${id}`;
   if (id === 'js0' || id === 'joint-js0') {
-    return { kind: 'champion', id: 'js0-frozen-champion', joint: null };
+    return { kind: 'champion', id: 'js0-frozen-champion', joint: null, descriptor: resolveAlgorithmVersion('legacy-js0') };
   }
   if (id === 'js1' || id === 'joint-js1') {
-    return { kind: 'champion', id: 'js1-beam-contest', joint: null, structure: 'beam-contest' };
+    return { kind: 'champion', id: 'js1-beam-contest', joint: null, structure: 'beam-contest', descriptor: resolveAlgorithmVersion('legacy-js1') };
   }
   return { kind: 'joint', id: jointId, joint: jointId };
 }
@@ -70,23 +78,36 @@ function historicalChampionParameters() {
   return beamBaseParameters(params);
 }
 
-function classicPool() {
-  const c = CHAMPION_PARAMETERS;
-  const base = beamBaseParameters(c);
+/** 对手池（不含候选本体）：当前活动冠军 + 中立基线 + 风格变体。
+ * P0-1 整改（2026-10-25）：
+ * - 风格变体基座 = 冻结 legacy-js0（晋级归档），id 沿用归档参数 id
+ *   （ai5-readiness-efficiency@tempo 等，与第五阶段 confirm 数据 versionsIds
+ *   逐字一致）——不再从活动冠军浅拷贝派生（活动冠军切换不得改变历史
+ *   变体身份；此前 {…CHAMPION_PARAMETERS} 携带 adapter 使权重 100% 失效，
+ *   PR #39 已修分派、本修复进一步消除对活动别名的派生依赖与失实标签）；
+ * - 冠军本体席位 = 当前活动冠军（显式 liveChampion 标记 + 注册表披露），
+ *   保持「对手池含当前冠军」语义。 */
+export function classicPool() {
+  const frozen = resolveAlgorithmVersion('legacy-js0');
+  const base = frozen.parameters;
+  const live = resolveAlgorithmVersion('live-champion');
+  const liveParams = live.core === 'champion-guided' ? live.parameters : beamBaseParameters(live.parameters);
   return [
-    { id: c.id, parameters: c, structure: c.structure },
+    { id: live.parameters.id, parameters: liveParams, structure: live.structure ?? liveParams.structure, liveChampion: true },
     { id: 'neutral-baseline', parameters: BASELINE_PARAMETERS, structure: BASELINE_PARAMETERS.structure },
-    { id: `${c.id}@tempo`, parameters: { ...base, tempoWeight: Math.min(1.5, base.tempoWeight * 1.35), restWeight: Math.max(0.5, base.restWeight * 0.8) }, structure: base.structure },
-    { id: `${c.id}@contest`, parameters: { ...base, contestWeight: Math.min(2, base.contestWeight * 1.4), goalWeight: Math.min(1.5, base.goalWeight * 1.15) }, structure: base.structure },
-    { id: `${c.id}@engine`, parameters: { ...base, engineWeight: Math.min(1.5, base.engineWeight * 1.3), endgameWeight: Math.min(1.5, base.endgameWeight * 1.1) }, structure: base.structure },
+    { id: `${base.id}@tempo`, parameters: { ...base, tempoWeight: Math.min(1.5, base.tempoWeight * 1.35), restWeight: Math.max(0.5, base.restWeight * 0.8) }, structure: base.structure },
+    { id: `${base.id}@contest`, parameters: { ...base, contestWeight: Math.min(2, base.contestWeight * 1.4), goalWeight: Math.min(1.5, base.goalWeight * 1.15) }, structure: base.structure },
+    { id: `${base.id}@engine`, parameters: { ...base, engineWeight: Math.min(1.5, base.engineWeight * 1.3), endgameWeight: Math.min(1.5, base.endgameWeight * 1.1) }, structure: base.structure },
   ];
 }
 
-function diversePool() {
-  const c = CHAMPION_PARAMETERS;
-  const base = beamBaseParameters(c);
+export function diversePool() {
+  const frozen = resolveAlgorithmVersion('legacy-js0');
+  const base = frozen.parameters;
+  const live = resolveAlgorithmVersion('live-champion');
+  const liveParams = live.core === 'champion-guided' ? live.parameters : beamBaseParameters(live.parameters);
   return [
-    { id: c.id, parameters: c, structure: c.structure },
+    { id: live.parameters.id, parameters: liveParams, structure: live.structure ?? liveParams.structure, liveChampion: true },
     { id: 'ai4-struct-beam-rollout', parameters: historicalChampionParameters(), structure: historicalChampionParameters().structure },
     { id: 'style-rush', parameters: { ...base, tempoWeight: 1.6, restWeight: 0.5, engineWeight: 0.5, endgameWeight: 0.6 }, structure: base.structure },
     { id: 'style-engine', parameters: { ...base, engineWeight: 1.6, capacityWeight: 1.4, tempoWeight: 0.7 }, structure: base.structure },
@@ -134,12 +155,12 @@ function versionsForSeats(candidateSeats, candidate, opponents, seedIndex, seatC
   });
 }
 
-/** 单局：候选 + 对手混合席位，返回候选阵营指标。
+/** 单局：候选 + 对手混合席位，返回候选阵营指标（导出供版本身份回归测试复用）。
  * 第五阶段扩展：simSeed = 对局种子（联合模拟随机流跨局独立——PR #27 的
  * duel 未传 simSeed，全部对局共用 0，跨局模拟噪声相关；本参数只影响
  * 联合候选的信念/对手采样熵，不改变算法语义，js0/js1 不消费该值）；
  * gated/override/回退统计（任务 E）；逐决策诊断流（任务 G，可选）。 */
-function runGame({ seed, seatCount, candidateSeats, candidate, opponents, jointOptions, maxMoves = 1200, deadlineMs = 120_000, diagnostics }) {
+export function runGame({ seed, seatCount, candidateSeats, candidate, opponents, jointOptions, maxMoves = 1200, deadlineMs = 120_000, diagnostics }) {
   const versions = versionsForSeats(candidateSeats, candidate, opponents, seed % 100000, seatCount);
   let game;
   try {
@@ -170,7 +191,11 @@ function runGame({ seed, seatCount, candidateSeats, candidate, opponents, jointO
       const t0 = performance.now();
       let action;
       if (version.candidate && version.kind === 'joint') {
-        const r = chooseJointAction(game, { version: version.joint, ...jointOptions, simSeed: seed, profile: seatProfile(seat) });
+        // P0-5 整改：联合模拟随机流由独立域派生（单向，不把真实对局种子暴露为
+        // AI 可利用特征）；同种子同配置 ⇒ 同流（配对 CRN 保持）。修复前历史
+        // （PR #29 起）simSeed=对局种子——与 confirm 历史数据的流域差异已在
+        // 报告 simStream 字段披露。
+        const r = chooseJointAction(game, { version: version.joint, ...jointOptions, simSeed: deriveSimStreamSeed(seed), profile: seatProfile(seat) });
         action = r.action;
         if (r.joint?.stats) {
           jointStats.rollouts += r.joint.stats.rollouts;
@@ -197,11 +222,11 @@ function runGame({ seed, seatCount, candidateSeats, candidate, opponents, jointO
           });
         }
       } else if (version.candidate && version.kind === 'champion') {
-        const r = chooseAIAction(game, {
-          parameters: CHAMPION_PARAMETERS,
-          ...(version.structure ? { structure: version.structure } : {}),
-          profile: seatProfile(seat),
-        });
+        // P0-1 整改：候选（js0/js1）经不可变版本描述符分派——冻结归档参数 +
+        // 显式结构，绝不传 CHAMPION_PARAMETERS（活动冠军别名）。
+        const d = version.descriptor;
+        const opts = decisionOptions(d);
+        const r = chooseAIAction(game, { ...opts.beam, profile: seatProfile(seat) });
         action = r.action;
       } else if (version.randomLegal) {
         action = randomLegalAction(game, rngFor(seat));
@@ -449,6 +474,13 @@ async function main() {
     engineBundleSha256: engineBundleSha256(),
     block: args.block, seedBase: args.block === 'confirm' ? 'partitioned-by-(players,pool)' : seedBase, seeds: args.seeds,
     pool: args.pool,
+    // P0-1 整改：报告披露不可变版本注册表快照与候选描述符——
+    // 「标签身份 = 执行身份」可由指纹独立复核（运行指纹另列）。
+    versionRegistry: describeVersionRegistry(),
+    simStream: { domain: 'derived-v1', salt: DEFAULT_SIM_SALT, note: 'AI 信念采样流 = sha256(salt:对局种子) 31 位（独立域，不暴露牌库洗牌种子）' },
+    candidateDescriptors: args.candidates
+      .filter(id => id === 'js0' || id === 'js1')
+      .map(id => { const d = candidateVersion(id).descriptor; return { registryId: d.registryId, core: d.core, structure: d.structure, fingerprint: d.fingerprint, source: d.source }; }),
     jointOptions, note: 'JS 编号为本阶段消融编号（JS0–JS5），非 PR #22 的 B0/B1/B2。confirm 块分区见 seed_policy.mjs AI6_JS5_CONFIRM_SUBBLOCK。',
     cells,
   };
