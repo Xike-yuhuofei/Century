@@ -204,6 +204,16 @@ test('重复运行保护：活动锁存在时拒绝第二个进程', async () =>
   await assert.rejects(() => controller.run(), /已有活动进程|重复运行/);
 });
 
+test('配置边界：并发上限必须在 1..4，超界拒绝构造', () => {
+  const root = tempRoot();
+  assert.throws(() => makeController({
+    root,
+    config: {
+      budget: { maxCandidates: 8, maxGames: 20, maxWallMs: 60_000, maxConcurrent: 9, maxDeepConfirmations: 1 },
+    },
+  }), /maxConcurrent/);
+});
+
 test('正式挑战请求文件包含待审核语义与证据引用，且不含晋级动作', async () => {
   const root = tempRoot();
   const { controller } = makeController({ root });

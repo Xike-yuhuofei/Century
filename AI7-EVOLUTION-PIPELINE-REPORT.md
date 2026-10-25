@@ -394,7 +394,7 @@ Guardrails：
 ```bash
 cd training
 
-# 1) 新增测试（62 项；编译型用例在非 macOS 自动 skip）
+# 1) 新增测试（63 项；编译型用例在非 macOS 自动 skip）
 npm run evolution:test
 
 # 2) 轻量真实对局演示（约 3 分钟，18 局，含一次 Seatbelt 内 tsc）
@@ -423,7 +423,7 @@ npm run evolution:demo:fake
 
 | 套件 | 结果 | 说明 |
 | --- | --- | --- |
-| `npm run evolution:test` | **62/62 pass** | artifact/targets/safety/compiled/governance/selection/generator/openevolve/failure-labels/controller/demo |
+| `npm run evolution:test` | **63/63 pass** | artifact/targets/safety/compiled/governance/selection/generator/openevolve/failure-labels/controller/demo |
 | `npm test`（既有训练套件） | **153/153 pass** | 运行约 10 分钟，未受影响 |
 | `web-v1 npm run build` | 成功 | 测试依赖的 `dist/js` 已构建；未改源码 |
 | 演示真实对局 | 18 局，0 异常 | `demo-summary.json` |
@@ -451,7 +451,7 @@ npm run evolution:demo:fake
 | 1. Candidate Artifact v1 | `training/evolution/candidate-artifact.mjs`、`artifact-store.mjs` |
 | 2. 多目标进化接口 | `training/evolution/evolution-targets.mjs`、`feature-extractors.mjs`、`openevolve-adapter.mjs` |
 | 3. Campaign Controller 原型 | `training/evolution/campaign-controller.mjs`、`compiled-candidate.mjs`、`sandbox/` |
-| 4. 安全与可复现测试 | `training/evolution/tests/`（62 项） |
+| 4. 安全与可复现测试 | `training/evolution/tests/`（63 项） |
 | 5. 轻量闭环演示及日志 | `training/reports/ai7-evolution-demo/` |
 | 6. 报告 | 本文件 |
 | 7. 独立 PR | 分支 `feat/ai7-evolution-pipeline`；PR #46 |
