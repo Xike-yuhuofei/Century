@@ -183,7 +183,7 @@
 ## 7. 未解决风险清单
 
 1. **没有更强冠军**：平台就绪不等于找到更强算法；本次所有候选均未通过真实第一名率门槛。
-2. **R09 未完成**：12 小时连续运行已启动（screen `century12h` + `caffeinate`），需满 12 小时且 `status=completed` 后才能 PASS。
+2. **R09 未完成**：12 小时连续运行已启动（screen `century12h` + `caffeinate`），需满 12 小时且以 `completed` 或 `budget-exhausted`（非失败/人工停止）结束才能 PASS。
 3. **R12 未完成**：机器合并（PR #51）、Pages 部署、线上身份核验、回滚演练均已真实 PASS；但仍需一个统计合格候选完成冠军晋级，并真实触发一次 revert+重新部署回滚。
 4. **源码候选未部署**：Track B 的 `acquisitionValue` 候选仍需接入正式构建与冠军身份链。
 5. **研究 fitness 未迁移**：OpenEvolve 内部仍按配对得分优势率筛选，可能把“第一名率更差但均分更高”的候选带入深验。
