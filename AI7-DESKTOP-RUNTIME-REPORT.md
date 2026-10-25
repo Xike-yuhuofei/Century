@@ -2,7 +2,7 @@
 
 - 任务：Century AI 7.0 · 任务 E（E1–E5）
 - 分支：`feat/ai7-desktop-runtime`
-- 基线：`main` @ `19fa56403aa36ef20d0338e5c3f502de39830802`
+- 基线：`main` @ `19fa564`（创建 worktree）；rebase 至 `35f2413`（PR #48 合并后）
 - Worktree：`/Volumes/Extreme SSD/Projects/Century-ai7-desktop`
 - 日期：2026-10-25
 
@@ -108,6 +108,11 @@
 3. 页面运行时读取该元素文本，`Blob` → `URL.createObjectURL` → `new Worker(url)`（经典 Worker），不请求任何外部文件。
 
 GitHub Pages 工作流把 `dist/standalone.html` 复制为 `_site/index.html`；浏览器实测正是按 `_site` + `/Century/` 子路径进行，而不是本地开发服务器直连 `dist`。
+
+**与 main 并行工作的整合**：PR #48 在 main 上引入了 G2 桌面 Worker（整份 `Game` 进 Worker、`ai-worker.ts`）与 AI6 的冠军参数透传。本分支 rebase 至 `35f2413` 后：
+- 用公开观察协议 Worker 替换 G2（删除 `src/ai-worker.ts`，避免两套 Worker 并存）；
+- `offline-ai-worker.test.mjs` 改为在 Node vm 中真实执行 `init + decision` 协议往返，继续覆盖“嵌入闭包完整性”这一原始防回归目标；
+- `decision-core` 固定注入 `CHAMPION_PARAMETERS`，与 AI6 正式入口的 `championParameters` 透传逐位同源。
 
 ### 4.2 信息边界
 
