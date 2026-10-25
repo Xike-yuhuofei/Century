@@ -20,21 +20,34 @@
  *
  * 用法：node training/tournament/run-formal-challenge-js5.mjs [--seeds 250]
  */
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { nextValidationBase, consumeLedger, assertBlockFree, validationChallengeCount, VALIDATION_POOL_BASE } from '../lib/seeds.mjs';
+import { consumeLedger, VALIDATION_POOL_BASE } from '../lib/seeds.mjs';
+import {
+  loadSeedGovernance, nextFormalValidationBase, formalChallengeCount,
+  assertFormalChallengeAllocation, reserveConsumption, completeConsumption,
+  CENTRAL_REGISTRY_PATH,
+} from '../lib/seed-governance.mjs';
 import { challengeWithDecision } from './challenge.mjs';
-import { requireBuiltEngine, engineBundleSha256, REPO_ROOT } from '../lib/paths.mjs';
+import { requireBuiltEngine, engineBundleSha256, buildProvenance, REPO_ROOT } from '../lib/paths.mjs';
 import { DEFAULT_SIM_SALT } from '../lib/sim-stream.mjs';
+import { validateAIParameters } from '../../web-v1/dist/js/ai/parameters.js';
+import { championParametersSha256 } from '../../web-v1/scripts/build-hash.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const outDir = resolve(REPO_ROOT, 'training/reports/js5-promotion-challenge');
+const args = process.argv.slice(2);
+const seatsArg = args.includes('--seats') ? Number(args[args.indexOf('--seats') + 1]) : 5;
+if (!Number.isSafeInteger(seatsArg) || seatsArg < 2 || seatsArg > 5) {
+  throw new Error(`--seats 必须为 2–5 的整数（按人数独立挑战），实际：${seatsArg}`);
+}
+const outDir = args.includes('--out')
+  ? resolve(process.cwd(), args[args.indexOf('--out') + 1])
+  : resolve(REPO_ROOT, seatsArg === 5 ? 'training/reports/js5-promotion-challenge' : `training/reports/js5-promotion-challenge-seat${seatsArg}`);
 mkdirSync(outDir, { recursive: true });
 requireBuiltEngine();
 
-const args = process.argv.slice(2);
 const seedsArg = args.includes('--seeds') ? Number(args[args.indexOf('--seeds') + 1]) : 250;
 if (!Number.isSafeInteger(seedsArg) || seedsArg < 60 || seedsArg > 2000) {
   throw new Error(`--seeds 必须为 60–2000 的整数（决定性下限 60 + 余量），实际：${seedsArg}`);
@@ -60,56 +73,42 @@ const candidateDescriptor = {
 if (candidateDescriptor.id !== 'joint-js5' || candidateDescriptor.adapter !== 'champion-guided') {
   throw new Error('JS5 候选描述符校验失败');
 }
+// 候选参数规范化身份：与 apply-champion 落地后的 CHAMPION_PARAMETERS 同一 canonical 口径。
+const candidateParametersForIdentity = validateAIParameters(candidateDescriptor);
+const CANDIDATE_PARAMETERS_SHA256 = championParametersSha256(candidateParametersForIdentity);
 
 const champion = JSON.parse(readFileSync(resolve(REPO_ROOT, 'training/champions/champion.json'), 'utf8'));
 const championParameters = champion.parameters;
 
-// ---- 1. 合并全部已知验证账本（P0-5 整改：fail-closed——缺失账本抛错而非跳过；
-// challenge-10 种子重复消费事故的根因即 worktree 缺账本被静默跳过） ----
-const ledgerSources = [
-  'training/reports/structure-challenge-rollout-confirm/validation-ledger.json', // PR #11 晋级挑战
-  'training/reports/evolve-latest/validation-ledger.json',                       // 本地进化确认挑战
-  'ai5/openevolve/experiments/reports/challenge-ai5-goal-remaining/validation-ledger.json',
-  'ai5/openevolve/experiments/reports/challenge-ai5-goal-remaining-500/validation-ledger.json',
-  'ai5/openevolve/experiments/reports/challenge-readiness-efficiency-500/validation-ledger.json',
-  'ai5/openevolve/experiments/reports/challenge-readiness-efficiency-1000/validation-ledger.json', // challengeIndex=9（前任冠军晋级）
-  'training/reports/js5-formal-challenge/validation-ledger.json', // challengeIndex=10（JS5 首次正式挑战；bundle 含接线前代码）
-];
-const merged = { history: [] };
-for (const rel of ledgerSources) {
-  const p = resolve(REPO_ROOT, rel);
-  if (!p.startsWith(REPO_ROOT)) throw new Error(`账本路径越界：${rel}`);
-  if (!existsSync(p)) {
-    throw new Error(
-      `验证账本缺失（fail-closed）：${rel}——缺失账本会使 challengeIndex 低估、种子块重复消费` +
-      '（challenge-10 事故根因）。先从归档恢复该账本；如确认该来源已永久失效，必须在' +
-      '本脚本账本清单中显式移除并留痕（不得静默跳过）。',
-    );
-  }
-  const ledger = JSON.parse(readFileSync(p, 'utf8'));
-  for (const entry of ledger.history ?? []) {
-    if (!merged.history.some(e => e.base === entry.base)) merged.history.push(entry);
-  }
-}
-merged.challengeCount = validationChallengeCount({ history: merged.history });
-const challengeIndex = merged.challengeCount + 1;
-console.log(`历史已消费块 ${merged.history.length} 个，累计确认挑战 ${merged.challengeCount} 次 → 本次 challengeIndex=${challengeIndex}`);
-console.log(`运行指纹（进程启动时捕获）：codeCommit=${CODE_COMMIT_AT_START.slice(0, 12)} engineBundle=${ENGINE_BUNDLE_AT_START.slice(0, 12)}`);
-
-// ---- 2. 分配并防重校验验证种子块（一次性消费；无论判定如何都记账） ----
+// ---- 1. 统一跨系统种子治理（AI7-A1）：AI4 evolve + OpenEvolve 正式挑战 +
+// 深度验证 + PPO arena + 联赛 + 基线账本全部只读纳入；缺失/冲突 fail-closed。
+// challengeIndex = 唯一正式挑战区间数 + 1（不信任任一账本自报 challengeCount）。
 const SEEDS = seedsArg;
-const seedBase = nextValidationBase(merged);
-assertBlockFree(seedBase, SEEDS, merged);
+const governance = loadSeedGovernance({ strict: true });
+const seedBase = nextFormalValidationBase(governance);
+const challengeIndex = formalChallengeCount(governance) + 1;
+assertFormalChallengeAllocation({ registry: governance, base: seedBase, size: SEEDS, challengeIndex });
+const experimentId = `js5-formal-seat${seatsArg}-${challengeIndex}`;
+// 动用种子前原子登记（跨系统防重）；作废/中止也继续占用区间，绝不"作废即复用"。
+reserveConsumption({
+  purposeClass: 'formal-challenge',
+  purpose: `js5-formal-challenge@${seatsArg}p`,
+  base: seedBase,
+  size: SEEDS,
+  experimentId,
+  challengeIndex,
+  evidencePath: outDir,
+  codeCommit: CODE_COMMIT_AT_START,
+  registryPath: CENTRAL_REGISTRY_PATH,
+});
+console.log(`治理层来源 ${governance.sources.length} 个，累计正式挑战 ${formalChallengeCount(governance)} 次 → 本次 challengeIndex=${challengeIndex}`);
 console.log(`本次验证种子块：[${seedBase}, ${seedBase + SEEDS})（验证池起点 ${VALIDATION_POOL_BASE}）`);
+console.log(`运行指纹（进程启动时捕获）：codeCommit=${CODE_COMMIT_AT_START.slice(0, 12)} engineBundle=${ENGINE_BUNDLE_AT_START.slice(0, 12)}`);
 
 // ---- 3. 正式挑战（默认 250 种子 × 2 局 = 500 局，双向配对 + 座位轮换 + 冠军独占对手） ----
 // deadlineMs 300s：方向 B 含 4 个 JS5 席位（每决策 100ms 预算），单局墙钟可达 ~90s。
 // P0-5：--seats 2..5 支持按人数执行独立挑战（每种人数单独成次、跨人数不合并判定）；
 // 缺省 5 = 历史协议口径。本脚本绝不在整改中自动执行挑战（不消费验证池）。
-const seatsArg = args.includes('--seats') ? Number(args[args.indexOf('--seats') + 1]) : 5;
-if (!Number.isSafeInteger(seatsArg) || seatsArg < 2 || seatsArg > 5) {
-  throw new Error(`--seats 必须为 2–5 的整数（按人数独立挑战），实际：${seatsArg}`);
-}
 console.log(`开始正式挑战：${SEEDS} 种子 × 2 方向 × ${seatsArg} 人（预计 40-90 分钟）...`);
 const startedAt = Date.now();
 const { summary, games } = challengeWithDecision({
@@ -140,7 +139,22 @@ console.log(JSON.stringify({
 }, null, 2));
 
 // ---- 4. 产出晋级脚本兼容的 candidate.json + 续接账本 ----
-const ledger = consumeLedger(merged, seedBase, SEEDS);
+// 账本合并治理层已识别的全部正式挑战区间 → challengeCount = 全局累计（本次为最后一个）。
+const formalHistory = governance.entries
+  .filter(e => e.countsTowardChallengeIndex === true)
+  .map(e => ({ base: e.base, size: e.size, at: e.rawAt ?? null }));
+const ledger = consumeLedger(
+  { history: formalHistory, challengeCount: formalChallengeCount(governance) },
+  seedBase,
+  SEEDS,
+  { challengeIndex, purpose: `js5-formal-challenge@${seatsArg}p`, experimentId, source: 'run-formal-challenge-js5' },
+);
+completeConsumption(experimentId, {
+  status: codeFrozen ? 'completed' : 'voided',
+  evidencePath: outDir,
+  note: `seatCount=${seatsArg} decision=${summary.decision.verdict} challengeIndex=${challengeIndex}`,
+  registryPath: CENTRAL_REGISTRY_PATH,
+});
 writeFileSync(resolve(outDir, 'candidate.json'), JSON.stringify({
   id: candidateDescriptor.id,
   name: 'AI6 JS5 冠军引导选择性联合搜索（PR #27）',
@@ -158,10 +172,47 @@ writeFileSync(resolve(outDir, 'candidate.json'), JSON.stringify({
     firstPlace: summary.firstPlace,
     winRate: summary.candidateWinRate, pairedDiff: summary.pairedDiffCI,
     ci: summary.decision.ci, decision: summary.decision,
+    seatCount: seatsArg,
   },
+  ...buildProvenance(),
   engineBundleSha256: ENGINE_BUNDLE_AT_START,
+  championParametersSha256: CANDIDATE_PARAMETERS_SHA256,
   codeCommit: CODE_COMMIT_AT_START,
   seatCount: seatsArg,
+  // AI7-A4：每次运行只覆盖一种人数；完整晋级由 promote-champion 汇总 2–5 人
+  // 的独立证据文件（--seat-evidence），缺任一人数不得晋级。
+  seatEvidence: [{
+    seatCount: seatsArg,
+    seeds: SEEDS,
+    seedBase,
+    challengeIndex,
+    engineBundleSha256: ENGINE_BUNDLE_AT_START,
+    sourceClosureSha256: buildProvenance().sourceClosureSha256,
+    decisionSourceSha256: buildProvenance().decisionSourceSha256,
+    decisionArtifactSha256: buildProvenance().decisionArtifactSha256,
+    championParametersSha256: CANDIDATE_PARAMETERS_SHA256,
+    codeCommit: CODE_COMMIT_AT_START,
+    decision: summary.decision,
+    seedPairs: summary.seedPairs,
+    primaryMetric: summary.primaryMetric,
+  }],
+  seatCoverage: {
+    required: [2, 3, 4, 5],
+    covered: [seatsArg],
+    complete: false,
+    note: '单次挑战只覆盖一种人数；晋级必须汇总 2/3/4/5 各自独立成次的证据',
+  },
+  promotionEligible: false,
+  governance: {
+    schema: governance.schema,
+    purposeClass: 'formal-challenge',
+    challengeIndex,
+    formalChallengeCount: formalChallengeCount(governance),
+    registeredInCentral: true,
+    experimentId,
+    sourceCount: governance.sources.length,
+    conflicts: governance.conflicts.length,
+  },
   primaryMetric: summary.primaryMetric,
   // P0-5 随机流留痕：AI 信念采样流 = deriveSimStreamSeed(对局种子, salt)——
   // 独立域单向派生，不暴露真实洗牌种子；来源与盐值随证据落盘可审计。

@@ -11,7 +11,7 @@
  */
 
 import { createGame, applyAction, score, ranking, count } from '../../web-v1/dist/js/engine.js';
-import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
+import { chooseAIAction, PROFILES, NEUTRAL_PROFILE, validateAIParameters } from '../../web-v1/dist/js/ai.js';
 import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
 import { ENGINE_SEED_MAX } from '../lib/seeds.mjs';
 import { deriveSimStreamSeed, DEFAULT_SIM_SALT } from '../lib/sim-stream.mjs';
@@ -119,6 +119,9 @@ export function simulateGame(options) {
             version: version.jointVersion ?? 'joint-js5',
             ...(version.gateMode !== undefined ? { gateMode: version.gateMode } : {}),
             ...(version.budgetMs !== undefined ? { budgetMs: version.budgetMs } : {}),
+            // AI7-A2：席位描述符的参数必须显式传入并通过校验——冻结版本
+            // （如 joint-js5 归档快照）不得回退读取活动 CHAMPION_PARAMETERS。
+            ...(version.parameters ? { championParameters: validateAIParameters(version.parameters) } : {}),
             simSeed: version.simSeed ?? deriveSimStreamSeed(seed, version.simSalt ?? DEFAULT_SIM_SALT),
             profile: seatProfile(seat),
           })

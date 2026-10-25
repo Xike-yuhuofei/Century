@@ -39,6 +39,7 @@ sys.path.insert(0, str(REPO_ROOT))
 from ai5.lib.seed_policy import (  # noqa: E402
     OPENEVOLVE_DEEP_VALIDATION_BLOCK, assert_in_block, generate_unique_seeds,
 )
+from ai5.lib.seed_governance_bridge import reserve_seed_interval  # noqa: E402
 
 # 复用评估管线的沙箱与目录设施（同一安全边界，不另起炉灶）。
 from ai5.openevolve.century_evaluator import (  # noqa: E402
@@ -58,7 +59,12 @@ V1_INVALID_CONSUMED = {"base": 300001000, "size": 1, "purpose": "deep-validation
 def _load_ledger() -> dict:
     if LEDGER_PATH.exists():
         return json.loads(LEDGER_PATH.read_text())
-    return {"history": [dict(V1_INVALID_CONSUMED)]}
+    # AI7-A1：深验账本缺失 fail-closed。旧实现按「仅含 v1 事故占位」的空账本
+    # 继续分配，会让新种子从块头重新消费；恢复账本或显式初始化后才可运行。
+    raise RuntimeError(
+        f"深度验证种子账本缺失（fail-closed）：{LEDGER_PATH}——"
+        "禁止按空账本重新消费深度验证种子"
+    )
 
 
 def allocate_deep_validation_seeds(count: int, purpose: str) -> tuple[int, list[int]]:
@@ -76,6 +82,17 @@ def allocate_deep_validation_seeds(count: int, purpose: str) -> tuple[int, list[
                 if base < b + s and b < base + count:
                     raise RuntimeError(f"种子块重叠：[{base},{base+count}) 与 [{b},{b+s})——账本状态异常")
             seeds = generate_unique_seeds(count, OPENEVOLVE_DEEP_VALIDATION_BLOCK, base)
+            # AI7-A1：深验种子必须经统一治理层登记。历史未入账区间
+            # （long20 [300001200,300001300)）在这里会触发 fail-closed，而不是
+            # 让下一次 100 种子分配静默覆盖它。
+            reserve_seed_interval(
+                "deep-validation",
+                f"deep-validation:{purpose}",
+                base=base,
+                size=count,
+                experiment_id=f"openevolve-deep-{purpose}-{base}",
+                evidence_path=str(LEDGER_PATH),
+            )
             entry = {"base": base, "size": count, "purpose": purpose,
                      "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
             ledger["history"] = (ledger.get("history", []) + [entry])[-99:]

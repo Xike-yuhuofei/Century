@@ -4382,7 +4382,10 @@
       id: "joint-js5-opt",
       label: "JS5-opt 第五阶段优化配置（champion-guided + tune2 选项覆盖）",
       kind: "champion-guided",
-      defaults: { variant: "joint-rollout", opponentMode: "rule", evaluator: "L2" }
+      defaults: { variant: "joint-rollout", opponentMode: "rule", evaluator: "L2" },
+      // 第五阶段 tune2 冻结：唯一独有选项 claimRanking='prior'
+      // （AI6-PHASE5-REPORT.md §4.3；确认集 inconclusive，未晋级）。
+      optionPreset: { claimRanking: "prior" }
     }
   };
 
@@ -4663,6 +4666,153 @@
     return new JointPlannerV1(versionId);
   }
 
+  // src/js/near-terminal.ts
+  function claimThreshold(playerCount) {
+    return playerCount >= 4 ? 5 : 6;
+  }
+  function officialScoreOf(player, stock) {
+    const golemPoints = player.claimed.reduce((sum, id) => sum + (GOLEM_BY_ID[id]?.points ?? 0), 0);
+    return golemPoints + player.copper * 3 + player.silver + stock.slice(1).reduce((sum, x) => sum + x, 0);
+  }
+  function nearTerminalRisk(view) {
+    const threshold = claimThreshold(view.players.length);
+    if (view.triggerPlayer !== null) {
+      return {
+        risky: true,
+        reason: "already-triggered",
+        threshold,
+        threatenedSeats: view.players.map((p) => p.id),
+        selfThreatened: true
+      };
+    }
+    const threatenedSeats = [];
+    for (const p of view.players) {
+      if (p.claimed.length < threshold - 1) continue;
+      const canPay = view.golemMarket.some((id) => {
+        const goal = GOLEM_BY_ID[id];
+        return !!goal && has(p.stock, goal.cost);
+      });
+      if (canPay) threatenedSeats.push(p.id);
+    }
+    return {
+      risky: threatenedSeats.length > 0,
+      reason: threatenedSeats.length > 0 ? "player-can-trigger" : null,
+      threshold,
+      threatenedSeats,
+      selfThreatened: threatenedSeats.includes(view.playerId)
+    };
+  }
+  function immediateOfficialScoreDelta(view, action2) {
+    if (view.playerId !== view.current) return null;
+    const me = view.players[view.playerId];
+    if (!me) return null;
+    let stock = [...me.stock];
+    let copper = me.copper;
+    let silver = me.silver;
+    let delta = 0;
+    let golemMarket = null;
+    if (action2.type === "claim") {
+      const id = view.golemMarket[action2.index];
+      const goal = id ? GOLEM_BY_ID[id] : null;
+      if (!goal || !has(stock, goal.cost)) return null;
+      let coin = 0;
+      if (action2.index === 0 && copper > 0) {
+        copper -= 1;
+        coin = 3;
+      } else if (action2.index === 0 && copper === 0 && silver > 0) {
+        silver -= 1;
+        coin = 1;
+      } else if (action2.index === 1 && copper > 0 && silver > 0) {
+        silver -= 1;
+        coin = 1;
+      }
+      delta += goal.points + coin;
+      delta -= goal.cost.slice(1).reduce((sum, x) => sum + x, 0);
+      for (let c = 0; c < 4; c++) stock[c] -= goal.cost[c];
+      golemMarket = view.golemMarket.filter((_, i) => i !== action2.index);
+    } else if (action2.type === "play") {
+      const card = MERCHANT_BY_ID[action2.cardId];
+      if (!card || !me.hand.includes(action2.cardId)) return null;
+      if (card.kind === "create") {
+        if (action2.steps?.length || action2.repeats !== void 0) return null;
+        const out = card.output;
+        for (let c = 0; c < 4; c++) stock[c] += out[c];
+        delta += out.slice(1).reduce((sum, x) => sum + x, 0);
+      } else if (card.kind === "upgrade") {
+        const steps = action2.steps ?? [];
+        if (action2.repeats !== void 0 || steps.length > card.steps) return null;
+        for (const source of steps) {
+          if (!Number.isInteger(source) || source < 0 || source >= 3) return null;
+          if (stock[source] <= 0) return null;
+          stock[source] -= 1;
+          stock[source + 1] += 1;
+          if (source === 0) delta += 1;
+        }
+      } else {
+        const repeats = action2.repeats ?? 1;
+        const limit = tradeLimit(stock, action2.cardId);
+        if (!Number.isSafeInteger(repeats) || repeats < 1 || repeats > limit) return null;
+        for (let i = 0; i < repeats; i++) {
+          if (!has(stock, card.input)) return null;
+          for (let c = 0; c < 4; c++) stock[c] -= card.input[c];
+          for (let c = 0; c < 4; c++) stock[c] += card.output[c];
+        }
+        delta += repeats * (card.output.slice(1).reduce((sum, x) => sum + x, 0) - card.input.slice(1).reduce((sum, x) => sum + x, 0));
+      }
+    } else if (action2.type === "acquire") {
+      const offer = view.merchantMarket[action2.index];
+      if (!offer) return null;
+      if (!Array.isArray(action2.payment) || action2.payment.length !== action2.index) return null;
+      for (const color of action2.payment) {
+        if (!Number.isInteger(color) || color < 0 || color >= 4 || stock[color] <= 0) return null;
+        stock[color] -= 1;
+        if (color > 0) delta -= 1;
+      }
+      for (let c = 0; c < 4; c++) stock[c] += offer.bonus[c];
+      delta += offer.bonus.slice(1).reduce((sum, x) => sum + x, 0);
+    } else if (action2.type === "rest") {
+    } else {
+      return null;
+    }
+    let discarded = 0;
+    if (count(stock) > 10) {
+      const trimmed = trimStock(stock, golemMarket ?? view.golemMarket, null, CHAMPION_PARAMETERS);
+      discarded = trimmed.discarded.length;
+      delta -= trimmed.discarded.filter((c) => c > 0).length;
+      stock = trimmed.stock;
+    }
+    return { action: action2, delta, scoreAfter: officialScoreOf({ ...me, copper, silver }, stock), discarded };
+  }
+  function maxImmediateScoreAction(view, actions2) {
+    let best = null;
+    for (const action2 of actions2) {
+      const candidate = immediateOfficialScoreDelta(view, action2);
+      if (!candidate || candidate.delta <= 0) continue;
+      if (!best || candidate.delta > best.delta) best = candidate;
+    }
+    return best;
+  }
+
+  // src/js/budget.ts
+  var LEGACY_TRIAL_FLOOR_MS = 5;
+  var BALANCED_TRIAL_FLOOR_MS = 2.5;
+  function trialFloorMs(admission) {
+    return admission === "balanced" ? BALANCED_TRIAL_FLOOR_MS : LEGACY_TRIAL_FLOOR_MS;
+  }
+  function batchFloors(admission, worlds, candidates) {
+    const floor = trialFloorMs(admission);
+    return {
+      trialFloorMs: floor,
+      fullBatchFloorMs: worlds * candidates * floor,
+      minBatchFloorMs: candidates * floor
+    };
+  }
+  function fitWorlds(remainingMs, worlds, candidates) {
+    const minBatchFloorMs = candidates * BALANCED_TRIAL_FLOOR_MS;
+    if (!(remainingMs >= minBatchFloorMs)) return 0;
+    return Math.min(worlds, Math.max(1, Math.floor(remainingMs / (candidates * BALANCED_TRIAL_FLOOR_MS))));
+  }
+
   // src/js/champion-guided.ts
   var fail6 = (message) => {
     throw new Error(message);
@@ -4697,6 +4847,7 @@
   var ChampionGuidedPlanner = class {
     decide(observation, callOptions) {
       const o = resolveChampionGuidedOptions(callOptions);
+      const championParameters = o.championParameters ? validateAIParameters(o.championParameters) : CHAMPION_PARAMETERS;
       const t0 = performance.now();
       const phase = { planMs: 0, rootSimMs: 0, legalGenMs: 0, gateMs: 0, screenMs: 0, rolloutMs: 0, aggregateMs: 0 };
       if (observation.phase === "finished") fail6("游戏已结束，无法决策");
@@ -4704,18 +4855,18 @@
       if (observation.current !== mySeat) fail6("观察席位不是当前行动者");
       const profile = o.profileName ? profileByName(o.profileName) : NEUTRAL_PROFILE;
       const planStart = performance.now();
-      const plan = choosePlan(observation, o.championParameters ?? CHAMPION_PARAMETERS, profile, o.championStructure ?? "beam-rollout");
+      const plan = choosePlan(observation, championParameters, profile, o.championStructure ?? "beam-rollout");
       phase.planMs = performance.now() - planStart;
       const championAction = plan?.first ?? null;
       const worldCount = Math.max(1, Math.min(8, Math.floor(o.worlds ?? 4)));
       const rootSimStart = performance.now();
       const root2 = createSimulation(observation, { simSeed: worldSeed(o.simSeed ?? 0, 0), historySummary: o.historySummary });
+      phase.rootSimMs = performance.now() - rootSimStart;
       let rootsCreated = 1;
       const roots = [root2];
       const legalStart = performance.now();
       const legalRootActions = enumerateLegalActions(root2.view, { dedupe: true });
       phase.legalGenMs = performance.now() - legalStart;
-      phase.rootSimMs = performance.now() - rootSimStart;
       if (!legalRootActions.length) fail6("根状态无合法行动（规则引擎不一致）");
       const immediateClaimGoals = new Set(
         legalRootActions.filter((a) => a.type === "claim").map((a) => observation.golemMarket[a.index])
@@ -4745,17 +4896,25 @@
             budgetExhausted: false,
             omTimeMs: 0,
             cloneMs: 0,
+            cloneMsMeasured: false,
             legalGenMs: phase.legalGenMs,
             rootActions: legalRootActions.length,
             candidateCount: 0,
-            worldsUsed: worldCount,
+            worldsUsed: 0,
+            worldsConfigured: worldCount,
             planMs: phase.planMs,
             rootSimMs: phase.rootSimMs,
             gateMs: phase.gateMs,
             screenMs: 0,
             rolloutMs: 0,
             aggregateMs: 0,
-            rootSimulationsCreated: rootsCreated
+            rootSimulationsCreated: rootsCreated,
+            batchesStarted: 0,
+            trialWindowMs: 0,
+            zeroTrialReason: "not-gated",
+            overBudget: false,
+            screenGoalScope: o.screenGoalScope ?? "all",
+            batchAdmission: o.batchAdmission ?? "legacy"
           },
           championAction,
           gated: false,
@@ -4763,31 +4922,64 @@
         };
       }
       const screenStart = performance.now();
-      const ctxRoot = heuristicContext(root2.view, CHAMPION_PARAMETERS, NEUTRAL_PROFILE);
-      const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival);
+      const ctxRoot = heuristicContext(root2.view, championParameters, NEUTRAL_PROFILE);
+      const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
+        goalScope: o.screenGoalScope ?? "all",
+        preferredGoal: plan?.preferred ?? null
+      });
       phase.screenMs = performance.now() - screenStart;
       const candidates = [];
+      const candidateSources = [];
       const priorOf = /* @__PURE__ */ new Map();
       const seen = /* @__PURE__ */ new Set();
-      const push = (a) => {
-        if (!a) return;
+      const push = (a, source) => {
+        if (!a) return false;
         const k = actionKey(a);
-        if (seen.has(k)) return;
+        if (seen.has(k)) return false;
         seen.add(k);
         candidates.push(a);
+        candidateSources.push(source);
+        return true;
       };
-      push(championAction);
+      push(championAction, "champion");
       const claimActions = legalRootActions.filter((x) => x.type === "claim");
       if (o.claimRanking === "prior") {
         const priorOfAction = new Map(claimActions.map((a) => [actionKey(a), screened.find((s) => actionKey(s.action) === actionKey(a))?.prior ?? -Infinity]));
         claimActions.sort((x, y) => (priorOfAction.get(actionKey(y)) ?? -Infinity) - (priorOfAction.get(actionKey(x)) ?? -Infinity));
       }
-      for (const a of claimActions.slice(0, 2)) push(a);
-      for (const { action: action2, prior } of screened) {
+      for (const a of claimActions.slice(0, 2)) push(a, "claim");
+      for (const { action: action2 } of screened) {
         if (candidates.length >= (o.candidateCap ?? 4)) break;
-        push(action2);
+        push(action2, "prior");
       }
       if (!candidates.length) fail6("候选构造为空（规则层缺陷）");
+      const nearTerminalPolicy = o.nearTerminalCandidate ?? "off";
+      const terminalRisk = nearTerminalPolicy === "off" ? null : nearTerminalRisk(observation);
+      let injected = null;
+      let replacedAction = null;
+      let injectionMode = nearTerminalPolicy;
+      if (terminalRisk?.risky && injectionMode !== "off") {
+        const best = maxImmediateScoreAction(observation, legalRootActions);
+        if (best && !seen.has(actionKey(best.action))) {
+          injected = best;
+          if (injectionMode === "add") {
+            push(best.action, "near-terminal");
+          } else {
+            let idx = candidateSources.lastIndexOf("prior");
+            if (idx < 0) idx = candidateSources.lastIndexOf("claim");
+            if (idx >= 0) {
+              replacedAction = candidates[idx];
+              seen.delete(actionKey(candidates[idx]));
+              candidates[idx] = best.action;
+              candidateSources[idx] = "near-terminal";
+              seen.add(actionKey(best.action));
+            } else {
+              push(best.action, "near-terminal");
+              injectionMode = "add";
+            }
+          }
+        }
+      }
       for (const { action: action2, prior } of screened) priorOf.set(actionKey(action2), prior);
       const championKey = championAction ? actionKey(championAction) : null;
       if (worldCount > 1) {
@@ -4823,17 +5015,38 @@
             budgetExhausted: false,
             omTimeMs: 0,
             cloneMs: 0,
+            cloneMsMeasured: false,
             legalGenMs: phase.legalGenMs,
             rootActions: legalRootActions.length,
             candidateCount: candidates.length,
-            worldsUsed: worldCount,
+            worldsUsed: 0,
+            worldsConfigured: worldCount,
+            batchesStarted: 0,
+            trialWindowMs: 0,
+            zeroTrialReason: "rerank-no-rollout",
+            overBudget: false,
+            screenGoalScope: o.screenGoalScope ?? "all",
+            batchAdmission: o.batchAdmission ?? "legacy",
             planMs: phase.planMs,
             rootSimMs: phase.rootSimMs,
             gateMs: phase.gateMs,
             screenMs: phase.screenMs,
             rolloutMs: 0,
             aggregateMs: 0,
-            rootSimulationsCreated: rootsCreated
+            rootSimulationsCreated: rootsCreated,
+            ...terminalRisk && injectionMode !== "off" ? {
+              nearTerminal: {
+                policy: nearTerminalPolicy,
+                risky: terminalRisk.risky,
+                reason: terminalRisk.reason,
+                threshold: terminalRisk.threshold,
+                threatenedSeats: terminalRisk.threatenedSeats,
+                injected: injected ? { action: injected.action, delta: injected.delta, scoreAfter: injected.scoreAfter, discarded: injected.discarded } : null,
+                replacedAction,
+                mode: injectionMode,
+                candidateSources
+              }
+            } : {}
           },
           championAction,
           gated: true,
@@ -4859,9 +5072,17 @@
       const workUnits = o.workUnits;
       const budgetMs = o.budgetMs ?? (workUnits !== void 0 ? void 0 : 100);
       const trialDeadline = workUnits || budgetMs === void 0 ? void 0 : t0 + budgetMs * 0.95;
-      const PER_TRIAL_FLOOR_MS = 5;
+      const admission = o.batchAdmission ?? "legacy";
       const M = candidates.length;
+      const floors = batchFloors(admission, worldCount, M);
+      const PER_TRIAL_FLOOR_MS = floors.trialFloorMs;
+      const fullBatchFloorMs = floors.fullBatchFloorMs;
+      const minBatchFloorMs = floors.minBatchFloorMs;
       const rolloutStart = performance.now();
+      const rolloutStartOffsetMs = rolloutStart - t0;
+      const trialWindowMs = trialDeadline === void 0 ? null : Math.max(0, trialDeadline - rolloutStart);
+      const worldsUsedSet = /* @__PURE__ */ new Set();
+      let batchesStarted = 0;
       const runTrial = (index, world, replica) => {
         const entry = aggregates[index];
         const forkStart = performance.now();
@@ -4876,23 +5097,43 @@
         trialsLog?.push({ actionIndex: index, world, replica, value: outcome.value });
         return outcome.value;
       };
-      const runBatch = (replica) => {
-        for (let w = 0; w < worldCount; w++) {
+      const runBatch = (replica, worldsInBatch) => {
+        for (let w = 0; w < worldsInBatch; w++) {
+          worldsUsedSet.add(w);
           for (let i = 0; i < M; i++) runTrial(i, w, replica);
         }
+        batchesStarted += 1;
       };
       if (workUnits !== void 0) {
         const passes = Math.max(1, Math.floor(workUnits / (worldCount * M)));
-        for (let r = 0; r < passes; r++) runBatch(r);
-      } else {
-        const batchFloorMs = M * PER_TRIAL_FLOOR_MS;
+        for (let r = 0; r < passes; r++) runBatch(r, worldCount);
+      } else if (admission === "legacy") {
+        const legacyBatchFloorMs = M * PER_TRIAL_FLOOR_MS;
         let pass = 0;
-        while (pass < 1e5 && trialDeadline !== void 0 && performance.now() + batchFloorMs <= trialDeadline) {
-          runBatch(pass);
+        while (pass < 1e5 && trialDeadline !== void 0 && performance.now() + legacyBatchFloorMs <= trialDeadline) {
+          runBatch(pass, worldCount);
+          pass += 1;
+        }
+      } else {
+        let pass = 0;
+        while (pass < 1e5 && trialDeadline !== void 0) {
+          const worldsFit = fitWorlds(trialDeadline - performance.now(), worldCount, M);
+          if (worldsFit === 0) break;
+          runBatch(pass, worldsFit);
           pass += 1;
         }
       }
       phase.rolloutMs = performance.now() - rolloutStart;
+      const wallClockMode = workUnits === void 0 && budgetMs !== void 0;
+      const stoppedByDeadline = wallClockMode && trialDeadline !== void 0 && (batchesStarted === 0 ? rolloutStart >= trialDeadline : performance.now() + minBatchFloorMs > trialDeadline);
+      let zeroTrialReason = null;
+      if (rollouts === 0) {
+        if (trialDeadline === void 0) zeroTrialReason = "no-window";
+        else if (rolloutStart >= trialDeadline) zeroTrialReason = "plan-and-screen-exhausted";
+        else if (trialWindowMs !== null && trialWindowMs < minBatchFloorMs) zeroTrialReason = "batch-floor-not-met";
+        else zeroTrialReason = "no-batch-started";
+      }
+      const budgetExhausted = wallClockMode && (rollouts === 0 ? zeroTrialReason === "plan-and-screen-exhausted" || zeroTrialReason === "batch-floor-not-met" : true);
       const aggregateStart = performance.now();
       const evaluations = aggregates.map((a) => {
         const mean = a.trials > 0 ? a.sum / a.trials : 0;
@@ -4905,10 +5146,11 @@
       let bestEval = evaluations[0];
       if (championEval && championEval.trials > 0) {
         const championScore = robustScoreOf(championEval);
+        const minChallengerTrials = admission === "balanced" && worldsUsedSet.size < worldCount ? 3 : 2;
         let challenger = championEval;
         for (const e of evaluations) {
           if (actionKey(e.action) === championKey) continue;
-          if (e.trials < 2) continue;
+          if (e.trials < minChallengerTrials) continue;
           if (robustScoreOf(e) > robustScoreOf(challenger)) challenger = e;
         }
         bestEval = robustScoreOf(challenger) > championScore + (o.overrideMargin ?? 0.02) ? challenger : championEval;
@@ -4929,9 +5171,10 @@
         opponentSamples: []
       };
       const golemTag = (a) => a.type === "claim" && GOLEM_BY_ID[observation.golemMarket[a.index]] ? `（${observation.golemMarket[a.index]}，${GOLEM_BY_ID[observation.golemMarket[a.index]].points} 分）` : "";
+      const injectionTag = injected ? `；临近终局候选注入 ${actionKey(injected.action)}（当步正式净分 +${injected.delta}，${injectionMode}${replacedAction ? "，替换先验候选" : ""}）` : "";
       return {
         action: bestEval.action,
-        reason: `js5 ${gated ? "联合仲裁" : "冠军直通"}：${bestEval === championEval ? "保持冠军行动" : "覆盖为联合最优"}（联合模拟评价值 ${bestEval.mean.toFixed(3)}，未校准胜率近似，${bestEval.trials} 轨迹 × ${worldCount} 世界，争议目标 ${risk.contestedGoals.join(",") || "无"}）${golemTag(bestEval.action)}`,
+        reason: `js5 ${gated ? "联合仲裁" : "冠军直通"}：${bestEval === championEval ? "保持冠军行动" : "覆盖为联合最优"}（联合模拟评价值 ${bestEval.mean.toFixed(3)}，未校准胜率近似，${bestEval.trials} 轨迹，实际世界 ${worldsUsedSet.size}/${worldCount}，争议目标 ${risk.contestedGoals.join(",") || "无"}）${golemTag(bestEval.action)}${injectionTag}`,
         evaluations,
         chosen: { action: bestEval.action, prior: 0, trials: bestEval.trials, mean: bestEval.mean, se: bestEval.se },
         trace,
@@ -4939,20 +5182,48 @@
           rollouts,
           transitions,
           elapsedMs,
-          budgetExhausted: !workUnits && budgetMs !== void 0 && elapsedMs >= budgetMs * 0.98,
+          budgetExhausted,
           omTimeMs: omTimeMs.value,
           cloneMs: 0,
+          cloneMsMeasured: false,
           legalGenMs: phase.legalGenMs,
           rootActions: legalRootActions.length,
           candidateCount: M,
-          worldsUsed: worldCount,
+          worldsUsed: worldsUsedSet.size,
+          worldsConfigured: worldCount,
+          batchesStarted,
+          trialWindowMs,
+          fullBatchFloorMs,
+          minBatchFloorMs,
+          rolloutStartMs: rolloutStartOffsetMs,
+          zeroTrialReason,
+          overBudget: wallClockMode && budgetMs !== void 0 && elapsedMs > budgetMs,
+          stoppedByDeadline,
+          overrideMinTrials: admission === "balanced" && worldsUsedSet.size < worldCount ? 3 : 2,
+          screenGoalScope: o.screenGoalScope ?? "all",
+          batchAdmission: admission,
+          accountingMs: phase.planMs + phase.rootSimMs + phase.legalGenMs + phase.gateMs + phase.screenMs + phase.rolloutMs + phase.aggregateMs,
+          unaccountedMs: Math.max(0, elapsedMs - (phase.planMs + phase.rootSimMs + phase.legalGenMs + phase.gateMs + phase.screenMs + phase.rolloutMs + phase.aggregateMs)),
           planMs: phase.planMs,
           rootSimMs: phase.rootSimMs,
           gateMs: phase.gateMs,
           screenMs: phase.screenMs,
           rolloutMs: phase.rolloutMs,
           aggregateMs: phase.aggregateMs,
-          rootSimulationsCreated: rootsCreated
+          rootSimulationsCreated: rootsCreated,
+          ...terminalRisk && injectionMode !== "off" ? {
+            nearTerminal: {
+              policy: nearTerminalPolicy,
+              risky: terminalRisk.risky,
+              reason: terminalRisk.reason,
+              threshold: terminalRisk.threshold,
+              threatenedSeats: terminalRisk.threatenedSeats,
+              injected: injected ? { action: injected.action, delta: injected.delta, scoreAfter: injected.scoreAfter, discarded: injected.discarded } : null,
+              replacedAction,
+              mode: injectionMode,
+              candidateSources
+            }
+          } : {}
         },
         ...trialsLog ? { trials: trialsLog } : {},
         championAction,
@@ -4963,6 +5234,12 @@
   };
   function resolveChampionGuidedOptions(o) {
     const base = o ?? {};
+    const nearTerminalCandidate = base.nearTerminalCandidate ?? "off";
+    if (!["off", "replace", "add"].includes(nearTerminalCandidate)) fail6(`未知 nearTerminalCandidate：${String(nearTerminalCandidate)}`);
+    const screenGoalScope = base.screenGoalScope ?? "all";
+    if (!["all", "preferred"].includes(screenGoalScope)) fail6(`未知 screenGoalScope：${String(screenGoalScope)}`);
+    const batchAdmission = base.batchAdmission ?? "legacy";
+    if (!["legacy", "balanced"].includes(batchAdmission)) fail6(`未知 batchAdmission：${String(batchAdmission)}`);
     return {
       ...base,
       championStructure: base.championStructure ?? "beam-rollout",
@@ -4970,11 +5247,116 @@
       overrideMargin: base.overrideMargin ?? 0.02,
       candidateCap: base.candidateCap ?? 4,
       contestThreshold: base.contestThreshold ?? 0.85,
-      claimRanking: base.claimRanking ?? "enumeration"
+      claimRanking: base.claimRanking ?? "enumeration",
+      nearTerminalCandidate,
+      screenGoalScope,
+      batchAdmission
     };
   }
   function createChampionGuidedPlanner() {
     return new ChampionGuidedPlanner();
+  }
+
+  // src/js/config.ts
+  var JOINT_SEARCH_DEFAULTS = {
+    championStructure: "beam-rollout",
+    gateMode: "auto",
+    contestThreshold: 0.85,
+    candidateCap: 4,
+    overrideMargin: 0.02,
+    claimRanking: "enumeration",
+    nearTerminalCandidate: "off",
+    screenGoalScope: "all",
+    batchAdmission: "legacy",
+    variant: "joint-rollout",
+    worlds: 4,
+    horizon: 48,
+    opponentMode: "rule",
+    evaluator: "L2"
+  };
+  var PRESET_FIELDS = [
+    "championStructure",
+    "gateMode",
+    "contestThreshold",
+    "candidateCap",
+    "overrideMargin",
+    "claimRanking",
+    "nearTerminalCandidate",
+    "screenGoalScope",
+    "batchAdmission",
+    "variant",
+    "worlds",
+    "horizon",
+    "opponentMode",
+    "evaluator"
+  ];
+  function versionOptionPreset(versionId) {
+    const version = JOINT_VERSIONS[versionId];
+    if (!version) throw new Error(`未知联合规划版本：${String(versionId)}`);
+    return { ...version.optionPreset ?? {} };
+  }
+  function mergeJointOptions(versionId, options = {}) {
+    return { ...versionOptionPreset(versionId), ...options };
+  }
+  function resolveJointConfig(versionId, options = {}, profileName) {
+    const version = JOINT_VERSIONS[versionId];
+    if (!version) throw new Error(`未知联合规划版本：${String(versionId)}`);
+    const preset = versionOptionPreset(versionId);
+    const workUnits = typeof options.workUnits === "number" ? options.workUnits : null;
+    const budgetMs = workUnits === null ? typeof options.budgetMs === "number" ? options.budgetMs : version.kind === "champion-guided" ? 100 : null : null;
+    const merged = {
+      ...JOINT_SEARCH_DEFAULTS,
+      ...Object.fromEntries(PRESET_FIELDS.filter((k) => preset[k] !== void 0).map((k) => [k, preset[k]])),
+      ...Object.fromEntries(PRESET_FIELDS.filter((k) => options[k] !== void 0).map((k) => [k, options[k]]))
+    };
+    const championParameters = options.championParameters ?? CHAMPION_PARAMETERS;
+    return {
+      versionId,
+      kind: version.kind,
+      algorithm: version.kind === "champion-guided" ? "champion-guided" : version.kind === "joint" ? String(merged.variant) === "joint-tree" ? "joint-tree" : "joint-rollout" : "champion-contest",
+      variant: String(merged.variant),
+      championStructure: String(merged.championStructure),
+      championParametersId: championParameters.id,
+      acquisitionVariant: championParameters.acquisitionVariant ?? null,
+      profileName: profileName ?? null,
+      budgetMode: workUnits !== null ? "fixed-work" : budgetMs !== null ? "wall-clock" : "wall-clock",
+      budgetMs,
+      workUnits,
+      simSeed: typeof options.simSeed === "number" ? options.simSeed : 0,
+      horizon: Number(merged.horizon),
+      worlds: Number(merged.worlds),
+      opponentMode: String(merged.opponentMode),
+      evaluator: String(merged.evaluator),
+      gateMode: String(merged.gateMode),
+      contestThreshold: Number(merged.contestThreshold),
+      candidateCap: Number(merged.candidateCap),
+      overrideMargin: Number(merged.overrideMargin),
+      claimRanking: String(merged.claimRanking),
+      nearTerminalCandidate: String(merged.nearTerminalCandidate),
+      screenGoalScope: String(merged.screenGoalScope),
+      batchAdmission: String(merged.batchAdmission),
+      preset,
+      overrides: Object.fromEntries(PRESET_FIELDS.filter((k) => options[k] !== void 0).map((k) => [k, options[k]]))
+    };
+  }
+  function fnv1a32(text) {
+    let hash = 2166136261;
+    for (let i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619) >>> 0;
+    }
+    return hash.toString(16).padStart(8, "0");
+  }
+  function stableStringify(value) {
+    if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+    if (value && typeof value === "object") {
+      return `{${Object.keys(value).sort().map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(",")}}`;
+    }
+    return JSON.stringify(value);
+  }
+  function jointConfigHash(config) {
+    const { hash: _ignored, ...payload } = config;
+    return fnv1a32(stableStringify(payload));
   }
 
   // src/js/adapter.ts
@@ -4995,8 +5377,15 @@
     const seat = options.playerId ?? game2.current;
     if (game2.phase === "finished") throw new Error("游戏结束，无法决策");
     if (game2.current !== seat) throw new Error("决策席位不是当前行动者");
+    const championParameters = options.championParameters ? validateAIParameters(options.championParameters) : CHAMPION_PARAMETERS;
+    const resolvedOptions = mergeJointOptions(versionId, {
+      ...options,
+      championParameters
+    });
+    const baseConfig = resolveJointConfig(versionId, resolvedOptions, options.profile?.name);
+    const config = { ...baseConfig, hash: jointConfigHash(baseConfig) };
     if (version.kind === "champion-contest") {
-      const beamBase = { ...CHAMPION_PARAMETERS };
+      const beamBase = { ...championParameters };
       const wasAdapter = beamBase.adapter !== void 0;
       for (const key of ["adapter", "jointVersion", "budgetMs"]) delete beamBase[key];
       if (wasAdapter && beamBase.structure === void 0) beamBase.structure = "beam-rollout";
@@ -5006,20 +5395,22 @@
         structure: "beam-contest",
         profile: options.profile
       });
-      return { action: response.action, reason: `JS1: ${response.reason}`, joint: null, version: versionId };
+      return { action: response.action, reason: `JS1: ${response.reason}`, joint: null, version: versionId, config };
     }
     if (game2.phase === "overflow") {
       const p = game2.players[seat];
-      const discarded = trimStock(p.stock, game2.golemMarket, null, CHAMPION_PARAMETERS).discarded;
-      return { action: { type: "discard", colors: discarded }, reason: "溢出弃置（冠军 trimStock 口径）", joint: null, version: versionId };
+      const discarded = trimStock(p.stock, game2.golemMarket, null, championParameters).discarded;
+      return { action: { type: "discard", colors: discarded }, reason: "溢出弃置（冠军 trimStock 口径）", joint: null, version: versionId, config };
     }
     const observation = buildObservation(game2, seat);
     const planner = plannerFor(versionId);
     const decision = version.kind === "champion-guided" ? planner.decide(observation, {
-      ...options,
+      ...resolvedOptions,
+      championParameters,
       profileName: options.profile?.name
     }) : planner.decide(observation, {
-      ...options,
+      ...resolvedOptions,
+      championParameters,
       profileName: options.profile?.name
     });
     const action2 = decision.action;
@@ -5030,9 +5421,9 @@
       const legal = enumerateLegalActions(sim.view, { dedupe: true });
       const fallback = legal[0];
       if (!fallback) throw new Error("联合规划决策非法且无合法回退");
-      return { action: fallback, reason: "联合规划决策非法，回退首个合法行动（缺陷暴露）", joint: decision, version: versionId };
+      return { action: fallback, reason: "联合规划决策非法，回退首个合法行动（缺陷暴露）", joint: decision, version: versionId, config };
     }
-    return { action: action2, reason: decision.reason, joint: decision, version: versionId };
+    return { action: action2, reason: decision.reason, joint: decision, version: versionId, config };
   }
 
   // src/ai/decision.ts
@@ -5045,6 +5436,9 @@
       const joint = chooseJointAction(game2, {
         version: params.jointVersion ?? "joint-js5",
         ...params.budgetMs !== void 0 ? { budgetMs: params.budgetMs } : {},
+        // AI7-A2：运行时实际消费的冠军基座参数必须显式注入（此前适配器回退读
+        // 模块级 CHAMPION_PARAMETERS——冻结描述符无法核验实际消费身份）。
+        championParameters: params,
         profile: options?.profile
       });
       return { action: joint.action, reason: joint.reason };

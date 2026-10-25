@@ -42,6 +42,9 @@ export function chooseAIAction(game: Game, options?: AIOptions): AIDecision {
     const joint = chooseJointAction(game, {
       version: params.jointVersion ?? 'joint-js5',
       ...(params.budgetMs !== undefined ? { budgetMs: params.budgetMs } : {}),
+      // AI7-A2：运行时实际消费的冠军基座参数必须显式注入（此前适配器回退读
+      // 模块级 CHAMPION_PARAMETERS——冻结描述符无法核验实际消费身份）。
+      championParameters: params,
       profile: options?.profile,
     });
     return { action: joint.action, reason: joint.reason };

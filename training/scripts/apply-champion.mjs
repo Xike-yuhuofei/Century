@@ -5,8 +5,10 @@
  * 用途：晋级 PR 中由 GitHub Actions 调用；也可手动执行。
  * 保证训练版与网页实战版永远使用同一套参数值（同一源码 + 同一参数块）。
  *
- * 用法：node training/scripts/apply-champion.mjs [--champion training/champions/champion.json] [--check]
+ * 用法：node training/scripts/apply-champion.mjs [--champion training/champions/champion.json]
+ *        [--target web-v1/src/ai/parameters.ts] [--check]
  * --check：仅校验当前生成区与冠军文件一致（CI 用），不一致时退出码 1。
+ * --target：测试/隔离工作区用；缺省写正式 parameters.ts（AI7 回归测试不再改动仓库源文件）。
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -18,6 +20,8 @@ const checkOnly = args.includes('--check');
 const championIndex = args.indexOf('--champion');
 const championArg = championIndex >= 0 ? args[championIndex + 1] : undefined;
 const championPath = resolve(championArg !== undefined ? process.cwd() : REPO_ROOT, championArg ?? 'training/champions/champion.json');
+const targetIndex = args.indexOf('--target');
+const targetArg = targetIndex >= 0 ? args[targetIndex + 1] : undefined;
 
 requireBuiltEngine();
 const champion = JSON.parse(readFileSync(championPath, 'utf8'));
@@ -26,7 +30,9 @@ if (!parameters.id) throw new Error('冠军文件缺少 parameters.id');
 
 const BEGIN = '// === CHAMPION-PARAMETERS-BEGIN';
 const END = '// === CHAMPION-PARAMETERS-END ===';
-const targetPath = resolve(dirname(fileURLToPath(import.meta.url)), '../../web-v1/src/ai/parameters.ts');
+const targetPath = targetArg !== undefined
+  ? resolve(process.cwd(), targetArg)
+  : resolve(dirname(fileURLToPath(import.meta.url)), '../../web-v1/src/ai/parameters.ts');
 const source = readFileSync(targetPath, 'utf8');
 const beginIndex = source.indexOf(BEGIN);
 const endIndex = source.indexOf(END);

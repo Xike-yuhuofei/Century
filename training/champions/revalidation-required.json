@@ -1,0 +1,24 @@
+{
+  "schema": "century-champion-revalidation-required-v1",
+  "createdAt": "2026-10-25T00:00:00.000Z",
+  "championId": "joint-js5",
+  "status": "REQUIRES_NEW_FORMAL_CHALLENGE",
+  "finding": {
+    "evidenceEngineBundleSha256": "77292a19c4e5ededf54af4b6637b53f798a81e23c72ee0ce095a5d93164eca20",
+    "evidenceCodeCommit": "4a11b62dbbc272c0903f932d7500313b1af13fc4",
+    "currentBuildAtRecording": "b76d61bf3a934312（AI7 分支构建；随代码修复会变化）",
+    "seatCountsCovered": [5],
+    "issue": "既有 joint-js5 晋级证据的受试产物与当前部署产物不一致（champion-guided.ts 在证据生成后有实质变更），且正式证据只覆盖 5 人局。"
+  },
+  "decision": {
+    "repromote": false,
+    "rewriteHistoricalProvenance": false,
+    "reason": "AI7-A4：不得通过修改历史 provenance 消除指纹漂移，也不得擅自重新晋级。当前冠军决策行为与参数保持不变（未改动 champion.json / CHAMPION_PARAMETERS / 默认路由）。"
+  },
+  "remediation": [
+    "对当前冻结产物执行新的正式独立挑战：2/3/4/5 人各自独立成次、独立验证种子块、独立 challengeIndex。",
+    "四份证据经 promote-champion.mjs --seat-evidence 汇总，账本必须合并全局正式挑战历史。",
+    "人工批准后由 apply-champion.mjs 落地；在此之前 champion.json 的既有证据状态保持 REQUIRES_APPROVAL。"
+  ],
+  "note": "本文件是治理记录，不是晋级证据；不得据此宣称当前冠军已被全人数验证。"
+}

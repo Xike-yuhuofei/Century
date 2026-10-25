@@ -69,18 +69,21 @@ test('chooseAIAction：无 adapter 字段的冠军路径行为不变（分派零
   assert.doesNotThrow(() => applyAction(g, r.action));
 });
 
-test('apply-champion.mjs：适配器冠军生成区 --check 往返一致', () => {
-  const tmp = resolve(repoRoot, 'web-v1/dist/adapter-champion-fixture.json');
-  writeFileSync(tmp, JSON.stringify({ id: 'joint-js5', parameters: js5Descriptor }));
+test('apply-champion.mjs：适配器冠军生成区 --check 往返一致（隔离 target，不改仓库源文件）', () => {
+  // AI7-A3 回归教训：旧测试直接改写 web-v1/src/ai/parameters.ts，构建新鲜度校验
+  // 一旦阻断恢复步骤就会把仓库源码留在临时状态。新测试写临时 target。
+  const tmpChampion = resolve(repoRoot, 'web-v1/dist/adapter-champion-fixture.json');
+  const tmpTarget = resolve(repoRoot, 'web-v1/dist/adapter-champion-parameters.ts');
+  writeFileSync(tmpChampion, JSON.stringify({
+    id: 'joint-js5',
+    parameters: { ...js5Descriptor, acquisitionVariant: 'readiness-efficiency' },
+  }));
+  writeFileSync(tmpTarget, readFileSync(resolve(repoRoot, 'web-v1/src/ai/parameters.ts'), 'utf8'));
   try {
-    // 对临时冠军文件做一次真实写入（生成区变为适配器冠军），
-    // 随后 --check 必须通过（生成逻辑确定性）。
-    execFileSync('node', ['training/scripts/apply-champion.mjs', '--champion', tmp], { cwd: repoRoot, stdio: 'pipe' });
-    execFileSync('node', ['training/scripts/apply-champion.mjs', '--champion', tmp, '--check'], { cwd: repoRoot, stdio: 'pipe' });
+    execFileSync('node', ['training/scripts/apply-champion.mjs', '--champion', tmpChampion, '--target', tmpTarget], { cwd: repoRoot, stdio: 'pipe' });
+    execFileSync('node', ['training/scripts/apply-champion.mjs', '--champion', tmpChampion, '--target', tmpTarget, '--check'], { cwd: repoRoot, stdio: 'pipe' });
   } finally {
-    // 恢复官方冠军生成区（测试不得改变冠军状态；生成确定性保证逐字节还原）。
-    execFileSync('node', ['training/scripts/apply-champion.mjs'], { cwd: repoRoot, stdio: 'pipe' });
-    execFileSync('node', ['training/scripts/apply-champion.mjs', '--check'], { cwd: repoRoot, stdio: 'pipe' });
-    unlinkSync(tmp);
+    unlinkSync(tmpChampion);
+    unlinkSync(tmpTarget);
   }
 });

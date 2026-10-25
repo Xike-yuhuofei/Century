@@ -13,7 +13,7 @@
  *   AI6-PHASE5-REPORT.md §4.3；确认集 inconclusive，未晋级）。
  */
 
-import { CHAMPION_PARAMETERS } from '../ai/parameters.js';
+import { CHAMPION_PARAMETERS, type AIParameters } from '../ai/parameters.js';
 import { JOINT_VERSIONS, type JointSearchOptions } from './types.js';
 
 /** JS5 搜索缺省值（与 champion-guided.ts resolveChampionGuidedOptions 一致）。
@@ -102,6 +102,10 @@ export function resolveJointConfig(
     ...Object.fromEntries(PRESET_FIELDS.filter(k => preset[k] !== undefined).map(k => [k, preset[k]])),
     ...Object.fromEntries(PRESET_FIELDS.filter(k => (options as Record<string, unknown>)[k] !== undefined).map(k => [k, (options as Record<string, unknown>)[k]])),
   };
+  // AI7-A2：被冻结版本身份的描述符必须携带其归档参数；配置身份披露
+  // 「实际消费的冠军基座参数 id / 血统」，不再无条件读活动 CHAMPION_PARAMETERS。
+  // 未显式传入时保持历史缺省（生产路径显式传入活动参数）。
+  const championParameters = (options.championParameters ?? CHAMPION_PARAMETERS) as AIParameters;
   return {
     versionId,
     kind: version.kind,
@@ -110,8 +114,8 @@ export function resolveJointConfig(
       : 'champion-contest',
     variant: String(merged.variant),
     championStructure: String(merged.championStructure),
-    championParametersId: CHAMPION_PARAMETERS.id,
-    acquisitionVariant: CHAMPION_PARAMETERS.acquisitionVariant ?? null,
+    championParametersId: championParameters.id,
+    acquisitionVariant: championParameters.acquisitionVariant ?? null,
     profileName: profileName ?? null,
     budgetMode: workUnits !== null ? 'fixed-work' : budgetMs !== null ? 'wall-clock' : 'wall-clock',
     budgetMs,

@@ -36,6 +36,10 @@ export type JointAdapterOptions = JointSearchOptions & {
   profile?: Profile;
   /** 决策席位（缺省 game.current；非当前席位抛错）。 */
   playerId?: number;
+  /** 冠军基座参数（AI7-A2 身份冻结）：冻结版本必须传入其归档参数；
+   * 生产入口 chooseAIAction 传入活动冠军参数。缺省时回退模块级
+   * CHAMPION_PARAMETERS（仅兼容旧测试调用，训练/评测运行器必须显式传入）。 */
+  championParameters?: AIParameters;
 };
 
 export type JointAdapterDecision = {
@@ -73,7 +77,14 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   if (game.current !== seat) throw new Error('决策席位不是当前行动者');
 
   // 有效配置：版本预设 + 调用方覆盖（opt 不再只是标签）。
-  const resolvedOptions = mergeJointOptions(versionId, options) as JointAdapterOptions;
+  // AI7-A2：冠军基座参数显式解析并注入配置身份（冻结描述符不得回退活动状态）。
+  const championParameters = options.championParameters
+    ? validateAIParameters(options.championParameters)
+    : CHAMPION_PARAMETERS;
+  const resolvedOptions = mergeJointOptions(versionId, {
+    ...options,
+    championParameters,
+  }) as JointAdapterOptions;
   const baseConfig = resolveJointConfig(versionId, resolvedOptions, options.profile?.name);
   const config = { ...baseConfig, hash: jointConfigHash(baseConfig) };
 
@@ -85,7 +96,7 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   // 束搜索形态（适配器冠军权重缺省补 1.0 + 结构 beam-rollout，与训练侧
   // beamBaseParameters 同口径）；冠军决策路径（champion-guided 分支）不受影响。
   if (version.kind === 'champion-contest') {
-    const beamBase: Record<string, unknown> = { ...CHAMPION_PARAMETERS };
+    const beamBase: Record<string, unknown> = { ...championParameters };
     const wasAdapter = beamBase.adapter !== undefined;
     for (const key of ['adapter', 'jointVersion', 'budgetMs']) delete beamBase[key];
     if (wasAdapter && beamBase.structure === undefined) beamBase.structure = 'beam-rollout';
@@ -101,7 +112,7 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   // 溢出：冠军 trimStock 弃置口径（与正式冠军 decision.ts 同一语义）。
   if (game.phase === 'overflow') {
     const p = game.players[seat];
-    const discarded = trimStock(p.stock, game.golemMarket, null, CHAMPION_PARAMETERS).discarded as Color[];
+    const discarded = trimStock(p.stock, game.golemMarket, null, championParameters).discarded as Color[];
     return { action: { type: 'discard', colors: discarded }, reason: '溢出弃置（冠军 trimStock 口径）', joint: null, version: versionId, config };
   }
 
@@ -113,10 +124,12 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   const decision = version.kind === 'champion-guided'
     ? (planner as ReturnType<typeof createChampionGuidedPlanner>).decide(observation, {
         ...resolvedOptions,
+        championParameters,
         profileName: options.profile?.name,
       } as ChampionGuidedSearchOptions)
     : (planner as ReturnType<typeof createJointPlanner>).decide(observation, {
         ...resolvedOptions,
+        championParameters,
         profileName: options.profile?.name,
       });
   const action = decision.action;
