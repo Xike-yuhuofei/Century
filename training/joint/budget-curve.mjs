@@ -13,7 +13,7 @@
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { pairedComparison } from './compare.mjs';
+import { pairedComparison, pairedComparisonDirectional } from './compare.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
 
 function parseArgs() {
@@ -23,17 +23,21 @@ function parseArgs() {
 
 function loadCells(dir) {
   const cells = [];
-  for (const sub of readdirSync(dir)) {
-    const subPath = resolve(dir, sub);
-    try {
-      for (const f of readdirSync(subPath)) {
-        if (!f.endsWith('.json') || f === 'manifest.json') continue;
-        const doc = JSON.parse(readFileSync(resolve(subPath, f), 'utf8'));
-        if (doc.schema !== 'century-joint-search-ablation-v1') continue;
-        for (const cell of doc.cells) cells.push({ doc, cell, file: `${sub}/${f}` });
-      }
-    } catch { /* 子目录非实验产物 */ }
-  }
+  // 递归遍历（格子位于 <players>p/b<budget>ms/<file> 两层结构）。
+  const walk = (rel) => {
+    const abs = resolve(dir, rel);
+    let entries;
+    try { entries = readdirSync(abs); } catch { return; }
+    for (const f of entries) {
+      const relPath = rel ? `${rel}/${f}` : f;
+      let doc;
+      try { doc = JSON.parse(readFileSync(resolve(dir, relPath), 'utf8')); }
+      catch { walk(relPath); continue; } // 目录 → 递归；JSON → 解析
+      if (doc.schema !== 'century-joint-search-ablation-v1') continue;
+      for (const cell of doc.cells) cells.push({ doc, cell, file: relPath });
+    }
+  };
+  walk('');
   return cells;
 }
 
@@ -71,16 +75,17 @@ async function main() {
       const a = cell.directionA?.firstPlace, b = cell.directionB?.firstPlace;
       const joint = cell.jointSearch ?? {};
       const p95 = cell.latency?.p95 ?? cell.latency?.p95Ms ?? null;
-      lines.push(`| ${budget}ms | ${a ? (a.point * 100).toFixed(1) + '% ' + fmtCI([a.lower, a.upper]) : '-'} | ${b ? (b.point * 100).toFixed(1) + '%' : '-'} | ${cell.meanRank ? cell.meanRank.point.toFixed(2) : '-'} | ${joint.gateTriggerRate ?? '-'} | ${joint.meanRolloutsPerDecision ?? '-'} | ${joint.gatedStarvedFallbackRate ?? '-'} | ${p95 ?? '-'} |`);
+      lines.push(`| ${budget}ms | ${a ? (a.point * 100).toFixed(1) + '% ' + fmtCI([a.lower, a.upper]) : '-'} | ${b ? (b.point * 100).toFixed(1) + '%' : '-'} | ${cell.meanRank ? cell.meanRank.mean.toFixed(2) : '-'} | ${joint.gateTriggerRate ?? '-'} | ${joint.meanRolloutsPerDecision ?? '-'} | ${joint.gatedStarvedFallbackRate ?? '-'} | ${p95 ?? '-'} |`);
     }
     lines.push('');
     // 相邻预算配对边际收益（同人数相邻预算：共享种子配对）。
+    // 主判定 = 方向 A（单席位，pairedComparisonDirectional）；合并口径仅参考。
     for (let i = 1; i < budgets.length; i++) {
       const lo = byKey.get(`${players}p:js5:b${budgets[i - 1]}`);
       const hi = byKey.get(`${players}p:js5:b${budgets[i]}`);
       if (!lo || !hi) continue;
       try {
-        const cmp = pairedComparison(pathOf(dir, players, 'js5', budgets[i]), pathOf(dir, players, 'js5', budgets[i - 1]), { seatCount: players, iterations: 2000 });
+        const cmp = pairedComparisonDirectional(pathOf(dir, players, 'js5', budgets[i]), pathOf(dir, players, 'js5', budgets[i - 1]), { seatCount: players, directionFilter: 'A', iterations: 2000 });
         lines.push(`- 边际 ${budgets[i - 1]}→${budgets[i]}ms：方向A差 ${(cmp.firstPlaceDiff * 100).toFixed(1)}pp ${fmtCI(cmp.firstPlaceDiffCI)}｜${cmp.significance}`);
       } catch (e) {
         lines.push(`- 边际 ${budgets[i - 1]}→${budgets[i]}ms：配对失败（${String(e.message).slice(0, 80)}）`);
@@ -89,14 +94,14 @@ async function main() {
     lines.push('');
   }
 
-  lines.push('# 同预算算法对照（JS6 vs JS5，任务 B2 比较二）\n');
+  lines.push('# 同预算算法对照（JS6 vs JS5，任务 B2 比较二；方向A 主判定）\n');
   for (const players of playersList) {
     for (const budget of budgets) {
       const js6 = byKey.get(`${players}p:js6:b${budget}`);
       const js5 = byKey.get(`${players}p:js5:b${budget}`);
       if (!js6 || !js5) continue;
       try {
-        const cmp = pairedComparison(pathOf(dir, players, 'js6', budget), pathOf(dir, players, 'js5', budget), { seatCount: players, iterations: 2000 });
+        const cmp = pairedComparisonDirectional(pathOf(dir, players, 'js6', budget), pathOf(dir, players, 'js5', budget), { seatCount: players, directionFilter: 'A', iterations: 2000 });
         lines.push(`- ${players}p @${budget}ms：JS6−JS5 方向A差 ${(cmp.firstPlaceDiff * 100).toFixed(1)}pp ${fmtCI(cmp.firstPlaceDiffCI)}｜${cmp.significance}｜分差 ${cmp.meanScoreDiff.toFixed(2)} ${fmtCI(cmp.meanScoreDiffCI)}`);
       } catch (e) {
         lines.push(`- ${players}p @${budget}ms：配对失败（${String(e.message).slice(0, 80)}）`);

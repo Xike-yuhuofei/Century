@@ -128,7 +128,11 @@ function versionsForSeats(candidateSeats, candidate, opponents, seedIndex, seatC
  * duel 未传 simSeed，全部对局共用 0，跨局模拟噪声相关；本参数只影响
  * 联合候选的信念/对手采样熵，不改变算法语义，js0/js1 不消费该值）；
  * gated/override/回退统计（任务 E）；逐决策诊断流（任务 G，可选）。 */
-function runGame({ seed, seatCount, candidateSeats, candidate, opponents, jointOptions, maxMoves = 1200, deadlineMs = 120_000, diagnostics }) {
+function runGame({ seed, seatCount, candidateSeats, candidate, opponents, jointOptions, maxMoves = 1200, deadlineMs, diagnostics }) {
+  // 单局死线随搜索预算缩放（第六阶段 B 矩阵教训：120s 固定死线在 5p@1000ms
+  // 下把 33% 的长对局误判为异常——高预算对局的合法墙钟更长，死线必须是
+  // 预算的函数而非常数；250×budget 覆盖 5p@1000ms 的长尾对局）。
+  const effectiveDeadline = deadlineMs ?? Math.max(120_000, 250 * (jointOptions?.budgetMs ?? 100));
   const versions = versionsForSeats(candidateSeats, candidate, opponents, seed % 100000, seatCount);
   let game;
   try {
@@ -153,7 +157,7 @@ function runGame({ seed, seatCount, candidateSeats, candidate, opponents, jointO
   try {
     while (game.phase !== 'finished') {
       if (moves >= maxMoves) return { status: 'anomaly', reason: `步数上限 ${maxMoves}` };
-      if (performance.now() - started > deadlineMs) return { status: 'anomaly', reason: `单局超时 ${deadlineMs}ms` };
+      if (performance.now() - started > effectiveDeadline) return { status: 'anomaly', reason: `单局超时 ${effectiveDeadline}ms` };
       const seat = game.current;
       const version = versions[seat];
       const t0 = performance.now();

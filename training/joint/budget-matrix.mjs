@@ -25,7 +25,7 @@
  * 输出：training/reports/phase6-task-b/<players>p/<tag>.json（duel ablation 格式）
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -91,6 +91,11 @@ function runCell(cell, args) {
     '--out', outDir,
   ];
   const t0 = Date.now();
+  // 断点续跑：已完成格子直接跳过（共享种子 + 确定性协议下重跑只会浪费墙钟；
+  // 存在性以 duel 产物 JSON 为准）。
+  if (existsSync(out)) {
+    return Promise.resolve({ cell, out, wallMs: 0, stdout: '（已存在，跳过）' });
+  }
   return new Promise((res, rej) => {
     const p = spawn('node', cmdArgs, { cwd: REPO_ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
     let stdout = '', stderr = '';
