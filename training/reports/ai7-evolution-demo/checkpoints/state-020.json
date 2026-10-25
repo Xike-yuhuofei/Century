@@ -81,13 +81,14 @@
       "candidates": [
         {
           "candidateId": "cand-ai7-searchbudget-r1c0-bfe007",
+          "parentId": null,
           "identityDigest": "8041a418935181e1cb7d21d417a1dcf56cd9e40b8d6df7508df8cadb0d79d577",
           "evaluationMode": "game",
           "targetIds": [
             "searchBudget"
           ],
           "artifactPath": "training/reports/ai7-evolution-demo/artifacts/objects/cand-ai7-searchbudget-r1c0-bfe007/8041a418935181e1cb7d21d417a1dcf56cd9e40b8d6df7508df8cadb0d79d577/candidate.json",
-          "stage": "not-selected",
+          "stage": "selected",
           "safetyStatus": "passed",
           "sourceHash": "501651c60eaee5e0ac612a4c63167680e5b6c076fa44ceeac22b02c441ea654c",
           "buildArtifactHash": "2eb5aa3c3184d4f30a291a3ba16725aa1154c5cd4a2e4a455a32a5226c3b55f4",
@@ -105,9 +106,9 @@
               ],
               "quality": 0.36279,
               "stability": 1,
-              "cost": 0.766039,
+              "cost": 0.873663,
               "safety": 1,
-              "composite": 0.657999
+              "composite": 0.668761
             },
             "games": 4,
             "metrics": {
@@ -115,18 +116,16 @@
               "chanceAdjustedRate": 0.0833,
               "minWilsonLower": 0.0945,
               "anomalyRate": 0,
-              "p95WallMs": 9162.5
+              "p95WallMs": 4338.2
             },
             "artifactHash": "f37f560a80d3bc7dd3eec0352f6cf3fdeb9a6672462ceef62ffc52599817e933"
           },
           "deep": null,
-          "failure": {
-            "stage": "selection",
-            "reason": "below-retention-cutoff"
-          }
+          "failure": null
         },
         {
           "candidateId": "cand-ai7-candidatecap-r1c1-33cef5",
+          "parentId": null,
           "identityDigest": "5cceb869d99543558d7e1b860f75334ebf3b742a5e0f3b37a072e0c55e6394dc",
           "evaluationMode": "game",
           "targetIds": [
@@ -151,9 +150,9 @@
               ],
               "quality": 0.43779,
               "stability": 1,
-              "cost": 0.825923,
+              "cost": 0.900806,
               "safety": 1,
-              "composite": 0.701487
+              "composite": 0.708976
             },
             "games": 4,
             "metrics": {
@@ -161,7 +160,7 @@
               "chanceAdjustedRate": 0.3333,
               "minWilsonLower": 0.0945,
               "anomalyRate": 0,
-              "p95WallMs": 6323
+              "p95WallMs": 3303.5
             },
             "artifactHash": "63879dee7643871b0786db0984f80bda2d54b82e2d85f62dbf0fde9a107c9c3f"
           },
@@ -177,9 +176,9 @@
               ],
               "quality": 0.225,
               "stability": 1,
-              "cost": 0.637807,
+              "cost": 0.747302,
               "safety": 1,
-              "composite": 0.576281
+              "composite": 0.58723
             },
             "games": 6,
             "metrics": {
@@ -194,13 +193,14 @@
         },
         {
           "candidateId": "cand-ai7-overridemargin-r1c0-3a144d",
+          "parentId": null,
           "identityDigest": "ac53c621800c6db6a480b28262524a93a82c457ed78b8057f803cb1e5ef777c0",
           "evaluationMode": "game",
           "targetIds": [
             "overrideMargin"
           ],
           "artifactPath": "training/reports/ai7-evolution-demo/artifacts/objects/cand-ai7-overridemargin-r1c0-3a144d/ac53c621800c6db6a480b28262524a93a82c457ed78b8057f803cb1e5ef777c0/candidate.json",
-          "stage": "selected",
+          "stage": "not-selected",
           "safetyStatus": "passed",
           "sourceHash": "d4b9b6571d26a9feb51ef17d03792680583706c2114fb3602dd5afab17d178e9",
           "buildArtifactHash": "a3a5c08332aed2cc2a4cd12f2ff4bfdada3736e2dde970ad9f10e81c9bb28da3",
@@ -218,9 +218,9 @@
               ],
               "quality": 0.36279,
               "stability": 1,
-              "cost": 0.776653,
+              "cost": 0.857346,
               "safety": 1,
-              "composite": 0.65906
+              "composite": 0.66713
             },
             "games": 4,
             "metrics": {
@@ -228,15 +228,19 @@
               "chanceAdjustedRate": 0.0833,
               "minWilsonLower": 0.0945,
               "anomalyRate": 0,
-              "p95WallMs": 8627.3
+              "p95WallMs": 4991.7
             },
             "artifactHash": "a07acb2330c4f8ffd6af18feb2001145edf0fcb03677cd826f38f40c241c8628"
           },
           "deep": null,
-          "failure": null
+          "failure": {
+            "stage": "selection",
+            "reason": "below-retention-cutoff"
+          }
         },
         {
           "candidateId": "cand-ai7-acquisitionvalue-r1c1-d31db4",
+          "parentId": null,
           "identityDigest": "b611c2a1495c5f37b0600a5b350df7b93b10d2bc93fc02bd5e442d6c03dd0395",
           "evaluationMode": "proxy",
           "targetIds": [
@@ -276,6 +280,7 @@
         },
         {
           "candidateId": "cand-ai7-enginevalue-r1c3-acf817",
+          "parentId": null,
           "identityDigest": "a12ca80b599e9651d4bd6e1e51e9014d58ff67bc6ba847bdd198d2b32f181d19",
           "evaluationMode": "proxy",
           "targetIds": [
@@ -308,6 +313,7 @@
         },
         {
           "candidateId": "cand-ai7-compiled-acq-r1c4-1d7b60",
+          "parentId": null,
           "identityDigest": "3932087d569e30e0ea33b102e0319cba429bbd50743b38489f81f57aad4a1c07",
           "evaluationMode": "proxy",
           "targetIds": [
@@ -350,7 +356,7 @@
         "cand-ai7-candidatecap-r1c1-33cef5",
         "cand-ai7-acquisitionvalue-r1c1-d31db4",
         "cand-ai7-compiled-acq-r1c4-1d7b60",
-        "cand-ai7-overridemargin-r1c0-3a144d"
+        "cand-ai7-searchbudget-r1c0-bfe007"
       ],
       "selectionSummary": {
         "evaluated": 5,
@@ -504,12 +510,12 @@
   ],
   "checkpointSeq": 20,
   "lastEventSeq": 29,
-  "createdAt": "2026-10-25T12:00:23.684Z",
-  "updatedAt": "2026-10-25T12:02:45.717Z",
+  "createdAt": "2026-10-25T12:15:52.853Z",
+  "updatedAt": "2026-10-25T12:17:18.284Z",
   "budgetUsed": {
     "candidates": 6,
     "games": 18,
-    "wallMs": 142024,
+    "wallMs": 85421,
     "deepConfirmations": 1
   },
   "pendingApprovals": [
@@ -536,9 +542,9 @@
             ],
             "quality": 0.43779,
             "stability": 1,
-            "cost": 0.825923,
+            "cost": 0.900806,
             "safety": 1,
-            "composite": 0.701487
+            "composite": 0.708976
           },
           "games": 4,
           "metrics": {
@@ -546,7 +552,7 @@
             "chanceAdjustedRate": 0.3333,
             "minWilsonLower": 0.0945,
             "anomalyRate": 0,
-            "p95WallMs": 6323
+            "p95WallMs": 3303.5
           },
           "artifactHash": "63879dee7643871b0786db0984f80bda2d54b82e2d85f62dbf0fde9a107c9c3f"
         },
@@ -562,9 +568,9 @@
             ],
             "quality": 0.225,
             "stability": 1,
-            "cost": 0.637807,
+            "cost": 0.747302,
             "safety": 1,
-            "composite": 0.576281
+            "composite": 0.58723
           },
           "games": 6,
           "metrics": {
@@ -589,7 +595,7 @@
       "status": "pending-human-approval",
       "approvalRequired": true,
       "promotionTriggered": false,
-      "requestedAt": "2026-10-25T12:02:45.710Z",
+      "requestedAt": "2026-10-25T12:17:18.277Z",
       "validationPoolConsumed": false,
       "requestPath": "training/reports/ai7-evolution-demo/pending-approval/greq-030de52c930dd0ff.json"
     }

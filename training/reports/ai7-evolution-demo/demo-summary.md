@@ -11,15 +11,15 @@
 
 | 候选 | 模式 | 阶段 | 快筛分 | 深验分 | 第一名率 | proxy Δ |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| cand-ai7-searchbudget-r1c0-bfe007 | game | not-selected | 0.6580 | — | 0.500 | — |
-| cand-ai7-candidatecap-r1c1-33cef5 | game | pending-approval | 0.7015 | 0.5763 | 0.750 | — |
-| cand-ai7-overridemargin-r1c0-3a144d | game | selected | 0.6591 | — | 0.500 | — |
+| cand-ai7-searchbudget-r1c0-bfe007 | game | selected | 0.6688 | — | 0.500 | — |
+| cand-ai7-candidatecap-r1c1-33cef5 | game | pending-approval | 0.7090 | 0.5872 | 0.750 | — |
+| cand-ai7-overridemargin-r1c0-3a144d | game | not-selected | 0.6671 | — | 0.500 | — |
 | cand-ai7-acquisitionvalue-r1c1-d31db4 | proxy | selected | 0.7366 | — | — | 0.042 |
 | cand-ai7-compiled-acq-r1c4-1d7b60 | proxy | selected | 0.7325 | — | — | 0.027 |
 
 安全失败候选（隔离，不污染其他候选）：cand-ai7-enginevalue-r1c3-acf817
 生成即拒绝候选：candidateCap（candidateCap.candidateCap 越界：必须为 2–8，实际：99）
-保留候选：cand-ai7-candidatecap-r1c1-33cef5(game)、cand-ai7-overridemargin-r1c0-3a144d(game)、cand-ai7-acquisitionvalue-r1c1-d31db4(proxy)、cand-ai7-compiled-acq-r1c4-1d7b60(proxy)
+保留候选：cand-ai7-searchbudget-r1c0-bfe007(game)、cand-ai7-candidatecap-r1c1-33cef5(game)、cand-ai7-acquisitionvalue-r1c1-d31db4(proxy)、cand-ai7-compiled-acq-r1c4-1d7b60(proxy)
 
 ## 待人工审批的正式挑战请求
 
