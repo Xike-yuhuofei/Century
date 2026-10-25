@@ -8,7 +8,10 @@ import { wilsonCI, meanCI, promotionDecision, pairedPromotionDecision, firstPlac
 import { runChallenge, challengeWithDecision, versionsFor } from '../tournament/challenge.mjs';
 import { mutateCandidate, evolve, compareCandidates, championFingerprint } from '../optimizer/evolve.mjs';
 import { mulberry32 } from '../lib/rng.mjs';
-import { buildOpponentPool, styleVariants, historicalChampions } from '../lib/opponents.mjs';
+import { buildOpponentPool, styleVariants, historicalChampions, beamBaseParameters } from '../lib/opponents.mjs';
+import { createGame } from '../../web-v1/dist/js/engine.js';
+import { chooseAIAction } from '../../web-v1/dist/js/ai.js';
+import { CHAMPION_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
 import {
   nextValidationBase, consumeLedger, assertBlockFree, validationChallengeCount,
   alignToTrainingBlock, allocateTrainingBlock, migrateLegacyCursor,
@@ -139,6 +142,51 @@ test('对手池构建：冠军 + 基线 + 风格变体（去重、限量、全�
   assert.ok(variants.some(v => v.contestWeight !== BASELINE_PARAMETERS.contestWeight));
   // 历史档案目录不存在时返回空（尚无晋级历史不是错误）。
   assert.deepEqual(historicalChampions('/nonexistent/path/candidates'), []);
+});
+
+test('适配器冠军的风格变体：剥离 adapter 且权重真实生效（2026-10-24 audit 回归）', () => {
+  // 缺陷背景：CHAMPION_PARAMETERS.adapter='champion-guided' 后，浅拷贝风格变体
+  // 被 decision.ts 静默分派到 JS5 联合搜索，权重乘子 100% 失效（变体 ≡ 冠军本体，
+  // 行为探针逐位一致 48/48）。styleVariants 必须经 beamBaseParameters 归一化。
+  const variants = styleVariants(CHAMPION_PARAMETERS);
+  assert.equal(variants.length, 3);
+  for (const v of variants) {
+    assert.equal(v.adapter, undefined, '风格变体不得携带 adapter 字段');
+    assert.equal(v.jointVersion, undefined);
+    assert.equal(v.budgetMs, undefined);
+    assert.equal(v.structure, 'beam-rollout', '适配器冠军的束搜索基座结构');
+    assert.doesNotThrow(() => validateAIParameters(v));
+  }
+  assert.ok(variants.some(v => v.tempoWeight !== 1), '权重扰动必须真实存在');
+  // 权重真实生效的结构性证据：变体决策走束搜索路径（reason 为束规划格式，
+  // 不含适配器分派标记"冠军直通/联合规划"；变体 id 含 js5 字样属正常——id 透传）。
+  const game = createGame(['A', 'B'], 1, [1]);
+  game.players[0].isAI = true;
+  const response = chooseAIAction(game, { parameters: variants[0] });
+  assert.doesNotMatch(response.reason, /冠军直通|联合规划/);
+  assert.match(response.reason, /beam-rollout/);
+});
+
+test('buildOpponentPool：适配器冠军入场但派生对手全部走束搜索基座', () => {
+  const pool = buildOpponentPool({ champion: CHAMPION_PARAMETERS, baseline: BASELINE_PARAMETERS, maxOpponents: 5 });
+  assert.equal(pool[0].adapter, 'champion-guided', '冠军本体席位保留适配器分派');
+  for (const opponent of pool.slice(1)) {
+    assert.equal(opponent.adapter, undefined, `对手 ${opponent.id} 不得携带 adapter（audit 缺陷防御）`);
+  }
+});
+
+test('beamBaseParameters：适配器参数归一化 + 非适配器参数原样保留', () => {
+  const normalized = beamBaseParameters(CHAMPION_PARAMETERS);
+  assert.equal(normalized.adapter, undefined);
+  assert.equal(normalized.structure, 'beam-rollout');
+  assert.equal(normalized.acquisitionVariant, 'readiness-efficiency', '血统保留');
+  for (const key of ['engineWeight', 'tempoWeight', 'restWeight', 'endgameWeight']) {
+    assert.equal(normalized[key], 1, `缺省权重补 1.0：${key}`);
+  }
+  // 非适配器冠军：structure 原样保留（不改变既有行为）。
+  const kept = beamBaseParameters({ ...BASELINE_PARAMETERS, structure: 'beam-lineage' });
+  assert.equal(kept.structure, 'beam-lineage');
+  assert.equal(kept.adapter, undefined);
 });
 
 test('验证种子账本：种子块不可重复使用', () => {

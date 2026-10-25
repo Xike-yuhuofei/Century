@@ -1,7 +1,11 @@
 /** AI5 候选源码树组装：把演化后的 acquisitionValue 函数注入隔离的源码副本。
  *
  * 设计要点（同局双版本隔离的基础）：
- * - 候选树 = 官方源码的字节级副本（src/data.ts、src/engine.ts、src/ai/**），
+ * - 候选树 = 官方源码的字节级副本（import 闭包：从 src/data.ts、src/engine.ts、
+ *   src/ai.ts 出发沿相对 import 递归收集——自动覆盖 ai/**、js/**、sim/**、om/**
+ *   等官方源码目录，杜绝"决策入口接线新增模块后快照失配"（2026-10-24 事故：
+ *   PR #26/#30 把 '../js/adapter.js' 接线进 decision.ts 后 COPIED_PATHS 白名单
+ *   未更新，候选编译 TS2307，ai5.yml Seatbelt/e2e 双 job 失败）），
  *   唯一差异是 ai/evaluator.ts 中的 acquisitionValue 函数被替换为演化版本；
  * - 官方 web-v1/src 与 web-v1/dist 全程只读，冠军代码零污染；
  * - 除演化函数外逐文件 SHA256 校验与官方一致（manifest 固证，审计可查）；
@@ -31,7 +35,31 @@ const outDir = arg('out');
 if (!programPath || !outDir) { console.error('用法: node assemble_candidate.mjs --program <fn.ts> --out <workdir>'); process.exit(2); }
 
 const functionText = readFileSync(programPath, 'utf8');
-const COPIED_PATHS = ['data.ts', 'engine.ts', 'ai.ts', 'ai'];
+const ENTRY_PATHS = ['data.ts', 'engine.ts', 'ai.ts'];
+
+/** import 闭包收集：从入口出发沿相对 import 递归收集全部 TS 源文件。
+ * NodeNext 风格的 '.js' 后缀映射回 '.ts'；非相对导入（裸包名）与不存在的
+ * 目标静默跳过（web-v1/src 无裸包依赖）。 */
+function collectImportClosure() {
+  const seen = new Set();
+  const queue = [...ENTRY_PATHS];
+  const importPattern = /(?:from\s+|import\s+|import\()\s*['"](\.[^'"]+)['"]/g;
+  while (queue.length > 0) {
+    const rel = queue.shift();
+    if (seen.has(rel)) continue;
+    seen.add(rel);
+    const source = readFileSync(join(srcRoot, rel), 'utf8');
+    for (const match of source.matchAll(importPattern)) {
+      const fromTs = join(srcRoot, rel);
+      let target = relative(srcRoot, resolve(dirname(fromTs), match[1]));
+      const candidates = [target, target.replace(/\.js$/, '.ts'), `${target}.ts`];
+      for (const candidate of candidates) {
+        if (existsSync(join(srcRoot, candidate))) { queue.push(candidate); break; }
+      }
+    }
+  }
+  return [...seen].sort();
+}
 
 /** 与 static_check.mjs 相同的剥离逻辑（用于在官方 evaluator.ts 中定位原函数）。 */
 function stripLiterals(src) { /* 简版：定位只依赖注释/字符串安全的最小实现 */
@@ -86,9 +114,11 @@ try {
   }
 
   if (existsSync(outDir)) rmSync(outDir, { recursive: true, force: true });
+  const closure = collectImportClosure();
   mkdirSync(join(outDir, 'src'), { recursive: true });
-  for (const rel of COPIED_PATHS) {
-    cpSync(join(srcRoot, rel), join(outDir, 'src', rel), { recursive: true });
+  for (const rel of closure) {
+    mkdirSync(dirname(join(outDir, 'src', rel)), { recursive: true });
+    cpSync(join(srcRoot, rel), join(outDir, 'src', rel));
   }
 
   // 替换演化函数（保持函数前后内容逐字节不动）。
@@ -99,17 +129,13 @@ try {
   }
   writeFileSync(evalPath, spliced);
 
-  // 逐文件哈希固证：除 evaluator.ts 外必须与官方逐字节一致。
+  // 逐文件哈希固证：候选树内全部文件（除 evaluator.ts 外）必须与官方逐字节一致。
   const manifest = { splicedFile: 'src/ai/evaluator.ts', evolvedFunctionSha256: sha256(functionText), files: {} };
   const files = {};
-  const aiDir = join(outDir, 'src/ai');
-  for (const rel of ['data.ts', 'engine.ts', 'ai.ts']) {
-    const p = join(outDir, 'src', rel);
-    files[`src/${rel}`] = { sha256: sha256(readFileSync(p)), matchesOfficial: readFileSync(p).equals(readFileSync(join(srcRoot, rel))) };
-  }
-  for (const f of listFiles(aiDir)) {
-    const rel = `src/ai/${relative(aiDir, f)}`;
-    files[rel] = { sha256: sha256(readFileSync(f)), matchesOfficial: readFileSync(f).equals(readFileSync(join(srcRoot, 'ai', relative(aiDir, f)))) };
+  const srcDir = join(outDir, 'src');
+  for (const f of listFiles(srcDir)) {
+    const rel = `src/${relative(srcDir, f)}`;
+    files[rel] = { sha256: sha256(readFileSync(f)), matchesOfficial: readFileSync(f).equals(readFileSync(join(srcRoot, relative(srcDir, f)))) };
   }
   const mismatches = Object.entries(files).filter(([k, v]) => !v.matchesOfficial).map(([k]) => k);
   // 允许两种形态：仅 evaluator.ts 有差异（演化候选）；或与官方完全一致
@@ -121,14 +147,14 @@ try {
   }
   files['src/ai/evaluator.ts'].diff = 'acquisitionValue 函数替换为演化版本（函数外内容逐字节一致）';
 
-  // 作用域 tsconfig：只编译候选树，严格选项与 web-v1 完全一致。
+  // 作用域 tsconfig：只编译候选树（import 闭包内的文件），严格选项与 web-v1 完全一致。
   writeFileSync(join(outDir, 'tsconfig.json'), JSON.stringify({
     compilerOptions: {
       target: 'ES2022', module: 'NodeNext', moduleResolution: 'NodeNext',
       strict: true, skipLibCheck: true, lib: ['ES2022', 'DOM', 'DOM.Iterable'],
       outDir: 'dist/js', rootDir: 'src', noEmitOnError: true,
     },
-    include: ['src/data.ts', 'src/engine.ts', 'src/ai.ts', 'src/ai/**/*.ts'],
+    include: ['src/**/*.ts'],
   }, null, 2));
 
   manifest.files = files;

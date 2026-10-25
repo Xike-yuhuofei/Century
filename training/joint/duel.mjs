@@ -30,6 +30,7 @@ import { firstPlaceClusterCI, pairedDiffSummary, latencySummary } from '../basel
 import { wilsonCI, meanCI } from '../evaluator/stats.mjs';
 import { REPO_ROOT, engineBundleSha256 } from '../lib/paths.mjs';
 import { mulberry32 } from '../lib/rng.mjs';
+import { beamBaseParameters } from '../lib/opponents.mjs';
 import { enumerateLegalActions } from '../../web-v1/dist/js/sim/legal.js';
 
 const MAX_SEAT_COUNT = 5;
@@ -51,40 +52,44 @@ function candidateVersion(id) {
   return { kind: 'joint', id: jointId, joint: jointId };
 }
 
-/** 对手池（不含候选本体）：冻结冠军 + 中立基线 + 风格变体。全部经
- * 正式冠军入口运行（对手行为与 PR #22 基准完全同口径）。
+/** 对手池（不含候选本体）：冻结冠军 + 中立基线 + 风格变体。冠军本体席位保持
+ * 适配器分派（行为 = 当前冠军）；风格变体席位经 beamBaseParameters 归一化——
+ * audit 修复（2026-10-24）：此前 {...CHAMPION_PARAMETERS} 浅拷贝携带 adapter，
+ * 变体被静默分派到 JS5 联合搜索，权重 100% 失效（变体 ≡ 冠军本体）。
  *
  * 第五阶段任务 D2：对手池分两套，作为独立评测维度披露——
  * - classic（缺省，与 PR #26/27 一致）：冠军同族风格变体；
  * - diverse：算法结构更多样的对手——历史冠军（AI4 struct-beam-rollout 归档参数）、
- *   手调 rush/engine/balanced 风格、随机合法策略（uniform-legal，与冠军
+ *   手调 rush/engine 风格、随机合法策略（uniform-legal，与冠军
  *   算法结构完全不同）。历史冠军参数从 training/champions/candidates/ 读取。 */
 function historicalChampionParameters() {
   const path = resolve(REPO_ROOT, 'training/champions/candidates/struct-beam-rollout.json');
   const doc = JSON.parse(readFileSync(path, 'utf8'));
   const params = doc.parameters ?? doc;
   if (!params?.id) throw new Error(`历史冠军归档缺少 parameters.id：${path}`);
-  return params;
+  return beamBaseParameters(params);
 }
 
 function classicPool() {
   const c = CHAMPION_PARAMETERS;
+  const base = beamBaseParameters(c);
   return [
     { id: c.id, parameters: c, structure: c.structure },
     { id: 'neutral-baseline', parameters: BASELINE_PARAMETERS, structure: BASELINE_PARAMETERS.structure },
-    { id: `${c.id}@tempo`, parameters: { ...c, tempoWeight: Math.min(1.5, c.tempoWeight * 1.35), restWeight: Math.max(0.5, c.restWeight * 0.8) }, structure: c.structure },
-    { id: `${c.id}@contest`, parameters: { ...c, contestWeight: Math.min(2, c.contestWeight * 1.4), goalWeight: Math.min(1.5, c.goalWeight * 1.15) }, structure: c.structure },
-    { id: `${c.id}@engine`, parameters: { ...c, engineWeight: Math.min(1.5, c.engineWeight * 1.3), endgameWeight: Math.min(1.5, c.endgameWeight * 1.1) }, structure: c.structure },
+    { id: `${c.id}@tempo`, parameters: { ...base, tempoWeight: Math.min(1.5, base.tempoWeight * 1.35), restWeight: Math.max(0.5, base.restWeight * 0.8) }, structure: base.structure },
+    { id: `${c.id}@contest`, parameters: { ...base, contestWeight: Math.min(2, base.contestWeight * 1.4), goalWeight: Math.min(1.5, base.goalWeight * 1.15) }, structure: base.structure },
+    { id: `${c.id}@engine`, parameters: { ...base, engineWeight: Math.min(1.5, base.engineWeight * 1.3), endgameWeight: Math.min(1.5, base.endgameWeight * 1.1) }, structure: base.structure },
   ];
 }
 
 function diversePool() {
   const c = CHAMPION_PARAMETERS;
+  const base = beamBaseParameters(c);
   return [
     { id: c.id, parameters: c, structure: c.structure },
     { id: 'ai4-struct-beam-rollout', parameters: historicalChampionParameters(), structure: historicalChampionParameters().structure },
-    { id: 'style-rush', parameters: { ...c, tempoWeight: 1.6, restWeight: 0.5, engineWeight: 0.5, endgameWeight: 0.6 }, structure: c.structure },
-    { id: 'style-engine', parameters: { ...c, engineWeight: 1.6, capacityWeight: 1.4, tempoWeight: 0.7 }, structure: c.structure },
+    { id: 'style-rush', parameters: { ...base, tempoWeight: 1.6, restWeight: 0.5, engineWeight: 0.5, endgameWeight: 0.6 }, structure: base.structure },
+    { id: 'style-engine', parameters: { ...base, engineWeight: 1.6, capacityWeight: 1.4, tempoWeight: 0.7 }, structure: base.structure },
     { id: 'random-legal', parameters: BASELINE_PARAMETERS, structure: BASELINE_PARAMETERS.structure, randomLegal: true },
   ];
 }
