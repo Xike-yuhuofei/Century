@@ -31,8 +31,17 @@ const OFFICIAL_DIST = resolve(REPO_ROOT, 'web-v1/dist/js');
 const STATIC_CHECK = resolve(REPO_ROOT, 'ai5/openevolve/node/static_check.mjs');
 const ASSEMBLE = resolve(REPO_ROOT, 'ai5/openevolve/node/assemble_candidate.mjs');
 const TSC = resolve(REPO_ROOT, 'web-v1/node_modules/typescript/bin/tsc');
-const TSC_VERSION = JSON.parse(readFileSync(resolve(REPO_ROOT, 'web-v1/node_modules/typescript/package.json'), 'utf8')).version;
+const TSC_PACKAGE = resolve(REPO_ROOT, 'web-v1/node_modules/typescript/package.json');
 const PROBE = resolve(REPO_ROOT, 'training/evolution/sandbox/probe_compiled.mjs');
+
+let tscVersionCache = null;
+/** 延迟读取 tsc 版本：没有 web-v1 node_modules 时也不影响非编译路径的导入。 */
+function readTscVersion() {
+  if (!tscVersionCache) {
+    tscVersionCache = JSON.parse(readFileSync(TSC_PACKAGE, 'utf8')).version;
+  }
+  return tscVersionCache;
+}
 
 /** 与 AI5 assemble 相同的字符串/注释剥离，用于定位官方函数。 */
 function stripLiterals(src) {
@@ -115,6 +124,7 @@ export function createCompiledAcquisitionCandidate({
   assertCondition(SEATBELT_AVAILABLE, 'Seatbelt 不可用——拒绝创建编译型候选（不做无沙箱编译）');
   assertCondition(existsSync(TSC), `tsc 不存在：${TSC}`);
   assertCondition(experiment && typeof experiment === 'object', '编译型候选必须提供 experiment 引用');
+  const tscVersion = readTscVersion();
 
   const baselineText = extractBaselineFunction();
   const mutatedText = mutateBaselineFunction(baselineText);
@@ -189,7 +199,7 @@ export function createCompiledAcquisitionCandidate({
       safety: { status: 'pending', checks: [] },
       buildInput: {
         kind: 'esm-module-bundle-v1',
-        compiler: `tsc ${TSC_VERSION}`,
+        compiler: `tsc ${tscVersion}`,
         files: [{ path: 'dist/js/ai/evaluator.js', content: compiledContent }],
       },
       gameRules: gameRulesDescriptor(),
@@ -200,7 +210,7 @@ export function createCompiledAcquisitionCandidate({
       targetValues: artifact.parameters.values,
       evaluationMode: 'proxy',
       buildLog: {
-        compiler: `tsc ${TSC_VERSION}`,
+        compiler: `tsc ${tscVersion}`,
         functionSha256,
         compiledSha256,
         compiledBytes: compiledContent.length,
@@ -316,7 +326,7 @@ export function evaluateCompiledProxy({ artifact, round = 1 }) {
 export const COMPILED_CANDIDATE_INFO = Object.freeze({
   targetId: COMPILED_TARGET_ID,
   sourcePath: COMPILED_SOURCE_PATH,
-  compiler: `tsc ${TSC_VERSION}`,
+  compiler: 'tsc (web-v1 node_modules)',
   sandbox: 'macos-seatbelt',
   seatbeltAvailable: SEATBELT_AVAILABLE,
 });
