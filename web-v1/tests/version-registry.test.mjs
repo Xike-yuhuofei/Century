@@ -166,7 +166,13 @@ test('championParameters 透传：权重修改真实影响 JS5 冠军基座（�
   assert.deepEqual(explicit.decisions, def.decisions);
 });
 
-test('实验占位拒绝参与对局；未知 id 抛错', () => {
-  assert.throws(() => frozenVersion('joint-js6-experimental'), /尚未注册算法实现/);
+test('未知 id 抛错；实验版本身份可解析（算法实现已注册）', () => {
+  // js6-experimental 在第六阶段 C/E 完成后已注册算法实现（joint-js6 组合），
+  // 可解析并可参与对局（行为受 F 确认与金丝雀约束）；「未注册即拒绝」的
+  // 语义由 frozenVersion 的 adapter 检查承担（对未实现算法的占位仍抛错）。
+  const js6 = frozenVersion('joint-js6-experimental');
+  assert.equal(js6.parameters.jointVersion, 'joint-js6');
+  assert.equal(js6.parameters.adapter, 'champion-guided');
+  assert.equal(js6.frozen, false);
   assert.throws(() => frozenVersion('no-such-version'), /未知版本 id/);
 });
