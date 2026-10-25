@@ -3,7 +3,7 @@
 日期：2026-10-25（Asia/Shanghai）
 分支：`codex/js5-evidence-optimization`
 基线：`e2361edc28b95c03ee5ccdd461c9afe0086dfe84`（main）
-本地提交：`ffeb6d0`（代码/测试/计划；证据报告提交见文末）
+本地提交：`ffeb6d0`（代码/测试/计划）、`80ff202`（证据/最终报告）
 研究目录：`training/reports/js5-goal-optimization/run-20261025-01/`
 
 ## 0. 结论摘要
@@ -243,7 +243,7 @@ C10 局部决策修复；不声明线上或真人棋力提高。
 
 ## 10. 交付与复现
 
-- 代码/测试/配置/计划：提交 `ffeb6d0`；证据/最终报告为后续本地提交（不推送）。
+- 代码/测试/配置/计划：提交 `ffeb6d0`；证据/最终报告：提交 `80ff202`（不推送）。
 - 计划与进度：`PLAN.md`、`PROGRESS.md`。
 - 基线：`BASELINE-MANIFEST.json`、`evidence/frozen-config.json`。
 - 实验记录：`EXPERIMENTS.jsonl`。
