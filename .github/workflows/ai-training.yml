@@ -92,6 +92,9 @@ jobs:
       - name: training 系统测试（含 CLI 端到端与晋级脚本）
         working-directory: training
         run: npm test
+      - name: AI7 进化控制面安全/可复现测试（Candidate Artifact / 目标边界 / 治理 / Controller / 演示逻辑）
+        working-directory: training
+        run: npm run evolution:test
       - name: 模拟器快速评估（PR 100 局）
         run: |
           node training/simulator/cli.mjs --games 100 --seed-base 1 --out training/reports/pr-eval

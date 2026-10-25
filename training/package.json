@@ -25,7 +25,10 @@
     "scenarios": "node --test --test-concurrency=2 scenarios/tests/*.test.mjs",
     "scenarios:generate": "node scenarios/scripts/generate.mjs",
     "scenarios:compare": "node scenarios/scripts/compare-budgets.mjs",
-    "scenarios:split": "node scenarios/scripts/split-dataset.mjs"
+    "scenarios:split": "node scenarios/scripts/split-dataset.mjs",
+    "evolution:test": "node --test evolution/tests/*.test.mjs",
+    "evolution:demo": "node evolution/demo.mjs",
+    "evolution:demo:fake": "node evolution/demo.mjs --fake"
   },
   "engines": {
     "node": ">=20"

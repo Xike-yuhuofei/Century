@@ -1,0 +1,27 @@
+{
+  "configRef": "training/evolution/configs/ai7-demo.json",
+  "rounds": 1,
+  "playerCounts": [2, 3],
+  "quickSeeds": 2,
+  "deepSeeds": 3,
+  "maxMoves": 350,
+  "deadlineMs": 90000,
+  "retainTopK": 4,
+  "deepConfirmations": 1,
+  "generation": {
+    "count": 2,
+    "seed": 20261025,
+    "targetIds": ["candidateCap", "searchBudget"]
+  },
+  "budget": {
+    "maxCandidates": 6,
+    "maxGames": 26,
+    "maxWallMs": 600000,
+    "maxConcurrent": 1,
+    "maxDeepConfirmations": 2
+  },
+  "diagnosticsPath": "training/reports/diagnostics-latest/analysis.json",
+  "humanAnalyticsFailuresPath": null,
+  "parentCandidateId": null,
+  "continueFromSelected": false
+}
