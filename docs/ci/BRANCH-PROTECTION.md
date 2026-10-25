@@ -60,7 +60,7 @@ Block force pushes、Restrict deletions。
 - `rules-cards` + `governance-tests`：永远运行的快速门禁；
 - `ui-smoke`：浏览器 UI 冒烟；
 - `audit-gate`：dev/research 层可靠性审计；
-- `research-node` / `research-worker` / `research-e2e` / `research-python` / `research-seatbelt`：AI5 研究检查（worker 协议按用例并发、端到端对战独立作业）；
+- `research-node` / `research-worker` / `research-e2e` / `research-python` / `research-seatbelt`：AI5 研究检查（worker 协议 3 条用例分 matrix 独立 runner、端到端对战独立作业）；
 - `promotion-gate` + `promotion-approval`：仅晋级 PR；
 - `pages-deploy`：仅 main push 且 web/data 变更；
 - `ci-summary`：唯一聚合必需检查，独立复算变更范围并拒绝 skipped/failure/cancelled。

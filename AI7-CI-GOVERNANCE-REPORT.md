@@ -67,7 +67,7 @@ changes ────────────────┐
                                   ├─ ui-smoke（Chromium + WebKit）
                                   ├─ audit-gate（dev 或 research 层，二选一）
                                   ├─ research-node（编码/合法性/公平性/种子静态）
-                                  ├─ research-worker（worker 协议 3 条用例并发）
+                                  ├─ research-worker（worker 协议 3 条用例，matrix 3 runner）
                                   ├─ research-e2e（官方自对照端到端）
                                   ├─ research-python
                                   ├─ research-seatbelt（仅 macOS）
@@ -169,7 +169,7 @@ JSON: { verdict, summary, checks }
 | Pages `build`（web 单测 + 复盘冒烟 + 部署） | `pages-deploy`（复用 dist，且依赖 `ui-smoke` 成功） | 保留；`smoke_replay.py` 在 `ui-smoke` 中执行 |
 | `ai-training` PR `test`（web + training + 100 局 + 审计） | `web-unit` + `training-unit` + `simulation` + `audit-gate` | 保留 |
 | AI5 `ppo-python-tests` | `research-python` | 保留（含 `test_seed_policy`） |
-| AI5 `node-tests` | `research-node`（编码/合法行动/公平性）+ `research-worker`（worker 协议，3 条用例并发） | 保留；worker 协议单文件串行会顶到 15m 旧超时，按用例并发后仍全部运行 |
+| AI5 `node-tests` | `research-node`（编码/合法行动/公平性）+ `research-worker`（worker 协议 3 条用例，matrix 独立 runner） | 保留；worker 协议单文件串行超过 15m 旧超时，拆成 3 个 runner 后每条用例仍真实运行 |
 | AI5 `seed-discipline` | `research-node`（Node 种子政策）+ `research-python`（Python 账本隔离） | 保留 |
 | AI5 `openevolve-static-security` | `research-node` | 保留 |
 | AI5 `macos-seatbelt` | `research-seatbelt`（macos-14） | 保留 |

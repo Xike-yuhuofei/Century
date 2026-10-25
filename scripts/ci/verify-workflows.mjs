@@ -43,6 +43,7 @@ export function verifyWorkflows(repoRoot) {
     'ci-summary', 'promotion-gate', 'promotion-approval', 'promotion-approved',
     'web-v1-dist', 'governance-tests', 'rules-cards', 'run-audit-gate.mjs',
     'research-worker', 'research-e2e', 'worker-protocol.test.mjs',
+    '--test-name-pattern', '全 node 席位完整对局并按种子复现', 'MLP 席位往返', '回传越界序号被如实记为异常对局',
     'ai5/openevolve/node/duel_runner.mjs', 'ai5.ppo.tests.python.test_seed_policy',
     'npm ci', 'actions/upload-artifact', 'actions/download-artifact',
   ]) {

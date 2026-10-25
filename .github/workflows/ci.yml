@@ -333,11 +333,21 @@ jobs:
         run: node --test ai5/openevolve/tests/seed-policy.test.mjs ai5/openevolve/tests/static-check.malicious.test.mjs
 
   research-worker:
-    name: research-worker
+    name: research-worker (${{ matrix.case.name }})
     needs: [changes, build]
     if: needs.changes.outputs.research == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        case:
+          - name: repro
+            pattern: 全 node 席位完整对局并按种子复现
+          - name: mlp
+            pattern: MLP 席位往返
+          - name: anomaly
+            pattern: 回传越界序号被如实记为异常对局
     steps:
       - uses: actions/checkout@v4
         with:
@@ -349,32 +359,20 @@ jobs:
         with:
           name: web-v1-dist
           path: web-v1/dist
-      # worker-protocol 单文件含 3 个完整对局，串行会顶到 job 超时；
-      # 按测试名并发执行（独立进程、固定种子），三条用例全部真实运行，任一失败即失败。
-      - name: 对局宿主协议（3 条用例并发）
+      # worker-protocol 单文件串行会超过 15m；拆成 3 个独立 runner 各跑 1 条用例，
+      # 每条用例仍真实执行，任一失败则 research-worker 整体失败。
+      - name: 对局宿主协议：${{ matrix.case.name }}
+        env:
+          PATTERN: ${{ matrix.case.pattern }}
         run: |
-          set -u
-          pids=()
-          logs=()
-          run_case() {
-            local pattern="$1" log
-            log="$(mktemp)"
-            node --test --test-name-pattern="$pattern" ai5/ppo/tests/node/worker-protocol.test.mjs > "$log" 2>&1 &
-            pids+=("$!")
-            logs+=("$log")
-          }
-          run_case "全 node 席位完整对局并按种子复现"
-          run_case "MLP 席位往返"
-          run_case "回传越界序号被如实记为异常对局"
+          log="$(mktemp)"
           status=0
-          for i in "${!pids[@]}"; do
-            wait "${pids[$i]}" || status=1
-            cat "${logs[$i]}"
+          node --test --test-name-pattern="$PATTERN" ai5/ppo/tests/node/worker-protocol.test.mjs > "$log" 2>&1 || status=$?
+          cat "$log"
+          if [ "$status" -eq 0 ]; then
             # 防止测试名漂移导致 --test-name-pattern 匹配空集而静默通过。
-            grep -q '^# pass 1$' "${logs[$i]}" || {
-              echo "用例未执行或未通过：${logs[$i]}"; status=1;
-            }
-          done
+            grep -q '^# pass 1$' "$log" || status=1
+          fi
           exit "$status"
 
   research-e2e:
