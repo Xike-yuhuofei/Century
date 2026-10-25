@@ -2,7 +2,7 @@
 
 - 任务：Century AI 7.0 · 任务 E（E1–E5）
 - 分支：`feat/ai7-desktop-runtime`
-- 基线：`main` @ `19fa564`（创建 worktree）；rebase 至 `35f2413`（PR #48 合并后）
+- 基线：`main` @ `19fa564`（创建 worktree）；rebase 至 `42a9391`（PR #48 / #47 合并后）
 - Worktree：`/Volumes/Extreme SSD/Projects/Century-ai7-desktop`
 - 日期：2026-10-25
 
@@ -11,8 +11,8 @@
 1. **默认 1 真人 + 4 AI 已进入 Focus 布局**：3440×1440 三列、1920×1080 与 1440×900 双列（右侧市场 + AI 轨道上下分区）。三种桌面分辨率均无横向溢出；1 真人局三种分辨率均无纵向溢出（1440 基线为 2361px 高，现为 900px）。
 2. **AI 已打出卡牌成为常驻公开信息**：所有 AI 轨道的「已打出」默认展开；3–4 名 AI 在 1920/1440 使用 2×2 轨道。点击 AI 标签即可展开完整回收区/手牌详情。
 3. **AI 决策已移出主线程**：单文件 `standalone.html` 与服务器入口都内联经典 Worker 源码，运行时经 Blob 创建，不依赖外部 `worker.js` 请求。GitHub Pages `_site` 子路径部署实测通过（Chromium + WebKit）。
-4. **主线程长任务从每回合 84–105ms 降为 0ms**（Chromium PerformanceObserver，4 个 AI 回合窗口），帧间隙 ≤28ms，view-only 交互 2.5–6ms。
-5. **行为一致性**：2–5 人各 2 个真实合法局面 + 临近终局 5 人冻结局面 + 6 人扩展，固定算法/参数/随机流/工作量下 Worker 与主线程逐位一致。墙钟模式的轨迹数差异只由计时造成，行动仍一致。
+4. **主线程长任务从每回合 84–105ms 降为 0ms**（Chromium PerformanceObserver，4 个 AI 回合窗口）；帧间隙本地 ≤35ms、CI WebKit ≤155ms（阈值 250ms），view-only 交互 2.7–6ms。
+5. **行为一致性**：2–5 人各 2 个真实合法局面 + 临近终局 5 人冻结局面 + 6 人扩展，固定算法/参数/随机流/工作量下 Worker 与主线程逐位一致。墙钟模式只做分布诊断；同轨迹数也可能因计时调度产生不同行动，不判为逻辑不一致。
 6. **规则与冠军未改变**：未修改 `src/engine.ts`、`src/ai/parameters.ts`、`src/js/**`、`training/**`、种子账本或冠军注册表。`CHAMPION_PARAMETERS`（JS5，100ms）原样读取。
 7. **保留 2 真人 + AI 成熟布局**：结构与三列尺寸未改；仅把 AI 轨道内容升级为「已打出引擎 + 手牌计数 + 一键详情」。1440 宽下该成熟布局仍按既有设计纵向滚动（基线即如此），未推倒重排。
 
@@ -109,7 +109,7 @@
 
 GitHub Pages 工作流把 `dist/standalone.html` 复制为 `_site/index.html`；浏览器实测正是按 `_site` + `/Century/` 子路径进行，而不是本地开发服务器直连 `dist`。
 
-**与 main 并行工作的整合**：PR #48 在 main 上引入了 G2 桌面 Worker（整份 `Game` 进 Worker、`ai-worker.ts`）与 AI6 的冠军参数透传。本分支 rebase 至 `35f2413` 后：
+**与 main 并行工作的整合**：PR #48 在 main 上引入了 G2 桌面 Worker（整份 `Game` 进 Worker、`ai-worker.ts`）与 AI6 的冠军参数透传。本分支 rebase 至 `42a9391` 后：
 - 用公开观察协议 Worker 替换 G2（删除 `src/ai-worker.ts`，避免两套 Worker 并存）；
 - `offline-ai-worker.test.mjs` 改为在 Node vm 中真实执行 `init + decision` 协议往返，继续覆盖“嵌入闭包完整性”这一原始防回归目标；
 - `decision-core` 固定注入 `CHAMPION_PARAMETERS`，与 AI6 正式入口的 `championParameters` 透传逐位同源。
@@ -197,10 +197,12 @@ GitHub Pages 工作流把 `dist/standalone.html` 复制为 `_site/index.html`；
 | 手牌字号 | 11px（1440/1920）、12px（3440）；基线 10px |
 | AI 已打出展示 | 所有 solo 运行 ≥1 张；2×2 轨道 3–4 AI 全部可见 |
 | 主线程 longtask | 基线 4 回合：84–105ms/次，合计 365–383ms；本分支 0ms |
-| 帧间隙 | Chromium ≤17ms；WebKit ≤28ms |
-| 交互响应（视图切换） | 2.5–6ms |
+| 帧间隙 | Chromium ≤17ms；WebKit ≤35ms（本地）/ ≤155ms（CI，阈值 250ms） |
+| 交互响应（视图切换） | 2.7–6ms |
 | Worker 决策成功率 | 100%（无 fallback / 无 spawn failure） |
 | 页面错误 | 0 |
+
+CI（Linux ubuntu-latest，`web-v1-ai` 工作流）同矩阵复验：`failures=[]`，Worker 4/4、2/2，主线程 longtask 0ms，WebKit 最大帧隙 155ms（<250ms 阈值），14 次运行全部通过。
 
 截图：
 
