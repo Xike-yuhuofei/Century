@@ -145,7 +145,7 @@ pages-deploy（仅 main push，复用同一 dist）
 - `REQUIRES_APPROVAL` → **保留原状态**：`promotion-gate` 红色失败 + Step Summary 明示，不转换为 PASS。
 - 独立 `promotion-approval` 作业（Environment `promotion-approval` + PR 标签 `promotion-approved`）成功后，`ci-summary` 才可能放行。
 - 判定以 `promotion-audit` 产物为准，不依赖失败作业的 outputs；产物缺失/损坏一律失败关闭。
-- 普通 PR 不触发 promotion 作业，历史晋级阻断（当前 2 项 REQUIRES_APPROVAL）不会导致所有 PR 永久失败。
+- 普通 PR 不触发 promotion 作业，历史晋级阻断（当前 3 项 REQUIRES_APPROVAL）不会导致所有 PR 永久失败。
 
 ### 4.3 Agent A 审计接口适配
 
@@ -329,6 +329,8 @@ web 单测从 3 份（Focus 14m58s + V2 14m02s + ai-training 内串行 12m31s）
 
 研究作业（`research-node` / `research-worker` / `research-e2e` / `research-python` / `research-seatbelt`）只在 research 变更时运行，普通 PR 的上表不含它们；full dispatch 实测见 §9.5。
 
+合并 `main@42a9391` 后的最终 head `735de56`（run 40201940664）：墙钟 18m24s，web-unit 13m55s、training-unit 17m47s（含 `evolution:test`）、simulation 8m28s、audit-gate 21s（research 层）、ci-summary 7s；必需作业全部 success。
+
 ---
 
 ## 9. 验证记录
@@ -363,11 +365,13 @@ PR #45（`fix/ai7-ci-governance`）的完整 CI：
 - run [40179000627](https://github.com/Xike-yuhuofei/Century/actions/runs/40179000627)，head `f345753`，**success**，墙钟 16m49s。
 - `changes`、`governance-tests`、`rules-cards`、`build`、`web-unit`、`training-unit`、`simulation`、`ui-smoke`、`audit-gate`、`ci-summary` 全部真实执行并成功。
 - `research-node`、`research-worker`、`research-e2e`、`research-python`、`research-seatbelt`、`promotion-gate`、`promotion-approval`、`pages-deploy` 为 `skipped`，属于“变更范围不适用”，`ci-summary` 表格中明确标注，未当作必需检查。
-- 普通开发 PR 不触发 promotion 作业：历史晋级的 2 项 `REQUIRES_APPROVAL` 不会阻断本 PR。
+- 普通开发 PR 不触发 promotion 作业：历史晋级的 3 项 `REQUIRES_APPROVAL` 不会阻断本 PR。
 
 路径过滤作用于整个 PR 的 diff（`base...head`），而不是单个提交。若某个 PR 的整体变更只有文档，则只触发 `changes`、`governance-tests`、`rules-cards`、`ci-summary`（分类矩阵由 `scope.test.mjs` 覆盖）；本 PR 自身包含 CI 代码，因此每次 head 更新仍按全代码范围执行，这是“共享/CI 自身变更不得跳过必要测试”的预期行为。
 
 已验证 head `835381e` 的 PR run [40193187465](https://github.com/Xike-yuhuofei/Century/actions/runs/40193187465)：首跑 `web-unit` 在时序敏感用例 `js5-budget` 上失败，重跑失败作业后 `web-unit` 15m15s 通过、`ci-summary` success。该 flake 与失败原因如实记录在 §9.6，未用 `continue-on-error` 或跳过测试掩盖。
+
+合并 `main@42a9391` 并修复 `.nojekyll` 产物传递后的最终 head `735de56`：run [40201940664](https://github.com/Xike-yuhuofei/Century/actions/runs/40201940664)，**success**，墙钟 18m24s；web-unit 13m55s、training-unit 17m47s、simulation 8m28s、audit-gate 21s、ci-summary 7s；research/promotion/pages 按变更范围 skipped。
 
 ### 9.4 CI 首跑发现的真实问题（已修复，未伪装为成功）
 
@@ -425,7 +429,7 @@ PR 首跑（run 40176731716，attempt 1）暴露两个基础设施问题：
 - `actions/upload-artifact` 默认 `include-hidden-files: false`，导致下载到测试作业的 `web-v1-dist` 缺少 `.nojekyll`；
 - `requireBuiltEngine` 复核 dist 闭包哈希不一致 → 所有依赖编译产物的作业按设计 fail-closed。
 
-修复：`build` 上传产物显式 `include-hidden-files: true`；`verify-workflows.mjs` 新增断言，防止该配置被回退。该失败被 CI 如实暴露（没有用 `continue-on-error` 或缓存旧 dist 绕过），属于构建清单门禁按预期工作。修复后的 PR head CI 结果见 PR #45 检查列表。
+修复：`build` 上传产物显式 `include-hidden-files: true`；`verify-workflows.mjs` 新增断言，防止该配置被回退。该失败被 CI 如实暴露（没有用 `continue-on-error` 或缓存旧 dist 绕过），属于构建清单门禁按预期工作。修复后 run 40201940664（head `735de56`）全部必需作业 success，墙钟 18m24s。
 
 ---
 
