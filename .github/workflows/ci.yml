@@ -278,11 +278,24 @@ jobs:
           python scripts/smoke_focus.py
           python scripts/smoke_organize.py
           python scripts/smoke_replay.py
+          python scripts/smoke_ai_runtime.py
+      - name: 桌面 Focus + 内联 AI Worker（Chromium/WebKit × 3440/1920/1440）
+        working-directory: web-v1
+        run: python scripts/smoke_desktop_runtime.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ui-smoke-evidence
           path: web-v1/dist/replay-evidence
+          if-no-files-found: ignore
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-runtime-evidence
+          path: |
+            docs/ai7/desktop-runtime-metrics.json
+            docs/ai7/screenshots/
           if-no-files-found: ignore
           retention-days: 14
 

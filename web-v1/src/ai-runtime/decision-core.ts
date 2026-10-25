@@ -161,6 +161,10 @@ export function decideFromObservation(payload: DecisionRequestPayload): {
       ...(payload.horizon !== undefined ? { horizon: payload.horizon } : {}),
       ...(payload.worlds !== undefined ? { worlds: payload.worlds } : {}),
       ...search,
+      // AI6 第六阶段 P0：正式入口 chooseAIAction 会把冠军参数对象传入适配器
+      // （冠军本体 = 归一化 CHAMPION_PARAMETERS，行为不变；风格变体才产生差异）。
+      // Worker 只承载生产冠军，因此固定注入 CHAMPION_PARAMETERS 保持同源。
+      ...(version.kind === 'champion-guided' ? { championParameters: CHAMPION_PARAMETERS } : {}),
       profileName: ai.profileName,
     };
     // 版本预设（如 joint-js5-opt 的 claimRanking=prior）与调用方覆盖合并；
