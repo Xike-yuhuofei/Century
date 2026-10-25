@@ -2,7 +2,7 @@
 
 - 任务：Century AI 7.0 · 任务 E（E1–E5）
 - 分支：`feat/ai7-desktop-runtime`
-- 基线：`main` @ `19fa564`（创建 worktree）；rebase 至 `42a9391`（PR #48 / #47 合并后）
+- 基线：`main` @ `19fa564`（创建 worktree）；rebase 至 `42a9391`（PR #48 / #47 合并后）；最终合并 `main` @ `d9b5344`（PR #45 CI 治理 / #50 AI7 竞技决策候选 V2 后）
 - Worktree：`/Volumes/Extreme SSD/Projects/Century-ai7-desktop`
 - 日期：2026-10-25
 
@@ -114,6 +114,11 @@ GitHub Pages 工作流把 `dist/standalone.html` 复制为 `_site/index.html`；
 - `offline-ai-worker.test.mjs` 改为在 Node vm 中真实执行 `init + decision` 协议往返，继续覆盖“嵌入闭包完整性”这一原始防回归目标；
 - `decision-core` 固定注入 `CHAMPION_PARAMETERS`，与 AI6 正式入口的 `championParameters` 透传逐位同源。
 
+**与 CI 治理（PR #45）的整合**：`pages.yml` 与 `web-v1-ai.yml` 已被唯一入口 `ci.yml` 取代，E5 验收迁入 `ui-smoke` 作业：
+- 新增 `smoke_ai_runtime.py` 与 `smoke_desktop_runtime.py` 步骤，继续执行 Chromium/WebKit × 3440/1920/1440 矩阵；
+- `desktop-runtime-evidence` artifact 保留指标与截图；
+- `js5-budget.test.mjs` 的墙钟批次观测改为负载自适应：100ms 预算在 CI 高负载下可能零批次，此时用 500ms 重试，仍为零只记录诊断，不把环境时序判为逻辑失败。
+
 ### 4.2 信息边界
 
 - 页面只发送 `buildObservation(game)` 产出的公开观察；
@@ -202,7 +207,7 @@ GitHub Pages 工作流把 `dist/standalone.html` 复制为 `_site/index.html`；
 | Worker 决策成功率 | 100%（无 fallback / 无 spawn failure） |
 | 页面错误 | 0 |
 
-CI（Linux ubuntu-latest，`web-v1-ai` 工作流）同矩阵复验：`failures=[]`，Worker 4/4、2/2，主线程 longtask 0ms，WebKit 最大帧隙 155ms（<250ms 阈值），14 次运行全部通过。
+CI（Linux ubuntu-latest，原 `web-v1-ai` 工作流，现迁入 `ci.yml` 的 `ui-smoke` 作业）同矩阵复验：`failures=[]`，Worker 4/4、2/2，主线程 longtask 0ms，WebKit 最大帧隙 155ms（<250ms 阈值），14 次运行全部通过。
 
 截图：
 
