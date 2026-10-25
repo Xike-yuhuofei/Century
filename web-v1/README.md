@@ -20,14 +20,15 @@
 
 ### 导出对局复盘
 
-桌面端打开标题栏「行动记录」（☷）。对局进行中和结算后均可导出：
+复盘文件仅提供 **JSON** 一种格式（Markdown 导出已移除）：
 
-- **Markdown**：可直接阅读的中文复盘，按轮次、全局手数、玩家个人回合排列，包含卡号、获取支付顺序、升级路径、重复交易次数、超额弃置、行动前后水晶/卡牌/硬币/估分以及当前排名。
 - **JSON**：`format: century-replay`、`version: 1`，包含 `replay.initial` 起点、`replay.turns` 全部回合和 `current` 导出时局面。依次将每条回合的 `actions` 交给正式 `applyAction`，即可从起点重放。此文件用于分析。
+
+导出途径：**桌面端**对局历史（⧉）面板中的「自动导出」。开启后对局结束自动把 JSON 下载到浏览器默认下载文件夹，无需手动操作；手动导出按钮已移除。
 
 新局从开局完整记录，覆盖全部真人和 AI，不受近期日志 45 条限制；记录随本地存档保存。超额弃置合并到对应回合，尚未弃置的回合标记为未完成。旧版 v2 存档可继续使用，首次新行动从接续局面开始记录，导出会注明历史缺失，无法恢复旧版已经丢弃的行动。新局会覆盖本局，复盘需要先导出保存。
 
-复盘回归：`node --test tests/replay.test.mjs`（先构建）；`python scripts/smoke_replay.py` 验证 Chromium/WebKit 的复盘下载及刷新续局。设置 `CENTURY_TEST_URL` 可对部署地址进行同样检查。
+复盘回归：`node --test tests/replay.test.mjs`（先构建）；`python scripts/smoke_replay.py` 验证 Chromium/WebKit 的自动导出开关与刷新续局。设置 `CENTURY_TEST_URL` 可对部署地址进行同样检查。
 
 ```bash
 npm install

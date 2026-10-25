@@ -1,6 +1,6 @@
 import { GOLEM_BY_ID, MERCHANT_BY_ID, type Merchant, type Stock } from './data.js';
 import { applyAction, count, createGame, has, ranking, readable, score, tradeLimit, type Action, type Color, type Game } from './engine.js';
-import { downloadReplay, replayCoverage, replayMarkdown, validateReplay } from './replay.js';
+import { replayCoverage, replayMarkdown, validateReplay } from './replay.js';
 import { ARCHIVE_LIMIT, loadArchive, makeEntry, pushArchive, saveArchive, type ArchiveEntry } from './archive.js';
 import { autoExportEnabled, disableAutoExport, enableAutoExport, maybeAutoExport } from './auto-export.js';
 import { chooseAIAction } from './ai.js';
@@ -223,7 +223,7 @@ function minimalTopbar(g:Game):string {
   return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact?'▦':'▣'}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="history" aria-label="对局历史" title="对局历史">⧉</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
 }
 function replayControls(g: Game): string {
-  return `<div class="replay-controls"><small>${esc(replayCoverage(g))}</small><button class="subtle-btn" data-action="export-replay-md">导出复盘 Markdown</button><button class="subtle-btn" data-action="export-replay-json">导出复盘 JSON</button></div>`;
+  return `<div class="replay-controls"><small>${esc(replayCoverage(g))}</small></div>`;
 }
 function historyTime(iso: string): string {
   const d = new Date(iso);
@@ -235,15 +235,15 @@ function autoExportPanel(): string {
   const buttons = autoExportEnabled()
     ? '<button class="subtle-btn" data-action="auto-export-disable">关闭自动导出</button>'
     : '<button class="subtle-btn" data-action="auto-export-enable">开启自动导出</button>';
-  return `<div class="auto-export-panel"><p class="small-muted">${status} · 结束的对局自动下载复盘 Markdown 与 JSON 到浏览器默认下载文件夹（~/Downloads）。</p><p class="small-muted">如需固定到专属文件夹，可在浏览器设置中把下载目录改为 /Volumes/Extreme SSD/Projects/Century/century-replays。</p><div class="history-item-actions">${buttons}</div></div>`;
+  return `<div class="auto-export-panel"><p class="small-muted">${status} · 结束的对局自动下载复盘 JSON 到浏览器默认下载文件夹（~/Downloads）。</p><p class="small-muted">如需固定到专属文件夹，可在浏览器设置中把下载目录改为 /Volumes/Extreme SSD/Projects/Century/century-replays。</p><div class="history-item-actions">${buttons}</div></div>`;
 }
 function renderHistory(): string {
   const view = historyViewId !== null ? archive.find(e => e.id === historyViewId) : undefined;
   const close = '<button class="close-modal" data-action="close-history" aria-label="关闭对局历史">✕</button>';
   if (view) {
-    return `<div class="overlay" data-overlay="history"><section class="dialog history-dialog">${close}<div class="eyebrow">GAME ARCHIVE</div><h2>对局复盘</h2><p class="small-muted">${esc(historyTime(view.savedAt))} · ${view.players} 人 · ${view.turns} 手 · ${esc(view.title)}</p><div class="replay-view" tabindex="0">${esc(replayMarkdown(view.game))}</div><div class="modal-actions"><button class="secondary-btn" data-action="history-back">‹ 返回列表</button><div class="history-item-actions"><button class="subtle-btn" data-action="archive-export-md" data-id="${esc(view.id)}">导出 Markdown</button><button class="subtle-btn" data-action="archive-export-json" data-id="${esc(view.id)}">导出 JSON</button></div></div></section></div>`;
+    return `<div class="overlay" data-overlay="history"><section class="dialog history-dialog">${close}<div class="eyebrow">GAME ARCHIVE</div><h2>对局复盘</h2><p class="small-muted">${esc(historyTime(view.savedAt))} · ${view.players} 人 · ${view.turns} 手 · ${esc(view.title)}</p><div class="replay-view" tabindex="0">${esc(replayMarkdown(view.game))}</div><div class="modal-actions"><button class="secondary-btn" data-action="history-back">‹ 返回列表</button></div></section></div>`;
   }
-  const list = archive.map(e => `<div class="history-item"><div class="history-item-main"><b>${e.finished ? '✦ ' : '◔ '}${esc(e.title)}</b><small>${esc(historyTime(e.savedAt))} · ${e.players} 人 · ${e.turns} 手</small></div><div class="history-item-actions"><button class="subtle-btn" data-action="history-view" data-id="${esc(e.id)}">复盘</button><button class="subtle-btn" data-action="archive-export-md" data-id="${esc(e.id)}">MD</button><button class="subtle-btn" data-action="archive-export-json" data-id="${esc(e.id)}">JSON</button><button class="subtle-btn" data-action="archive-delete" data-id="${esc(e.id)}">删除</button></div></div>`).join('');
+  const list = archive.map(e => `<div class="history-item"><div class="history-item-main"><b>${e.finished ? '✦ ' : '◔ '}${esc(e.title)}</b><small>${esc(historyTime(e.savedAt))} · ${e.players} 人 · ${e.turns} 手</small></div><div class="history-item-actions"><button class="subtle-btn" data-action="history-view" data-id="${esc(e.id)}">复盘</button><button class="subtle-btn" data-action="archive-delete" data-id="${esc(e.id)}">删除</button></div></div>`).join('');
   return `<div class="overlay" data-overlay="history"><section class="dialog history-dialog">${close}<div class="eyebrow">GAME ARCHIVE</div><h2>对局历史</h2>${archive.length ? `<div class="history-list">${list}</div><p class="small-muted">对局结束或重新开局时自动归档，本地保留最近 ${ARCHIVE_LIMIT} 局。</p>` : '<p class="small-muted">暂无归档。对局结束或重新开局时会自动存入，本地保留最近 20 局。</p>'}${autoExportPanel()}<div class="modal-actions"><button class="primary-btn" data-action="close-history">关闭</button></div></section></div>`;
 }
 function logPopover(g:Game):string {
@@ -399,7 +399,7 @@ function action(a: Action) {
     toast = '';
     if (game.phase === 'finished') {
       archiveGame();
-      if (maybeAutoExport(game)) notify('已自动下载复盘 Markdown 与 JSON（浏览器默认下载文件夹）');
+      if (maybeAutoExport(game)) notify('已自动下载复盘 JSON（浏览器默认下载文件夹）');
     }
     save(); render();
   } catch(e) { notify(e instanceof Error ? e.message : '行动无法执行'); }
@@ -420,16 +420,10 @@ function control(target: HTMLElement) {
   const type = target.dataset.action || '';
   if (type === 'start') { start(); return; }
   if (type === 'inspect-ai') { const id=Number(target.dataset.player); inspectedAI = inspectedAI===id ? null : id; render(); return; }
-  if ((type === 'export-replay-md' || type === 'export-replay-json') && game) { downloadReplay(game, type === 'export-replay-md' ? 'md' : 'json'); return; }
   if (type === 'history') { showHistory = true; historyViewId = null; render(); return; }
   if (type === 'close-history') { showHistory = false; historyViewId = null; render(); return; }
   if (type === 'history-back') { historyViewId = null; render(); return; }
   if (type === 'history-view') { historyViewId = target.dataset.id || null; render(); return; }
-  if (type === 'archive-export-md' || type === 'archive-export-json') {
-    const entry = archive.find(e => e.id === target.dataset.id);
-    if (entry) downloadReplay(entry.game, type === 'archive-export-md' ? 'md' : 'json');
-    return;
-  }
   if (type === 'auto-export-enable') { enableAutoExport(); notify('已开启自动导出：结束的对局将自动下载复盘'); render(); return; }
   if (type === 'auto-export-disable') { disableAutoExport(); notify('已关闭自动导出'); render(); return; }
   if (type === 'archive-delete') {

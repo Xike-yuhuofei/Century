@@ -21,7 +21,7 @@
 - **电脑地址**：https://xike-yuhuofei.github.io/Century/
 - **自动部署**：[.github/workflows/pages.yml](.github/workflows/pages.yml)。每次 `main` 的 `web-v1/**` 更新会校验卡牌、运行测试、重新编译，并将 `web-v1/dist/standalone.html` 发布为网站首页。
 - **首次启用（仓库管理员操作一次）**：打开仓库 **Settings → Pages → Build and deployment**，将 **Source** 设置为 **GitHub Actions**。如首次自动运行因未启用 Pages 而失败，到 **Actions → Deploy Century Game to GitHub Pages → Run workflow** 选择 `main` 重跑。
-- **复盘导出**：桌面端「行动记录 ☷」，支持 Markdown 和 JSON。新局完整记录所有玩家每回合的行动与资源变化，随存档保留，结束后仍可导出；旧存档从更新后的接续点开始记录。详见 [复盘说明](web-v1/README.md#导出对局复盘)。
+- **复盘导出**：桌面端「对局历史 ⧉ → 自动导出」，仅支持 JSON。新局完整记录所有玩家每回合的行动与资源变化，随存档保留，结束后仍可导出；旧存档从更新后的接续点开始记录。详见 [复盘说明](web-v1/README.md#导出对局复盘)。
 
 ## 验证
 

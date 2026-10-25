@@ -1,4 +1,4 @@
-"""通过实际下载验证桌面入口的完整复盘导出，并验证刷新续局不丢记录。"""
+"""验证桌面端复盘导出：手动导出已移除，仅保留自动导出（JSON），并验证刷新续局不丢记录。"""
 import json
 import os
 import subprocess
@@ -32,29 +32,13 @@ console.log(JSON.stringify({long:g,finished,legacy}));
 errors = []
 
 
-def download(page, action, suffix):
-    with page.expect_download() as result:
-        page.locator(f'[data-action="{action}"]').last.click()
-    item = result.value
-    assert item.suggested_filename.endswith(suffix), item.suggested_filename
-    return Path(item.path()).read_text()
-
-
 def check(page, fixture, url, shot):
     page.goto(url, wait_until='domcontentloaded')
     page.evaluate('(g)=>{localStorage.clear();localStorage.setItem("crystal-corridor-game-v2-canonical",JSON.stringify(g))}', fixture)
     page.reload(wait_until='domcontentloaded')
-    if fixture['phase'] != 'finished':
-        page.locator('[data-action="toggle-log"]').click()
-    md = download(page, 'export-replay-md', '.md')
-    data = json.loads(download(page, 'export-replay-json', '.json'))
-    assert data['format'] == 'century-replay'
-    assert data['current']['turnNumber'] == fixture['turnNumber']
-    if 'replay' in fixture:
-        assert len(data['replay']['turns']) == 60
-        assert '第 60 手' in md and '个人第 30 回合' in md
-    else:
-        assert data['replay'] is None and '没有完整回合记录' in md
+    # 桌面端手动导出已移除，复盘文件仅由自动导出（JSON）产生。
+    assert page.locator('[data-action="export-replay-md"]').count() == 0
+    assert page.locator('[data-action="export-replay-json"]').count() == 0
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     page.screenshot(path=str(OUT / shot))
 
@@ -72,7 +56,15 @@ try:
                 url = BASE
             for name, fixture in fixtures.items():
                 check(page, fixture, url, f'{engine}-{name}.png')
-            # 刷新后行动会继续追加，导出按钮不会消耗回合。
+            # 桌面端仅剩的导出途径：历史面板中的自动导出（JSON）开关。
+            page.locator('[data-action="history"]').click()
+            assert page.locator('.auto-export-panel').count() == 1
+            page.locator('[data-action="auto-export-enable"]').click()
+            assert '自动导出：已开启' in page.locator('.auto-export-panel').inner_text()
+            page.locator('[data-action="auto-export-disable"]').click()
+            assert '自动导出：已关闭' in page.locator('.auto-export-panel').inner_text()
+            page.locator('[data-action="close-history"]').last.click()
+            # 刷新后行动会继续追加，行动不消耗回合。
             page.goto(url, wait_until='domcontentloaded')
             page.locator('.duel-player[data-player="0"] [data-action="rest"]').click()
             saved = json.loads(page.evaluate('()=>localStorage.getItem("crystal-corridor-game-v2-canonical")'))
@@ -82,6 +74,6 @@ try:
             context.close()
             browser.close()
     assert not errors, errors
-    print('复盘导出通过：Chromium / WebKit，完整历史 / 旧存档 / 结算 / 刷新续局。')
+    print('复盘导出通过：Chromium / WebKit，桌面自动导出开关可用，刷新续局正常。')
 finally:
     server.shutdown()
