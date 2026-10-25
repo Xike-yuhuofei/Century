@@ -25,7 +25,8 @@ import type { AIParameters } from '../ai/parameters.js';
 import type { AIObservation } from '../ai/observation.js';
 import { initialState, actions as championActions, type SearchState } from '../ai/planner.js';
 import { acquisitionValue, goalGap, trimStock, keepValue } from '../ai/evaluator.js';
-import { weighted, engineValue } from '../ai/knowledge.js';
+import { weighted } from '../ai/knowledge.js';
+import { engineValueFor, engineModelContext, type EngineModelContext } from '../ai/engine-model.js';
 import { pressureModel, golemSurvivalModel, type PressureModel } from '../ai/opponent-model.js';
 import type { Profile } from '../ai/profiles.js';
 import { simViewToObservation, type PressureCache } from './simview.js';
@@ -38,6 +39,8 @@ export type HeuristicContext = {
   /** 终局紧迫度 stage（冠军口径：(1 − mostClaimed/threshold)^endgameWeight）。 */
   stage: number;
   allowAcquire: boolean;
+  /** AI7 C2/C4：v2 引擎模型上下文（v1 为 null；缺省零成本）。 */
+  model?: EngineModelContext | null;
 };
 
 /** 从模拟状态构造求值上下文（每次己方/对手决策点调用；pressure 允许缓存复用）。 */
@@ -55,6 +58,7 @@ export function heuristicContext(
     pressure: pressureCache ? pressureCache.get(state, state.current) : pressureModel(view),
     stage: Math.pow(rawStage, params.endgameWeight),
     allowAcquire: state.triggerPlayer === null,
+    model: params.engineModel === 'v2' ? engineModelContext(view, params) : null,
   };
 }
 
@@ -68,8 +72,8 @@ function searchGradeLite(
   const goal = preferred ? GOLEM_BY_ID[preferred] : null;
   const gap = goal ? goalGap(next.stock, goal) : 0;
   return -gap * 2.6 + weighted(next.stock) * .13 * ctx.params.capacityWeight
-    + engineValue(next, preferred) * ctx.stage * .22 * ctx.profile.engine * ctx.params.engineWeight
-    + next.newCards.reduce((sum, id) => sum + acquisitionValue(next, id, preferred, ctx.profile, ctx.pressure, ctx.params), 0) * ctx.stage * .35
+    + engineValueFor(next, preferred, ctx.params, ctx.model ?? null) * ctx.stage * .22 * ctx.profile.engine * ctx.params.engineWeight
+    + next.newCards.reduce((sum, id) => sum + acquisitionValue(next, id, preferred, ctx.profile, ctx.pressure, ctx.params, ctx.model ?? null), 0) * ctx.stage * .35
     - next.steps * .35 * ctx.profile.tempo * ctx.params.tempoWeight
     - next.acquired * .15;
 }
@@ -78,7 +82,7 @@ function searchGradeLite(
 function routeGradeLite(next: SearchState, preferred: string | null, ctx: HeuristicContext): number {
   return next.gained * ctx.profile.tempo * ctx.params.tempoWeight / Math.pow(next.steps + .65, .90)
     + weighted(next.stock) * .055 * ctx.params.capacityWeight
-    + engineValue(next, preferred) * ctx.stage * .085 * ctx.profile.engine * ctx.params.engineWeight;
+    + engineValueFor(next, preferred, ctx.params, ctx.model ?? null) * ctx.stage * .085 * ctx.profile.engine * ctx.params.engineWeight;
 }
 
 /** 局部 1-ply 转移镜像（冠军 ai/planner.step 的逐条镜像；differential 锚定）。
@@ -175,6 +179,16 @@ export function actionValue(
   if (action.type === 'claim') return routeGradeLite(next, preferred, ctx);
   const base = next.terminal ? routeGradeLite(next, preferred, ctx) : searchGradeLite(next, preferred, ctx);
   if (action.type === 'rest' && state.played.length > 0) {
+    if (ctx.params.engineModel === 'v2' && ctx.model) {
+      // AI7 C2：回收价值按"被收回卡牌的引擎价值"计，而非张数——避免
+      // 为回收 1 张低价值卡而休息（审计 §4.5 的 20.3% 单卡休息）。
+      const recovered = engineValueFor(
+        { stock: state.stock, hand: [], played: state.played },
+        preferred, ctx.params, ctx.model,
+      );
+      const relief = 0.35 * recovered + (state.hand.length === 0 ? 1.2 : 0);
+      return base + relief * ctx.params.restWeight;
+    }
     // 回收激励 = 已打出卡数 × restWeight；手牌为空时额外加成（无牌可打，必须回收）。
     const relief = 0.55 * state.played.length + (state.hand.length === 0 ? 1.2 : 0);
     return base + relief * ctx.params.restWeight;

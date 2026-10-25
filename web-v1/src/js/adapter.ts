@@ -27,6 +27,8 @@ import { createSimulation } from '../sim/session.js';
 import { enumerateLegalActions } from '../sim/legal.js';
 import { createJointPlanner } from './planner.js';
 import { createChampionGuidedPlanner, type ChampionGuidedSearchOptions } from './champion-guided.js';
+import { endgameDiscardColors } from './endgame.js';
+import { count } from '../engine.js';
 import { JOINT_VERSIONS, type JointDecision, JointSearchOptions, JointVersionId } from './types.js';
 import { mergeJointOptions, resolveJointConfig, jointConfigHash, type JointSearchResolved } from './config.js';
 
@@ -79,13 +81,12 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
 
   // 有效配置：版本预设 + 调用方覆盖（opt 不再只是标签）。
   // AI7-A2：冠军基座参数显式解析并注入配置身份（冻结描述符不得回退活动状态）。
-  const championParameters = options.championParameters
-    ? validateAIParameters(options.championParameters)
+  // AI7 候选：版本预设的 parameterVariant（engine-v2 / engine-v2-seat）经
+  // mergeJointOptions 注入 championParameters；调用方显式传入时优先。
+  const resolvedOptions = mergeJointOptions(versionId, options) as JointAdapterOptions;
+  const championParameters = resolvedOptions.championParameters
+    ? validateAIParameters(resolvedOptions.championParameters)
     : CHAMPION_PARAMETERS;
-  const resolvedOptions = mergeJointOptions(versionId, {
-    ...options,
-    championParameters,
-  }) as JointAdapterOptions;
   const baseConfig = resolveJointConfig(versionId, resolvedOptions, options.profile?.name);
   const config = { ...baseConfig, hash: jointConfigHash(baseConfig) };
 
@@ -111,10 +112,19 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   }
 
   // 溢出：冠军 trimStock 弃置口径（与正式冠军 decision.ts 同一语义）。
+  // AI7 C1（显式 opt-in）：终局圈强制弃置按官方得分口径（非黄留存）。
   if (game.phase === 'overflow') {
     const p = game.players[seat];
-    const discarded = trimStock(p.stock, game.golemMarket, null, championParameters).discarded as Color[];
-    return { action: { type: 'discard', colors: discarded }, reason: '溢出弃置（冠军 trimStock 口径）', joint: null, version: versionId, config };
+    const colors = resolvedOptions.endgameDiscard === true && game.triggerPlayer !== null
+      ? endgameDiscardColors(p.stock, count(p.stock) - 10)
+      : trimStock(p.stock, game.golemMarket, null, championParameters).discarded as Color[];
+    return {
+      action: { type: 'discard', colors },
+      reason: resolvedOptions.endgameDiscard === true && game.triggerPlayer !== null
+        ? '溢出弃置（终局官方得分口径：先弃黄，保留非黄）'
+        : '溢出弃置（冠军 trimStock 口径）',
+      joint: null, version: versionId, config,
+    };
   }
 
   const observation = buildObservation(game, seat);

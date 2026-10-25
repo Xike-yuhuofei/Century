@@ -1,0 +1,947 @@
+{
+  "schema": "century-ai7-c4-ablation-v1",
+  "generatedAt": "2026-10-25T12:42:06.113Z",
+  "seedBlock": [
+    1410000000,
+    1420000000
+  ],
+  "note": "C4 人数条件直接消融（5 人局 flat vs stratified；研究块，非正式验证）",
+  "cells": [
+    {
+      "version": "joint-js8-engine",
+      "seatCount": 5,
+      "seeds": 16,
+      "seedBase": 1410500000,
+      "jointOptions": {
+        "workUnits": 16,
+        "worlds": 2,
+        "horizon": 32
+      },
+      "elapsedMs": 84328,
+      "summary": {
+        "candidateId": "joint-js8-engine",
+        "seatCount": 5,
+        "directions": [
+          "A"
+        ],
+        "totalGames": 16,
+        "finishedGames": 16,
+        "anomalies": 0,
+        "anomalyReasons": [],
+        "games": [
+          {
+            "seed": 1410500000,
+            "direction": "A",
+            "candidateSeats": [
+              0
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 3,
+            "meanScore": 57,
+            "scoreDiff": -2.5,
+            "winnerSeat": 2,
+            "moves": 181,
+            "versionsIds": [
+              "joint-js8-engine",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline"
+            ]
+          },
+          {
+            "seed": 1410500001,
+            "direction": "A",
+            "candidateSeats": [
+              1
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 4,
+            "meanScore": 45,
+            "scoreDiff": -8.25,
+            "winnerSeat": 2,
+            "moves": 166,
+            "versionsIds": [
+              "ai5-readiness-efficiency@engine",
+              "joint-js8-engine",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5"
+            ]
+          },
+          {
+            "seed": 1410500002,
+            "direction": "A",
+            "candidateSeats": [
+              2
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 4,
+            "meanScore": 53,
+            "scoreDiff": -2.5,
+            "winnerSeat": 1,
+            "moves": 185,
+            "versionsIds": [
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "joint-js8-engine",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine"
+            ]
+          },
+          {
+            "seed": 1410500003,
+            "direction": "A",
+            "candidateSeats": [
+              3
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 4,
+            "meanScore": 41,
+            "scoreDiff": -7.75,
+            "winnerSeat": 1,
+            "moves": 155,
+            "versionsIds": [
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5",
+              "joint-js8-engine",
+              "ai5-readiness-efficiency@contest"
+            ]
+          },
+          {
+            "seed": 1410500004,
+            "direction": "A",
+            "candidateSeats": [
+              4
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 3,
+            "meanScore": 48,
+            "scoreDiff": -4,
+            "winnerSeat": 2,
+            "moves": 171,
+            "versionsIds": [
+              "neutral-baseline",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "joint-js8-engine"
+            ]
+          },
+          {
+            "seed": 1410500005,
+            "direction": "A",
+            "candidateSeats": [
+              0
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 2,
+            "meanScore": 52,
+            "scoreDiff": 9.75,
+            "winnerSeat": 1,
+            "moves": 155,
+            "versionsIds": [
+              "joint-js8-engine",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline"
+            ]
+          },
+          {
+            "seed": 1410500006,
+            "direction": "A",
+            "candidateSeats": [
+              1
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 4,
+            "meanScore": 44,
+            "scoreDiff": -8.5,
+            "winnerSeat": 4,
+            "moves": 176,
+            "versionsIds": [
+              "ai5-readiness-efficiency@engine",
+              "joint-js8-engine",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5"
+            ]
+          },
+          {
+            "seed": 1410500007,
+            "direction": "A",
+            "candidateSeats": [
+              2
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 2,
+            "meanScore": 58,
+            "scoreDiff": 4.25,
+            "winnerSeat": 1,
+            "moves": 166,
+            "versionsIds": [
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "joint-js8-engine",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine"
+            ]
+          },
+          {
+            "seed": 1410500008,
+            "direction": "A",
+            "candidateSeats": [
+              3
+            ],
+            "status": "finished",
+            "won": true,
+            "meanRank": 1,
+            "meanScore": 63,
+            "scoreDiff": 10.75,
+            "winnerSeat": 3,
+            "moves": 200,
+            "versionsIds": [
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5",
+              "joint-js8-engine",
+              "ai5-readiness-efficiency@contest"
+            ]
+          },
+          {
+            "seed": 1410500009,
+            "direction": "A",
+            "candidateSeats": [
+              4
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 5,
+            "meanScore": 40,
+            "scoreDiff": -10,
+            "winnerSeat": 2,
+            "moves": 155,
+            "versionsIds": [
+              "neutral-baseline",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "joint-js8-engine"
+            ]
+          },
+          {
+            "seed": 1410500010,
+            "direction": "A",
+            "candidateSeats": [
+              0
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 4,
+            "meanScore": 47,
+            "scoreDiff": -2.25,
+            "winnerSeat": 1,
+            "moves": 150,
+            "versionsIds": [
+              "joint-js8-engine",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline"
+            ]
+          },
+          {
+            "seed": 1410500011,
+            "direction": "A",
+            "candidateSeats": [
+              1
+            ],
+            "status": "finished",
+            "won": true,
+            "meanRank": 1,
+            "meanScore": 74,
+            "scoreDiff": 12,
+            "winnerSeat": 1,
+            "moves": 197,
+            "versionsIds": [
+              "ai5-readiness-efficiency@engine",
+              "joint-js8-engine",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5"
+            ]
+          },
+          {
+            "seed": 1410500012,
+            "direction": "A",
+            "candidateSeats": [
+              2
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 4,
+            "meanScore": 48,
+            "scoreDiff": -8.25,
+            "winnerSeat": 3,
+            "moves": 183,
+            "versionsIds": [
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "joint-js8-engine",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine"
+            ]
+          },
+          {
+            "seed": 1410500013,
+            "direction": "A",
+            "candidateSeats": [
+              3
+            ],
+            "status": "finished",
+            "won": true,
+            "meanRank": 1,
+            "meanScore": 54,
+            "scoreDiff": 10.25,
+            "winnerSeat": 3,
+            "moves": 191,
+            "versionsIds": [
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5",
+              "joint-js8-engine",
+              "ai5-readiness-efficiency@contest"
+            ]
+          },
+          {
+            "seed": 1410500014,
+            "direction": "A",
+            "candidateSeats": [
+              4
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 2,
+            "meanScore": 65,
+            "scoreDiff": 3.75,
+            "winnerSeat": 1,
+            "moves": 195,
+            "versionsIds": [
+              "neutral-baseline",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "joint-js8-engine"
+            ]
+          },
+          {
+            "seed": 1410500015,
+            "direction": "A",
+            "candidateSeats": [
+              0
+            ],
+            "status": "finished",
+            "won": true,
+            "meanRank": 1,
+            "meanScore": 67,
+            "scoreDiff": 10.25,
+            "winnerSeat": 0,
+            "moves": 200,
+            "versionsIds": [
+              "joint-js8-engine",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline"
+            ]
+          }
+        ],
+        "directionA": {
+          "games": 16,
+          "firstPlace": {
+            "point": 0.25,
+            "lower": 0.0625,
+            "upper": 0.5,
+            "seeds": 16,
+            "games": 16,
+            "iterations": 2000,
+            "method": "seed-cluster-bootstrap-95"
+          },
+          "bySeat": {
+            "0": {
+              "games": 4,
+              "firstPlaceRate": 0.25,
+              "wilson": {
+                "point": 0.25,
+                "lower": 0.04558726080970055,
+                "upper": 0.6993581574175981
+              }
+            },
+            "1": {
+              "games": 3,
+              "firstPlaceRate": 0.3333,
+              "wilson": {
+                "point": 0.3333333333333333,
+                "lower": 0.06149194472039615,
+                "upper": 0.7923403991979523
+              }
+            },
+            "2": {
+              "games": 3,
+              "firstPlaceRate": 0,
+              "wilson": {
+                "point": 0,
+                "lower": 0,
+                "upper": 0.5614970317550455
+              }
+            },
+            "3": {
+              "games": 3,
+              "firstPlaceRate": 0.6667,
+              "wilson": {
+                "point": 0.6666666666666666,
+                "lower": 0.20765960080204765,
+                "upper": 0.9385080552796037
+              }
+            },
+            "4": {
+              "games": 3,
+              "firstPlaceRate": 0,
+              "wilson": {
+                "point": 0,
+                "lower": 0,
+                "upper": 0.5614970317550455
+              }
+            }
+          }
+        },
+        "firstPlaceCombined": {
+          "point": 0.25,
+          "lower": 0.0625,
+          "upper": 0.5,
+          "seeds": 16,
+          "games": 16,
+          "iterations": 2000,
+          "method": "seed-cluster-bootstrap-95"
+        },
+        "meanRank": {
+          "mean": 2.8125,
+          "se": 0.3442231592053814,
+          "lower": 2.1378350053128554,
+          "upper": 3.4871649946871446
+        },
+        "meanScoreDiff": {
+          "mean": 0.4375,
+          "se": 2.036963119450129,
+          "lower": -3.554874351958613,
+          "upper": 4.429874351958613
+        },
+        "pairedScoreAdvantage": {
+          "seeds": 16,
+          "meanDiff": 0.4375,
+          "won": 7,
+          "lost": 9,
+          "tied": 0,
+          "advantageRate": 0.4375
+        },
+        "latency": {
+          "count": 2826,
+          "meanMs": 29.818,
+          "p50Ms": 16.595,
+          "p95Ms": 95.138,
+          "p99Ms": 107.279,
+          "maxMs": 136.207
+        },
+        "jointSearch": {
+          "decisions": 562,
+          "meanRolloutsPerDecision": 14.98,
+          "meanTransitionsPerDecision": 439.5,
+          "omTimeMsTotal": 0,
+          "omTimeShare": 0,
+          "gateTriggerRate": 0.9395,
+          "overrideRate": 0.358,
+          "gatedChampionKeepRate": 0.642,
+          "gatedStarvedFallbackRate": 0
+        }
+      }
+    },
+    {
+      "version": "joint-js8-engine-seat",
+      "seatCount": 5,
+      "seeds": 16,
+      "seedBase": 1410500000,
+      "jointOptions": {
+        "workUnits": 16,
+        "worlds": 2,
+        "horizon": 32
+      },
+      "elapsedMs": 82947,
+      "summary": {
+        "candidateId": "joint-js8-engine-seat",
+        "seatCount": 5,
+        "directions": [
+          "A"
+        ],
+        "totalGames": 16,
+        "finishedGames": 16,
+        "anomalies": 0,
+        "anomalyReasons": [],
+        "games": [
+          {
+            "seed": 1410500000,
+            "direction": "A",
+            "candidateSeats": [
+              0
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 3,
+            "meanScore": 57,
+            "scoreDiff": -2.5,
+            "winnerSeat": 2,
+            "moves": 181,
+            "versionsIds": [
+              "joint-js8-engine-seat",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline"
+            ]
+          },
+          {
+            "seed": 1410500001,
+            "direction": "A",
+            "candidateSeats": [
+              1
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 4,
+            "meanScore": 45,
+            "scoreDiff": -8.25,
+            "winnerSeat": 2,
+            "moves": 166,
+            "versionsIds": [
+              "ai5-readiness-efficiency@engine",
+              "joint-js8-engine-seat",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5"
+            ]
+          },
+          {
+            "seed": 1410500002,
+            "direction": "A",
+            "candidateSeats": [
+              2
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 4,
+            "meanScore": 53,
+            "scoreDiff": -2.5,
+            "winnerSeat": 1,
+            "moves": 185,
+            "versionsIds": [
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "joint-js8-engine-seat",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine"
+            ]
+          },
+          {
+            "seed": 1410500003,
+            "direction": "A",
+            "candidateSeats": [
+              3
+            ],
+            "status": "finished",
+            "won": true,
+            "meanRank": 1,
+            "meanScore": 64,
+            "scoreDiff": 21.75,
+            "winnerSeat": 3,
+            "moves": 171,
+            "versionsIds": [
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5",
+              "joint-js8-engine-seat",
+              "ai5-readiness-efficiency@contest"
+            ]
+          },
+          {
+            "seed": 1410500004,
+            "direction": "A",
+            "candidateSeats": [
+              4
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 3,
+            "meanScore": 55,
+            "scoreDiff": 2.75,
+            "winnerSeat": 2,
+            "moves": 172,
+            "versionsIds": [
+              "neutral-baseline",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "joint-js8-engine-seat"
+            ]
+          },
+          {
+            "seed": 1410500005,
+            "direction": "A",
+            "candidateSeats": [
+              0
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 2,
+            "meanScore": 52,
+            "scoreDiff": 9.75,
+            "winnerSeat": 1,
+            "moves": 155,
+            "versionsIds": [
+              "joint-js8-engine-seat",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline"
+            ]
+          },
+          {
+            "seed": 1410500006,
+            "direction": "A",
+            "candidateSeats": [
+              1
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 4,
+            "meanScore": 41,
+            "scoreDiff": -15.25,
+            "winnerSeat": 4,
+            "moves": 177,
+            "versionsIds": [
+              "ai5-readiness-efficiency@engine",
+              "joint-js8-engine-seat",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5"
+            ]
+          },
+          {
+            "seed": 1410500007,
+            "direction": "A",
+            "candidateSeats": [
+              2
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 3,
+            "meanScore": 53,
+            "scoreDiff": 4.5,
+            "winnerSeat": 1,
+            "moves": 161,
+            "versionsIds": [
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "joint-js8-engine-seat",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine"
+            ]
+          },
+          {
+            "seed": 1410500008,
+            "direction": "A",
+            "candidateSeats": [
+              3
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 3,
+            "meanScore": 57,
+            "scoreDiff": 0.75,
+            "winnerSeat": 4,
+            "moves": 171,
+            "versionsIds": [
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5",
+              "joint-js8-engine-seat",
+              "ai5-readiness-efficiency@contest"
+            ]
+          },
+          {
+            "seed": 1410500009,
+            "direction": "A",
+            "candidateSeats": [
+              4
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 5,
+            "meanScore": 28,
+            "scoreDiff": -16.25,
+            "winnerSeat": 2,
+            "moves": 140,
+            "versionsIds": [
+              "neutral-baseline",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "joint-js8-engine-seat"
+            ]
+          },
+          {
+            "seed": 1410500010,
+            "direction": "A",
+            "candidateSeats": [
+              0
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 4,
+            "meanScore": 47,
+            "scoreDiff": -2.25,
+            "winnerSeat": 1,
+            "moves": 150,
+            "versionsIds": [
+              "joint-js8-engine-seat",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline"
+            ]
+          },
+          {
+            "seed": 1410500011,
+            "direction": "A",
+            "candidateSeats": [
+              1
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 5,
+            "meanScore": 56,
+            "scoreDiff": -7.25,
+            "winnerSeat": 4,
+            "moves": 183,
+            "versionsIds": [
+              "ai5-readiness-efficiency@engine",
+              "joint-js8-engine-seat",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5"
+            ]
+          },
+          {
+            "seed": 1410500012,
+            "direction": "A",
+            "candidateSeats": [
+              2
+            ],
+            "status": "finished",
+            "won": true,
+            "meanRank": 1,
+            "meanScore": 67,
+            "scoreDiff": 13.5,
+            "winnerSeat": 2,
+            "moves": 186,
+            "versionsIds": [
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "joint-js8-engine-seat",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine"
+            ]
+          },
+          {
+            "seed": 1410500013,
+            "direction": "A",
+            "candidateSeats": [
+              3
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 2,
+            "meanScore": 64,
+            "scoreDiff": 9.75,
+            "winnerSeat": 2,
+            "moves": 201,
+            "versionsIds": [
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline",
+              "joint-js5",
+              "joint-js8-engine-seat",
+              "ai5-readiness-efficiency@contest"
+            ]
+          },
+          {
+            "seed": 1410500014,
+            "direction": "A",
+            "candidateSeats": [
+              4
+            ],
+            "status": "finished",
+            "won": false,
+            "meanRank": 2,
+            "meanScore": 65,
+            "scoreDiff": 3.75,
+            "winnerSeat": 1,
+            "moves": 195,
+            "versionsIds": [
+              "neutral-baseline",
+              "joint-js5",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "joint-js8-engine-seat"
+            ]
+          },
+          {
+            "seed": 1410500015,
+            "direction": "A",
+            "candidateSeats": [
+              0
+            ],
+            "status": "finished",
+            "won": true,
+            "meanRank": 1,
+            "meanScore": 67,
+            "scoreDiff": 10.25,
+            "winnerSeat": 0,
+            "moves": 200,
+            "versionsIds": [
+              "joint-js8-engine-seat",
+              "ai5-readiness-efficiency@engine",
+              "ai5-readiness-efficiency@contest",
+              "ai5-readiness-efficiency@tempo",
+              "neutral-baseline"
+            ]
+          }
+        ],
+        "directionA": {
+          "games": 16,
+          "firstPlace": {
+            "point": 0.1875,
+            "lower": 0,
+            "upper": 0.375,
+            "seeds": 16,
+            "games": 16,
+            "iterations": 2000,
+            "method": "seed-cluster-bootstrap-95"
+          },
+          "bySeat": {
+            "0": {
+              "games": 4,
+              "firstPlaceRate": 0.25,
+              "wilson": {
+                "point": 0.25,
+                "lower": 0.04558726080970055,
+                "upper": 0.6993581574175981
+              }
+            },
+            "1": {
+              "games": 3,
+              "firstPlaceRate": 0,
+              "wilson": {
+                "point": 0,
+                "lower": 0,
+                "upper": 0.5614970317550455
+              }
+            },
+            "2": {
+              "games": 3,
+              "firstPlaceRate": 0.3333,
+              "wilson": {
+                "point": 0.3333333333333333,
+                "lower": 0.06149194472039615,
+                "upper": 0.7923403991979523
+              }
+            },
+            "3": {
+              "games": 3,
+              "firstPlaceRate": 0.3333,
+              "wilson": {
+                "point": 0.3333333333333333,
+                "lower": 0.06149194472039615,
+                "upper": 0.7923403991979523
+              }
+            },
+            "4": {
+              "games": 3,
+              "firstPlaceRate": 0,
+              "wilson": {
+                "point": 0,
+                "lower": 0,
+                "upper": 0.5614970317550455
+              }
+            }
+          }
+        },
+        "firstPlaceCombined": {
+          "point": 0.1875,
+          "lower": 0,
+          "upper": 0.375,
+          "seeds": 16,
+          "games": 16,
+          "iterations": 2000,
+          "method": "seed-cluster-bootstrap-95"
+        },
+        "meanRank": {
+          "mean": 2.9375,
+          "se": 0.33502176546208656,
+          "lower": 2.2808694056572856,
+          "upper": 3.5941305943427144
+        },
+        "meanScoreDiff": {
+          "mean": 1.40625,
+          "se": 2.5788477522270807,
+          "lower": -3.648198715977151,
+          "upper": 6.460698715977151
+        },
+        "pairedScoreAdvantage": {
+          "seeds": 16,
+          "meanDiff": 1.4063,
+          "won": 9,
+          "lost": 7,
+          "tied": 0,
+          "advantageRate": 0.5625
+        },
+        "latency": {
+          "count": 2794,
+          "meanMs": 29.647,
+          "p50Ms": 16.191,
+          "p95Ms": 95.27,
+          "p99Ms": 108.253,
+          "maxMs": 175.6
+        },
+        "jointSearch": {
+          "decisions": 556,
+          "meanRolloutsPerDecision": 14.9,
+          "meanTransitionsPerDecision": 438.5,
+          "omTimeMsTotal": 0,
+          "omTimeShare": 0,
+          "gateTriggerRate": 0.9353,
+          "overrideRate": 0.3519,
+          "gatedChampionKeepRate": 0.6481,
+          "gatedStarvedFallbackRate": 0
+        }
+      }
+    }
+  ]
+}

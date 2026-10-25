@@ -1,24 +1,21 @@
 name: AI 4.0 auto training
 
+# 定时训练/周挑战/自动晋级（非 CI）。
+# PR 验证统一由 .github/workflows/ci.yml 负责；本工作流不再在 pull_request 上触发，
+# 避免同一提交重复执行 web/training 大规模测试与共享构建。
 on:
   schedule:
     # 每日 02:00 UTC 参数优化训练（约 40 分钟预算）
     - cron: '0 2 * * *'
     # 每周一 03:00 UTC 大规模冠军挑战
     - cron: '0 3 * * 1'
-  pull_request:
-    branches: [main]
-    paths:
-      - 'web-v1/**'
-      - 'training/**'
-      - '.github/workflows/ai-training.yml'
   workflow_dispatch:
     inputs:
       mode:
         description: '运行模式'
         type: choice
         default: evolve
-        options: [test, evolve, challenge]
+        options: [evolve, challenge]
       generations:
         description: '进化代数（1-30）'
         default: '3'
@@ -44,74 +41,29 @@ on:
 # 默认只读；写权限仅在 promote 任务内显式声明。
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: ai-training
   cancel-in-progress: false
 
 jobs:
-  audit-gate:
-    # AI7-A1/A3：PR CI 执行 research 层门禁（dev + 跨系统种子治理 + 证据核算）。
-    # promotion 层仍需本地完整环境与人工授权（REQUIRES_APPROVAL），不在 PR CI
-    # 强制为绿；晋级前必须在本地执行 npm run gate:promotion。
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'test')
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Build web-v1（构建清单/行为学审计需要编译产物）
-        working-directory: web-v1
-        run: npm install --no-audit --no-fund && npm run build
-      - name: 红队审计门禁（research 层：版本身份 / 构建新鲜度 / 种子治理 / 证据核算）
-        run: node training/redteam/audit-gate.mjs --tier research --json training/reports/audit-gate.json --md training/reports/audit-gate.md
-      - uses: actions/upload-artifact@v4
-        with:
-          name: audit-gate-report
-          path: |
-            training/reports/audit-gate.json
-            training/reports/audit-gate.md
-
-  test:
-    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'test')
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Build web-v1（训练与正式游戏共用同一编译产物）
-        working-directory: web-v1
-        run: npm install --no-audit --no-fund && npm run build
-      - name: web-v1 规则与 AI 测试（含信息公平性、冠军记录一致性）
-        working-directory: web-v1
-        run: npm test
-      - name: training 系统测试（含 CLI 端到端与晋级脚本）
-        working-directory: training
-        run: npm test
-      - name: AI7 进化控制面安全/可复现测试（Candidate Artifact / 目标边界 / 治理 / Controller / 演示逻辑）
-        working-directory: training
-        run: npm run evolution:test
-      - name: 模拟器快速评估（PR 100 局）
-        run: |
-          node training/simulator/cli.mjs --games 100 --seed-base 1 --out training/reports/pr-eval
-          node -e "const s=require('./training/reports/pr-eval/summary.json');console.log('finished:',s.finishedGames,'anomalyRate:',s.anomalyRate,'meanMoves:',s.meanMoves);if(s.anomalyRate>0.02){console.error('异常率超限');process.exit(1)}"
-
   evolve:
     if: github.event_name == 'schedule' && github.event.schedule == '0 2 * * *' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'evolve')
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Build web-v1
+          cache: npm
+          cache-dependency-path: web-v1/package-lock.json
+      - name: 构建 web-v1（训练与正式游戏共用同一编译产物）
         working-directory: web-v1
-        run: npm install --no-audit --no-fund && npm run build
+        run: npm ci --no-audit --no-fund && npm run build
       - name: 校验手动输入（白名单：纯数字 + 范围，经环境变量传递，杜绝注入 Shell）
         env:
           GENERATIONS: ${{ inputs.generations || '3' }}
@@ -134,10 +86,12 @@ jobs:
           check CONFIRM_SEEDS "$CONFIRM_SEEDS" 1 500
           check TIME_BUDGET_MIN "$TIME_BUDGET_MIN" 5 55
           check POOL_SIZE "$POOL_SIZE" 1 8
-      - name: 快速回归（规则 + 训练系统）
+      # 定时训练前只跑轻量可靠性门禁（卡表 + dev 审计，约 1 分钟），
+      # 不再重复 CI 已覆盖的 web/training 全量测试（原先串行约 24 分钟）。
+      - name: 启动前轻量门禁（卡表 + dev 审计）
         run: |
-          (cd web-v1 && npm test)
-          (cd training && npm test)
+          node web-v1/scripts/sync-cards.mjs --check
+          node training/redteam/audit-gate.mjs --tier dev --json training/reports/audit-gate-scheduled.json --md training/reports/audit-gate-scheduled.md
       - name: 下载上次训练状态（断点续训 + 验证种子账本）
         continue-on-error: true
         env:
@@ -160,7 +114,6 @@ jobs:
           TIME_BUDGET_MIN: ${{ inputs['time-budget-min'] || '40' }}
           POOL_SIZE: ${{ inputs['pool-size'] || '5' }}
         run: |
-          # 每日种子基数：按日期派生，跨日探索不同的候选与牌局，绝不逐日重复同一搜索。
           seed_base=$(date +%Y%m%d)
           resume_args=()
           if [ -f training/state-prev/state.json ]; then
@@ -213,14 +166,17 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Build web-v1（晋级脚本与回归测试都需要编译产物）
+          cache: npm
+          cache-dependency-path: web-v1/package-lock.json
+      - name: 构建 web-v1（晋级脚本需要编译产物）
         working-directory: web-v1
-        run: npm install --no-audit --no-fund && npm run build
+        run: npm ci --no-audit --no-fund && npm run build
       - name: 下载训练产物
         uses: actions/download-artifact@v4
         with:
@@ -235,7 +191,7 @@ jobs:
             candidate_id=$(node -p "JSON.parse(require('fs').readFileSync('$file','utf8')).id")
             echo "id=$candidate_id" >> "$GITHUB_OUTPUT"
           fi
-      - name: 晋级（归档候选 + 同步 champion.json + 落地参数区 + 完整回归）
+      - name: 晋级（归档候选 + 同步 champion.json + 落地参数区 + 一致性终检）
         if: steps.candidate.outputs.file != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -245,15 +201,12 @@ jobs:
           git config user.name "century-ai-bot"
           git config user.email "actions@users.noreply.github.com"
           branch="ai-champion/${CANDIDATE_ID}-$(date +%Y%m%d%H%M)"
-          # 归档候选（目录自动创建）并同步 champion.json——
-          # 保证下一轮进化以新冠军为基准，训练与正式游戏不脱节。
           node training/scripts/promote-champion.mjs --candidate "$CANDIDATE_FILE"
           node training/scripts/apply-champion.mjs --champion training/champions/champion.json
-          # 晋级前完整回归：参数变更必须通过全部规则、公平性与训练测试。
-          (cd web-v1 && npm test)
-          (cd training && npm test)
-          # 终检：web-v1 参数区必须与冠军记录逐字段一致。
+          # 完整回归与晋级审计在候选 PR 的 ci.yml（promotion 层 + 全代码检查）中执行，
+          # 这里只做参数一致性与轻量门禁，避免与 CI 重复跑 24 分钟测试。
           node training/scripts/apply-champion.mjs --check
+          node training/redteam/audit-gate.mjs --tier dev --json training/reports/audit-gate-promote.json
           git checkout -b "$branch"
           git add training/champions/ web-v1/src/ai/parameters.ts training/reports/
           git commit -m "feat(ai4): 晋级冠军参数 ${CANDIDATE_ID}（挑战证据见 PR 正文，champion.json 已同步）"
@@ -265,14 +218,19 @@ jobs:
             node -e "const d=require('./$CANDIDATE_FILE');console.log('\`\`\`json\\n'+JSON.stringify(d.confirmation,null,2)+'\\n\`\`\`')"
             echo '### 晋级判定'
             node -e "const d=require('./$CANDIDATE_FILE');console.log(d.confirmation.decision.reason)"
-            echo '### 回归状态'
-            echo '- web-v1 全部测试通过（规则 / AI / 信息公平性 / 冠军记录一致性 / 模块化）'
-            echo '- training 全部测试通过（模拟器 / 统计 / 进化 / 晋级脚本 / CLI 端到端）'
-            echo '- training/champions/champion.json 已同步（下一轮进化以新冠军为基准）'
-            echo '- 候选已归档至 training/champions/candidates/（跨版本对抗对手池来源）'
-            echo '- web-v1 参数区由 apply-champion.mjs 生成，训练版与网页实战版使用同一参数'
+            echo '### 审核要求'
+            echo '- CI promotion 层必须给出结构化 verdict（REQUIRES_APPROVAL 不会被转换成 PASS）'
+            echo '- 维护者需在 PR 上添加 `promotion-approved` 标签，并在 promotion-approval 环境批准'
+            echo '- 全量代码检查（web/training/模拟/UI/审计）在 CI 中真实执行'
           } > pr-body.md
-          gh pr create --title "AI 4.0 冠军晋级：${CANDIDATE_ID}" --body-file pr-body.md --base main --head "$branch"
+          pr_url=$(gh pr create --title "AI 4.0 冠军晋级：${CANDIDATE_ID}" --body-file pr-body.md --base main --head "$branch")
+          echo "候选 PR：$pr_url"
+          # GITHUB_TOKEN 创建的 PR 不会自动触发 pull_request 工作流（GitHub 防递归），
+          # 必须显式 dispatch CI；promotion=true 强制进入晋级门禁并覆盖全代码检查。
+          gh workflow run ci.yml --ref "$branch" -f promotion=true || {
+            echo "::error::无法 dispatch ci.yml；请手动运行 'CI' 工作流（ref=$branch, promotion=true）后再审查"
+            exit 1
+          }
 
   challenge:
     if: github.event_name == 'schedule' && github.event.schedule == '0 3 * * 1' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'challenge')
@@ -280,9 +238,13 @@ jobs:
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+          cache: npm
+          cache-dependency-path: web-v1/package-lock.json
       - name: 校验手动输入（白名单：纯数字 + 范围）
         env:
           CHALLENGE_SEEDS: ${{ inputs['challenge-seeds'] || '100' }}
@@ -291,17 +253,14 @@ jobs:
           if [ "$CHALLENGE_SEEDS" -lt 1 ] || [ "$CHALLENGE_SEEDS" -gt 500 ]; then
             echo "challenge-seeds 超出范围 [1, 500]：$CHALLENGE_SEEDS"; exit 1
           fi
-      - name: Build web-v1
+      - name: 构建 web-v1
         working-directory: web-v1
-        run: npm install --no-audit --no-fund && npm run build
+        run: npm ci --no-audit --no-fund && npm run build
       - name: 大规模冠军基线挑战（当前冠军自对弈回归基准 + V1/V2 赛马）
         env:
           CHALLENGE_SEEDS: ${{ inputs['challenge-seeds'] || '100' }}
         run: |
           (cd web-v1 && node scripts/benchmark-ai.mjs 16)
-          # 周挑战基准种子（训练池 [400M, 900M) 评测约定区，与日常进化 [0, 400M) 不相交）：
-          # 年份(2位)×4M + 年积日×1000——每个自然日唯一，跨年绝不重复同一批对局，
-          # 且 2125 年前恒在训练池内（10# 强制十进制，防 date 前导零被当八进制）。
           weekly_base=$((400000000 + 10#$(date +%y) * 4000000 + 10#$(date +%j) * 1000))
           node training/simulator/cli.mjs \
             --games "$CHALLENGE_SEEDS" \

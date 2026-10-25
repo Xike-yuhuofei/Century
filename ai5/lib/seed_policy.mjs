@@ -120,6 +120,13 @@ export const AI6_LEAGUE_SMOKE_SUBBLOCK = [1_401_000_000, 1_402_000_000];
 export const AI6_LEAGUE_MATRIX_DEV_SUBBLOCK = [1_402_000_000, 1_403_000_000];
 export const AI6_LEAGUE_PREREG_SUBBLOCK = [1_403_000_000, 1_410_000_000];
 
+/** AI7 竞技决策候选开发快筛块（research only，2026-10-25）：
+ * - [1.41e9, 1.42e9) 与对抗联赛预留段物理隔离；
+ * - 只用于固定工作量开发种子快速筛选（方向性读数），**不是**正式验证池：
+ *   正式验证池为 [900M, 1.06e9)，本块完全在验证池之外；
+ * - 任何候选晋级必须另起独立确认块并由后续实验流程批准，禁止复用本块。 */
+export const AI7_CANDIDATE_DEV_SUBBLOCK = [1_410_000_000, 1_420_000_000];
+
 /** AI6 战术基准局面库专用块（research/overnight-tactical-benchmark，PR 合并时换块）：
  * 原拟 [1.4e9,1.5e9) 与对抗性联赛块重叠（并行会话先合并），按块不重叠纪律改登记
  * [1.5e9,1.6e9)，语料随之用新种子确定性重生成（见 training/scenarios/data/）。

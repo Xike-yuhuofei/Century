@@ -16,6 +16,11 @@ export { evaluateLeaf, leafVector, logisticWin, evaluateL0, evaluateL1, evaluate
 export { playJointTrajectory, runJointRollout, firstPlaceOf } from './joint-rollout.js';
 export { runJointTreeTrial } from './joint-tree.js';
 export { L3_CALIBRATION, type L3Calibration } from './l3-calibration.js';
-export { resolveJointConfig, mergeJointOptions, versionOptionPreset, jointConfigHash, JOINT_SEARCH_DEFAULTS, type JointSearchResolved } from './config.js';
+export { resolveJointConfig, mergeJointOptions, versionOptionPreset, jointConfigHash, JOINT_SEARCH_DEFAULTS, AI7_CANDIDATE_PARAMETERS, type JointSearchResolved } from './config.js';
 export { nearTerminalRisk, immediateOfficialScoreDelta, maxImmediateScoreAction, claimThreshold, type NearTerminalRisk, type ImmediateScoreCandidate } from './near-terminal.js';
+export {
+  isFinalOwnAction, finalScoreOfAction, finalScoreTable, solveFinalAction,
+  endgameDiscardColors, opponentOneActionUpperBound,
+  type EndgameSolution, type FinalScoreCandidate, type OpponentBound,
+} from './endgame.js';
 export { batchFloors, fitWorlds, trialFloorMs, type BatchAdmission } from './budget.js';

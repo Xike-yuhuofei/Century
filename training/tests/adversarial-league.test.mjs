@@ -203,7 +203,9 @@ test('端到端冒烟：2+5 人、3 版本、快档——报告结构、指纹�
   });
   // 2p: C(3,2)=3 场 h2h；5p: C(3,2)×2=6 场 field
   assert.equal(plan.matches.length, 9);
-  const games = runPlan(plan, reg, { jointOverrides: FAST });
+  // CI 慢 runner 上 5p 对局可能超过生产默认 60s 单局墙钟预算而被记为异常；
+  // 本冒烟只验证报告/矩阵结构，不参与训练统计，故显式放宽测试用 deadline（不改变生产口径）。
+  const games = runPlan(plan, reg, { jointOverrides: FAST, deadlineMs: 180_000 });
   assert.equal(games.length, 18);
   const report = summarizeLeague({ plan, games, registry: reg, jointOverrides: FAST, note: '测试冒烟' });
   assert.equal(report.schema, 'century-adversarial-league-v2');
