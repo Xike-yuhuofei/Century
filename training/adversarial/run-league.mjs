@@ -45,7 +45,7 @@ function parseArgs() {
     mode: 'matrix', versions: null, candidates: null, candidateIds: null,
     players: [2, 5], seeds: 4, block: 'smoke', joint: 'fast',
     out: resolve('training/reports/adversarial-league'), label: null,
-    registryJoint: null,
+    registryJoint: null, seedOffset: 0,
   };
   const argv = process.argv.slice(2);
   for (let i = 0; i < argv.length; i++) {
@@ -60,7 +60,11 @@ function parseArgs() {
     else if (flag === '--joint') args.joint = argv[++i];
     else if (flag === '--out') args.out = resolve(argv[++i]);
     else if (flag === '--label') args.label = argv[++i];
+    else if (flag === '--seed-offset') args.seedOffset = Number(argv[++i]);
     else throw new Error(`未知参数：${flag}`);
+  }
+  if (!Number.isSafeInteger(args.seedOffset) || args.seedOffset < 0) {
+    throw new Error(`--seed-offset 必须为非负安全整数，实际：${args.seedOffset}`);
   }
   return args;
 }
@@ -120,7 +124,7 @@ async function main() {
     for (const id of versionIds) resolveVersion(registry, id);
     const plan = planMatrix({
       versionIds, seatCounts: args.players, seedsPerPair: args.seeds,
-      seedBase: block[0], block,
+      seedBase: block[0] + args.seedOffset, block,
     });
     process.stdout.write(`赛程：${plan.matches.length} 场，${plan.matches.reduce((s, m) => s + m.seeds.length, 0)} 局，种子 [${plan.seedBase}, ${plan.seedEnd})\n`);
     const t0 = performance.now();
@@ -134,12 +138,12 @@ async function main() {
   } else {
     const candidateIds = args.candidateIds ?? (registry.snapshot.candidates ?? []);
     if (!candidateIds.length) throw new Error('evaluate 模式需要 --candidates + --candidate-ids（或候选文件中的候选）');
-    // 双轴种子分区（块内：轴 A 前段，轴 G 后段，绝不重叠）。
+    // 双轴种子分区（块内：offset 前段保留给既定方案，轴 A 随后，轴 G 收尾，绝不重叠）。
     const axisAGamesPerCell = args.players.reduce((s, n) => s + (n === 2 ? 1 : 2), 0);
     const axisANeed = axisAGamesPerCell * args.seeds;
     const axisGNeed = args.players.length * args.seeds;
-    if (axisANeed + axisGNeed > block[1] - block[0]) {
-      throw new Error(`种子需求 ${axisANeed + axisGNeed} 超出块容量 ${block[1] - block[0]}`);
+    if (args.seedOffset + axisANeed + axisGNeed > block[1] - block[0]) {
+      throw new Error(`种子需求 offset ${args.seedOffset} + ${axisANeed} + ${axisGNeed} 超出块容量 ${block[1] - block[0]}`);
     }
     const evaluations = [];
     for (const candidateId of candidateIds) {
@@ -147,7 +151,7 @@ async function main() {
       const t0 = performance.now();
       const evaluation = evaluateCandidate({
         registry, candidateId, seatCounts: args.players, seedsPerCell: args.seeds,
-        axisASeedBase: block[0], axisGSeedBase: block[0] + axisANeed, block,
+        axisASeedBase: block[0] + args.seedOffset, axisGSeedBase: block[0] + args.seedOffset + axisANeed, block,
         jointOverrides,
       });
       process.stdout.write(`  完成 ${Math.round(performance.now() - t0) / 1000}s｜轴A ${evaluation.axisA.cells.map(c => `${(c.firstPlaceRate * 100).toFixed(1)}%(${c.games})`).join(' ')}｜轴G ${evaluation.axisG.cells.map(c => `${(c.firstPlaceRate * 100).toFixed(1)}%(${c.games})`).join(' ')}\n`);
@@ -160,6 +164,7 @@ async function main() {
       registryFingerprint: registryFingerprint(registry),
       engineBundleSha256: baseRegistry.snapshot.engineBundleSha256,
       block: [...block], jointOverrides, seedsPerCell: args.seeds, players: args.players,
+      seedOffset: args.seedOffset,
       generalityPool: GENERALITY_POOL,
       selection,
       evaluations: evaluations.map(e => ({
