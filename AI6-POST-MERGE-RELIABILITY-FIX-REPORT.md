@@ -59,12 +59,13 @@
 | Worker 运行时 | `node --test web-v1/tests/ai-runtime.test.mjs` | 15/15 ✅ |
 | 复盘分析 | `node --test training/human-analytics/tests/run-tests.mjs` | 19/19 ✅ |
 | 战术语料 | `node --test --test-concurrency=2 training/scenarios/tests/*.test.mjs` | integrity 13/13 + decisions 5/5 ✅ |
+| AI5 回归 | `node --test ai5/openevolve/tests/seed-policy.test.mjs` | 9/9 ✅（种子政策块与本分支联赛账本交叉核对一致） |
 | 等价审计 | `node training/joint/equivalence-audit.mjs --seeds 4 --players 2,5` | EQUIVALENT（8 局 305 决策零不一致）✅ |
 | 版本身份审计 | `node training/redteam/audit-versions.mjs --probes=8 --json` | CLEAN_WITH_GOVERNANCE ✅ |
 | 审计门禁 | `node training/redteam/audit-gate.mjs --tier dev` / `--tier research` / `--tier promotion` | dev exit 0 / research exit 0 / promotion exit 2（REQUIRES_APPROVAL×2，如实阻断）✅ |
 | 证据核算 | `node training/redteam/audit-evidence-accounting.mjs` | confirm 12,800 复算一致；challenge-11 独立 promote 复现；账本无重叠 ✅ |
 | PR #40 分层重算 | `node training/adversarial/stratify-league-report.mjs --in ...prereg-15s-official/league-report.json` | 108 单元；逐局守恒对账通过 ✅ |
-| 浏览器冒烟 | Pages 入口（standalone/mobile esbuild 产物）由 pages-entrypoints 测试与构建锚点断言覆盖（esbuild IIFE 产物含冠军链标记） | web-v1 套件内覆盖 ✅ |
+| 浏览器冒烟 | Pages 入口（standalone/mobile esbuild 产物）由 pages-entrypoints 测试与构建锚点断言覆盖（esbuild IIFE 产物含冠军链标记）；PR #44 触发的 CI `test-and-build` job 自动执行 Playwright 冒烟套件（桌面/移动/Focus 全流程） | web-v1 套件内覆盖 + CI 执行 ✅ |
 
 ### C.1 全量套件执行记录
 

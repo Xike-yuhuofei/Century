@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 import { nextValidationBase, consumeLedger, assertBlockFree, validationChallengeCount, VALIDATION_POOL_BASE } from '../lib/seeds.mjs';
 import { challengeWithDecision } from './challenge.mjs';
 import { requireBuiltEngine, engineBundleSha256, REPO_ROOT } from '../lib/paths.mjs';
+import { DEFAULT_SIM_SALT } from '../lib/sim-stream.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const outDir = resolve(REPO_ROOT, 'training/reports/js5-promotion-challenge');
@@ -162,6 +163,14 @@ writeFileSync(resolve(outDir, 'candidate.json'), JSON.stringify({
   codeCommit: CODE_COMMIT_AT_START,
   seatCount: seatsArg,
   primaryMetric: summary.primaryMetric,
+  // P0-5 随机流留痕：AI 信念采样流 = deriveSimStreamSeed(对局种子, salt)——
+  // 独立域单向派生，不暴露真实洗牌种子；来源与盐值随证据落盘可审计。
+  simStream: {
+    domain: 'derived-v1',
+    salt: DEFAULT_SIM_SALT,
+    derivation: 'simSeed = sha256(salt:对局种子) 截断 31 位（training/lib/sim-stream.mjs）',
+    note: '游戏真实牌库 RNG（引擎内部）与 AI 信念采样 RNG 逻辑隔离；同盐同种子 ⇒ 同流（配对 CRN 保持）',
+  },
   runFingerprints: {
     engineBundleAtStart: ENGINE_BUNDLE_AT_START,
     engineBundleAtEnd: ENGINE_BUNDLE_AT_END,
