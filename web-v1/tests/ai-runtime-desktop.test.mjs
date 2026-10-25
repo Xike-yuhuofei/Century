@@ -166,13 +166,10 @@ test('E4 墙钟模式：只记录分布，不把计时噪声误判为逻辑差�
   } finally {
     client.dispose();
   }
-  // 差异必须由工作量（计时）解释，而不是另一套算法/参数。
-  for (const sample of samples) {
-    if (!sample.sameAction) {
-      assert.notEqual(sample.workerRollouts, sample.mainRollouts,
-        `行动不同但工作量相同：疑似逻辑不一致 ${JSON.stringify(sample)}`);
-    }
-  }
+  // 墙钟模式不做任何行动一致性断言：预算截止时机、批次准入与候选调度都可能
+  // 改变轨迹集合——即使轨迹数相同，行动也可能不同（CI 实测已出现）。
+  // 逻辑一致性由固定工作量测试保证；这里只记录分布，并已在上面校验每个
+  // Worker 行动都能被正式引擎接受。
   console.log('  [墙钟诊断]', JSON.stringify(samples));
 });
 
