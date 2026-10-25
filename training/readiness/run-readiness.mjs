@@ -273,14 +273,23 @@ function findLatest12hArtifact() {
   const rollbackDry = run(['node', 'scripts/ci/rollback-champion.mjs', '--dry-run']);
   const deployed = readJSON('training/reports/deploy-verification.json');
   const deployedPass = deployed?.verdict === 'PASS';
+  const championEvidence = readJSON('training/champions/champion.json')?.provenance?.promotionEvidence;
+  const promotedFirstPlace = championEvidence?.metric === 'pairedFirstPlaceRateDelta'
+    && championEvidence?.decision?.promote === true;
+  const rollbackDrill = existsSync(resolve(REPO_ROOT, 'training/reports/rollback-drill.json'));
+  const complete = deployedPass && promotedFirstPlace && rollbackDrill;
   record({
     id: 'R12', title: '无人工审批的自动晋级、发布、线上核验与回滚',
-    status: deployedPass ? 'PASS' : 'BLOCKED',
+    status: complete ? 'PASS' : 'BLOCKED',
     source: '.github/workflows/ci.yml + ai-training.yml + scripts/ci/verify-deploy.mjs + rollback-champion.mjs',
     testCommand: 'node scripts/ci/verify-workflows.mjs && node scripts/ci/rollback-champion.mjs --dry-run',
-    evidence: `工作流机器门禁=${verifyWorkflows.ok}；回滚 dry-run=${rollbackDry.ok}；线上核验=${deployedPass ? 'PASS' : '尚未执行真实发布'}`,
-    unmetReason: deployedPass ? null
-      : '当前没有通过第一名率正式挑战的候选，因此未执行真实冠军发布；不能以模拟发布冒充 PASS',
+    evidence: `工作流机器门禁=${verifyWorkflows.ok}；回滚 dry-run=${rollbackDry.ok}；` +
+      `真实机器合并+Pages 部署+线上核验=${deployedPass}（run 40221527752, site=PASS）；` +
+      `第一名率冠军晋级=${promotedFirstPlace}；回滚演练=${rollbackDrill}`,
+    unmetReason: complete ? null
+      : (deployedPass
+          ? '真实部署与线上身份核验已 PASS，但没有统计合格候选完成冠军晋级，也未执行回滚演练；不能把“部署现有冠军”当作 R12 完成'
+          : '当前没有通过第一名率正式挑战的候选，因此未执行真实冠军发布；不能以模拟发布冒充 PASS'),
   });
 }
 
