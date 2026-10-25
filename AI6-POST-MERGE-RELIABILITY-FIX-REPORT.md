@@ -69,9 +69,10 @@
 
 ### C.1 全量套件执行记录
 
-- **web-v1：208/208 全部通过**（`npm test`，808s；含离线 Worker 决策、信息公平性、pages-entrypoints 冠军链标记、联合搜索预算纪律）。
-- **training：153/153 全部通过**（`npm test`，434s；含 CLI 端到端、晋级脚本、进化管线回归；首轮 152/153 的失败为并发测试用 `process.cwd()` 拼路径的测试自身缺陷——cwd=training 时路径错位，已改为相对测试文件定位并复跑全绿）。
-- CI：新增 `audit-gate` job（dev 层，PR 触发）；其余工作流沿用 main 现状（ai5.yml 四 job 失败为 main 既有损坏，与本分支无关——PR #35 报告 §11 已取证）。
+- **web-v1：203/203 全部通过**（合并 main@cb0fb98 后复跑；手机端经 PR #43 移除，移动端相关 5 项测试随代码删除，208→203；含离线 Worker 决策、信息公平性、pages-entrypoints 冠军链标记）。
+- **training：153/153 全部通过**（合并后复跑，423s；含 CLI 端到端、晋级脚本、进化管线回归；首轮 152/153 的失败为并发测试用 `process.cwd()` 拼路径的测试自身缺陷——cwd=training 时路径错位，已改为相对测试文件定位并复跑全绿）。
+- **合并审计补录（main 前移 8 提交后）**：PR #42 的 `--seed-offset` 手动偏移方案并入账本校验（不再绕过防重）；其历史种子消费补录账本（matrix-dev 50 + prereg 150，verifyLedger 零缺陷）；其评估报告经分层重算证实 verdict 全部成立但逐人数数字为合并伪影（勘误文档 §七 + `engine-axis-stratified-corrections.json`）。
+- CI：新增 `audit-gate` job（dev 层，PR 触发）**已在 PR #44 上 SUCCESS**；`test-and-build`（Focus UI Playwright 浏览器冒烟）**SUCCESS**；ai5.yml 与 AI 4.0 training `test` job 的超时取消为 main 既有系统性超窗（PR #35 报告 §11 已取证，非本分支引入）。
 
 ### 构建产物指纹
 
@@ -150,4 +151,6 @@
 | `e33f330` | P0 整改：版本身份、审计门禁、联赛统计、种子账本、挑战管线 |
 | `c72b537` | P1 整改：Worker 信息防火墙、复盘数据质量、战术语料公开/私有分离 |
 | `9c7c037` | 证据更正：PR #29 勘误 + PR #40 分层重算 |
-| （最终） | 本报告 |
+| `a1b7633` | 最终报告与测试修复（training 153/153、web-v1 208/208） |
+| `8d554cb` | 完成审计补齐：随机流盐值留痕 + AI5 回归证据 |
+| `d50aabc` | 合并 main（PR #42/#43）+ PR #42 种子补录 + 引擎轴分层重算 + 勘误 §七 |
