@@ -49,14 +49,6 @@ with sync_playwright() as pw:
             assert page.locator('.duel-player[data-player="0"] .played-face').count()==1
             page.screenshot(path=str(ROOT/'dist/focus-after-round.png'))
         page.close()
-    phone=browser.new_page(viewport={'width':390,'height':844},device_scale_factor=1)
-    phone.on('pageerror',lambda e:errors.append(str(e)))
-    phone.set_content(html)
-    phone.select_option('#humanCount','2')  # 沿用 2 真人 + 4 AI 的 6 人扩展布局
-    phone.select_option('#botCount','4')
-    phone.click('[data-action="start"]')
-    assert phone.evaluate('document.documentElement.scrollWidth<=innerWidth')
-    phone.screenshot(path=str(ROOT/'dist/focus-mobile.png'),full_page=True)
     assert not errors,errors
     browser.close()
 print('FOCUS 浏览器检查通过')

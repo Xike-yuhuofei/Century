@@ -16,14 +16,12 @@
 | [data/cards.json](data/cards.json) | 卡牌机器可读数据 |
 | [scripts/validate-cards.mjs](scripts/validate-cards.mjs) | 校验脚本 |
 
-## 手机与浏览器游玩（GitHub Pages）
+## 桌面浏览器游玩（GitHub Pages）
 
 - **电脑地址**：https://xike-yuhuofei.github.io/Century/
 - **自动部署**：[.github/workflows/pages.yml](.github/workflows/pages.yml)。每次 `main` 的 `web-v1/**` 更新会校验卡牌、运行测试、重新编译，并将 `web-v1/dist/standalone.html` 发布为网站首页。
 - **首次启用（仓库管理员操作一次）**：打开仓库 **Settings → Pages → Build and deployment**，将 **Source** 设置为 **GitHub Actions**。如首次自动运行因未启用 Pages 而失败，到 **Actions → Deploy Century Game to GitHub Pages → Run workflow** 选择 `main` 重跑。
-- **手机地址**：https://xike-yuhuofei.github.io/Century/mobile/ 。独立触屏界面提供双行市场、底部手牌抽屉、完整行动与双真人交接遮挡；复用电脑版规则和 AI 2.0。手机与电脑各自保存本地对局，可显式导入/导出备份，不支持跨设备实时联机。
-- **设计与验收**：[交付报告](docs/mobile/DELIVERY.md)、[自查报告](docs/mobile/SELF-AUDIT.md)。
-- **复盘导出**：电脑端「行动记录 ☷」、手机端「菜单 → 行动记录与复盘导出」，支持 Markdown 和 JSON。新局完整记录所有玩家每回合的行动与资源变化，随存档保留，结束后仍可导出；旧存档从更新后的接续点开始记录。详见 [复盘说明](web-v1/README.md#导出对局复盘)。
+- **复盘导出**：桌面端「行动记录 ☷」，支持 Markdown 和 JSON。新局完整记录所有玩家每回合的行动与资源变化，随存档保留，结束后仍可导出；旧存档从更新后的接续点开始记录。详见 [复盘说明](web-v1/README.md#导出对局复盘)。
 
 ## 验证
 

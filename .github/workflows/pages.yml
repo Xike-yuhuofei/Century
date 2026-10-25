@@ -23,31 +23,22 @@ jobs:
         working-directory: web-v1
       - run: npm test
         working-directory: web-v1
-      - name: Install mobile browser checks
+      - name: Install browser checks for replay smoke
         run: |
           python -m pip install playwright==1.56.0
           python -m playwright install --with-deps chromium webkit
-      - name: Verify mobile flows in Chromium and WebKit
-        run: python web-v1/scripts/smoke_mobile.py
-      - name: Check mobile privacy, touch and save recovery boundaries
-        run: python web-v1/scripts/audit_mobile.py
-      - name: Verify replay downloads on desktop and mobile
+      - name: Verify replay downloads in Chromium and WebKit
         run: python web-v1/scripts/smoke_replay.py
       - uses: actions/upload-artifact@v4
         with:
           name: replay-browser-evidence
           path: web-v1/dist/replay-evidence/
-      - uses: actions/upload-artifact@v4
-        with:
-          name: mobile-browser-evidence
-          path: docs/mobile/
       - name: Prepare complete website
         run: |
           mkdir -p _site
           cp -R web-v1/dist/. _site/
           cp web-v1/dist/standalone.html _site/index.html
           test -s _site/index.html
-          test -s _site/mobile/index.html
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
