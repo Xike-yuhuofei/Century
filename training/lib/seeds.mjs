@@ -88,23 +88,33 @@ function consumedBlocks(ledger) {
   return blocks;
 }
 
-/** 由上次账本推下一次验证种子块起点；无账本时按运行身份派生。
- * 有账本时严格落在全部已消费块之后（不再只依赖 lastBase）。 */
-export function nextValidationBase(previousLedger, { runId = process.env.GITHUB_RUN_ID, now = Date.now() } = {}) {
-  const blocks = consumedBlocks(previousLedger);
-  if (blocks.length > 0) {
-    const highestEnd = Math.max(...blocks.map(b => b.base + b.size));
-    const next = highestEnd + VALIDATION_STRIDE;
-    if (next >= VALIDATION_POOL_MAX) {
-      throw new Error(`验证种子池已耗尽（下一块起点 ${next} ≥ 上限 ${VALIDATION_POOL_MAX}），需要扩池并升级引擎种子范围`);
-    }
-    return next;
+/** 由上次账本推下一次验证种子块起点。
+ *
+ * AI7-A1 修复（原 P1-1 fail-open）：账本缺失或没有任何可核验的已消费块时
+ * 直接抛错，不再按 GITHUB_RUN_ID / 当前小时派生起点——派生起点会与历史
+ * 账本不可见地重合，且同一小时两次本地运行会拿到同一块。生产路径改用
+ * training/lib/seed-governance.mjs 的跨系统治理层；本 helper 仅保留给
+ * 「已有本地账本」的兼容调用与回归测试。 */
+export function nextValidationBase(previousLedger) {
+  if (!previousLedger || typeof previousLedger !== 'object') {
+    throw new Error(
+      '验证种子账本缺失（fail-closed，AI7-A1）：禁止按运行身份/时间派生种子起点；' +
+      '请使用 training/lib/seed-governance.mjs 的治理层分配下一块，或恢复既有账本。',
+    );
   }
-  const id = Number(runId);
-  const salt = Number.isSafeInteger(id) && id > 0
-    ? id % 80_000
-    : Math.floor(now / 3_600_000) % 80_000; // 本地运行按小时派生（按天会让同日多次无账本运行撞同一块）
-  return VALIDATION_POOL_BASE + salt * VALIDATION_STRIDE;
+  const blocks = consumedBlocks(previousLedger);
+  if (blocks.length === 0) {
+    throw new Error(
+      '验证种子账本没有可核验的已消费块（fail-closed）：无法推导下一块；' +
+      '全新部署必须经治理层显式初始化，禁止按运行身份派生。',
+    );
+  }
+  const highestEnd = Math.max(...blocks.map(b => b.base + b.size));
+  const next = highestEnd + VALIDATION_STRIDE;
+  if (next >= VALIDATION_POOL_MAX) {
+    throw new Error(`验证种子池已耗尽（下一块起点 ${next} ≥ 上限 ${VALIDATION_POOL_MAX}），需要扩池并升级引擎种子范围`);
+  }
+  return next;
 }
 
 /** 防重断言：拟消费块 [base, base+size) 不得与账本中任何已消费块重叠。
@@ -112,6 +122,9 @@ export function nextValidationBase(previousLedger, { runId = process.env.GITHUB_
 export function assertBlockFree(base, size, ledger) {
   if (!Number.isSafeInteger(base) || !Number.isSafeInteger(size) || size <= 0) {
     throw new Error(`非法种子块：base=${base}, size=${size}`);
+  }
+  if (!ledger || typeof ledger !== 'object') {
+    throw new Error('验证种子账本缺失（fail-closed，AI7-A1）：无账本时不得判断种子块可用');
   }
   const end = base + size;
   for (const block of consumedBlocks(ledger)) {
@@ -127,11 +140,14 @@ export function assertBlockFree(base, size, ledger) {
  * size 记录本次实际消耗的种子数，供防重校验使用。
  * challengeCount 记录累计确认挑战次数（多重检验 alpha 消耗的输入，
  * P0 可靠性整改：长期重复挑战的误晋级风险必须随挑战次数收紧检验阈值）。 */
-export function consumeLedger(previousLedger, base, size = VALIDATION_STRIDE) {
+export function consumeLedger(previousLedger, base, size = VALIDATION_STRIDE, meta = {}) {
   return {
     lastBase: base,
     challengeCount: validationChallengeCount(previousLedger) + 1,
-    history: [...(Array.isArray(previousLedger?.history) ? previousLedger.history : []).slice(-99), { base, size, at: new Date().toISOString() }],
+    history: [
+      ...(Array.isArray(previousLedger?.history) ? previousLedger.history : []).slice(-99),
+      { base, size, at: new Date().toISOString(), ...meta },
+    ],
   };
 }
 

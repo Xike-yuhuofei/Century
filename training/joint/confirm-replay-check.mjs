@@ -10,50 +10,26 @@ import { resolve } from 'node:path';
 import { createGame, applyAction, score as engineScore, ranking } from '../../web-v1/dist/js/engine.js';
 import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
 import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
-import { BASELINE_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
+import { frozenVersion } from '../../web-v1/dist/js/ai/version-registry.js';
+import { HISTORICAL_POOLS } from './pools.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
 import { mulberry32 } from '../lib/rng.mjs';
 import { enumerateLegalActions } from '../../web-v1/dist/js/sim/legal.js';
-import { resolveAlgorithmVersion, decisionOptions } from '../lib/version-registry.mjs';
+
+/** 历史冠军参数（AI6 第六阶段 P0 修复）：本工具重放第五阶段 confirm 对局，
+ * 其"js0 席位"= 晋级前冠军 ai5-readiness-efficiency。此前引用
+ * CHAMPION_PARAMETERS——晋级后该常量为 JS5 描述符，重放静默换成 JS5 决策，
+ * js0 重放率从 24/24 崩到 1-2/12（污染实况证据）。冻结参数从注册表取。 */
+const LEGACY = frozenVersion('legacy-js0');
 
 const seatProfile = seat => (seat === 0 ? NEUTRAL_PROFILE : PROFILES[(seat - 1) % PROFILES.length]);
-
-// P0-1 整改：confirm 历史数据生成于晋级前——当时的池冠军 = ai5-readiness-efficiency
-// （冻结 js0），风格变体从它浅拷贝。修复前本工具用 CHAMPION_PARAMETERS 重建池与
-// js0 候选席位——晋级后 CHAMPION_PARAMETERS=joint-js5 适配器 → 重放身份全错
-// （js0 24/24 → 1/12、2/12 实锤）。历史重放的全部身份必须来自冻结归档。
-const JS0 = resolveAlgorithmVersion('legacy-js0');
-const JS0_OPTS = decisionOptions(JS0);
-
-function classicPool() {
-  const base = JS0.parameters;
-  return [
-    { id: base.id, parameters: base, structure: base.structure },
-    { id: 'neutral-baseline', parameters: BASELINE_PARAMETERS, structure: BASELINE_PARAMETERS.structure },
-    { id: `${base.id}@tempo`, parameters: { ...base, tempoWeight: Math.min(1.5, base.tempoWeight * 1.35), restWeight: Math.max(0.5, base.restWeight * 0.8) }, structure: base.structure },
-    { id: `${base.id}@contest`, parameters: { ...base, contestWeight: Math.min(2, base.contestWeight * 1.4), goalWeight: Math.min(1.5, base.goalWeight * 1.15) }, structure: base.structure },
-    { id: `${base.id}@engine`, parameters: { ...base, engineWeight: Math.min(1.5, base.engineWeight * 1.3), endgameWeight: Math.min(1.5, base.endgameWeight * 1.1) }, structure: base.structure },
-  ];
-}
-function diversePool() {
-  const base = JS0.parameters;
-  const hist = JSON.parse(readFileSync(resolve(REPO_ROOT, 'training/champions/candidates/struct-beam-rollout.json'), 'utf8'));
-  const hp = hist.parameters ?? hist;
-  return [
-    { id: base.id, parameters: base, structure: base.structure },
-    { id: 'ai4-struct-beam-rollout', parameters: hp, structure: hp.structure, randomLegal: false },
-    { id: 'style-rush', parameters: { ...base, tempoWeight: 1.6, restWeight: 0.5, engineWeight: 0.5, endgameWeight: 0.6 }, structure: base.structure, randomLegal: false },
-    { id: 'style-engine', parameters: { ...base, engineWeight: 1.6, capacityWeight: 1.4, tempoWeight: 0.7 }, structure: base.structure, randomLegal: false },
-    { id: 'random-legal', parameters: BASELINE_PARAMETERS, structure: BASELINE_PARAMETERS.structure, randomLegal: true },
-  ];
-}
-const POOLS = { classic: classicPool, diverse: diversePool };
+const POOLS = HISTORICAL_POOLS;
 function versionsForSeats(candidateSeats, candidateId, opponents, seedIndex, seatCount) {
   const poolSize = opponents.length;
   return Array.from({ length: seatCount }, (_, seat) => {
     if (candidateSeats.includes(seat)) {
       return candidateId === 'js0'
-        ? { candidate: true, kind: 'champion', id: 'js0-frozen-champion' }
+        ? { candidate: true, kind: 'frozen', id: LEGACY.id, parameters: LEGACY.parameters, structure: LEGACY.structure }
         : { candidate: true, kind: 'joint', id: `joint-${candidateId}`, joint: `joint-${candidateId}` };
     }
     const opponentIndex = (poolSize - 1) * ((seedIndex + seat) % poolSize) % poolSize;
@@ -87,8 +63,8 @@ function replay({ seed, seatCount, candidateSeats, candidateId, pool }) {
     if (version.candidate && version.kind === 'joint') {
       const r = chooseJointAction(game, { version: version.joint, budgetMs: 100, simSeed: seed, profile: seatProfile(seat) });
       action = r.action;
-    } else if (version.candidate && version.kind === 'champion') {
-      action = chooseAIAction(game, { ...JS0_OPTS.beam, profile: seatProfile(seat) }).action;
+    } else if (version.candidate && version.kind === 'frozen') {
+      action = chooseAIAction(game, { parameters: version.parameters, ...(version.structure ? { structure: version.structure } : {}), profile: seatProfile(seat) }).action;
     } else if (version.randomLegal) {
       action = randomLegalAction(game, rngFor(seat));
     } else {

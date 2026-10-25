@@ -58,6 +58,16 @@ test('冠军归档变更同样触发晋级门禁', () => {
   assert.equal(s.simulation, true);
 });
 
+test('冠军治理元数据与候选资料不触发晋级门禁（避免信任类变更阻断普通 PR）', () => {
+  for (const file of ['training/champions/version-lock.json', 'training/champions/revalidation-required.json', 'training/champions/candidates/joint-js5.json']) {
+    const s = scope([file]);
+    assert.equal(s.promotion, false, `${file} 不应触发 promotion`);
+    assert.equal(s.training, true, `${file} 应触发 training`);
+    assert.equal(s.audit, true, `${file} 应触发审计`);
+    assert.equal(auditTier(s), 'research');
+  }
+});
+
 test('B5 AI5 研究变更：跑研究检查，不误触发 web/training 单测', () => {
   const s = scope(['ai5/ppo/trainer.py']);
   assert.equal(s.ai5, true);
@@ -151,6 +161,6 @@ test('scopeToOutputs 输出 GitHub Actions 可消费的字符串布尔值', () =
   const outputs = scopeToOutputs(scope(['web-v1/src/ai/decision.ts']));
   assert.equal(outputs.web, 'true');
   assert.equal(outputs.research, 'false');
-  assert.equal(outputs.audit_tier, 'dev');
+  assert.equal(outputs.audit_tier, 'research');
   assert.equal(outputs.changed_count, '1');
 });

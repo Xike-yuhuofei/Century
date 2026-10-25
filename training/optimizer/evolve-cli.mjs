@@ -22,17 +22,22 @@
  *
  * 流程：进化（训练种子）→ 最佳候选用独立验证种子确认挑战 → 达标则输出候选文件供 PR。
  */
-import { resolve } from 'node:path';
+import { resolve, basename } from 'node:path';
 import { existsSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
 import { evolve } from './evolve.mjs';
 import { challengeWithDecision } from '../tournament/challenge.mjs';
-import { requireBuiltEngine, REPO_ROOT, engineBundleSha256 } from '../lib/paths.mjs';
+import { requireBuiltEngine, REPO_ROOT, engineBundleSha256, buildProvenance } from '../lib/paths.mjs';
 import { writeJSON, appendJSONL, readJSON, ensureDir } from '../lib/io.mjs';
-import { nextValidationBase, consumeLedger, assertBlockFree, validationChallengeCount, TRAINING_POOL_MAX, TRAINING_SEED_BLOCK, VALIDATION_POOL_MAX } from '../lib/seeds.mjs';
+import { consumeLedger, TRAINING_POOL_MAX, TRAINING_SEED_BLOCK } from '../lib/seeds.mjs';
+import {
+  loadSeedGovernance, nextFormalValidationBase, formalChallengeCount,
+  assertFormalChallengeAllocation, reserveConsumption, completeConsumption,
+} from '../lib/seed-governance.mjs';
 import { buildOpponentPool } from '../lib/opponents.mjs';
 import { PROMOTION_ALPHA_BUDGET } from '../evaluator/stats.mjs';
-import { BASELINE_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
+import { validateAIParameters, BASELINE_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
+import { championParametersSha256 } from '../../web-v1/scripts/build-hash.mjs';
 
 function parseArgs(argv) {
   const values = {};
@@ -126,17 +131,35 @@ const evolveBudgetMs = Math.max(60_000, totalBudgetMs - reserveMs);
 const deadlineAt = startedAt + evolveBudgetMs;
 const remaining = () => totalBudgetMs - (Date.now() - startedAt);
 
+// AI7-A1：显式 --resume 指向缺失断点必须 fail-closed——旧实现静默从头开始，
+// 会把同一训练种子块再消费一遍（候选筛选过拟合且无告警）。
 let initialState = null;
-if (args.resume && existsSync(resolve(process.cwd(), args.resume))) {
-  initialState = readJSON(resolve(process.cwd(), args.resume));
+const resumePath = args.resume ? resolve(process.cwd(), String(args.resume)) : null;
+if (resumePath) {
+  if (!existsSync(resumePath)) {
+    throw new Error(`--resume 指向的断点不存在：${resumePath}（fail-closed：禁止静默从头开始并重复消费训练种子）`);
+  }
+  initialState = readJSON(resumePath);
   console.error(`恢复断点：第 ${initialState.generation} 代之后继续`);
 }
 
-// 验证种子账本（P1：验证种子不可重复使用）。
-let previousLedger = null;
-if (args['seed-ledger'] && existsSync(resolve(process.cwd(), args['seed-ledger']))) {
-  previousLedger = readJSON(resolve(process.cwd(), args['seed-ledger']));
+// AI7-A1：验证种子账本必须显式存在。旧实现缺失时按运行身份派生起点
+// （fail-open），会静默复用历史验证种子并低估 challengeIndex。
+if (!args['seed-ledger']) {
+  throw new Error(
+    '必须显式提供 --seed-ledger <验证账本路径>（fail-closed，AI7-A1）。' +
+    '首次部署请先创建空账本（经治理层显式初始化），禁止无账本运行确认挑战。',
+  );
 }
+const seedLedgerPath = resolve(process.cwd(), String(args['seed-ledger']));
+if (!existsSync(seedLedgerPath)) {
+  throw new Error(`验证种子账本不存在：${seedLedgerPath}（fail-closed：缺失账本禁止确认挑战）`);
+}
+const previousLedger = readJSON(seedLedgerPath);
+const governanceRoot = args['governance-root']
+  ? resolve(process.cwd(), String(args['governance-root']))
+  : REPO_ROOT;
+const centralRegistryPath = resolve(governanceRoot, 'training/governance/seed-consumption-registry.json');
 
 ensureDir(outDir);
 const logPath = resolve(outDir, 'experiments.jsonl');
@@ -185,17 +208,38 @@ const report = {
     migrated: result.state.seedMigration ?? null,
   },
   // 证据溯源（P1）：本次运行使用的运行时产物指纹与代码版本。
-  provenance: { engineBundleSha256: engineBundleSha256(), codeCommit: gitHeadCommit() },
+  // AI7-A3：同时记录源码闭包哈希与构建元数据（源码↔产物一致性可核验）。
+  provenance: { ...buildProvenance(), codeCommit: gitHeadCommit() },
 };
 
 // 时间预算允许时，用独立验证种子对最佳候选做确认挑战（训练/验证种子隔离 + 不可复用）。
 // P0 多重检验防线：challengeIndex = 账本已记账挑战次数 + 1，按几何 alpha 消耗
 // 收紧本次检验阈值，控制长期重复挑战的家族误晋级率 ≤ 预算（默认 5%）。
-if (result.improved && remaining() > reserveMs * 0.6) {
-  const validationSeedBase = nextValidationBase(previousLedger);
-  // 防重断言（P1 复审）：拟消费块与账本任何已消费块重叠时拒绝挑战，绝不复用种子。
-  assertBlockFree(validationSeedBase, confirmSeeds, previousLedger);
-  const challengeIndex = validationChallengeCount(previousLedger) + 1;
+const noConfirm = args['no-confirm'] === true;
+if (result.improved && !noConfirm && remaining() > reserveMs * 0.6) {
+  // AI7-A1：跨系统治理层分配 + 登记。账本必须完整（含 PPO/deep/league），
+  // 下一块 = 全部用途已消费区间末端 + 步长；challengeIndex = 唯一正式区间数 + 1。
+  const governance = loadSeedGovernance({
+    root: governanceRoot,
+    strict: true,
+    extraLedgers: [{ id: 'evolve-previous-ledger', path: seedLedgerPath, required: true }],
+  });
+  const validationSeedBase = nextFormalValidationBase(governance);
+  const challengeIndex = formalChallengeCount(governance) + 1;
+  assertFormalChallengeAllocation({ registry: governance, base: validationSeedBase, size: confirmSeeds, challengeIndex });
+  const experimentId = `evolve-${String(basename(outDir)).toLowerCase().replace(/[^a-z0-9._-]/g, '-').slice(0, 40)}-${challengeIndex}`;
+  reserveConsumption({
+    purposeClass: 'formal-challenge',
+    purpose: 'ai4-evolve-confirmation',
+    base: validationSeedBase,
+    size: confirmSeeds,
+    experimentId,
+    challengeIndex,
+    evidencePath: outDir,
+    codeCommit: buildProvenance().buildGitCommit,
+    registryPath: centralRegistryPath,
+    root: governanceRoot,
+  });
   const { summary } = challengeWithDecision({
     champion, candidate: result.bestCandidate,
     seeds: confirmSeeds, seedBase: validationSeedBase,
@@ -205,9 +249,24 @@ if (result.improved && remaining() > reserveMs * 0.6) {
   report.validationSeedBase = validationSeedBase;
   report.challengeIndex = challengeIndex;
   appendJSONL(logPath, { type: 'confirmation', candidateId: result.bestCandidate.id, seedBase: validationSeedBase, challengeIndex, summary });
-  // 记账：该验证种子块已消费（记录块大小与累计挑战次数供防重与 alpha 消耗），写入 outDir 供工作流归档、下次续接。
-  const ledger = consumeLedger(previousLedger, validationSeedBase, confirmSeeds);
+  // 记账：该验证种子块已消费。落盘账本合并治理层已识别的全部正式挑战区间，
+  // 保证本地账本的 challengeCount = 全局累计（不再从 1 起步、低估阈值）。
+  const formalHistory = governance.entries
+    .filter(e => e.countsTowardChallengeIndex === true)
+    .map(e => ({ base: e.base, size: e.size, at: e.rawAt ?? null }));
+  const ledger = consumeLedger(
+    { history: formalHistory, challengeCount: formalChallengeCount(governance) },
+    validationSeedBase,
+    confirmSeeds,
+    { challengeIndex, purpose: 'ai4-evolve-confirmation', experimentId, source: 'evolve-cli' },
+  );
   writeJSON(resolve(outDir, 'validation-ledger.json'), ledger);
+  completeConsumption(experimentId, {
+    status: 'completed',
+    evidencePath: outDir,
+    note: `confirmation decision=${summary.decision.verdict}，challengeIndex=${challengeIndex}`,
+    registryPath: centralRegistryPath,
+  });
   if (summary.decision.promote) {
     const candidateFile = resolve(outDir, 'candidate.json');
     writeJSON(candidateFile, {
@@ -220,24 +279,56 @@ if (result.improved && remaining() > reserveMs * 0.6) {
         // 多重检验证据：挑战序号与 alpha 预算随证据落盘，晋级脚本据此独立重算收紧后的判定。
         challengeIndex,
         alphaBudget: PROMOTION_ALPHA_BUDGET,
-        // 完整配对证据随候选归档：晋级脚本据此独立重算判定，不信任调用方给出的结论。
+        // 多重检验证据：挑战序号与 alpha 预算随证据落盘，晋级脚本据此独立重算收紧后的判定。
         paired: summary.paired,
         seedPairs: summary.seedPairs,
         firstPlace: summary.firstPlace,
         winRate: summary.candidateWinRate, pairedDiff: summary.pairedDiffCI,
         ci: summary.decision.ci, decision: summary.decision,
+        seatCount: 5,
       },
+      // AI7-A4：人数覆盖必须显式披露。evolve 单次确认只覆盖 5 人局，
+      // 因此 promotionEligible=false——不得用单人数据冒充全人数晋级证据。
+      // 规范化身份：候选参数哈希（apply-champion 落地后应与 CHAMPION_PARAMETERS 一致）。
+      championParametersSha256: championParametersSha256(validateAIParameters(result.bestCandidate)),
+      seatCount: 5,
+      seatEvidence: [{
+        seatCount: 5,
+        seeds: confirmSeeds,
+        seedBase: validationSeedBase,
+        challengeIndex,
+        engineBundleSha256: engineBundleSha256(),
+        decisionSourceSha256: buildProvenance().decisionSourceSha256,
+        decisionArtifactSha256: buildProvenance().decisionArtifactSha256,
+        championParametersSha256: championParametersSha256(validateAIParameters(result.bestCandidate)),
+        codeCommit: gitHeadCommit(),
+        decision: summary.decision,
+        seedPairs: summary.seedPairs,
+      }],
+      seatCoverage: { required: [2, 3, 4, 5], covered: [5], complete: false, note: 'evolve 确认挑战只覆盖 5 人局；2–4 人必须独立成次挑战后才可晋级' },
+      promotionEligible: false,
       // 证据完整性溯源（P1）：证据生成时的运行时产物指纹与代码版本。
       // 晋级时重算当前产物指纹比对，引擎在证据生成后变更过则证据失效。
-      engineBundleSha256: engineBundleSha256(),
+      ...buildProvenance(),
       codeCommit: gitHeadCommit(),
+      governance: {
+        schema: governance.schema,
+        purposeClass: 'formal-challenge',
+        challengeIndex,
+        formalChallengeCount: formalChallengeCount(governance),
+        registeredInCentral: true,
+        experimentId,
+      },
       generatedAt: new Date().toISOString(),
     });
     report.candidateFile = candidateFile;
-    console.error(`候选参数已通过确认挑战：${candidateFile}`);
+    console.error(`候选参数已通过确认挑战：${candidateFile}（仅 5 人局证据，不具备全人数晋级资格）`);
   } else {
     console.error(`确认挑战未达标：${summary.decision.reason}`);
   }
+} else if (result.improved && noConfirm) {
+  report.confirmationSkipped = '--no-confirm（诊断/端到端测试；不消费验证种子）';
+  console.error('显式 --no-confirm：跳过确认挑战，不消费验证种子');
 } else if (result.improved) {
   console.error('时间预算不足，跳过确认挑战；候选仅完成快速筛选，状态已落盘可续训');
 } else if (result.state.interrupted) {

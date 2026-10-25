@@ -1,0 +1,49 @@
+{
+  "schema": "century-opponent-stratification-v1",
+  "date": "2026-10-25",
+  "question": "style-engine 在 2p diverse 方向A 显示 47.5% 低胜率——是否为 JS5 的克制型对手？",
+  "dataSources": [
+    "A1 第五阶段 confirm 2p diverse（主工作区 training/reports/js5-phase5/confirm/{js5,js0}-diverse/，200 种子）",
+    "A2 第六阶段双人独立验证 2p diverse（training/reports/phase6-task-a/ablation-phase6-2p-js5_js0-2-200s-div.json，200 种子）"
+  ],
+  "mergedGames": 1600,
+  "uniqueSeeds": 400,
+  "verdict": "NOT-A-COUNTER-PICK",
+  "findings": {
+    "candidateByOpponent": {
+      "js5": {
+        "vs random-legal": "100.0%（160 局）",
+        "vs style-rush": "66.9%",
+        "vs ai4-struct-beam-rollout": "65.0%",
+        "vs ai5-readiness-efficiency（血统对打）": "60.0%",
+        "vs joint-js5-frozen（镜像基线）": "52.5%",
+        "vs style-engine": "50.6%（Wilson 95% CI [43.0,58.3]——包含 50%，平价）"
+      },
+      "js0（legacy 束搜索）": {
+        "vs random-legal": "100.0%",
+        "vs ai4-struct-beam-rollout": "56.3%",
+        "vs ai5-readiness-efficiency": "53.8%",
+        "vs style-rush": "53.1%",
+        "vs style-engine": "42.5%",
+        "vs joint-js5-frozen": "42.5%"
+      }
+    },
+    "styleEnginePairedTest": {
+      "design": "同 (种子, 方向) 配对：js5 与 js0 各自对 style-engine",
+      "pairs": 160,
+      "js5WinRate": "50.6%",
+      "js0WinRate": "42.5%",
+      "pairedDiff": "+8.1pp",
+      "pairedMeanScoreDiff": "+3.34",
+      "interpretation": "style-engine 克制的是 legacy 束搜索（42.5%），JS5 联合搜索把该 matchup 拉回平价（+8.1pp）"
+    },
+    "directionBreakdown": {
+      "js5": { "A": "47.5% (38/80)", "B": "53.8% (43/80)" },
+      "js0": { "A": "46.3% (37/80)", "B": "38.8% (31/80)" },
+      "note": "js0 在方向 B（对等席位）被 style-engine 压制最重；js5 双方向均≥47.5%"
+    },
+    "smallSampleCaveat": "A2 单独 40 局的 47.5% 是抽样噪声；合并 160 局后 CI 覆盖 50%",
+    "mechanismHypothesis": "style-engine = legacy 基座 + engineWeight 1.6 + capacityWeight 1.4 + tempoWeight 0.7（2p 长局重引擎积累）。束搜索基座对该风格估值不足（js0 42.5%）；JS5 竞争门控触发时的联合模拟评估能识别被反超路径，恢复平价",
+    "f3Disclosure": "本分层为任务书 §九 F3 对手强度分层的执行样例；正式确认实验将按对手身份全量披露"
+  }
+}

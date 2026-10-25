@@ -41,7 +41,7 @@ import type { Action } from '../engine.js';
 import { GOLEM_BY_ID } from '../data.js';
 import type { AIObservation } from '../ai/observation.js';
 import type { AIParameters } from '../ai/parameters.js';
-import { CHAMPION_PARAMETERS } from '../ai/parameters.js';
+import { CHAMPION_PARAMETERS, validateAIParameters } from '../ai/parameters.js';
 import { choosePlan } from '../ai/planner.js';
 import type { AIStructure } from '../ai/structures.js';
 import type { Profile } from '../ai/profiles.js';
@@ -88,6 +88,20 @@ export type ChampionGuidedOptions = {
   /** 立即认领候选进入联合评估的选取原则（缺省 enumeration = PR #27 原始语义：
    * 合法枚举顺序前 2 个；prior = js5-opt 消融：按根筛选先验降序取前 2）。 */
   claimRanking?: 'enumeration' | 'prior';
+  /** AI6 第六阶段 C2：试验预算分配（缺省 balanced = JS5 语义逐位不变）。
+   * racing = 首个完整平衡批次后按 Hoeffding 置信界淘汰：非冠军候选的
+   * UCB(mean+ε) 低于冠军候选 LCB(mean−ε) 时淘汰（δ 按 M 候选 union 校正）；
+   * 全部非冠军候选被淘汰 → 提前返回冠军行动（保守语义保底）；
+   * 存活候选独占剩余预算。采样键 (world, replica) 与 balanced 完全一致
+   * （CRN 保持、逐试验可审计）；冠军候选绝不被淘汰。 */
+  allocation?: 'balanced' | 'racing';
+  /** racing 单决策淘汰错误率预算 δ（缺省 0.05；实际 ε 按 δ/M union 校正）。 */
+  racingDelta?: number;
+  /** AI6 第六阶段 C4：终局模式（缺省 default = JS5 语义）。claimFocus =
+   * 终局已触发（triggerPlayer 非 null）时，候选 = 冠军行动 ∪ 全部合法认领
+   * （不再限 2 个）∪ 先验 top 填满 cap——终局是小行动空间精确排序问题，
+   * 认领顺序比探索宽度更重要。 */
+  endgameMode?: 'default' | 'claimFocus';
 };
 
 export type ChampionGuidedSearchOptions = JointSearchOptions & ChampionGuidedOptions;
@@ -150,6 +164,12 @@ type PhaseTimings = {
 class ChampionGuidedPlanner {
   decide(observation: AIObservation, callOptions?: ChampionGuidedSearchOptions): ChampionGuidedDecision {
     const o = resolveChampionGuidedOptions(callOptions);
+    // AI7-A2 身份冻结：本决策消费的冠军基座参数必须来自调用描述符；未显式
+    // 传入时才回退模块级活动冠军（生产入口显式传入，冻结版本传入归档参数）。
+    // 归一化保证部分参数对象不会以 undefined 乘子进入束搜索。
+    const championParameters = o.championParameters
+      ? validateAIParameters(o.championParameters)
+      : CHAMPION_PARAMETERS;
     const t0 = performance.now();
     const phase: PhaseTimings = { planMs: 0, rootSimMs: 0, legalGenMs: 0, gateMs: 0, screenMs: 0, rolloutMs: 0, aggregateMs: 0 };
     if (observation.phase === 'finished') fail('游戏已结束，无法决策');
@@ -159,7 +179,7 @@ class ChampionGuidedPlanner {
     // 1. 冠军规划（冻结参数 + 显式结构；人格经 profileOverride 注入）。
     const profile: Profile = o.profileName ? profileByName(o.profileName) : NEUTRAL_PROFILE;
     const planStart = performance.now();
-    const plan = choosePlan(observation, o.championParameters ?? CHAMPION_PARAMETERS, profile, o.championStructure ?? 'beam-rollout');
+    const plan = choosePlan(observation, championParameters, profile, o.championStructure ?? 'beam-rollout');
     phase.planMs = performance.now() - planStart;
     const championAction: Action | null = plan?.first ?? null;
 
@@ -227,7 +247,7 @@ class ChampionGuidedPlanner {
     //    72-103ms，状态依赖；js0 同样承担），根筛选仅 3-10ms——预算尾部
     //    不足以试验时自然回退冠军行动（保守覆盖语义的退化情形）。
     const screenStart = performance.now();
-    const ctxRoot = heuristicContext(root.view, CHAMPION_PARAMETERS, NEUTRAL_PROFILE);
+    const ctxRoot = heuristicContext(root.view, championParameters, NEUTRAL_PROFILE);
     // 根筛选目标范围：缺省 all（冻结语义）；preferred 是文件注释记载的 JS5
     // 10ms 口径，现在真正接线（此前注释说用 preferred、实现却落 all）。
     const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
@@ -251,12 +271,17 @@ class ChampionGuidedPlanner {
     push(championAction, 'champion');
     // C2：立即认领候选的选取原则（缺省 enumeration = PR #27 原始语义；
     // prior 模式按根筛选先验降序取前 2，避免枚举顺序偶然排除高分认领）。
+    // C4 claimFocus：终局已触发时候选 = 冠军行动 ∪ 全部合法认领（认领顺序
+    // 是终局的核心决策；不再限 2 个）∪ 先验 top 填满 cap。
     const claimActions = legalRootActions.filter(x => x.type === 'claim');
-    if (o.claimRanking === 'prior') {
+    const claimFocus = o.endgameMode === 'claimFocus' && observation.triggerPlayer !== null;
+    if (o.claimRanking === 'prior' || claimFocus) {
       const priorOfAction = new Map(claimActions.map(a => [actionKey(a), screened.find(s => actionKey(s.action) === actionKey(a))?.prior ?? -Infinity]));
       claimActions.sort((x, y) => (priorOfAction.get(actionKey(y)) ?? -Infinity) - (priorOfAction.get(actionKey(x)) ?? -Infinity));
     }
-    for (const a of claimActions.slice(0, 2)) push(a, 'claim');
+    for (const a of claimActions.slice(0, claimFocus
+      ? Math.max(0, (o.candidateCap ?? 4) - candidates.length) // claimFocus：认领优先填满 cap
+      : 2)) push(a, 'claim');
     for (const { action } of screened) {
       if (candidates.length >= (o.candidateCap ?? 4)) break;
       push(action, 'prior');
@@ -408,18 +433,60 @@ class ChampionGuidedPlanner {
     };
     /** 完整批次 = 同一 replica 下全部 (world × candidate) 试验。批次一旦启动
      * 全部入账（部分批次绝不出现）⇒ 任意截断点上各候选试验数之差 < M
-     * 且 (world, replica) 键集严格相同（CRN 配对成立）。 */
-    const runBatch = (replica: number, worldsInBatch: number): void => {
-      // 批次内全部 (world × candidate) 试验共同入账；缩减批次只减少 world
-      // 数量、绝不减少候选数量 ⇒ 各候选的 (world,replica) 键集仍严格相同，
-      // CRN 配对无偏。
+     * 且 (world, replica) 键集严格相同（CRN 配对成立）。
+     * C2 racing：runBatchOver 支持候选子集批次——只收缩候选集合、绝不收缩
+     * (world, replica) 键集 ⇒ 淘汰后存活候选的采样键与 balanced 完全一致。 */
+    const runBatchOver = (indices: number[], replica: number, worldsInBatch: number): void => {
       for (let w = 0; w < worldsInBatch; w++) {
         worldsUsedSet.add(w);
-        for (let i = 0; i < M; i++) runTrial(i, w, replica);
+        for (const i of indices) runTrial(i, w, replica);
       }
       batchesStarted += 1;
     };
-    if (workUnits !== undefined) {
+    const runBatch = (replica: number, worldsInBatch: number): void =>
+      runBatchOver(aggregates.map((_, i) => i), replica, worldsInBatch);
+    let racingEliminated = 0;
+    if (o.allocation === 'racing' && championKey) {
+      // C2 racing（AI6 第六阶段）：首个完整平衡批次（全员，与 balanced 首批
+      // 逐位一致）后，按 Hoeffding 界淘汰"即使后续全胜也无法威胁冠军"的
+      // 非冠军候选（UCB_i = mean_i + ε(t) < LCB_champ = mean_c − ε(t)）；
+      // δ 按候选数 union 校正；冠军候选绝不淘汰（保守覆盖语义保底）；
+      // 采样键 (world, replica) 与 balanced 完全一致（CRN 保持）。
+      const delta = Math.max(1e-9, o.racingDelta ?? 0.05);
+      const epsUnion = Math.log(2 * Math.max(2, M) / delta);
+      const eps = (t: number) => (t > 0 ? Math.sqrt(epsUnion / (2 * t)) : 1);
+      const alive = aggregates.map((_, i) => i);
+      const championIdx = aggregates.findIndex(a => actionKey(a.action) === championKey);
+      const robustOf = (i: number) => {
+        const e = aggregates[i];
+        return e.trials > 0 ? e.sum / e.trials : -Infinity;
+      };
+      runBatch(0, worldCount);
+      let replica = 1;
+      let trialsDone = worldCount * M;
+      while (alive.length > 1 && replica < 100_000) {
+        if (workUnits !== undefined) {
+          if (trialsDone + worldCount * alive.length > workUnits) break;
+        } else if (trialDeadline !== undefined) {
+          const floorMs = Math.max(1, alive.length) * PER_TRIAL_FLOOR_MS;
+          if (performance.now() + floorMs > trialDeadline) break;
+        }
+        if (championIdx >= 0) {
+          const lcbChamp = robustOf(championIdx) - eps(aggregates[championIdx].trials);
+          const eliminated = alive.filter(i => i !== championIdx
+            && aggregates[i].trials > 0
+            && robustOf(i) + eps(aggregates[i].trials) < lcbChamp);
+          if (eliminated.length) {
+            for (const i of eliminated) alive.splice(alive.indexOf(i), 1);
+            racingEliminated += eliminated.length;
+          }
+          if (alive.length === 1 && alive[0] === championIdx) break; // 冠军直通保底
+        }
+        runBatchOver(alive, replica, worldCount);
+        trialsDone += worldCount * alive.length;
+        replica += 1;
+      }
+    } else if (workUnits !== undefined) {
       // 固定工作量模式（确定性）：完整批次向下取整（每候选严格等试验数；
       // workUnits < W×M 时按最小粒度 1 个完整批次执行并披露）。
       const passes = Math.max(1, Math.floor(workUnits / (worldCount * M)));
@@ -527,6 +594,7 @@ class ChampionGuidedPlanner {
         budgetExhausted,
         omTimeMs: omTimeMs.value, cloneMs: 0, cloneMsMeasured: false, legalGenMs: phase.legalGenMs,
         rootActions: legalRootActions.length, candidateCount: M,
+        racingEliminated,
         worldsUsed: worldsUsedSet.size, worldsConfigured: worldCount,
         batchesStarted, trialWindowMs, fullBatchFloorMs, minBatchFloorMs,
         rolloutStartMs: rolloutStartOffsetMs, zeroTrialReason,
@@ -560,7 +628,8 @@ class ChampionGuidedPlanner {
 /** 选项解析：显式缺省集中在一处（JS5 全部参数显式可审计）。 */
 function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required<Pick<ChampionGuidedSearchOptions,
   'championStructure' | 'gateMode' | 'overrideMargin' | 'candidateCap' | 'contestThreshold' | 'claimRanking' |
-  'nearTerminalCandidate' | 'screenGoalScope' | 'batchAdmission'>> & ChampionGuidedSearchOptions {
+  'nearTerminalCandidate' | 'screenGoalScope' | 'batchAdmission' |
+  'allocation' | 'racingDelta' | 'endgameMode'>> & ChampionGuidedSearchOptions {
   const base = o ?? {};
   const nearTerminalCandidate = base.nearTerminalCandidate ?? 'off';
   if (!['off', 'replace', 'add'].includes(nearTerminalCandidate)) fail(`未知 nearTerminalCandidate：${String(nearTerminalCandidate)}`);
@@ -568,6 +637,12 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   if (!['all', 'preferred'].includes(screenGoalScope)) fail(`未知 screenGoalScope：${String(screenGoalScope)}`);
   const batchAdmission = base.batchAdmission ?? 'legacy';
   if (!['legacy', 'balanced'].includes(batchAdmission)) fail(`未知 batchAdmission：${String(batchAdmission)}`);
+  const allocation = base.allocation ?? 'balanced';
+  if (!['balanced', 'racing'].includes(allocation)) fail(`未知 allocation：${String(allocation)}`);
+  const endgameMode = base.endgameMode ?? 'default';
+  if (!['default', 'claimFocus'].includes(endgameMode)) fail(`未知 endgameMode：${String(endgameMode)}`);
+  const racingDelta = base.racingDelta ?? 0.05;
+  if (!(racingDelta > 0 && racingDelta < 1)) fail(`racingDelta 必须在 (0,1)，实际：${String(racingDelta)}`);
   return {
     ...base,
     championStructure: base.championStructure ?? 'beam-rollout',
@@ -576,6 +651,7 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
     candidateCap: base.candidateCap ?? 4,
     contestThreshold: base.contestThreshold ?? 0.85,
     claimRanking: base.claimRanking ?? 'enumeration',
+    allocation, racingDelta, endgameMode,
     nearTerminalCandidate,
     screenGoalScope,
     batchAdmission,

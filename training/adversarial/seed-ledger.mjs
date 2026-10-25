@@ -35,6 +35,7 @@ import {
   AI6_LEAGUE_DEV_SUBBLOCK, AI6_LEAGUE_SMOKE_SUBBLOCK,
   AI6_LEAGUE_MATRIX_DEV_SUBBLOCK, AI6_LEAGUE_PREREG_SUBBLOCK,
 } from '../../ai5/lib/seed_policy.mjs';
+import { reserveConsumption } from '../lib/seed-governance.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 export const LEAGUE_LEDGER_PATH = resolve(here, 'seed-ledger.json');
@@ -204,7 +205,23 @@ export function registerExperiment({
       voidReason: null,
     };
     ledger.experiments = [...(ledger.experiments ?? []), entry].sort((a, b) => a.seedStart - b.seedStart);
-    if (persist) saveLedger(ledger, ledgerPath);
+    if (persist) {
+      // AI7-A1：新联赛实验在写入本系统账本前先经统一治理层登记（跨系统防重）。
+      // 测试注入临时 ledgerPath 时不写正式中央登记。
+      if (ledgerPath === LEAGUE_LEDGER_PATH) {
+        reserveConsumption({
+          purposeClass: 'league',
+          purpose: String(purpose ?? ''),
+          base: seedBase,
+          size: seedCount,
+          experimentId: `league-${experimentId}`,
+          evidencePath: ledgerPath,
+          codeCommit: entry.codeCommit,
+          crnGroup,
+        });
+      }
+      saveLedger(ledger, ledgerPath);
+    }
     const seeds = Array.from({ length: seedCount }, (_, i) => seedBase + i);
     if (new Set(seeds).size !== seedCount) throw new Error('种子分配出现重复（内部不变量违规）');
     return { seeds, seedStart: seedBase, seedEnd: seedBase + seedCount, entry };

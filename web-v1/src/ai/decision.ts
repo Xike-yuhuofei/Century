@@ -42,6 +42,10 @@ export function chooseAIAction(game: Game, options?: AIOptions): AIDecision {
     const joint = chooseJointAction(game, {
       version: params.jointVersion ?? 'joint-js5',
       ...(params.budgetMs !== undefined ? { budgetMs: params.budgetMs } : {}),
+      // AI7-A2 / AI6-P0：运行时实际消费的冠军基座参数必须显式注入。
+      // 冠军本体传入自身（行为逐位不变）；冻结描述符传入归档参数；
+      // 风格变体的权重修改经此真实影响冠军基座规划（不再回退活动常量）。
+      championParameters: params,
       profile: options?.profile,
     });
     return { action: joint.action, reason: joint.reason };

@@ -15,6 +15,7 @@ import { existsSync, readFileSync, writeFileSync, copyFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { AI6_BASELINE_BLOCK, assertInBlock } from '../../ai5/lib/seed_policy.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
+import { reserveConsumption } from '../lib/seed-governance.mjs';
 
 export const BASELINE_LEDGER_PATH = resolve(REPO_ROOT, 'training/baseline/seed-ledger.json');
 
@@ -57,6 +58,11 @@ export function assertLayoutValid() {
 export function loadLedger(ledgerPath = BASELINE_LEDGER_PATH) {
   assertLayoutValid();
   if (!existsSync(ledgerPath)) {
+    // AI7-A1：正式账本缺失 fail-closed（不得按空账本从子块头部重新分配）；
+    // 测试/隔离工作区显式注入临时路径时允许从空状态开始。
+    if (ledgerPath === BASELINE_LEDGER_PATH) {
+      throw new Error(`基线种子账本缺失（fail-closed）：${ledgerPath}——禁止按空账本重新分配已消费种子`);
+    }
     return { schema: 'century-baseline-seed-ledger-v1', configs: {}, updatedAt: null };
   }
   const ledger = JSON.parse(readFileSync(ledgerPath, 'utf8'));
@@ -97,6 +103,17 @@ export function allocateBaselineSeeds(configKey, count, { ledgerPath = BASELINE_
   const uniqueCount = new Set(seeds).size;
   if (uniqueCount !== count) throw new Error(`基线种子分配出现重复（${count} 请求仅 ${uniqueCount} 唯一）——统计独立性违规`);
   if (persist) {
+    // AI7-A1：新基线评测区间先经统一治理层登记（测试临时账本不写中央登记）。
+    if (ledgerPath === BASELINE_LEDGER_PATH) {
+      reserveConsumption({
+        purposeClass: 'baseline',
+        purpose: `baseline:${configKey}`,
+        base: start,
+        size: count,
+        experimentId: `baseline-${configKey}-${start}`,
+        evidencePath: ledgerPath,
+      });
+    }
     ledger.configs[configKey] = {
       blockBase: base,
       capacity: BASELINE_SUBBLOCK_CAPACITY,

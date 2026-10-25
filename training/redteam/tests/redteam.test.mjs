@@ -64,7 +64,10 @@ test('[不变量] run-formal-challenge-js5.mjs 对缺失账本 fail-closed', () 
   const src = readFileSync(resolve(REPO_ROOT, 'training/tournament/run-formal-challenge-js5.mjs'), 'utf8');
   assert.ok(src.includes('fail-closed'), '账本合并必须声明 fail-closed 纪律');
   assert.ok(!src.includes('账本缺失（跳过）'), '不得静默跳过缺失账本（challenge-10 事故根因）');
-  assert.ok(/验证账本缺失（fail-closed）/.test(src), '缺失账本必须抛错并说明后果');
+  // AI7-A1：账本合并升级为统一治理层 strict 模式（缺失任一来源即抛出，
+  // 并保留 fail-closed 纪律说明），不再由本脚本维护局部账本清单。
+  assert.ok(/loadSeedGovernance\(\{ strict: true \}\)/.test(src), '必须经统一治理层 strict 模式加载全部账本');
+  assert.ok(/fail-closed/.test(src), '缺失账本/冲突必须抛错并说明后果');
   // 运行指纹在进程启动时捕获（受试代码 = 实际加载代码）
   assert.ok(/CODE_COMMIT_AT_START\s*=\s*execFileSync\('git', \['rev-parse', 'HEAD'\]/.test(src), 'codeCommit 必须在进程启动时捕获');
   assert.ok(/ENGINE_BUNDLE_AT_START\s*=\s*engineBundleSha256\(\)/.test(src), '引擎产物指纹必须在进程启动时捕获');

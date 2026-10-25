@@ -30,6 +30,7 @@ import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { validateAIParameters, BASELINE_PARAMETERS, CHAMPION_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
 import { REPO_ROOT } from './paths.mjs';
+import { assertVersionLockIntact } from './version-lock.mjs';
 
 export const VERSION_REGISTRY_SCHEMA = 'century-algorithm-version-registry-v1';
 
@@ -133,6 +134,9 @@ function assertDescriptorConsistency(descriptor, registryId) {
  * @returns {Readonly<object>} 深冻结描述符
  */
 export function resolveAlgorithmVersion(id, { archiveDir = CHAMPION_ARCHIVE_DIR } = {}) {
+  // AI7-A2：冻结版本（含归档参数与决策核心源码）必须通过字节级版本锁；
+  // live-champion 是活动别名，明确不锁（其变化由冠军晋级流程治理）。
+  if (id !== 'live-champion') assertVersionLockIntact();
   const make = (descriptor) => {
     assertDescriptorConsistency(descriptor, id);
     const fingerprint = identityFingerprint(descriptor);

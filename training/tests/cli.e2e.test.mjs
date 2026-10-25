@@ -5,7 +5,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, existsSync, readFileSync } from 'node:fs';
+import { mkdtempSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -13,8 +13,17 @@ import { fileURLToPath } from 'node:url';
 const TRAINING_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const REPO_ROOT = resolve(TRAINING_ROOT, '..');
 
+/** AI7-A1：无确认挑战的端到端测试仍必须显式提供既有账本；--no-confirm 保证
+ * 不消费任何真实验证种子（测试不得动用验证池）。 */
+function seedLedgerFixture(dir) {
+  const path = join(dir, 'input-validation-ledger.json');
+  writeFileSync(path, JSON.stringify({ lastBase: null, challengeCount: 0, history: [] }));
+  return path;
+}
+
 test('evolve-cli 端到端：进化 → 状态/账本/报告完整落盘', { timeout: 300_000 }, () => {
   const outDir = mkdtempSync(join(tmpdir(), 'evolve-e2e-'));
+  const ledgerPath = seedLedgerFixture(outDir);
   execFileSync(process.execPath, [
     join(TRAINING_ROOT, 'optimizer', 'evolve-cli.mjs'),
     '--generations', '1',
@@ -26,6 +35,8 @@ test('evolve-cli 端到端：进化 → 状态/账本/报告完整落盘', { tim
     '--seed-base', '777000',
     '--pool-size', '1',
     '--out', outDir,
+    '--seed-ledger', ledgerPath,
+    '--no-confirm',
   ], { cwd: REPO_ROOT, stdio: 'pipe' });
 
   // 进化状态与实验日志必须落盘（次日 --resume 与审计依赖它们）。
@@ -77,8 +88,37 @@ test('evolve-cli 端到端：进化 → 状态/账本/报告完整落盘', { tim
   }
 });
 
+test('evolve-cli 负向：缺少 --seed-ledger 必须 fail-closed', () => {
+  const outDir = mkdtempSync(join(tmpdir(), 'evolve-noledger-'));
+  assert.throws(
+    () => execFileSync(process.execPath, [
+      join(TRAINING_ROOT, 'optimizer', 'evolve-cli.mjs'),
+      '--generations', '1', '--population', '1', '--games-per-candidate', '1',
+      '--time-budget-min', '5', '--seed-base', '777000', '--pool-size', '1', '--out', outDir,
+    ], { cwd: REPO_ROOT, stdio: 'pipe' }),
+    /seed-ledger|账本缺失|fail-closed/,
+    '无账本不得启动（旧实现按运行身份派生起点）',
+  );
+});
+
+test('evolve-cli 负向：--resume 指向不存在断点必须 fail-closed', () => {
+  const outDir = mkdtempSync(join(tmpdir(), 'evolve-badresume-'));
+  const ledgerPath = seedLedgerFixture(outDir);
+  assert.throws(
+    () => execFileSync(process.execPath, [
+      join(TRAINING_ROOT, 'optimizer', 'evolve-cli.mjs'),
+      '--generations', '1', '--population', '1', '--games-per-candidate', '1',
+      '--time-budget-min', '5', '--seed-base', '777000', '--pool-size', '1', '--out', outDir,
+      '--seed-ledger', ledgerPath, '--resume', join(outDir, 'missing-state.json'), '--no-confirm',
+    ], { cwd: REPO_ROOT, stdio: 'pipe' }),
+    /断点不存在|fail-closed/,
+    '显式断点缺失不得静默从头开始（训练种子块会被重复消费）',
+  );
+});
+
 test('evolve-cli 断点续训：--resume 从上次状态继续且种子游标单调前进', { timeout: 300_000 }, () => {
   const outDir = mkdtempSync(join(tmpdir(), 'evolve-resume-'));
+  const ledgerPath = seedLedgerFixture(outDir);
   const common = [
     join(TRAINING_ROOT, 'optimizer', 'evolve-cli.mjs'),
     '--population', '1',
@@ -89,6 +129,8 @@ test('evolve-cli 断点续训：--resume 从上次状态继续且种子游标单
     '--seed-base', '888000',
     '--pool-size', '1',
     '--out', outDir,
+    '--seed-ledger', ledgerPath,
+    '--no-confirm',
   ];
   execFileSync(process.execPath, [...common, '--generations', '1'], { cwd: REPO_ROOT, stdio: 'pipe' });
   const first = JSON.parse(readFileSync(join(outDir, 'state.json'), 'utf8'));

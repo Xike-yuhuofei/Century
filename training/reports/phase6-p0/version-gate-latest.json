@@ -1,0 +1,39 @@
+{
+  "schema": "century-version-gate-v1",
+  "date": "2026-10-25T09:49:18.700Z",
+  "engineBundleSha256": "e823afed2fe9a4eae17c914ca6ab1bdbe0e56aadbbfdab5ecdb1c4a6c397e4c3",
+  "bootstrap": false,
+  "checks": [
+    {
+      "name": "deployment-coherence",
+      "ok": true,
+      "detail": "champion.json ↔ CHAMPION_PARAMETERS 一致（joint-js5）"
+    },
+    {
+      "name": "frozen-fingerprints",
+      "ok": true,
+      "detail": "3 个冻结版本指纹一致"
+    },
+    {
+      "name": "canary-digests",
+      "ok": true,
+      "detail": "10 个版本决策摘要一致"
+    },
+    {
+      "name": "identity-inequality",
+      "ok": true,
+      "detail": "8 组跨身份不等式全部成立"
+    },
+    {
+      "name": "gate-never-equivalence",
+      "ok": true,
+      "detail": "js5(gate=never) ≡ legacy-js0（4 局 195 决策零不一致）"
+    },
+    {
+      "name": "historical-replay-spot",
+      "ok": true,
+      "detail": "js0 历史对局重放 3/3 逐位一致"
+    }
+  ],
+  "verdict": "PASS（允许实验）"
+}

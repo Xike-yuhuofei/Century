@@ -74,8 +74,11 @@ export function classifyChanges(files, options = {}) {
   const scope = { ...DEFAULT_SCOPE };
 
   const promotionByLabel = labels.includes('promotion');
-  const promotionByPath = hasExact(list, ['web-v1/src/ai/parameters.ts']) ||
-    hasPrefix(list, ['training/champions/']);
+  // 只把真正的晋级产物视为 promotion：参数区、当前冠军、历史归档。
+  // version-lock / revalidation-required / candidates 等治理与候选资料不等同于
+  // 一次正式晋级，避免信任基础类变更新增 REQUIRES_APPROVAL 阻断普通 PR。
+  const promotionByPath = hasExact(list, ['web-v1/src/ai/parameters.ts', 'training/champions/champion.json']) ||
+    hasPrefix(list, ['training/champions/archive/']);
   const promotion = Boolean(options.forcePromotion || promotionByLabel || promotionByPath);
 
   // 共享核心：任何一项变化都足以影响 web 单测、训练单测、模拟与审计。
@@ -158,9 +161,10 @@ export function classifyChanges(files, options = {}) {
   };
 }
 
-/** CI 中只允许 dev/research 两层自动执行；promotion 独立作业。 */
+/** 任何触发审计的代码/证据变更都运行 research 层（research 层包含 dev）；
+ * research 作业仍只由 AI5/种子/审计工具等研究变更触发，二者解耦。 */
 export function auditTier(scope) {
-  return scope.research ? 'research' : 'dev';
+  return scope.audit ? 'research' : 'dev';
 }
 
 /** 汇总作业独立复算分类结果，与 changes 作业输出逐字段对账。 */

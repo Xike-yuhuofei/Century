@@ -189,12 +189,11 @@ test('beamBaseParameters：适配器参数归一化 + 非适配器参数原样�
   assert.equal(kept.adapter, undefined);
 });
 
-test('验证种子账本：种子块不可重复使用', () => {
-  // 无账本：按运行身份派生（不同 runId 起点不同）。
-  const first = nextValidationBase(null, { runId: '111' });
-  const second = nextValidationBase(null, { runId: '222' });
-  assert.ok(first >= VALIDATION_POOL_BASE);
-  assert.notEqual(first, second);
+test('验证种子账本：种子块不可重复使用（AI7-A1：无账本 fail-closed）', () => {
+  // AI7-A1：无账本/空账本禁止按运行身份/时间派生起点（旧 fail-open 缺陷）。
+  assert.throws(() => nextValidationBase(null, { runId: '111' }), /账本缺失|fail-closed/);
+  assert.throws(() => nextValidationBase({ history: [] }, { runId: '222' }), /没有可核验|禁止按运行身份/);
+  const first = VALIDATION_POOL_BASE + 10 * VALIDATION_STRIDE;
   // 有账本：下一块严格落在已消费块之后（旧式 lastBase 无 size 按整步长保守计）。
   const next = nextValidationBase({ lastBase: VALIDATION_POOL_BASE + 5 * VALIDATION_STRIDE }, { runId: '999' });
   assert.equal(next, VALIDATION_POOL_BASE + 7 * VALIDATION_STRIDE, 'lastBase 块按最大步长保守估计，下一块再空一个步长');
@@ -476,8 +475,9 @@ test('验证种子账本：重叠消费必须被拒绝（防重复使用）', ()
   assert.throws(() => assertBlockFree(VALIDATION_POOL_BASE + 500, 80, legacy), /重叠/);
   // 不重叠的下一块通过。
   assert.ok(assertBlockFree(VALIDATION_POOL_BASE + 1000 * VALIDATION_STRIDE + VALIDATION_STRIDE, 80, ledger));
-  // 非法输入直接抛错。
+  // 非法输入直接抛错；缺账本同样 fail-closed（AI7-A1）。
   assert.throws(() => assertBlockFree(VALIDATION_POOL_BASE, 0, null), /非法/);
+  assert.throws(() => assertBlockFree(VALIDATION_POOL_BASE, 80, null), /账本缺失|fail-closed/);
 });
 
 // ---- P0 可靠性整改：长期多重检验控制（几何 alpha 消耗） ----

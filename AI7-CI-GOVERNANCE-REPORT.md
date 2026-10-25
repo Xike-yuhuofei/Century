@@ -1,7 +1,7 @@
 # Century AI 7.0｜任务 B：CI/CD 与工程治理升级报告
 
 - 分支：`fix/ai7-ci-governance`
-- 基线：`main@19fa56403aa36ef20d0338e5c3f502de39830802`（统一 main SHA，独立 worktree）
+- 基线：`main@19fa56403aa36ef20d0338e5c3f502de39830802`（统一 main SHA，独立 worktree）；合并前同步了 `origin/main@42a9391`（AI7 信任基础 + 进化控制面），保留其新增测试并适配 CI
 - 范围：CI 结构、测试编排、分支治理、辅助脚本；**未修改游戏规则、AI 算法、训练统计口径、冠军参数、种子账本与审计核心**
 - 结论：PR CI 从“多工作流重复 + 30 分钟超时”收敛为“单次共享构建 + 并行分组 + 唯一聚合门禁”；main 分支保护完成方案与可审计申请脚本，未擅自修改仓库设置
 
@@ -117,13 +117,14 @@ pages-deploy（仅 main push，复用同一 dist）
 | 纯文档（`*.md` / `docs/**`） | `rules-cards`、`governance-tests`、`ci-summary` |
 | `web-v1/src/engine.ts`、`src/ai/**`、`src/js/**`、`src/om/**`、`src/sim/**`、`src/data.ts` | 全代码：build/web/training/simulation/ui/audit |
 | `web-v1/src/**`（UI/样式/存档）、`index.html`、`scripts/**` | build/web/ui/pages（不跑训练、模拟、审计） |
-| `training/**`（代码） | build/training/audit |
+| `training/**`（代码，含 `training/evolution/**`、`training/joint/**`、`training/governance/**`） | build/training/audit；training-unit 跑 `npm test` + `npm run evolution:test` |
 | `training/reports/**`（证据 JSON） | build/audit（不跑训练单测） |
 | `training/lib/**`、`training/redteam/**`、`training/package.json` | build/training/audit；seeds/stats 额外 research |
-| `ai5/**` | build/audit/research + 研究三项；`ai5/lib/**` 额外 training |
+| `ai5/**` | build/audit/research + 研究五项；`ai5/lib/**` 额外 training |
 | `data/cards.json`、`web-v1/package*.json`、`tsconfig` | 全代码 |
 | `.github/workflows/**`、`scripts/ci/**` | 全代码（CI 自身不得弱化门禁） |
-| `training/champions/**`、`web-v1/src/ai/parameters.ts`、`promotion` 标签 | 晋级门禁 + 全代码 |
+| `training/champions/champion.json`、`training/champions/archive/**`、`web-v1/src/ai/parameters.ts`、`promotion` 标签 | 晋级门禁 + 全代码 |
+| `training/champions/version-lock.json`、`revalidation-required.json`、`candidates/**` | training/audit，**不触发晋级门禁**（治理/候选资料不等同正式晋级，避免历史 REQUIRES_APPROVAL 阻断普通 PR） |
 
 共享模块的改动不会被跳过；未知文件只跑快速门禁，不触发高成本测试。
 
@@ -133,8 +134,8 @@ pages-deploy（仅 main push，复用同一 dist）
 
 ### 4.1 三层审计
 
-- **dev**：普通开发 PR（代码合法性、版本身份、信息公平、回归测试）。
-- **research**：AI5/种子/stats/审计工具相关变更自动升到 research 层（含 dev），避免同一提交跑两遍 dev。
+- **dev**：普通开发 PR 的审计层（代码合法性、版本身份、信息公平、回归测试）。
+- **research**：任何触发审计的代码/证据变更运行 research 层（research 包含 dev），与 main 上 PR 审计保持一致；AI5 研究作业另行按 AI5/种子/审计工具变更触发，二者解耦，避免同一提交重复跑 dev。
 - **promotion**：仅晋级 PR（路径命中或 `promotion` 标签或 dispatch `promotion=true`）。
 
 ### 4.2 REQUIRES_APPROVAL 语义
@@ -268,7 +269,7 @@ CONFIRM_APPLY_MAIN_PROTECTION=yes \
 | 静默跳过 | 必需作业 `skipped` → summary 失败 | summary skipped / missing 用例 |
 | 研究变更 | `research-node` + `research-worker` + `research-e2e` + `research-python` + `research-seatbelt` + research 层审计 | scope/summary 用例 |
 
-单元测试共 **55 项**，另有工作流结构不变量：
+单元测试共 **56 项**，另有工作流结构不变量：
 
 - 只有一个工作流含 `pull_request` 且必须是 `ci.yml`；
 - `ai-training.yml` 不得在 PR 触发；
@@ -336,22 +337,24 @@ web 单测从 3 份（Focus 14m58s + V2 14m02s + ai-training 内串行 12m31s）
 
 - `npm ci && npm run build`：通过
 - `node scripts/ci/verify-dist.mjs --dist web-v1/dist`：通过
-- `node --test scripts/ci/tests/*.test.mjs`：55/55 通过
+- `node --test scripts/ci/tests/*.test.mjs`：56/56 通过
 - `node scripts/ci/verify-workflows.mjs`：通过
-- `run-audit-gate --tier dev`：PASS（约 7.5s）
-- `run-audit-gate --tier research`：PASS（约 7.7s）
-- `run-audit-gate --tier promotion`：REQUIRES_APPROVAL ×2，exit=2，输出 `requires_approval=true`（符合预期，不转换为通过）
+- `run-audit-gate --tier dev`：PASS
+- `run-audit-gate --tier research`：PASS（合并 main 后新增 evidence/seed-governance 检查）
+- `run-audit-gate --tier promotion`：REQUIRES_APPROVAL ×3，exit=2，输出 `requires_approval=true`（符合预期，不转换为通过）
 - `run-sim-shards` 8 局冒烟：4 片、8 唯一种子、0 异常
 - `duel_runner --candidate-official --seeds 4`：8 局、4 唯一种子、0 异常、A/B 双向、每局 5 席终局排名（补齐自旧 `ai5.yml` 的端到端冒烟）
 - web-v1 全量单测：见 §9.2
-- training 全量单测：见 §9.2
+- training `npm test`：181/181 通过（本地 442s，合并 main 后）
+- training `npm run evolution:test`：63/63 通过（本地 5s）
 
 ### 9.2 全量回归
 
 | 套件 | 结果 |
 |---|---|
-| web-v1 | **203/203 通过**（exit 0；本地 859.89s，含并行会话 CPU 争用） |
-| training | **153/153 通过**（exit 0；本地 749.12s） |
+| web-v1 | **220/220 通过**（CI run 40193187465 重跑；合并 main 前本地为 203/203） |
+| training | **181/181 通过**（本地 442s，合并 main 后） |
+| training/evolution | **63/63 通过**（本地 5s） |
 
 ### 9.3 PR CI
 
@@ -432,3 +435,15 @@ PR 首跑（run 40176731716，attempt 1）暴露两个基础设施问题：
 - 未修改 `training/champions/champion.json`、`web-v1/src/ai/parameters.ts`。
 - 未运行正式冠军挑战、未消费验证池种子。
 - 未修改训练统计口径、晋级判定阈值、alpha 消耗机制。
+
+---
+
+## 12. 与 main 新进展的合并
+
+任务执行期间 main 前进到 `42a9391`（AI7 信任基础 + 自主进化控制面）。为避免 PR 长期冲突，本分支执行了一次普通 merge（未 rebase、未 force push），只做 CI 适配：
+
+- main 新增的 `npm run evolution:test` 已加入 `training-unit`（`npm test` + `evolution:test`），不丢失 AI7 进化控制面测试。
+- main 的 `ai-training.yml` PR 作业（audit-gate/test）仍由 `ci.yml` 统一承接；合并冲突按“单一 PR 入口”保留本分支结构，未恢复重复工作流。
+- 审计层调整为：任何触发审计的代码/证据变更运行 research 层（包含 dev），与 main 的 PR 审计口径一致；AI5 重作业仍只在研究变更时触发。
+- 晋级识别收窄为 `champion.json` / `archive/**` / `parameters.ts` / `promotion` 标签；`version-lock.json`、`revalidation-required.json`、`candidates/**` 不再触发 promotion，避免信任基础类变更被历史 `REQUIRES_APPROVAL` 永久阻断。
+- 合并后本地：`npm ci && npm run build`、dev/research 审计、56 项 CI 元测试、training `npm test` + `evolution:test` 均通过；未手工改写任何 main 引入的 AI/游戏逻辑。

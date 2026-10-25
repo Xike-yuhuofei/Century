@@ -1,0 +1,37 @@
+{
+  "schema": "century-seed-historical-claims-v1",
+  "createdAt": "2026-10-25T00:00:00.000Z",
+  "note": "历史只读声明（AI7-A1）：只记录可从原始证据恢复、但未写入对应账本的种子区间；保留原始文件与不确定状态，绝不伪造账本条目、绝不重写历史。",
+  "claims": [
+    {
+      "claimId": "openevolve-long20-deep-validation-unledgered",
+      "base": 300001200,
+      "size": 100,
+      "purpose": "deep-validation:long20-best",
+      "purposeClass": "deep-validation",
+      "status": "historical-unverified",
+      "ledgerStatus": "missing-from-deep-validation-ledger",
+      "uncertainty": "种子区间由 deep_validation_long20_best.json 的 100 个 seedPairs 反推（300001200–300001299），未写入 ai5/openevolve/results/deep-validation-ledger.json；long20 结论本身为 inconclusive，不晋级。该区间按保守原则继续占用，防止下一次深度验证分配覆盖。",
+      "evidence": [
+        "ai5/openevolve/results/deep_validation_long20_best.json",
+        "ai5/openevolve/results/deep-validation-ledger.json"
+      ],
+      "countsTowardChallengeIndex": false,
+      "occupiesRange": true
+    }
+  ],
+  "crossSystemNotes": [
+    {
+      "noteId": "ppo-arena-validation-block-recognized",
+      "base": 900000000,
+      "size": 40,
+      "source": "ai5/ppo/reports/seed-ledger.json",
+      "status": "recognized-by-unified-governance",
+      "uncertainty": "PPO arena 消费了验证池 [900000000, 900000040)，正式挑战账本未记录该块；PPO 账本自身 challengeCount=3 与仅 1 条验证条目不一致。统一治理层将其识别为 arena 用途的已消费验证池区间，计入种子防重，但绝不计入正式挑战 challengeIndex。",
+      "evidence": [
+        "ai5/ppo/reports/seed-ledger.json",
+        "ai5/ppo/reports/seed-audit/seed-pollution-audit.json"
+      ]
+    }
+  ]
+}
