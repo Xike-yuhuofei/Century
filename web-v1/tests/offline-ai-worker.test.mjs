@@ -1,10 +1,12 @@
-/** 离线构建闭包完整性测试（AI6 第六阶段·任务 G）。
+/** 离线构建闭包完整性测试（AI6 第六阶段·任务 G / AI7 E3）。
  *
- * 防回归目标（任务书 §十二.16/.18）：训练与实战使用相同算法描述符；
- * 网页离线（standalone/mobile）与 Node 环境输出的决策版本一致。
- * 背景：JS5 晋级后冠军路径引入 js//sim//om/ 模块，手工构建清单缺失 31 个
- * 模块，离线版适配器冠军路径损坏（chooseJointAction 未定义）——本测试
- * 提取嵌入 Worker blob 并在 Node 沙箱实跑一次决策，确保冠军路径完整。
+ * 防回归目标：训练与实战使用相同算法描述符；网页离线（standalone/服务器）
+ * 嵌入的 Worker 必须包含完整冠军闭包，并能在无宿主页面的沙箱中真实执行
+ * 一次协议决策。
+ *
+ * AI7 起嵌入 Worker 从 G2 的 "整份 Game 进 Worker" 改为公开观察 + 协议
+ * （worker-core/decision-core）；本测试同步改为在 Node vm 沙箱里跑
+ * init + decision 往返，确保内联产物不是空壳。
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,6 +15,8 @@ import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import vm from 'node:vm';
 import { createGame } from '../dist/js/engine.js';
+import { buildObservation } from '../dist/js/ai/observation.js';
+import { PROTOCOL_VERSION } from '../dist/js/ai-runtime/protocol.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
@@ -38,21 +42,36 @@ function loadEmbeddedWorker(htmlPath, markerId) {
   return sandbox.self;
 }
 
-test('桌面 standalone：嵌入 AI Worker 含完整冠军闭包并能实跑 JS5 决策', () => {
-  const worker = loadEmbeddedWorker('../dist/standalone.html', 'offline-ai-worker');
+test('桌面 standalone：嵌入 Worker 含完整冠军闭包并能执行协议决策', () => {
+  const worker = loadEmbeddedWorker('../dist/standalone.html', 'ai-worker-source');
   const game = createGame(['人类', 'AI 甲', 'AI 乙'], 99_000_001, [1, 2]);
-  for (const p of game.players) p.isAI = true;
-  let response = null;
-  worker.postMessage = (msg) => { response = msg; };
-  worker.onmessage({ data: game });
-  assert.ok(response, 'Worker 未返回决策');
-  assert.ok(!response.error, `Worker 决策报错：${response.error}`);
-  assert.ok(response.action && typeof response.action.type === 'string', '决策缺少合法行动');
+  game.current = 1;
+  game.phase = 'turn';
+  const observation = buildObservation(game, 1);
+  const responses = [];
+  worker.postMessage = (msg) => { responses.push(msg); };
+
+  worker.onmessage({ data: { kind: 'init', protocolVersion: PROTOCOL_VERSION } });
+  assert.equal(responses.at(-1)?.kind, 'ready', '内联 Worker 未完成协议握手');
+
+  worker.onmessage({
+    data: {
+      kind: 'decision', protocolVersion: PROTOCOL_VERSION,
+      requestId: 'offline-check-1', gameStateVersion: 1,
+      payload: {
+        observation, ai: { jointVersion: 'joint-js5' },
+        budget: { mode: 'fixed-work', workUnits: 2 }, simSeed: 1, horizon: 20,
+      },
+    },
+  });
+  const response = responses.at(-1);
+  assert.equal(response?.kind, 'decision', `内联 Worker 未返回决策：${JSON.stringify(response)}`);
+  assert.ok(response.diagnostics.action && typeof response.diagnostics.action.type === 'string', '决策缺少合法行动');
 });
 
 test('桌面 standalone 主内联脚本含适配器冠军路径（chooseJointAction 可用）', () => {
   const html = readFileSync(resolve(HERE, '../dist/standalone.html'), 'utf8');
   assert.ok(html.includes('function chooseJointAction'), '主内联缺少 js/adapter 闭包');
   assert.ok(html.includes('createChampionGuidedPlanner'), '主内联缺少 champion-guided 闭包');
-  assert.ok(html.includes("id=\"offline-ai-worker\""), '桌面 standalone 缺少嵌入 AI Worker');
+  assert.ok(html.includes('id="ai-worker-source"'), '桌面 standalone 缺少嵌入 AI Worker');
 });

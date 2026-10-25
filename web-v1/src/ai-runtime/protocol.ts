@@ -202,7 +202,9 @@ export const MARKET_MERCHANT_KEYS = ['id', 'bonus'] as const;
  * 上限取引擎合法规模的宽松上界（魔像市场 5 张、商人市场 6 张、 claimed 随对局
  * 增长），仅拦截病态超大载荷，不限制任何合法对局状态。 */
 export const PAYLOAD_LIMITS = Object.freeze({
-  maxPlayers: 5,
+  // 正式规则 2–5 人；6 人仅限既有「2 真人 + 4 AI」非官方扩展。
+  // 上限放宽到 6 是为了该模式继续使用 Worker，而不是退回主线程同步决策。
+  maxPlayers: 6,
   maxMarketMerchants: 6,
   maxGolemMarket: 6,
   maxClaimedGolems: 12,

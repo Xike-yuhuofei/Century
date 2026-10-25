@@ -29,10 +29,19 @@ jobs:
           python -m playwright install --with-deps chromium webkit
       - name: Verify replay downloads in Chromium and WebKit
         run: python web-v1/scripts/smoke_replay.py
+      - name: Verify desktop Focus layout + inline AI Worker (Pages path)
+        run: python web-v1/scripts/smoke_desktop_runtime.py
       - uses: actions/upload-artifact@v4
         with:
           name: replay-browser-evidence
           path: web-v1/dist/replay-evidence/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-runtime-evidence
+          path: |
+            docs/ai7/desktop-runtime-metrics.json
+            docs/ai7/screenshots/
       - name: Prepare complete website
         run: |
           mkdir -p _site
