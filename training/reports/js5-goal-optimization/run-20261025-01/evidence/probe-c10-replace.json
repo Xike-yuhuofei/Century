@@ -1,0 +1,239 @@
+{
+  "schema": "js5-goal-c10-probe-v1",
+  "fixture": "web-v1/tests/fixtures/js5-near-terminal-c10.json",
+  "config": {
+    "workUnits": 32,
+    "worlds": 4,
+    "horizon": 48,
+    "simSeed": 2026102509,
+    "policy": "replace"
+  },
+  "beforeScore": 57,
+  "championAction": {
+    "type": "play",
+    "cardId": "M43",
+    "steps": [
+      1,
+      1,
+      2
+    ]
+  },
+  "action": {
+    "type": "play",
+    "cardId": "M43",
+    "steps": [
+      0,
+      0,
+      0
+    ]
+  },
+  "actionImmediateScore": 0,
+  "gated": true,
+  "stats": {
+    "rollouts": 32,
+    "transitions": 128,
+    "elapsedMs": 41.195333,
+    "budgetExhausted": false,
+    "omTimeMs": 0,
+    "cloneMs": 0,
+    "legalGenMs": 0.12495799999999946,
+    "rootActions": 48,
+    "candidateCount": 4,
+    "worldsUsed": 4,
+    "planMs": 21.439833000000004,
+    "rootSimMs": 0.9262090000000001,
+    "gateMs": 0.2469999999999999,
+    "screenMs": 1.4802919999999986,
+    "rolloutMs": 16.466291999999996,
+    "aggregateMs": 0.0847919999999931,
+    "rootSimulationsCreated": 4,
+    "nearTerminal": {
+      "policy": "replace",
+      "risky": true,
+      "reason": "player-can-trigger",
+      "threshold": 5,
+      "threatenedSeats": [
+        3
+      ],
+      "injected": {
+        "action": {
+          "type": "play",
+          "cardId": "M43",
+          "steps": [
+            0,
+            0,
+            0
+          ]
+        },
+        "delta": 3,
+        "scoreAfter": 60,
+        "discarded": 0
+      },
+      "replacedAction": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          1,
+          1
+        ]
+      },
+      "mode": "replace",
+      "candidateSources": [
+        "champion",
+        "prior",
+        "prior",
+        "near-terminal"
+      ]
+    }
+  },
+  "evaluations": [
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          0,
+          0
+        ]
+      },
+      "prior": 0,
+      "trials": 8,
+      "mean": 1,
+      "se": 0
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          1,
+          1,
+          2
+        ]
+      },
+      "prior": 0,
+      "trials": 8,
+      "mean": 0,
+      "se": 0
+    },
+    {
+      "action": {
+        "type": "rest"
+      },
+      "prior": 0,
+      "trials": 8,
+      "mean": 0,
+      "se": 0
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          1,
+          2
+        ]
+      },
+      "prior": 0,
+      "trials": 8,
+      "mean": 0,
+      "se": 0
+    }
+  ],
+  "reason": "js5 联合仲裁：覆盖为联合最优（联合模拟评价值 1.000，未校准胜率近似，8 轨迹 × 4 世界，争议目标 G13,G09,G11,G06,G27）；临近终局候选注入 {\"type\":\"play\",\"cardId\":\"M43\",\"steps\":[0,0,0]}（当步正式净分 +3，replace，替换先验候选）",
+  "trials": 32,
+  "topImmediate": [
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          0,
+          0
+        ]
+      },
+      "delta": 3
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          0
+        ]
+      },
+      "delta": 2
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          0,
+          1
+        ]
+      },
+      "delta": 2
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M33",
+        "repeats": 1
+      },
+      "delta": 1
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0
+        ]
+      },
+      "delta": 1
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          1
+        ]
+      },
+      "delta": 1
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          1,
+          1
+        ]
+      },
+      "delta": 1
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          1,
+          2
+        ]
+      },
+      "delta": 1
+    }
+  ],
+  "legalActionCount": 48
+}

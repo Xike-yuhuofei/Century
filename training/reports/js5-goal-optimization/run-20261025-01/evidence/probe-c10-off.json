@@ -1,0 +1,200 @@
+{
+  "schema": "js5-goal-c10-probe-v1",
+  "fixture": "web-v1/tests/fixtures/js5-near-terminal-c10.json",
+  "config": {
+    "workUnits": 32,
+    "worlds": 4,
+    "horizon": 48,
+    "simSeed": 2026102509,
+    "policy": "off"
+  },
+  "beforeScore": 57,
+  "championAction": {
+    "type": "play",
+    "cardId": "M43",
+    "steps": [
+      1,
+      1,
+      2
+    ]
+  },
+  "action": {
+    "type": "play",
+    "cardId": "M43",
+    "steps": [
+      1,
+      1,
+      2
+    ]
+  },
+  "actionImmediateScore": 0,
+  "gated": true,
+  "stats": {
+    "rollouts": 32,
+    "transitions": 128,
+    "elapsedMs": 44.491375000000005,
+    "budgetExhausted": false,
+    "omTimeMs": 0,
+    "cloneMs": 0,
+    "legalGenMs": 0.11904100000000284,
+    "rootActions": 48,
+    "candidateCount": 4,
+    "worldsUsed": 4,
+    "planMs": 25.077917,
+    "rootSimMs": 0.9442500000000038,
+    "gateMs": 0.30912499999999454,
+    "screenMs": 1.6499589999999955,
+    "rolloutMs": 16.279458999999996,
+    "aggregateMs": 0.0918750000000017,
+    "rootSimulationsCreated": 4
+  },
+  "evaluations": [
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          1,
+          1,
+          2
+        ]
+      },
+      "prior": 0,
+      "trials": 8,
+      "mean": 0,
+      "se": 0
+    },
+    {
+      "action": {
+        "type": "rest"
+      },
+      "prior": 0,
+      "trials": 8,
+      "mean": 0,
+      "se": 0
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          1,
+          2
+        ]
+      },
+      "prior": 0,
+      "trials": 8,
+      "mean": 0,
+      "se": 0
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          1,
+          1
+        ]
+      },
+      "prior": 0,
+      "trials": 8,
+      "mean": 0,
+      "se": 0
+    }
+  ],
+  "reason": "js5 联合仲裁：保持冠军行动（联合模拟评价值 0.000，未校准胜率近似，8 轨迹 × 4 世界，争议目标 G13,G09,G11,G06,G27）",
+  "trials": 32,
+  "topImmediate": [
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          0,
+          0
+        ]
+      },
+      "delta": 3
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          0
+        ]
+      },
+      "delta": 2
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          0,
+          1
+        ]
+      },
+      "delta": 2
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M33",
+        "repeats": 1
+      },
+      "delta": 1
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0
+        ]
+      },
+      "delta": 1
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          1
+        ]
+      },
+      "delta": 1
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          1,
+          1
+        ]
+      },
+      "delta": 1
+    },
+    {
+      "action": {
+        "type": "play",
+        "cardId": "M43",
+        "steps": [
+          0,
+          1,
+          2
+        ]
+      },
+      "delta": 1
+    }
+  ],
+  "legalActionCount": 48
+}

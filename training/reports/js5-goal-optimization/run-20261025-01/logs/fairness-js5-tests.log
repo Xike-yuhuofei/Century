@@ -1,0 +1,365 @@
+TAP version 13
+# Subtest: 随机化隐藏牌库顺序不改变 AI 决策（多位置 × 多种打乱方式）
+ok 1 - 随机化隐藏牌库顺序不改变 AI 决策（多位置 × 多种打乱方式）
+  ---
+  duration_ms: 8692.671625
+  type: 'test'
+  ...
+# Subtest: AIObservation 纯度：不含隐藏牌库字段且深度冻结
+ok 2 - AIObservation 纯度：不含隐藏牌库字段且深度冻结
+  ---
+  duration_ms: 0.195583
+  type: 'test'
+  ...
+# Subtest: 静态扫描：AI 决策源码对隐藏牌库字段的引用必须为零
+ok 3 - 静态扫描：AI 决策源码对隐藏牌库字段的引用必须为零
+  ---
+  duration_ms: 49.847334
+  type: 'test'
+  ...
+# Subtest: 决策不修改输入局面且默认冠军与显式冠军参数同路（JS5 适配器）
+ok 4 - 决策不修改输入局面且默认冠军与显式冠军参数同路（JS5 适配器）
+  ---
+  duration_ms: 4674.668125
+  type: 'test'
+  ...
+# Subtest: 冠军参数与训练系统冠军记录一致（审计整改：防止真正晋级后测试误报）
+ok 5 - 冠军参数与训练系统冠军记录一致（审计整改：防止真正晋级后测试误报）
+  ---
+  duration_ms: 12.244875
+  type: 'test'
+  ...
+# Subtest: 静态扫描：src/js 对隐藏牌库顺序的引用为零
+ok 6 - 静态扫描：src/js 对隐藏牌库顺序的引用为零
+  ---
+  duration_ms: 5.186083
+  type: 'test'
+  ...
+# Subtest: 随机化隐藏牌库顺序不改变联合规划决策（多位置 × 多种打乱）
+ok 7 - 随机化隐藏牌库顺序不改变联合规划决策（多位置 × 多种打乱）
+  ---
+  duration_ms: 1139.067375
+  type: 'test'
+  ...
+# Subtest: 预算纪律：25/50/100/200ms 预算下决策延迟 p95 ≤ 预算 + 5ms
+ok 8 - 预算纪律：25/50/100/200ms 预算下决策延迟 p95 ≤ 预算 + 5ms
+  ---
+  duration_ms: 10552.363291
+  type: 'test'
+  ...
+# Subtest: 预算耗尽回退：极端预算下决策仍合法
+ok 9 - 预算耗尽回退：极端预算下决策仍合法
+  ---
+  duration_ms: 245.831166
+  type: 'test'
+  ...
+# Subtest: 版本隔离：未注册版本抛错；注册版本可完整决策
+ok 10 - 版本隔离：未注册版本抛错；注册版本可完整决策
+  ---
+  duration_ms: 269.043
+  type: 'test'
+  ...
+# Subtest: P0-1a 树搜索：放弃轮次不能"免费"（v1 缺陷：max 节点替对手做利我选择）
+ok 11 - P0-1a 树搜索：放弃轮次不能"免费"（v1 缺陷：max 节点替对手做利我选择）
+  ---
+  duration_ms: 245.225875
+  type: 'test'
+  ...
+# Subtest: P0-1b 树搜索：2 人局座位时序严格交替（我→下家→我→…）
+ok 12 - P0-1b 树搜索：2 人局座位时序严格交替（我→下家→我→…）
+  ---
+  duration_ms: 8.073958
+  type: 'test'
+  ...
+# Subtest: P0-1c 树搜索终局：finalRank 必须来自正式规则 ranking
+ok 13 - P0-1c 树搜索终局：finalRank 必须来自正式规则 ranking
+  ---
+  duration_ms: 1.420542
+  type: 'test'
+  ...
+# Subtest: P0-2 立即认领不被未来存活概率惩罚（screenRootActions 修复）
+ok 14 - P0-2 立即认领不被未来存活概率惩罚（screenRootActions 修复）
+  ---
+  duration_ms: 1.668083
+  type: 'test'
+  ...
+# Subtest: P1-1a CRN：同一 (world, replica) 跨根行动派生同一随机流
+ok 15 - P1-1a CRN：同一 (world, replica) 跨根行动派生同一随机流
+  ---
+  duration_ms: 0.185667
+  type: 'test'
+  ...
+# Subtest: P1-1b 多世界 + CRN：全部候选共享同一 (world, replica) 网格且逐位可复现
+ok 16 - P1-1b 多世界 + CRN：全部候选共享同一 (world, replica) 网格且逐位可复现
+  ---
+  duration_ms: 257.316833
+  type: 'test'
+  ...
+# Subtest: P1-1c 单世界回退：worlds=1 时恢复单一信念世界语义
+ok 17 - P1-1c 单世界回退：worlds=1 时恢复单一信念世界语义
+  ---
+  duration_ms: 36.7565
+  type: 'test'
+  ...
+# Subtest: P0-1d 兄弟分支预算独立：两个分支都必须获得完整视野（v1 缺陷：共享预算饥饿）
+ok 18 - P0-1d 兄弟分支预算独立：两个分支都必须获得完整视野（v1 缺陷：共享预算饥饿）
+  ---
+  duration_ms: 17.075709
+  type: 'test'
+  ...
+# Subtest: P0-1e 对手行动必须来自对手当回合的完整合法策略（random 模式覆盖检验）
+ok 19 - P0-1e 对手行动必须来自对手当回合的完整合法策略（random 模式覆盖检验）
+  ---
+  duration_ms: 23.933709
+  type: 'test'
+  ...
+# Subtest: P1-1d 修复后 js4 端到端：决策合法且时序正确（座位交替抽查）
+ok 20 - P1-1d 修复后 js4 端到端：决策合法且时序正确（座位交替抽查）
+  ---
+  duration_ms: 117.088083
+  type: 'test'
+  ...
+# Subtest: 批次准入纯函数：W×M 成本与缩减世界数
+ok 21 - 批次准入纯函数：W×M 成本与缩减世界数
+  ---
+  duration_ms: 0.364875
+  type: 'test'
+  ...
+# Subtest: 固定工作量：确定性 + 遥测语义（不假装墙钟耗尽）
+ok 22 - 固定工作量：确定性 + 遥测语义（不假装墙钟耗尽）
+  ---
+  duration_ms: 641.335209
+  type: 'test'
+  ...
+# Subtest: 极小墙钟预算：零试验原因准确、budgetExhausted=true、回退冠军
+ok 23 - 极小墙钟预算：零试验原因准确、budgetExhausted=true、回退冠军
+  ---
+  duration_ms: 193.594375
+  type: 'test'
+  ...
+# Subtest: 墙钟 balanced：缩减批次仍保持全候选共同键集（若发生试验）
+ok 24 - 墙钟 balanced：缩减批次仍保持全候选共同键集（若发生试验）
+  ---
+  duration_ms: 1244.25825
+  type: 'test'
+  ...
+# Subtest: 非法准入/筛选/候选策略在规划器层显式拒绝
+ok 25 - 非法准入/筛选/候选策略在规划器层显式拒绝
+  ---
+  duration_ms: 0.609917
+  type: 'test'
+  ...
+# Subtest: 阶段计时互斥：rootSim 不含 legalGen，accounting 与 elapsed 不重复相加
+ok 26 - 阶段计时互斥：rootSim 不含 legalGen，accounting 与 elapsed 不重复相加
+  ---
+  duration_ms: 193.012875
+  type: 'test'
+  ...
+# Subtest: joint-js5-opt 预设：claimRanking=prior；js5 仍是 enumeration
+ok 27 - joint-js5-opt 预设：claimRanking=prior；js5 仍是 enumeration
+  ---
+  duration_ms: 0.850292
+  type: 'test'
+  ...
+# Subtest: 调用方覆盖优先于版本预设；resolved 配置可审计
+ok 28 - 调用方覆盖优先于版本预设；resolved 配置可审计
+  ---
+  duration_ms: 0.1
+  type: 'test'
+  ...
+# Subtest: 适配器返回有效配置身份（js5 vs js5-opt）
+ok 29 - 适配器返回有效配置身份（js5 vs js5-opt）
+  ---
+  duration_ms: 121.104042
+  type: 'test'
+  ...
+# Subtest: 活动冠军参数确实分派到 JS5；显式 legacy 参数走束搜索；structure 不能覆盖 adapter
+ok 30 - 活动冠军参数确实分派到 JS5；显式 legacy 参数走束搜索；structure 不能覆盖 adapter
+  ---
+  duration_ms: 193.355292
+  type: 'test'
+  ...
+# Subtest: 当步正式净分差分与正式引擎逐动作一致（含强制弃置）
+ok 31 - 当步正式净分差分与正式引擎逐动作一致（含强制弃置）
+  ---
+  duration_ms: 10.826542
+  type: 'test'
+  ...
+# Subtest: C10：冻结基线候选遗漏 + replace/add 注入后可见且可选中
+ok 32 - C10：冻结基线候选遗漏 + replace/add 注入后可见且可选中
+  ---
+  duration_ms: 161.894083
+  type: 'test'
+  ...
+# Subtest: 结构泛化：不同席位/牌面/库存下，注入机制仍覆盖当步净分最大行动
+ok 33 - 结构泛化：不同席位/牌面/库存下，注入机制仍覆盖当步净分最大行动
+  ---
+  duration_ms: 182.976708
+  type: 'test'
+  ...
+# Subtest: C1 平衡批次：预算截断时各候选试验数与 (world,replica) 键集严格一致
+ok 34 - C1 平衡批次：预算截断时各候选试验数与 (world,replica) 键集严格一致
+  ---
+  duration_ms: 3623.943791
+  type: 'test'
+  ...
+# Subtest: C1 固定工作量逐位可复现 + collectTrials 披露（js5）
+ok 35 - C1 固定工作量逐位可复现 + collectTrials 披露（js5）
+  ---
+  duration_ms: 1866.42975
+  type: 'test'
+  ...
+# Subtest: 零预算严格回退：门控触发但零试验必须返回冠军行动
+ok 36 - 零预算严格回退：门控触发但零试验必须返回冠军行动
+  ---
+  duration_ms: 3023.58
+  type: 'test'
+  ...
+# Subtest: A3 语义：gated 决策 reason 不得宣称"预期第一名率"
+ok 37 - A3 语义：gated 决策 reason 不得宣称"预期第一名率"
+  ---
+  duration_ms: 2645.857208
+  type: 'test'
+  ...
+# Subtest: B root 延迟创建 + gate=never ≡ js0（单元级快查）
+ok 38 - B root 延迟创建 + gate=never ≡ js0（单元级快查）
+  ---
+  duration_ms: 4516.66225
+  type: 'test'
+  ...
+# Subtest: B 分相计时披露（plan/rootSim/gate/screen/rollout/aggregate）
+ok 39 - B 分相计时披露（plan/rootSim/gate/screen/rollout/aggregate）
+  ---
+  duration_ms: 134.92325
+  type: 'test'
+  ...
+# Subtest: C2 冠军行动始终参与竞争 + claimRanking 选项合法
+ok 40 - C2 冠军行动始终参与竞争 + claimRanking 选项合法
+  ---
+  duration_ms: 3788.090625
+  type: 'test'
+  ...
+# Subtest: Worker search 选项透传 + resolved config/hash 一致
+ok 41 - Worker search 选项透传 + resolved config/hash 一致
+  ---
+  duration_ms: 213.693167
+  type: 'test'
+  ...
+# Subtest: Worker 与主线程适配器固定工作量行动一致（同配置/同种子）
+ok 42 - Worker 与主线程适配器固定工作量行动一致（同配置/同种子）
+  ---
+  duration_ms: 199.245584
+  type: 'test'
+  ...
+# Subtest: joint-js5-opt 在 Worker 中也真正注入 prior 预设
+ok 43 - joint-js5-opt 在 Worker 中也真正注入 prior 预设
+  ---
+  duration_ms: 50.313916
+  type: 'test'
+  ...
+# Subtest: 未知搜索选项 / 非法值被协议层拒绝
+ok 44 - 未知搜索选项 / 非法值被协议层拒绝
+  ---
+  duration_ms: 0.362042
+  type: 'test'
+  ...
+# [public-sim-differential] 合法转移对照 21171 次 | 合法性奇偶校验 9488 次 | 局面 615 | 对局 18
+# Subtest: 任务E：2–5人 playout differential（随机 + 贪心认领，模式 A+B）
+ok 45 - 任务E：2–5人 playout differential（随机 + 贪心认领，模式 A+B）
+  ---
+  duration_ms: 480.943458
+  type: 'test'
+  ...
+# Subtest: 任务E：冻结冠军 AI 驱动终局 differential（真实对局路径）
+ok 46 - 任务E：冻结冠军 AI 驱动终局 differential（真实对局路径）
+  ---
+  duration_ms: 21710.684167
+  type: 'test'
+  ...
+# Subtest: 任务E：合法行动集合一致性 + 逐动作后继对照（引擎为 oracle）
+ok 47 - 任务E：合法行动集合一致性 + 逐动作后继对照（引擎为 oracle）
+  ---
+  duration_ms: 7268.660958
+  type: 'test'
+  ...
+# Subtest: 任务E：容量溢出与弃置 differential（构造极端库存）
+ok 48 - 任务E：容量溢出与弃置 differential（构造极端库存）
+  ---
+  duration_ms: 0.724125
+  type: 'test'
+  ...
+# Subtest: 任务E：牌库耗尽 differential（商人 + 魔像）
+ok 49 - 任务E：牌库耗尽 differential（商人 + 魔像）
+  ---
+  duration_ms: 7.6935
+  type: 'test'
+  ...
+# Subtest: 任务E：终局触发与整轮完成 differential
+ok 50 - 任务E：终局触发与整轮完成 differential
+  ---
+  duration_ms: 0.644209
+  type: 'test'
+  ...
+# Subtest: 任务E：平分决胜名次（同分后手席位优先）
+ok 51 - 任务E：平分决胜名次（同分后手席位优先）
+  ---
+  duration_ms: 0.184292
+  type: 'test'
+  ...
+# Subtest: 任务E：对照总量达到验收门槛（≥ 20,000 次合法状态转移对照）
+ok 52 - 任务E：对照总量达到验收门槛（≥ 20,000 次合法状态转移对照）
+  ---
+  duration_ms: 0.433375
+  type: 'test'
+  ...
+# Subtest: 隐藏牌序扰动不变性：公开状态、候选动作与信念采样分布不变
+ok 53 - 隐藏牌序扰动不变性：公开状态、候选动作与信念采样分布不变
+  ---
+  duration_ms: 16014.618916
+  type: 'test'
+  ...
+# Subtest: 模拟随机流与真实牌库随机数隔离：相同种子流下模拟轨迹与真实牌序无关
+ok 54 - 模拟随机流与真实牌库随机数隔离：相同种子流下模拟轨迹与真实牌序无关
+  ---
+  duration_ms: 594.005625
+  type: 'test'
+  ...
+# Subtest: 信念采样可重复性与多样性：相同输入+种子可复现，不同种子产生不同未来牌序
+ok 55 - 信念采样可重复性与多样性：相同输入+种子可复现，不同种子产生不同未来牌序
+  ---
+  duration_ms: 0.238416
+  type: 'test'
+  ...
+# Subtest: Common Random Numbers：同一 root 的 fork 分支共享同一随机世界
+ok 56 - Common Random Numbers：同一 root 的 fork 分支共享同一随机世界
+  ---
+  duration_ms: 0.561875
+  type: 'test'
+  ...
+# Subtest: 已采样未翻开的牌序物理不可见（决策函数无法触达）
+ok 57 - 已采样未翻开的牌序物理不可见（决策函数无法触达）
+  ---
+  duration_ms: 0.603166
+  type: 'test'
+  ...
+# Subtest: 静态扫描：src/sim 不引用隐藏字段、不依赖正式引擎随机数、不运行时依赖 src/ai
+ok 58 - 静态扫描：src/sim 不引用隐藏字段、不依赖正式引擎随机数、不运行时依赖 src/ai
+  ---
+  duration_ms: 48.467625
+  type: 'test'
+  ...
+# Subtest: 静态扫描：src/ai 与正式入口不导入 sim 模块（正式 AI 行为保持不变）
+ok 59 - 静态扫描：src/ai 与正式入口不导入 sim 模块（正式 AI 行为保持不变）
+  ---
+  duration_ms: 6.919875
+  type: 'test'
+  ...
+1..59
+# tests 59
+# suites 0
+# pass 59
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 96485.214167

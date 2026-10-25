@@ -1,0 +1,116 @@
+{
+  "schema": "js5-goal-paired-analysis-v1",
+  "generatedAt": "2026-10-25T06:26:54.464Z",
+  "baselineReport": "training/reports/js5-goal-optimization/run-20261025-01/evidence/confirm/ablation-goal-confirm-js5-5-200s-w16.json",
+  "candidateReports": [
+    "training/reports/js5-goal-optimization/run-20261025-01/evidence/confirm/ablation-goal-confirm-js5-5-200s-w16-nt-replace-sc-preferred-ba-balanced.json"
+  ],
+  "results": [
+    {
+      "candidate": "training/reports/js5-goal-optimization/run-20261025-01/evidence/confirm/ablation-goal-confirm-js5-5-200s-w16-nt-replace-sc-preferred-ba-balanced.json",
+      "baseline": "training/reports/js5-goal-optimization/run-20261025-01/evidence/confirm/ablation-goal-confirm-js5-5-200s-w16.json",
+      "players": 5,
+      "direction": "A",
+      "seeds": 200,
+      "firstPlace": {
+        "baselineRate": 0.3,
+        "candidateRate": 0.35,
+        "pointDiff": 0.05,
+        "bootstrap95": [
+          -0.02,
+          0.125
+        ],
+        "wins": 32,
+        "losses": 22,
+        "ties": 146,
+        "discordance": 0.27,
+        "exactMcNemarP": 0.22032849417661146,
+        "nFor8pp": 332,
+        "nFor5pp": 848,
+        "nFor3pp": 2355
+      },
+      "auxiliary": {
+        "baselineMeanScoreDiff": 4.2725,
+        "candidateMeanScoreDiff": 3.76,
+        "scoreDiffDelta": -0.5125,
+        "baselineAnomalies": 0,
+        "candidateAnomalies": 0,
+        "baselineJoint": {
+          "decisions": 7000,
+          "meanRolloutsPerDecision": 14.68,
+          "meanTransitionsPerDecision": 613.8,
+          "omTimeMsTotal": 0,
+          "omTimeShare": 0,
+          "gateTriggerRate": 0.9211,
+          "overrideRate": 0.3573,
+          "gatedChampionKeepRate": 0.6427,
+          "gatedStarvedFallbackRate": 0
+        },
+        "candidateJoint": {
+          "decisions": 7009,
+          "meanRolloutsPerDecision": 14.73,
+          "meanTransitionsPerDecision": 613.2,
+          "omTimeMsTotal": 0,
+          "omTimeShare": 0,
+          "gateTriggerRate": 0.924,
+          "overrideRate": 0.3484,
+          "gatedChampionKeepRate": 0.6516,
+          "gatedStarvedFallbackRate": 0
+        },
+        "baselineLatency": {
+          "count": 35197,
+          "meanMs": 56.654,
+          "p50Ms": 32.608,
+          "p95Ms": 160.702,
+          "p99Ms": 242.326,
+          "maxMs": 762.218
+        },
+        "candidateLatency": {
+          "count": 35232,
+          "meanMs": 56.983,
+          "p50Ms": 33.482,
+          "p95Ms": 159.528,
+          "p99Ms": 242.43,
+          "maxMs": 1002.741
+        }
+      },
+      "bySeat": [
+        {
+          "seat": "0",
+          "n": 40,
+          "baseWins": 19,
+          "candWins": 19,
+          "pointDiff": 0
+        },
+        {
+          "seat": "1",
+          "n": 40,
+          "baseWins": 9,
+          "candWins": 8,
+          "pointDiff": -0.025
+        },
+        {
+          "seat": "2",
+          "n": 40,
+          "baseWins": 10,
+          "candWins": 12,
+          "pointDiff": 0.05
+        },
+        {
+          "seat": "3",
+          "n": 40,
+          "baseWins": 12,
+          "candWins": 15,
+          "pointDiff": 0.075
+        },
+        {
+          "seat": "4",
+          "n": 40,
+          "baseWins": 10,
+          "candWins": 16,
+          "pointDiff": 0.15
+        }
+      ]
+    }
+  ]
+}

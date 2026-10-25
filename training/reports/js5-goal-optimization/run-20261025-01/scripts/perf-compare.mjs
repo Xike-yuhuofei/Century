@@ -111,6 +111,7 @@ function runDecision(mod, ai, game, options) {
 }
 
 const positions = collectPositions(targetPositions);
+const loadavgAtStart = os.loadavg();
 process.stdout.write(`positions=${positions.length}（目标 ${targetPositions}）\n`);
 if (positions.length < targetPositions) process.stdout.write('警告：局面数不足，报告按实际样本披露\n');
 
@@ -166,13 +167,37 @@ function summarize(version) {
   };
 }
 
+// 同局面同重复的配对延迟差（控制共同负载）。
+const byKey = new Map();
+for (const r of rows) {
+  if (r.error) continue;
+  const k = `${r.rep}:${r.index}`;
+  if (!byKey.has(k)) byKey.set(k, {});
+  byKey.get(k)[r.version] = r.ms;
+}
+const deltas = [];
+for (const v of byKey.values()) {
+  if (typeof v.baseline === 'number' && typeof v.candidate === 'number') deltas.push(v.candidate - v.baseline);
+}
+deltas.sort((a, b) => a - b);
+const pairedDelta = deltas.length ? {
+  n: deltas.length,
+  p50: percentile(deltas, .5),
+  p95: percentile(deltas, .95),
+  min: deltas[0],
+  max: deltas.at(-1),
+  candidateSlowerBy10ms: deltas.filter(d => d > 10).length,
+  candidateFaster: deltas.filter(d => d < 0).length,
+} : null;
+
 const out = {
   schema: 'js5-goal-perf-compare-v1',
   generatedAt: new Date().toISOString(),
   baselineDist, candidateDist,
   budgetMs, repeats, positions: positions.length,
-  loadavgAtStart: os.loadavg(), cpuCount: os.cpus().length,
+  loadavgAtStart, loadavgAtEnd: os.loadavg(), cpuCount: os.cpus().length,
   candidateOptions: CANDIDATE_OPTIONS,
+  pairedDelta,
   seedBlock: AI6_JS5_GOAL_PERF_SUBBLOCK,
   summary: { baseline: summarize('baseline'), candidate: summarize('candidate') },
   rows: rows.map(r => ({ rep: r.rep, index: r.index, phase: r.phase, version: r.version, ms: r.ms, rollouts: r.stats?.rollouts ?? 0, worlds: r.stats?.worldsUsed ?? null, zeroReason: r.stats?.zeroTrialReason ?? null, overBudget: r.stats?.overBudget ?? null, illegal: r.illegal, fallback: r.fallback })),
