@@ -51,8 +51,9 @@ concurrency:
 
 jobs:
   audit-gate:
-    # P0-2 整改：第六阶段审计门禁 CI 入口（开发层）。研究/晋级层需要本地完整
-    # 环境（种子账本、引擎产物）与人工授权，不在 PR CI 强制。
+    # AI7-A1/A3：PR CI 执行 research 层门禁（dev + 跨系统种子治理 + 证据核算）。
+    # promotion 层仍需本地完整环境与人工授权（REQUIRES_APPROVAL），不在 PR CI
+    # 强制为绿；晋级前必须在本地执行 npm run gate:promotion。
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'test')
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -61,11 +62,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Build web-v1（行为学审计需要编译产物）
+      - name: Build web-v1（构建清单/行为学审计需要编译产物）
         working-directory: web-v1
         run: npm install --no-audit --no-fund && npm run build
-      - name: 红队审计门禁（dev 层：版本身份 / 信息公平 / 正向不变量回归）
-        run: node training/redteam/audit-gate.mjs --tier dev --json training/reports/audit-gate.json --md training/reports/audit-gate.md
+      - name: 红队审计门禁（research 层：版本身份 / 构建新鲜度 / 种子治理 / 证据核算）
+        run: node training/redteam/audit-gate.mjs --tier research --json training/reports/audit-gate.json --md training/reports/audit-gate.md
       - uses: actions/upload-artifact@v4
         with:
           name: audit-gate-report
@@ -91,6 +92,9 @@ jobs:
       - name: training 系统测试（含 CLI 端到端与晋级脚本）
         working-directory: training
         run: npm test
+      - name: AI7 进化控制面安全/可复现测试（Candidate Artifact / 目标边界 / 治理 / Controller / 演示逻辑）
+        working-directory: training
+        run: npm run evolution:test
       - name: 模拟器快速评估（PR 100 局）
         run: |
           node training/simulator/cli.mjs --games 100 --seed-base 1 --out training/reports/pr-eval

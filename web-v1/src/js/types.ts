@@ -16,6 +16,7 @@
  */
 
 import type { Action } from '../engine.js';
+import type { AIParameters } from '../ai/parameters.js';
 import type { AIObservation } from '../ai/observation.js';
 import type { PublicHistorySummary } from '../sim/history.js';
 import type { OpponentModel } from '../om/index.js';
@@ -251,9 +252,10 @@ export type JointSearchOptions = {
   claimProtectMargin?: number;
   /** 保证当步净分最大的可立即认领行动进入候选集（C3）。 */
   ensureBestClaimCandidate?: boolean;
-  /** 冠军基座参数集（C2：候选版本注入 engineModel/seatPolicy 变体；
-   * 缺省 = 冻结 CHAMPION_PARAMETERS）。 */
-  championParameters?: import('../ai/parameters.js').AIParameters;
+  /** 冠军基座参数集（AI7 身份冻结 + C2/C4 变体注入）：显式描述实际消费的
+   * 冠军参数集。版本预设（parameterVariant）会注入候选变体；缺省 = 冻结
+   * CHAMPION_PARAMETERS（仅兼容旧调用）。 */
+  championParameters?: AIParameters;
 };
 
 // === 规划器接口（任务 A 推荐接口） ===

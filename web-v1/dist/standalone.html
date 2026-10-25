@@ -5312,6 +5312,7 @@
   var ChampionGuidedPlanner = class {
     decide(observation, callOptions) {
       const o = resolveChampionGuidedOptions(callOptions);
+      const championParameters = o.championParameters ? validateAIParameters(o.championParameters) : CHAMPION_PARAMETERS;
       const t0 = performance.now();
       const phase = { planMs: 0, rootSimMs: 0, legalGenMs: 0, gateMs: 0, screenMs: 0, rolloutMs: 0, aggregateMs: 0 };
       if (observation.phase === "finished") fail6("游戏已结束，无法决策");
@@ -5319,7 +5320,7 @@
       if (observation.current !== mySeat) fail6("观察席位不是当前行动者");
       const profile = o.profileName ? profileByName(o.profileName) : NEUTRAL_PROFILE;
       const planStart = performance.now();
-      const plan = choosePlan(observation, o.championParameters ?? CHAMPION_PARAMETERS, profile, o.championStructure ?? "beam-rollout");
+      const plan = choosePlan(observation, championParameters, profile, o.championStructure ?? "beam-rollout");
       phase.planMs = performance.now() - planStart;
       const championAction = plan?.first ?? null;
       const worldCount = Math.max(1, Math.min(8, Math.floor(o.worlds ?? 4)));
@@ -5454,7 +5455,7 @@
         };
       }
       const screenStart = performance.now();
-      const ctxRoot = heuristicContext(root2.view, CHAMPION_PARAMETERS, NEUTRAL_PROFILE);
+      const ctxRoot = heuristicContext(root2.view, championParameters, NEUTRAL_PROFILE);
       const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
         goalScope: o.screenGoalScope ?? "all",
         preferredGoal: plan?.preferred ?? null
@@ -6127,6 +6128,7 @@
     if (game2.phase === "finished") throw new Error("游戏结束，无法决策");
     if (game2.current !== seat) throw new Error("决策席位不是当前行动者");
     const resolvedOptions = mergeJointOptions(versionId, options);
+    const championParameters = resolvedOptions.championParameters ? validateAIParameters(resolvedOptions.championParameters) : CHAMPION_PARAMETERS;
     const baseConfig = resolveJointConfig(versionId, resolvedOptions, options.profile?.name);
     const config = { ...baseConfig, hash: jointConfigHash(baseConfig) };
     if (version.kind === "champion-contest") {
@@ -6139,7 +6141,7 @@
     }
     if (game2.phase === "overflow") {
       const p = game2.players[seat];
-      const colors = resolvedOptions.endgameDiscard === true && game2.triggerPlayer !== null ? endgameDiscardColors(p.stock, count(p.stock) - 10) : trimStock(p.stock, game2.golemMarket, null, CHAMPION_PARAMETERS).discarded;
+      const colors = resolvedOptions.endgameDiscard === true && game2.triggerPlayer !== null ? endgameDiscardColors(p.stock, count(p.stock) - 10) : trimStock(p.stock, game2.golemMarket, null, championParameters).discarded;
       return {
         action: { type: "discard", colors },
         reason: resolvedOptions.endgameDiscard === true && game2.triggerPlayer !== null ? "溢出弃置（终局官方得分口径：先弃黄，保留非黄）" : "溢出弃置（冠军 trimStock 口径）",
@@ -6154,9 +6156,11 @@
     const decision = version.kind === "champion-guided" ? planner.decide(observation, {
       ...guidedDefaults,
       ...resolvedOptions,
+      championParameters,
       profileName: options.profile?.name
     }) : planner.decide(observation, {
       ...resolvedOptions,
+      championParameters,
       profileName: options.profile?.name
     });
     const action2 = decision.action;
@@ -6182,9 +6186,9 @@
       const joint = chooseJointAction(game2, {
         version: params.jointVersion ?? "joint-js5",
         ...params.budgetMs !== void 0 ? { budgetMs: params.budgetMs } : {},
-        // AI6 第六阶段 P0 版本身份透传：完整参数对象进入适配器——冠军本体传入
-        // 自身（= CHAMPION_PARAMETERS 归一化结果，行为逐位不变），风格变体的
-        // 权重修改从此真实影响冠军基座规划（此前被适配器忽略，变体 ≡ 本体）。
+        // AI7-A2 / AI6-P0：运行时实际消费的冠军基座参数必须显式注入。
+        // 冠军本体传入自身（行为逐位不变）；冻结描述符传入归档参数；
+        // 风格变体的权重修改经此真实影响冠军基座规划（不再回退活动常量）。
         championParameters: params,
         profile: options?.profile
       });
@@ -11534,6 +11538,7 @@
   var ChampionGuidedPlanner = class {
     decide(observation, callOptions) {
       const o = resolveChampionGuidedOptions(callOptions);
+      const championParameters = o.championParameters ? validateAIParameters(o.championParameters) : CHAMPION_PARAMETERS;
       const t0 = performance.now();
       const phase = { planMs: 0, rootSimMs: 0, legalGenMs: 0, gateMs: 0, screenMs: 0, rolloutMs: 0, aggregateMs: 0 };
       if (observation.phase === "finished") fail6("游戏已结束，无法决策");
@@ -11541,7 +11546,7 @@
       if (observation.current !== mySeat) fail6("观察席位不是当前行动者");
       const profile = o.profileName ? profileByName(o.profileName) : NEUTRAL_PROFILE;
       const planStart = performance.now();
-      const plan = choosePlan(observation, o.championParameters ?? CHAMPION_PARAMETERS, profile, o.championStructure ?? "beam-rollout");
+      const plan = choosePlan(observation, championParameters, profile, o.championStructure ?? "beam-rollout");
       phase.planMs = performance.now() - planStart;
       const championAction = plan?.first ?? null;
       const worldCount = Math.max(1, Math.min(8, Math.floor(o.worlds ?? 4)));
@@ -11676,7 +11681,7 @@
         };
       }
       const screenStart = performance.now();
-      const ctxRoot = heuristicContext(root.view, CHAMPION_PARAMETERS, NEUTRAL_PROFILE);
+      const ctxRoot = heuristicContext(root.view, championParameters, NEUTRAL_PROFILE);
       const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
         goalScope: o.screenGoalScope ?? "all",
         preferredGoal: plan?.preferred ?? null
@@ -12349,6 +12354,7 @@
     if (game.phase === "finished") throw new Error("游戏结束，无法决策");
     if (game.current !== seat) throw new Error("决策席位不是当前行动者");
     const resolvedOptions = mergeJointOptions(versionId, options);
+    const championParameters = resolvedOptions.championParameters ? validateAIParameters(resolvedOptions.championParameters) : CHAMPION_PARAMETERS;
     const baseConfig = resolveJointConfig(versionId, resolvedOptions, options.profile?.name);
     const config = { ...baseConfig, hash: jointConfigHash(baseConfig) };
     if (version.kind === "champion-contest") {
@@ -12361,7 +12367,7 @@
     }
     if (game.phase === "overflow") {
       const p = game.players[seat];
-      const colors = resolvedOptions.endgameDiscard === true && game.triggerPlayer !== null ? endgameDiscardColors(p.stock, count(p.stock) - 10) : trimStock(p.stock, game.golemMarket, null, CHAMPION_PARAMETERS).discarded;
+      const colors = resolvedOptions.endgameDiscard === true && game.triggerPlayer !== null ? endgameDiscardColors(p.stock, count(p.stock) - 10) : trimStock(p.stock, game.golemMarket, null, championParameters).discarded;
       return {
         action: { type: "discard", colors },
         reason: resolvedOptions.endgameDiscard === true && game.triggerPlayer !== null ? "溢出弃置（终局官方得分口径：先弃黄，保留非黄）" : "溢出弃置（冠军 trimStock 口径）",
@@ -12376,9 +12382,11 @@
     const decision = version.kind === "champion-guided" ? planner.decide(observation, {
       ...guidedDefaults,
       ...resolvedOptions,
+      championParameters,
       profileName: options.profile?.name
     }) : planner.decide(observation, {
       ...resolvedOptions,
+      championParameters,
       profileName: options.profile?.name
     });
     const action = decision.action;
@@ -12404,9 +12412,9 @@
       const joint = chooseJointAction(game, {
         version: params.jointVersion ?? "joint-js5",
         ...params.budgetMs !== void 0 ? { budgetMs: params.budgetMs } : {},
-        // AI6 第六阶段 P0 版本身份透传：完整参数对象进入适配器——冠军本体传入
-        // 自身（= CHAMPION_PARAMETERS 归一化结果，行为逐位不变），风格变体的
-        // 权重修改从此真实影响冠军基座规划（此前被适配器忽略，变体 ≡ 本体）。
+        // AI7-A2 / AI6-P0：运行时实际消费的冠军基座参数必须显式注入。
+        // 冠军本体传入自身（行为逐位不变）；冻结描述符传入归档参数；
+        // 风格变体的权重修改经此真实影响冠军基座规划（不再回退活动常量）。
         championParameters: params,
         profile: options?.profile
       });

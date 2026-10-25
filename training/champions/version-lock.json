@@ -1,0 +1,27 @@
+{
+  "schema": "century-algorithm-version-lock-v1",
+  "algorithm": "sha256(file bytes)",
+  "createdAt": "2026-10-25T14:03:35.470Z",
+  "archives": {
+    "training/champions/candidates/ai5-readiness-efficiency.json": "1de6c7f3beedda7e964c55271d6fe704df956ff7d78f1e29ef6761fc01ce3df5",
+    "training/champions/candidates/joint-js5.json": "b584e99ba16db7e1b17228875c501036df5b3e4f2ddab2f5cf6cae99677ab73c",
+    "training/champions/candidates/struct-beam-rollout.json": "da962c404f402f557f902d49de430caa78a5d32cb63661cec7b7525ef40b7e22"
+  },
+  "decisionSources": {
+    "web-v1/src/ai/decision.ts": "1daac6bfed44a31d84032f744adda96b1d559325a4461f07e783a3e630a4c1d0",
+    "web-v1/src/js/champion-guided.ts": "2dfda7d8faf938ceae0464400f0a95e6c58cfee1d4a76b17cfdb50eb094b6d02",
+    "web-v1/src/js/adapter.ts": "c0c81c07957a644afcb4ba64b02e9a81c1178b1491f938d4083642857752b2b6",
+    "web-v1/src/js/config.ts": "2e71edc7c2f50a43b1c47949b5a128377aec8fc2c1182fcf160a2c249b0c1465",
+    "web-v1/src/js/joint-rollout.ts": "653ce2297de94a656945b42770f19426b1f2a1f8dd9ea1b9ce46681fd5d2c743",
+    "web-v1/src/js/rollout-policy.ts": "16d17b5e0cc1fc67ab3f3e33ace790f3ad1fa4f390cee9ff8a52bef69cc16c8a",
+    "web-v1/src/js/near-terminal.ts": "225d5a66c6d9c0d28bae1fcf7ee30cc05b373a65eaeb0e90a40be55288bcd128",
+    "web-v1/src/js/budget.ts": "750cd6e9359195d5353b0d357b4054ec4acfc097653399355920b6960da058f4",
+    "web-v1/src/js/simview.ts": "a0c95021a0b6b41b5b0c170d778ef4463f3d0be0e225de27822f5d40cde1b321",
+    "web-v1/src/js/types.ts": "f2787723b8fe10dd62662737fb23be26fd8c96050cf1b8c835323528856046be",
+    "web-v1/src/ai/version-registry.ts": "6b0769d29481c0e1c10364ce3ea0a3a6961a2e633dcce9a4e895d78dd58f70a9",
+    "web-v1/src/ai/parameters.ts": "04cfc2804f48dffc8e33c3880e04acaf955bc12f51ba25dc2ebb3053b7a64526",
+    "web-v1/src/ai/planner.ts": "a0eecae250f6080bbc8f4ae91f3bc57438fe0c6bc0ce16caa3af968d6f522f3c",
+    "web-v1/src/ai/evaluator.ts": "0321057e373505dd03070d971d9e1609477bfd7e2323718c3408e02fab69ea40"
+  },
+  "note": "AI7 任务 C 候选（feat/ai7-strategy-candidates）：有意变更决策核心文件，新增终局精确求解（endgame.ts 接入）、JS5 配对仲裁/认领保护、引擎价值 V2 与人数条件折扣选项。全部新选项缺省关闭，冻结 joint-js5 生产行为逐位不变（tests/ai7-regression 断言）。锁仅记录有意变更后的文件字节哈希。"
+}

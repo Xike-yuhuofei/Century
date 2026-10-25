@@ -80,6 +80,34 @@ if (!distReady) {
   });
 }
 
+// ---- 0.5 构建产物一致性（AI7-A3；dev 层，fail-closed） ----
+if (distReady) {
+  const { verifyBuildManifest } = await import(`file://${resolve(REPO_ROOT, 'web-v1/scripts/build-hash.mjs')}`);
+  const v = verifyBuildManifest({ repoRoot: REPO_ROOT, webRoot: resolve(REPO_ROOT, 'web-v1') });
+  add({
+    id: 'dist-freshness', tier: 'dev', status: v.ok ? 'PASS' : 'BLOCKED', severity: v.ok ? 'PASS' : 'P0',
+    title: v.ok ? '源码闭包 ↔ dist 产物一致（构建清单复核通过）' : '源码已变更但 dist 未重新构建（stale dist）',
+    evidence: v.ok
+      ? `source=${String(v.manifest?.source?.sha256).slice(0, 16)} artifact=${String(v.manifest?.artifact?.sha256).slice(0, 16)} dirty=${v.manifest?.gitDirty}`
+      : v.errors.join('；'),
+    remediation: v.ok ? null : 'cd web-v1 && npm run build（禁止在旧产物上运行训练/评测/正式挑战）',
+  });
+}
+
+// ---- 0.6 历史算法版本锁（AI7-A2；dev 层，fail-closed） ----
+{
+  const { verifyVersionLock } = await import(`file://${resolve(REPO_ROOT, 'training/lib/version-lock.mjs')}`);
+  const v = verifyVersionLock();
+  add({
+    id: 'version-lock', tier: 'dev', status: v.ok ? 'PASS' : 'BLOCKED', severity: v.ok ? 'PASS' : 'P0',
+    title: v.ok ? '历史算法版本锁完整（归档 + 决策核心源码字节级固定）' : '历史算法版本锁与归档/源码不一致（静默身份漂移）',
+    evidence: v.ok
+      ? `archives=${Object.keys(v.lock.archives).length} decisionSources=${Object.keys(v.lock.decisionSources).length}`
+      : v.errors.join('；'),
+    remediation: v.ok ? null : '如属有意变更：node training/scripts/version-lock.mjs --write --note <原因> 并随 PR 审核；否则恢复文件',
+  });
+}
+
 // ---- 1. 版本身份（行为学；dev 层） ----
 if (distReady) {
   const r = runAudit('training/redteam/audit-versions.mjs', ['--probes=16', '--json']);
@@ -199,6 +227,36 @@ if (distReady || true) { // 核算是纯数据复算，不依赖 dist
   }
 }
 
+// ---- 5.5 统一跨系统种子治理（research 层；AI7-A1） ----
+{
+  try {
+    const { loadSeedGovernance, governanceReport } = await import(`file://${resolve(REPO_ROOT, 'training/lib/seed-governance.mjs')}`);
+    const registry = loadSeedGovernance({ strict: true });
+    const report = governanceReport(registry);
+    const ppoArena = registry.entries.find(e => e.sourceId === 'ppo-ledger' && e.purposeClass === 'arena');
+    const long20 = registry.entries.find(e => e.experimentId === 'openevolve-long20-deep-validation-unledgered');
+    const healthy = registry.complete && registry.conflicts.length === 0;
+    add({
+      id: 'seed-governance', tier: 'research', status: healthy ? 'PASS' : 'FAIL', severity: healthy ? 'PASS' : 'P0',
+      title: healthy
+        ? `跨系统种子治理健康（正式挑战 ${report.summary.formalChallenges} 次；来源 ${registry.sources.length} 个）`
+        : '跨系统种子治理存在缺失/冲突（fail-closed）',
+      evidence: healthy
+        ? `PPO 验证池块已识别=${Boolean(ppoArena)}（[${ppoArena?.base}, ${ppoArena?.base + ppoArena?.size})）；long20 未入账区间已保守占用=${Boolean(long20)}；` +
+          `不确定条目=${report.summary.uncertainEntries}；冲突=0`
+        : JSON.stringify(report.conflicts),
+      remediation: healthy ? null : '修复账本缺失/冲突后重跑；禁止跳过治理层',
+    });
+  } catch (error) {
+    add({
+      id: 'seed-governance', tier: 'research', status: 'BLOCKED', severity: 'P0',
+      title: '统一种子治理层不可用（缺失账本/加载失败，fail-closed）',
+      evidence: error.message,
+      remediation: '恢复全部账本与 training/governance/* 治理文件后重跑',
+    });
+  }
+}
+
 // ---- 6. 晋级治理（promotion 层；区分代码缺陷与治理决定） ----
 {
   const champPath = resolve(REPO_ROOT, 'training/champions/champion.json');
@@ -208,12 +266,19 @@ if (distReady || true) { // 核算是纯数据复算，不依赖 dist
   // G1：证据人数覆盖——正式挑战证据覆盖的人数 vs 部署口径
   const seatCountsCovered = evidence.seatCounts ?? [5]; // challenge-11 按 5 人协议执行
   govNotes.push(`晋级证据覆盖人数=${JSON.stringify(seatCountsCovered)}（正式挑战协议 ${TIER === 'promotion' ? '现已支持 2–5 人独立成次' : ''}）；2p 未有正式证据即全人数部署属治理风险（需按人数补验或人工裁决）`);
-  // G2：证据指纹 = 当前重建产物
+  // G2：证据身份 = 当前重建产物（规范化身份优先；旧记录退回全量 bundle）
   const recorded = champ.provenance?.engineBundleSha256;
-  let current = null;
-  try { current = (await import(`file://${resolve(REPO_ROOT, 'training/lib/paths.mjs')}`)).engineBundleSha256(); } catch { /* 无 dist */ }
-  if (recorded && current && recorded !== current) {
-    govNotes.push(`晋级证据指纹 ${recorded.slice(0, 12)} ≠ 当前产物 ${current.slice(0, 12)}（受试产物 ≠ 晋级产物——需人工授权的新独立挑战；已在 version-identity V7b 列为 REQUIRES_APPROVAL）`);
+  const prov = champ.provenance ?? {};
+  let currentProv = null;
+  try { currentProv = (await import(`file://${resolve(REPO_ROOT, 'training/lib/paths.mjs')}`)).buildProvenance(); } catch { /* 无 dist */ }
+  const normalized = prov.decisionSourceSha256 && prov.decisionArtifactSha256 && prov.championParametersSha256;
+  const drift = normalized && currentProv
+    ? ['decisionSourceSha256', 'decisionArtifactSha256', 'championParametersSha256'].some(k => prov[k] !== currentProv[k])
+    : (recorded && currentProv && recorded !== currentProv.engineBundleSha256);
+  if (drift) {
+    govNotes.push(normalized
+      ? '晋级证据规范化身份（决策核心/产物/冠军参数）≠ 当前构建——需人工授权的新独立挑战；已在 version-identity V7b 列为 REQUIRES_APPROVAL'
+      : `晋级证据指纹 ${recorded.slice(0, 12)} ≠ 当前产物 ${currentProv.engineBundleSha256.slice(0, 12)}（受试产物 ≠ 晋级产物——需人工授权的新独立挑战；已在 version-identity V7b 列为 REQUIRES_APPROVAL）`);
   }
   add({
     id: 'promotion-governance', tier: 'promotion', status: 'REQUIRES_APPROVAL', severity: 'GOVERNANCE',
@@ -223,8 +288,31 @@ if (distReady || true) { // 核算是纯数据复算，不依赖 dist
   });
 }
 
+// ---- 6.5 冠军证据待重新验证（AI7-A4：记录问题，不重新晋级/不改写历史） ----
+{
+  const revalidationPath = resolve(REPO_ROOT, 'training/champions/revalidation-required.json');
+  if (existsSync(revalidationPath)) {
+    const doc = JSON.parse(readFileSync(revalidationPath, 'utf8'));
+    add({
+      id: 'champion-revalidation', tier: 'promotion', status: 'REQUIRES_APPROVAL', severity: 'GOVERNANCE',
+      title: `冠军 ${doc.championId} 的既有晋级证据待重新验证（${doc.status}）`,
+      evidence: `受试产物=${String(doc.finding?.evidenceEngineBundleSha256).slice(0, 12)}；人数覆盖=${JSON.stringify(doc.finding?.seatCountsCovered)}；` +
+        '未重新晋级、未改写历史 provenance——需人工授权新的 2–5 人正式挑战',
+      remediation: '按 revalidation-required.json 的 remediation 执行新挑战；在此之前不得宣称全人数已验证',
+    });
+  }
+}
+
 // ---- 7. 审计工具自身在场（防"删脚本变绿"） ----
-for (const tool of ['training/redteam/audit-versions.mjs', 'training/redteam/audit-evidence-accounting.mjs', 'training/redteam/stats-two-player.mjs', 'training/redteam/tests/redteam.test.mjs']) {
+for (const tool of [
+  'training/redteam/audit-versions.mjs', 'training/redteam/audit-evidence-accounting.mjs',
+  'training/redteam/stats-two-player.mjs', 'training/redteam/tests/redteam.test.mjs',
+  'training/lib/seed-governance.mjs', 'training/scripts/seed-governance-cli.mjs',
+  'training/lib/version-lock.mjs', 'training/scripts/version-lock.mjs', 'training/champions/version-lock.json',
+  'training/governance/historical-seed-claims.json', 'training/governance/seed-consumption-registry.json',
+  'training/champions/revalidation-required.json',
+  'web-v1/scripts/build-hash.mjs', 'web-v1/scripts/build-manifest.mjs',
+]) {
   if (!existsSync(resolve(REPO_ROOT, tool))) {
     add({
       id: `tool-presence:${tool}`, tier: 'dev', status: 'BLOCKED', severity: 'P0',

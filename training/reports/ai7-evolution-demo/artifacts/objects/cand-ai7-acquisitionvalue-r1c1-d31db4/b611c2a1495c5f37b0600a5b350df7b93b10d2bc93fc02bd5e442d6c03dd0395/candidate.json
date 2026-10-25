@@ -1,0 +1,151 @@
+{
+  "schema": "century-candidate-artifact-v1",
+  "version": 1,
+  "candidateId": "cand-ai7-acquisitionvalue-r1c1-d31db4",
+  "parentId": null,
+  "sourceHash": "5c2847cd7cda230f6400bcc810106490799394cf0c1e1b1bc7b26beef5b85321",
+  "source": {
+    "kind": "declarative-module",
+    "entry": "module.json",
+    "hashKind": "file-content",
+    "files": [
+      {
+        "path": "module.json",
+        "sha256": "d31db48d7cb3fd497f7ffda7ffea1801b274751ba4669fb05ee19c7b5e702edc",
+        "content": "{\"bias\":0,\"coefficients\":{\"capacityRoom\":0,\"demand\":0.45,\"depthPenalty\":0,\"efficiency\":0,\"engineDelta\":0.6,\"goalFit\":2.4,\"readiness\":0.15,\"risk\":0.55,\"synergy\":2},\"notes\":null,\"outputClamp\":[-5,30],\"schema\":\"century-declarative-linear-module-v1\",\"template\":\"linear-feature-v1\"}"
+      }
+    ]
+  },
+  "algorithmStructure": {
+    "targetIds": [
+      "acquisitionValue"
+    ],
+    "decisionCore": "plugin-only",
+    "adapter": null,
+    "structure": null,
+    "jointVersion": null,
+    "evaluationMode": "proxy",
+    "jointOptionsByPlayerCount": null,
+    "integration": "candidate-plugin-only"
+  },
+  "parameters": {
+    "id": "cand-ai7-acquisitionvalue-r1c1-d31db4",
+    "version": 1,
+    "values": {
+      "schema": "century-declarative-linear-module-v1",
+      "template": "linear-feature-v1",
+      "coefficients": {
+        "engineDelta": 0.6,
+        "synergy": 2,
+        "goalFit": 2.4,
+        "demand": 0.45,
+        "risk": 0.55,
+        "readiness": 0.15,
+        "efficiency": 0,
+        "capacityRoom": 0,
+        "depthPenalty": 0
+      },
+      "bias": 0,
+      "outputClamp": [
+        -5,
+        30
+      ],
+      "notes": null
+    },
+    "boundsVersion": "module-bounds-acquisitionValue-v1"
+  },
+  "buildArtifact": {
+    "kind": "declarative-module-bundle-v1",
+    "sha256": "a2bf9b78ba28bbccb241c5d1a534a3ab0bf1b00927aa32ef48496dddc54acfe2",
+    "compiled": false,
+    "compiler": null,
+    "reproducible": true
+  },
+  "gameRules": {
+    "version": "century-rules-v1",
+    "engineBundleSha256": "589e8adf30bde4e9aa0b5b163dd7f5835a0e4fa5ed8b62909b9569dde8467f72"
+  },
+  "experiment": {
+    "configRef": "training/evolution/configs/ai7-demo.json",
+    "configHash": "f4d9ac13a409bdcc34eaf0d7f75f36b55934525f55a31956c662d11d77103fd1",
+    "seedRefs": [
+      {
+        "purpose": "screen",
+        "windowId": "ai7-screen-w000",
+        "base": 1610000000,
+        "count": 2
+      },
+      {
+        "purpose": "deep",
+        "windowId": "ai7-deep-w000",
+        "base": 1620000000,
+        "count": 3
+      }
+    ]
+  },
+  "applicablePlayerCounts": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "evidenceDir": "training/reports/ai7-evolution-demo/evidence/cand-ai7-acquisitionvalue-r1c1-d31db4",
+  "safety": {
+    "status": "passed",
+    "checks": [
+      {
+        "id": "artifact-schema",
+        "status": "pass",
+        "detail": "schema=century-candidate-artifact-v1, identity=b611c2a1495c"
+      },
+      {
+        "id": "parameter-bounds",
+        "status": "pass",
+        "detail": "targets=acquisitionValue"
+      },
+      {
+        "id": "compiled-module",
+        "status": "pass",
+        "detail": "not-compiled"
+      },
+      {
+        "id": "hidden-info",
+        "status": "pass",
+        "detail": "no hidden deck/seed/random access"
+      },
+      {
+        "id": "forbidden-constructs",
+        "status": "pass",
+        "detail": "no forbidden constructs"
+      },
+      {
+        "id": "resource-budget",
+        "status": "pass",
+        "detail": "players=2,3,4,5"
+      },
+      {
+        "id": "fallback-declared",
+        "status": "pass",
+        "detail": "fallback strategy present"
+      },
+      {
+        "id": "governance-boundary",
+        "status": "pass",
+        "detail": "dev-only seed references"
+      },
+      {
+        "id": "production-isolation",
+        "status": "pass",
+        "detail": "mode=proxy"
+      },
+      {
+        "id": "identity-reproducible",
+        "status": "pass",
+        "detail": "source=5c2847cd7cda, build=a2bf9b78ba28"
+      }
+    ]
+  },
+  "status": "selected",
+  "identityDigest": "b611c2a1495c5f37b0600a5b350df7b93b10d2bc93fc02bd5e442d6c03dd0395",
+  "artifactHash": "5e1e80492ea714aea9158816e41fc6943ff4937dd0c4763597dec4dc4b7a594c"
+}
