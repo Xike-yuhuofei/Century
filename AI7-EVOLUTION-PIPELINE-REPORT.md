@@ -4,6 +4,7 @@
 - 分支：`feat/ai7-evolution-pipeline`
 - 统一 main SHA：`19fa56403aa36ef20d0338e5c3f502de39830802`
 - 独立 Worktree：`/Volumes/Extreme SSD/Projects/Century-ai7-evolution`
+- 独立 PR：`https://github.com/Xike-yuhuofei/Century/pull/46`
 - 交付日期：2026-10-25
 - 正式冠军：`joint-js5`（本任务未改动）
 
@@ -419,7 +420,7 @@ npm run evolution:demo:fake
 | 4. 安全与可复现测试 | `training/evolution/tests/`（52 项） |
 | 5. 轻量闭环演示及日志 | `training/reports/ai7-evolution-demo/` |
 | 6. 报告 | 本文件 |
-| 7. 独立 PR | 分支 `feat/ai7-evolution-pipeline` |
+| 7. 独立 PR | 分支 `feat/ai7-evolution-pipeline`；PR #46 |
 
 ---
 
