@@ -211,6 +211,20 @@ CONFIRM_APPLY_MAIN_PROTECTION=yes \
 | 凭据 | 普通 checkout `persist-credentials: false` |
 | 指标采集 | `scripts/ci/ci-metrics.mjs` 采集 run/job/失败步骤耗时 |
 
+### 6.1 各检查的运行环境
+
+| 检查 | runner | 运行时 | 依赖来源 |
+|---|---|---|---|
+| governance-tests / rules-cards | ubuntu-latest | Node 22 | 仓库脚本，无第三方依赖 |
+| build / web-unit / training-unit / simulation | ubuntu-latest | Node 22 | `npm ci`（web-v1 lockfile，npm 缓存）；training 零 npm 依赖 |
+| ui-smoke | ubuntu-latest | Python 3.12 + Playwright 1.56.0（Chromium/WebKit） | pip + 浏览器缓存 |
+| audit-gate / research-node | ubuntu-latest | Node 22 | 复用 `web-v1-dist` |
+| research-python | ubuntu-latest | Python 3.12 + CPU torch/numpy | pip 缓存 |
+| research-seatbelt | macos-14 | Node 22 + 系统 Python | `npm ci`（沙箱编译需要 tsc） |
+| pages-deploy | ubuntu-latest | 仅归档/部署 | 复用 `web-v1-dist` |
+
+> 残余风险：`research-python` 的 pip 依赖沿用原工作流的非锁定安装（torch CPU + numpy），本任务未锁定版本，以免改变研究侧运行时；如需完全可复现，应由研究负责人在独立变更中引入 constraints。
+
 > 未通过提高 timeout 或减少测试来“换时间”。web/training 全量测试、100 局模拟、浏览器冒烟、审计门禁均保留。
 
 ---
