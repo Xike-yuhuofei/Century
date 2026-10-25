@@ -15,10 +15,13 @@
  */
 
 import {
-  ALL_PLAYER_COUNTS, HIDDEN_INFO_KEYS, assertCondition, scanForbiddenConstructs,
+  HIDDEN_INFO_KEYS, assertCondition, scanForbiddenConstructs,
 } from './core.mjs';
 import { validateArtifact, verifyArtifactReproducibility } from './candidate-artifact.mjs';
-import { getTarget } from './evolution-targets.mjs';
+import {
+  getTarget, normalizeModuleSpec, validateSearchJointOptions,
+} from './evolution-targets.mjs';
+import { validateAIParameters } from '../../web-v1/dist/js/ai/parameters.js';
 import { AI7_DEV_BLOCKS } from './core.mjs';
 
 function check(id, fn) {
@@ -45,24 +48,23 @@ export function runSafetyChecks(artifact) {
 
   checks.push(check('parameter-bounds', () => {
     const targetIds = artifact.algorithmStructure.targetIds;
+    if (artifact.algorithmStructure.evaluationMode === 'game') {
+      // 冠军权重/适配器身份按正式参数校验器复核，防止重封印 artifact 注入非法参数。
+      validateAIParameters(artifact.parameters.values);
+    }
     for (const targetId of targetIds) {
       const target = getTarget(targetId);
       if (target.kind === 'parameter-vector') {
-        if (target.structural) {
-          assertCondition(Array.isArray(artifact.parameters.values.playerCounts), 'playerCounts 缺失');
-          for (const n of artifact.parameters.values.playerCounts) {
-            assertCondition(ALL_PLAYER_COUNTS.includes(n), `适用人数非法：${n}`);
-          }
-        } else {
-          assertCondition(artifact.parameters.values && typeof artifact.parameters.values === 'object',
-            '搜索控制候选 parameters.values 缺失');
-        }
+        // 搜索控制的真实值在分人数联合选项里（playerCountScope 则体现在
+        // applicablePlayerCounts），必须按目标边界逐项校验。
+        validateSearchJointOptions({
+          targetId,
+          jointOptionsByPlayerCount: artifact.algorithmStructure.jointOptionsByPlayerCount,
+          applicablePlayerCounts: artifact.applicablePlayerCounts,
+        });
       } else {
-        assertCondition(artifact.parameters.values?.coefficients, '模块候选缺少系数');
-        for (const [key, value] of Object.entries(artifact.parameters.values.coefficients)) {
-          assertCondition(Number.isFinite(value), `系数 ${key} 非有限`);
-          assertCondition(value >= -3 && value <= 3, `系数 ${key} 越界：${value}`);
-        }
+        // 模块候选系数/模板/输出范围统一走规范化校验（未知字段/越界即失败）。
+        normalizeModuleSpec(targetId, artifact.parameters.values);
       }
     }
     return `targets=${targetIds.join(',')}`;

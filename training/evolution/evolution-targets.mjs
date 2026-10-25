@@ -461,6 +461,39 @@ export function defaultTargetValues(targetId) {
   return JSON.parse(JSON.stringify(target.defaultValue));
 }
 
+/** 校验候选 artifact 的分人数联合选项（安全门禁/加载侧 fail-closed）。
+ * 搜索控制候选的真实参数在 jointOptionsByPlayerCount，而不是 parameters.values；
+ * 因此这里必须按目标边界逐一验证，防止手工重封印的 artifact 绕过生成侧检查。 */
+export function validateSearchJointOptions({ targetId, jointOptionsByPlayerCount, applicablePlayerCounts }) {
+  const target = getTarget(targetId);
+  assertCondition(target.kind === 'parameter-vector', `目标 ${targetId} 不是参数向量`);
+  const options = jointOptionsByPlayerCount ?? {};
+  const counts = applicablePlayerCounts ?? ALL_PLAYER_COUNTS;
+  assertCondition(Array.isArray(counts) && counts.length > 0, `${targetId} 适用人数不能为空`);
+  for (const n of counts) {
+    assertCondition(ALL_PLAYER_COUNTS.includes(n), `${targetId} 非法人数：${n}`);
+    const option = options[String(n)] ?? options[n];
+    assertCondition(option && typeof option === 'object', `${targetId} 缺少 ${n} 人联合选项`);
+    const allowed = target.structural || target.perPlayerCount
+      ? ['workUnits']
+      : ['workUnits', target.jointOptionKey];
+    for (const key of Object.keys(option)) {
+      assertCondition(allowed.includes(key), `${targetId}.${n} 含未声明联合选项：${key}`);
+    }
+    assertWithinBound(option.workUnits, [8, 512], `${targetId}.${n}.workUnits`, true);
+    if (target.structural) continue;
+    if (target.perPlayerCount) {
+      const [low, high] = target.bounds[String(n)];
+      assertWithinBound(option.workUnits, [low, high], `${targetId}.${n}.workUnits`, true);
+      continue;
+    }
+    const [low, high] = target.bounds[target.jointOptionKey];
+    assertWithinBound(option[target.jointOptionKey], [low, high],
+      `${targetId}.${target.jointOptionKey}`, target.integer);
+  }
+  return true;
+}
+
 /** 搜索控制 → 联合搜索选项（按人数解析）。 */
 export function jointOptionsForPlayerCount(targetId, values, seatCount) {
   const target = getTarget(targetId);

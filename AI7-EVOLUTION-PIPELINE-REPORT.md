@@ -158,6 +158,8 @@ artifacts/
 | 回退机制 | 非法输入/非有限/超预算 → 默认系数或冻结冠军默认选项，并记录 `fallbackHit` |
 | 独立回归测试 | 每个资源目标 ≥2 个 fixture；`tests/targets.test.mjs` 逐目标运行 |
 
+安全门禁（`safety-check.mjs`）在 artifact 注册后按目标边界复核真实承载位置：搜索控制的 `jointOptionsByPlayerCount` 必须逐人数落在目标边界内、模块系数必须经 `normalizeModuleSpec`、冠军权重必须经正式 `validateAIParameters`。`playerCountScope` 的结构值取 `applicablePlayerCounts`，不依赖 `parameters.values`。这样即使候选绕过生成器被手工重封印，也无法把越界参数送进评估。
+
 ### 4.3 不修改正式评价函数
 
 - 5 个资源/策略目标均为 `decisionCore='plugin-only'`、`integration='candidate-plugin-only'`、`productionWiring='not-wired'`。
@@ -362,7 +364,7 @@ Guardrails：
 ```bash
 cd training
 
-# 1) 新增测试（52 项）
+# 1) 新增测试（57 项）
 npm run evolution:test
 
 # 2) 轻量真实对局演示（约 80 秒，16 局）
@@ -391,7 +393,7 @@ npm run evolution:demo:fake
 
 | 套件 | 结果 | 说明 |
 | --- | --- | --- |
-| `npm run evolution:test` | **53/53 pass** | artifact/targets/governance/selection/generator/openevolve/failure-labels/controller/demo |
+| `npm run evolution:test` | **57/57 pass** | artifact/targets/safety/governance/selection/generator/openevolve/failure-labels/controller/demo |
 | `npm test`（既有训练套件） | **153/153 pass** | 运行约 10 分钟，未受影响 |
 | `web-v1 npm run build` | 成功 | 测试依赖的 `dist/js` 已构建；未改源码 |
 | 演示真实对局 | 16 局，0 异常 | `demo-summary.json` |
@@ -400,6 +402,7 @@ npm run evolution:demo:fake
 
 - `training/evolution/tests/artifact.test.mjs`：双哈希、篡改检出、store 覆盖保护、独立加载。
 - `training/evolution/tests/targets.test.mjs`：11 目标、边界、隐藏信息、预算回退、搜索控制映射与 fail-safe 回退。
+- `training/evolution/tests/safety.test.mjs`：重封印 artifact 的联合选项/模块系数/冠军权重越界必须 fail-closed；`playerCountScope` 合法候选可通过。
 - `training/evolution/tests/governance.test.mjs`：dev-only、验证池拒绝、自动批准/晋级拒绝。
 - `training/evolution/tests/selection.test.mjs`：行为距离、去重、多保留、分区、对手轮换。
 - `training/evolution/tests/generator.test.mjs`：确定性、父候选继承、失败隔离。
@@ -417,7 +420,7 @@ npm run evolution:demo:fake
 | 1. Candidate Artifact v1 | `training/evolution/candidate-artifact.mjs`、`artifact-store.mjs` |
 | 2. 多目标进化接口 | `training/evolution/evolution-targets.mjs`、`feature-extractors.mjs`、`openevolve-adapter.mjs` |
 | 3. Campaign Controller 原型 | `training/evolution/campaign-controller.mjs` |
-| 4. 安全与可复现测试 | `training/evolution/tests/`（53 项） |
+| 4. 安全与可复现测试 | `training/evolution/tests/`（57 项） |
 | 5. 轻量闭环演示及日志 | `training/reports/ai7-evolution-demo/` |
 | 6. 报告 | 本文件 |
 | 7. 独立 PR | 分支 `feat/ai7-evolution-pipeline`；PR #46 |
