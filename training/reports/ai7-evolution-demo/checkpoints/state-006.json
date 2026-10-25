@@ -1,7 +1,7 @@
 {
   "schema": "century-evolution-campaign-v1",
   "campaignId": "ai7-demo-20261025",
-  "runFingerprint": "12a2e5748dc32fff6c4a5108407abb0c582d58b8edaffd2ee85d68c6e2f56746",
+  "runFingerprint": "89aed50b59f4da5958e96a7d71413439ec8448b0bb9e3067d06984c960b3f542",
   "config": {
     "version": 1,
     "configRef": "training/evolution/configs/ai7-demo.json",
@@ -11,10 +11,10 @@
       3
     ],
     "quickSeeds": 2,
-    "deepSeeds": 2,
+    "deepSeeds": 3,
     "maxMoves": 350,
-    "deadlineMs": 30000,
-    "retainTopK": 3,
+    "deadlineMs": 90000,
+    "retainTopK": 4,
     "deepConfirmations": 1,
     "generation": {
       "count": 2,
@@ -26,10 +26,10 @@
     },
     "budget": {
       "maxCandidates": 6,
-      "maxGames": 20,
-      "maxWallMs": 240000,
+      "maxGames": 26,
+      "maxWallMs": 600000,
       "maxConcurrent": 1,
-      "maxDeepConfirmations": 1
+      "maxDeepConfirmations": 2
     },
     "diagnosticsPath": "training/reports/diagnostics-latest/analysis.json",
     "humanAnalyticsFailuresPath": null,
@@ -58,7 +58,7 @@
           "purpose": "deep",
           "pool": "dev",
           "base": 1620000000,
-          "count": 2,
+          "count": 3,
           "blockStart": 1620000000,
           "blockEnd": 1630000000,
           "contractVersion": "century-governance-adapter-v1"
@@ -70,7 +70,8 @@
       ],
       "deepSeeds": [
         1620000000,
-        1620000001
+        1620000001,
+        1620000002
       ],
       "generated": true,
       "selected": false,
@@ -167,6 +168,24 @@
           "quick": null,
           "deep": null,
           "failure": null
+        },
+        {
+          "candidateId": "cand-ai7-compiled-acq-r1c4-1d7b60",
+          "identityDigest": "3932087d569e30e0ea33b102e0319cba429bbd50743b38489f81f57aad4a1c07",
+          "evaluationMode": "proxy",
+          "targetIds": [
+            "acquisitionValue"
+          ],
+          "artifactPath": "training/reports/ai7-evolution-demo/artifacts/objects/cand-ai7-compiled-acq-r1c4-1d7b60/3932087d569e30e0ea33b102e0319cba429bbd50743b38489f81f57aad4a1c07/candidate.json",
+          "stage": "created",
+          "safetyStatus": "pending",
+          "sourceHash": "b2f1fc596c6516acd62a4a8d4514c3e108757cf0c24fb7e001c85e08ee2f8a14",
+          "buildArtifactHash": "527a4bd707a67874929f487534ff93b9dedd9f1c5d6d141d0fe43509f80b699c",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": null
         }
       ],
       "selectedIds": [],
@@ -183,13 +202,13 @@
     }
   ],
   "checkpointSeq": 6,
-  "lastEventSeq": 13,
-  "createdAt": "2026-10-25T08:51:00.285Z",
-  "updatedAt": "2026-10-25T08:51:00.309Z",
+  "lastEventSeq": 14,
+  "createdAt": "2026-10-25T12:00:23.684Z",
+  "updatedAt": "2026-10-25T12:00:24.871Z",
   "budgetUsed": {
-    "candidates": 5,
+    "candidates": 6,
     "games": 0,
-    "wallMs": 21,
+    "wallMs": 1186,
     "deepConfirmations": 0
   },
   "pendingApprovals": [],

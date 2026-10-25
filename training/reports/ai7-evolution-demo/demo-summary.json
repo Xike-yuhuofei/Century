@@ -5,11 +5,11 @@
   "campaignId": "ai7-demo-20261025",
   "status": "completed",
   "firstRunStatus": "stopped",
-  "checkpointSeq": 18,
+  "checkpointSeq": 21,
   "budgetUsed": {
-    "candidates": 5,
-    "games": 16,
-    "wallMs": 71893,
+    "candidates": 6,
+    "games": 18,
+    "wallMs": 142024,
     "deepConfirmations": 1
   },
   "seeds": {
@@ -19,7 +19,8 @@
     ],
     "deep": [
       1620000000,
-      1620000001
+      1620000001,
+      1620000002
     ],
     "windows": [
       {
@@ -37,14 +38,14 @@
         "purpose": "deep",
         "pool": "dev",
         "base": 1620000000,
-        "count": 2,
+        "count": 3,
         "blockStart": 1620000000,
         "blockEnd": 1630000000,
         "contractVersion": "century-governance-adapter-v1"
       }
     ]
   },
-  "candidateCount": 5,
+  "candidateCount": 6,
   "safetyFailed": [
     {
       "candidateId": "cand-ai7-enginevalue-r1c3-acf817",
@@ -76,8 +77,8 @@
     {
       "candidateId": "cand-ai7-searchbudget-r1c0-bfe007",
       "mode": "game",
-      "stage": "selected",
-      "quickScore": 0.668519,
+      "stage": "not-selected",
+      "quickScore": 0.657999,
       "deepScore": null,
       "firstPlaceRate": 0.5,
       "proxyDelta": null
@@ -86,16 +87,16 @@
       "candidateId": "cand-ai7-candidatecap-r1c1-33cef5",
       "mode": "game",
       "stage": "pending-approval",
-      "quickScore": 0.709027,
-      "deepScore": 0.651949,
+      "quickScore": 0.701487,
+      "deepScore": 0.576281,
       "firstPlaceRate": 0.75,
       "proxyDelta": null
     },
     {
       "candidateId": "cand-ai7-overridemargin-r1c0-3a144d",
       "mode": "game",
-      "stage": "not-selected",
-      "quickScore": 0.666519,
+      "stage": "selected",
+      "quickScore": 0.65906,
       "deepScore": null,
       "firstPlaceRate": 0.5,
       "proxyDelta": null
@@ -108,36 +109,50 @@
       "deepScore": null,
       "firstPlaceRate": null,
       "proxyDelta": 0.04208
+    },
+    {
+      "candidateId": "cand-ai7-compiled-acq-r1c4-1d7b60",
+      "mode": "proxy",
+      "stage": "selected",
+      "quickScore": 0.732533,
+      "deepScore": null,
+      "firstPlaceRate": null,
+      "proxyDelta": 0.027391
     }
   ],
   "selected": [
-    {
-      "candidateId": "cand-ai7-searchbudget-r1c0-bfe007",
-      "stage": "selected",
-      "mode": "game"
-    },
     {
       "candidateId": "cand-ai7-candidatecap-r1c1-33cef5",
       "stage": "pending-approval",
       "mode": "game"
     },
     {
+      "candidateId": "cand-ai7-overridemargin-r1c0-3a144d",
+      "stage": "selected",
+      "mode": "game"
+    },
+    {
       "candidateId": "cand-ai7-acquisitionvalue-r1c1-d31db4",
+      "stage": "selected",
+      "mode": "proxy"
+    },
+    {
+      "candidateId": "cand-ai7-compiled-acq-r1c4-1d7b60",
       "stage": "selected",
       "mode": "proxy"
     }
   ],
   "selectionSummary": {
-    "evaluated": 4,
-    "eligible": 4,
-    "selected": 3,
+    "evaluated": 5,
+    "eligible": 5,
+    "selected": 4,
     "rejected": 0,
     "duplicates": 0,
     "byMode": {
       "game": 2,
-      "proxy": 1
+      "proxy": 2
     },
-    "maxKeep": 3,
+    "maxKeep": 4,
     "minBehaviorDistance": 0.12,
     "meanBehaviorDistance": 1,
     "scoring": "composite = quality/stability/cost/safety 加权；game 与 proxy 分组保留"
@@ -146,11 +161,11 @@
     {
       "candidateId": "cand-ai7-candidatecap-r1c1-33cef5",
       "metrics": {
-        "firstPlaceRate": 0.5,
-        "chanceAdjustedRate": 0.0833,
-        "minWilsonLower": 0.0945,
+        "firstPlaceRate": 0.1667,
+        "chanceAdjustedRate": -0.25,
+        "minWilsonLower": 0,
         "anomalyRate": 0,
-        "finishedGames": 4
+        "finishedGames": 6
       }
     }
   ],
@@ -204,6 +219,13 @@
       "status": "pending-approval"
     },
     {
+      "candidateId": "cand-ai7-compiled-acq-r1c4-1d7b60",
+      "identityDigest": "3932087d569e30e0ea33b102e0319cba429bbd50743b38489f81f57aad4a1c07",
+      "buildArtifactHash": "527a4bd707a67874929f487534ff93b9dedd9f1c5d6d141d0fe43509f80b699c",
+      "evaluationMode": "proxy",
+      "status": "selected"
+    },
+    {
       "candidateId": "cand-ai7-enginevalue-r1c3-acf817",
       "identityDigest": "a12ca80b599e9651d4bd6e1e51e9014d58ff67bc6ba847bdd198d2b32f181d19",
       "buildArtifactHash": "72288b33b12d6d5f911a7f88dc89393d598e3c4d315da9985ad55410ec715a45",
@@ -215,14 +237,14 @@
       "identityDigest": "ac53c621800c6db6a480b28262524a93a82c457ed78b8057f803cb1e5ef777c0",
       "buildArtifactHash": "a3a5c08332aed2cc2a4cd12f2ff4bfdada3736e2dde970ad9f10e81c9bb28da3",
       "evaluationMode": "game",
-      "status": "archived"
+      "status": "selected"
     },
     {
       "candidateId": "cand-ai7-searchbudget-r1c0-bfe007",
       "identityDigest": "8041a418935181e1cb7d21d417a1dcf56cd9e40b8d6df7508df8cadb0d79d577",
       "buildArtifactHash": "2eb5aa3c3184d4f30a291a3ba16725aa1154c5cd4a2e4a455a32a5226c3b55f4",
       "evaluationMode": "game",
-      "status": "selected"
+      "status": "archived"
     }
   ],
   "guardrails": {
@@ -251,7 +273,7 @@
         "purpose": "deep",
         "pool": "dev",
         "base": 1620000000,
-        "count": 2,
+        "count": 3,
         "blockStart": 1620000000,
         "blockEnd": 1630000000,
         "contractVersion": "century-governance-adapter-v1"
@@ -266,7 +288,7 @@
         "identityDigest": "5cceb869d99543558d7e1b860f75334ebf3b742a5e0f3b37a072e0c55e6394dc",
         "evidenceDir": "training/reports/ai7-evolution-demo/evidence/cand-ai7-candidatecap-r1c1-33cef5",
         "summary": {
-          "artifactHash": "75a9800bff9553c78e3508cb2fffb62c10efc397e0a3e0f53a8df2449f6145b0",
+          "artifactHash": "1c1d867b27954eb40df3e5ad9a807dd83cf3478434c3fc2084a8033fc0271cc8",
           "sourceHash": "f77c1046f2ccb9b09edc64a01895a65ea226b0000a88a2a10d9a0ea61abdc3f0",
           "buildArtifactHash": "e05211f17d31bc947103349c6a47bd81c9e0c1209b48f5d49c4fa5b807e80c64",
           "quick": {
@@ -281,9 +303,9 @@
               ],
               "quality": 0.43779,
               "stability": 1,
-              "cost": 0.901323,
+              "cost": 0.825923,
               "safety": 1,
-              "composite": 0.709027
+              "composite": 0.701487
             },
             "games": 4,
             "metrics": {
@@ -291,9 +313,9 @@
               "chanceAdjustedRate": 0.3333,
               "minWilsonLower": 0.0945,
               "anomalyRate": 0,
-              "p95WallMs": 3284.4
+              "p95WallMs": 6323
             },
-            "artifactHash": "e074dfea18e03b0b55fa201523ffb3d31923104647c1fbb3fe2b2c1270e62b59"
+            "artifactHash": "63879dee7643871b0786db0984f80bda2d54b82e2d85f62dbf0fde9a107c9c3f"
           },
           "deep": {
             "status": "done",
@@ -305,36 +327,36 @@
               "targetIds": [
                 "candidateCap"
               ],
-              "quality": 0.36279,
+              "quality": 0.225,
               "stability": 1,
-              "cost": 0.705535,
+              "cost": 0.637807,
               "safety": 1,
-              "composite": 0.651949
+              "composite": 0.576281
             },
-            "games": 4,
+            "games": 6,
             "metrics": {
-              "firstPlaceRate": 0.5,
-              "chanceAdjustedRate": 0.0833,
-              "minWilsonLower": 0.0945,
+              "firstPlaceRate": 0.1667,
+              "chanceAdjustedRate": -0.25,
+              "minWilsonLower": 0,
               "anomalyRate": 0,
-              "finishedGames": 4
+              "finishedGames": 6
             }
           },
           "deepAssessment": {
-            "verdict": "promising",
-            "chanceAdjustedRate": 0.0833,
-            "minWilsonLower": 0.0945,
+            "verdict": "no-advantage",
+            "chanceAdjustedRate": -0.25,
+            "minWilsonLower": 0,
             "anomalyRate": 0,
             "note": "小样本深验只用于人工审核；no-advantage 不构成自动拒绝，但人工应重点复核"
           },
-          "recommendation": "review-required (positive signal)",
+          "recommendation": "review-required (weak/inconclusive signal)",
           "validationPoolConsumed": false,
           "promotionTriggered": false
         },
         "status": "pending-human-approval",
         "approvalRequired": true,
         "promotionTriggered": false,
-        "requestedAt": "2026-10-25T08:52:12.193Z",
+        "requestedAt": "2026-10-25T12:02:45.710Z",
         "validationPoolConsumed": false
       }
     ],

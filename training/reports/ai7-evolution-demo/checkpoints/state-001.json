@@ -1,7 +1,7 @@
 {
   "schema": "century-evolution-campaign-v1",
   "campaignId": "ai7-demo-20261025",
-  "runFingerprint": "12a2e5748dc32fff6c4a5108407abb0c582d58b8edaffd2ee85d68c6e2f56746",
+  "runFingerprint": "89aed50b59f4da5958e96a7d71413439ec8448b0bb9e3067d06984c960b3f542",
   "config": {
     "version": 1,
     "configRef": "training/evolution/configs/ai7-demo.json",
@@ -11,10 +11,10 @@
       3
     ],
     "quickSeeds": 2,
-    "deepSeeds": 2,
+    "deepSeeds": 3,
     "maxMoves": 350,
-    "deadlineMs": 30000,
-    "retainTopK": 3,
+    "deadlineMs": 90000,
+    "retainTopK": 4,
     "deepConfirmations": 1,
     "generation": {
       "count": 2,
@@ -26,10 +26,10 @@
     },
     "budget": {
       "maxCandidates": 6,
-      "maxGames": 20,
-      "maxWallMs": 240000,
+      "maxGames": 26,
+      "maxWallMs": 600000,
       "maxConcurrent": 1,
-      "maxDeepConfirmations": 1
+      "maxDeepConfirmations": 2
     },
     "diagnosticsPath": "training/reports/diagnostics-latest/analysis.json",
     "humanAnalyticsFailuresPath": null,
@@ -58,7 +58,7 @@
           "purpose": "deep",
           "pool": "dev",
           "base": 1620000000,
-          "count": 2,
+          "count": 3,
           "blockStart": 1620000000,
           "blockEnd": 1630000000,
           "contractVersion": "century-governance-adapter-v1"
@@ -70,7 +70,8 @@
       ],
       "deepSeeds": [
         1620000000,
-        1620000001
+        1620000001,
+        1620000002
       ],
       "generated": false,
       "selected": false,
@@ -87,8 +88,8 @@
   ],
   "checkpointSeq": 1,
   "lastEventSeq": 1,
-  "createdAt": "2026-10-25T08:51:00.285Z",
-  "updatedAt": "2026-10-25T08:51:00.286Z",
+  "createdAt": "2026-10-25T12:00:23.684Z",
+  "updatedAt": "2026-10-25T12:00:23.684Z",
   "budgetUsed": {
     "candidates": 0,
     "games": 0,

@@ -414,6 +414,14 @@ export class CampaignController {
           buildKind: updated.buildArtifact.kind,
           buildCompiled: updated.buildArtifact.compiled,
         }, item.candidateId);
+        if (updated.buildArtifact.compiled === true) {
+          // 独立编译产物已通过哈希复核；记录可审计的构建身份。
+          this._event(state, 'candidate-build-verified', {
+            buildKind: updated.buildArtifact.kind,
+            compiler: updated.buildArtifact.compiler,
+            buildArtifactHash: updated.buildArtifact.sha256,
+          }, item.candidateId);
+        }
       }
     } catch (error) {
       item.stage = 'safety-failed';

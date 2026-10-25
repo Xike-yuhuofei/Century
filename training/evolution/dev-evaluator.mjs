@@ -23,6 +23,7 @@ import { playLeagueGame } from '../adversarial/league.mjs';
 import { wilsonCI } from '../evaluator/stats.mjs';
 import { seatVersionFor } from './candidate-artifact.mjs';
 import { getTarget, evaluateModule, targetRegression } from './evolution-targets.mjs';
+import { evaluateCompiledProxy } from './compiled-candidate.mjs';
 import {
   AI7_DEV_BLOCKS, SCHEMAS, assertCondition, assertDevSeedInBlock, canonicalJSON,
   clamp, deepFreeze, sha256Canonical, shortHash,
@@ -276,6 +277,9 @@ export function evaluateGameCandidate({
 export function evaluateProxyCandidate({ artifact, round = 1 }) {
   assertCondition(artifact.algorithmStructure.evaluationMode === 'proxy', '该候选不是 proxy 模式');
   assertCondition(artifact.algorithmStructure.targetIds.length === 1, 'proxy 候选必须只有一个目标');
+  if (artifact.buildArtifact?.compiled === true) {
+    return evaluateCompiledProxy({ artifact, round });
+  }
   const targetId = artifact.algorithmStructure.targetIds[0];
   const target = getTarget(targetId);
   const regression = targetRegression(targetId);

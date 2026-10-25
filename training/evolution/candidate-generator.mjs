@@ -16,6 +16,8 @@ import {
   buildGameCandidatePieces, buildProxyCandidatePieces, defaultTargetValues,
 } from './evolution-targets.mjs';
 import { createCandidateArtifact } from './candidate-artifact.mjs';
+import { createCompiledAcquisitionCandidate } from './compiled-candidate.mjs';
+import { SEATBELT_AVAILABLE } from './sandbox/seatbelt.mjs';
 import {
   ALL_PLAYER_COUNTS, SCHEMAS, assertCondition, canonicalJSON, clamp, gameRulesDescriptor,
   sha256Canonical, shortHash,
@@ -214,8 +216,11 @@ export function generateCandidateBatch({
   return results;
 }
 
-/** 演示/测试用脚本化候选：包含非法参数与带禁止构造的模块（验证失败隔离）。 */
-export function scriptedCandidates({ experiment, round = 1, parentArtifact = null }) {
+/** 演示/测试用脚本化候选：包含非法参数、带禁止构造的模块与一个真实编译候选
+ * （验证失败隔离 + 独立编译路径）。编译候选只在 macOS Seatbelt 可用时生成。 */
+export function scriptedCandidates({
+  experiment, round = 1, parentArtifact = null, includeCompiled = false,
+}) {
   const results = [];
   const accepted = [];
   // 1) 合法搜索控制候选：更低覆盖边际（更容易覆盖冠军建议）。
@@ -246,5 +251,21 @@ export function scriptedCandidates({ experiment, round = 1, parentArtifact = nul
     },
     round, index: 3, parentArtifact, experiment,
   }));
+  // 5) 真实编译候选（仅 macOS Seatbelt）：静态检查 → 独立 tsc → 编译产物哈希。
+  // 编译失败作为“生成即拒绝”隔离，不阻断其他候选。
+  if (includeCompiled && SEATBELT_AVAILABLE) {
+    try {
+      accepted.push(createCompiledAcquisitionCandidate({
+        experiment, round, index: 4,
+        parentId: parentArtifact?.candidateId ?? null,
+      }));
+    } catch (error) {
+      results.push({
+        rejectedAtGeneration: true,
+        targetId: 'acquisitionValue(compiled)',
+        error: String(error?.message ?? error).slice(0, 500),
+      });
+    }
+  }
   return { candidates: accepted, rejectedAtGeneration: results };
 }

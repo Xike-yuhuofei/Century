@@ -62,12 +62,35 @@ export function runSafetyChecks(artifact) {
           jointOptionsByPlayerCount: artifact.algorithmStructure.jointOptionsByPlayerCount,
           applicablePlayerCounts: artifact.applicablePlayerCounts,
         });
-      } else {
-        // 模块候选系数/模板/输出范围统一走规范化校验（未知字段/越界即失败）。
+      } else if (artifact.buildArtifact?.compiled !== true) {
+        // 声明式模块候选：系数/模板/输出范围统一走规范化校验（未知字段/越界即失败）。
         normalizeModuleSpec(targetId, artifact.parameters.values);
       }
+      // 编译型候选的参数是编译元数据而非模块 spec，由 compiled-module 检查负责。
     }
     return `targets=${targetIds.join(',')}`;
+  }));
+
+  checks.push(check('compiled-module', () => {
+    if (artifact.buildArtifact?.compiled !== true) return 'not-compiled';
+    assertCondition(artifact.source?.kind === 'esm-module-bundle',
+      '编译型候选 source.kind 必须为 esm-module-bundle');
+    assertCondition(artifact.buildArtifact.kind === 'esm-module-bundle-v1',
+      '编译型候选 buildArtifact.kind 非法');
+    assertCondition(typeof artifact.buildArtifact.compiler === 'string' && artifact.buildArtifact.compiler.length > 0,
+      '编译型候选缺少 compiler 身份');
+    const compiled = (artifact.buildArtifact.files ?? []).find(f => f.path === 'dist/js/ai/evaluator.js');
+    assertCondition(compiled && typeof compiled.content === 'string' && compiled.content.length > 0,
+      '编译型候选缺少 dist/js/ai/evaluator.js 产物');
+    assertCondition(compiled.content.length <= 64 * 1024,
+      `编译产物 ${compiled.content.length}B 超过 64KB 预算`);
+    const sourceText = artifactText(artifact);
+    const signatureCount = (sourceText.match(/export\s+function\s+acquisitionValue\s*\(/g) ?? []).length;
+    assertCondition(signatureCount === 1, `编译型候选必须恰好导出一个 acquisitionValue（实际 ${signatureCount}）`);
+    assertCondition(/\/\*\s*EVOLVE-BLOCK-START\s*\*\//.test(sourceText)
+      && /\/\*\s*EVOLVE-BLOCK-END\s*\*\//.test(sourceText),
+    '编译型候选缺少 EVOLVE-BLOCK 边界');
+    return `compiler=${artifact.buildArtifact.compiler}, bytes=${compiled.content.length}`;
   }));
 
   checks.push(check('hidden-info', () => {

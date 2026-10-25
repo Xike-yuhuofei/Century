@@ -119,7 +119,9 @@ function demoGenerator(options) {
     targetIds: ['candidateCap', 'searchBudget'],
     hints: options.hints,
   });
-  const scripted = scriptedCandidates({ experiment: options.experiment, round: options.round });
+  const scripted = scriptedCandidates({
+    experiment: options.experiment, round: options.round, includeCompiled: true,
+  });
   const seen = new Set();
   const candidates = [];
   for (const item of [...generated, ...scripted.candidates]) {

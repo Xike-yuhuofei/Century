@@ -66,7 +66,8 @@ export function computeSourceHash(source) {
 }
 
 /** 构建产物哈希：对构建输入做 canonical 哈希；若提供真实编译产物文件，
- * 则按文件内容哈希（compiled=true）。descriptor 候选没有代码增量，显式标记
+ * 则按文件内容哈希（compiled=true），并把编译产物内容随 artifact 一起封印，
+ * 使加载方无需原构建目录即可复现校验。descriptor 候选没有代码增量，显式标记
  * compiled=false，绝不把参数描述符伪装成编译产物。 */
 export function computeBuildArtifact({ source, algorithmStructure, parameters, buildInput = null }) {
   if (buildInput?.files?.length) {
@@ -77,6 +78,7 @@ export function computeBuildArtifact({ source, algorithmStructure, parameters, b
       compiled: true,
       compiler: buildInput.compiler ?? 'unknown',
       reproducible: true,
+      files,
     });
   }
   const kind = source.kind === 'descriptor'
@@ -188,10 +190,12 @@ export function createCandidateArtifact(input) {
     'gameRules.engineBundleSha256 非法');
 
   assertCondition(source && SOURCE_KINDS.includes(source.kind), `source.kind 非法：${String(source?.kind)}`);
-  // 编译型候选路径尚未启用：必须先在 Seatbelt 内完成 tsc 并接入 buildInput，
-  // 否则拒绝创建——绝不产生"看似有编译产物但无法复现"的 artifact。
-  assertCondition(!buildInput?.files?.length,
-    '编译型候选路径尚未启用（需要 Seatbelt 沙箱 + tsc 集成；本轮只支持 descriptor/声明模块）');
+  // 编译型候选必须携带真实编译产物，且源码类型必须为 esm-module-bundle；
+  // 产物的内容随 artifact 封印，加载侧可独立重算哈希。
+  if (buildInput?.files?.length) {
+    assertCondition(source.kind === 'esm-module-bundle',
+      `编译产物只允许 esm-module-bundle 候选，实际：${source.kind}`);
+  }
   const files = source.files?.length ? normalizeFiles(source.files) : null;
   let normalizedSource;
   if (files) {
@@ -272,13 +276,26 @@ export function validateArtifact(artifact) {
   const sourceHash = computeSourceHash(artifact.source);
   assertCondition(sourceHash === artifact.sourceHash, `artifact sourceHash 不符：期望 ${sourceHash}，实际 ${artifact.sourceHash}`);
 
-  const expectedBuild = computeBuildArtifact({
-    source: { ...artifact.source, sha256: artifact.sourceHash },
-    algorithmStructure: artifact.algorithmStructure,
-    parameters: artifact.parameters,
-  });
-  assertCondition(expectedBuild.kind === artifact.buildArtifact?.kind, 'artifact buildArtifact.kind 不符');
-  assertCondition(expectedBuild.sha256 === artifact.buildArtifact?.sha256, 'artifact buildArtifact.sha256 不符');
+  if (artifact.buildArtifact?.compiled === true) {
+    assertCondition(artifact.source?.kind === 'esm-module-bundle',
+      'artifact buildArtifact.compiled=true 但 source.kind 不是 esm-module-bundle');
+    assertCondition(artifact.buildArtifact.kind === 'esm-module-bundle-v1',
+      `artifact buildArtifact.kind 非法：${String(artifact.buildArtifact.kind)}`);
+    assertCondition(typeof artifact.buildArtifact.compiler === 'string' && artifact.buildArtifact.compiler.length > 0,
+      'artifact 编译产物缺少 compiler');
+    const compiledFiles = normalizeFiles(artifact.buildArtifact.files ?? []);
+    const expectedSha = sha256Canonical(compiledFiles.map(f => [f.path, f.sha256]));
+    assertCondition(expectedSha === artifact.buildArtifact.sha256,
+      `artifact buildArtifact.sha256 不符：编译产物内容被篡改或缺失（期望 ${expectedSha}）`);
+  } else {
+    const expectedBuild = computeBuildArtifact({
+      source: { ...artifact.source, sha256: artifact.sourceHash },
+      algorithmStructure: artifact.algorithmStructure,
+      parameters: artifact.parameters,
+    });
+    assertCondition(expectedBuild.kind === artifact.buildArtifact?.kind, 'artifact buildArtifact.kind 不符');
+    assertCondition(expectedBuild.sha256 === artifact.buildArtifact?.sha256, 'artifact buildArtifact.sha256 不符');
+  }
 
   validateAlgorithmStructure(artifact.algorithmStructure, artifact.algorithmStructure.evaluationMode);
   validateExperiment(artifact.experiment);
@@ -291,8 +308,8 @@ export function validateArtifact(artifact) {
   }
   assertCondition(typeof artifact.parameters?.id === 'string' && artifact.parameters.id.length > 0, 'artifact parameters.id 缺失');
   assertCondition(Number.isSafeInteger(artifact.parameters?.version) && artifact.parameters.version >= 1, 'artifact parameters.version 非法');
-  assertCondition(artifact.buildArtifact?.compiled === false,
-    'artifact buildArtifact.compiled=true 需要原始构建输入才能复现；本轮未启用编译型候选');
+  assertCondition(artifact.buildArtifact?.compiled === true || artifact.buildArtifact?.compiled === false,
+    'artifact buildArtifact.compiled 必须为布尔值');
 
   const identityDigest = sha256Canonical(identityFields(artifact));
   assertCondition(identityDigest === artifact.identityDigest,

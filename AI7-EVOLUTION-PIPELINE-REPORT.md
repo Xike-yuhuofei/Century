@@ -14,14 +14,15 @@
 
 本轮把"人工串联 OpenEvolve、手工搬候选代码/参数、只选一次快筛冠军"的流程，升级为一个**可检查点、可恢复、可停止、可审计、只使用开发池**的轻量进化控制面：
 
-1. **Candidate Artifact v1** 统一了候选身份、源码/构建哈希、参数版本、规则版本、实验配置/种子引用、证据目录与安全状态；生成、打包、注册、加载、复现验证均有独立接口。
+1. **Candidate Artifact v1** 统一了候选身份、源码/构建哈希、参数版本、规则版本、实验配置/种子引用、证据目录与安全状态；生成、打包、注册、加载、复现验证均有独立接口。编译型候选把 tsc 产物内容随 artifact 一起封印，加载侧无需原构建目录即可复核。
 2. **多目标进化接口**从单一 `acquisitionValue` 扩展为 5 个资源/策略评价目标 + 6 个有界搜索控制目标；每个目标都有输入白名单、隐藏信息拒绝、资源预算、回退与独立回归。
-3. **搜索多样性**通过治理窗口轮换、历史/风格对手轮换、父候选继承、行为签名、去重与多候选保留实现；快筛与深验使用物理隔离的种子窗口。
-4. **Campaign Controller** 跑通了"生成 → 安全检查 → 构建校验 → 快筛 → 筛选 → 深验 → 待人工审批挑战请求 → 诊断 → 下一轮"闭环，支持 checkpoint、断点恢复、安全停止、M4 预算、失败隔离、完整日志与重复运行保护。
-5. **失败诊断回流**把现有 `diagnostics` / `human-analytics` 公开诊断映射为 6 类可复现标签，只生成研究提示与课程配置；显式 `advisoryOnly=true`、`notRewardTruth=true`、`rewardModified=false`。
-6. **轻量闭环演示**用 5 个候选、16 局开发池对局完成端到端验证，14 项验收检查全部 PASS；中途停止后从检查点恢复；生成 1 个 `pending-human-approval` 正式挑战请求；冠军、账本、验证账本哈希零变化。
+3. **真实独立编译**：新增 `acquisitionValue` 编译型候选路径——AI5 `static_check`（Seatbelt）→ `assemble_candidate`（Seatbelt）→ `tsc`（Seatbelt）→ 编译产物哈希 → artifact；探针同样在 Seatbelt 内执行。
+4. **搜索多样性**通过治理窗口轮换、历史/风格对手轮换、父候选继承、行为签名、去重与多候选保留实现；快筛与深验使用物理隔离的种子窗口。
+5. **Campaign Controller** 跑通了"生成（含可选独立编译）→ 统一安全检查 → 快筛 → 筛选 → 深验 → 待人工审批挑战请求 → 诊断 → 下一轮"闭环，支持 checkpoint、断点恢复、安全停止、M4 预算、失败隔离、完整日志与重复运行保护。
+6. **失败诊断回流**把现有 `diagnostics` / `human-analytics` 公开诊断映射为 6 类可复现标签，只生成研究提示与课程配置；显式 `advisoryOnly=true`、`notRewardTruth=true`、`rewardModified=false`。
+7. **轻量闭环演示**用 6 个候选、18 局开发池对局完成端到端验证，14 项验收检查全部 PASS；中途停止后从检查点恢复；生成 1 个 `pending-human-approval` 正式挑战请求；冠军、账本、验证账本哈希零变化。
 
-**本轮不声称产生了强于 JS5 的算法**。深验只有 4 局，且结果仅用于人工审核；正式挑战与冠军晋级均未触发。
+**本轮不声称产生了强于 JS5 的算法**。深验只有 6 局，且结果仅用于人工审核；本次待审批请求的深验判定为 `no-advantage`（小样本），人工应重点复核或拒绝；正式挑战与冠军晋级均未触发。
 
 ---
 
@@ -34,8 +35,8 @@
 | 3. 不改 Agent A 账本/晋级门禁核心 | 未改 `training/lib/seeds.mjs`、`training/tournament/challenge.mjs`、`training/adversarial/seed-ledger.mjs`、`ai5/lib/seed_policy.mjs` | `git status` 仅新增 evolution 控制面与演示产物 |
 | 4. 通过适配器消费统一治理接口 | `governance-adapter.mjs` 定义 v1 provider contract；测试替身仅用于离线研发 | `tests/governance.test.mjs` 7 项 |
 | 5. 不消耗正式验证池、不自动晋级 | 验证池 `[900M,1.06e9)` 在适配器与核心层硬拒绝；控制器只产生待审批请求 | 演示窗口 `1.61e9/1.62e9`；`validationPoolConsumed=false`、`promotionTriggered=false` |
-| 6. 默认轻量验证、不长时间训练 | 演示 16 局、总墙钟约 79 秒；无 PPO/长训练 | `demo-summary.json` |
-| 7. LLM 仅离线研发、最终推理本地 | OpenEvolve 适配器只解析有界 JSON 提案，不进入运行时；演示无 LLM 调用 | `openevolve-adapter.mjs`、`tests/openevolve.test.mjs` |
+| 6. 默认轻量验证、不长时间训练 | 演示 18 局、总墙钟约 180 秒（含一次 tsc 编译）；无 PPO/长训练 | `demo-summary.json` |
+| 7. LLM 仅离线研发、最终推理本地 | OpenEvolve 适配器只解析有界 JSON 提案，不进入运行时；编译型候选源码来自官方函数的有界单点变异，演示无 LLM 调用 | `openevolve-adapter.mjs`、`tests/openevolve.test.mjs`、`compiled-candidate.mjs` |
 
 ---
 
@@ -116,14 +117,26 @@ artifacts/
 - `findByIdentity()`：供多样性去重/别名检测。
 - 写入禁止路径穿越（`..`/绝对路径拒绝）。
 
-### 3.4 诚实边界：构建产物的两种形态
+### 3.4 构建产物的三种形态
 
-本轮没有代码增量候选，因此 artifact 的 `buildArtifact.kind` 为：
+| `buildArtifact.kind` | `compiled` | 用途 | 哈希覆盖 |
+| --- | --- | --- | --- |
+| `descriptor-bundle-v1` | false | 参数/搜索控制候选 | 确定性运行描述符 |
+| `declarative-module-bundle-v1` | false | 声明式线性模块候选 | 声明模块内容 |
+| `esm-module-bundle-v1` | **true** | 真实 TS 函数候选 | tsc 产物内容（随 artifact 封印） |
 
-- `descriptor-bundle-v1`（参数/搜索控制候选）；
-- `declarative-module-bundle-v1`（声明式线性模块候选）。
+编译型候选的 `buildArtifact.files` 内含 `dist/js/ai/evaluator.js` 全文与 SHA256，`validateArtifact` 读取即重算，篡改立即失败。路径为：
 
-两者 `compiled=false`。它们不是伪装成编译产物的二进制；哈希覆盖的是确定性运行描述符与声明模块内容。未来若接入真实 TS 函数候选，必须走既有 `ai5/openevolve/node/assemble_candidate.mjs` + `tsc` + Seatbelt 路径，并把 `buildArtifact.compiled=true`、`kind='esm-module-bundle-v1'`；当前 `validateArtifact` 对该路径显式 fail-closed（未启用）。
+```text
+官方 acquisitionValue 函数（单点有界变异 goalFit 2.0→2.4）
+  → EVOLVE-BLOCK 包装
+  → AI5 static_check（沙箱）
+  → assemble_candidate（沙箱，复制官方源码树并替换函数）
+  → tsc（沙箱）
+  → 编译产物哈希 + artifact
+```
+
+本轮只启用 `acquisitionValue` 一个编译型目标，且变异点固定、可审计；**不允许 LLM 任意改写整个引擎**。其余资源目标仍为声明式模块，避免在 Agent C 的正式评价函数合并前越界。
 
 ---
 
@@ -135,7 +148,7 @@ artifacts/
 
 | 组 | 目标 | 形态 | 评测 | 生产接线 |
 | --- | --- | --- | --- | --- |
-| 资源/策略评价 | `acquisitionValue` | 声明式线性特征模块 | proxy | 未接线（Agent C 正式实现零改动） |
+| 资源/策略评价 | `acquisitionValue` | 声明式线性模块 **或编译型函数候选** | proxy | 未接线（Agent C 正式实现零改动） |
 | 资源/策略评价 | `engineValue` | 声明式线性特征模块 | proxy | 未接线 |
 | 资源/策略评价 | `goalValue` | 声明式线性特征模块 | proxy | 未接线 |
 | 资源/策略评价 | `keepValue` | 声明式线性特征模块 | proxy | 未接线 |
@@ -154,7 +167,7 @@ artifacts/
 | 类型与输入检查 | `validateValues` / `normalizeModuleSpec` / `normalizeSearchValues`；未知字段/越界/非整数直接拒绝 |
 | 不允许隐藏信息 | `assertTargetInput` 顶层白名单 + `HIDDEN_INFO_KEYS` 递归扫描；`merchantDeck/golemDeck/deck/seed/random/...` 一律拒绝 |
 | 资源预算 | 模块：输入 ≤8192B、求值 ≤5ms、输出有限且 clamp；搜索控制：候选/局数/墙钟预算 |
-| 安全沙箱 | 声明式模块**不执行候选代码**（最强隔离）；代码候选必须 Seatbelt（本轮未启用） |
+| 安全沙箱 | 声明式模块**不执行候选代码**；编译型 `acquisitionValue` 候选的静态检查、组装、tsc、探针全部在 macOS Seatbelt 内，非 macOS 直接 fail closed |
 | 回退机制 | 非法输入/非有限/超预算 → 默认系数或冻结冠军默认选项，并记录 `fallbackHit` |
 | 独立回归测试 | 每个资源目标 ≥2 个 fixture；`tests/targets.test.mjs` 逐目标运行 |
 
@@ -175,6 +188,18 @@ artifacts/
 - 提案逐项校验，非法项进入 `rejected`，合法项物化为 Candidate Artifact；
 - `openEvolvePromptContract()` 提供稳定 prompt 正文，不含密钥/路径；
 - LLM 不参与最终游戏推理。
+
+### 4.5 编译型候选适配器
+
+`compiled-candidate.mjs` 复用 AI5 已验证工具链，把“函数候选”从人工搬运变成可复现构建：
+
+- 源码来源：官方 `acquisitionValue` baseline 函数，单点变异 `goalFit * 2` → `goalFit * 2.4`；变异点必须唯一，否则拒绝；
+- `static_check.mjs`：EVOLVE-BLOCK、签名、禁止构造、括号配平；在 Seatbelt 内执行；
+- `assemble_candidate.mjs`：复制官方源码 import 闭包，仅替换演化函数，逐文件哈希固证；在 Seatbelt 内执行；
+- `tsc`：独立工作目录编译，`noEmitOnError`；在 Seatbelt 内执行；
+- artifact：`source.kind='esm-module-bundle'`、`buildArtifact.compiled=true`、`kind='esm-module-bundle-v1'`、`files` 内含编译产物全文与哈希；
+- 探针：`probe_compiled.mjs` 在 Seatbelt 内导入官方与候选 evaluator，只使用公开 fixture，输出 `offline-proxy` 证据；
+- 非 macOS / Seatbelt 不可用：创建编译型候选直接抛错，控制器按“生成即拒绝”隔离，绝不无沙箱执行。
 
 ---
 
@@ -226,8 +251,8 @@ artifacts/
 
 ```text
 initialized
-  → generated
-  → safety/build checks（逐候选）
+  → generation（静态预检；编译型候选额外完成 Seatbelt 内 assemble+tsc）
+  → safety/build checks（逐候选；含编译产物哈希复核）
   → quick eval（逐候选，失败隔离）
   → selection（多维 + 去重 + 多保留）
   → deep confirm（逐候选，独立种子；异常则 deep-unstable）
@@ -246,8 +271,9 @@ initialized
 | 安全停止 | `requestStop()` 或 `.stop` 文件；步边界停止；可恢复 |
 | M4 预算 | `maxCandidates/maxGames/maxWallMs/maxDeepConfirmations`；超限安全停止 |
 | 并发限制 | `maxConcurrent` 1–4 校验；当前按单候选串行评估（CPU-bound），绝不超过上限 |
+| 独立编译 | 编译型候选在生成阶段完成 `static_check → assemble → tsc`（全部 Seatbelt）；编译失败记为 `rejectedAtGeneration`，隔离失败不阻断其他候选 |
 | 候选失败隔离 | 每候选 try/catch；`safety-failed`/`quick-failed`/`deep-failed` 不阻断其他候选 |
-| 完整日志 | `logs/events.jsonl`：生成/安全检查/快筛/筛选/深验/审批/诊断/停止/预算事件 |
+| 完整日志 | `logs/events.jsonl`：生成/安全检查/编译产物复核/快筛/筛选/深验/审批/诊断/停止/预算事件 |
 | 重复运行保护 | `.campaign.lock`（pid 存活检查）+ state fingerprint；已完成 campaign 拒绝重复运行 |
 | 人工审批 | 只调用治理接口创建 `pending-human-approval`；绝不触发挑战/晋级 |
 
@@ -300,28 +326,31 @@ initialized
 | 项 | 值 |
 | --- | --- |
 | 模式 | `real-dev-games (lightweight)` |
-| 候选数 | 5（4 个通过安全，1 个安全失败；另有 1 个生成即拒绝） |
-| 对局数 | 16（快筛 12 + 深验 4） |
+| 候选数 | 6（5 个通过安全，1 个安全失败；另有 1 个生成即拒绝） |
+| 编译型候选 | 1 个 `acquisitionValue`（tsc 5.9.3，Seatbelt 探针） |
+| 对局数 | 18（快筛 12 + 深验 6） |
 | 深验确认 | 1 |
-| 总墙钟 | 71,893 ms |
+| 总墙钟 | 142,024 ms（含一次独立编译） |
 | screen 窗口 | `ai7-screen-w000`，种子 `1610000000, 1610000001` |
-| deep 窗口 | `ai7-deep-w000`，种子 `1620000000, 1620000001` |
+| deep 窗口 | `ai7-deep-w000`，种子 `1620000000, 1620000001, 1620000002` |
 | 停止/恢复 | 第 1 次 `run(maxSteps=8)` → `stopped`；第 2 次 `resume` → `completed` |
-| 检查点 | 18 个 |
+| 检查点 | 21 个 |
 
 ### 8.2 候选结果
 
 | 候选 | 模式 | 阶段 | 快筛分 | 深验分 | 快筛第一名率 | proxy Δ |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `cand-ai7-searchbudget-r1c0-bfe007` | game | selected | 0.6685 | — | 0.500 | — |
-| `cand-ai7-candidatecap-r1c1-33cef5` | game | pending-approval | 0.7090 | 0.6519 | 0.750 | — |
-| `cand-ai7-overridemargin-r1c0-3a144d` | game | not-selected | 0.6665 | — | 0.500 | — |
-| `cand-ai7-acquisitionvalue-r1c1-d31db4` | proxy | selected | 0.7366 | — | — | +0.0421 |
+| `cand-ai7-searchbudget-r1c0-bfe007` | game | not-selected | 0.6580 | — | 0.500 | — |
+| `cand-ai7-candidatecap-r1c1-33cef5` | game | pending-approval | 0.7015 | 0.5763 | 0.750 | — |
+| `cand-ai7-overridemargin-r1c0-3a144d` | game | selected | 0.6591 | — | 0.500 | — |
+| `cand-ai7-acquisitionvalue-r1c1-d31db4` | proxy (声明式) | selected | 0.7366 | — | — | +0.0421 |
+| `cand-ai7-compiled-acq-r1c4-1d7b60` | proxy (编译型) | selected | 0.7325 | — | — | +0.0274 |
 
 - 安全失败候选：`cand-ai7-enginevalue-r1c3-acf817`（`hidden-info` + `forbidden-constructs`，被隔离）。
 - 生成即拒绝：`candidateCap=99` 越界，未进入候选池。
-- 多候选保留：2 个 game + 1 个 proxy。
-- 深验候选 `candidatecap` 在独立 deep 窗口 4 局：`firstPlaceRate=0.5`、`chanceAdjustedRate=+0.0833`、`minWilsonLower=0.0945`、`anomalyRate=0`。这**只是微小样本的人工审核信号，不构成强于 JS5 的结论**。
+- 多候选保留：2 个 game + 2 个 proxy（4 个保留）。
+- 编译型候选：`buildArtifact.kind=esm-module-bundle-v1`、`compiled=true`、`compiler=tsc 5.9.3`；产物 `dist/js/ai/evaluator.js` 全文随 artifact 封印，Seatbelt 探针 2 个公开 fixture、0 错误。
+- 深验候选 `candidatecap` 在独立 deep 窗口 6 局：`firstPlaceRate=0.1667`、`chanceAdjustedRate=-0.25`、`minWilsonLower=0`、`anomalyRate=0`。这**只是 6 局的人工审核信号，不构成强于或弱于 JS5 的结论**；本次信号为负，人工应拒绝或要求更大样本。
 
 ### 8.3 待审核请求
 
@@ -329,7 +358,8 @@ initialized
 - 候选：`cand-ai7-candidatecap-r1c1-33cef5`
 - 状态：`pending-human-approval`
 - `approvalRequired=true`、`promotionTriggered=false`、`validationPoolConsumed=false`
-- 深验评估：`verdict=promising`、`chanceAdjustedRate=0.0833`、`minWilsonLower=0.0945`、`anomalyRate=0`
+- 深验评估：`verdict=no-advantage`、`chanceAdjustedRate=-0.25`、`minWilsonLower=0`、`anomalyRate=0`、`finishedGames=6`
+- 请求正文标注 `review-required (weak/inconclusive signal)`；这只是流程演示请求，**不是晋级建议**
 - 文件：`training/reports/ai7-evolution-demo/pending-approval/greq-030de52c930dd0ff.json`
 
 ### 8.4 验收检查（全部 PASS）
@@ -364,10 +394,10 @@ Guardrails：
 ```bash
 cd training
 
-# 1) 新增测试（57 项）
+# 1) 新增测试（62 项；编译型用例在非 macOS 自动 skip）
 npm run evolution:test
 
-# 2) 轻量真实对局演示（约 80 秒，16 局）
+# 2) 轻量真实对局演示（约 3 分钟，18 局，含一次 Seatbelt 内 tsc）
 npm run evolution:demo
 
 # 3) 仅验证演示逻辑（假评估器，不跑对局）
@@ -393,16 +423,17 @@ npm run evolution:demo:fake
 
 | 套件 | 结果 | 说明 |
 | --- | --- | --- |
-| `npm run evolution:test` | **57/57 pass** | artifact/targets/safety/governance/selection/generator/openevolve/failure-labels/controller/demo |
+| `npm run evolution:test` | **62/62 pass** | artifact/targets/safety/compiled/governance/selection/generator/openevolve/failure-labels/controller/demo |
 | `npm test`（既有训练套件） | **153/153 pass** | 运行约 10 分钟，未受影响 |
 | `web-v1 npm run build` | 成功 | 测试依赖的 `dist/js` 已构建；未改源码 |
-| 演示真实对局 | 16 局，0 异常 | `demo-summary.json` |
+| 演示真实对局 | 18 局，0 异常 | `demo-summary.json` |
 
 关键测试文件：
 
 - `training/evolution/tests/artifact.test.mjs`：双哈希、篡改检出、store 覆盖保护、独立加载。
 - `training/evolution/tests/targets.test.mjs`：11 目标、边界、隐藏信息、预算回退、搜索控制映射与 fail-safe 回退。
 - `training/evolution/tests/safety.test.mjs`：重封印 artifact 的联合选项/模块系数/冠军权重越界必须 fail-closed；`playerCountScope` 合法候选可通过。
+- `training/evolution/tests/compiled.test.mjs`：真实 tsc 编译、产物哈希、store 注册/加载/复现、篡改检出、Seatbelt 探针、源码走私拒绝。
 - `training/evolution/tests/governance.test.mjs`：dev-only、验证池拒绝、自动批准/晋级拒绝。
 - `training/evolution/tests/selection.test.mjs`：行为距离、去重、多保留、分区、对手轮换。
 - `training/evolution/tests/generator.test.mjs`：确定性、父候选继承、失败隔离。
@@ -419,8 +450,8 @@ npm run evolution:demo:fake
 | --- | --- |
 | 1. Candidate Artifact v1 | `training/evolution/candidate-artifact.mjs`、`artifact-store.mjs` |
 | 2. 多目标进化接口 | `training/evolution/evolution-targets.mjs`、`feature-extractors.mjs`、`openevolve-adapter.mjs` |
-| 3. Campaign Controller 原型 | `training/evolution/campaign-controller.mjs` |
-| 4. 安全与可复现测试 | `training/evolution/tests/`（57 项） |
+| 3. Campaign Controller 原型 | `training/evolution/campaign-controller.mjs`、`compiled-candidate.mjs`、`sandbox/` |
+| 4. 安全与可复现测试 | `training/evolution/tests/`（62 项） |
 | 5. 轻量闭环演示及日志 | `training/reports/ai7-evolution-demo/` |
 | 6. 报告 | 本文件 |
 | 7. 独立 PR | 分支 `feat/ai7-evolution-pipeline`；PR #46 |
@@ -431,12 +462,12 @@ npm run evolution:demo:fake
 
 ### 11.1 本轮明确未做
 
-1. **没有证明强于 JS5**：演示仅 16 局，深验 4 局，样本量不足以做胜负结论。
+1. **没有证明强于 JS5**：演示仅 18 局，深验 6 局且信号为负；样本量不足以做胜负结论。
 2. **没有改正式评价函数**：5 个资源目标只走候选插件接口，proxy 证据不进入正式评分。
-3. **没有真实编译型函数候选**：本轮为 descriptor/声明模块，`buildArtifact.compiled=false`；真实 TS 候选需接 `assemble_candidate.mjs` + `tsc` + Seatbelt。
+3. **编译型候选只覆盖一个目标**：本轮只启用 `acquisitionValue` 的固定单点变异；其余 4 个资源目标仍是声明式模块。开放任意函数/多目标编译需要新的目标注册、Seatbelt profile 与独立安全评审。
 4. **治理接口仍是测试替身**：AI7 区块未写入 `seed_policy.mjs`；正式集成需 Agent A 登记区块、单一账本、并发分配与 alpha 治理。
 5. **没有自动晋级**：只有 `pending-human-approval` 请求；正式挑战、验证池、champion.json 均未触碰。
-6. **没有运行 LLM**：OpenEvolve 适配器只定义了提案边界与解析器；真实 LLM 运行仍需离线、人工触发，最终推理完全本地。
+6. **没有运行 LLM**：OpenEvolve 适配器只定义了提案边界与解析器；编译型候选源码来自官方函数的有界变异，不使用 LLM；最终推理完全本地。
 
 ### 11.2 与 Agent A/C 的正式集成清单
 
@@ -456,6 +487,7 @@ npm run evolution:demo:fake
 本轮交付的不是"又一个更强的参数"，而是一个**可持续运行、可审计、可停止/恢复、只消费开发池、把正式挑战交还人工审批**的进化平台底座：
 
 - 候选从"人工搬运代码/参数"变成可哈希、可加载、可复现的 artifact；
+- 函数候选从"人工替换文件"变成 Seatbelt 内 `static_check → assemble → tsc → 哈希` 的可复现构建；
 - 搜索空间从单函数扩展为 5 个评价目标 + 6 个有界搜索控制目标；
 - 评估从"固定种子 + 单一对手 + 只选冠军"变成轮换窗口、历史/风格对手、行为多样性、多候选保留；
 - 闭环从"人盯脚本"变成带检查点、预算、失败隔离和完整日志的 controller；

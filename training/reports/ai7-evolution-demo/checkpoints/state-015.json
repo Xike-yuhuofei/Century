@@ -1,7 +1,7 @@
 {
   "schema": "century-evolution-campaign-v1",
   "campaignId": "ai7-demo-20261025",
-  "runFingerprint": "12a2e5748dc32fff6c4a5108407abb0c582d58b8edaffd2ee85d68c6e2f56746",
+  "runFingerprint": "89aed50b59f4da5958e96a7d71413439ec8448b0bb9e3067d06984c960b3f542",
   "config": {
     "version": 1,
     "configRef": "training/evolution/configs/ai7-demo.json",
@@ -11,10 +11,10 @@
       3
     ],
     "quickSeeds": 2,
-    "deepSeeds": 2,
+    "deepSeeds": 3,
     "maxMoves": 350,
-    "deadlineMs": 30000,
-    "retainTopK": 3,
+    "deadlineMs": 90000,
+    "retainTopK": 4,
     "deepConfirmations": 1,
     "generation": {
       "count": 2,
@@ -26,10 +26,10 @@
     },
     "budget": {
       "maxCandidates": 6,
-      "maxGames": 20,
-      "maxWallMs": 240000,
+      "maxGames": 26,
+      "maxWallMs": 600000,
       "maxConcurrent": 1,
-      "maxDeepConfirmations": 1
+      "maxDeepConfirmations": 2
     },
     "diagnosticsPath": "training/reports/diagnostics-latest/analysis.json",
     "humanAnalyticsFailuresPath": null,
@@ -58,7 +58,7 @@
           "purpose": "deep",
           "pool": "dev",
           "base": 1620000000,
-          "count": 2,
+          "count": 3,
           "blockStart": 1620000000,
           "blockEnd": 1630000000,
           "contractVersion": "century-governance-adapter-v1"
@@ -70,11 +70,12 @@
       ],
       "deepSeeds": [
         1620000000,
-        1620000001
+        1620000001,
+        1620000002
       ],
       "generated": true,
-      "selected": true,
-      "deepDone": true,
+      "selected": false,
+      "deepDone": false,
       "approvalDone": false,
       "diagnosticsDone": false,
       "candidates": [
@@ -86,7 +87,7 @@
             "searchBudget"
           ],
           "artifactPath": "training/reports/ai7-evolution-demo/artifacts/objects/cand-ai7-searchbudget-r1c0-bfe007/8041a418935181e1cb7d21d417a1dcf56cd9e40b8d6df7508df8cadb0d79d577/candidate.json",
-          "stage": "selected",
+          "stage": "quick-done",
           "safetyStatus": "passed",
           "sourceHash": "501651c60eaee5e0ac612a4c63167680e5b6c076fa44ceeac22b02c441ea654c",
           "buildArtifactHash": "2eb5aa3c3184d4f30a291a3ba16725aa1154c5cd4a2e4a455a32a5226c3b55f4",
@@ -104,9 +105,9 @@
               ],
               "quality": 0.36279,
               "stability": 1,
-              "cost": 0.871237,
+              "cost": 0.766039,
               "safety": 1,
-              "composite": 0.668519
+              "composite": 0.657999
             },
             "games": 4,
             "metrics": {
@@ -114,9 +115,9 @@
               "chanceAdjustedRate": 0.0833,
               "minWilsonLower": 0.0945,
               "anomalyRate": 0,
-              "p95WallMs": 4433.8
+              "p95WallMs": 9162.5
             },
-            "artifactHash": "3442b6101ebc6600447e11b69969b4e084ab4e3cf83aff1979337d1a6db0db92"
+            "artifactHash": "f37f560a80d3bc7dd3eec0352f6cf3fdeb9a6672462ceef62ffc52599817e933"
           },
           "deep": null,
           "failure": null
@@ -129,7 +130,7 @@
             "candidateCap"
           ],
           "artifactPath": "training/reports/ai7-evolution-demo/artifacts/objects/cand-ai7-candidatecap-r1c1-33cef5/5cceb869d99543558d7e1b860f75334ebf3b742a5e0f3b37a072e0c55e6394dc/candidate.json",
-          "stage": "deep-done",
+          "stage": "quick-done",
           "safetyStatus": "passed",
           "sourceHash": "f77c1046f2ccb9b09edc64a01895a65ea226b0000a88a2a10d9a0ea61abdc3f0",
           "buildArtifactHash": "e05211f17d31bc947103349c6a47bd81c9e0c1209b48f5d49c4fa5b807e80c64",
@@ -147,9 +148,9 @@
               ],
               "quality": 0.43779,
               "stability": 1,
-              "cost": 0.901323,
+              "cost": 0.825923,
               "safety": 1,
-              "composite": 0.709027
+              "composite": 0.701487
             },
             "games": 4,
             "metrics": {
@@ -157,35 +158,11 @@
               "chanceAdjustedRate": 0.3333,
               "minWilsonLower": 0.0945,
               "anomalyRate": 0,
-              "p95WallMs": 3284.4
+              "p95WallMs": 6323
             },
-            "artifactHash": "e074dfea18e03b0b55fa201523ffb3d31923104647c1fbb3fe2b2c1270e62b59"
+            "artifactHash": "63879dee7643871b0786db0984f80bda2d54b82e2d85f62dbf0fde9a107c9c3f"
           },
-          "deep": {
-            "status": "done",
-            "evidencePath": "training/reports/ai7-evolution-demo/evidence/cand-ai7-candidatecap-r1c1-33cef5/deep-r001.json",
-            "score": {
-              "candidateId": "cand-ai7-candidatecap-r1c1-33cef5",
-              "identityDigest": "5cceb869d99543558d7e1b860f75334ebf3b742a5e0f3b37a072e0c55e6394dc",
-              "evaluationMode": "game",
-              "targetIds": [
-                "candidateCap"
-              ],
-              "quality": 0.36279,
-              "stability": 1,
-              "cost": 0.705535,
-              "safety": 1,
-              "composite": 0.651949
-            },
-            "games": 4,
-            "metrics": {
-              "firstPlaceRate": 0.5,
-              "chanceAdjustedRate": 0.0833,
-              "minWilsonLower": 0.0945,
-              "anomalyRate": 0,
-              "finishedGames": 4
-            }
-          },
+          "deep": null,
           "failure": null
         },
         {
@@ -196,7 +173,7 @@
             "overrideMargin"
           ],
           "artifactPath": "training/reports/ai7-evolution-demo/artifacts/objects/cand-ai7-overridemargin-r1c0-3a144d/ac53c621800c6db6a480b28262524a93a82c457ed78b8057f803cb1e5ef777c0/candidate.json",
-          "stage": "not-selected",
+          "stage": "quick-done",
           "safetyStatus": "passed",
           "sourceHash": "d4b9b6571d26a9feb51ef17d03792680583706c2114fb3602dd5afab17d178e9",
           "buildArtifactHash": "a3a5c08332aed2cc2a4cd12f2ff4bfdada3736e2dde970ad9f10e81c9bb28da3",
@@ -214,9 +191,9 @@
               ],
               "quality": 0.36279,
               "stability": 1,
-              "cost": 0.851238,
+              "cost": 0.776653,
               "safety": 1,
-              "composite": 0.666519
+              "composite": 0.65906
             },
             "games": 4,
             "metrics": {
@@ -224,15 +201,12 @@
               "chanceAdjustedRate": 0.0833,
               "minWilsonLower": 0.0945,
               "anomalyRate": 0,
-              "p95WallMs": 5242.8
+              "p95WallMs": 8627.3
             },
-            "artifactHash": "94b64e36a044760ecdddc529917e65cd51d9951fda699efc852baf7d0947ea8a"
+            "artifactHash": "a07acb2330c4f8ffd6af18feb2001145edf0fcb03677cd826f38f40c241c8628"
           },
           "deep": null,
-          "failure": {
-            "stage": "selection",
-            "reason": "below-retention-cutoff"
-          }
+          "failure": null
         },
         {
           "candidateId": "cand-ai7-acquisitionvalue-r1c1-d31db4",
@@ -242,7 +216,7 @@
             "acquisitionValue"
           ],
           "artifactPath": "training/reports/ai7-evolution-demo/artifacts/objects/cand-ai7-acquisitionvalue-r1c1-d31db4/b611c2a1495c5f37b0600a5b350df7b93b10d2bc93fc02bd5e442d6c03dd0395/candidate.json",
-          "stage": "selected",
+          "stage": "quick-done",
           "safetyStatus": "passed",
           "sourceHash": "5c2847cd7cda230f6400bcc810106490799394cf0c1e1b1bc7b26beef5b85321",
           "buildArtifactHash": "a2bf9b78ba28bbccb241c5d1a534a3ab0bf1b00927aa32ef48496dddc54acfe2",
@@ -268,7 +242,7 @@
             "metrics": {
               "proxyDelta": 0.04208
             },
-            "artifactHash": "5c4be97a9fb716ab369e482353aa440bffb51aeaf90202f63218f02c6cbb7e0c"
+            "artifactHash": "dcab63cc94e09f5827fec5f18ec01bef4646bdddf99b7e4335173e92a954b335"
           },
           "deep": null,
           "failure": null
@@ -304,28 +278,49 @@
               }
             ]
           }
+        },
+        {
+          "candidateId": "cand-ai7-compiled-acq-r1c4-1d7b60",
+          "identityDigest": "3932087d569e30e0ea33b102e0319cba429bbd50743b38489f81f57aad4a1c07",
+          "evaluationMode": "proxy",
+          "targetIds": [
+            "acquisitionValue"
+          ],
+          "artifactPath": "training/reports/ai7-evolution-demo/artifacts/objects/cand-ai7-compiled-acq-r1c4-1d7b60/3932087d569e30e0ea33b102e0319cba429bbd50743b38489f81f57aad4a1c07/candidate.json",
+          "stage": "quick-done",
+          "safetyStatus": "passed",
+          "sourceHash": "b2f1fc596c6516acd62a4a8d4514c3e108757cf0c24fb7e001c85e08ee2f8a14",
+          "buildArtifactHash": "527a4bd707a67874929f487534ff93b9dedd9f1c5d6d141d0fe43509f80b699c",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": "training/reports/ai7-evolution-demo/evidence/cand-ai7-compiled-acq-r1c4-1d7b60",
+          "quick": {
+            "evidencePath": "training/reports/ai7-evolution-demo/evidence/cand-ai7-compiled-acq-r1c4-1d7b60/quick-r001.json",
+            "evidenceType": "offline-proxy",
+            "score": {
+              "candidateId": "cand-ai7-compiled-acq-r1c4-1d7b60",
+              "identityDigest": "3932087d569e30e0ea33b102e0319cba429bbd50743b38489f81f57aad4a1c07",
+              "evaluationMode": "proxy",
+              "targetIds": [
+                "acquisitionValue"
+              ],
+              "quality": 0.513695,
+              "stability": 1,
+              "cost": 1,
+              "safety": 1,
+              "composite": 0.732533
+            },
+            "games": 0,
+            "metrics": {
+              "proxyDelta": 0.027391
+            },
+            "artifactHash": "71236311895ec31cc5dcae274f32478bd1e14327f6b73c595d14a9464a8fb748"
+          },
+          "deep": null,
+          "failure": null
         }
       ],
-      "selectedIds": [
-        "cand-ai7-candidatecap-r1c1-33cef5",
-        "cand-ai7-acquisitionvalue-r1c1-d31db4",
-        "cand-ai7-searchbudget-r1c0-bfe007"
-      ],
-      "selectionSummary": {
-        "evaluated": 4,
-        "eligible": 4,
-        "selected": 3,
-        "rejected": 0,
-        "duplicates": 0,
-        "byMode": {
-          "game": 2,
-          "proxy": 1
-        },
-        "maxKeep": 3,
-        "minBehaviorDistance": 0.12,
-        "meanBehaviorDistance": 1,
-        "scoring": "composite = quality/stability/cost/safety 加权；game 与 proxy 分组保留"
-      },
+      "selectedIds": [],
+      "selectionSummary": null,
       "diagnostics": null,
       "rejectedAtGeneration": [
         {
@@ -338,14 +333,14 @@
     }
   ],
   "checkpointSeq": 15,
-  "lastEventSeq": 23,
-  "createdAt": "2026-10-25T08:51:00.285Z",
-  "updatedAt": "2026-10-25T08:52:12.192Z",
+  "lastEventSeq": 24,
+  "createdAt": "2026-10-25T12:00:23.684Z",
+  "updatedAt": "2026-10-25T12:01:27.049Z",
   "budgetUsed": {
-    "candidates": 5,
-    "games": 16,
-    "wallMs": 71889,
-    "deepConfirmations": 1
+    "candidates": 6,
+    "games": 12,
+    "wallMs": 63360,
+    "deepConfirmations": 0
   },
   "pendingApprovals": [],
   "guardrails": {
