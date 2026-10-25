@@ -1,0 +1,21 @@
+{
+  "schema": "century-tactical-scenario-split-manifest-v1",
+  "rawSource": "data/scenarios.jsonl（原始语料，保留不覆盖）",
+  "rawSha256": "7fa0a98d296d4c73586bab9bad19b2f00837718c1d7c1b7b6e39bcf4d2616c52",
+  "publicPath": "data/public/scenarios.public.jsonl",
+  "publicSha256": "29c2c3eee75a3a865c50fc04c781e4f84f6922f06800ae3036560686b266a537",
+  "privatePath": "data/private/scenarios.private-oracle.jsonl",
+  "privateSha256": "423522747cdda8ec93c4a72b91b795a848bb28c1cc679c0bce72e08bb757c18c",
+  "scenarioCount": 50,
+  "publicForbiddenKeys": [
+    "merchantDeck",
+    "golemDeck",
+    "position",
+    "gameSeed"
+  ],
+  "oracleSemantics": "oracle 结论 = exact-under-recorded-deck 局部穷举（仅在记录的实际牌库序列下成立），不是不完全信息博弈的普适最优策略证明；不得无条件用作神经网络监督学习的最优行动标签。",
+  "layers": {
+    "public": "AI 训练/搜索输入唯一合法数据接口（无隐藏牌库、无 gameSeed）",
+    "private": "仅限离线评估器（oracle 复算 / 引擎精确重放）"
+  }
+}

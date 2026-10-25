@@ -16,6 +16,7 @@ import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import { engineBundleSha256, REPO_ROOT } from '../../lib/paths.mjs';
+import { writeSplitDataset } from '../lib/dataset.mjs';
 import { AI6_SCENARIO_BLOCK } from '../../../ai5/lib/seed_policy.mjs';
 import { scenarioSeed, frozenVersions } from '../lib/versions.mjs';
 import { playGame, snapshotPosition } from '../lib/harvest.mjs';
@@ -171,6 +172,10 @@ for (const scenario of scenarios) {
 
 // 序列化在 oracle 之后：确保落盘内容包含 oracle 结论（历史教训：先序列化后补字段会丢 oracle）。
 writeFileSync(args.out, scenarios.map(s => JSON.stringify(s)).join('\n') + (scenarios.length ? '\n' : ''));
+
+// —— P1-3：同步生成公开/私有双层（公开层 = AI 输入唯一合法接口；原始语料保留） ——
+const split = writeSplitDataset(args.out, SCENARIOS_ROOT);
+console.log(`[generate] 公开/私有双层已同步：${split.manifest.scenarioCount} 条（公开 ${split.publicPath}）`);
 
 // —— 汇总与索引 ——
 const byCategory = {};

@@ -17,7 +17,7 @@
  */
 
 import {
-  PROTOCOL_VERSION, isCompatibleProtocolVersion, validateObservationShape,
+  PROTOCOL_VERSION, isCompatibleProtocolVersion, validateDecisionPayload,
   type AIWorkerRequest, type AIWorkerResponse,
 } from './protocol.js';
 import { decideFromObservation, DecisionCoreError } from './decision-core.js';
@@ -32,6 +32,9 @@ export type AIWorkerCore = {
 export function createAIWorkerCore(post: (response: AIWorkerResponse) => void): AIWorkerCore {
   /** 已被取消/替代、尚未开始处理的请求 id 集合。 */
   const superseded = new Set<string>();
+  /** 已接受决策的最大 gameStateVersion 水位（P1-1：过期状态版本的真实防线）——
+   * 迟到的旧版本决策请求（乱序投递/客户端缺陷）直接回 cancelled，绝不执行。 */
+  let versionWatermark = -1;
   let ready = false;
 
   const sendError = (requestId: string | null, message: string, category: 'protocol' | 'decision' | 'fatal') => {
@@ -66,7 +69,9 @@ export function createAIWorkerCore(post: (response: AIWorkerResponse) => void): 
         return;
       }
       case 'reset': {
+        // 换局信号：清空取消标记 + 重置状态版本水位（新对局可能重新从低版本计数）。
         superseded.clear();
+        versionWatermark = -1;
         return;
       }
       case 'decision': {
@@ -76,14 +81,22 @@ export function createAIWorkerCore(post: (response: AIWorkerResponse) => void): 
           post({ kind: 'cancelled', protocolVersion: PROTOCOL_VERSION, requestId });
           return;
         }
-        if (request.gameStateVersion !== gameStateVersion) {
-          // 不可达守卫（类型完整性）；无害忽略。
-          sendError(requestId, 'gameStateVersion 字段不一致', 'protocol');
+        // P1-1 整改：v1.0 此处是与自身比较的无效不变量（恒 false 死代码）。
+        // 替换为真实检查：
+        // ① 类型/范围校验（协议层）；② 过期状态版本水位（迟到旧请求拒绝执行）。
+        if (typeof gameStateVersion !== 'number' || !Number.isSafeInteger(gameStateVersion) || gameStateVersion < 0) {
+          sendError(requestId, `gameStateVersion 必须为非负安全整数，实际：${JSON.stringify(gameStateVersion)}`, 'protocol');
           return;
         }
+        if (gameStateVersion < versionWatermark) {
+          post({ kind: 'cancelled', protocolVersion: PROTOCOL_VERSION, requestId });
+          return;
+        }
+        versionWatermark = Math.max(versionWatermark, gameStateVersion);
         try {
-          // 结构防火墙：观察载荷必须是白名单公开字段（拒绝整份 Game 等越权载荷）。
-          validateObservationShape(payload?.observation);
+          // 结构防火墙（v1.1 递归）：观察/版本描述符/预算/种子的严格 schema 校验
+          //（拒绝整份 Game 等越权载荷与任意嵌套层级的隐藏牌库字段）。
+          validateDecisionPayload(payload);
         } catch (error) {
           sendError(requestId, error instanceof Error ? error.message : String(error), 'protocol');
           return;
