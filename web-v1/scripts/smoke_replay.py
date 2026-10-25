@@ -1,4 +1,4 @@
-"""通过实际下载验证电脑/手机、在线/离线入口的完整复盘导出。"""
+"""验证复盘导出：手机端实际下载 JSON（在线/离线），桌面端手动导出已移除、仅自动导出。"""
 import json
 import os
 import subprocess
@@ -49,21 +49,20 @@ def check(page, mobile, fixture, url, shot):
         page.locator('[data-action="resume"]').click()
         if page.locator('[data-action="ready"]').count():
             page.locator('[data-action="ready"]').click()
-    if fixture['phase'] != 'finished':
-        if mobile:
-            page.locator('[data-action="menu"]').click()
-            page.locator('[data-action="log"]').click()
+        # 手机端唯一导出入口：菜单 → 行动记录 → 导出复盘 JSON。
+        page.locator('[data-action="menu"]').click()
+        page.locator('[data-action="log"]').click()
+        data = json.loads(download(page, 'export-replay-json', '.json'))
+        assert data['format'] == 'century-replay'
+        assert data['current']['turnNumber'] == fixture['turnNumber']
+        if 'replay' in fixture:
+            assert len(data['replay']['turns']) == 60
         else:
-            page.locator('[data-action="toggle-log"]').click()
-    md = download(page, 'export-replay-md', '.md')
-    data = json.loads(download(page, 'export-replay-json', '.json'))
-    assert data['format'] == 'century-replay'
-    assert data['current']['turnNumber'] == fixture['turnNumber']
-    if 'replay' in fixture:
-        assert len(data['replay']['turns']) == 60
-        assert '第 60 手' in md and '个人第 30 回合' in md
+            assert data['replay'] is None
     else:
-        assert data['replay'] is None and '没有完整回合记录' in md
+        # 桌面端手动导出已移除，复盘文件仅由自动导出（JSON）产生。
+        assert page.locator('[data-action="export-replay-md"]').count() == 0
+        assert page.locator('[data-action="export-replay-json"]').count() == 0
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     page.screenshot(path=str(OUT / shot))
 
@@ -82,7 +81,16 @@ try:
                     url = BASE
                 for name, fixture in fixtures.items():
                     check(page, mobile, fixture, url, f'{engine}-{mobile}-{name}.png')
-                # 刷新后行动会继续追加，导出按钮不会消耗回合。
+                if not mobile:
+                    # 桌面端仅剩的导出途径：历史面板中的自动导出（JSON）开关。
+                    page.locator('[data-action="history"]').click()
+                    assert page.locator('.auto-export-panel').count() == 1
+                    page.locator('[data-action="auto-export-enable"]').click()
+                    assert '自动导出：已开启' in page.locator('.auto-export-panel').inner_text()
+                    page.locator('[data-action="auto-export-disable"]').click()
+                    assert '自动导出：已关闭' in page.locator('.auto-export-panel').inner_text()
+                    page.locator('[data-action="close-history"]').last.click()
+                # 刷新后行动会继续追加，行动不消耗回合。
                 page.goto(url, wait_until='domcontentloaded')
                 if mobile:
                     page.locator('[data-action="resume"]').click()
@@ -97,7 +105,7 @@ try:
                 assert saved['replay']['initial']['turnNumber'] == 61
                 assert len(saved['replay']['turns']) == 1
                 context.close()
-            # 离线入口仍支持下载。
+            # 离线入口仍支持手机端 JSON 导出。
             if not os.environ.get('CENTURY_TEST_URL'):
                 context = browser.new_context(viewport={'width':390,'height':844}, accept_downloads=True)
                 page = context.new_page()
@@ -106,6 +114,6 @@ try:
                 context.close()
             browser.close()
     assert not errors, errors
-    print('复盘导出通过：Chromium / WebKit，电脑 / 手机，完整历史 / 旧存档 / 结算 / 刷新 / 离线。')
+    print('复盘导出通过：手机端 JSON 下载（Chromium / WebKit，在线 / 离线），桌面端手动导出已移除、自动导出开关可用。')
 finally:
     server.shutdown()
