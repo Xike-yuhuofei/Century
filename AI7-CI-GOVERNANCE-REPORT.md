@@ -22,24 +22,26 @@
 
 ### 1.2 实测耗时（GitHub Actions，2026-10-25）
 
-同一提交 `19fa564` push main（run 40171122424 / 450 / 471 / 443 / 478）：
+改造前 main 合并提交 `69ec14c` push（run 40171122424 / 450 / 471 / 443 / 478；`19fa564` 仅在其后追加文档，代码树相同）：
 
 | 作业 | 耗时 | 说明 |
 |---|---|---|
-| Focus UI `test-and-build` | **16m30s** | 构建 + web 单测 + 浏览器冒烟 |
-| Offline AI V2 `test` | **12m55s** | 构建 + 同一套 web 单测 |
-| Pages `build` | **15m21s** | 构建 + 同一套 web 单测 + 复盘冒烟 |
-| AI5 `node-tests` 等 5 job | **15m20s** | 每个 job 自行构建，整体失败 |
-| 卡牌校验 | 14s | |
+| Focus UI `test-and-build` | **16m27s** | 构建 + web 单测 + 浏览器冒烟 |
+| Offline AI V2 `test` | **12m53s** | 构建 + 同一套 web 单测 |
+| Pages `build` | **15m15s** | 构建 + 同一套 web 单测 + 复盘冒烟 |
+| AI5 5 个 job | **最长 15m16s cancelled** | 每个 job 自行构建，整体失败 |
+| 卡牌校验 | 10s | |
 
-PR `fix/ai6-post-merge-reliability`（run 40164344553）：
+PR `fix/ai6-post-merge-reliability`（run 40164344553，head `e445029`）：
 
 | 作业 | 耗时 | 说明 |
 |---|---|---|
 | `ai-training` / `test` | **30m18s cancelled** | web 12m31 + training 11m35 + 模拟 30m（串行）→ 30 分钟 job 上限 |
 | `ai-training` / `audit-gate` | 24s | |
-| Focus UI | 14m56s | 第四份 web 单测 |
-| Offline AI V2 | 13m55s | 第五份 web 单测 |
+| Focus UI `test-and-build` | 14m58s | 第四份 web 单测 |
+| Offline AI V2 `test` | 14m02s | 第五份 web 单测 |
+| 卡牌校验 | 15s | |
+| **PR 墙钟** | **60m07s** | ai-training 取消后整体结束；作业累计 59m57s |
 
 ### 1.3 根因
 
@@ -257,27 +259,34 @@ node scripts/ci/verify-workflows.mjs
 | 每次提交共享构建次数 | 4–5 次（ai5 另有 5 次） | 1 次 |
 | 文档变更是否触发大测试 | 是（PR 侧约 60 分钟 runner 时间，含 ai-training 30m 超时） | 否（仅快速门禁） |
 | 100 局模拟 | 串行约 30m，导致 job 30m 超时 | 4 片并行，约 7-8m |
-| PR 最长作业 | 30m18s（cancelled） | web-unit 约 12.5m（25m timeout 余量） |
+| PR 最长作业 | 30m18s（cancelled） | training-unit 16m16s（35m timeout） |
 | 必需检查 | 无（main 未保护） | `ci-summary` 聚合 + rules/governance |
 | REQUIRES_APPROVAL | 可能被当作通过，或阻断所有 PR | 保持红色阻断，独立人工批准作业 |
 
 ### 8.2 实测耗时（改造后）
 
-> 本次 PR 的 `CI` 运行完成后回填（run URL 与 job 级耗时见 PR 评论 / `ci-metrics.mjs`）。
+> 数据来源：PR #45 的 `CI` run [40179000627](https://github.com/Xike-yuhuofei/Century/actions/runs/40179000627)，head `f345753`，2026-10-25。变更 28 个文件，分类为 `shared-core + ci-self`，即全代码检查（build/web/training/simulation/ui/audit）。
 
 | 作业 | 实测 | timeout | 余量 |
 |---|---|---|---|
-| changes | 待回填 | 5m | |
-| governance-tests | 待回填 | 5m | |
-| rules-cards | 待回填 | 5m | |
-| build | 待回填 | 10m | |
-| web-unit | 待回填 | 25m | |
-| training-unit | 待回填 | 25m | |
-| simulation | 待回填 | 25m | |
-| ui-smoke | 待回填 | 20m | |
-| audit-gate | 待回填 | 15m | |
-| ci-summary | 待回填 | 10m | |
-| **PR 墙钟** | 待回填 | — | |
+| changes | 7s | 5m | 43× |
+| governance-tests | 6s | 5m | 50× |
+| rules-cards | 8s | 5m | 37× |
+| build | 11s | 10m | 54× |
+| web-unit | 15m08s | 25m | 1.65× |
+| training-unit | 16m16s | 35m | 2.15× |
+| simulation（100 局 / 4 片） | 8m04s | 25m | 3.1× |
+| ui-smoke（Chromium + WebKit） | 1m37s | 20m | 12× |
+| audit-gate（dev 层） | 19s | 15m | 47× |
+| ci-summary | 7s | 10m | 85× |
+| **PR 墙钟** | **16m49s** | — | — |
+| **作业累计** | **42m03s** | — | — |
+
+同一 PR 范围的改造前基线（`e445029`，4 个工作流）：**墙钟 60m07s、作业累计 59m57s**；改造后 **墙钟 16m49s、作业累计 42m03s**。
+web 单测从 3 份（Focus 14m58s + V2 14m02s + ai-training 内串行 12m31s）收敛为 1 份 15m08s；共享构建从 4 次收敛为 1 次 11s。
+墙钟下降约 72%，且改后覆盖更完整（含 100 局模拟、审计门禁与结构校验）。
+
+首跑（run 40176731716）失败的具体原因与修复见 §9.4；失败时 `ci-summary` 返回 failure，未伪装为成功。
 
 ---
 
@@ -300,12 +309,38 @@ node scripts/ci/verify-workflows.mjs
 
 | 套件 | 结果 |
 |---|---|
-| web-v1 | 待回填 |
-| training | 待回填 |
+| web-v1 | **203/203 通过**（exit 0；本地 859.89s，含并行会话 CPU 争用） |
+| training | **153/153 通过**（exit 0；本地 749.12s） |
 
 ### 9.3 PR CI
 
-待 PR 创建后回填运行链接与结论。
+PR #45（`fix/ai7-ci-governance`）的完整 CI：
+
+- run [40179000627](https://github.com/Xike-yuhuofei/Century/actions/runs/40179000627)，head `f345753`，**success**，墙钟 16m49s。
+- `changes`、`governance-tests`、`rules-cards`、`build`、`web-unit`、`training-unit`、`simulation`、`ui-smoke`、`audit-gate`、`ci-summary` 全部真实执行并成功。
+- `research-node`、`research-python`、`research-seatbelt`、`promotion-gate`、`promotion-approval`、`pages-deploy` 为 `skipped`，属于“变更范围不适用”，`ci-summary` 表格中明确标注，未当作必需检查。
+- 普通开发 PR 不触发 promotion 作业：历史晋级的 2 项 `REQUIRES_APPROVAL` 不会阻断本 PR。
+
+本报告回填提交为纯文档变更，预期只触发 `changes`、`governance-tests`、`rules-cards`、`ci-summary`；该提交的最新检查结果直接显示在 PR #45 中，可作为路径过滤生效的现场证据。
+
+### 9.4 CI 首跑发现的真实问题（已修复，未伪装为成功）
+
+PR 首跑（run 40176731716，attempt 1）暴露两个基础设施问题：
+
+1. `changes` job 在 GitHub runner 分配阶段长时间 queued（同 run 的 governance/rules 已完成）。
+   取消并重跑后正常 —— 属于 GitHub Actions 调度抖动，不是工作流逻辑缺陷；
+   重跑后 `changes` 7s 完成，分类结果与本地一致（28 文件 → shared-core + ci-self）。
+2. `training-unit` 在 20m33s 失败，失败点为 `adversarial-league.test.mjs` 的
+   “2+5 人、3 版本、快档”冒烟：慢 runner 上 5p 单局超过 `deadlineMs=60s` 生产默认预算，
+   被记为异常，导致 `field@5` 矩阵层无已完成对局。旧 CI 同一测试耗时 187s，
+   本次 runner 耗时 392s（约 2.1×）。
+   - 修复：**仅测试 harness** 显式传 `deadlineMs=180_000`；生产默认 60s 未改，
+     不改变训练统计口径、覆盖的 18 局与全部断言。
+   - `training-unit` timeout 按实测 20m33s 调整为 35m（实测 2 倍左右余量），
+     不是为减少测试而抬阈值。
+   - 失败时 `ci-summary` 如实返回 failure，证明“失败不会被伪装成成功”。
+
+修复后重跑 CI（run 40179000627，head `f345753`）作为最终验收数据来源。
 
 ---
 
