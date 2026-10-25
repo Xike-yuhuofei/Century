@@ -22,6 +22,7 @@ import { leafVector, l2RawMargin } from '../../web-v1/dist/js/js/evaluators.js';
 import { playJointTrajectory } from '../../web-v1/dist/js/js/joint-rollout.js';
 import { mulberry32 } from '../../web-v1/dist/js/sim/rng.js';
 import { REPO_ROOT } from '../lib/paths.mjs';
+import { resolveAlgorithmVersion } from '../lib/version-registry.mjs';
 
 const SEED_BASE = 1_340_000_000;
 const SEEDS = 60;
@@ -65,9 +66,9 @@ function collectSamples() {
         const actor = state.current;
         let action = null;
         if (state.phase === 'overflow') {
-          action = { type: 'discard', colors: discardDecision(state.players[actor].stock, state.golemMarket, CHAMPION_PARAMETERS) };
+          action = { type: 'discard', colors: discardDecision(state.players[actor].stock, state.golemMarket, JS0_FROZEN.parameters) };
         } else if (actor === mySeat) {
-          const ctxH = heuristicContext(state, CHAMPION_PARAMETERS, { name: '中立代理', engine: 1, tempo: 1, contest: 1 });
+          const ctxH = heuristicContext(state, JS0_FROZEN.parameters, { name: '中立代理', engine: 1, tempo: 1, contest: 1 });
           action = myRankedActions(state, actor, ctxH).ranked[0]?.action ?? { type: 'rest' };
         } else {
           const sample = sampleOpponentAction(state, rng, createOpponentContext('rule', null));
@@ -184,10 +185,12 @@ export const L3_CALIBRATION: L3Calibration = {
 }
 
 // 顶层动态导入（ESM 顶层 await；先于 main() 执行）。
-const [{ discardDecision, myRankedActions, heuristicContext }, { sampleOpponentAction, createOpponentContext }, { CHAMPION_PARAMETERS }] = await Promise.all([
+const [{ discardDecision, myRankedActions, heuristicContext }, { sampleOpponentAction, createOpponentContext }] = await Promise.all([
   import('../../web-v1/dist/js/js/rollout-policy.js'),
   import('../../web-v1/dist/js/js/opponents.js'),
-  import('../../web-v1/dist/js/ai/parameters.js'),
 ]);
+// P0-1 整改：校准轨迹的贪心策略参考 = 冻结 legacy-js0（数据生成时的冠军基座；
+// 晋级后 CHAMPION_PARAMETERS 是 JS5 适配器，透传会漂移轨迹策略身份）。
+const JS0_FROZEN = resolveAlgorithmVersion('legacy-js0');
 
 main();

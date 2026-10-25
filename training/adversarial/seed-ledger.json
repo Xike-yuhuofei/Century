@@ -1,0 +1,90 @@
+{
+  "schema": "century-adversarial-seed-ledger-v1",
+  "createdAt": "2026-10-25T00:00:00.000Z",
+  "updatedAt": "2026-10-25T04:38:19.605Z",
+  "note": "P0-4 整改：联赛实验种子消费账本。experiments 前 3 条为历史只读事实导入（2026-10-25，来源为已归档实验报告的 plan.seedBase/seedEnd 与逐局种子），不重写原始数据。防重键 = 种子区间本身（改名/换输出目录不可规避）；有意 CRN 配对必须显式 crnGroup；缺失账本 fail-closed。",
+  "experiments": [
+    {
+      "experimentId": "evaluate-smoke-3cand",
+      "blockName": "dev",
+      "seedStart": 1400000000,
+      "seedEnd": 1400000020,
+      "seeds": 20,
+      "runId": "evaluate-smoke@2026-10-24T15:18:28.195Z",
+      "codeCommit": "9676afb-era（evaluate-smoke 报告归档时点）",
+      "algorithmFingerprints": [
+        "aa24564f999a (cand-rush-plus)",
+        "01ad598815e1 (cand-js5-fast-gate)",
+        "bd1f66f01ebb (cand-goal-remaining)"
+      ],
+      "purpose": "evaluate 模式端到端冒烟（开发读数，非结论）；3 候选共享轴 A/轴 G 种子 = 有意 CRN 配对",
+      "crnGroup": "evaluate-smoke-axis-shared",
+      "status": "completed",
+      "registeredAt": "2026-10-24T15:18:28.195Z",
+      "voidReason": null,
+      "historicalImport": "training/reports/adversarial-league/evaluate-smoke/evaluation-report.json"
+    },
+    {
+      "experimentId": "smoke-2-5-4s",
+      "blockName": "smoke",
+      "seedStart": 1401000000,
+      "seedEnd": 1401000120,
+      "seeds": 120,
+      "runId": "smoke-2-5-4s@2026-10-24T15:03:20.359Z",
+      "codeCommit": "9676afb-era（smoke 报告归档时点）",
+      "algorithmFingerprints": [],
+      "purpose": "联赛框架端到端冒烟（fast 快档 workUnits=64，非结论）",
+      "crnGroup": null,
+      "status": "completed",
+      "registeredAt": "2026-10-24T15:03:20.359Z",
+      "voidReason": null,
+      "historicalImport": "training/reports/adversarial-league/smoke-2-5-4s/league-report.json"
+    },
+    {
+      "experimentId": "engine-axis-screen-v1",
+      "blockName": "matrix-dev",
+      "seedStart": 1402000000,
+      "seedEnd": 1402000050,
+      "seeds": 50,
+      "runId": "engine-axis-screen-v1@PR42（报告 seedOffset=0）",
+      "codeCommit": "8d554cb2d1fe869f94574b2166a2b4b83a008007",
+      "algorithmFingerprints": [],
+      "purpose": "引擎轴候选初筛（PR #42，evaluate 模式 12 候选 CRN 共享，fast 档 workUnits=64；非结论）",
+      "crnGroup": "engine-axis-screen-axis-shared",
+      "status": "registered",
+      "registeredAt": "2026-10-25T04:38:19.593Z",
+      "voidReason": null
+    },
+    {
+      "experimentId": "prereg-15s-official",
+      "blockName": "prereg",
+      "seedStart": 1403000000,
+      "seedEnd": 1403001620,
+      "seeds": 1620,
+      "runId": "prereg-15s-official@2026-10-24T19:01:49.657Z",
+      "codeCommit": "预注册方案逐种子一致（PR #40，research/adversarial-league-results）",
+      "algorithmFingerprints": [],
+      "purpose": "预注册正式联赛（用户批准执行；official 口径 budgetMs=100；1620 局 0 异常）",
+      "crnGroup": null,
+      "status": "completed",
+      "registeredAt": "2026-10-24T19:01:49.657Z",
+      "voidReason": null,
+      "historicalImport": "training/reports/adversarial-league/prereg/prereg-15s-official/league-report.json"
+    },
+    {
+      "experimentId": "engine-axis-confirm-v1",
+      "blockName": "prereg",
+      "seedStart": 1403001620,
+      "seedEnd": 1403001770,
+      "seeds": 150,
+      "runId": "engine-axis-confirm-v1@PR42（报告 seedOffset=1620）",
+      "codeCommit": "8d554cb2d1fe869f94574b2166a2b4b83a008007",
+      "algorithmFingerprints": [],
+      "purpose": "引擎轴候选确认（PR #42，evaluate 模式 2 候选 CRN 共享，official 档 budgetMs=100；紧随 prereg-15s-official 未消费区间）",
+      "crnGroup": "engine-axis-confirm-axis-shared",
+      "status": "registered",
+      "registeredAt": "2026-10-25T04:38:19.605Z",
+      "voidReason": null
+    }
+  ]
+}

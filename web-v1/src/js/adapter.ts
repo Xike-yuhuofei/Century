@@ -18,7 +18,7 @@
 import type { Game, Action, Color } from '../engine.js';
 import { applyAction } from '../engine.js';
 import { buildObservation } from '../ai/observation.js';
-import { CHAMPION_PARAMETERS, type AIParameters } from '../ai/parameters.js';
+import { CHAMPION_PARAMETERS, validateAIParameters, type AIParameters } from '../ai/parameters.js';
 import { trimStock } from '../ai/evaluator.js';
 import { chooseAIAction } from '../ai/decision.js';
 import type { Profile } from '../ai/profiles.js';
@@ -71,9 +71,19 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
 
   // JS1：冠军 + 静态目标存活折扣 = beam-contest 结构（冠军 beam-rollout +
   // golemSurvivalModel），委托正式冠军入口，保证与冠军代码逐位同源。
+  // P0-1 整改（2026-10-25）：基座必须剥离适配器字段——晋级后 CHAMPION_PARAMETERS
+  // 携带 adapter='champion-guided'，直接透传会被 decision.ts 静默分派回联合搜索，
+  // beam-contest 结构被忽略（js1 实际执行 JS5 的身份污染）。基座 = 冠军参数的
+  // 束搜索形态（适配器冠军权重缺省补 1.0 + 结构 beam-rollout，与训练侧
+  // beamBaseParameters 同口径）；冠军决策路径（champion-guided 分支）不受影响。
   if (version.kind === 'champion-contest') {
+    const beamBase: Record<string, unknown> = { ...CHAMPION_PARAMETERS };
+    const wasAdapter = beamBase.adapter !== undefined;
+    for (const key of ['adapter', 'jointVersion', 'budgetMs']) delete beamBase[key];
+    if (wasAdapter && beamBase.structure === undefined) beamBase.structure = 'beam-rollout';
+    const base = validateAIParameters(beamBase as AIParameters);
     const response = chooseAIAction(game, {
-      parameters: CHAMPION_PARAMETERS,
+      parameters: base,
       structure: 'beam-contest',
       profile: options.profile,
     });

@@ -4996,8 +4996,13 @@
     if (game2.phase === "finished") throw new Error("游戏结束，无法决策");
     if (game2.current !== seat) throw new Error("决策席位不是当前行动者");
     if (version.kind === "champion-contest") {
+      const beamBase = { ...CHAMPION_PARAMETERS };
+      const wasAdapter = beamBase.adapter !== void 0;
+      for (const key of ["adapter", "jointVersion", "budgetMs"]) delete beamBase[key];
+      if (wasAdapter && beamBase.structure === void 0) beamBase.structure = "beam-rollout";
+      const base = validateAIParameters(beamBase);
       const response = chooseAIAction(game2, {
-        parameters: CHAMPION_PARAMETERS,
+        parameters: base,
         structure: "beam-contest",
         profile: options.profile
       });

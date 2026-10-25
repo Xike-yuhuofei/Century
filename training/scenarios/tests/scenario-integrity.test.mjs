@@ -131,3 +131,67 @@ test('公开信息边界：隐藏牌序置换后冻结版本决策逐位不变�
     }
   }
 });
+
+// ==================== P1-3 整改：公开/私有数据层物理分离 ====================
+
+import {
+  splitScenarioRecord, mergeScenarioRecords, assertPublicNoHiddenInfo,
+  loadPublicScenarios, loadPrivateOracle, PUBLIC_FORBIDDEN_KEYS,
+} from '../lib/dataset.mjs';
+
+const SCEN_ROOT = join(HERE, '..');
+const publicRecords = JSON.parse(JSON.stringify(loadPublicScenarios(SCEN_ROOT)));
+const privateRecords = loadPrivateOracle(SCEN_ROOT, { purpose: 'oracle 复算与重放验证（完整性测试）' });
+
+test('P1-3 双层数据集：50 条局面迁移完整、scenarioId 稳定关联', () => {
+  assert.equal(scenarios.length, 50, '原始语料 50 条不得丢失');
+  assert.equal(publicRecords.length, 50, '公开层必须覆盖全部 50 条');
+  assert.equal(privateRecords.length, 50, '私有层必须覆盖全部 50 条');
+  const ids = scenarios.map(s => s.id);
+  assert.deepEqual(publicRecords.map(r => r.id), ids, '公开层 id 顺序与原始语料一致');
+  assert.deepEqual(privateRecords.map(r => r.scenarioId), ids, '私有层 scenarioId 顺序与原始语料一致');
+});
+
+test('P1-3 公开层零隐藏信息：position/gameSeed/牌库键任意层级不存在', () => {
+  const violations = assertPublicNoHiddenInfo(publicRecords);
+  assert.deepEqual(violations, [], `公开层泄漏：${violations.join('；')}`);
+  for (const r of publicRecords) {
+    assert.equal(r.engineState, undefined, '公开层不得携带 engineState');
+    assert.equal(r.provenance.gameSeed, undefined, 'gameSeed 可与引擎 commit 确定性重导出牌库序——必须只在私有层');
+    assert.ok(r.hiddenStateRef?.containsHiddenInfo, '公开层必须显式指向私有层并标记 containsHiddenInfo');
+    assert.equal(r.publicView.merchantDeck, undefined);
+    assert.equal(r.publicView.golemDeck, undefined);
+  }
+});
+
+test('P1-3 无损迁移：public+private ⇄ 原始记录逐字段还原', () => {
+  for (let i = 0; i < scenarios.length; i++) {
+    const merged = mergeScenarioRecords(publicRecords[i], privateRecords[i]);
+    assert.deepEqual(merged, scenarios[i], `${scenarios[i].id} 合并后必须与原始记录逐位一致`);
+  }
+});
+
+test('P1-3 公开层合法行动集合与决策分歧保持一致（AI 可用性不降级）', () => {
+  for (let i = 0; i < scenarios.length; i++) {
+    assert.deepEqual(publicRecords[i].legalActions, scenarios[i].legalActions, `${scenarios[i].id} 合法行动集合必须一致`);
+    assert.deepEqual(publicRecords[i].decisions, scenarios[i].decisions, `${scenarios[i].id} 冻结版本决策必须一致`);
+    assert.deepEqual(publicRecords[i].disagreement, scenarios[i].disagreement, `${scenarios[i].id} 分歧矩阵必须一致`);
+    assert.deepEqual(publicRecords[i].publicView, scenarios[i].publicView, `${scenarios[i].id} 公开观察必须一致`);
+  }
+});
+
+test('P1-3 oracle 语义：公开层保留 honest 限定 + 监督使用警告', () => {
+  const oracleIds = scenarios.filter(s => s.oracle).map(s => s.id);
+  assert.ok(oracleIds.length > 0, '语料必须含 oracle 局面');
+  for (const r of publicRecords) {
+    if (!r.oracle) continue;
+    assert.match(String(r.oracle.model ?? ''), /exact-under-recorded-deck/, `${r.id} oracle 必须保留 exact-under-recorded-deck 限定`);
+    assert.match(r.oracleUsageNote, /不得无条件用作神经网络监督学习/, `${r.id} 必须携带监督使用警告`);
+  }
+});
+
+test('P1-3 数据接口：私有层必须显式声明评估器用途才可读取', () => {
+  assert.throws(() => loadPrivateOracle(SCEN_ROOT, { purpose: null }), /评估器|purpose/);
+  assert.throws(() => loadPrivateOracle(SCEN_ROOT, { purpose: 'AI 训练输入' }), /评估器/);
+  assert.doesNotThrow(() => loadPrivateOracle(SCEN_ROOT, { purpose: 'oracle 复算' }));
+});

@@ -48,12 +48,22 @@ function playerProfile(seat, ctx) {
   const stockSeries = [];      // [turnNumber, 黄,绿,蓝,粉]（自己每手行动后）
   let overflowCount = 0;
   const playRoundSet = new Set(); // 有打出行动的轮次（引擎建设持续轮数）
+  const merchantPlayCounts = {};   // cardId → 实际打出次数（历史打出事件，observable）
+  const firstPlayTurnByCard = new Map(); // cardId → 首次打出 turnNumber
 
   for (const entry of own) {
     const t = entry.turn;
     const timeline = timelineByIndex.get(entry.index);
     for (const a of t.actions) actionsByType[a.type]++;
     if (t.actions.some(a => a.type === 'play')) playRoundSet.add(t.round);
+    // P1-2 整改：商人卡使用追踪按**历史打出事件**统计（终局手牌快照会因卡牌
+    // 循环与休息后收回而失真——打出过的卡终局仍可能回到手上）。
+    for (const a of t.actions) {
+      if (a.type === 'play' && typeof a.cardId === 'string') {
+        merchantPlayCounts[a.cardId] = (merchantPlayCounts[a.cardId] ?? 0) + 1;
+        if (!firstPlayTurnByCard.has(a.cardId)) firstPlayTurnByCard.set(a.cardId, t.turnNumber);
+      }
+    }
     for (const a of t.actions) {
       if (a.type === 'acquire') {
         const marketCard = timeline.merchantMarket[a.index];
@@ -84,7 +94,31 @@ function playerProfile(seat, ctx) {
   }
 
   const finalHand = lastAfter.hand ?? [];
-  const deadCards = finalHand.filter(id => !data.MERCHANT_BY_ID[id]?.starter); // 结束时仍在手上的非起始卡（取了没用上）
+  // 终局手牌中的非起始卡（终局快照语义：不含"从未使用"判断——打出过的卡会因
+  // 休息收回而回到手上。"取了从未打出"的权威口径见 merchantUsage.neverPlayed）。
+  const deadCards = finalHand.filter(id => !data.MERCHANT_BY_ID[id]?.starter);
+  // P1-2 整改：商人卡使用档案（按正式 replay 历史打出事件追踪）。
+  const acquiredCardIds = [...new Set(acquires.map(a => a.cardId).filter(id => typeof id === 'string'))];
+  const neverPlayed = acquiredCardIds.filter(id => !merchantPlayCounts[id]);
+  const firstUseLag = {}; // cardId → 获取→首次打出的回合成本（turnNumber 差；从未打出 = null）
+  for (const id of acquiredCardIds) firstUseLag[id] = null;
+  for (const a of acquires) {
+    const firstPlay = firstPlayTurnByCard.get(a.cardId);
+    if (firstPlay !== undefined && firstUseLag[a.cardId] === null) {
+      firstUseLag[a.cardId] = firstPlay - a.turn;
+    }
+  }
+  const frequentlyUsed = Object.entries(merchantPlayCounts)
+    .filter(([, n]) => n >= 3)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([cardId, playCount]) => ({ cardId, playCount }));
+  const merchantUsage = {
+    acquiredCards: acquiredCardIds.slice().sort(),
+    playCounts: Object.fromEntries(Object.entries(merchantPlayCounts).sort(([a], [b]) => a.localeCompare(b))),
+    neverPlayed: neverPlayed.slice().sort(),
+    firstUseLag,
+    frequentlyUsed,
+  };
   const golemPoints = sum(claims.map(c => c.points));
   const copper = lastAfter.copper ?? 0;
   const silver = lastAfter.silver ?? 0;
@@ -137,6 +171,7 @@ function playerProfile(seat, ctx) {
         finalStock: lastAfter.stock ?? null,
         finalHandSize: finalHand.length,
         deadCards,
+        merchantUsage,
         finalCopper: copper,
         finalSilver: silver,
         firstTurn: ownTurnNumbers[0] ?? null,
@@ -164,6 +199,7 @@ function playerProfile(seat, ctx) {
         deepAcquireRatio: acquires.length ? round2(acquires.filter(a => a.payCount >= 3).length / acquires.length) : null,
         avgBonusRetrieved: acquires.length ? avg(acquires.map(a => a.bonusRetrieved)) : null,
         deadCardCount: deadCards.length,
+        neverPlayedAcquiredCount: merchantUsage.neverPlayed.length,
         avgCapacityUtil: capacityUsed.length ? round2(avg(capacityUsed.map(c => c / 10))) : null,
         maxCapacity: capacityUsed.length ? Math.max(...capacityUsed) : null,
         restCount: rests.length,

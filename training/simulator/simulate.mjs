@@ -14,6 +14,7 @@ import { createGame, applyAction, score, ranking, count } from '../../web-v1/dis
 import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
 import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
 import { ENGINE_SEED_MAX } from '../lib/seeds.mjs';
+import { deriveSimStreamSeed, DEFAULT_SIM_SALT } from '../lib/sim-stream.mjs';
 
 export const DEFAULT_MAX_MOVES = 1200;
 export const DEFAULT_DEADLINE_MS = 60_000;
@@ -109,11 +110,16 @@ export function simulateGame(options) {
       // 该席位走联合规划适配器（joint-js5：冠军引导选择性联合搜索，budgetMs 缺省
       // 100ms 墙钟）——与结构变体同一"一等公民候选"注入模式；冠军路径（无
       // adapter 字段）的决策分派逐字节不变，两版本同进程按席位隔离。
+      // P0-5 整改（独立模拟随机流）：AI 信念采样流由独立域派生
+      // （deriveSimStreamSeed，单向 + 域分离），不再把真实对局种子（=牌库洗牌
+      // 种子）原样暴露给 AI——候选无法从 simSeed 反推牌库序；同盐同种子 ⇒ 同流
+      // （配对 CRN 保持）；version.simSeed 显式覆盖仅供专项实验（留痕）。
       const response = version?.adapter === 'champion-guided'
         ? chooseJointAction(game, {
             version: version.jointVersion ?? 'joint-js5',
             ...(version.gateMode !== undefined ? { gateMode: version.gateMode } : {}),
             ...(version.budgetMs !== undefined ? { budgetMs: version.budgetMs } : {}),
+            simSeed: version.simSeed ?? deriveSimStreamSeed(seed, version.simSalt ?? DEFAULT_SIM_SALT),
             profile: seatProfile(seat),
           })
         : chooseAIAction(game, {

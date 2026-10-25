@@ -1,8 +1,10 @@
-/** 对抗性联赛测试：联赛框架（对局循环 / 赛程 / 座位轮换 / 胜率矩阵 / 端到端冒烟）。 */
+/** 对抗性联赛测试：联赛框架（对局循环 / 赛程 / 座位轮换 / 胜率矩阵 / 端到端冒烟）。
+ * P0-3 整改：胜率矩阵按 (seatCount, protocol) 严格分层——
+ * 相同版本、不同人数/协议不得合并（含专门的分层不变量测试）。 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  playLeagueGame, planMatrix, matchSeats, runPlan, buildWinRateMatrix, summarizeLeague,
+  playLeagueGame, planMatrix, matchSeats, runPlan, buildWinRateMatrix, matrixCell, summarizeLeague,
 } from '../adversarial/league.mjs';
 import { buildRegistry, toSeatVersion } from '../adversarial/registry.mjs';
 import { AI6_LEAGUE_DEV_SUBBLOCK } from '../../ai5/lib/seed_policy.mjs';
@@ -99,7 +101,7 @@ test('planMatrix：2p 头对头单场、≥3p 双向场、种子场间不重叠�
   }), /seatCount/);
 });
 
-test('buildWinRateMatrix：异常局绝不计入；2p 头对头双向互补计数', () => {
+test('buildWinRateMatrix：异常局绝不计入统计但按层披露；2p 头对头双向互补计数', () => {
   const plan = planMatrix({
     versionIds: ['A', 'B'], seatCounts: [2], seedsPerPair: 4,
     seedBase: 100, block: [100, 200],
@@ -108,19 +110,26 @@ test('buildWinRateMatrix：异常局绝不计入；2p 头对头双向互补计�
     { matchId: 'A--vs--B@2', direction: 'h2h', focusId: 'A', opponentId: 'B', focusSeat: 0, status: 'finished', seatCount: 2, winnerSeat: 0 },
     { matchId: 'A--vs--B@2', direction: 'h2h', focusId: 'A', opponentId: 'B', focusSeat: 1, status: 'finished', seatCount: 2, winnerSeat: 1 },
     { matchId: 'A--vs--B@2', direction: 'h2h', focusId: 'A', opponentId: 'B', focusSeat: 0, status: 'finished', seatCount: 2, winnerSeat: 1 },
-    { matchId: 'A--vs--B@2', direction: 'h2h', focusId: 'A', opponentId: 'B', focusSeat: 1, status: 'anomaly', reason: 'x', winnerSeat: null },
+    { matchId: 'A--vs--B@2', direction: 'h2h', focusId: 'A', opponentId: 'B', focusSeat: 1, status: 'anomaly', reason: 'x', seatCount: 2, winnerSeat: null },
   ];
   const matrix = buildWinRateMatrix(plan, games);
+  const ab = matrix.A.B.byProtocol['h2h@2'];
+  const ba = matrix.B.A.byProtocol['h2h@2'];
   // A 焦点 3 finished：A 胜 2（seed0 座0、seed1 座1 时 winner=focus）
-  assert.equal(matrix.A.B.games, 3);
-  assert.equal(matrix.A.B.wins, 2);
+  assert.equal(ab.games, 3);
+  assert.equal(ab.wins, 2);
   // 互补：B 视角 wins = 3 - 2 = 1
-  assert.equal(matrix.B.A.games, 3);
-  assert.equal(matrix.B.A.wins, 1);
-  // 异常局（第 4 局）未计入任何 cell
-  assert.equal(matrix.A.B.games + matrix.B.A.games, 6);
+  assert.equal(ba.games, 3);
+  assert.equal(ba.wins, 1);
+  // 异常局（第 4 局）未计入任何 cell 的 games/wins，但按层披露（双方视角各计一次）
+  assert.equal(ab.games + ba.games, 6);
+  assert.equal(ab.anomalies, 1);
+  assert.equal(ba.anomalies, 1);
   // 座位覆盖披露
-  assert.deepEqual(Object.keys(matrix.A.B.bySeat).sort(), ['0', '1']);
+  assert.deepEqual(Object.keys(ab.bySeat).sort(), ['0', '1']);
+  // Wilson 区间基于本层样本（n=3）
+  assert.ok(ab.wilson);
+  assert.equal(ab.firstPlaceRate, 0.6667);
 });
 
 test('buildWinRateMatrix：≥3p 有向场只计入焦点→对手方向', () => {
@@ -135,10 +144,55 @@ test('buildWinRateMatrix：≥3p 有向场只计入焦点→对手方向', () =>
     { matchId: 'B--vs--A@3', direction: 'field', focusId: 'B', opponentId: 'A', focusSeat: 2, status: 'finished', seatCount: 3, winnerSeat: 2 },
   ];
   const matrix = buildWinRateMatrix(plan, games);
-  assert.equal(matrix.A.B.wins, 1);
-  assert.equal(matrix.B.A.wins, 1);
-  assert.equal(matrix.A.B.games, 2);
-  assert.equal(matrix.B.A.games, 2);
+  assert.equal(matrixCell(matrix, 'A', 'B', 'field', 3).wins, 1);
+  assert.equal(matrixCell(matrix, 'B', 'A', 'field', 3).wins, 1);
+  assert.equal(matrixCell(matrix, 'A', 'B', 'field', 3).games, 2);
+  assert.equal(matrixCell(matrix, 'B', 'A', 'field', 3).games, 2);
+});
+
+test('buildWinRateMatrix 分层不变量：相同版本、不同人数/协议绝不合并（P0-3）', () => {
+  // 构造 A vs B 在 2p h2h 与 5p field 各 2 局——v1 会合并成 n=4 的单元；
+  // v2 必须按 'h2h@2' 与 'field@5' 两个协议层分开统计。
+  const plan = planMatrix({
+    versionIds: ['A', 'B'], seatCounts: [2, 5], seedsPerPair: 2,
+    seedBase: 100, block: [100, 200],
+  });
+  const games = [
+    { matchId: 'A--vs--B@2', direction: 'h2h', focusId: 'A', opponentId: 'B', focusSeat: 0, status: 'finished', seatCount: 2, winnerSeat: 0 },
+    { matchId: 'A--vs--B@2', direction: 'h2h', focusId: 'A', opponentId: 'B', focusSeat: 1, status: 'finished', seatCount: 2, winnerSeat: 0 },
+    { matchId: 'A--vs--B@5', direction: 'field', focusId: 'A', opponentId: 'B', focusSeat: 0, status: 'finished', seatCount: 5, winnerSeat: 1 },
+    { matchId: 'A--vs--B@5', direction: 'field', focusId: 'A', opponentId: 'B', focusSeat: 1, status: 'finished', seatCount: 5, winnerSeat: 2 },
+  ];
+  const matrix = buildWinRateMatrix(plan, games);
+  const entry = matrix.A.B;
+  assert.deepEqual(Object.keys(entry.byProtocol).sort(), ['field@5', 'h2h@2']);
+  // h2h@2：局1 焦点A（座0，胜者座0）胜；局2 焦点A（座1，胜者座0）负 → A 1/2
+  assert.equal(entry.byProtocol['h2h@2'].games, 2);
+  assert.equal(entry.byProtocol['h2h@2'].wins, 1);
+  // field@5：焦点A 0 胜（胜者均为非焦点席）
+  assert.equal(entry.byProtocol['field@5'].games, 2);
+  assert.equal(entry.byProtocol['field@5'].wins, 0);
+  // 不存在任何合并层数（v1 的 matrix.A.B.games 直接读数必须不存在）
+  assert.equal(entry.games, undefined);
+  // 协议层互不污染：h2h 互补层只影响 B.A 的 h2h@2（互补计数 = 2 − 1 = 1）
+  assert.equal(matrix.B.A.byProtocol['h2h@2'].wins, 1);
+  assert.equal(matrix.B.A.byProtocol['field@5'], undefined, '2p h2h 不得反向填充 field 层');
+});
+
+test('buildWinRateMatrix：分层单元披露版本指纹与异常计数（审计口径）', () => {
+  const plan = planMatrix({
+    versionIds: ['A', 'B'], seatCounts: [3], seedsPerPair: 2,
+    seedBase: 100, block: [100, 200],
+  });
+  const games = [
+    { matchId: 'A--vs--B@3', direction: 'field', focusId: 'A', opponentId: 'B', focusSeat: 0, status: 'finished', seatCount: 3, winnerSeat: 0, fingerprints: ['fp-A', 'fp-B', 'fp-B'] },
+    { matchId: 'A--vs--B@3', direction: 'field', focusId: 'A', opponentId: 'B', focusSeat: 1, status: 'anomaly', reason: 'x', seatCount: 3, fingerprints: ['fp-A', 'fp-B', 'fp-B'] },
+  ];
+  const matrix = buildWinRateMatrix(plan, games);
+  const cell = matrixCell(matrix, 'A', 'B', 'field', 3);
+  assert.deepEqual(cell.focusFingerprints, ['fp-A']);
+  assert.equal(cell.anomalies, 1);
+  assert.equal(cell.games, 1);
 });
 
 test('端到端冒烟：2+5 人、3 版本、快档——报告结构、指纹、异常记账、座位覆盖', () => {
@@ -152,7 +206,7 @@ test('端到端冒烟：2+5 人、3 版本、快档——报告结构、指纹�
   const games = runPlan(plan, reg, { jointOverrides: FAST });
   assert.equal(games.length, 18);
   const report = summarizeLeague({ plan, games, registry: reg, jointOverrides: FAST, note: '测试冒烟' });
-  assert.equal(report.schema, 'century-adversarial-league-v1');
+  assert.equal(report.schema, 'century-adversarial-league-v2');
   assert.equal(report.totals.games, 18);
   assert.equal(report.totals.finished + report.totals.anomalies, 18);
   // 注册表快照全量披露（不可变版本指纹）
@@ -166,15 +220,22 @@ test('端到端冒烟：2+5 人、3 版本、快档——报告结构、指纹�
       assert.equal(g.fingerprints[s], reg.snapshot.versionFingerprints[versionId]);
     }
   }
-  // 矩阵覆盖：3 版本两两方向全齐
+  // 矩阵覆盖：3 版本两两方向全齐，且每个 (seatCount, protocol) 层独立披露
   for (const a of ['js5-frozen-champion', 'style-rush', 'style-balanced']) {
     for (const b of ['js5-frozen-champion', 'style-rush', 'style-balanced']) {
       if (a === b) continue;
-      const cell = report.matrix[a]?.[b];
-      assert.ok(cell, `缺少矩阵单元 ${a}→${b}`);
-      assert.ok(cell.games > 0);
-      assert.ok(cell.firstPlaceRate >= 0 && cell.firstPlaceRate <= 1);
-      assert.ok(cell.wilson, 'Wilson 区间必须披露');
+      const entry = report.matrix[a]?.[b];
+      assert.ok(entry, `缺少矩阵单元 ${a}→${b}`);
+      // 2p h2h 与 5p field 两层都在（跨人数不得合并——P0-3）
+      const h2h = entry.byProtocol['h2h@2'];
+      const field = entry.byProtocol['field@5'];
+      assert.ok(h2h && h2h.games > 0, `${a}→${b} 缺 h2h@2 层`);
+      assert.ok(field && field.games > 0, `${a}→${b} 缺 field@5 层`);
+      for (const cell of [h2h, field]) {
+        assert.ok(cell.firstPlaceRate >= 0 && cell.firstPlaceRate <= 1);
+        assert.ok(cell.wilson, 'Wilson 区间必须按层披露');
+        assert.ok(Array.isArray(cell.focusFingerprints) && cell.focusFingerprints.length > 0, '分层单元必须披露版本指纹');
+      }
     }
   }
   // 一级指标按场披露 + 座位轮换覆盖（快档下全部正常终局）

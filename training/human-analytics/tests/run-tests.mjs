@@ -285,3 +285,102 @@ test('fixtures 生成器：同种子两次生成逐字节一致', async () => {
   const b = await simulateGame(3, 202);
   assert.equal(canonicalStringify(a.json), canonicalStringify(b.json));
 });
+
+// ==================== P1-2 整改：输入缺失 fail-closed + 商人卡使用档案 ====================
+
+test('P1-2 输入缺失：全部输入不存在时 check/analyze 必须非零退出（空集合≠全部通过）', () => {
+  const dir = tmp();
+  const cli = resolve(MOD, 'cli.mjs');
+  try {
+    const missing = resolve(dir, '不存在-1.json');
+    const r1 = spawnSync(process.execPath, [cli, 'check', missing], { encoding: 'utf8' });
+    assert.notEqual(r1.status, 0, '全部输入缺失时 check 不得返回成功');
+    assert.match(r1.stderr, /找不到文件/);
+    assert.match(r1.stderr, /检查披露/, '必须披露实际检查数量/成功数量/失败数量');
+    assert.match(r1.stderr, /实际检查 0/, '空检查集合必须显式披露');
+    const r2 = spawnSync(process.execPath, [cli, 'analyze', missing, '--out', resolve(dir, 'out')], { encoding: 'utf8' });
+    assert.notEqual(r2.status, 0, '全部输入缺失时 analyze 不得返回成功');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('P1-2 输入缺失：部分输入缺失按批处理失败策略返回非零并披露计数', async () => {
+  const dir = tmp();
+  const cli = resolve(MOD, 'cli.mjs');
+  try {
+    const good = fixture(FINISHED[0]);
+    const missing = resolve(dir, '不存在-2.json');
+    const r = spawnSync(process.execPath, [cli, 'check', good, missing], { encoding: 'utf8' });
+    assert.notEqual(r.status, 0, '部分输入缺失必须非零退出（fail-closed 批策略）');
+    assert.match(r.stderr, /输入 2（缺失 1）/, '必须披露 缺失/检查/通过/失败 计数');
+    assert.match(r.stderr, /实际检查 1/, '');
+    assert.match(r.stdout, /通过/, '存在文件仍应正常检查并披露结果');
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('P1-2 商人卡使用档案：从未打出的已获取卡 ≠ 终局在手的卡（打出事件追踪）', async () => {
+  // 断言口径：metrics 基于正式 replay 的历史打出事件（play 行动逐次计数），
+  // 而非终局手牌快照。真实 fixture 中挑一个「终局在手但打出过」或「从未打出」
+  // 的具体卡逐位验证两个口径的差异由 playCounts 正确表达。
+  const r = await importGameFile(fixture(FINISHED[2])); // 4p
+  assert.ok(r.ok);
+  const metrics = await computeGameMetrics(r);
+  for (const p of metrics.players) {
+    const usage = p.kind.observable.merchantUsage;
+    assert.ok(usage, 'merchantUsage 必须在场');
+    // playCounts 与 replay 逐 turn 求和一致
+    let expectedTotal = 0;
+    for (const t of r.record.replay.turns) {
+      if (t.playerId !== p.seat) continue;
+      for (const a of t.actions) if (a.type === 'play') expectedTotal++;
+    }
+    const counted = Object.values(usage.playCounts).reduce((s, x) => s + x, 0);
+    assert.equal(counted, expectedTotal, `${p.seat} 打出事件计数必须等于 replay 中 play 行动总数`);
+    // neverPlayed ⊆ acquiredCards 且与 playCounts 无交
+    for (const id of usage.neverPlayed) {
+      assert.ok(usage.acquiredCards.includes(id), `neverPlayed ${id} 必须属于已获取集合`);
+      assert.equal(usage.playCounts[id] ?? 0, 0, `neverPlayed ${id} 打出次数必须为 0`);
+    }
+    // frequentlyUsed：次数 ≥3 且降序
+    for (const f of usage.frequentlyUsed) assert.ok(f.playCount >= 3);
+    // 首用成本：数字且 ≥0，或 null（从未打出）
+    for (const [id, lag] of Object.entries(usage.firstUseLag)) {
+      assert.ok(lag === null || (Number.isInteger(lag) && lag >= 0), `${id} 首用回合成本非法：${lag}`);
+    }
+    // 兼容性：deadCards 仍为终局快照口径（可与 neverPlayed 不同）
+    assert.ok(Array.isArray(p.kind.observable.deadCards));
+    assert.equal(p.kind.computed.neverPlayedAcquiredCount, usage.neverPlayed.length);
+  }
+});
+
+test('P1-2 商人卡档案：打出后又休息收回的卡不误判为未使用', async () => {
+  // 从 fixture 中寻找证据：存在「打出次数 ≥1 且终局仍在手」的已获取卡——
+  // 旧口径（终局在手=没用上）会把它误判，新口径按打出事件正确计数。
+  let found = false;
+  for (const f of FINISHED) {
+    const r = await importGameFile(fixture(f));
+    const metrics = await computeGameMetrics(r);
+    for (const p of metrics.players) {
+      const usage = p.kind.observable.merchantUsage;
+      const finalHandNonStarter = p.kind.observable.deadCards;
+      const playedButBackInHand = finalHandNonStarter.filter(id => (usage.playCounts[id] ?? 0) >= 1);
+      if (playedButBackInHand.length) {
+        found = true;
+        for (const id of playedButBackInHand) {
+          assert.ok(!usage.neverPlayed.includes(id), `${f} 座位 ${p.seat} 的 ${id} 打出过（${usage.playCounts[id]} 次）且终局在手——绝不得进入 neverPlayed`);
+        }
+      }
+    }
+  }
+  assert.ok(found, 'fixture 集合中必须存在「打出后休息收回」的天然证据（否则口径测试退化为恒真）');
+});
+
+test('P1-2 数据来源：模拟数据必须带来源戳，不得标注为真人', async () => {
+  for (const f of [...FINISHED, 'sim-scripted-3p-unfinished-seed505.json']) {
+    const r = await importGameFile(fixture(f));
+    assert.equal(r.provenance.kind, 'simulated-scripted', `${f} 必须带 simulated-scripted 来源戳`);
+  }
+});

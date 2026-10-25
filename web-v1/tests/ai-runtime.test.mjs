@@ -276,3 +276,103 @@ test('版本纪律：未知版本与 champion-contest 在 worker 路径被明确
     client.dispose();
   }
 });
+
+// ==================== P1-1 整改：递归防火墙与过期状态防线 ====================
+
+import { validateDecisionPayload, validateAIVersionDescriptor, validateDecisionBudget } from '../dist/js/ai-runtime/protocol.js';
+import { createAIWorkerCore } from '../dist/js/ai-runtime/worker-core.js';
+
+test('P1-1 递归防火墙：嵌套隐藏牌库字段在任意层级被拒绝', () => {
+  const { observation } = positionAndObservation(6120);
+  const base = () => ({
+    observation, ai: { jointVersion: 'joint-js5' },
+    budget: { mode: 'fixed-work', workUnits: 4 }, simSeed: 7,
+  });
+  // players 元素内夹带 merchantDeck
+  const nested1 = base();
+  nested1.observation = {
+    ...observation,
+    players: observation.players.map((p, i) => i === 0 ? { ...p, merchantDeck: ['M01'] } : p),
+  };
+  assert.throws(() => validateDecisionPayload(nested1), /merchantDeck/);
+  // merchantMarket 元素内夹带 golemDeck
+  const nested2 = base();
+  nested2.observation = {
+    ...observation,
+    merchantMarket: [{ id: 'M01', bonus: [1, 0, 0, 0], golemDeck: ['G01'] }],
+  };
+  assert.throws(() => validateDecisionPayload(nested2), /golemDeck/);
+  // 整份 Game 作为观察（顶层 merchantDeck）
+  const wholeGame = base();
+  wholeGame.observation = { ...observation, merchantDeck: ['M01', 'M02'] };
+  assert.throws(() => validateDecisionPayload(wholeGame), /merchantDeck/);
+  // ai 描述符内夹带隐藏字段（递归扫描覆盖 payload 全域）
+  const smuggled = base();
+  smuggled.ai = { jointVersion: 'joint-js5', merchantDeck: [] };
+  assert.throws(() => validateDecisionPayload(smuggled), /merchantDeck/);
+});
+
+test('P1-1 载荷校验：合法手牌不被误判 + 非法版本/预算/种子拒绝', () => {
+  const { observation } = positionAndObservation(6121);
+  const base = () => ({
+    observation, ai: { jointVersion: 'joint-js5' },
+    budget: { mode: 'fixed-work', workUnits: 4 }, simSeed: 7,
+  });
+  // 合法载荷（含玩家 hand 公开信息）必须通过——不得把规则允许的手牌当隐藏信息。
+  assert.doesNotThrow(() => validateDecisionPayload(base()));
+  // 非法版本描述符
+  const badVersion = base(); badVersion.ai = { jointVersion: 'champion-guided-raw' };
+  assert.throws(() => validateAIVersionDescriptor(badVersion.ai), /非法版本描述符/);
+  const badVersion2 = base(); badVersion2.ai = { jointVersion: '../etc/passwd' };
+  assert.throws(() => validateAIVersionDescriptor(badVersion2.ai), /非法版本描述符/);
+  // 非法预算
+  assert.throws(() => validateDecisionBudget({ mode: 'unbounded' }), /budget\.mode/);
+  assert.throws(() => validateDecisionBudget({ mode: 'fixed-work', workUnits: 0 }), /workUnits/);
+  assert.throws(() => validateDecisionBudget({ mode: 'wall-clock', budgetMs: 999_999 }), /budgetMs/);
+  assert.throws(() => validateDecisionBudget({ mode: 'fixed-work', workUnits: 4, smuggle: 1 }), /白名单之外/);
+  // 非法种子 / horizon / worlds
+  assert.throws(() => validateDecisionPayload({ ...base(), simSeed: -1 }), /simSeed/);
+  assert.throws(() => validateDecisionPayload({ ...base(), simSeed: 2 ** 32 }), /simSeed/);
+  assert.throws(() => validateDecisionPayload({ ...base(), horizon: 0 }), /horizon/);
+  assert.throws(() => validateDecisionPayload({ ...base(), worlds: 'many' }), /worlds/);
+  // 载荷白名单外字段
+  assert.throws(() => validateDecisionPayload({ ...base(), gameState: {} }), /白名单之外/);
+  // 病态数值范围
+  const badRange = base();
+  badRange.observation = { ...observation, turnNumber: -5 };
+  assert.throws(() => validateDecisionPayload(badRange), /turnNumber/);
+});
+
+test('P1-1 状态管理：无效自比较检查已删除，过期版本请求被拒绝', () => {
+  // 源码静态断言：v1.0 的 request.gameStateVersion !== gameStateVersion 死代码不再存在。
+  const src = readFileSync(join(SRC_RUNTIME, 'worker-core.ts'), 'utf8');
+  assert.equal(/gameStateVersion !== gameStateVersion/.test(src), false, '不得保留与自身比较的无效不变量');
+  assert.ok(/versionWatermark/.test(src), '必须存在真实的过期版本水位检查');
+
+  // 行为学：直接驱动 worker 核。
+  const sent = [];
+  const core = createAIWorkerCore(response => sent.push(response));
+  core.handleMessage({ kind: 'init', protocolVersion: PROTOCOL_VERSION });
+  assert.equal(sent.at(-1).kind, 'ready');
+  const { observation } = positionAndObservation(6122);
+  const payload = {
+    observation, ai: { jointVersion: 'joint-js5' },
+    budget: { mode: 'fixed-work', workUnits: 2 }, simSeed: 5, horizon: 20,
+  };
+  const decision = (requestId, gameStateVersion, p = payload) =>
+    core.handleMessage({ kind: 'decision', protocolVersion: PROTOCOL_VERSION, requestId, gameStateVersion, payload: p });
+  // v5 正常执行
+  decision('req-v5', 5);
+  assert.equal(sent.at(-1).kind, 'decision', '首个合法决策必须执行');
+  // 非整数版本 → 协议错误
+  decision('req-bad', 1.5);
+  assert.equal(sent.at(-1).kind, 'error');
+  assert.match(sent.at(-1).message, /gameStateVersion/);
+  // 迟到的旧版本 → cancelled（不执行、不产出可提交行动）
+  decision('req-stale', 4);
+  assert.equal(sent.at(-1).kind, 'cancelled', '过期状态版本的决策必须被拒绝');
+  // reset 后新对局：低版本重新被接受
+  core.handleMessage({ kind: 'reset', protocolVersion: PROTOCOL_VERSION });
+  decision('req-new-game', 1);
+  assert.equal(sent.at(-1).kind, 'decision', 'reset 后新对局的低版本决策必须被接受');
+});

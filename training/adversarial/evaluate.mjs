@@ -15,7 +15,7 @@
  * 供第六阶段消费。
  */
 
-import { planMatrix, runPlan, buildWinRateMatrix, playLeagueGame, MIN_SEAT_COUNT, MAX_SEAT_COUNT } from './league.mjs';
+import { planMatrix, runPlan, buildWinRateMatrix, matrixCell, playLeagueGame, MIN_SEAT_COUNT, MAX_SEAT_COUNT } from './league.mjs';
 import { assertInBlock } from '../../ai5/lib/seed_policy.mjs';
 import { wilsonCI } from '../evaluator/stats.mjs';
 
@@ -98,18 +98,22 @@ export function evaluateCandidate({
   };
 }
 
-/** 轴 A 汇总：按 seatCount 聚合焦点席第一名率（Wilson CI + 座位覆盖）。 */
+/** 轴 A 汇总：按 match（= seatCount × protocol）读取分层矩阵单元（P0-3 整改：
+ * v1 曾读取跨人数合并 cell——2p h2h 与 5p field 合并后的 Wilson 区间不可作
+ * 强度判据。v2 每场只读自己的 (seatCount, protocol) 层）。 */
 function summarizeAxis(plan, games) {
   const matrix = buildWinRateMatrix(plan, games);
   const cells = [];
   for (const match of plan.matches) {
-    const cell = matrix[match.focusId]?.[match.opponentId];
+    const cell = matrixCell(matrix, match.focusId, match.opponentId, match.direction, match.seatCount);
     if (!cell) continue;
     cells.push({
-      seatCount: match.seatCount, direction: match.direction,
+      seatCount: cell.seatCount, direction: cell.direction, protocol: cell.protocol,
       games: cell.games, wins: cell.wins,
       firstPlaceRate: cell.firstPlaceRate, wilson: cell.wilson,
+      anomalies: cell.anomalies,
       seatCoverage: Object.keys(cell.bySeat).sort().join('+'),
+      focusFingerprints: cell.focusFingerprints,
     });
   }
   const anomalies = games.filter(g => g.status !== 'finished').length;
@@ -167,7 +171,9 @@ export function selectStrongOpponents(evaluations, {
 } = {}) {
   const ranked = [];
   for (const evaluation of evaluations) {
-    // 轴 A 主读数：优先头对头（h2h）单元；多人局取方向 A（field）单元。
+    // 轴 A 主读数（P0-3 整改）：每个 cell 已按 (seatCount, protocol) 分层——
+    // 主读数取头对头（h2h）特定人数单元；多人局取方向 A（field）单元。
+    // 禁止任何跨人数合并 Wilson 区间参与筛选；全部分层单元随 cells 披露。
     const h2h = evaluation.axisA.cells.find(c => c.direction === 'h2h');
     const fieldCells = evaluation.axisA.cells.filter(c => c.direction === 'field');
     const primary = h2h ?? fieldCells[0] ?? null;
@@ -193,7 +199,7 @@ export function selectStrongOpponents(evaluations, {
   }
   ranked.sort((a, b) => (b.axisA.firstPlaceRate ?? -1) - (a.axisA.firstPlaceRate ?? -1));
   return {
-    schema: 'century-adversarial-strong-opponents-v1',
+    schema: 'century-adversarial-strong-opponents-v2',
     criteria: { minAxisALower, minAxisGLower, minAxisGDiff },
     strongOpponents: ranked.filter(r => r.verdict === 'strong'),
     all: ranked,

@@ -27,6 +27,7 @@ import { fileURLToPath } from 'node:url';
 import { nextValidationBase, consumeLedger, assertBlockFree, validationChallengeCount, VALIDATION_POOL_BASE } from '../lib/seeds.mjs';
 import { challengeWithDecision } from './challenge.mjs';
 import { requireBuiltEngine, engineBundleSha256, REPO_ROOT } from '../lib/paths.mjs';
+import { DEFAULT_SIM_SALT } from '../lib/sim-stream.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const outDir = resolve(REPO_ROOT, 'training/reports/js5-promotion-challenge');
@@ -38,6 +39,12 @@ const seedsArg = args.includes('--seeds') ? Number(args[args.indexOf('--seeds') 
 if (!Number.isSafeInteger(seedsArg) || seedsArg < 60 || seedsArg > 2000) {
   throw new Error(`--seeds 必须为 60–2000 的整数（决定性下限 60 + 余量），实际：${seedsArg}`);
 }
+
+// ---- 0. 运行指纹在进程启动时捕获（教训：结束时捕获不对应实际加载代码——
+// challenge-11 事故：并行改动晚于模块加载，证据 codeCommit 失真已用 provenance 更正）。
+const CODE_COMMIT_AT_START = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+requireBuiltEngine();
+const ENGINE_BUNDLE_AT_START = engineBundleSha256();
 
 // ---- 候选版本：JS5 冠军引导选择性联合搜索（结构候选；显式适配器注入） ----
 const candidateDescriptor = {
@@ -57,7 +64,8 @@ if (candidateDescriptor.id !== 'joint-js5' || candidateDescriptor.adapter !== 'c
 const champion = JSON.parse(readFileSync(resolve(REPO_ROOT, 'training/champions/champion.json'), 'utf8'));
 const championParameters = champion.parameters;
 
-// ---- 1. 合并全部已知验证账本（防伪造小序号：累计全部已记账挑战） ----
+// ---- 1. 合并全部已知验证账本（P0-5 整改：fail-closed——缺失账本抛错而非跳过；
+// challenge-10 种子重复消费事故的根因即 worktree 缺账本被静默跳过） ----
 const ledgerSources = [
   'training/reports/structure-challenge-rollout-confirm/validation-ledger.json', // PR #11 晋级挑战
   'training/reports/evolve-latest/validation-ledger.json',                       // 本地进化确认挑战
@@ -71,7 +79,13 @@ const merged = { history: [] };
 for (const rel of ledgerSources) {
   const p = resolve(REPO_ROOT, rel);
   if (!p.startsWith(REPO_ROOT)) throw new Error(`账本路径越界：${rel}`);
-  if (!existsSync(p)) { console.error(`账本缺失（跳过）：${rel}`); continue; }
+  if (!existsSync(p)) {
+    throw new Error(
+      `验证账本缺失（fail-closed）：${rel}——缺失账本会使 challengeIndex 低估、种子块重复消费` +
+      '（challenge-10 事故根因）。先从归档恢复该账本；如确认该来源已永久失效，必须在' +
+      '本脚本账本清单中显式移除并留痕（不得静默跳过）。',
+    );
+  }
   const ledger = JSON.parse(readFileSync(p, 'utf8'));
   for (const entry of ledger.history ?? []) {
     if (!merged.history.some(e => e.base === entry.base)) merged.history.push(entry);
@@ -80,6 +94,7 @@ for (const rel of ledgerSources) {
 merged.challengeCount = validationChallengeCount({ history: merged.history });
 const challengeIndex = merged.challengeCount + 1;
 console.log(`历史已消费块 ${merged.history.length} 个，累计确认挑战 ${merged.challengeCount} 次 → 本次 challengeIndex=${challengeIndex}`);
+console.log(`运行指纹（进程启动时捕获）：codeCommit=${CODE_COMMIT_AT_START.slice(0, 12)} engineBundle=${ENGINE_BUNDLE_AT_START.slice(0, 12)}`);
 
 // ---- 2. 分配并防重校验验证种子块（一次性消费；无论判定如何都记账） ----
 const SEEDS = seedsArg;
@@ -87,20 +102,36 @@ const seedBase = nextValidationBase(merged);
 assertBlockFree(seedBase, SEEDS, merged);
 console.log(`本次验证种子块：[${seedBase}, ${seedBase + SEEDS})（验证池起点 ${VALIDATION_POOL_BASE}）`);
 
-// ---- 3. 正式挑战（250 种子 × 2 局 = 500 局，双向配对 + 座位轮换 + 冠军独占对手） ----
+// ---- 3. 正式挑战（默认 250 种子 × 2 局 = 500 局，双向配对 + 座位轮换 + 冠军独占对手） ----
 // deadlineMs 300s：方向 B 含 4 个 JS5 席位（每决策 100ms 预算），单局墙钟可达 ~90s。
-console.log(`开始正式挑战：${SEEDS} 种子 × 2 方向（预计 40-90 分钟）...`);
+// P0-5：--seats 2..5 支持按人数执行独立挑战（每种人数单独成次、跨人数不合并判定）；
+// 缺省 5 = 历史协议口径。本脚本绝不在整改中自动执行挑战（不消费验证池）。
+const seatsArg = args.includes('--seats') ? Number(args[args.indexOf('--seats') + 1]) : 5;
+if (!Number.isSafeInteger(seatsArg) || seatsArg < 2 || seatsArg > 5) {
+  throw new Error(`--seats 必须为 2–5 的整数（按人数独立挑战），实际：${seatsArg}`);
+}
+console.log(`开始正式挑战：${SEEDS} 种子 × 2 方向 × ${seatsArg} 人（预计 40-90 分钟）...`);
 const startedAt = Date.now();
 const { summary, games } = challengeWithDecision({
   champion: championParameters,
   candidate: candidateDescriptor,
   seeds: SEEDS,
   seedBase,
+  seatCount: seatsArg,
   minSeeds: 60,
   challengeIndex,
   deadlineMs: 300_000,
 });
-console.log(`挑战完成（${Math.round((Date.now() - startedAt) / 60000)} 分钟）`);
+// ---- 3.5 代码冻结校验：挑战全程产物指纹不得漂移（实际执行产物 = 受试产物） ----
+const ENGINE_BUNDLE_AT_END = engineBundleSha256();
+const codeFrozen = ENGINE_BUNDLE_AT_END === ENGINE_BUNDLE_AT_START;
+if (!codeFrozen) {
+  throw new Error(
+    `代码冻结校验失败：引擎产物指纹在挑战过程中漂移（start=${ENGINE_BUNDLE_AT_START.slice(0, 12)} end=${ENGINE_BUNDLE_AT_END.slice(0, 12)}）——` +
+    '并行会话重建了 dist。本次运行证据按纪律作废（不计入晋级），先隔离运行环境。',
+  );
+}
+console.log(`挑战完成（${Math.round((Date.now() - startedAt) / 60000)} 分钟）；代码冻结校验通过（bundle ${ENGINE_BUNDLE_AT_END.slice(0, 12)}）`);
 console.log(JSON.stringify({
   verdict: summary.decision.verdict, reason: summary.decision.reason,
   paired: summary.paired, candidateWinRate: summary.candidateWinRate,
@@ -128,8 +159,24 @@ writeFileSync(resolve(outDir, 'candidate.json'), JSON.stringify({
     winRate: summary.candidateWinRate, pairedDiff: summary.pairedDiffCI,
     ci: summary.decision.ci, decision: summary.decision,
   },
-  engineBundleSha256: engineBundleSha256(),
-  codeCommit: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
+  engineBundleSha256: ENGINE_BUNDLE_AT_START,
+  codeCommit: CODE_COMMIT_AT_START,
+  seatCount: seatsArg,
+  primaryMetric: summary.primaryMetric,
+  // P0-5 随机流留痕：AI 信念采样流 = deriveSimStreamSeed(对局种子, salt)——
+  // 独立域单向派生，不暴露真实洗牌种子；来源与盐值随证据落盘可审计。
+  simStream: {
+    domain: 'derived-v1',
+    salt: DEFAULT_SIM_SALT,
+    derivation: 'simSeed = sha256(salt:对局种子) 截断 31 位（training/lib/sim-stream.mjs）',
+    note: '游戏真实牌库 RNG（引擎内部）与 AI 信念采样 RNG 逻辑隔离；同盐同种子 ⇒ 同流（配对 CRN 保持）',
+  },
+  runFingerprints: {
+    engineBundleAtStart: ENGINE_BUNDLE_AT_START,
+    engineBundleAtEnd: ENGINE_BUNDLE_AT_END,
+    codeFrozen: true,
+    capturedAt: 'process-start（受试代码 = 实际加载代码）',
+  },
   generatedAt: new Date().toISOString(),
 }, null, 2));
 writeFileSync(resolve(outDir, 'validation-ledger.json'), JSON.stringify(ledger, null, 2));

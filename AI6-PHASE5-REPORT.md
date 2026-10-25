@@ -586,3 +586,25 @@ node training/joint/gate-analysis.mjs <ablation.json ...> --out training/reports
 # 诊断记录器（G）
 node training/joint/diagnostics.mjs --players 3 --seeds 10
 ```
+
+---
+
+## 附录：独立复核勘误（2026-10-25，AI6 合并后可靠性整改）
+
+> 本附录以勘误方式修正正文声明，正文原文保留不改写。复核脚本与证据见
+> `AI6-POST-MERGE-EVIDENCE-CORRECTIONS.md` 与 `training/redteam/audit-evidence-accounting.mjs`。
+
+### 勘误 1：confirm 块总局数 25,600 → 12,800
+
+- **原陈述**：§摘要/结论「独立确认（决定性结果，25,600 局全新种子零异常）」；经典池「12,800 局」。
+- **错误原因**：总局数把统计口径双计——每个 (候选, 对手池) 落盘文件的 cells 之和为
+  1,600 局（4 人数 × 200 种子 × 2 方向），8 个文件合计 **12,800 局**。25,600 把
+  方向 A/B 或候选维度重复计入一次。
+- **修正陈述**：confirm 块实际落盘 **12,800 局**（4 候选 js0/js1/js5/js5-opt ×
+  2 对手池 classic/diverse × 4 人数 × 200 种子 × 2 方向），零异常。各候选/池的
+  方向 A 显著性结论（3p classic +11.5pp、4p +26.5/+12.5pp、5p +22.0/+18.5pp，
+  family=4 校正存活）按 12,800 口径**不变**（置信区间基于种子级配对，样本基数
+  未受双计影响）；2p 正向趋势不显著的结论不变。
+- **原始证据来源**：`training/reports/js5-phase5/confirm/*/ablation-confirm-*.json`
+  （8 文件，逐局 games 数组在案，未覆盖未改写）。
+- **影响**：不影响挑战判定与晋级结论；样本量声明需按 12,800 引用。

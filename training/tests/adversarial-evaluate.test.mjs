@@ -122,7 +122,7 @@ test('selectStrongOpponents：标准化版本描述符输出（第六阶段可�
     axisA: { cells: [{ seatCount: 2, direction: 'h2h', games: 10, wins: 7, firstPlaceRate: 0.7, wilson: { lower: 0.55, upper: 0.82, point: 0.7 }, seatCoverage: '0+1' }], anomalies: 0, totalGames: 10 },
     axisG: { cells: [{ seatCount: 5, games: 10, wins: 6, firstPlaceRate: 0.6, wilson: { lower: 0.31, upper: 0.83, point: 0.6 }, meanScore: 32, meanOpponentScore: 30, scoreDiff: 2 }], anomalies: 0, totalGames: 10 },
   }]);
-  assert.equal(selection.schema, 'century-adversarial-strong-opponents-v1');
+  assert.equal(selection.schema, 'century-adversarial-strong-opponents-v2');
   const strong = selection.strongOpponents[0];
   // 指纹 = 注册表版本指纹（消费方可直接用 run-league --versions 注入复现）
   assert.equal(strong.fingerprint, evalReg.snapshot.versionFingerprints['cand-rush-plus']);

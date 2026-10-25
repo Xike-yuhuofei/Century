@@ -60,24 +60,36 @@ async function main() {
 
   if (cmd === 'check') {
     if (!args.files.length) { usage(); process.exit(2); }
-    let bad = 0;
-    for (const r of await importGameFiles(args.files.filter(inputOk))) {
+    // P1-2 整改（批处理失败策略，fail-closed）：
+    // - 输入文件不存在 = 检查失败（绝不静默过滤）；全部输入不存在 = 直接非零退出
+    //   （空检查集合不得代表"全部通过"）；
+    // - 报告必须披露：实际检查数 / 通过数 / 失败数 / 缺失数。
+    const missing = args.files.filter(f => !inputOk(f));
+    for (const m of missing) console.error(`[错误] 找不到文件：${m}`);
+    const present = args.files.filter(inputOk);
+    let checked = 0, passed = 0, failed = 0;
+    for (const r of await importGameFiles(present)) {
+      checked++;
       const errors = r.anomalies.filter(a => a.level === 'error');
-      if (errors.length) bad++;
+      if (errors.length) failed++;
+      else passed++;
       console.log(`\n${r.file}: ${errors.length ? '拒绝' : r.ok ? '通过' : '拒绝'}（座位 ${r.meta?.seatCount ?? '?'}，${r.meta?.turnCount ?? 0} 手）`);
       for (const a of r.anomalies) console.log(`  ${a.level === 'error' ? '[错误]' : '[警告]'} ${a.code}：${a.message}`);
     }
-    process.exit(bad ? 1 : 0);
+    console.error(`\n检查披露：输入 ${args.files.length}（缺失 ${missing.length}），实际检查 ${checked}，通过 ${passed}，失败 ${failed}`);
+    // 非零退出条件：任一输入缺失 / 任一文件检查失败 / 一个文件都没检查。
+    if (missing.length || failed || !checked) process.exit(1);
+    return;
   }
 
   if (cmd === 'analyze') {
     if (!args.files.length || !args.out) { usage(); process.exit(2); }
-    const files = args.files.filter(inputOk);
+    // P1-2 整改：缺失输入 = 批处理失败（fail-closed）；全部缺失直接非零退出。
     const missing = args.files.filter(f => !inputOk(f));
     for (const m of missing) console.error(`[错误] 找不到文件：${m}`);
-    const imported = await importGameFiles(files);
+    const files = args.files.filter(inputOk);
     let analyzed = 0, rejected = 0;
-    for (const r of imported) {
+    for (const r of await importGameFiles(files)) {
       const errors = r.anomalies.filter(a => a.level === 'error');
       if (errors.length) {
         rejected++;
@@ -103,8 +115,9 @@ async function main() {
       console.log(`  复盘报告：${filesWritten.report}`);
       for (const w of r.anomalies.filter(a => a.level === 'warn')) console.log(`  [警告] ${w.code}：${w.message}`);
     }
-    console.log(`\n汇总：成功 ${analyzed}，拒绝 ${rejected}（含重复记录）。`);
-    if (rejected && !analyzed) process.exit(1);
+    console.error(`\n批处理披露：输入 ${args.files.length}（缺失 ${missing.length}），实际处理 ${analyzed + rejected}，成功 ${analyzed}，拒绝 ${rejected}`);
+    // 非零退出条件（明确批处理失败策略）：任一输入缺失 / 任一文件被拒 / 一个都没处理。
+    if (missing.length || rejected || !analyzed) process.exit(1);
     return;
   }
 
