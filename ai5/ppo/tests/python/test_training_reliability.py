@@ -204,7 +204,7 @@ class TestResumeDeterminismE2E(unittest.TestCase):
             "ppo": {"lr": 0.001, "epochs": 2, "minibatch": 64, "gamma": 0.999, "gaeLambda": 0.95,
                     "targetKl": 0.05},
             "reward": {"mode": "win_loss", "aux": {}},
-            "seats": {"layout": ["learner", "node:champion", "node:champion", "node:champion", "node:champion"],
+            "seats": {"layout": ["learner", "node:champion-beam", "node:champion-beam", "node:champion-beam", "node:champion-beam"],
                       "snapshots": {"every": 0, "poolSize": 2}},
             "eval": {"every": 0, "games": 10},
         }

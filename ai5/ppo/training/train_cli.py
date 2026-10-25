@@ -24,6 +24,16 @@ from pathlib import Path
 import numpy as np
 import torch
 
+# P3 确定性：CPU 小模型的浮点归约顺序受线程调度影响，会让同一数据的 PPO
+# 更新产生末位差异并放大为不同采样。训练入口强制单线程 + 关闭 oneDNN。
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
+torch.set_num_threads(1)
+try:
+    torch.backends.mkldnn.enabled = False
+except Exception:
+    pass
+
 PPO_ROOT = Path(__file__).resolve().parent.parent          # ai5/ppo
 REPO_ROOT = PPO_ROOT.parent.parent                          # 仓库根
 sys.path.insert(0, str(REPO_ROOT))
@@ -327,6 +337,13 @@ def main() -> None:
 
         trajs = buffer.compute_gae()
         n_samples = sum(len(t["actions"]) for t in trajs)
+        if os.environ.get("PPO_DEBUG_TRACE"):
+            import hashlib
+            h = hashlib.sha256()
+            for t in trajs:
+                for key in ("obs", "cand_flat", "cand_counts", "actions", "old_logp", "values"):
+                    h.update(np.ascontiguousarray(t[key]).tobytes())
+            print(f"PPO_TRACE it={it} traj_sha={h.hexdigest()} trajs={len(trajs)} samples={n_samples}", flush=True)
         update_metrics = ppo.update(trajs, progress=it / max(1, iterations)) if n_samples >= 8 else {"skipped": "few"}
         totals["updates"] += 1 if "skipped" not in update_metrics else 0
 
@@ -373,6 +390,8 @@ def main() -> None:
             fh.write(json.dumps(record, ensure_ascii=False) + "\n")
         if (it + 1) % log_every == 0 or it == iterations - 1:
             print(json.dumps(record, ensure_ascii=False))
+        if os.environ.get("PPO_DEBUG_TRACE"):
+            print(f"PPO_TRACE it={it} model_sha={model_hash(model)}", flush=True)
 
         # 周期性断点（last.pt 覆盖写；best 由独立评估产出，绝不覆盖）。
         if (it + 1) % int(cfg["train"].get("checkpointEvery", 5)) == 0 or it == iterations - 1:

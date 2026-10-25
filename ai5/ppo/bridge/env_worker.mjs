@@ -22,6 +22,7 @@
 
 import { createGame, applyAction, score, ranking, count } from '../../../web-v1/dist/js/engine.js';
 import { chooseAIAction, buildObservation, PROFILES, NEUTRAL_PROFILE, BASELINE_PARAMETERS, CHAMPION_PARAMETERS } from '../../../web-v1/dist/js/ai.js';
+import { chooseJointAction } from '../../../web-v1/dist/js/js/adapter.js';
 import { enumerateCandidates, descriptorToEngineAction } from './action_enum.mjs';
 import { encodeDecision, packF32, ACTION_DIM } from './encode.mjs';
 
@@ -56,8 +57,37 @@ function nodeSeatAction(game, seat, spec, moveIndex, rngSource) {
     return { action: descriptorToEngineAction(pick), reason: 'random-legal' };
   }
   const options = { profile: seatProfile(seat) };
+  // P3 确定性对手：`champion-beam` 使用冠军血统的束搜索基座（剥离 adapter/
+  // 墙钟预算），完全不进入联合搜索；`champion-det-<N>` 使用固定 workUnits
+  // 的联合搜索。两者都用于训练/恢复逐位复现，前者最稳。
+  if (spec.variant === 'champion-beam') {
+    const { adapter: _adapter, jointVersion: _jointVersion, budgetMs: _budgetMs, ...base } = CHAMPION_PARAMETERS;
+    return chooseAIAction(game, {
+      parameters: { ...base, id: `${CHAMPION_PARAMETERS.id}-beam` },
+      structure: 'beam-rollout',
+      profile: seatProfile(seat),
+    });
+  }
+  const deterministic = /^champion-det-(\d+)$/.exec(spec.variant ?? '');
+  if (deterministic) {
+    const workUnits = Number(deterministic[1]);
+    if (!Number.isSafeInteger(workUnits) || workUnits <= 0) {
+      throw new Error(`champion-det workUnits 非法：${spec.variant}`);
+    }
+    if (CHAMPION_PARAMETERS.adapter === 'champion-guided') {
+      return chooseJointAction(game, {
+        version: CHAMPION_PARAMETERS.jointVersion ?? 'joint-js5',
+        // opponentMode='rule' 关闭 om-v1 的共享对手模型缓存（模块级跨局状态 +
+        // 墙钟预算），否则同一 worker 连续对局与重启后的新 worker 会产生不同决策。
+        jointOptions: { workUnits, opponentMode: 'rule' },
+        championParameters: CHAMPION_PARAMETERS,
+        profile: seatProfile(seat),
+      });
+    }
+    return chooseAIAction(game, { parameters: CHAMPION_PARAMETERS, profile: seatProfile(seat) });
+  }
   switch (spec.variant) {
-    case 'champion': break; // 当前激活参数即冠军（struct-beam-rollout）
+    case 'champion': break; // 当前激活参数即冠军（可能是墙钟预算，不保证逐位复现）
     case 'champion-params': options.parameters = CHAMPION_PARAMETERS; break;
     case 'neutral': options.parameters = BASELINE_PARAMETERS; break;
     default: {
