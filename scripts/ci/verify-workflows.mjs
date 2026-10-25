@@ -83,6 +83,14 @@ export function verifyWorkflows(repoRoot) {
     issues.push('ai-training.yml promote 作业缺少 actions: write（无法 dispatch CI）');
   }
 
+  const continuation = text['champion-continuation.yml'] ?? '';
+  if (!continuation) {
+    issues.push('缺少 champion-continuation.yml（冠军晋级后必须自动触发下一代进化）');
+  } else {
+    if (!/champion\.json/.test(continuation)) issues.push('champion-continuation 必须由 champion.json 变更触发');
+    if (!/gh workflow run ai-training\.yml/.test(continuation)) issues.push('champion-continuation 必须 dispatch ai-training.yml');
+  }
+
   const writeContents = files.filter(f => /contents:\s*write/.test(stripComments(text[f])));
   const allowedWrite = new Set(['ai-training.yml', 'ci.yml']);
   if (writeContents.some(f => !allowedWrite.has(f))) {
