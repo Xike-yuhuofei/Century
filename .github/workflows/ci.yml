@@ -1,0 +1,709 @@
+name: CI
+
+# Century AI 7.0 任务 B：唯一 CI 入口。
+# - PR 与 main push 都从本工作流获得完整、明确的结果；
+# - 共享构建只生成一次 dist，所有高成本测试并行复用；
+# - 变更分类器按路径/标签选择检查集合，文档变更不再触发大规模测试；
+# - ci-summary 是唯一必需检查，任何必需作业 skipped/failure/cancelled 都会失败。
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      scope:
+        description: '检查范围（auto=按变更，full=全量含 macOS 研究验收）'
+        type: choice
+        options: [auto, full]
+        default: auto
+      promotion:
+        description: '按正式冠军晋级门禁运行（需要人工批准）'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    name: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      build: ${{ steps.scope.outputs.build }}
+      web: ${{ steps.scope.outputs.web }}
+      training: ${{ steps.scope.outputs.training }}
+      ai5: ${{ steps.scope.outputs.ai5 }}
+      ui: ${{ steps.scope.outputs.ui }}
+      simulation: ${{ steps.scope.outputs.simulation }}
+      audit: ${{ steps.scope.outputs.audit }}
+      research: ${{ steps.scope.outputs.research }}
+      promotion: ${{ steps.scope.outputs.promotion }}
+      pages: ${{ steps.scope.outputs.pages }}
+      rules: ${{ steps.scope.outputs.rules }}
+      governance: ${{ steps.scope.outputs.governance }}
+      docs_only: ${{ steps.scope.outputs.docs_only }}
+      audit_tier: ${{ steps.scope.outputs.audit_tier }}
+      changed_count: ${{ steps.scope.outputs.changed_count }}
+      reasons: ${{ steps.scope.outputs.reasons }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: 计算变更范围（失败关闭：diff 不可用则全量）
+        id: scope
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          FORCE_SCOPE: ${{ inputs.scope || 'auto' }}
+          FORCE_PROMOTION: ${{ inputs.promotion || 'false' }}
+          CI_SCOPE_JSON: ${{ runner.temp }}/ci-scope.json
+        run: node scripts/ci/change-scope.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-scope
+          path: ${{ runner.temp }}/ci-scope.json
+          if-no-files-found: warn
+          retention-days: 7
+
+  governance-tests:
+    name: governance-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: CI 元测试（变更矩阵 / 汇总门禁 / 审计适配 / 产物校验 / 工作流结构）
+        run: node --test --test-concurrency=2 scripts/ci/tests/*.test.mjs
+
+  rules-cards:
+    name: rules-cards
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 卡牌数据校验（规则与数据源）
+        run: node scripts/validate-cards.mjs
+      - name: 生成卡表漂移检查（data/cards.json → src/data.ts）
+        run: node web-v1/scripts/sync-cards.mjs --check
+
+  build:
+    name: build
+    needs: changes
+    if: needs.changes.outputs.build == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web-v1/package-lock.json
+      - name: 可复现安装（npm ci）
+        working-directory: web-v1
+        run: npm ci --no-audit --no-fund
+      - name: 编译共享产物（tsc + esbuild + ai-runtime）
+        working-directory: web-v1
+        run: npm run build
+      - name: 校验构建产物完整性（缺文件/空文件/规划器缺失即失败）
+        working-directory: web-v1
+        run: node ../scripts/ci/verify-dist.mjs --dist dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+          if-no-files-found: error
+          retention-days: 7
+          # AI7 构建清单的 dist 部署闭包包含 .nojekyll；默认 hidden=false 会丢文件，
+          # 导致下载后的 dist 与清单不一致（simulation/audit/training 均 fail-closed）。
+          include-hidden-files: true
+
+  web-unit:
+    name: web-unit
+    needs: [changes, build]
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: 卡表漂移检查
+        working-directory: web-v1
+        run: node scripts/sync-cards.mjs --check
+      - name: web-v1 规则与 AI 单测（复用共享构建，不重复编译）
+        working-directory: web-v1
+        run: |
+          mkdir -p test-results
+          node --test --test-concurrency=2 \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination=test-results/junit.xml \
+            tests/*.test.mjs
+      - name: 离线 standalone 完整性（规划器必须内联）
+        working-directory: web-v1
+        run: |
+          node -e "const fs=require('fs');const html=fs.readFileSync('dist/standalone.html','utf8');if(!html.includes('function choosePlan(')){console.error('standalone 缺少规划器');process.exit(1)}"
+      - name: 小型 V1/V2 基准诊断
+        working-directory: web-v1
+        run: node scripts/benchmark-ai.mjs 2
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-unit-junit
+          path: web-v1/test-results/junit.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+  training-unit:
+    name: training-unit
+    needs: [changes, build]
+    if: needs.changes.outputs.training == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      # training 无 npm 依赖；npm test 的 pretest 只做卡表漂移检查。禁止重复 npm install。
+      - name: training 系统测试（模拟器 / 统计 / 进化 / 晋级 / CLI 端到端）
+        working-directory: training
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee training-test.log
+      - name: AI7 进化控制面安全/可复现测试（Artifact / 目标边界 / 治理 / Controller）
+        working-directory: training
+        run: npm run evolution:test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: training-test-log
+          path: training/training-test.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+  simulation:
+    name: simulation
+    needs: [changes, build]
+    if: needs.changes.outputs.simulation == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: PR 模拟评估（100 局，4 分片并行，种子连续且不重叠）
+        run: node scripts/ci/run-sim-shards.mjs --games 100 --seed-base 1 --shards 4 --out training/reports/pr-eval --max-anomaly-rate 0.02
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pr-simulation
+          path: training/reports/pr-eval
+          if-no-files-found: ignore
+          retention-days: 14
+
+  ui-smoke:
+    name: ui-smoke
+    needs: [changes, build]
+    if: needs.changes.outputs.ui == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-1.56.0
+      - name: 安装 Playwright 与浏览器
+        run: |
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps chromium webkit
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: 浏览器 UI 冒烟（Focus / 玩家模式 / 整理 / 复盘导出）
+        working-directory: web-v1
+        run: |
+          python scripts/live-five-smoke.py
+          python scripts/smoke_focus.py
+          python scripts/smoke_organize.py
+          python scripts/smoke_replay.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-smoke-evidence
+          path: web-v1/dist/replay-evidence
+          if-no-files-found: ignore
+          retention-days: 14
+
+  audit-gate:
+    name: audit-gate
+    needs: [changes, build]
+    if: needs.changes.outputs.audit == 'true' && needs.changes.outputs.promotion != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      # 研究类变更自动提升到 research 层（dev 层包含在其中），避免同一提交重复跑两遍。
+      - name: 审计门禁（${{ needs.changes.outputs.audit_tier }} 层）
+        run: node training/redteam/audit-gate.mjs --tier "${{ needs.changes.outputs.audit_tier }}" --json training/reports/audit-gate.json --md training/reports/audit-gate.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: audit-gate-report
+          path: |
+            training/reports/audit-gate.json
+            training/reports/audit-gate.md
+          if-no-files-found: ignore
+          retention-days: 30
+
+  research-node:
+    name: research-node
+    needs: [changes, build]
+    if: needs.changes.outputs.research == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: PPO 编码/合法行动/信息公平性（不含 worker 协议）
+        run: node --test ai5/ppo/tests/node/encoding.test.mjs ai5/ppo/tests/node/enum-legality.test.mjs ai5/ppo/tests/node/enum-fairness.test.mjs
+      - name: 种子政策与恶意样例静态拦截
+        run: node --test ai5/openevolve/tests/seed-policy.test.mjs ai5/openevolve/tests/static-check.malicious.test.mjs
+
+  research-worker:
+    name: research-worker
+    needs: [changes, build]
+    if: needs.changes.outputs.research == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        case:
+          - name: repro
+            pattern: 全 node 席位完整对局并按种子复现
+          - name: mlp
+            pattern: MLP 席位往返
+          - name: anomaly
+            pattern: 回传越界序号被如实记为异常对局
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      # worker-protocol 单文件串行会超过 15m；拆成 3 个独立 runner 各跑 1 条用例，
+      # 每条用例仍真实执行，任一失败则 research-worker 整体失败。
+      - name: 对局宿主协议：${{ matrix.case.name }}
+        env:
+          PATTERN: ${{ matrix.case.pattern }}
+        run: |
+          log="$(mktemp)"
+          status=0
+          node --test --test-name-pattern="$PATTERN" ai5/ppo/tests/node/worker-protocol.test.mjs > "$log" 2>&1 || status=$?
+          cat "$log"
+          if [ "$status" -eq 0 ]; then
+            # 防止测试名漂移导致 --test-name-pattern 匹配空集而静默通过。
+            grep -q '^# pass 1$' "$log" || status=1
+          fi
+          exit "$status"
+
+  research-e2e:
+    name: research-e2e
+    needs: [changes, build]
+    if: needs.changes.outputs.research == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: 端到端冒烟：同局双版本对战（官方自对照，4 唯一种子）
+        run: |
+          node ai5/openevolve/node/duel_runner.mjs --candidate-official \
+            --seed-base 300000000 --seeds 4 --out /tmp/duel-smoke.json
+          # 旧 ai5.yml 的零分差断言不成立：AI 预算按 performance.now 墙钟分配，
+          # 两局执行顺序不同即可能产生不同决策数；这里验证管线完整性，不改 AI 行为。
+          node -e "
+            const r = require('/tmp/duel-smoke.json');
+            if (r.config.uniqueSeedCount !== 4) process.exit(1);
+            if (r.stats.totalGames !== 8) process.exit(1);
+            if (r.stats.anomalyGames !== 0) process.exit(1);
+            if (new Set(r.games.map(g => g.direction)).size !== 2) process.exit(1);
+            for (const g of r.games) {
+              if (g.status !== 'finished' || (g.ranking ?? []).length !== 5) process.exit(1);
+            }
+            console.log('duel smoke OK:', r.stats.totalGames, 'games,', r.config.uniqueSeedCount, 'unique seeds');
+          "
+
+  research-python:
+    name: research-python
+    needs: [changes, build]
+    if: needs.changes.outputs.research == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-torch-cpu-py312
+      - name: 安装依赖（CPU torch + numpy）
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: PPO 单元测试（GAE/PPO/奖励/softmax/种子约束）
+        run: python -m unittest ai5.ppo.tests.python.test_ai5_ppo ai5.ppo.tests.python.test_seed_policy ai5.ppo.tests.python.test_export_consistency -v
+      - name: 训练可靠性单元测试（对手池轮换/on-policy 边界/检查点 RNG）
+        run: python -m unittest ai5.ppo.tests.python.test_training_reliability.TestSnapshotPoolRotation ai5.ppo.tests.python.test_training_reliability.TestOnPolicyBoundary ai5.ppo.tests.python.test_training_reliability.TestAuxRewardChain ai5.ppo.tests.python.test_training_reliability.TestCheckpointRngRoundTrip -v
+      - name: 断点恢复确定性端到端（真实 Node worker + 引擎 + 冠军）
+        run: python -m unittest ai5.ppo.tests.python.test_training_reliability.TestResumeDeterminismE2E -v
+
+  research-seatbelt:
+    name: research-seatbelt
+    needs: [changes, build]
+    if: needs.changes.outputs.research == 'true'
+    runs-on: macos-14
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web-v1/package-lock.json
+      - name: 安装 web-v1 依赖（沙箱编译需要 tsc）
+        working-directory: web-v1
+        run: npm ci --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: Seatbelt 沙箱全链路验收（仅 macOS）
+        run: python3 ai5/openevolve/tests/test_security_sandbox.py -v
+
+  promotion-gate:
+    name: promotion-gate
+    needs: [changes, build]
+    if: needs.changes.outputs.promotion == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      verdict: ${{ steps.audit.outputs.verdict }}
+      requires_approval: ${{ steps.audit.outputs.requires_approval }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      # REQUIRES_APPROVAL 保持红色阻断，绝不转换为成功；由 promotion-approval 独立人工批准。
+      - name: 晋级审计（promotion 层，结构化 verdict）
+        id: audit
+        env:
+          CI_AUDIT_RECORD: training/reports/audit-gate-promotion-record.json
+        run: node scripts/ci/run-audit-gate.mjs --tier promotion --json training/reports/audit-gate-promotion.json --md training/reports/audit-gate-promotion.md
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: promotion-audit
+          path: |
+            training/reports/audit-gate-promotion.json
+            training/reports/audit-gate-promotion.md
+            training/reports/audit-gate-promotion-record.json
+          if-no-files-found: ignore
+          retention-days: 90
+
+  promotion-approval:
+    name: promotion-approval (human sign-off)
+    needs: [changes, build, promotion-gate]
+    if: ${{ always() && needs.changes.outputs.promotion == 'true' && needs.build.result == 'success' && (needs.promotion-gate.outputs.requires_approval == 'true' || (needs.promotion-gate.result != 'success' && needs.promotion-gate.outputs.verdict == '')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      pull-requests: read
+    environment:
+      name: promotion-approval
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: 读取晋级审计判定（以产物为准，不信任作业输出）
+        uses: actions/download-artifact@v4
+        with:
+          name: promotion-audit
+          path: ${{ runner.temp }}/promotion-audit
+      - name: 对账审计 verdict（BLOCKED 不得进入批准流程）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          INFO_FILE="$RUNNER_TEMP/promotion-pr.json"
+          gh pr list --head "$BRANCH" --state open --limit 1 \
+            --json number,baseRefName,labels,headRefOid > "$INFO_FILE"
+          AUDIT_JSON="$RUNNER_TEMP/promotion-audit/audit-gate-promotion.json" \
+          INFO_FILE="$INFO_FILE" BRANCH="$BRANCH" node -e '
+            const fs = require("fs");
+            const prs = JSON.parse(fs.readFileSync(process.env.INFO_FILE, "utf8"));
+            const pr = prs[0];
+            if (!pr) { console.error("未找到对应的开放 PR（人工批准必须绑定到 PR）"); process.exit(1); }
+            if (pr.baseRefName !== "main") { console.error(`PR 目标分支必须是 main，实际 ${pr.baseRefName}`); process.exit(1); }
+            let report;
+            try { report = JSON.parse(fs.readFileSync(process.env.AUDIT_JSON, "utf8")); }
+            catch (error) { console.error(`晋级审计产物缺失/损坏（失败关闭）：${error.message}`); process.exit(1); }
+            const verdict = report.verdict;
+            if (verdict === "BLOCKED" || verdict === "FAIL") {
+              console.error(`REQUIRES_APPROVAL 不适用于 BLOCKED/FAIL（实际 ${verdict}）；必须先修复证据/代码，禁止人工绕过`);
+              process.exit(1);
+            }
+            if (verdict !== "REQUIRES_APPROVAL") {
+              console.error(`晋级审计作业失败但 verdict=${verdict}，状态不一致（失败关闭）`);
+              process.exit(1);
+            }
+            const labels = (pr.labels || []).map(l => l.name);
+            if (!labels.includes("promotion-approved")) {
+              console.error("REQUIRES_APPROVAL：维护者必须在 PR 上添加 promotion-approved 标签并重新运行本作业");
+              process.exit(1);
+            }
+            console.log(`人工批准已确认：PR #${pr.number}，分支 ${process.env.BRANCH}，verdict=${verdict}`);
+            fs.writeFileSync(process.env.RUNNER_TEMP + "/promotion-verdict.txt", verdict);
+          '
+      - name: 记录人工批准
+        run: |
+          mkdir -p training/reports
+          node -e '
+            const fs = require("fs");
+            fs.writeFileSync("training/reports/promotion-approval.json", JSON.stringify({
+              approvedAt: new Date().toISOString(),
+              runId: process.env.GITHUB_RUN_ID,
+              workflow: process.env.GITHUB_WORKFLOW,
+              ref: process.env.GITHUB_REF,
+              branch: process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME,
+              verdict: "REQUIRES_APPROVAL",
+              authorization: "environment:promotion-approval + label:promotion-approved"
+            }, null, 2));
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: promotion-approval-record
+          path: training/reports/promotion-approval.json
+          if-no-files-found: ignore
+          retention-days: 90
+
+  pages-deploy:
+    name: pages-deploy
+    needs: [changes, build, web-unit, ui-smoke, rules-cards]
+    if: ${{ always() && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && needs.changes.outputs.pages == 'true' && needs.build.result == 'success' && needs.web-unit.result == 'success' && needs.ui-smoke.result == 'success' && needs.rules-cards.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: 准备站点（复用同一个共享构建产物，不再重跑 npm test）
+        run: |
+          mkdir -p _site
+          cp -R web-v1/dist/. _site/
+          cp web-v1/dist/standalone.html _site/index.html
+          test -s _site/index.html
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  ci-summary:
+    name: ci-summary
+    needs:
+      - changes
+      - build
+      - web-unit
+      - training-unit
+      - simulation
+      - rules-cards
+      - governance-tests
+      - ui-smoke
+      - audit-gate
+      - research-node
+      - research-worker
+      - research-e2e
+      - research-python
+      - research-seatbelt
+      - promotion-gate
+      - promotion-approval
+      - pages-deploy
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 下载晋级审计产物（verdict 以产物为准）
+        if: needs.changes.outputs.promotion == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: promotion-audit
+          path: ${{ runner.temp }}/promotion-audit
+      - name: 汇总门禁判定（独立复算变更范围 + 检查静默跳过）
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          FORCE_SCOPE: ${{ inputs.scope || 'auto' }}
+          FORCE_PROMOTION: ${{ inputs.promotion || 'false' }}
+          SCOPE_BUILD: ${{ needs.changes.outputs.build }}
+          SCOPE_WEB: ${{ needs.changes.outputs.web }}
+          SCOPE_TRAINING: ${{ needs.changes.outputs.training }}
+          SCOPE_AI5: ${{ needs.changes.outputs.ai5 }}
+          SCOPE_UI: ${{ needs.changes.outputs.ui }}
+          SCOPE_SIMULATION: ${{ needs.changes.outputs.simulation }}
+          SCOPE_AUDIT: ${{ needs.changes.outputs.audit }}
+          SCOPE_RESEARCH: ${{ needs.changes.outputs.research }}
+          SCOPE_PROMOTION: ${{ needs.changes.outputs.promotion }}
+          SCOPE_PAGES: ${{ needs.changes.outputs.pages }}
+          SCOPE_RULES: ${{ needs.changes.outputs.rules }}
+          SCOPE_GOVERNANCE: ${{ needs.changes.outputs.governance }}
+          SCOPE_DOCS_ONLY: ${{ needs.changes.outputs.docs_only }}
+          SCOPE_AUDIT_TIER: ${{ needs.changes.outputs.audit_tier }}
+          SCOPE_CHANGED_COUNT: ${{ needs.changes.outputs.changed_count }}
+          SCOPE_REASONS: ${{ needs.changes.outputs.reasons }}
+          PROMOTION_VERDICT: ${{ needs.promotion-gate.outputs.verdict }}
+          PROMOTION_REQUIRES_APPROVAL: ${{ needs.promotion-gate.outputs.requires_approval }}
+          PROMOTION_VERDICT_FILE: ${{ runner.temp }}/promotion-audit/audit-gate-promotion.json
+          CI_SUMMARY_JSON: ${{ runner.temp }}/ci-summary.json
+        run: node scripts/ci/summarize.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-summary
+          path: ${{ runner.temp }}/ci-summary.json
+          if-no-files-found: ignore
+          retention-days: 30

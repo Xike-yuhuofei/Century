@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc && node scripts/build.mjs && node scripts/build-ai-runtime.mjs && node scripts/build-manifest.mjs",
     "start": "npm run build && node scripts/serve.mjs",
-    "test": "node scripts/sync-cards.mjs --check && npm run build && node --test --test-concurrency=2 tests/*.test.mjs"
+    "test": "node scripts/sync-cards.mjs --check && npm run build && node --test --test-concurrency=2 tests/*.test.mjs",
+    "test:unit": "node scripts/sync-cards.mjs --check && node --test --test-concurrency=2 tests/*.test.mjs"
   },
   "devDependencies": {
     "esbuild": "^0.25.12",
