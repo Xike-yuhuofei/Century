@@ -16,6 +16,7 @@
  */
 
 import type { Action } from '../engine.js';
+import type { AIParameters } from '../ai/parameters.js';
 import type { AIObservation } from '../ai/observation.js';
 import type { PublicHistorySummary } from '../sim/history.js';
 import type { OpponentModel } from '../om/index.js';
@@ -195,6 +196,9 @@ export type JointSearchOptions = {
    * 只跑完整 W×M 批次）；balanced=W×M 成本预检 + 全候选缩减批次 +
    * 缩减批次最低 3 试验覆盖门槛。固定工作量模式不受影响。 */
   batchAdmission?: 'legacy' | 'balanced';
+  /** 冠军基座参数（AI7-A2 身份冻结）：显式描述实际消费的冠军参数集。
+   * 缺省时 champion-guided 回退模块级 CHAMPION_PARAMETERS（仅兼容旧调用）。 */
+  championParameters?: AIParameters;
 };
 
 // === 规划器接口（任务 A 推荐接口） ===

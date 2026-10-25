@@ -41,7 +41,7 @@ import type { Action } from '../engine.js';
 import { GOLEM_BY_ID } from '../data.js';
 import type { AIObservation } from '../ai/observation.js';
 import type { AIParameters } from '../ai/parameters.js';
-import { CHAMPION_PARAMETERS } from '../ai/parameters.js';
+import { CHAMPION_PARAMETERS, validateAIParameters } from '../ai/parameters.js';
 import { choosePlan } from '../ai/planner.js';
 import type { AIStructure } from '../ai/structures.js';
 import type { Profile } from '../ai/profiles.js';
@@ -164,6 +164,12 @@ type PhaseTimings = {
 class ChampionGuidedPlanner {
   decide(observation: AIObservation, callOptions?: ChampionGuidedSearchOptions): ChampionGuidedDecision {
     const o = resolveChampionGuidedOptions(callOptions);
+    // AI7-A2 身份冻结：本决策消费的冠军基座参数必须来自调用描述符；未显式
+    // 传入时才回退模块级活动冠军（生产入口显式传入，冻结版本传入归档参数）。
+    // 归一化保证部分参数对象不会以 undefined 乘子进入束搜索。
+    const championParameters = o.championParameters
+      ? validateAIParameters(o.championParameters)
+      : CHAMPION_PARAMETERS;
     const t0 = performance.now();
     const phase: PhaseTimings = { planMs: 0, rootSimMs: 0, legalGenMs: 0, gateMs: 0, screenMs: 0, rolloutMs: 0, aggregateMs: 0 };
     if (observation.phase === 'finished') fail('游戏已结束，无法决策');
@@ -173,7 +179,7 @@ class ChampionGuidedPlanner {
     // 1. 冠军规划（冻结参数 + 显式结构；人格经 profileOverride 注入）。
     const profile: Profile = o.profileName ? profileByName(o.profileName) : NEUTRAL_PROFILE;
     const planStart = performance.now();
-    const plan = choosePlan(observation, o.championParameters ?? CHAMPION_PARAMETERS, profile, o.championStructure ?? 'beam-rollout');
+    const plan = choosePlan(observation, championParameters, profile, o.championStructure ?? 'beam-rollout');
     phase.planMs = performance.now() - planStart;
     const championAction: Action | null = plan?.first ?? null;
 
@@ -241,7 +247,7 @@ class ChampionGuidedPlanner {
     //    72-103ms，状态依赖；js0 同样承担），根筛选仅 3-10ms——预算尾部
     //    不足以试验时自然回退冠军行动（保守覆盖语义的退化情形）。
     const screenStart = performance.now();
-    const ctxRoot = heuristicContext(root.view, CHAMPION_PARAMETERS, NEUTRAL_PROFILE);
+    const ctxRoot = heuristicContext(root.view, championParameters, NEUTRAL_PROFILE);
     // 根筛选目标范围：缺省 all（冻结语义）；preferred 是文件注释记载的 JS5
     // 10ms 口径，现在真正接线（此前注释说用 preferred、实现却落 all）。
     const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {

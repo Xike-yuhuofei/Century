@@ -17,7 +17,7 @@
  */
 
 import { createGame, applyAction, score as engineScore, ranking } from '../../web-v1/dist/js/engine.js';
-import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
+import { chooseAIAction, PROFILES, NEUTRAL_PROFILE, validateAIParameters } from '../../web-v1/dist/js/ai.js';
 import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
 import { assertInBlock, sequentialSeeds } from '../../ai5/lib/seed_policy.mjs';
 import { engineBundleSha256 } from '../lib/paths.mjs';
@@ -78,6 +78,9 @@ export function playLeagueGame({ seed, seatCount, seatVersions, jointOverrides =
     return seatRngs.get(seat);
   };
   const actionCounts = seatVersions.map(() => ({ acquire: 0, claim: 0, rest: 0, play: 0, discard: 0 }));
+  // AI7-A2：每席位参数在入局前归一化一次；联合搜索席位显式接收该席位
+  // 描述符参数（冻结版本不读活动冠军状态）。
+  const seatParameters = seatVersions.map(v => (v.parameters ? validateAIParameters(v.parameters) : null));
   let moves = 0;
   const started = performance.now();
   const tick = () => performance.now() - started;
@@ -93,6 +96,7 @@ export function playLeagueGame({ seed, seatCount, seatVersions, jointOverrides =
           version: seatVersion.jointVersion ?? 'joint-js5',
           ...(seatVersion.jointOptions ?? {}),
           ...(jointOverrides ?? {}),
+          ...(seatParameters[seat] ? { championParameters: seatParameters[seat] } : {}),
           profile: seatProfile(seat),
         });
         action = response.action;

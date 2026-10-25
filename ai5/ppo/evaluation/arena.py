@@ -36,6 +36,7 @@ from ai5.ppo.training.collector import LEARNER_POLICY, PolicyBundle, derive_rng 
 from ai5.lib.seed_policy import (  # noqa: E402
     AI5_EVAL_TRAINING_BLOCK, VALIDATION_POOL_BLOCK,
 )
+from ai5.lib.seed_governance_bridge import reserve_seed_interval  # noqa: E402
 
 VALIDATION_POOL_BASE, VALIDATION_POOL_MAX = VALIDATION_POOL_BLOCK
 VALIDATION_STRIDE = 2_000
@@ -46,6 +47,8 @@ AI4_LEDGER_SCAN_DIRS = (  # AI4 验证账本分散持久化目录（测试可替
     REPO / "ai5" / "openevolve" / "experiments" / "reports",
 )
 LEDGER_PATH = REPO / "ai5" / "ppo" / "reports" / "seed-ledger.json"
+# 测试会用临时账本替换 LEDGER_PATH；只有正式账本路径才强制走统一治理层。
+_REAL_LEDGER_PATH = REPO / "ai5" / "ppo" / "reports" / "seed-ledger.json"
 
 
 def wilson_ci(successes: int, n: int, z: float = 1.959963985) -> tuple[float, float]:
@@ -104,6 +107,12 @@ def load_ai4_ledger_blocks() -> list[tuple[int, int]]:
 def _read_ledger() -> dict:
     if LEDGER_PATH.exists():
         return json.loads(LEDGER_PATH.read_text())
+    # AI7-A1：正式 PPO 账本缺失 fail-closed——按空账本会从 900M 重新分配，
+    # 静默复用验证种子。测试替换 LEDGER_PATH 时允许空状态夹具。
+    if LEDGER_PATH == _REAL_LEDGER_PATH:
+        raise RuntimeError(
+            f"PPO 种子账本缺失（fail-closed）：{LEDGER_PATH}——禁止按空账本重新消费验证池种子"
+        )
     return {"history": [], "lastBase": None}
 
 
@@ -158,6 +167,17 @@ def allocate_validation_block(size: int, purpose: str) -> int:
         for b, s in consumed:
             if base < b + s and b < base + size:
                 raise RuntimeError(f"种子块重叠：[{base},{base+size}) 与 [{b},{b+s})")
+        # AI7-A1：动用验证种子前必须经统一治理层登记（跨系统防重）。
+        # 测试替换 LEDGER_PATH 时不写正式中央登记；正式路径缺账本/冲突即中止。
+        if LEDGER_PATH == _REAL_LEDGER_PATH:
+            reserve_seed_interval(
+                "arena",
+                f"arena:{purpose}",
+                base=base,
+                size=size,
+                experiment_id=f"ppo-arena-{purpose}-{base}",
+                evidence_path=str(LEDGER_PATH),
+            )
         entry = {"base": base, "size": size, "purpose": purpose, "at": time.strftime("%Y-%m-%dT%H:%M:%S")}
         ledger["history"] = (ledger.get("history", []) + [entry])[-99:]
         ledger["lastBase"] = base

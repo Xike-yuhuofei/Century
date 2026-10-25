@@ -72,6 +72,12 @@ export function candidateVersion(id) {
   if (id === 'js1' || id === 'joint-js1') {
     return { kind: 'champion', id: 'js1-beam-contest', joint: null, structure: 'beam-contest', descriptor: resolveAlgorithmVersion('legacy-js1') };
   }
+  // AI7-A2：JS5 候选必须携带冻结归档参数（而不是让适配器回退读活动
+  // CHAMPION_PARAMETERS）；duel / confirm 的历史对照因此不随冠军切换漂移。
+  if (jointId === 'joint-js5') {
+    const descriptor = resolveAlgorithmVersion('joint-js5-frozen');
+    return { kind: 'joint', id: jointId, joint: jointId, parameters: descriptor.parameters, descriptor };
+  }
   return { kind: 'joint', id: jointId, joint: jointId };
 }
 
@@ -159,7 +165,13 @@ export function runGame({ seed, seatCount, candidateSeats, candidate, opponents,
         // AI 可利用特征）；同种子同配置 ⇒ 同流（配对 CRN 保持）。修复前历史
         // （PR #29 起）simSeed=对局种子——与 confirm 历史数据的流域差异已在
         // 报告 simStream 字段披露。
-        const r = chooseJointAction(game, { version: version.joint, ...jointOptions, simSeed: deriveSimStreamSeed(seed), profile: seatProfile(seat) });
+        const r = chooseJointAction(game, {
+          version: version.joint,
+          ...jointOptions,
+          ...(version.parameters ? { championParameters: version.parameters } : {}),
+          simSeed: deriveSimStreamSeed(seed),
+          profile: seatProfile(seat),
+        });
         action = r.action;
         if (r.joint?.stats) {
           jointStats.rollouts += r.joint.stats.rollouts;

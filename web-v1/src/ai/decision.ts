@@ -42,9 +42,9 @@ export function chooseAIAction(game: Game, options?: AIOptions): AIDecision {
     const joint = chooseJointAction(game, {
       version: params.jointVersion ?? 'joint-js5',
       ...(params.budgetMs !== undefined ? { budgetMs: params.budgetMs } : {}),
-      // AI6 第六阶段 P0 版本身份透传：完整参数对象进入适配器——冠军本体传入
-      // 自身（= CHAMPION_PARAMETERS 归一化结果，行为逐位不变），风格变体的
-      // 权重修改从此真实影响冠军基座规划（此前被适配器忽略，变体 ≡ 本体）。
+      // AI7-A2 / AI6-P0：运行时实际消费的冠军基座参数必须显式注入。
+      // 冠军本体传入自身（行为逐位不变）；冻结描述符传入归档参数；
+      // 风格变体的权重修改经此真实影响冠军基座规划（不再回退活动常量）。
       championParameters: params,
       profile: options?.profile,
     });
