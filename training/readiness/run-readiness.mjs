@@ -101,23 +101,32 @@ const ok = r => r.ok;
   const info = runDir && existsSync(resolve(runDir, 'best/best_program_info.json'))
     ? JSON.parse(readFileSync(resolve(runDir, 'best/best_program_info.json'), 'utf8'))
     : null;
-  const logPaths = ['/tmp/century-openevolve-r002.log', '/tmp/century-openevolve-r001.log'].filter(existsSync);
+  const logPaths = execFileSync('ls', ['-1', '/tmp'], { encoding: 'utf8' })
+    .split('\n').filter(name => /^century-openevolve-r\d+\.log$/.test(name))
+    .sort().map(name => `/tmp/${name}`);
   const log = logPaths.map(p => readFileSync(p, 'utf8')).join('\n');
   const llmCall = /Total LLM Token Usage[^\n]*/i.exec(log)?.[0] ?? null;
+  // 真实生成必须至少有一次「行为不同于官方」的演化程序通过静态/编译/探针并
+  // 进入真实对局评估；只有初始程序（identical=1）的 run 不算算法生成。
+  const evolvedBehavior = [...log.matchAll(/Iteration \d+: .*?identical_to_official=0\.0000/g)].length;
   const real = Boolean(latest && best && info && /LLM Token Usage/i.test(log));
   const metrics = info?.metrics ?? info ?? {};
   const compiled = Number(metrics.compile_ok ?? 0) >= 1;
   const probed = Number(metrics.probe_ok ?? 0) >= 1;
-  const identical = Number(metrics.identical_to_official ?? 0) >= 1;
+  const bestIdentical = Number(metrics.identical_to_official ?? 0) >= 1;
+  const pass = real && evolvedBehavior >= 1;
   record({
     id: 'R01', title: 'OpenEvolve 真实算法生成（LLM 离线提案 + 级联评估）',
-    status: real ? 'PASS' : 'NOT_RUN',
+    status: pass ? 'PASS' : (real ? 'FAIL' : 'NOT_RUN'),
     source: 'ai5/openevolve/run_openevolve.py + training/evolution/openevolve-bridge.mjs',
-    testCommand: 'caffeinate -is .venv/bin/python run_openevolve.py program/acquisition_value.ts century_evaluator.py --config config.yaml --iterations 1 --output results/ai8-openevolve-r00N',
+    testCommand: 'caffeinate -is .venv/bin/python run_openevolve.py program/acquisition_value.ts century_evaluator.py --config config.yaml --iterations 3 --output results/ai8-openevolve-r00N',
     evidence: real
-      ? `run=${latest}；${llmCall}；bestProgram=yes；static_ok=${metrics.static_ok}；compile_ok=${compiled}；probe_ok=${probed}；identical_to_official=${identical}；stage_passed=${metrics.stage_passed}；failure=${metrics.failure_stage ?? 'none'}`
+      ? `run=${latest}；${llmCall}；行为不同于官方的演化程序=${evolvedBehavior}；bestProgram=yes；bestIdentical=${bestIdentical}；` +
+        `best static_ok=${metrics.static_ok} compile_ok=${compiled} probe_ok=${probed} stage_passed=${metrics.stage_passed} failure=${metrics.failure_stage ?? 'none'}`
       : '未找到本次真实 OpenEvolve 运行产物',
-    unmetReason: real ? null : 'OpenEvolve 未执行或未产出 best_program',
+    unmetReason: pass ? null : (real
+      ? 'OpenEvolve 只评估了初始程序，没有产生行为不同于官方的演化程序（LLM 提案失败/被级联淘汰前无可审计行为差异）'
+      : 'OpenEvolve 未执行或未产出 best_program'),
   });
 }
 
@@ -308,18 +317,21 @@ function findLatest12hArtifact() {
   const promotedFirstPlace = championEvidence?.metric === 'pairedFirstPlaceRateDelta'
     && championEvidence?.decision?.promote === true;
   const rollbackDrill = existsSync(resolve(REPO_ROOT, 'training/reports/rollback-drill.json'));
+  const promotionDrill = readJSON('training/reports/promotion-e2e-drill.json');
+  const promotionDrillPass = promotionDrill?.verdict === 'PASS';
   const complete = deployedPass && promotedFirstPlace && rollbackDrill;
   record({
     id: 'R12', title: '无人工审批的自动晋级、发布、线上核验与回滚',
     status: complete ? 'PASS' : 'BLOCKED',
-    source: '.github/workflows/ci.yml + ai-training.yml + scripts/ci/verify-deploy.mjs + rollback-champion.mjs',
-    testCommand: 'node scripts/ci/verify-workflows.mjs && node scripts/ci/rollback-champion.mjs --dry-run',
+    source: '.github/workflows/ci.yml + ai-training.yml + scripts/ci/verify-deploy.mjs + rollback-champion.mjs + training/scripts/promotion-e2e-drill.mjs',
+    testCommand: 'node scripts/ci/verify-workflows.mjs && node scripts/ci/rollback-champion.mjs --dry-run && node training/scripts/promotion-e2e-drill.mjs',
     evidence: `工作流机器门禁=${verifyWorkflows.ok}；回滚 dry-run=${rollbackDry.ok}；` +
       `真实机器合并+Pages 部署+线上核验=${deployedPass}（run 40221527752, site=PASS）；` +
+      `隔离环境晋级→落地→构建→发布核验→回滚全链路=${promotionDrillPass}（${promotionDrill?.checks?.length ?? 0} 项，合成夹具）；` +
       `第一名率冠军晋级=${promotedFirstPlace}；回滚演练=${rollbackDrill}`,
     unmetReason: complete ? null
       : (deployedPass && rollbackDrill
-          ? '部署、线上身份核验与回滚演练均已 PASS，但没有统计合格候选完成冠军晋级；不能把“部署现有冠军”当作 R12 完成'
+          ? '部署、线上身份核验、隔离全链路演练与回滚演练均已 PASS，但没有统计合格候选完成真实冠军晋级；且几何 alpha 预算已消耗 0.0499756（剩余 2.44e-5），新 alpha 家族必须显式治理授权，不能把“部署现有冠军/合成夹具演练”当作 R12 完成'
           : (deployedPass
               ? '真实部署与线上身份核验已 PASS，但没有统计合格候选完成冠军晋级，也未执行回滚演练；不能把“部署现有冠军”当作 R12 完成'
               : '当前没有通过第一名率正式挑战的候选，因此未执行真实冠军发布；不能以模拟发布冒充 PASS')),

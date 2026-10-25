@@ -123,12 +123,16 @@ async function main() {
   });
   const started = Date.now();
   const results = await controller.run({ resume: command === 'resume' });
+  // 总墙钟从 campaign 创建时刻计（resume 不得把已运行时长清零，否则 12h
+  // 压力测试可通过重启伪造时长）。
+  const stateDoc = JSON.parse(readFileSync(resolve(rootDir, 'state.json'), 'utf8'));
+  const campaignStartedAt = stateDoc.createdAt ?? new Date(started).toISOString();
   const summary = {
     schema: 'century-autonomous-run-summary-v1',
     campaignId,
     command,
-    startedAt: new Date(started).toISOString(),
-    elapsedMs: Date.now() - started,
+    startedAt: campaignStartedAt,
+    elapsedMs: Math.max(0, Date.now() - Date.parse(campaignStartedAt)),
     status: results.status,
     phase: results.phase,
     rounds: results.rounds.length,
