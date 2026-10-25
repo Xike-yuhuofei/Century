@@ -154,6 +154,10 @@ export function createCompiledAcquisitionCandidate({
     });
     assertCondition(assemble.ok, `源码树组装失败：${assemble.stderr.slice(-800)}`);
 
+    // 独立构建目录没有 package.json 时 tsc 按 CommonJS 产出；写入 type=module
+    // 使产物与官方 web-v1 一致为 ESM，兑现 artifact 的 esm-module-bundle 语义。
+    writeFileSync(join(buildDir, 'package.json'), JSON.stringify({ type: 'module' }, null, 2));
+
     const compile = runNodeSeatbelt({
       workRoot, script: TSC, args: ['-p', join(buildDir, 'tsconfig.json')],
       timeoutMs: 180_000, cwd: buildDir,

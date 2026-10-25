@@ -331,7 +331,7 @@ initialized
 | 编译型候选 | 1 个 `acquisitionValue`（tsc 5.9.3，Seatbelt 探针） |
 | 对局数 | 18（快筛 12 + 深验 6） |
 | 深验确认 | 1 |
-| 总墙钟 | 85,421 ms（含一次独立编译） |
+| 总墙钟 | 69,747 ms（含一次独立编译） |
 | screen 窗口 | `ai7-screen-w000`，种子 `1610000000, 1610000001` |
 | deep 窗口 | `ai7-deep-w000`，种子 `1620000000, 1620000001, 1620000002` |
 | 停止/恢复 | 第 1 次 `run(maxSteps=8)` → `stopped`；第 2 次 `resume` → `completed` |
@@ -341,9 +341,9 @@ initialized
 
 | 候选 | 模式 | 阶段 | 快筛分 | 深验分 | 快筛第一名率 | proxy Δ |
 | --- | --- | --- | ---: | ---: | ---: | ---: |
-| `cand-ai7-searchbudget-r1c0-bfe007` | game | selected | 0.6688 | — | 0.500 | — |
-| `cand-ai7-candidatecap-r1c1-33cef5` | game | pending-approval | 0.7090 | 0.5872 | 0.750 | — |
-| `cand-ai7-overridemargin-r1c0-3a144d` | game | not-selected | 0.6671 | — | 0.500 | — |
+| `cand-ai7-searchbudget-r1c0-bfe007` | game | selected | 0.6710 | — | 0.500 | — |
+| `cand-ai7-candidatecap-r1c1-33cef5` | game | pending-approval | 0.7108 | 0.5907 | 0.750 | — |
+| `cand-ai7-overridemargin-r1c0-3a144d` | game | not-selected | 0.6692 | — | 0.500 | — |
 | `cand-ai7-acquisitionvalue-r1c1-d31db4` | proxy (声明式) | selected | 0.7366 | — | — | +0.0421 |
 | `cand-ai7-compiled-acq-r1c4-1d7b60` | proxy (编译型) | selected | 0.7325 | — | — | +0.0274 |
 
