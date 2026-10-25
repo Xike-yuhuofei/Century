@@ -1,0 +1,142 @@
+{
+  "schema": "century-candidate-artifact-v1",
+  "version": 1,
+  "candidateId": "cand-ai7-enginevalue-r1c3-acf817",
+  "parentId": null,
+  "sourceHash": "9b54d63548455c77fb243b5d12fc8582037af5ea93beacec0b69a5d2aae29554",
+  "source": {
+    "kind": "declarative-module",
+    "entry": "module.json",
+    "hashKind": "file-content",
+    "files": [
+      {
+        "path": "module.json",
+        "sha256": "acf817a66a5d84f2f930e43f77fff7b6928d51db2725a3045f60792c57365f78",
+        "content": "{\"bias\":0,\"coefficients\":{\"goalUseful\":0.22,\"inputCost\":0,\"outputWeight\":0.4,\"reachable\":0.45,\"steps\":0.7},\"notes\":\"candidate tries Math.random() and merchantDeck access\",\"outputClamp\":[0,20],\"schema\":\"century-declarative-linear-module-v1\",\"template\":\"linear-feature-v1\"}"
+      }
+    ]
+  },
+  "algorithmStructure": {
+    "targetIds": [
+      "engineValue"
+    ],
+    "decisionCore": "plugin-only",
+    "adapter": null,
+    "structure": null,
+    "jointVersion": null,
+    "evaluationMode": "proxy",
+    "jointOptionsByPlayerCount": null,
+    "integration": "candidate-plugin-only"
+  },
+  "parameters": {
+    "id": "cand-ai7-enginevalue-r1c3-acf817",
+    "version": 1,
+    "values": {
+      "schema": "century-declarative-linear-module-v1",
+      "template": "linear-feature-v1",
+      "coefficients": {
+        "outputWeight": 0.4,
+        "goalUseful": 0.22,
+        "reachable": 0.45,
+        "inputCost": 0,
+        "steps": 0.7
+      },
+      "bias": 0,
+      "outputClamp": [
+        0,
+        20
+      ],
+      "notes": "candidate tries Math.random() and merchantDeck access"
+    },
+    "boundsVersion": "module-bounds-engineValue-v1"
+  },
+  "buildArtifact": {
+    "kind": "declarative-module-bundle-v1",
+    "sha256": "72288b33b12d6d5f911a7f88dc89393d598e3c4d315da9985ad55410ec715a45",
+    "compiled": false,
+    "compiler": null,
+    "reproducible": true
+  },
+  "gameRules": {
+    "version": "century-rules-v1",
+    "engineBundleSha256": "589e8adf30bde4e9aa0b5b163dd7f5835a0e4fa5ed8b62909b9569dde8467f72"
+  },
+  "experiment": {
+    "configRef": "training/evolution/configs/ai7-demo.json",
+    "configHash": "e474071a48801d8242fcc3cc1c4b2dce4b724f1c7fd34527fd499bde747de4ea",
+    "seedRefs": [
+      {
+        "purpose": "screen",
+        "windowId": "ai7-screen-w000",
+        "base": 1610000000,
+        "count": 2
+      },
+      {
+        "purpose": "deep",
+        "windowId": "ai7-deep-w000",
+        "base": 1620000000,
+        "count": 2
+      }
+    ]
+  },
+  "applicablePlayerCounts": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "evidenceDir": null,
+  "safety": {
+    "status": "failed",
+    "checks": [
+      {
+        "id": "artifact-schema",
+        "status": "pass",
+        "detail": "schema=century-candidate-artifact-v1, identity=a12ca80b599e"
+      },
+      {
+        "id": "parameter-bounds",
+        "status": "pass",
+        "detail": "targets=engineValue"
+      },
+      {
+        "id": "hidden-info",
+        "status": "fail",
+        "detail": "候选源码/声明模块包含隐藏信息字段：merchantDeck"
+      },
+      {
+        "id": "forbidden-constructs",
+        "status": "fail",
+        "detail": "禁止时钟/随机源（Math.random）；禁止隐藏牌库（merchantDeck）"
+      },
+      {
+        "id": "resource-budget",
+        "status": "pass",
+        "detail": "players=2,3,4,5"
+      },
+      {
+        "id": "fallback-declared",
+        "status": "pass",
+        "detail": "fallback strategy present"
+      },
+      {
+        "id": "governance-boundary",
+        "status": "pass",
+        "detail": "dev-only seed references"
+      },
+      {
+        "id": "production-isolation",
+        "status": "pass",
+        "detail": "mode=proxy"
+      },
+      {
+        "id": "identity-reproducible",
+        "status": "pass",
+        "detail": "source=9b54d6354845, build=72288b33b12d"
+      }
+    ]
+  },
+  "status": "rejected",
+  "identityDigest": "a12ca80b599e9651d4bd6e1e51e9014d58ff67bc6ba847bdd198d2b32f181d19",
+  "artifactHash": "1d3bb4f98dd34feb31c3decfc999284516c6b72dd1c01d74dd03e124201ea6a8"
+}

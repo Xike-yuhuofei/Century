@@ -1,0 +1,36 @@
+{
+  "adapter": {
+    "contractVersion": "century-governance-adapter-v1",
+    "mode": "test-double",
+    "capabilities": {
+      "allocateDevSeedWindow": true,
+      "requestFormalChallengeApproval": true,
+      "recordCampaignOutcome": true,
+      "writeValidationLedger": false,
+      "promoteChampion": false,
+      "triggerFormalChallenge": false
+    }
+  },
+  "provider": {
+    "mode": "test-double",
+    "contractVersion": "century-governance-adapter-v1",
+    "windowSize": 1000,
+    "screen": {
+      "block": [
+        1610000000,
+        1620000000
+      ],
+      "windows": 10000,
+      "windowSize": 1000
+    },
+    "deep": {
+      "block": [
+        1620000000,
+        1630000000
+      ],
+      "windows": 10000,
+      "windowSize": 1000
+    },
+    "validationPoolConsumption": "forbidden"
+  }
+}

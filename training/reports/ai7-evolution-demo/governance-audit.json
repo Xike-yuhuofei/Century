@@ -1,0 +1,109 @@
+{
+  "contractVersion": "century-governance-adapter-v1",
+  "mode": "test-double",
+  "windows": [
+    {
+      "windowId": "ai7-screen-w000",
+      "purpose": "screen",
+      "pool": "dev",
+      "base": 1610000000,
+      "count": 2,
+      "blockStart": 1610000000,
+      "blockEnd": 1620000000,
+      "contractVersion": "century-governance-adapter-v1"
+    },
+    {
+      "windowId": "ai7-deep-w000",
+      "purpose": "deep",
+      "pool": "dev",
+      "base": 1620000000,
+      "count": 2,
+      "blockStart": 1620000000,
+      "blockEnd": 1630000000,
+      "contractVersion": "century-governance-adapter-v1"
+    }
+  ],
+  "requests": [
+    {
+      "schema": "century-governance-challenge-request-v1",
+      "requestId": "greq-030de52c930dd0ff",
+      "campaignId": "ai7-demo-20261025",
+      "candidateId": "cand-ai7-candidatecap-r1c1-33cef5",
+      "identityDigest": "5cceb869d99543558d7e1b860f75334ebf3b742a5e0f3b37a072e0c55e6394dc",
+      "evidenceDir": "training/reports/ai7-evolution-demo/evidence/cand-ai7-candidatecap-r1c1-33cef5",
+      "summary": {
+        "artifactHash": "75a9800bff9553c78e3508cb2fffb62c10efc397e0a3e0f53a8df2449f6145b0",
+        "sourceHash": "f77c1046f2ccb9b09edc64a01895a65ea226b0000a88a2a10d9a0ea61abdc3f0",
+        "buildArtifactHash": "e05211f17d31bc947103349c6a47bd81c9e0c1209b48f5d49c4fa5b807e80c64",
+        "quick": {
+          "evidencePath": "training/reports/ai7-evolution-demo/evidence/cand-ai7-candidatecap-r1c1-33cef5/quick-r001.json",
+          "evidenceType": "dev-game",
+          "score": {
+            "candidateId": "cand-ai7-candidatecap-r1c1-33cef5",
+            "identityDigest": "5cceb869d99543558d7e1b860f75334ebf3b742a5e0f3b37a072e0c55e6394dc",
+            "evaluationMode": "game",
+            "targetIds": [
+              "candidateCap"
+            ],
+            "quality": 0.43779,
+            "stability": 1,
+            "cost": 0.901323,
+            "safety": 1,
+            "composite": 0.709027
+          },
+          "games": 4,
+          "metrics": {
+            "firstPlaceRate": 0.75,
+            "chanceAdjustedRate": 0.3333,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "p95WallMs": 3284.4
+          },
+          "artifactHash": "e074dfea18e03b0b55fa201523ffb3d31923104647c1fbb3fe2b2c1270e62b59"
+        },
+        "deep": {
+          "status": "done",
+          "evidencePath": "training/reports/ai7-evolution-demo/evidence/cand-ai7-candidatecap-r1c1-33cef5/deep-r001.json",
+          "score": {
+            "candidateId": "cand-ai7-candidatecap-r1c1-33cef5",
+            "identityDigest": "5cceb869d99543558d7e1b860f75334ebf3b742a5e0f3b37a072e0c55e6394dc",
+            "evaluationMode": "game",
+            "targetIds": [
+              "candidateCap"
+            ],
+            "quality": 0.36279,
+            "stability": 1,
+            "cost": 0.705535,
+            "safety": 1,
+            "composite": 0.651949
+          },
+          "games": 4,
+          "metrics": {
+            "firstPlaceRate": 0.5,
+            "chanceAdjustedRate": 0.0833,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "finishedGames": 4
+          }
+        },
+        "deepAssessment": {
+          "verdict": "promising",
+          "chanceAdjustedRate": 0.0833,
+          "minWilsonLower": 0.0945,
+          "anomalyRate": 0,
+          "note": "小样本深验只用于人工审核；no-advantage 不构成自动拒绝，但人工应重点复核"
+        },
+        "recommendation": "review-required (positive signal)",
+        "validationPoolConsumed": false,
+        "promotionTriggered": false
+      },
+      "status": "pending-human-approval",
+      "approvalRequired": true,
+      "promotionTriggered": false,
+      "requestedAt": "2026-10-25T08:52:12.193Z",
+      "validationPoolConsumed": false
+    }
+  ],
+  "validationPoolConsumed": false,
+  "promotionTriggered": false
+}
