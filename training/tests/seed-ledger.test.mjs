@@ -8,7 +8,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
 import {
   initializeLedger, loadLedger, registerExperiment, resumeExperiment,
@@ -66,8 +67,10 @@ test('有意 CRN 配对：显式声明同组才允许共享；未声明/组不�
 
 test('并发申请不能分配相同种子（多进程文件锁串行化）', () => {
   const path = tempLedger();
+  // 导入路径必须相对本测试文件定位（npm test 的 cwd = training/，不能用 process.cwd()）。
+  const ledgerModulePath = resolve(dirname(fileURLToPath(import.meta.url)), '../adversarial/seed-ledger.mjs');
   const worker = `
-    import { registerExperiment } from '${process.cwd()}/training/adversarial/seed-ledger.mjs';
+    import { registerExperiment } from '${ledgerModulePath}';
     const path = process.argv[2];
     const id = process.argv[3];
     try {
