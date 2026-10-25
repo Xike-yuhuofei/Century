@@ -20,10 +20,15 @@ import { sha256Canonical, assertCondition } from '../evolution/core.mjs';
 import { firstPlacePromotionDecision, clusterFirstPlacePairs } from '../evaluator/first-place.mjs';
 import {
   assertFixedSample, assertPlanIdentity, assertResultsAfterLock, assertValidationSeeds,
+  DEFAULT_SEARCH_WORK_UNITS,
 } from '../evaluator/preregistration.mjs';
 
+/** 正式挑战的固定搜索工作量：质量比较必须固定 workUnits，墙钟仅用于资源控制。
+ * 计划与实际执行共用同一常量；计划字段 searchWorkUnits 是唯一权威值。 */
+export const DEFAULT_FORMAL_WORK_UNITS = DEFAULT_SEARCH_WORK_UNITS;
+
 /** 版本描述符 → 模拟器席位版本（保留适配器分派字段；两个实验同口径）。 */
-export function toSeatVersion(descriptor, { seatCount = null } = {}) {
+export function toSeatVersion(descriptor, { seatCount = null, workUnits = DEFAULT_FORMAL_WORK_UNITS } = {}) {
   assertCondition(descriptor && typeof descriptor === 'object', '版本描述符缺失');
   assertCondition(typeof descriptor.id === 'string' && descriptor.id.length > 0, '版本描述符缺少 id');
   const version = { id: descriptor.id, parameters: descriptor };
@@ -33,13 +38,16 @@ export function toSeatVersion(descriptor, { seatCount = null } = {}) {
     if (descriptor.jointVersion !== undefined) version.jointVersion = descriptor.jointVersion;
     if (descriptor.budgetMs !== undefined) version.budgetMs = descriptor.budgetMs;
     if (descriptor.gateMode !== undefined) version.gateMode = descriptor.gateMode;
-    // search-control 候选：按人数取联合搜索配置（workUnits/contestThreshold/
-    // overrideMargin/candidateCap）。缺失时保持冠军缺省，行为不变。
+    // 正式挑战强制固定 workUnits：候选与冠军在同一搜索工作量下比较，
+    // 不允许墙钟预算决定展开顺序；候选按人数覆盖的显式 workUnits 优先。
     const perCount = descriptor.jointOptionsByPlayerCount;
-    if (perCount && seatCount !== null) {
-      const options = perCount[String(seatCount)] ?? perCount[seatCount];
-      if (options && typeof options === 'object') version.jointOptions = { ...options };
-    }
+    const explicit = perCount && seatCount !== null
+      ? (perCount[String(seatCount)] ?? perCount[seatCount] ?? {})
+      : {};
+    version.jointOptions = {
+      workUnits: explicit.workUnits ?? workUnits,
+      ...explicit,
+    };
   }
   return version;
 }
@@ -88,7 +96,7 @@ export function focusSeatFor({ seedIndex, seatCount, seatOffset = 0 }) {
  */
 export function runFirstPlaceSeatChallenge({
   champion, candidate, opponents, seeds, seatCount, seatOffset = 0,
-  maxMoves = 1200, deadlineMs = 300_000,
+  maxMoves = 1200, deadlineMs = 300_000, workUnits = DEFAULT_FORMAL_WORK_UNITS,
 }) {
   assertCondition(champion?.id && candidate?.id, 'champion/candidate 必须带 id');
   assertCondition(champion.id !== candidate.id, '冠军与候选 id 不得相同');
@@ -110,8 +118,8 @@ export function runFirstPlaceSeatChallenge({
       return toSeatVersion(opponentForSeat({ seedIndex, seat, opponents }));
     });
     const arms = [
-      { arm: 'A', version: toSeatVersion(candidate, { seatCount }) },
-      { arm: 'B', version: toSeatVersion(champion, { seatCount }) },
+      { arm: 'A', version: toSeatVersion(candidate, { seatCount, workUnits }) },
+      { arm: 'B', version: toSeatVersion(champion, { seatCount, workUnits }) },
     ];
     const results = {};
     for (const { arm, version } of arms) {
@@ -175,7 +183,7 @@ export function runFirstPlaceSeatChallenge({
 export function runFirstPlaceChallengeBundle({
   champion, candidate, opponents, seatPlans,
   weights = null, alpha = 0.05, margin = 0.02, minSeeds = 60, maxAnomalyRate = 0.02,
-  seatOffset = 0, maxMoves = 1200, deadlineMs = 300_000,
+  seatOffset = 0, maxMoves = 1200, deadlineMs = 300_000, workUnits = DEFAULT_FORMAL_WORK_UNITS,
 }) {
   assertCondition(Array.isArray(seatPlans) && seatPlans.length > 0, 'seatPlans 不能为空');
   const strata = [];
@@ -183,7 +191,7 @@ export function runFirstPlaceChallengeBundle({
   for (const plan of seatPlans) {
     const run = runFirstPlaceSeatChallenge({
       champion, candidate, opponents, seeds: plan.seeds, seatCount: plan.seatCount,
-      seatOffset, maxMoves, deadlineMs,
+      seatOffset, maxMoves, deadlineMs, workUnits,
     });
     runs.push(run);
     strata.push({ seatCount: plan.seatCount, pairs: run.pairs });
@@ -211,9 +219,14 @@ export function runFirstPlaceChallengeBundle({
  */
 export function runPreregisteredFirstPlaceChallenge({
   plan, champion, candidate, opponents, engine = null, recomputeIdentity = null,
-  seatOffset = 0, maxMoves = 1200, deadlineMs = 300_000,
+  seatOffset = 0, maxMoves = 1200, deadlineMs = 300_000, workUnits = null,
 }) {
   assertCondition(plan?.lockedAt, '预注册计划未锁定（缺少 lockedAt）');
+  const planWorkUnits = plan.searchWorkUnits ?? DEFAULT_FORMAL_WORK_UNITS;
+  assertCondition(Number.isSafeInteger(planWorkUnits) && planWorkUnits >= 1,
+    `预注册 searchWorkUnits 非法：${String(planWorkUnits)}`);
+  assertCondition(workUnits === null || workUnits === planWorkUnits,
+    `实际 workUnits ${String(workUnits)} ≠ 预注册 searchWorkUnits ${planWorkUnits}（搜索预算不得在读取结果后调整）`);
   const championIdentity = {
     parametersSha256: sha256Canonical(champion),
     artifactHash: plan.champion.artifactHash,
@@ -253,6 +266,7 @@ export function runPreregisteredFirstPlaceChallenge({
     seatOffset,
     maxMoves,
     deadlineMs,
+    workUnits: planWorkUnits,
   });
 
   if (recomputeIdentity) {
@@ -271,6 +285,7 @@ export function runPreregisteredFirstPlaceChallenge({
 
   const evidenceHash = sha256Canonical({
     planHash: plan.planHash,
+    searchWorkUnits: planWorkUnits,
     runs: runs.map(r => ({ seatCount: r.seatCount, pairs: r.pairs })),
     decision,
   });
@@ -282,6 +297,7 @@ export function runPreregisteredFirstPlaceChallenge({
     challengeIndex: plan.challengeIndex,
     alpha: alphaEntry.alpha,
     alphaBudget: plan.alphaBudget,
+    searchWorkUnits: planWorkUnits,
     candidateId: candidate.id,
     championId: champion.id,
     opponents: opponents.map(o => ({ id: o.id, fingerprint: descriptorFingerprint(o) })),

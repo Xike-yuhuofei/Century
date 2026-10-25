@@ -191,6 +191,7 @@ def _stage_impl(program_path: str, stage: int) -> dict:
     duel = _run(["/usr/bin/sandbox-exec", "-f", str(profile), "node",
                  str(NODE_DIR / "duel_runner.mjs"),
                  "--candidate", str(candidate_ai),
+                 "--primary", "first-place",
                  "--seed-list", str(seed_list),
                  "--out", str(result_json)], _STAGE_TIMEOUT[stage], "duel")
     if duel.returncode != 0:
@@ -205,9 +206,7 @@ def _stage_impl(program_path: str, stage: int) -> dict:
     (eval_dir / "manifest.json").write_text((workdir / "manifest.json").read_text())
 
     anomaly_rate = stats.get("anomalyRate", 1.0)
-    # 配对得分优势率：从 seedPairs 直接计算决定性种子的胜率；
-    # pairedPromotionDecision 的 scoreAdvantageRate 在 insufficient 判定下缺失，
-    # 这里独立计算（无决定性种子 → 中性 0.5，不误判为劣势）。
+    # 配对得分优势率：保留为诊断口径（不再决定晋级/研究 fitness 主排序）。
     seed_pairs = duel_result.get("seedPairs", [])
     decisive = [p for p in seed_pairs if p.get("status") == "finished" and p.get("diff", 0) != 0]
     adv_rate = (sum(1 for p in decisive if p["diff"] > 0) / len(decisive)) if decisive else 0.5
@@ -216,25 +215,53 @@ def _stage_impl(program_path: str, stage: int) -> dict:
     latency_excess = min(1.0, max(0.0, (p95 - 150.0) / 150.0))
     complexity_excess = min(1.0, max(0.0, complexity / 3000.0 - 1.0))
 
-    # combined_score：配对得分优势（主）+ 配对胜率差（辅）- 稳定性/延迟/复杂度惩罚。
-    # 平局基线（与官方逐位一致）≈ 0.5；ties 由 pairedPromotionDecision 的 decisive 口径排除。
-    combined = (
-        0.5
-        + 0.30 * _tanh(mean_diff / 8.0)
-        + 0.20 * (adv_rate - 0.5) * 2.0
-        - 1.5 * anomaly_rate
-        - 0.10 * latency_excess
-        - 0.05 * complexity_excess
+    # P0：研究 fitness 主指标 = 焦点席位配对第一名率增量（不是阵营口径）。
+    first_place_delta = (stats.get("firstPlaceDelta") or {}).get("ci", {}).get("mean")
+    first_place_ci = (stats.get("firstPlaceDelta") or {}).get("ci")
+    pairs = stats.get("firstPlacePairs") or []
+    candidate_first_rate = (
+        sum(1 for p in pairs if p.get("candidateFirst") == 1) / len(pairs) if pairs else None
     )
+    champion_first_rate = (
+        sum(1 for p in pairs if p.get("championFirst") == 1) / len(pairs) if pairs else None
+    )
+
+    if first_place_delta is not None:
+        # 0.5 = 无优势；delta>0 提升第一名率，delta<0 降低。平均分差只披露、不参与。
+        combined = (
+            0.5
+            + 0.5 * float(first_place_delta)
+            - 1.5 * anomaly_rate
+            - 0.10 * latency_excess
+            - 0.05 * complexity_excess
+        )
+    elif stats.get("primaryMetric") == "pairedFirstPlaceRateDelta":
+        # 第一名率模式但没有有效区间（样本不足/异常率过高）→ 直接判 0，
+        # 绝不回退到旧得分优势率口径。
+        combined = 0.0
+    else:
+        # 旧口径仅作历史复现/回退，不得用于新冠军晋级判定。
+        combined = (
+            0.5
+            + 0.30 * _tanh(mean_diff / 8.0)
+            + 0.20 * (adv_rate - 0.5) * 2.0
+            - 1.5 * anomaly_rate
+            - 0.10 * latency_excess
+            - 0.05 * complexity_excess
+        )
 
     return {
         "combined_score": round(combined, 4),
         "stage_passed": 1.0,
+        "primary_metric": "pairedFirstPlaceRateDelta" if first_place_delta is not None else "pairedScoreAdvantage",
+        "first_place_delta": float(first_place_delta) if first_place_delta is not None else 0.0,
+        "first_place_ci_lower": float(first_place_ci["lower"]) if first_place_ci else 0.0,
+        "candidate_first_rate": float(candidate_first_rate) if candidate_first_rate is not None else 0.0,
+        "champion_first_rate": float(champion_first_rate) if champion_first_rate is not None else 0.0,
         "games": float(stats.get("totalGames", 0)),
         "anomaly_rate": float(anomaly_rate),
         "paired_win_rate": float(adv_rate),
         "mean_score_diff_per_seed": float(mean_diff),
-        "first_place_rate": float((stats.get("firstPlace") or {}).get("merged", {}).get("rate", 0.0) or 0.0),
         "p95_decision_ms": float(p95),
         "mean_decision_ms": float(stats.get("meanDecisionMs") or 0.0),
         "code_complexity": float(complexity),

@@ -212,7 +212,8 @@ measured({
 // ---- R09 12 小时无人值守训练 ----
 {
   const artifact = findLatest12hArtifact();
-  const inProgress = readJSON('training/reports/autonomous/ai8-12h/state.json');
+  const inProgress = readJSON('training/reports/autonomous/ai8-12h-v2/state.json')
+    ?? readJSON('training/reports/autonomous/ai8-12h/state.json');
   const elapsedHours = inProgress?.createdAt
     ? Number(((Date.now() - Date.parse(inProgress.createdAt)) / 3600_000).toFixed(2))
     : 0;
@@ -237,6 +238,7 @@ measured({
 
 function findLatest12hArtifact() {
   const candidates = [
+    'training/reports/autonomous/ai8-12h-v2/run-summary.json',
     'training/reports/autonomous/ai8-12h/run-summary.json',
     'training/reports/autonomous-12h/run-summary.json',
   ];

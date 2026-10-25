@@ -33,7 +33,7 @@ import {
 import { VALIDATION_POOL_BASE } from '../lib/seeds.mjs';
 import { reserveAlpha, completeAlpha, ALPHA_LEDGER_PATH } from '../lib/alpha-ledger.mjs';
 import {
-  createPreregistration, lockPreregistration, REQUIRED_SEAT_COUNTS,
+  createPreregistration, lockPreregistration, REQUIRED_SEAT_COUNTS, DEFAULT_SEARCH_WORK_UNITS,
 } from '../evaluator/preregistration.mjs';
 import { sha256Canonical } from '../evolution/core.mjs';
 import { buildRegistry } from '../adversarial/registry.mjs';
@@ -68,6 +68,10 @@ const seatOffset = args['seat-offset'] !== undefined ? Number(args['seat-offset'
 if (!Number.isSafeInteger(seatOffset) || seatOffset < 0 || seatOffset > 4) throw new Error('--seat-offset 必须在 0..4');
 const maxMoves = args['max-moves'] !== undefined ? Number(args['max-moves']) : 1200;
 const deadlineMs = args['deadline-ms'] !== undefined ? Number(args['deadline-ms']) : 300_000;
+const workUnits = args['work-units'] !== undefined ? Number(args['work-units']) : DEFAULT_SEARCH_WORK_UNITS;
+if (!Number.isSafeInteger(workUnits) || workUnits < 1 || workUnits > 4096) {
+  throw new Error(`--work-units 必须为 1–4096 的整数，实际：${workUnits}`);
+}
 const outDir = resolve(process.cwd(), args.out ?? `training/reports/fp-challenge-${Date.now()}`);
 const candidatePath = resolve(process.cwd(), args.candidate);
 
@@ -133,6 +137,7 @@ const plan = createPreregistration({
   challengeIndex,
   minSeedsPerSeatCount: Math.min(seedsPerSeat, 60),
   maxSeedsPerSeatCount: seedsPerSeat,
+  searchWorkUnits: workUnits,
   engine: {
     engineBundleSha256: provenance.engineBundleSha256,
     sourceClosureSha256: provenance.sourceClosureSha256,
@@ -149,6 +154,7 @@ const planSummary = {
   base,
   totalSeeds,
   seedsPerSeat,
+  searchWorkUnits: workUnits,
   seatWindows,
   candidate: candidateIdentity,
   champion: championIdentity,
@@ -202,6 +208,7 @@ try {
     seatOffset,
     maxMoves,
     deadlineMs,
+    workUnits,
     recomputeIdentity: () => ({
       parametersSha256: championParametersSha256(validatedCandidate),
       sourceHash: candidateDoc.sourceHash ?? sha256Canonical(validatedCandidate),

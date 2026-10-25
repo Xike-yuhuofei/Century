@@ -43,9 +43,11 @@ prompt:
     (params.engineWeight etc.) must remain wired in; (7) if you use `model`,
     keep it nil-safe and do not assume it is always present.
     Evaluation: candidates are compiled with the official game rules engine,
-    probed on deterministic states, then play paired games against the
-    reigning champion AI in a sandbox; combined_score rewards paired score
-    advantage and stability, and penalizes anomalies, latency and bloat. Small
+    probed on deterministic states, then play paired focus-seat games against
+    the reigning champion AI in a sandbox (A=candidate at focus seat,
+    B=champion at the same seat, same seed/opponents). combined_score is driven
+    by the paired first-place-rate delta, not by average score; anomalies,
+    latency and bloat are penalties. Small
     principled changes beat large speculative rewrites.
 
 # 评估级联：stage1 静态+编译+探针（阈值 0.5，未过即淘汰）；
