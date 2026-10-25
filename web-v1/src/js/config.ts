@@ -72,11 +72,15 @@ const PRESET_FIELDS = [
   'variant', 'worlds', 'horizon', 'opponentMode', 'evaluator',
 ] as const;
 
-/** 版本预设（仅已记载配置；preset 为空 = 与冻结缺省逐项相同）。 */
+/** 版本预设（仅已记载配置；preset 为空 = 与冻结缺省逐项相同）。
+ * AI6 第六阶段：champion-guided 版本可另带 guided 缺省（如 joint-js6 的
+ * allocation/endgameMode）——一并落入 preset 参与 resolved 披露与哈希；
+ * guided 先落位、optionPreset 后落位（后者优先），显式注入最终覆盖。 */
 export function versionOptionPreset(versionId: string): Record<string, unknown> {
   const version = JOINT_VERSIONS[versionId as keyof typeof JOINT_VERSIONS];
   if (!version) throw new Error(`未知联合规划版本：${String(versionId)}`);
-  return { ...(version.optionPreset ?? {}) };
+  const guided = (version as { guided?: Record<string, unknown> }).guided ?? {};
+  return { ...guided, ...(version.optionPreset ?? {}) };
 }
 
 /** 合并版本预设与调用方覆盖；返回新对象（不修改入参）。 */
