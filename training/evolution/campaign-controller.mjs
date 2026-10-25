@@ -555,12 +555,21 @@ export class CampaignController {
     }
     const item = pending.sort((a, b) => (b.quick?.score?.composite ?? 0) - (a.quick?.score?.composite ?? 0))[0];
     const games = expectedGames({ evidenceMode: 'game', seeds: roundData.deepSeeds, playerCounts: this.config.playerCounts });
-    if (state.budgetUsed.games + games > this.config.budget.maxGames
-      || state.budgetUsed.deepConfirmations >= this.config.budget.maxDeepConfirmations) {
+    if (state.budgetUsed.games + games > this.config.budget.maxGames) {
       item.stage = 'deep-skipped';
-      item.failure = { stage: 'deep-confirm', reason: 'budget exhausted' };
+      item.failure = { stage: 'deep-confirm', reason: 'game budget exhausted' };
       state.status = 'budget-exhausted';
       this._event(state, 'candidate-deep-budget-skipped', item.failure, item.candidateId);
+      return true;
+    }
+    if (state.budgetUsed.deepConfirmations >= this.config.budget.maxDeepConfirmations) {
+      // 深验配额是「本 campaign 不再做深验」的资源上限，不是全局终止条件：
+      // 继续下一轮生成/快筛/筛选，但不再消耗深验预算，避免长 campaign 在第 4 次
+      // 深验后误判为 budget-exhausted（12h 压力测试首次运行即因此提前停止）。
+      item.stage = 'deep-quota-skipped';
+      item.failure = { stage: 'deep-confirm', reason: 'deep confirmation quota reached' };
+      this._event(state, 'candidate-deep-quota-skipped', item.failure, item.candidateId);
+      roundData.deepDone = true;
       return true;
     }
     try {

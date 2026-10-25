@@ -70,6 +70,23 @@ function tempRoot() {
   return mkdtempSync(join(tmpdir(), 'ai7-controller-'));
 }
 
+test('深验配额耗尽只跳过深验，不把整个 campaign 判为 budget-exhausted', async () => {
+  const root = tempRoot();
+  const { controller } = makeController({
+    root,
+    config: {
+      rounds: 2,
+      budget: { maxCandidates: 8, maxGames: 80, maxWallMs: 600_000, maxConcurrent: 1, maxDeepConfirmations: 1 },
+    },
+  });
+  const results = await controller.run();
+  assert.equal(results.status, 'completed', results.status);
+  assert.equal(results.rounds.length, 2);
+  const second = results.rounds[1];
+  assert.ok(second.candidates.length > 0, '第二轮必须继续生成候选');
+  assert.equal(results.budgetUsed.deepConfirmations, 1, '深验总配额不得被突破');
+});
+
 test('检查点/停止/恢复/完成：同一次 campaign 可跨进程继续', async () => {
   const root = tempRoot();
   const { controller } = makeController({ root });

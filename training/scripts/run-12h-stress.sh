@@ -4,10 +4,10 @@
 set -u
 REPO="/Volumes/Extreme SSD/Projects/Century"
 cd "$REPO" || exit 1
-CAMPAIGN="ai8-12h"
+CAMPAIGN="ai8-12h-v2"
 ARGS=(
   --campaign "$CAMPAIGN"
-  --rounds 200
+  --rounds 500
   --player-counts 2,3,4,5
   --quick-seeds 8
   --deep-seeds 12
