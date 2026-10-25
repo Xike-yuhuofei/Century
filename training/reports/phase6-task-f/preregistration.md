@@ -51,6 +51,28 @@ seedBase = 1.382e9 + (人数−2)×3e6 + (diverse ? 1.5e6 : 0)。
 - 结果无论正负均如实披露；不晋级、不覆盖 champion.json（正式晋级走既有
   验证池 + 几何 alpha 管线，须人工批准）。
 
-## 5. 候选身份锁定（筛查后补记）
+## 5. 候选身份锁定（2026-10-25 12:20，筛查后补记）
 
-（待机制筛查完成后填写：JS6 最终组合、被否决组件、筛查数据引用。）
+**候选 = `joint-js6`（组合 = js5 语义 + C2 racing + C4 claimFocus，budgetMs=100）**。
+
+锁定依据（全部为筛查/矩阵信号，非确认结论）：
+- B 矩阵同预算对照：JS6 vs JS5 @100ms 在 5p **+13.0pp [2.0,24.0] 显著**；
+  其余 7 格平价、无显著为害（budget-curve.md §对照）；
+- B 矩阵阶梯：JS6@100 (37%) ≈ JS5@500 (35%)（5p）——racing 在紧预算档抵偿
+  5 倍算力；
+- 单因子筛查（5p@500ms，30 种子，tune 块）：worlds8/16、cap6/8 全部负趋势
+  （否决——稀释每候选试验深度，证实任务书 C3 预言）；omV1 **−25pp 显著有害**
+  （D1 定论：OM V1 不进默认路径）；racing/claimFocus 单独在 500ms 平价
+  （其价值在紧预算档，与 B 矩阵一致）；evaluatorL3/gateAlways 平价；
+- **被否决组件**：worlds>4、candidateCap>4、om-v1、L3（默认路径）——均无
+  可靠正向证据；
+- **F 确认预算 = 100ms（实战档）**：JS6 的证据集中在该档；500ms 档 JS6≈JS5，
+  高预算场景推荐 JS5（无需要求 JS6）。
+
+## 6. 确认运行配置
+
+- duel `--candidates js6,js5 --players N --seeds {150|200} --block phase6-confirm
+  --pool {classic|diverse}`（同 (人数,池) 双候选共享种子 = 配对）；
+- 4 workers（每人数一路）；caffeinate 防睡眠；结果目录
+  training/reports/phase6-task-f/。
+

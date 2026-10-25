@@ -1,0 +1,1601 @@
+{
+  "schema": "century-joint-search-ablation-v1",
+  "date": "2026-10-25T01:14:11.227Z",
+  "codeCommit": "925298e26c5391de3e52884c135e272e8f2d18f1",
+  "engineBundleSha256": "e823afed2fe9a4eae17c914ca6ab1bdbe0e56aadbbfdab5ecdb1c4a6c397e4c3",
+  "versionRegistry": {
+    "legacy-js0": {
+      "id": "legacy-js0",
+      "algorithm": "beam-search",
+      "parameters": {
+        "id": "ai5-readiness-efficiency",
+        "engineWeight": 1,
+        "tempoWeight": 1,
+        "contestWeight": 1,
+        "synergyWeight": 1,
+        "goalWeight": 1,
+        "capacityWeight": 1,
+        "restWeight": 1,
+        "endgameWeight": 1,
+        "structure": "beam-rollout",
+        "acquisitionVariant": "readiness-efficiency"
+      },
+      "structure": "beam-rollout"
+    },
+    "legacy-js1": {
+      "id": "legacy-js1",
+      "algorithm": "beam-search",
+      "parameters": {
+        "id": "ai5-readiness-efficiency",
+        "engineWeight": 1,
+        "tempoWeight": 1,
+        "contestWeight": 1,
+        "synergyWeight": 1,
+        "goalWeight": 1,
+        "capacityWeight": 1,
+        "restWeight": 1,
+        "endgameWeight": 1,
+        "structure": "beam-contest",
+        "acquisitionVariant": "readiness-efficiency"
+      },
+      "structure": "beam-contest"
+    },
+    "joint-js5-frozen": {
+      "id": "joint-js5-frozen",
+      "algorithm": "champion-guided-joint-search",
+      "parameters": {
+        "id": "joint-js5",
+        "adapter": "champion-guided",
+        "engineWeight": 1,
+        "tempoWeight": 1,
+        "contestWeight": 1,
+        "synergyWeight": 1,
+        "goalWeight": 1,
+        "capacityWeight": 1,
+        "restWeight": 1,
+        "endgameWeight": 1,
+        "acquisitionVariant": "readiness-efficiency",
+        "jointVersion": "joint-js5",
+        "budgetMs": 100
+      },
+      "structure": null
+    }
+  },
+  "block": "phase6-tune",
+  "seedBase": 1353000000,
+  "seeds": 30,
+  "pool": "classic",
+  "jointOptions": {
+    "budgetMs": 500,
+    "worlds": 16
+  },
+  "note": "JS 编号为本阶段消融编号（JS0–JS5），非 PR #22 的 B0/B1/B2。confirm 块分区见 seed_policy.mjs AI6_JS5_CONFIRM_SUBBLOCK。",
+  "cells": [
+    {
+      "candidateId": "js5",
+      "seatCount": 5,
+      "totalGames": 60,
+      "finishedGames": 60,
+      "anomalies": 0,
+      "anomalyReasons": [],
+      "games": [
+        {
+          "seed": 1353000000,
+          "direction": "A",
+          "candidateSeats": [
+            0
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 3,
+          "meanScore": 48,
+          "scoreDiff": 0.5,
+          "winnerSeat": 1,
+          "moves": 165,
+          "versionsIds": [
+            "joint-js5",
+            "style-engine",
+            "style-contest",
+            "style-tempo",
+            "neutral-baseline"
+          ]
+        },
+        {
+          "seed": 1353000000,
+          "direction": "B",
+          "candidateSeats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 3,
+          "meanScore": 46.25,
+          "scoreDiff": 0.25,
+          "winnerSeat": 2,
+          "moves": 149,
+          "versionsIds": [
+            "joint-js5-frozen",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000001,
+          "direction": "A",
+          "candidateSeats": [
+            1
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 3,
+          "meanScore": 51,
+          "scoreDiff": -8,
+          "winnerSeat": 4,
+          "moves": 190,
+          "versionsIds": [
+            "style-engine",
+            "joint-js5",
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen"
+          ]
+        },
+        {
+          "seed": 1353000001,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.5,
+          "meanScore": 55,
+          "scoreDiff": 18,
+          "winnerSeat": 4,
+          "moves": 161,
+          "versionsIds": [
+            "joint-js5",
+            "style-contest",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000002,
+          "direction": "A",
+          "candidateSeats": [
+            2
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 3,
+          "meanScore": 54,
+          "scoreDiff": -2.25,
+          "winnerSeat": 4,
+          "moves": 187,
+          "versionsIds": [
+            "style-contest",
+            "style-tempo",
+            "joint-js5",
+            "joint-js5-frozen",
+            "style-engine"
+          ]
+        },
+        {
+          "seed": 1353000002,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 3.5,
+          "meanScore": 54,
+          "scoreDiff": -19,
+          "winnerSeat": 2,
+          "moves": 181,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "neutral-baseline",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000003,
+          "direction": "A",
+          "candidateSeats": [
+            3
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 2,
+          "meanScore": 59,
+          "scoreDiff": 3,
+          "winnerSeat": 2,
+          "moves": 183,
+          "versionsIds": [
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "joint-js5",
+            "style-contest"
+          ]
+        },
+        {
+          "seed": 1353000003,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 3,
+          "meanScore": 50.5,
+          "scoreDiff": -3.5,
+          "winnerSeat": 2,
+          "moves": 168,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-engine",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000004,
+          "direction": "A",
+          "candidateSeats": [
+            4
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 2,
+          "meanScore": 56,
+          "scoreDiff": 0.25,
+          "winnerSeat": 1,
+          "moves": 200,
+          "versionsIds": [
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "style-engine",
+            "style-contest",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000004,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 58.5,
+          "scoreDiff": 7.5,
+          "winnerSeat": 3,
+          "moves": 192,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-tempo"
+          ]
+        },
+        {
+          "seed": 1353000005,
+          "direction": "A",
+          "candidateSeats": [
+            0
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 2,
+          "meanScore": 52,
+          "scoreDiff": 4.25,
+          "winnerSeat": 1,
+          "moves": 181,
+          "versionsIds": [
+            "joint-js5",
+            "style-engine",
+            "style-contest",
+            "style-tempo",
+            "neutral-baseline"
+          ]
+        },
+        {
+          "seed": 1353000005,
+          "direction": "B",
+          "candidateSeats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 58.5,
+          "scoreDiff": 0.5,
+          "winnerSeat": 2,
+          "moves": 182,
+          "versionsIds": [
+            "joint-js5-frozen",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000006,
+          "direction": "A",
+          "candidateSeats": [
+            1
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 1,
+          "meanScore": 74,
+          "scoreDiff": 18.75,
+          "winnerSeat": 1,
+          "moves": 161,
+          "versionsIds": [
+            "style-engine",
+            "joint-js5",
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen"
+          ]
+        },
+        {
+          "seed": 1353000006,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 55,
+          "scoreDiff": 11,
+          "winnerSeat": 3,
+          "moves": 157,
+          "versionsIds": [
+            "joint-js5",
+            "style-contest",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000007,
+          "direction": "A",
+          "candidateSeats": [
+            2
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 3,
+          "meanScore": 51,
+          "scoreDiff": -0.75,
+          "winnerSeat": 3,
+          "moves": 157,
+          "versionsIds": [
+            "style-contest",
+            "style-tempo",
+            "joint-js5",
+            "joint-js5-frozen",
+            "style-engine"
+          ]
+        },
+        {
+          "seed": 1353000007,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 55.5,
+          "scoreDiff": 1.5,
+          "winnerSeat": 1,
+          "moves": 166,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "neutral-baseline",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000008,
+          "direction": "A",
+          "candidateSeats": [
+            3
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 1,
+          "meanScore": 64,
+          "scoreDiff": 14.75,
+          "winnerSeat": 3,
+          "moves": 151,
+          "versionsIds": [
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "joint-js5",
+            "style-contest"
+          ]
+        },
+        {
+          "seed": 1353000008,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 3,
+          "meanScore": 57.25,
+          "scoreDiff": 1.25,
+          "winnerSeat": 4,
+          "moves": 162,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-engine",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000009,
+          "direction": "A",
+          "candidateSeats": [
+            4
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 2,
+          "meanScore": 48,
+          "scoreDiff": 5.25,
+          "winnerSeat": 2,
+          "moves": 150,
+          "versionsIds": [
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "style-engine",
+            "style-contest",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000009,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 51.5,
+          "scoreDiff": 7.5,
+          "winnerSeat": 2,
+          "moves": 171,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-tempo"
+          ]
+        },
+        {
+          "seed": 1353000010,
+          "direction": "A",
+          "candidateSeats": [
+            0
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 1,
+          "meanScore": 70,
+          "scoreDiff": 15.25,
+          "winnerSeat": 0,
+          "moves": 199,
+          "versionsIds": [
+            "joint-js5",
+            "style-engine",
+            "style-contest",
+            "style-tempo",
+            "neutral-baseline"
+          ]
+        },
+        {
+          "seed": 1353000010,
+          "direction": "B",
+          "candidateSeats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 60.25,
+          "scoreDiff": 9.25,
+          "winnerSeat": 2,
+          "moves": 165,
+          "versionsIds": [
+            "joint-js5-frozen",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000011,
+          "direction": "A",
+          "candidateSeats": [
+            1
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 2,
+          "meanScore": 57,
+          "scoreDiff": 4.25,
+          "winnerSeat": 4,
+          "moves": 181,
+          "versionsIds": [
+            "style-engine",
+            "joint-js5",
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen"
+          ]
+        },
+        {
+          "seed": 1353000011,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 3.25,
+          "meanScore": 54.5,
+          "scoreDiff": -4.5,
+          "winnerSeat": 2,
+          "moves": 181,
+          "versionsIds": [
+            "joint-js5",
+            "style-contest",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000012,
+          "direction": "A",
+          "candidateSeats": [
+            2
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 1,
+          "meanScore": 61,
+          "scoreDiff": 10.25,
+          "winnerSeat": 2,
+          "moves": 175,
+          "versionsIds": [
+            "style-contest",
+            "style-tempo",
+            "joint-js5",
+            "joint-js5-frozen",
+            "style-engine"
+          ]
+        },
+        {
+          "seed": 1353000012,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 3,
+          "meanScore": 59.75,
+          "scoreDiff": 0.75,
+          "winnerSeat": 0,
+          "moves": 173,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "neutral-baseline",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000013,
+          "direction": "A",
+          "candidateSeats": [
+            3
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 3,
+          "meanScore": 54,
+          "scoreDiff": -0.25,
+          "winnerSeat": 1,
+          "moves": 221,
+          "versionsIds": [
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "joint-js5",
+            "style-contest"
+          ]
+        },
+        {
+          "seed": 1353000013,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.5,
+          "meanScore": 53,
+          "scoreDiff": 10,
+          "winnerSeat": 2,
+          "moves": 175,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-engine",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000014,
+          "direction": "A",
+          "candidateSeats": [
+            4
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 2,
+          "meanScore": 56,
+          "scoreDiff": 4,
+          "winnerSeat": 0,
+          "moves": 173,
+          "versionsIds": [
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "style-engine",
+            "style-contest",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000014,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 3.5,
+          "meanScore": 47.5,
+          "scoreDiff": -15.5,
+          "winnerSeat": 4,
+          "moves": 156,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-tempo"
+          ]
+        },
+        {
+          "seed": 1353000015,
+          "direction": "A",
+          "candidateSeats": [
+            0
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 2,
+          "meanScore": 60,
+          "scoreDiff": 10.5,
+          "winnerSeat": 3,
+          "moves": 155,
+          "versionsIds": [
+            "joint-js5",
+            "style-engine",
+            "style-contest",
+            "style-tempo",
+            "neutral-baseline"
+          ]
+        },
+        {
+          "seed": 1353000015,
+          "direction": "B",
+          "candidateSeats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 50.25,
+          "scoreDiff": 4.25,
+          "winnerSeat": 3,
+          "moves": 145,
+          "versionsIds": [
+            "joint-js5-frozen",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000016,
+          "direction": "A",
+          "candidateSeats": [
+            1
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 1,
+          "meanScore": 69,
+          "scoreDiff": 9.25,
+          "winnerSeat": 1,
+          "moves": 206,
+          "versionsIds": [
+            "style-engine",
+            "joint-js5",
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen"
+          ]
+        },
+        {
+          "seed": 1353000016,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 3.25,
+          "meanScore": 50.5,
+          "scoreDiff": -14.5,
+          "winnerSeat": 2,
+          "moves": 178,
+          "versionsIds": [
+            "joint-js5",
+            "style-contest",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000017,
+          "direction": "A",
+          "candidateSeats": [
+            2
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 2,
+          "meanScore": 66,
+          "scoreDiff": 3.25,
+          "winnerSeat": 3,
+          "moves": 191,
+          "versionsIds": [
+            "style-contest",
+            "style-tempo",
+            "joint-js5",
+            "joint-js5-frozen",
+            "style-engine"
+          ]
+        },
+        {
+          "seed": 1353000017,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.5,
+          "meanScore": 64.5,
+          "scoreDiff": 16.5,
+          "winnerSeat": 3,
+          "moves": 186,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "neutral-baseline",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000018,
+          "direction": "A",
+          "candidateSeats": [
+            3
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 1,
+          "meanScore": 85,
+          "scoreDiff": 28.75,
+          "winnerSeat": 3,
+          "moves": 177,
+          "versionsIds": [
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "joint-js5",
+            "style-contest"
+          ]
+        },
+        {
+          "seed": 1353000018,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 60.75,
+          "scoreDiff": 11.75,
+          "winnerSeat": 1,
+          "moves": 176,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-engine",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000019,
+          "direction": "A",
+          "candidateSeats": [
+            4
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 3,
+          "meanScore": 50,
+          "scoreDiff": -5.75,
+          "winnerSeat": 1,
+          "moves": 160,
+          "versionsIds": [
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "style-engine",
+            "style-contest",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000019,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 60.75,
+          "scoreDiff": 7.75,
+          "winnerSeat": 2,
+          "moves": 180,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-tempo"
+          ]
+        },
+        {
+          "seed": 1353000020,
+          "direction": "A",
+          "candidateSeats": [
+            0
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 3,
+          "meanScore": 69,
+          "scoreDiff": 2.75,
+          "winnerSeat": 2,
+          "moves": 181,
+          "versionsIds": [
+            "joint-js5",
+            "style-engine",
+            "style-contest",
+            "style-tempo",
+            "neutral-baseline"
+          ]
+        },
+        {
+          "seed": 1353000020,
+          "direction": "B",
+          "candidateSeats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 3.25,
+          "meanScore": 60.5,
+          "scoreDiff": -1.5,
+          "winnerSeat": 1,
+          "moves": 176,
+          "versionsIds": [
+            "joint-js5-frozen",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000021,
+          "direction": "A",
+          "candidateSeats": [
+            1
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 1,
+          "meanScore": 68,
+          "scoreDiff": 13.5,
+          "winnerSeat": 1,
+          "moves": 180,
+          "versionsIds": [
+            "style-engine",
+            "joint-js5",
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen"
+          ]
+        },
+        {
+          "seed": 1353000021,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 3.25,
+          "meanScore": 48,
+          "scoreDiff": -11,
+          "winnerSeat": 4,
+          "moves": 137,
+          "versionsIds": [
+            "joint-js5",
+            "style-contest",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000022,
+          "direction": "A",
+          "candidateSeats": [
+            2
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 1,
+          "meanScore": 80,
+          "scoreDiff": 27,
+          "winnerSeat": 2,
+          "moves": 196,
+          "versionsIds": [
+            "style-contest",
+            "style-tempo",
+            "joint-js5",
+            "joint-js5-frozen",
+            "style-engine"
+          ]
+        },
+        {
+          "seed": 1353000022,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 43,
+          "scoreDiff": 3,
+          "winnerSeat": 1,
+          "moves": 137,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "neutral-baseline",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000023,
+          "direction": "A",
+          "candidateSeats": [
+            3
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 1,
+          "meanScore": 70,
+          "scoreDiff": 18.75,
+          "winnerSeat": 3,
+          "moves": 165,
+          "versionsIds": [
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "joint-js5",
+            "style-contest"
+          ]
+        },
+        {
+          "seed": 1353000023,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.5,
+          "meanScore": 62.75,
+          "scoreDiff": 5.75,
+          "winnerSeat": 2,
+          "moves": 176,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-engine",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000024,
+          "direction": "A",
+          "candidateSeats": [
+            4
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 4,
+          "meanScore": 48,
+          "scoreDiff": -5.5,
+          "winnerSeat": 1,
+          "moves": 163,
+          "versionsIds": [
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "style-engine",
+            "style-contest",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000024,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 41.75,
+          "scoreDiff": 5.75,
+          "winnerSeat": 3,
+          "moves": 132,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-tempo"
+          ]
+        },
+        {
+          "seed": 1353000025,
+          "direction": "A",
+          "candidateSeats": [
+            0
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 4,
+          "meanScore": 49,
+          "scoreDiff": -10.25,
+          "winnerSeat": 1,
+          "moves": 195,
+          "versionsIds": [
+            "joint-js5",
+            "style-engine",
+            "style-contest",
+            "style-tempo",
+            "neutral-baseline"
+          ]
+        },
+        {
+          "seed": 1353000025,
+          "direction": "B",
+          "candidateSeats": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 3.25,
+          "meanScore": 56.75,
+          "scoreDiff": -3.25,
+          "winnerSeat": 4,
+          "moves": 168,
+          "versionsIds": [
+            "joint-js5-frozen",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000026,
+          "direction": "A",
+          "candidateSeats": [
+            1
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 4,
+          "meanScore": 45,
+          "scoreDiff": -7.75,
+          "winnerSeat": 4,
+          "moves": 180,
+          "versionsIds": [
+            "style-engine",
+            "joint-js5",
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen"
+          ]
+        },
+        {
+          "seed": 1353000026,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            2,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 3,
+          "meanScore": 49,
+          "scoreDiff": 2,
+          "winnerSeat": 3,
+          "moves": 180,
+          "versionsIds": [
+            "joint-js5",
+            "style-contest",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000027,
+          "direction": "A",
+          "candidateSeats": [
+            2
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 3,
+          "meanScore": 52,
+          "scoreDiff": -3.75,
+          "winnerSeat": 1,
+          "moves": 195,
+          "versionsIds": [
+            "style-contest",
+            "style-tempo",
+            "joint-js5",
+            "joint-js5-frozen",
+            "style-engine"
+          ]
+        },
+        {
+          "seed": 1353000027,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            3,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.5,
+          "meanScore": 64.25,
+          "scoreDiff": 18.25,
+          "winnerSeat": 3,
+          "moves": 177,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "neutral-baseline",
+            "joint-js5",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000028,
+          "direction": "A",
+          "candidateSeats": [
+            3
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 2,
+          "meanScore": 72,
+          "scoreDiff": 12.25,
+          "winnerSeat": 4,
+          "moves": 196,
+          "versionsIds": [
+            "style-tempo",
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "joint-js5",
+            "style-contest"
+          ]
+        },
+        {
+          "seed": 1353000028,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            4
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.75,
+          "meanScore": 63.75,
+          "scoreDiff": 2.75,
+          "winnerSeat": 1,
+          "moves": 211,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-engine",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000029,
+          "direction": "A",
+          "candidateSeats": [
+            4
+          ],
+          "status": "finished",
+          "won": false,
+          "meanRank": 4,
+          "meanScore": 44,
+          "scoreDiff": -4.75,
+          "winnerSeat": 2,
+          "moves": 145,
+          "versionsIds": [
+            "neutral-baseline",
+            "joint-js5-frozen",
+            "style-engine",
+            "style-contest",
+            "joint-js5"
+          ]
+        },
+        {
+          "seed": 1353000029,
+          "direction": "B",
+          "candidateSeats": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "status": "finished",
+          "won": true,
+          "meanRank": 2.5,
+          "meanScore": 56,
+          "scoreDiff": 7,
+          "winnerSeat": 2,
+          "moves": 163,
+          "versionsIds": [
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "joint-js5",
+            "style-tempo"
+          ]
+        }
+      ],
+      "directionA": {
+        "games": 30,
+        "firstPlace": {
+          "point": 0.3,
+          "lower": 0.1333,
+          "upper": 0.4667,
+          "seeds": 30,
+          "games": 30,
+          "iterations": 2000,
+          "method": "seed-cluster-bootstrap-95"
+        },
+        "bySeat": {
+          "0": {
+            "games": 6,
+            "firstPlaceRate": 0.1667,
+            "wilson": {
+              "point": 0.16666666666666666,
+              "lower": 0.03005336974830658,
+              "upper": 0.5635028221864702
+            }
+          },
+          "1": {
+            "games": 6,
+            "firstPlaceRate": 0.5,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.18761630648265054,
+              "upper": 0.8123836935173494
+            }
+          },
+          "2": {
+            "games": 6,
+            "firstPlaceRate": 0.3333,
+            "wilson": {
+              "point": 0.3333333333333333,
+              "lower": 0.09677141110578041,
+              "upper": 0.700006684861608
+            }
+          },
+          "3": {
+            "games": 6,
+            "firstPlaceRate": 0.5,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.18761630648265054,
+              "upper": 0.8123836935173494
+            }
+          },
+          "4": {
+            "games": 6,
+            "firstPlaceRate": 0,
+            "wilson": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.39033428790216534
+            }
+          }
+        }
+      },
+      "directionB": {
+        "games": 30,
+        "firstPlace": {
+          "point": 0.9333,
+          "lower": 0.8333,
+          "upper": 1,
+          "seeds": 30,
+          "games": 30,
+          "iterations": 2000,
+          "method": "seed-cluster-bootstrap-95"
+        },
+        "bySeat": {
+          "1+2+3+4": {
+            "games": 6,
+            "firstPlaceRate": 1,
+            "wilson": {
+              "point": 1,
+              "lower": 0.6096657120978346,
+              "upper": 1
+            }
+          },
+          "0+2+3+4": {
+            "games": 6,
+            "firstPlaceRate": 1,
+            "wilson": {
+              "point": 1,
+              "lower": 0.6096657120978346,
+              "upper": 1
+            }
+          },
+          "0+1+3+4": {
+            "games": 6,
+            "firstPlaceRate": 0.8333,
+            "wilson": {
+              "point": 0.8333333333333334,
+              "lower": 0.43649717781352987,
+              "upper": 0.9699466302516935
+            }
+          },
+          "0+1+2+4": {
+            "games": 6,
+            "firstPlaceRate": 1,
+            "wilson": {
+              "point": 1,
+              "lower": 0.6096657120978346,
+              "upper": 1
+            }
+          },
+          "0+1+2+3": {
+            "games": 6,
+            "firstPlaceRate": 0.8333,
+            "wilson": {
+              "point": 0.8333333333333334,
+              "lower": 0.43649717781352987,
+              "upper": 0.9699466302516935
+            }
+          }
+        }
+      },
+      "firstPlaceCombined": {
+        "point": 0.6167,
+        "lower": 0.5167,
+        "upper": 0.7167,
+        "seeds": 30,
+        "games": 60,
+        "iterations": 2000,
+        "method": "seed-cluster-bootstrap-95"
+      },
+      "meanRank": {
+        "mean": 2.5541666666666667,
+        "se": 0.10647996327965961,
+        "lower": 2.3454697735633863,
+        "upper": 2.762863559769947
+      },
+      "meanScoreDiff": {
+        "mean": 3.95,
+        "se": 1.2499124263108705,
+        "lower": 1.5002166606016196,
+        "upper": 6.399783339398381
+      },
+      "pairedScoreAdvantage": {
+        "seeds": 30,
+        "meanDiff": 3.95,
+        "won": 23,
+        "lost": 7,
+        "tied": 0,
+        "advantageRate": 0.7667
+      },
+      "latency": {
+        "count": 10420,
+        "meanMs": 243.422,
+        "p50Ms": 95.606,
+        "p95Ms": 525.503,
+        "p99Ms": 547.226,
+        "maxMs": 630.644
+      },
+      "jointSearch": {
+        "decisions": 5070,
+        "meanRolloutsPerDecision": 748.82,
+        "meanTransitionsPerDecision": 8394.6,
+        "omTimeMsTotal": 0,
+        "omTimeShare": 0,
+        "gateTriggerRate": 0.9542,
+        "overrideRate": 0.296,
+        "gatedChampionKeepRate": 0.704,
+        "gatedStarvedFallbackRate": 0
+      }
+    }
+  ]
+}
