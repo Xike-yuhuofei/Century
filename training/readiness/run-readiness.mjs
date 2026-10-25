@@ -59,14 +59,20 @@ function readJSON(path) {
 }
 
 const results = [];
-function record({ id, title, status, source, command, evidence, unmetReason = null, checkVersion = 'ai8-readiness-v1' }) {
+function record({ id, title, status, source, command = null, testCommand = null, evidence, unmetReason = null, checkVersion = 'ai8-readiness-v1' }) {
+  // 验收矩阵要求每项都有可复算的测试命令；允许调用方用 command 或 testCommand，
+  // 但缺失时直接失败，避免再产出没有 testCommand 的历史矩阵。
+  const reproducibleCommand = command ?? testCommand;
+  if (typeof reproducibleCommand !== 'string' || reproducibleCommand.trim().length === 0) {
+    throw new Error(`readiness ${id} 缺少 testCommand`);
+  }
   results.push({
     schema: 'century-acceptance-requirement-v1',
     requirementId: id,
     title,
     status,
     source,
-    testCommand: command,
+    testCommand: reproducibleCommand,
     evidence,
     commit,
     unmetReason,
@@ -101,16 +107,14 @@ const ok = r => r.ok;
   const info = runDir && existsSync(resolve(runDir, 'best/best_program_info.json'))
     ? JSON.parse(readFileSync(resolve(runDir, 'best/best_program_info.json'), 'utf8'))
     : null;
-  // 优先使用随运行产物提交的 run.log（自包含、可在其他机器复核）；
-  // 仅当仓库内没有日志时才回退到本机 /tmp 的临时日志。
-  const localLogs = candidates
-    .map(name => resolve(resultsRoot, name, 'run.log'))
-    .filter(p => existsSync(p));
-  const tmpLogs = execFileSync('ls', ['-1', '/tmp'], { encoding: 'utf8' })
-    .split('\n').filter(name => /^century-openevolve-r\d+\.log$/.test(name))
-    .sort().map(name => `/tmp/${name}`);
-  const logPaths = localLogs.length ? localLogs : tmpLogs;
-  const log = logPaths.map(p => readFileSync(p, 'utf8')).join('\n');
+  // 只读取「最新一次运行」的日志：跨 run 拼接会把旧 run 的 token 统计和
+  // evolved 数量混进 R01 证据，造成 run=r003 但数字来自 r001 的审计错误。
+  const repoLog = runDir ? resolve(runDir, 'run.log') : null;
+  const tmpLog = latest ? `/tmp/century-openevolve-${latest.replace(/^ai8-openevolve-/, '')}.log` : null;
+  const logPath = repoLog && existsSync(repoLog)
+    ? repoLog
+    : (tmpLog && existsSync(tmpLog) ? tmpLog : null);
+  const log = logPath ? readFileSync(logPath, 'utf8') : '';
   const llmCall = /Total LLM Token Usage[^\n]*/i.exec(log)?.[0] ?? null;
   // 真实生成必须至少有一次「行为不同于官方」的演化程序通过静态/编译/探针并
   // 进入真实对局评估；只有初始程序（identical=1）的 run 不算算法生成。
@@ -129,7 +133,7 @@ const ok = r => r.ok;
     source: 'ai5/openevolve/run_openevolve.py + training/evolution/openevolve-bridge.mjs',
     testCommand: 'caffeinate -is .venv/bin/python run_openevolve.py program/acquisition_value.ts century_evaluator.py --config config.yaml --iterations 3 --output results/ai8-openevolve-r00N',
     evidence: real
-      ? `run=${latest}；${llmCall}；行为不同于官方的演化程序=${evolvedBehavior}；bestProgram=yes；bestIdentical=${bestIdentical}；` +
+      ? `run=${latest}；log=${logPath}；${llmCall}；行为不同于官方的演化程序=${evolvedBehavior}；bestProgram=yes；bestIdentical=${bestIdentical}；` +
         `best static_ok=${metrics.static_ok} compile_ok=${compiled} probe_ok=${probed} stage_passed=${metrics.stage_passed} failure=${metrics.failure_stage ?? 'none'}`
       : '未找到本次真实 OpenEvolve 运行产物',
     unmetReason: pass ? null : (real
