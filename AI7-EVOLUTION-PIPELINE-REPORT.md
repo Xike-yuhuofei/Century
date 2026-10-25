@@ -198,7 +198,8 @@ artifacts/
 - `assemble_candidate.mjs`：复制官方源码 import 闭包，仅替换演化函数，逐文件哈希固证；在 Seatbelt 内执行；
 - `tsc`：独立工作目录编译，`noEmitOnError`；在 Seatbelt 内执行；
 - artifact：`source.kind='esm-module-bundle'`、`buildArtifact.compiled=true`、`kind='esm-module-bundle-v1'`、`files` 内含编译产物全文与哈希；
-- 探针：`probe_compiled.mjs` 在 Seatbelt 内导入官方与候选 evaluator，只使用公开 fixture，输出 `offline-proxy` 证据；
+- 探针：`probe_compiled.mjs` 在 Seatbelt 内导入官方与候选 evaluator，只使用公开 fixture，输出 `offline-proxy` 证据；编译产物本身也扫描 process/网络/时钟/隐藏牌库等危险构造；
+- 篡改：编译产物内容被改动或替换都会因 `buildArtifact.sha256`/文件哈希不一致而被拒绝；
 - 非 macOS / Seatbelt 不可用：创建编译型候选直接抛错，控制器按“生成即拒绝”隔离，绝不无沙箱执行。
 
 ---

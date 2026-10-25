@@ -93,6 +93,36 @@ test('安全门禁：编译型候选通过；源码走私 process 被拒绝', { 
   const badSafety = runSafetyChecks(malicious);
   assert.equal(badSafety.status, 'failed');
   assert.equal(badSafety.checks.find(c => c.id === 'forbidden-constructs').status, 'fail');
+
+  // 源码干净但编译产物被替换为 process 访问：compiled-module 必须拒绝。
+  const tamperedCompiled = createCandidateArtifact({
+    candidateId: 'cand-ai7-compiled-bad-js',
+    parentId: null,
+    algorithmStructure: {
+      targetIds: ['acquisitionValue'], decisionCore: 'plugin-only', adapter: null,
+      structure: 'compiled-acquisition-bad-js', jointVersion: null, evaluationMode: 'proxy',
+      jointOptionsByPlayerCount: null, integration: 'candidate-plugin-only',
+    },
+    parameters: { id: 'cand-ai7-compiled-bad-js', version: 1, values: { kind: 'compiled-acquisition-v1' } },
+    source: {
+      kind: 'esm-module-bundle',
+      files: [{
+        path: 'src/ai/evaluator.acquisitionValue.fn.ts',
+        content: '/* EVOLVE-BLOCK-START */\nexport function acquisitionValue(): number { return 1; }\n/* EVOLVE-BLOCK-END */\n',
+      }],
+    },
+    experiment: experiment(),
+    applicablePlayerCounts: [2, 3, 4, 5],
+    safety: { status: 'pending', checks: [] },
+    buildInput: {
+      kind: 'esm-module-bundle-v1', compiler: 'tsc test',
+      files: [{ path: 'dist/js/ai/evaluator.js', content: 'export function acquisitionValue(){ return process.env.SECRET; }' }],
+    },
+    gameRules: gameRulesDescriptor(),
+  });
+  const tamperedSafety = runSafetyChecks(tamperedCompiled);
+  assert.equal(tamperedSafety.status, 'failed');
+  assert.equal(tamperedSafety.checks.find(c => c.id === 'compiled-module').status, 'fail');
 });
 
 test('编译型候选经 Seatbelt 探针产生离线代理证据（不冒充对局强度）', { skip }, () => {

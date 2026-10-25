@@ -37,6 +37,25 @@ function artifactText(artifact) {
   return artifact.source.files.map(f => `${f.path}\n${f.content}`).join('\n');
 }
 
+/** 编译产物是 JS（允许 ESM import），但仍禁止运行期危险构造。 */
+const COMPILED_FORBIDDEN = Object.freeze([
+  { re: /\bprocess\b/, why: 'process' },
+  { re: /\bglobalThis\b/, why: 'globalThis' },
+  { re: /\bfetch\s*\(|\bXMLHttpRequest\b|\bWebSocket\b/, why: '网络' },
+  { re: /\bDate\b|\bperformance\b|\bsetTimeout\b|\bsetInterval\b|\bMath\.random\b/, why: '时钟/随机源' },
+  { re: /\bnode:fs\b|\bnode:net\b|\bnode:child_process\b|\bnode:os\b/, why: '文件/网络/进程模块' },
+  { re: /\bmerchantDeck\b|\bgolemDeck\b|\.deck\b/, why: '隐藏牌库' },
+]);
+
+function compiledForbiddenHits(text) {
+  const hits = [];
+  for (const { re, why } of COMPILED_FORBIDDEN) {
+    const match = text.match(re);
+    if (match) hits.push({ why, token: match[0] });
+  }
+  return hits;
+}
+
 /** 运行全部安全检查；返回 { status, checks }（不修改 artifact）。 */
 export function runSafetyChecks(artifact) {
   const checks = [];
@@ -84,6 +103,9 @@ export function runSafetyChecks(artifact) {
       '编译型候选缺少 dist/js/ai/evaluator.js 产物');
     assertCondition(compiled.content.length <= 64 * 1024,
       `编译产物 ${compiled.content.length}B 超过 64KB 预算`);
+    const compiledHits = compiledForbiddenHits(compiled.content);
+    assertCondition(compiledHits.length === 0,
+      `编译产物包含危险构造：${compiledHits.map(h => `${h.why}(${h.token})`).join('；')}`);
     const sourceText = artifactText(artifact);
     const signatureCount = (sourceText.match(/export\s+function\s+acquisitionValue\s*\(/g) ?? []).length;
     assertCondition(signatureCount === 1, `编译型候选必须恰好导出一个 acquisitionValue（实际 ${signatureCount}）`);
