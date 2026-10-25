@@ -15,6 +15,11 @@ export { contestPressure, peakPressure, pressureModel, golemSurvivalModel, type 
 export { PROFILES, profileFor, NEUTRAL_PROFILE, type Profile } from './ai/profiles.js';
 export { choosePlan } from './ai/planner.js';
 export {
+  engineModelContext, engineValueV2, engineValueFor, cardEngineValueV2,
+  acquisitionPaymentOpportunityCost, acquisitionRepeatDelta,
+  type EngineModelContext,
+} from './ai/engine-model.js';
+export {
   AI_STRUCTURES, DEFAULT_STRUCTURE, normalizeStructure,
   adaptiveWidth, ROLLOUT_DEFAULTS, type AIStructure,
 } from './ai/structures.js';

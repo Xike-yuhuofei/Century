@@ -7,6 +7,7 @@ import { GOLEM_BY_ID, MERCHANT_BY_ID, type Golem, type Stock } from '../data.js'
 import type { AIParameters } from './parameters.js';
 import type { PressureModel } from './opponent-model.js';
 import { VALUES, weighted, stockCount, cloneStock, engineValue } from './knowledge.js';
+import { acquisitionRepeatDelta, type EngineModelContext } from './engine-model.js';
 
 /** 距目标魔像的费用差距（按水晶价值加权）。 */
 export function goalGap(stock: readonly number[], goal: Golem | null): number {
@@ -190,12 +191,19 @@ export function acquisitionValue(
   profile: { engine: number; contest: number },
   pressure: PressureModel,
   params: AIParameters,
+  model: EngineModelContext | null = null,
 ): number {
+  // AI7 C2：v2 只追加"重复使用增量"（创造卡可反复产出/升级卡长期作用/
+  // 交易卡循环），叠加在冻结的获取估值血统之上——不替换、不放大其他项。
+  const withV2 = (value: number): number =>
+    params.engineModel === 'v2' && model
+      ? value + acquisitionRepeatDelta(cardId, state, preferred, model)
+      : value;
   if (params.acquisitionVariant === 'goal-remaining') {
-    return acquisitionValueGoalRemaining(state, cardId, preferred, profile, pressure, params);
+    return withV2(acquisitionValueGoalRemaining(state, cardId, preferred, profile, pressure, params));
   }
   if (params.acquisitionVariant === 'readiness-efficiency') {
-    return acquisitionValueReadinessEfficiency(state, cardId, preferred, profile, pressure, params);
+    return withV2(acquisitionValueReadinessEfficiency(state, cardId, preferred, profile, pressure, params));
   }
   const card = MERCHANT_BY_ID[cardId];
   if (!card) return 0;
@@ -221,6 +229,6 @@ export function acquisitionValue(
   const risk = pressure.peak[cardId] ?? 0;
   // 被抢风险与目标契合叠加为紧迫度：越关键且越可能被抢，越值得立刻出手。
   const urgency = 1 + (risk > 0 && goalFit > 0 ? goalFit : 0);
-  return profile.engine * (raw * .6 * params.engineWeight + synergy * 2 * params.synergyWeight + goalFit * 2 * params.goalWeight)
-    + profile.contest * params.contestWeight * (demand * .45 + risk * urgency * .55) * .9;
+  return withV2(profile.engine * (raw * .6 * params.engineWeight + synergy * 2 * params.synergyWeight + goalFit * 2 * params.goalWeight)
+    + profile.contest * params.contestWeight * (demand * .45 + risk * urgency * .55) * .9);
 }

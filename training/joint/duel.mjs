@@ -30,6 +30,7 @@ import {
   AI6_JS5_GOAL_DEV_SUBBLOCK, AI6_JS5_GOAL_CONFIRM_SUBBLOCK, AI6_JS5_GOAL_PERF_SUBBLOCK,
   AI6_PHASE6_DEV_SUBBLOCK, AI6_PHASE6_TUNE_SUBBLOCK, AI6_PHASE6_PERF_SUBBLOCK,
   AI6_PHASE6_2P_SUBBLOCK, AI6_PHASE6_BUDGET_SUBBLOCK, AI6_PHASE6_CONFIRM_SUBBLOCK,
+  AI7_CANDIDATE_DEV_SUBBLOCK,
 } from '../../ai5/lib/seed_policy.mjs';
 import { firstPlaceClusterCI, pairedDiffSummary, latencySummary } from '../baseline/stats.mjs';
 import { wilsonCI, meanCI } from '../evaluator/stats.mjs';
@@ -281,7 +282,8 @@ export function runAblationCell({ candidateId, seatCount, seeds, seedBase, joint
     : seedBase < AI6_JS5_GOAL_PERF_SUBBLOCK[1] ? AI6_JS5_GOAL_PERF_SUBBLOCK
     : seedBase < AI6_PHASE6_BUDGET_SUBBLOCK[1] ? AI6_PHASE6_BUDGET_SUBBLOCK
     : seedBase < AI6_JS5_GOAL_CONFIRM_SUBBLOCK[1] ? AI6_JS5_GOAL_CONFIRM_SUBBLOCK
-    : AI6_PHASE6_CONFIRM_SUBBLOCK, 'seedBase');
+    : seedBase < AI6_PHASE6_CONFIRM_SUBBLOCK[1] ? AI6_PHASE6_CONFIRM_SUBBLOCK
+    : AI7_CANDIDATE_DEV_SUBBLOCK, 'seedBase');
   const candidate = candidateVersion(candidateId);
   const opponents = pool === 'diverse' ? diversePool() : classicPool();
   const games = [];
@@ -491,6 +493,7 @@ async function main() {
         : args.block === 'phase6-budget' ? null // 预算矩阵由运行脚本计算分区后经 --seed-base 传入
         : args.block === 'goal-confirm' ? AI6_JS5_GOAL_CONFIRM_SUBBLOCK[0]
         : args.block === 'goal-dev' ? AI6_JS5_GOAL_DEV_SUBBLOCK[0]
+        : args.block === 'ai7-dev' ? AI7_CANDIDATE_DEV_SUBBLOCK[0]
         : args.block === 'tune2' ? 1_351_000_000
         : args.block === 'phase6-dev' ? 1_352_000_000
         : args.block === 'phase6-tune' ? 1_353_000_000
@@ -499,7 +502,7 @@ async function main() {
         : args.block === 'test' ? 1_320_000_000
         : args.block === 'audit' ? 1_300_000_000
         : args.block === 'verify' ? 1_330_000_000
-        : (() => { throw new Error(`--block 必须是 tune|tune2|test|audit|verify|confirm|phase6-dev|phase6-tune|phase6-perf|phase6-2p|phase6-budget|phase6-confirm|goal-dev|goal-confirm，实际：${args.block}`); })();
+        : (() => { throw new Error(`--block 必须是 tune|tune2|test|audit|verify|confirm|phase6-dev|phase6-tune|phase6-perf|phase6-2p|phase6-budget|phase6-confirm|goal-dev|goal-confirm|ai7-dev，实际：${args.block}`); })();
   const jointOptions = {
     ...(args.budgetMs !== undefined ? { budgetMs: args.budgetMs } : {}),
     ...(args.workUnits !== undefined ? { workUnits: args.workUnits } : {}),

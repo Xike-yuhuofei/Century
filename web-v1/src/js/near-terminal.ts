@@ -95,10 +95,15 @@ export function immediateOfficialScoreDelta(view: AIObservation, action: Action)
     const id = view.golemMarket[action.index];
     const goal = id ? GOLEM_BY_ID[id] : null;
     if (!goal || !has(stock, goal.cost)) return null;
+    // 硬币奖励由**公开资源池**支付（engine.applyClaim 语义），不是玩家已持硬币。
+    // 修复前本函数误用玩家自己的 copper/silver 判断资格：当玩家 0 铜但池中
+    // 有铜时，认领净分会少算 3 分，直接影响认领保护门槛。
+    let copperPool = view.copper;
+    let silverPool = view.silver;
     let coin = 0;
-    if (action.index === 0 && copper > 0) { copper -= 1; coin = 3; }
-    else if (action.index === 0 && copper === 0 && silver > 0) { silver -= 1; coin = 1; }
-    else if (action.index === 1 && copper > 0 && silver > 0) { silver -= 1; coin = 1; }
+    if (action.index === 0 && copperPool > 0) { copperPool -= 1; copper += 1; coin = 3; }
+    else if (action.index === 0 && copperPool === 0 && silverPool > 0) { silverPool -= 1; silver += 1; coin = 1; }
+    else if (action.index === 1 && copperPool > 0 && silverPool > 0) { silverPool -= 1; silver += 1; coin = 1; }
     delta += goal.points + coin;
     delta -= goal.cost.slice(1).reduce((sum, x) => sum + x, 0);
     for (let c = 0; c < 4; c++) stock[c] -= goal.cost[c];

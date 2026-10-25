@@ -1,0 +1,1141 @@
+{
+  "schema": "century-ai7-latency-probe-v1",
+  "generatedAt": "2026-10-25T11:38:23.715Z",
+  "budgetMs": 100,
+  "reps": 5,
+  "versionRegistry": {
+    "schema": "century-algorithm-version-registry-v1",
+    "builtFrom": "/Volumes/Extreme SSD/Projects/Century-ai7/training/champions/candidates",
+    "liveChampionParametersId": "joint-js5",
+    "versions": [
+      {
+        "registryId": "legacy-js0",
+        "label": "JS0 冻结冠军基线（ai5-readiness-efficiency 束搜索）",
+        "core": "beam-search",
+        "structure": "beam-rollout",
+        "jointVersion": null,
+        "budgetMs": null,
+        "parametersId": "ai5-readiness-efficiency",
+        "fingerprint": "0cb240fea65f9fa37169eb9cc89393f300acb2ebacbef76eb317cc9c164aeb6c",
+        "source": "training/champions/candidates/ai5-readiness-efficiency.json",
+        "lineage": {
+          "derivedFrom": "challengeIndex=9 晋级归档",
+          "note": "第五阶段 js0 消融/confirm/等价审计的历史语义锚点"
+        }
+      },
+      {
+        "registryId": "legacy-js1",
+        "label": "JS1（冻结基座 + beam-contest 结构）",
+        "core": "beam-search",
+        "structure": "beam-contest",
+        "jointVersion": null,
+        "budgetMs": null,
+        "parametersId": "ai5-readiness-efficiency",
+        "fingerprint": "3f2ab89c18815cf117c991c04c6d55189852cdb3db7451ea61367e2b8387f0f2",
+        "source": "training/champions/candidates/ai5-readiness-efficiency.json + structure=beam-contest",
+        "lineage": {
+          "derivedFrom": "legacy-js0 + beam-contest",
+          "note": "冠军 + 静态目标存活折扣（第四阶段最佳折中非联合候选）"
+        }
+      },
+      {
+        "registryId": "joint-js5-frozen",
+        "label": "JS5 冠军引导选择性联合搜索（冻结归档身份）",
+        "core": "champion-guided",
+        "structure": null,
+        "jointVersion": "joint-js5",
+        "budgetMs": 100,
+        "parametersId": "joint-js5",
+        "fingerprint": "08570b3003d3d3bd415e01799ac77f297e112f8e29f1855d054d7d1c39b58fca",
+        "source": "training/champions/candidates/joint-js5.json",
+        "lineage": {
+          "derivedFrom": "challengeIndex=11 晋级归档",
+          "note": "acquisitionVariant=readiness-efficiency 血统必须保留（轨迹镜像消费）"
+        }
+      },
+      {
+        "registryId": "live-champion",
+        "label": "当前活动冠军别名（CHAMPION_PARAMETERS，随晋级切换）",
+        "core": "champion-guided",
+        "structure": null,
+        "jointVersion": "joint-js5",
+        "budgetMs": 100,
+        "parametersId": "joint-js5",
+        "fingerprint": "cb0e1afb265c4eac4fae49d727f9732b5ebf9638a9d74273605d86b942c66417",
+        "source": "web-v1/dist CHAMPION_PARAMETERS（活动状态，非归档）",
+        "lineage": {
+          "derivedFrom": "champion.json 活动别名",
+          "note": "仅供「对当前冠军」语义；历史对照/消融基线/等价审计禁止使用"
+        }
+      },
+      {
+        "registryId": "ai7-endgame",
+        "label": "AI7-C1 终局精确求解（官方得分/保证名次/终局弃置）",
+        "core": "champion-guided",
+        "structure": null,
+        "jointVersion": "joint-js6-endgame",
+        "budgetMs": 100,
+        "parametersId": "ai7-endgame-exact",
+        "fingerprint": "835dc26a4df4037deab9d1651c67795fb17454edfa24025854a75f191adf4c32",
+        "source": "web-v1 JOINT_VERSIONS['joint-js6-endgame']（候选预设）",
+        "lineage": {
+          "derivedFrom": "joint-js5-frozen + AI7 候选选项",
+          "note": "C1：终局圈枚举合法行动，按官方最终得分与公开名次界决策"
+        }
+      },
+      {
+        "registryId": "ai7-arb",
+        "label": "AI7-C3 JS5 配对仲裁稳健性（置信下界+认领保护）",
+        "core": "champion-guided",
+        "structure": null,
+        "jointVersion": "joint-js7-arb",
+        "budgetMs": 100,
+        "parametersId": "ai7-arb-paired",
+        "fingerprint": "4a3ada4f234e0215271337e3a2a0b095c06aac50605c6df9082122f491699125",
+        "source": "web-v1 JOINT_VERSIONS['joint-js7-arb']（候选预设）",
+        "lineage": {
+          "derivedFrom": "joint-js5-frozen + AI7 候选选项",
+          "note": "C3：配对差单侧置信下界 + 高价值认领保护 + 最佳认领候选补全"
+        }
+      },
+      {
+        "registryId": "ai7-engine",
+        "label": "AI7-C2 引擎价值 V2（剩余回合/重复产出/循环成本）",
+        "core": "champion-guided",
+        "structure": null,
+        "jointVersion": "joint-js8-engine",
+        "budgetMs": 100,
+        "parametersId": "ai7-engine-v2",
+        "fingerprint": "14b952cf892ab8d16a953a763f1004f0deaa8bae0b4f0d39f845fb6e82ed73c9",
+        "source": "web-v1 JOINT_VERSIONS['joint-js8-engine']（候选预设）",
+        "lineage": {
+          "derivedFrom": "joint-js5-frozen + AI7 候选选项",
+          "note": "C2：创造卡重复产出、升级长期作用、休息循环摊销、支付机会成本"
+        }
+      },
+      {
+        "registryId": "ai7-engine-seat",
+        "label": "AI7-C4 引擎价值 V2 + 人数条件竞争折扣",
+        "core": "champion-guided",
+        "structure": null,
+        "jointVersion": "joint-js8-engine-seat",
+        "budgetMs": 100,
+        "parametersId": "ai7-engine-v2-seat",
+        "fingerprint": "e0334d3e19199d04c0d7a08d419e78d50bc8a0d3f2ef538304f00fd5fc7756c7",
+        "source": "web-v1 JOINT_VERSIONS['joint-js8-engine-seat']（候选预设）",
+        "lineage": {
+          "derivedFrom": "joint-js5-frozen + AI7 候选选项",
+          "note": "C4：5 人局竞争折扣；必须按人数分层单独消融，禁止用 5 人收益推断 2 人"
+        }
+      }
+    ]
+  },
+  "summary": {
+    "joint-js5": {
+      "p50OfP50": 85.42,
+      "p50OfP95": 89.1,
+      "maxObserved": 128.28,
+      "stableActionRate": 0.9167,
+      "overBudgetRate": 0.25
+    },
+    "joint-js6-endgame": {
+      "p50OfP50": 84.78,
+      "p50OfP95": 88.72,
+      "maxObserved": 128.35,
+      "stableActionRate": 1,
+      "overBudgetRate": 0.0833
+    },
+    "joint-js7-arb": {
+      "p50OfP50": 82.1,
+      "p50OfP95": 92.33,
+      "maxObserved": 119.15,
+      "stableActionRate": 1,
+      "overBudgetRate": 0.0833
+    },
+    "joint-js8-engine": {
+      "p50OfP50": 76.75,
+      "p50OfP95": 81.17,
+      "maxObserved": 109.51,
+      "stableActionRate": 1,
+      "overBudgetRate": 0.1667
+    },
+    "joint-js8-engine-seat": {
+      "p50OfP50": 79.18,
+      "p50OfP95": 90.9,
+      "maxObserved": 110.02,
+      "stableActionRate": 1,
+      "overBudgetRate": 0.25
+    }
+  },
+  "rows": [
+    {
+      "id": "TS-2P-TCR-002",
+      "playerCount": 2,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": true,
+          "action": {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          },
+          "latency": {
+            "n": 5,
+            "p50": 97.27,
+            "p95": 104.61,
+            "max": 104.61,
+            "mean": 96.45
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          },
+          "latency": {
+            "n": 5,
+            "p50": 92.12,
+            "p95": 128.35,
+            "max": 128.35,
+            "mean": 97.44
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M18",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 88.73,
+            "p95": 97.27,
+            "max": 97.27,
+            "mean": 90.19
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M18",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 76.62,
+            "p95": 82.01,
+            "max": 82.01,
+            "mean": 77.46
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M18",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 77.41,
+            "p95": 100.57,
+            "max": 100.57,
+            "mean": 85.38
+          }
+        }
+      }
+    },
+    {
+      "id": "TS-2P-CAR-001",
+      "playerCount": 2,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              2
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 25.16,
+            "p95": 33.12,
+            "max": 33.12,
+            "mean": 26.81
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              2
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 25.95,
+            "p95": 26.66,
+            "max": 26.66,
+            "mean": 25.81
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              2
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 26.15,
+            "p95": 28.47,
+            "max": 28.47,
+            "mean": 26.98
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              2
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 29.8,
+            "p95": 30.55,
+            "max": 30.55,
+            "mean": 29.94
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              2
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 29.66,
+            "p95": 30.66,
+            "max": 30.66,
+            "mean": 29.86
+          }
+        }
+      }
+    },
+    {
+      "id": "TS-3P-CNV-001",
+      "playerCount": 3,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 10.73,
+            "p95": 11.78,
+            "max": 11.78,
+            "mean": 10.86
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 10.6,
+            "p95": 11.03,
+            "max": 11.03,
+            "mean": 10.74
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 10.46,
+            "p95": 10.85,
+            "max": 10.85,
+            "mean": 10.5
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 13.33,
+            "p95": 13.34,
+            "max": 13.34,
+            "mean": 13.26
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 13.1,
+            "p95": 13.74,
+            "max": 13.74,
+            "mean": 13.2
+          }
+        }
+      }
+    },
+    {
+      "id": "TS-3P-AVS-001",
+      "playerCount": 3,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 95.98,
+            "p95": 98.32,
+            "max": 98.32,
+            "mean": 95.6
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 95.89,
+            "p95": 97.65,
+            "max": 97.65,
+            "mean": 96.17
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 0
+          },
+          "latency": {
+            "n": 5,
+            "p50": 95.56,
+            "p95": 119.15,
+            "max": 119.15,
+            "mean": 98.11
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 76.75,
+            "p95": 103.77,
+            "max": 103.77,
+            "mean": 86.91
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 88.66,
+            "p95": 104.64,
+            "max": 104.64,
+            "mean": 92.5
+          }
+        }
+      }
+    },
+    {
+      "id": "TS-3P-MCL-001",
+      "playerCount": 3,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 3
+          },
+          "latency": {
+            "n": 5,
+            "p50": 15.54,
+            "p95": 16.19,
+            "max": 16.19,
+            "mean": 15.58
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 3
+          },
+          "latency": {
+            "n": 5,
+            "p50": 15.66,
+            "p95": 16.5,
+            "max": 16.5,
+            "mean": 15.66
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 3
+          },
+          "latency": {
+            "n": 5,
+            "p50": 17.17,
+            "p95": 18.21,
+            "max": 18.21,
+            "mean": 16.72
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 3
+          },
+          "latency": {
+            "n": 5,
+            "p50": 19.12,
+            "p95": 22.05,
+            "max": 22.05,
+            "mean": 19.14
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 3
+          },
+          "latency": {
+            "n": 5,
+            "p50": 20.94,
+            "p95": 23.77,
+            "max": 23.77,
+            "mean": 20.99
+          }
+        }
+      }
+    },
+    {
+      "id": "TS-3P-CAR-001",
+      "playerCount": 3,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": true,
+          "action": {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 22.91,
+            "p95": 26.7,
+            "max": 26.7,
+            "mean": 23.7
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 21.68,
+            "p95": 25.24,
+            "max": 25.24,
+            "mean": 22.36
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 23.3,
+            "p95": 28.06,
+            "max": 28.06,
+            "mean": 23.31
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 26.01,
+            "p95": 28.32,
+            "max": 28.32,
+            "mean": 26.21
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 24.67,
+            "p95": 26.64,
+            "max": 26.64,
+            "mean": 24.72
+          }
+        }
+      }
+    },
+    {
+      "id": "TS-3P-CAR-002",
+      "playerCount": 3,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M29",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 21.78,
+            "p95": 24.37,
+            "max": 24.37,
+            "mean": 22.36
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M29",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 21.51,
+            "p95": 23.38,
+            "max": 23.38,
+            "mean": 21.67
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M29",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 22.48,
+            "p95": 22.95,
+            "max": 22.95,
+            "mean": 22.39
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M29",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 24.14,
+            "p95": 30.99,
+            "max": 30.99,
+            "mean": 25.42
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M29",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 25.13,
+            "p95": 26.07,
+            "max": 26.07,
+            "mean": 24.93
+          }
+        }
+      }
+    },
+    {
+      "id": "TS-3P-MCL-002",
+      "playerCount": 3,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 0
+          },
+          "latency": {
+            "n": 5,
+            "p50": 78.69,
+            "p95": 89.1,
+            "max": 89.1,
+            "mean": 80.93
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 0
+          },
+          "latency": {
+            "n": 5,
+            "p50": 79.74,
+            "p95": 88.72,
+            "max": 88.72,
+            "mean": 82.61
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 0
+          },
+          "latency": {
+            "n": 5,
+            "p50": 80.26,
+            "p95": 99.71,
+            "max": 99.71,
+            "mean": 83.98
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 0
+          },
+          "latency": {
+            "n": 5,
+            "p50": 87.77,
+            "p95": 109.51,
+            "max": 109.51,
+            "mean": 93.71
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 0
+          },
+          "latency": {
+            "n": 5,
+            "p50": 88.66,
+            "p95": 90.9,
+            "max": 90.9,
+            "mean": 88.4
+          }
+        }
+      }
+    },
+    {
+      "id": "TS-4P-CAR-001",
+      "playerCount": 4,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": false,
+          "action": {
+            "type": "play",
+            "cardId": "M27",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 96.36,
+            "p95": 102.66,
+            "max": 102.66,
+            "mean": 93.99
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M27",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 97.54,
+            "p95": 99.29,
+            "max": 99.29,
+            "mean": 97.68
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M27",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 97.33,
+            "p95": 98.05,
+            "max": 98.05,
+            "mean": 97.36
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M27",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 77.78,
+            "p95": 81.17,
+            "max": 81.17,
+            "mean": 77.8
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "M27",
+            "repeats": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 79.18,
+            "p95": 110.02,
+            "max": 110.02,
+            "mean": 86
+          }
+        }
+      }
+    },
+    {
+      "id": "TS-4P-MCL-001",
+      "playerCount": 4,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 89.78,
+            "p95": 91.18,
+            "max": 91.18,
+            "mean": 89.89
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 91.12,
+            "p95": 96.52,
+            "max": 96.52,
+            "mean": 92.16
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 0
+          },
+          "latency": {
+            "n": 5,
+            "p50": 90.41,
+            "p95": 92.39,
+            "max": 92.39,
+            "mean": 90.39
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 96.23,
+            "p95": 96.29,
+            "max": 96.29,
+            "mean": 95.79
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "rest"
+          },
+          "latency": {
+            "n": 5,
+            "p50": 95.81,
+            "p95": 98.26,
+            "max": 98.26,
+            "mean": 96.44
+          }
+        }
+      }
+    },
+    {
+      "id": "TS-4P-CAR-002",
+      "playerCount": 4,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 89.84,
+            "p95": 128.28,
+            "max": 128.28,
+            "mean": 96.01
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 90.43,
+            "p95": 93.15,
+            "max": 93.15,
+            "mean": 91.17
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 91.96,
+            "p95": 92.33,
+            "max": 92.33,
+            "mean": 91.55
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 78.14,
+            "p95": 80.72,
+            "max": 80.72,
+            "mean": 78.37
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          },
+          "latency": {
+            "n": 5,
+            "p50": 80.56,
+            "p95": 82.08,
+            "max": 82.08,
+            "mean": 80.49
+          }
+        }
+      }
+    },
+    {
+      "id": "TS-4P-OPP-001",
+      "playerCount": 4,
+      "perVersion": {
+        "joint-js5": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 85.42,
+            "p95": 86.23,
+            "max": 86.23,
+            "mean": 84.56
+          }
+        },
+        "joint-js6-endgame": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 84.78,
+            "p95": 85.98,
+            "max": 85.98,
+            "mean": 84.65
+          }
+        },
+        "joint-js7-arb": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 82.1,
+            "p95": 84.24,
+            "max": 84.24,
+            "mean": 82.79
+          }
+        },
+        "joint-js8-engine": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 87.19,
+            "p95": 92.97,
+            "max": 92.97,
+            "mean": 87.13
+          }
+        },
+        "joint-js8-engine-seat": {
+          "actionStable": true,
+          "action": {
+            "type": "claim",
+            "index": 1
+          },
+          "latency": {
+            "n": 5,
+            "p50": 87.31,
+            "p95": 99.13,
+            "max": 99.13,
+            "mean": 87.64
+          }
+        }
+      }
+    }
+  ]
+}
