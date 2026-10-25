@@ -1,0 +1,28 @@
+{
+  "schema": "century-rollback-drill-v1",
+  "generatedAt": "2026-10-25T19:20:55.973Z",
+  "verdict": "PASS",
+  "checks": [
+    {
+      "id": "valid-deploy-passes",
+      "status": "PASS",
+      "evidence": "verify-deploy 放行"
+    },
+    {
+      "id": "corrupt-artifact-detected",
+      "status": "PASS",
+      "evidence": "错误产物指纹被拒绝"
+    },
+    {
+      "id": "missing-champion-detected",
+      "status": "PASS",
+      "evidence": "冠军 id 缺失被拒绝"
+    },
+    {
+      "id": "rollback-plan-valid",
+      "status": "PASS",
+      "evidence": "target=a69956ae3c25 branch=rollback/champion-a69956ae3c25-1792956055971"
+    }
+  ],
+  "note": "演练只验证损坏部署检测与 revert 计划；未创建真实 revert PR、未改变正式冠军"
+}

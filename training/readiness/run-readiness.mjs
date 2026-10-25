@@ -212,13 +212,25 @@ measured({
 // ---- R09 12 小时无人值守训练 ----
 {
   const artifact = findLatest12hArtifact();
+  const inProgress = readJSON('training/reports/autonomous/ai8-12h/state.json');
+  const elapsedHours = inProgress?.createdAt
+    ? Number(((Date.now() - Date.parse(inProgress.createdAt)) / 3600_000).toFixed(2))
+    : 0;
   record({
     id: 'R09', title: '连续 12 小时真实自主训练压力测试',
     status: artifact ? 'PASS' : 'NOT_RUN',
-    source: 'training/evolution/autonomous-run.mjs + report/',
-    testCommand: 'caffeinate -is node training/evolution/autonomous-run.mjs start --campaign ai8-12h --rounds 200 --max-wall-ms 43200000 --max-games 100000',
-    evidence: artifact ? `12h 产物=${artifact.path}；elapsedHours=${artifact.elapsedHours}` : '未发现已完成的 12 小时连续运行产物',
-    unmetReason: artifact ? null : '本次会话无法连续运行 12 小时真实训练；必须在目标 M4 上实际执行并保留日志后才能 PASS',
+    source: 'training/evolution/autonomous-run.mjs + training/scripts/run-12h-stress.sh',
+    testCommand: 'screen -dmS century12h /bin/zsh -f -c "cd <repo> && caffeinate -is training/scripts/run-12h-stress.sh"',
+    evidence: artifact
+      ? `12h 产物=${artifact.path}；elapsedHours=${artifact.elapsedHours}`
+      : (inProgress
+          ? `真实 12h 运行进行中：status=${inProgress.status} phase=${inProgress.phase} rounds=${inProgress.rounds?.length ?? 0} ` +
+            `games=${inProgress.budgetUsed?.games ?? 0} wallMs=${inProgress.budgetUsed?.wallMs ?? 0} 已运行约 ${elapsedHours}h；` +
+            '达到 12h 且 status=completed 后才可 PASS'
+          : '未发现已完成的 12 小时连续运行产物'),
+    unmetReason: artifact ? null : (inProgress
+      ? `运行中（约 ${elapsedHours}h）；未满 12 小时，不能提前 PASS`
+      : '本次会话无法连续运行 12 小时真实训练；必须在目标 M4 上实际执行并保留日志后才能 PASS'),
   });
 }
 
@@ -287,9 +299,11 @@ function findLatest12hArtifact() {
       `真实机器合并+Pages 部署+线上核验=${deployedPass}（run 40221527752, site=PASS）；` +
       `第一名率冠军晋级=${promotedFirstPlace}；回滚演练=${rollbackDrill}`,
     unmetReason: complete ? null
-      : (deployedPass
-          ? '真实部署与线上身份核验已 PASS，但没有统计合格候选完成冠军晋级，也未执行回滚演练；不能把“部署现有冠军”当作 R12 完成'
-          : '当前没有通过第一名率正式挑战的候选，因此未执行真实冠军发布；不能以模拟发布冒充 PASS'),
+      : (deployedPass && rollbackDrill
+          ? '部署、线上身份核验与回滚演练均已 PASS，但没有统计合格候选完成冠军晋级；不能把“部署现有冠军”当作 R12 完成'
+          : (deployedPass
+              ? '真实部署与线上身份核验已 PASS，但没有统计合格候选完成冠军晋级，也未执行回滚演练；不能把“部署现有冠军”当作 R12 完成'
+              : '当前没有通过第一名率正式挑战的候选，因此未执行真实冠军发布；不能以模拟发布冒充 PASS')),
   });
 }
 

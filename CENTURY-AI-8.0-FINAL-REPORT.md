@@ -96,6 +96,11 @@
 - `training/scripts/verify-determinism.mjs`：固定 workUnits，2–5 人 × 50 世界 × 2 轮 = 400 局，逐局比对状态/排名/分数/行动轨迹哈希；实测 **0 不一致**。
 - `training/lib/resource-scheduler.mjs`：macOS 用 `vm_stat` 计算可回收内存（修复 `os.freemem()` 在内存充足时误判 2.5% 的问题）；CPU 负载、磁盘、并发上限、低内存停止。
 - `training/scripts/fault-injection.mjs`：9 类故障全部 PASS（强杀恢复、超时、非法源码、编译失败、重复 Campaign、种子冲突、损坏 state、资源耗尽、LLM 不可用）。
+- `training/evaluator/power.mjs` + `training/scripts/statistical-plan.mjs`：统计功效/样本量/MDE 分析，并冻结 `training/readiness/statistical-plan.json`。
+  - 当前几何 α₁₂=1.22e-5 下，250 种子/人数的 MDE≈0.23–0.32（Var 0.5–1）；
+  - 500 种子 MDE≈0.16–0.23；若改用 100 次固定期限 Bonferroni（α=5e-4），250 种子 MDE 降至≈0.18–0.26；
+  - 结论：继续用几何预算做小效应挑战几乎无功效；长期运行必须显式授权固定期限家族或扩大样本，阈值已冻结、不得事后放宽。
+- `training/scripts/rollback-drill.mjs`：真实启动本地站点，验证正确产物 PASS、错误产物 FAIL、冠军 id 缺失 FAIL、revert 计划可生成；证据落盘 `training/reports/rollback-drill.json`。
 
 ### 2.5 顺带修复的既有红灯
 
@@ -119,6 +124,8 @@
 | 2 代自主进化 | `completed`，4 候选，24 局，2 个机器门禁请求，冠军未变 | `training/reports/autonomous/ai8-smoke2/` |
 | 确定性 | 2/3/4/5 人各 50 世界 × 2 轮，0 mismatch | `training/reports/determinism/full.json` |
 | 故障注入 | 9/9 PASS | `training/reports/fault-injection.json` |
+| 回滚演练 | 损坏产物/缺失冠军检测 + revert 计划 4/4 PASS | `training/reports/rollback-drill.json` |
+| 12 小时压力测试 | **已启动并运行中**（screen 会话 `century12h`，`caffeinate`，AI7 开发池真实对局） | `training/reports/autonomous/ai8-12h/state.json` |
 | 晋级门禁（隔离合成） | 正向 PROMOTE + 篡改/统计不达标拒绝 | `training/tests/promotion-gate.test.mjs` |
 
 注意：OpenEvolve r002 的 `identical_to_official=1` 是**诚实的负结果**——LLM 没有提出有效改动；不得把它算作棋力提升。
@@ -166,18 +173,18 @@
 | R06 | PASS | 焦点席位配对第一名率、种子簇 CI、非劣效、跨人数独立种子 |
 | R07 | PASS | 预注册锁 + 反例测试 + append-only alpha 账本 |
 | R08 | PASS | Seatbelt 禁网/禁 HOME/禁隐藏信息；静态禁止构造 |
-| R09 | NOT_RUN | 未完成连续 12 小时真实训练 |
+| R09 | NOT_RUN | 真实 12h 运行已启动（screen `century12h`）；未满 12 小时，不能提前 PASS |
 | R10 | PASS | M4 资源感知 + 9 类故障注入 |
 | R11 | PASS | 预注册第一名率自动统计判定（隔离验收，无真实挑战） |
-| R12 | BLOCKED | 真实机器合并/Pages 发布/线上核验已 PASS；无统计合格冠军晋级，回滚未实际触发 |
+| R12 | BLOCKED | 真实机器合并/Pages 发布/线上核验/回滚演练均 PASS；无统计合格冠军晋级，回滚未实际触发 |
 
 ---
 
 ## 7. 未解决风险清单
 
 1. **没有更强冠军**：平台就绪不等于找到更强算法；本次所有候选均未通过真实第一名率门槛。
-2. **R09 未完成**：12 小时连续运行、跨多代、真实对局、checkpoint/恢复与资源监测必须在目标 M4 上实测。
-3. **R12 未完成**：机器合并（PR #51）、Pages 部署与线上身份核验已真实 PASS；但仍需一个统计合格候选完成冠军晋级，并真实触发一次回滚演练（当前 `rollback-drill=false`）。
+2. **R09 未完成**：12 小时连续运行已启动（screen `century12h` + `caffeinate`），需满 12 小时且 `status=completed` 后才能 PASS。
+3. **R12 未完成**：机器合并（PR #51）、Pages 部署、线上身份核验、回滚演练均已真实 PASS；但仍需一个统计合格候选完成冠军晋级，并真实触发一次 revert+重新部署回滚。
 4. **源码候选未部署**：Track B 的 `acquisitionValue` 候选仍需接入正式构建与冠军身份链。
 5. **研究 fitness 未迁移**：OpenEvolve 内部仍按配对得分优势率筛选，可能把“第一名率更差但均分更高”的候选带入深验。
 6. **alpha 预算接近上限**：第 12 次后只剩 1.22e-5；长期运行必须显式治理授权新的固定期限家族。
