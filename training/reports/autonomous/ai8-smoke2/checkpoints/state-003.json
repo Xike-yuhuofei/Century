@@ -1,0 +1,144 @@
+{
+  "schema": "century-evolution-campaign-v1",
+  "campaignId": "ai8-smoke2",
+  "runFingerprint": "2fa3d79ef5df84df02f6fdb12ea101075f725f3b5a899fecc921a9205e826318",
+  "config": {
+    "version": 1,
+    "configRef": "ai7://campaign/default",
+    "rounds": 2,
+    "playerCounts": [
+      2,
+      3
+    ],
+    "quickSeeds": 2,
+    "deepSeeds": 2,
+    "maxMoves": 400,
+    "deadlineMs": 60000,
+    "retainTopK": 3,
+    "deepConfirmations": 2,
+    "generation": {
+      "count": 2,
+      "seed": 20261025,
+      "targetIds": null
+    },
+    "budget": {
+      "maxCandidates": 4,
+      "maxGames": 40,
+      "maxWallMs": 600000,
+      "maxConcurrent": 1,
+      "maxDeepConfirmations": 4
+    },
+    "diagnosticsPath": "training/reports/diagnostics-latest/analysis.json",
+    "humanAnalyticsFailuresPath": null,
+    "parentCandidateId": null,
+    "continueFromSelected": true
+  },
+  "status": "running",
+  "phase": "generated",
+  "currentRoundIndex": 0,
+  "rounds": [
+    {
+      "round": 1,
+      "seedWindows": {
+        "screen": {
+          "windowId": "ai7-screen-w002",
+          "purpose": "screen",
+          "pool": "dev",
+          "base": 1610002000,
+          "count": 1000,
+          "blockStart": 1610000000,
+          "blockEnd": 1620000000,
+          "index": 2
+        },
+        "deep": {
+          "windowId": "ai7-deep-w001",
+          "purpose": "deep",
+          "pool": "dev",
+          "base": 1620001000,
+          "count": 1000,
+          "blockStart": 1620000000,
+          "blockEnd": 1630000000,
+          "index": 1
+        }
+      },
+      "screenSeeds": [
+        1610002000,
+        1610002001
+      ],
+      "deepSeeds": [
+        1620001000,
+        1620001001
+      ],
+      "generated": true,
+      "selected": false,
+      "deepDone": false,
+      "approvalDone": false,
+      "diagnosticsDone": false,
+      "candidates": [
+        {
+          "candidateId": "cand-ai7-searchbudget-r1c0-bfe007",
+          "parentId": null,
+          "identityDigest": "823d6c511c7a6f32772e6ad0e7afbfed06885f534a13e5e2e672725e4434e807",
+          "evaluationMode": "game",
+          "targetIds": [
+            "searchBudget"
+          ],
+          "artifactPath": "training/reports/autonomous/ai8-smoke2/artifacts/objects/cand-ai7-searchbudget-r1c0-bfe007/823d6c511c7a6f32772e6ad0e7afbfed06885f534a13e5e2e672725e4434e807/candidate.json",
+          "stage": "checked",
+          "safetyStatus": "passed",
+          "sourceHash": "501651c60eaee5e0ac612a4c63167680e5b6c076fa44ceeac22b02c441ea654c",
+          "buildArtifactHash": "2eb5aa3c3184d4f30a291a3ba16725aa1154c5cd4a2e4a455a32a5226c3b55f4",
+          "buildKind": "descriptor-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai7-goalvalue-r1c1-ca98bd",
+          "parentId": null,
+          "identityDigest": "910a6925f448b06d42285bb1fbb765f1bc0530c2c1c0936657dd64b339285d1e",
+          "evaluationMode": "proxy",
+          "targetIds": [
+            "goalValue"
+          ],
+          "artifactPath": "training/reports/autonomous/ai8-smoke2/artifacts/objects/cand-ai7-goalvalue-r1c1-ca98bd/910a6925f448b06d42285bb1fbb765f1bc0530c2c1c0936657dd64b339285d1e/candidate.json",
+          "stage": "created",
+          "safetyStatus": "pending",
+          "sourceHash": "b74d10ce82e1fbb09e2c4e274ef6c93dfc8032d282cda314fa8b9bec3754bccc",
+          "buildArtifactHash": "d49151f5f654106e46395e246f1eedc1efcc5fc59c2e9c4bb6f0c789dfb22fd9",
+          "buildKind": "declarative-module-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": null
+        }
+      ],
+      "selectedIds": [],
+      "selectionSummary": null,
+      "diagnostics": null,
+      "rejectedAtGeneration": [],
+      "notes": []
+    }
+  ],
+  "checkpointSeq": 3,
+  "lastEventSeq": 6,
+  "createdAt": "2026-10-25T15:55:40.005Z",
+  "updatedAt": "2026-10-25T15:55:40.064Z",
+  "budgetUsed": {
+    "candidates": 2,
+    "games": 0,
+    "wallMs": 46,
+    "deepConfirmations": 0
+  },
+  "pendingApprovals": [],
+  "guardrails": {
+    "validationPoolConsumed": false,
+    "promotionTriggered": false,
+    "championMutation": "none",
+    "formalChallengeApprovalRequired": false,
+    "machineGateRequired": true
+  },
+  "promotionQueue": [],
+  "promotionOutcomes": []
+}

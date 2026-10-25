@@ -60,11 +60,28 @@ if (!args.candidate) {
   console.error('必须提供 --candidate <候选文件>');
   process.exit(2);
 }
+// P0 迁移守卫：本脚本的判据是「配对得分优势率」，不再是冠军晋级的有效依据。
+// 仅允许作为历史复现工具运行，且复现产物写入 reports 目录，绝不改写正式冠军。
+const legacyReproduction = args['legacy-reproduction'] === true;
+if (!legacyReproduction) {
+  console.error(
+    '拒绝执行：旧晋级判据（配对得分优势率）已不是冠军晋级的有效依据。\n' +
+    '请使用第一名率正式挑战与机器门禁：\n' +
+    '  node training/tournament/run-first-place-challenge.mjs --candidate <file>\n' +
+    '  node training/scripts/promote-first-place-champion.mjs --evidence ... --plan ... --candidate ...\n' +
+    '如仅需历史复现，请显式传 --legacy-reproduction（输出到 training/reports/legacy-reproduction/，不改正式冠军）。',
+  );
+  process.exit(4);
+}
 const minSeedsFloor = args['min-seeds'] !== undefined ? Number(args['min-seeds']) : 60;
 if (!Number.isSafeInteger(minSeedsFloor) || minSeedsFloor < 1) {
   throw new Error('--min-seeds 必须为正整数');
 }
-const championPath = resolve(args.champion !== undefined ? process.cwd() : REPO_ROOT, args.champion ?? 'training/champions/champion.json');
+const championPath = legacyReproduction
+  ? (args.champion !== undefined
+      ? resolve(process.cwd(), args.champion)
+      : resolve(REPO_ROOT, 'training/reports/legacy-reproduction/champion-reproduced.json'))
+  : resolve(args.champion !== undefined ? process.cwd() : REPO_ROOT, args.champion ?? 'training/champions/champion.json');
 const candidatePath = resolve(process.cwd(), args.candidate);
 // 中央种子登记路径（隔离工作区/回归测试可注入；缺省为仓库正式登记）。
 const centralRegistryPath = args['governance-central'] !== undefined

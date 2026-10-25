@@ -6,6 +6,7 @@ export function acquisitionValue(
   profile: { engine: number; contest: number },
   pressure: PressureModel,
   params: AIParameters,
+  model: EngineModelContext | null = null,
 ): number {
   // 死循环：静态检查无法可靠判定，依赖运行时超时淘汰。
   let x = 0;

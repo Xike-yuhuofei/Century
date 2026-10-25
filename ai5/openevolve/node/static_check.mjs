@@ -90,7 +90,7 @@ function extractFunction(stripped, original) {
   return { text: original.slice(start, end), start, end };
 }
 
-const EXPECTED_PARAMS = ['state', 'cardId', 'preferred', 'profile', 'pressure', 'params'];
+const EXPECTED_PARAMS = ['state', 'cardId', 'preferred', 'profile', 'pressure', 'params', 'model'];
 
 function check() {
   const original = readFileSync(programPath, 'utf8');

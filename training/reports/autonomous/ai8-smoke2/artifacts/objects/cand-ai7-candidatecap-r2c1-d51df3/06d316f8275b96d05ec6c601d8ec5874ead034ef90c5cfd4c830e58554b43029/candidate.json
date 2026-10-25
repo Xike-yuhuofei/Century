@@ -1,0 +1,162 @@
+{
+  "schema": "century-candidate-artifact-v1",
+  "version": 1,
+  "candidateId": "cand-ai7-candidatecap-r2c1-d51df3",
+  "parentId": "cand-ai7-searchbudget-r1c0-bfe007",
+  "sourceHash": "bfe9179b718fef210dffeb4bf98272869166fa3084643c3cb7f7e82d072ac421",
+  "source": {
+    "kind": "descriptor",
+    "entry": "descriptor.json",
+    "hashKind": "descriptor-identity",
+    "files": [
+      {
+        "path": "descriptor.json",
+        "sha256": "017f58fce3011d76318658576c096cdabf4d58b32f466719d9e3d6d70acc68fc",
+        "content": "{\"algorithmStructure\":{\"adapter\":\"champion-guided\",\"decisionCore\":\"champion-guided\",\"evaluationMode\":\"game\",\"integration\":\"production-seat-dispatch\",\"jointOptionsByPlayerCount\":{\"2\":{\"candidateCap\":4,\"workUnits\":32},\"3\":{\"candidateCap\":4,\"workUnits\":32},\"4\":{\"candidateCap\":4,\"workUnits\":32},\"5\":{\"candidateCap\":4,\"workUnits\":32}},\"jointVersion\":\"joint-js5\",\"structure\":null,\"targetIds\":[\"candidateCap\"]},\"parameters\":{\"boundsVersion\":\"ai-parameters-v1\",\"id\":\"cand-ai7-candidatecap-r2c1-d51df3\",\"values\":{\"acquisitionVariant\":\"readiness-efficiency\",\"adapter\":\"champion-guided\",\"budgetMs\":100,\"capacityWeight\":1,\"contestWeight\":1,\"endgameWeight\":1,\"engineWeight\":1,\"goalWeight\":1,\"id\":\"cand-ai7-candidatecap-r2c1-d51df3\",\"jointVersion\":\"joint-js5\",\"restWeight\":1,\"synergyWeight\":1,\"tempoWeight\":1},\"version\":1}}"
+      }
+    ]
+  },
+  "algorithmStructure": {
+    "targetIds": [
+      "candidateCap"
+    ],
+    "decisionCore": "champion-guided",
+    "adapter": "champion-guided",
+    "structure": null,
+    "jointVersion": "joint-js5",
+    "evaluationMode": "game",
+    "jointOptionsByPlayerCount": {
+      "2": {
+        "workUnits": 32,
+        "candidateCap": 4
+      },
+      "3": {
+        "workUnits": 32,
+        "candidateCap": 4
+      },
+      "4": {
+        "workUnits": 32,
+        "candidateCap": 4
+      },
+      "5": {
+        "workUnits": 32,
+        "candidateCap": 4
+      }
+    },
+    "integration": "production-seat-dispatch"
+  },
+  "parameters": {
+    "id": "cand-ai7-candidatecap-r2c1-d51df3",
+    "version": 1,
+    "values": {
+      "id": "cand-ai7-candidatecap-r2c1-d51df3",
+      "adapter": "champion-guided",
+      "engineWeight": 1,
+      "tempoWeight": 1,
+      "contestWeight": 1,
+      "synergyWeight": 1,
+      "goalWeight": 1,
+      "capacityWeight": 1,
+      "restWeight": 1,
+      "endgameWeight": 1,
+      "acquisitionVariant": "readiness-efficiency",
+      "jointVersion": "joint-js5",
+      "budgetMs": 100
+    },
+    "boundsVersion": "ai-parameters-v1"
+  },
+  "buildArtifact": {
+    "kind": "descriptor-bundle-v1",
+    "sha256": "918e32f25264f7c40eed681dad9a8476548d89b381d8ea27d11952559d28df44",
+    "compiled": false,
+    "compiler": null,
+    "reproducible": true
+  },
+  "gameRules": {
+    "version": "century-rules-v1",
+    "engineBundleSha256": "e596a4d64555dd0303b8be8b8d80c3eee5ed32759ad47328e379ebd6d5063df7"
+  },
+  "experiment": {
+    "configRef": "ai7://campaign/default",
+    "configHash": "8d7d4767d0d545967cbe0414892865693e07e58eef5689251fbcccd06ec32ecb",
+    "seedRefs": [
+      {
+        "purpose": "screen",
+        "windowId": "ai7-screen-w003",
+        "base": 1610003000,
+        "count": 2
+      },
+      {
+        "purpose": "deep",
+        "windowId": "ai7-deep-w002",
+        "base": 1620002000,
+        "count": 2
+      }
+    ]
+  },
+  "applicablePlayerCounts": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "evidenceDir": "training/reports/autonomous/ai8-smoke2/evidence/cand-ai7-candidatecap-r2c1-d51df3",
+  "safety": {
+    "status": "passed",
+    "checks": [
+      {
+        "id": "artifact-schema",
+        "status": "pass",
+        "detail": "schema=century-candidate-artifact-v1, identity=06d316f8275b"
+      },
+      {
+        "id": "parameter-bounds",
+        "status": "pass",
+        "detail": "targets=candidateCap"
+      },
+      {
+        "id": "compiled-module",
+        "status": "pass",
+        "detail": "not-compiled"
+      },
+      {
+        "id": "hidden-info",
+        "status": "pass",
+        "detail": "no hidden deck/seed/random access"
+      },
+      {
+        "id": "forbidden-constructs",
+        "status": "pass",
+        "detail": "no forbidden constructs"
+      },
+      {
+        "id": "resource-budget",
+        "status": "pass",
+        "detail": "players=2,3,4,5"
+      },
+      {
+        "id": "fallback-declared",
+        "status": "pass",
+        "detail": "fallback strategy present"
+      },
+      {
+        "id": "governance-boundary",
+        "status": "pass",
+        "detail": "dev-only seed references"
+      },
+      {
+        "id": "production-isolation",
+        "status": "pass",
+        "detail": "mode=game"
+      },
+      {
+        "id": "identity-reproducible",
+        "status": "pass",
+        "detail": "source=bfe9179b718f, build=918e32f25264"
+      }
+    ]
+  },
+  "status": "selected",
+  "identityDigest": "06d316f8275b96d05ec6c601d8ec5874ead034ef90c5cfd4c830e58554b43029",
+  "artifactHash": "ca108e49a74d52862ab4601fe62e5b8e6756451f95524c682269238487ab5fc2"
+}

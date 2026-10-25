@@ -28,7 +28,7 @@ export const PARAMETER_BOUNDS_VERSION = 'ai-parameters-v1';
 
 const SOURCE_KINDS = Object.freeze(['descriptor', 'declarative-module', 'esm-module-bundle']);
 const EVALUATION_MODES = Object.freeze(['game', 'proxy']);
-const STATUSES = Object.freeze(['created', 'checked', 'evaluated', 'selected', 'pending-approval', 'rejected', 'archived']);
+const STATUSES = Object.freeze(['created', 'checked', 'evaluated', 'selected', 'pending-approval', 'promotion-queued', 'rejected', 'archived']);
 const SAFETY_STATUSES = Object.freeze(['pending', 'passed', 'failed']);
 
 /** identityDigest 覆盖的字段：只含算法身份，不含实验/证据/安全状态。 */

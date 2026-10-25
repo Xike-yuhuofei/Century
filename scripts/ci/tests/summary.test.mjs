@@ -43,7 +43,7 @@ const docsNeeds = () => baseNeeds({
   'research-python': job('skipped'),
   'research-seatbelt': job('skipped'),
   'promotion-gate': job('skipped'),
-  'promotion-approval': job('skipped'),
+  'promotion-machine-gate': job('skipped'),
   'pages-deploy': job('skipped'),
 });
 
@@ -96,33 +96,34 @@ test('changes 失败时不得继续放行', () => {
   assert.equal(result.ok, false);
 });
 
-test('B5 冠军晋级：REQUIRES_APPROVAL + 独立人工批准成功才放行', () => {
+test('B5 冠军晋级：REQUIRES_APPROVAL 直接阻断（人工审批已移除，机器门禁不得放行）', () => {
   const scope = { ...fullScope, promotion: true, pages: false };
   const needs = fullNeeds({
     'audit-gate': job('skipped'),
     'promotion-gate': job('failure', { verdict: 'REQUIRES_APPROVAL', requires_approval: 'true' }),
-    'promotion-approval': job('success'),
-  });
-  const result = evaluateSummary({
-    needs, scope, eventName: 'pull_request', promotionVerdict: 'REQUIRES_APPROVAL', promotionRequiresApproval: true,
-  });
-  assert.equal(result.ok, true, result.failures.join('; '));
-  assert.equal(result.promotion.verdict, 'REQUIRES_APPROVAL');
-  assert.match(renderMarkdown(result, scope), /REQUIRES_APPROVAL/);
-});
-
-test('REQUIRES_APPROVAL 未被人工批准 → 汇总失败', () => {
-  const scope = { ...fullScope, promotion: true, pages: false };
-  const needs = fullNeeds({
-    'audit-gate': job('skipped'),
-    'promotion-gate': job('failure', { verdict: 'REQUIRES_APPROVAL', requires_approval: 'true' }),
-    'promotion-approval': job('skipped'),
+    'promotion-machine-gate': job('skipped'),
   });
   const result = evaluateSummary({
     needs, scope, eventName: 'pull_request', promotionVerdict: 'REQUIRES_APPROVAL', promotionRequiresApproval: true,
   });
   assert.equal(result.ok, false);
-  assert.match(result.failures.join(';'), /promotion-approval: skipped/);
+  assert.match(result.failures.join(';'), /机器门禁拒绝放行/);
+  assert.equal(result.promotion.verdict, 'REQUIRES_APPROVAL');
+  assert.match(renderMarkdown(result, scope), /REQUIRES_APPROVAL/);
+});
+
+test('REQUIRES_APPROVAL 不得被任何"批准"作业转换为成功', () => {
+  const scope = { ...fullScope, promotion: true, pages: false };
+  const needs = fullNeeds({
+    'audit-gate': job('skipped'),
+    'promotion-gate': job('failure', { verdict: 'REQUIRES_APPROVAL', requires_approval: 'true' }),
+    'promotion-machine-gate': job('success'),
+  });
+  const result = evaluateSummary({
+    needs, scope, eventName: 'pull_request', promotionVerdict: 'REQUIRES_APPROVAL', promotionRequiresApproval: true,
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.failures.join(';'), /机器门禁拒绝放行|不得被转换为成功/);
 });
 
 test('REQUIRES_APPROVAL 被错误转换为成功 → 汇总失败（防止伪装）', () => {
@@ -130,7 +131,7 @@ test('REQUIRES_APPROVAL 被错误转换为成功 → 汇总失败（防止伪装
   const needs = fullNeeds({
     'audit-gate': job('skipped'),
     'promotion-gate': job('success', { verdict: 'REQUIRES_APPROVAL', requires_approval: 'true' }),
-    'promotion-approval': job('success'),
+    'promotion-machine-gate': job('success'),
   });
   const result = evaluateSummary({
     needs, scope, eventName: 'pull_request', promotionVerdict: 'REQUIRES_APPROVAL', promotionRequiresApproval: true,
@@ -139,15 +140,27 @@ test('REQUIRES_APPROVAL 被错误转换为成功 → 汇总失败（防止伪装
   assert.match(result.failures.join(';'), /不得被转换为成功/);
 });
 
-test('晋级证据 PASS：不需要人工批准作业', () => {
+test('晋级证据 PASS：必须由机器门禁复核成功（不再需要人工批准）', () => {
   const scope = { ...fullScope, promotion: true, pages: false };
   const needs = fullNeeds({
     'audit-gate': job('skipped'),
     'promotion-gate': job('success', { verdict: 'PASS', requires_approval: 'false' }),
-    'promotion-approval': job('skipped'),
+    'promotion-machine-gate': job('success'),
   });
   const result = evaluateSummary({ needs, scope, eventName: 'pull_request', promotionVerdict: 'PASS' });
   assert.equal(result.ok, true, result.failures.join('; '));
+});
+
+test('晋级证据 PASS 但机器门禁未成功 → 汇总失败（不得跳过证据复核）', () => {
+  const scope = { ...fullScope, promotion: true, pages: false };
+  const needs = fullNeeds({
+    'audit-gate': job('skipped'),
+    'promotion-gate': job('success', { verdict: 'PASS', requires_approval: 'false' }),
+    'promotion-machine-gate': job('skipped'),
+  });
+  const result = evaluateSummary({ needs, scope, eventName: 'pull_request', promotionVerdict: 'PASS' });
+  assert.equal(result.ok, false);
+  assert.match(result.failures.join(';'), /promotion-machine-gate/);
 });
 
 test('晋级门禁缺少 verdict → 失败关闭', () => {
@@ -155,7 +168,7 @@ test('晋级门禁缺少 verdict → 失败关闭', () => {
   const needs = fullNeeds({
     'audit-gate': job('skipped'),
     'promotion-gate': job('failure', {}),
-    'promotion-approval': job('skipped'),
+    'promotion-machine-gate': job('skipped'),
   });
   const result = evaluateSummary({ needs, scope, eventName: 'pull_request' });
   assert.equal(result.ok, false);
@@ -165,7 +178,7 @@ test('晋级门禁缺少 verdict → 失败关闭', () => {
 test('非晋级 PR 不要求 promotion 作业，普通 PR 不会被历史晋级阻断', () => {
   const required = requiredJobs(fullScope, { eventName: 'pull_request' });
   assert.equal(required.has('promotion-gate'), false);
-  assert.equal(required.has('promotion-approval'), false);
+  assert.equal(required.has('promotion-machine-gate'), false);
 });
 
 test('非必需作业意外失败也会失败（红色作业不得被汇总掩盖）', () => {
@@ -179,10 +192,23 @@ test('非必需作业意外失败也会失败（红色作业不得被汇总掩�
 });
 
 test('main push 部署失败 → 汇总失败', () => {
-  const needs = fullNeeds({ 'pages-deploy': job('failure') });
+  const needs = fullNeeds({ 'pages-deploy': job('failure'), 'deploy-verify': job('skipped'), 'rollback-on-deploy-failure': job('success') });
   const result = evaluateSummary({ needs, scope: fullScope, eventName: 'push', ref: 'refs/heads/main' });
   assert.equal(result.ok, false);
   assert.match(result.failures.join(';'), /pages-deploy: failure/);
+});
+
+test('main push 部署成功但线上身份核验失败 → 汇总失败并触发回滚', () => {
+  const needs = fullNeeds({ 'pages-deploy': job('success'), 'deploy-verify': job('failure'), 'rollback-on-deploy-failure': job('success') });
+  const result = evaluateSummary({ needs, scope: fullScope, eventName: 'push', ref: 'refs/heads/main' });
+  assert.equal(result.ok, false);
+  assert.match(result.failures.join(';'), /deploy-verify: failure/);
+});
+
+test('main push 部署与线上核验均成功 → 汇总放行', () => {
+  const needs = fullNeeds({ 'pages-deploy': job('success'), 'deploy-verify': job('success'), 'rollback-on-deploy-failure': job('skipped') });
+  const result = evaluateSummary({ needs, scope: fullScope, eventName: 'push', ref: 'refs/heads/main' });
+  assert.equal(result.ok, true, result.failures.join('; '));
 });
 
 test('PR 上 pages-deploy skipped 是合法的不适用状态', () => {

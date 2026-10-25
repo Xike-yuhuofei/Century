@@ -1,0 +1,30 @@
+2026-10-26 00:07:57,976 - openevolve.controller - INFO - Logging to results/ai8-openevolve-r002/logs/openevolve_20261026_000757.log
+2026-10-26 00:07:58,004 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-10-26 00:07:58,004 - openevolve.llm.ensemble - INFO - Initialized LLM ensemble with models: gpt-5.6-sol (weight: 1.00)
+2026-10-26 00:07:58,007 - openevolve.prompt.sampler - INFO - Initialized prompt sampler
+2026-10-26 00:07:58,007 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-10-26 00:07:58,008 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-10-26 00:07:58,008 - openevolve.evaluator - INFO - Successfully loaded evaluation function from century_evaluator.py
+2026-10-26 00:07:58,008 - openevolve.evaluator - INFO - Initialized evaluator with century_evaluator.py
+2026-10-26 00:07:58,008 - openevolve.controller - INFO - Initialized OpenEvolve with program/acquisition_value.ts
+2026-10-26 00:07:58,008 - openevolve.controller - INFO - Adding initial program to database
+2026-10-26 00:14:59,694 - openevolve.evaluator - INFO - Evaluated program 0c29c29d-664b-42a9-808a-2b7eafa71c9e in 421.69s: combined_score=0.0000, stage_passed=0.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=1.0000, function_sha256_head=0.1631, code_complexity=2453.0000
+2026-10-26 00:14:59,739 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 5, 'diversity': 0}
+2026-10-26 00:14:59,744 - openevolve.process_parallel - INFO - Initialized process parallel controller with 1 workers
+2026-10-26 00:14:59,745 - openevolve.process_parallel - INFO - Set max None tasks per child
+2026-10-26 00:14:59,745 - openevolve.process_parallel - INFO - Started process pool with 1 processes
+2026-10-26 00:14:59,745 - openevolve.controller - INFO - Using island-based evolution with 2 islands
+2026-10-26 00:14:59,745 - openevolve.database - INFO - Island Status:
+2026-10-26 00:14:59,745 - openevolve.database - INFO -  * Island 0: 1 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0 (best: 0c29c29d-664b-42a9-808a-2b7eafa71c9e)
+2026-10-26 00:14:59,745 - openevolve.database - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-10-26 00:14:59,745 - openevolve.process_parallel - INFO - Starting process-based evolution from iteration 1 for 1 iterations (total: 2)
+2026-10-26 00:14:59,748 - openevolve.process_parallel - INFO - Early stopping disabled
+2026-10-26 00:22:27,026 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 9, 'diversity': 5}
+2026-10-26 00:22:27,026 - openevolve.process_parallel - INFO - Iteration 1: Program ae8b20f5-5396-410e-99a0-1b4cc331c6d8 (parent: 0c29c29d-664b-42a9-808a-2b7eafa71c9e) completed in 446.80s | tokens: 149769 (prompt: 148677, completion: 1092)
+2026-10-26 00:22:27,026 - openevolve.process_parallel - INFO - Metrics: combined_score=0.0000, stage_passed=0.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=0.0000, function_sha256_head=0.7035, code_complexity=2689.0000
+2026-10-26 00:22:27,026 - openevolve.process_parallel - INFO - ✅ Evolution completed - Maximum iterations reached
+2026-10-26 00:22:27,026 - openevolve.process_parallel - INFO - 📊 Total LLM Token Usage (1 calls): total_tokens=149769 (prompt_tokens=148677, completion_tokens=1092)
+2026-10-26 00:22:27,029 - openevolve.process_parallel - INFO - Stopped process pool
+2026-10-26 00:22:27,029 - openevolve.controller - INFO - Using tracked best program: 0c29c29d-664b-42a9-808a-2b7eafa71c9e
+2026-10-26 00:22:27,029 - openevolve.controller - INFO - Evolution complete. Best program has metrics: combined_score=0.0000, stage_passed=0.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=1.0000, function_sha256_head=0.1631, code_complexity=2453.0000
+2026-10-26 00:22:27,089 - openevolve.controller - INFO - Saved best program to results/ai8-openevolve-r002/best/best_program.ts with program info to results/ai8-openevolve-r002/best/best_program_info.json

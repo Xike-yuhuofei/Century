@@ -47,6 +47,12 @@ export const AI7_WINDOW_SIZE = 1_000;
 export const AI7_SCREEN_WINDOW_COUNT = (AI7_DEV_BLOCKS.screen[1] - AI7_DEV_BLOCKS.screen[0]) / AI7_WINDOW_SIZE;
 export const AI7_DEEP_WINDOW_COUNT = (AI7_DEV_BLOCKS.deep[1] - AI7_DEV_BLOCKS.deep[0]) / AI7_WINDOW_SIZE;
 
+/** 开发窗口总数（按用途）。 */
+export function ai7WindowCount(purpose) {
+  assertCondition(purpose === 'screen' || purpose === 'deep', `窗口用途非法：${String(purpose)}`);
+  return purpose === 'screen' ? AI7_SCREEN_WINDOW_COUNT : AI7_DEEP_WINDOW_COUNT;
+}
+
 export const ALL_PLAYER_COUNTS = Object.freeze([2, 3, 4, 5]);
 
 /** 游戏规则版本：规则语义版本 + 实际引擎产物指纹（运行指纹）。

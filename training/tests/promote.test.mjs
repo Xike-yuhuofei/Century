@@ -193,6 +193,9 @@ function runPromote(sandbox, candidate, {
     join(TRAINING_ROOT, 'scripts', 'promote-champion.mjs'),
     '--candidate', candidateFile,
     '--champion', join(sandbox, 'champion.json'),
+    // P0 迁移：旧判据只允许作为历史复现工具运行；测试固定沙箱 champion 路径，
+    // 不触碰正式冠军。正式晋级见 promote-first-place-champion.mjs。
+    '--legacy-reproduction',
     ...extraArgs,
     ...centralArgs,
   ], { stdio: 'pipe' });

@@ -25,7 +25,7 @@ from ai5.openevolve.century_evaluator import (  # noqa: E402
 )
 
 MALICIOUS_DIR = REPO / "ai5" / "openevolve" / "experiments" / "malicious"
-BENIGN_FN = REPO / "ai5" / "openevolve" / "results" / "evaluations" / "66f6a296aa72" / "function.ts"
+BENIGN_FN = REPO / "ai5" / "openevolve" / "tests" / "fixtures" / "benign_acquisition_value.ts"
 
 
 def with_evolve_markers(fn_text: str) -> str:

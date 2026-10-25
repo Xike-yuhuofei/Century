@@ -1,0 +1,39 @@
+2026-10-25 23:46:50,714 - openevolve.controller - INFO - Logging to results/ai8-openevolve-r001/logs/openevolve_20261025_234650.log
+2026-10-25 23:46:50,788 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-10-25 23:46:50,788 - openevolve.llm.ensemble - INFO - Initialized LLM ensemble with models: gpt-5.6-sol (weight: 1.00)
+2026-10-25 23:46:50,791 - openevolve.prompt.sampler - INFO - Initialized prompt sampler
+2026-10-25 23:46:50,792 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-10-25 23:46:50,792 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-10-25 23:46:50,793 - openevolve.evaluator - INFO - Successfully loaded evaluation function from century_evaluator.py
+2026-10-25 23:46:50,793 - openevolve.evaluator - INFO - Initialized evaluator with century_evaluator.py
+2026-10-25 23:46:50,793 - openevolve.controller - INFO - Initialized OpenEvolve with program/acquisition_value.ts
+2026-10-25 23:46:50,793 - openevolve.controller - INFO - Adding initial program to database
+2026-10-25 23:46:51,469 - openevolve.evaluator - INFO - Evaluated program 45e1d93d-c259-49a5-b7ba-75fd74b0bc43 in 0.68s: combined_score=0.0000, stage_passed=0.0000, failure_stage=compile, failure_reason=src/ai/planner.ts(240,114): error TS2554: Expected 6 arguments, but got 7.
+src/ai/planner.ts(279,114): error TS2554: Expected 6 arguments, but got 7.
+src/js/rollout-policy.ts(76,124): error TS2554: Expected 6 arguments, but got 7.
+, compile_stderr=
+2026-10-25 23:46:51,469 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 5, 'diversity': 0}
+2026-10-25 23:46:51,479 - openevolve.process_parallel - INFO - Initialized process parallel controller with 1 workers
+2026-10-25 23:46:51,480 - openevolve.process_parallel - INFO - Set max None tasks per child
+2026-10-25 23:46:51,480 - openevolve.process_parallel - INFO - Started process pool with 1 processes
+2026-10-25 23:46:51,480 - openevolve.controller - INFO - Using island-based evolution with 2 islands
+2026-10-25 23:46:51,480 - openevolve.database - INFO - Island Status:
+2026-10-25 23:46:51,480 - openevolve.database - INFO -  * Island 0: 1 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0 (best: 45e1d93d-c259-49a5-b7ba-75fd74b0bc43)
+2026-10-25 23:46:51,480 - openevolve.database - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-10-25 23:46:51,480 - openevolve.process_parallel - INFO - Starting process-based evolution from iteration 1 for 1 iterations (total: 2)
+2026-10-25 23:46:51,483 - openevolve.process_parallel - INFO - Early stopping disabled
+2026-10-25 23:47:19,138 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 9, 'diversity': 5}
+2026-10-25 23:47:19,140 - openevolve.process_parallel - INFO - Iteration 1: Program f0fe5ea4-2d34-462c-b568-5f0fffbf6916 (parent: 45e1d93d-c259-49a5-b7ba-75fd74b0bc43) completed in 27.40s | tokens: 25751 (prompt: 24379, completion: 1372)
+2026-10-25 23:47:19,140 - openevolve.process_parallel - INFO - Metrics: combined_score=0.0000, stage_passed=0.0000, failure_stage=compile, failure_reason=src/ai/planner.ts(240,114): error TS2554: Expected 6 arguments, but got 7.
+src/ai/planner.ts(279,114): error TS2554: Expected 6 arguments, but got 7.
+src/js/rollout-policy.ts(76,124): error TS2554: Expected 6 arguments, but got 7.
+, compile_stderr=
+2026-10-25 23:47:19,140 - openevolve.process_parallel - INFO - ✅ Evolution completed - Maximum iterations reached
+2026-10-25 23:47:19,140 - openevolve.process_parallel - INFO - 📊 Total LLM Token Usage (1 calls): total_tokens=25751 (prompt_tokens=24379, completion_tokens=1372)
+2026-10-25 23:47:19,142 - openevolve.process_parallel - INFO - Stopped process pool
+2026-10-25 23:47:19,142 - openevolve.controller - INFO - Using tracked best program: 45e1d93d-c259-49a5-b7ba-75fd74b0bc43
+2026-10-25 23:47:19,142 - openevolve.controller - INFO - Evolution complete. Best program has metrics: combined_score=0.0000, stage_passed=0.0000, failure_stage=compile, failure_reason=src/ai/planner.ts(240,114): error TS2554: Expected 6 arguments, but got 7.
+src/ai/planner.ts(279,114): error TS2554: Expected 6 arguments, but got 7.
+src/js/rollout-policy.ts(76,124): error TS2554: Expected 6 arguments, but got 7.
+, compile_stderr=
+2026-10-25 23:47:19,143 - openevolve.controller - INFO - Saved best program to results/ai8-openevolve-r001/best/best_program.ts with program info to results/ai8-openevolve-r001/best/best_program_info.json
