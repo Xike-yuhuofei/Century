@@ -368,22 +368,26 @@ class ChampionGuidedPlanner {
     // AI7 C3：认领候选的当步正式净分/毛分（与 near-terminal 同一口径）。
     // 毛分 = 魔像分值 + 硬币（支付水晶是认领的必要成本，保护门槛按毛分判断
     // "这是不是一个明确的高分机会"）；净分仍用于候选补全的优先序。
+    // 只在显式启用 C3 选项时计算——冻结 js5 / js6 的缺省路径保持零额外开销
+    // （墙钟预算对小开销敏感，缺省行为不得因遥测准备而变慢）。
     const claimDeltas = new Map<string, number>();
     const claimGross = new Map<string, number>();
-    for (const a of claimActions) {
-      const scored = immediateOfficialScoreDelta(observation, a);
-      if (!scored) continue;
-      claimDeltas.set(actionKey(a), scored.delta);
-      const goal = a.type === 'claim' ? GOLEM_BY_ID[observation.golemMarket[a.index]] : null;
-      const nonYellowCost = goal ? goal.cost.slice(1).reduce((s, x) => s + x, 0) : 0;
-      claimGross.set(actionKey(a), scored.delta + nonYellowCost);
-    }
     let bestClaim: { action: Action; delta: number; gross: number } | null = null;
-    for (const a of claimActions) {
-      const delta = claimDeltas.get(actionKey(a));
-      if (delta === undefined) continue;
-      if (!bestClaim || delta > bestClaim.delta) {
-        bestClaim = { action: a, delta, gross: claimGross.get(actionKey(a)) ?? delta };
+    if (o.claimProtection === true || o.ensureBestClaimCandidate === true) {
+      for (const a of claimActions) {
+        const scored = immediateOfficialScoreDelta(observation, a);
+        if (!scored) continue;
+        claimDeltas.set(actionKey(a), scored.delta);
+        const goal = a.type === 'claim' ? GOLEM_BY_ID[observation.golemMarket[a.index]] : null;
+        const nonYellowCost = goal ? goal.cost.slice(1).reduce((s, x) => s + x, 0) : 0;
+        claimGross.set(actionKey(a), scored.delta + nonYellowCost);
+      }
+      for (const a of claimActions) {
+        const delta = claimDeltas.get(actionKey(a));
+        if (delta === undefined) continue;
+        if (!bestClaim || delta > bestClaim.delta) {
+          bestClaim = { action: a, delta, gross: claimGross.get(actionKey(a)) ?? delta };
+        }
       }
     }
     // 候选补全（显式 opt-in）：保证当步净分最大的可立即认领行动进入候选集，

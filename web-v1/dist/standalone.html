@@ -5478,20 +5478,22 @@
       const claimActions = legalRootActions.filter((x) => x.type === "claim");
       const claimDeltas = /* @__PURE__ */ new Map();
       const claimGross = /* @__PURE__ */ new Map();
-      for (const a of claimActions) {
-        const scored = immediateOfficialScoreDelta(observation, a);
-        if (!scored) continue;
-        claimDeltas.set(actionKey(a), scored.delta);
-        const goal = a.type === "claim" ? GOLEM_BY_ID[observation.golemMarket[a.index]] : null;
-        const nonYellowCost = goal ? goal.cost.slice(1).reduce((s, x) => s + x, 0) : 0;
-        claimGross.set(actionKey(a), scored.delta + nonYellowCost);
-      }
       let bestClaim = null;
-      for (const a of claimActions) {
-        const delta = claimDeltas.get(actionKey(a));
-        if (delta === void 0) continue;
-        if (!bestClaim || delta > bestClaim.delta) {
-          bestClaim = { action: a, delta, gross: claimGross.get(actionKey(a)) ?? delta };
+      if (o.claimProtection === true || o.ensureBestClaimCandidate === true) {
+        for (const a of claimActions) {
+          const scored = immediateOfficialScoreDelta(observation, a);
+          if (!scored) continue;
+          claimDeltas.set(actionKey(a), scored.delta);
+          const goal = a.type === "claim" ? GOLEM_BY_ID[observation.golemMarket[a.index]] : null;
+          const nonYellowCost = goal ? goal.cost.slice(1).reduce((s, x) => s + x, 0) : 0;
+          claimGross.set(actionKey(a), scored.delta + nonYellowCost);
+        }
+        for (const a of claimActions) {
+          const delta = claimDeltas.get(actionKey(a));
+          if (delta === void 0) continue;
+          if (!bestClaim || delta > bestClaim.delta) {
+            bestClaim = { action: a, delta, gross: claimGross.get(actionKey(a)) ?? delta };
+          }
         }
       }
       if (o.ensureBestClaimCandidate && bestClaim) push(bestClaim.action, "claim");
@@ -11704,20 +11706,22 @@
       const claimActions = legalRootActions.filter((x) => x.type === "claim");
       const claimDeltas = /* @__PURE__ */ new Map();
       const claimGross = /* @__PURE__ */ new Map();
-      for (const a of claimActions) {
-        const scored = immediateOfficialScoreDelta(observation, a);
-        if (!scored) continue;
-        claimDeltas.set(actionKey(a), scored.delta);
-        const goal = a.type === "claim" ? GOLEM_BY_ID[observation.golemMarket[a.index]] : null;
-        const nonYellowCost = goal ? goal.cost.slice(1).reduce((s, x) => s + x, 0) : 0;
-        claimGross.set(actionKey(a), scored.delta + nonYellowCost);
-      }
       let bestClaim = null;
-      for (const a of claimActions) {
-        const delta = claimDeltas.get(actionKey(a));
-        if (delta === void 0) continue;
-        if (!bestClaim || delta > bestClaim.delta) {
-          bestClaim = { action: a, delta, gross: claimGross.get(actionKey(a)) ?? delta };
+      if (o.claimProtection === true || o.ensureBestClaimCandidate === true) {
+        for (const a of claimActions) {
+          const scored = immediateOfficialScoreDelta(observation, a);
+          if (!scored) continue;
+          claimDeltas.set(actionKey(a), scored.delta);
+          const goal = a.type === "claim" ? GOLEM_BY_ID[observation.golemMarket[a.index]] : null;
+          const nonYellowCost = goal ? goal.cost.slice(1).reduce((s, x) => s + x, 0) : 0;
+          claimGross.set(actionKey(a), scored.delta + nonYellowCost);
+        }
+        for (const a of claimActions) {
+          const delta = claimDeltas.get(actionKey(a));
+          if (delta === void 0) continue;
+          if (!bestClaim || delta > bestClaim.delta) {
+            bestClaim = { action: a, delta, gross: claimGross.get(actionKey(a)) ?? delta };
+          }
         }
       }
       if (o.ensureBestClaimCandidate && bestClaim) push(bestClaim.action, "claim");
