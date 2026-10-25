@@ -2,7 +2,7 @@
 
 生成时间：2026-10-26（Asia/Shanghai）
 分支：`feat/ai8-autonomous-evolution`
-功能提交：`0f99fbd5ac64a8dd82a040a5f2b925d2100582da`
+功能提交：`0f99fbd5ac64a8dd82a040a5f2b925d2100582da`（后续合并/证据提交见 PR #51）
 基线 main（开发开始时）：`d9b5344e6463ac547fd27dfe1fb4bab32a19b098`
 
 > **状态声明**
@@ -21,7 +21,7 @@
 |---|---|
 | 当前 main commit SHA | 开发基线 `d9b5344`；功能分支提交 `0f99fbd`；报告生成时尚未合并到 main |
 | R01–R12 结果 | PASS 10 / FAIL 0 / BLOCKED 1 / NOT_RUN 1（详见第 6 节） |
-| 所有测试结果 | 训练 204/204、web-v1 261/261、CI 元测试 59/59、沙箱 6/6、确定性 400 局 0 不一致、故障注入 9/9 |
+| 所有测试结果 | 训练 207/207、web-v1 261/261（合并 main 前；合并后由 CI 复核）、CI 元测试 59/59、沙箱 6/6、确定性 400 局 0 不一致、故障注入 9/9 |
 | OpenEvolve 是否真的运行过 | **是**。本次真实运行两次（`ai8-openevolve-r001`、`r002`），每次 1 次 LLM 调用；使用 codex ChatGPT 登录，无 API Key |
 | 12 小时压力测试是否实际完成 | **否**。只完成了 2 代真实自主运行与 9 类故障注入；12h 连续运行标为 NOT_RUN |
 | 是否执行过真实正式冠军挑战 | **否**。没有执行消费验证池的 2–5 人正式挑战 |
@@ -118,8 +118,8 @@
 
 | 套件 | 结果 |
 |---|---|
-| `training && npm test` | 204 / 204 PASS |
-| `web-v1 && npm test`（含构建） | 261 / 261 PASS |
+| `training && npm test` | 207 / 207 PASS |
+| `web-v1 && npm test`（含构建，合并 main 前） | 261 / 261 PASS（合并后由 CI 复核） |
 | `scripts/ci/tests/*.test.mjs` | 59 / 59 PASS |
 | `ai5/openevolve/tests/test_security_sandbox.py` | 6 / 6 PASS |
 | `training/evolution/tests/compiled.test.mjs` | 5 / 5 PASS |
