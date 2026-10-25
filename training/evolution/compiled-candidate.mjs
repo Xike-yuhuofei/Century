@@ -120,23 +120,32 @@ function cleanup(path) {
  */
 export function createCompiledAcquisitionCandidate({
   experiment, round = 1, index = 0, candidateId = null, parentId = null,
+  programText = null, mutationLabel = null, sourceOrigin = 'deterministic-template',
 }) {
   assertCondition(SEATBELT_AVAILABLE, 'Seatbelt 不可用——拒绝创建编译型候选（不做无沙箱编译）');
   assertCondition(existsSync(TSC), `tsc 不存在：${TSC}`);
   assertCondition(experiment && typeof experiment === 'object', '编译型候选必须提供 experiment 引用');
   const tscVersion = readTscVersion();
 
-  const baselineText = extractBaselineFunction();
-  const mutatedText = mutateBaselineFunction(baselineText);
-  const programText = programWithMarkers(mutatedText);
-  const functionSha256 = sha256Hex(mutatedText);
-  const id = candidateId ?? `cand-ai7-compiled-acq-r${round}c${index}-${shortHash(sha256Canonical({ programText, round, index }), 6)}`;
+  let finalProgramText;
+  let mutation;
+  if (programText !== null) {
+    assertCondition(typeof programText === 'string' && programText.trim().length > 0, 'programText 不能为空');
+    finalProgramText = programWithMarkers(programText.trim());
+    mutation = mutationLabel ?? 'external-program';
+  } else {
+    const baselineText = extractBaselineFunction();
+    finalProgramText = programWithMarkers(mutateBaselineFunction(baselineText));
+    mutation = mutationLabel ?? 'goalFit-weight-2.4';
+  }
+  const functionSha256 = sha256Hex(finalProgramText);
+  const id = candidateId ?? `cand-ai7-compiled-acq-r${round}c${index}-${shortHash(sha256Canonical({ programText: finalProgramText, round, index }), 6)}`;
 
   const workRoot = mkdtempSync(join(tmpdir(), 'ai7-compiled-'));
   const buildDir = join(workRoot, 'candidate');
   const programPath = join(workRoot, 'program.fn.ts');
   const staticJson = join(workRoot, 'static.json');
-  writeFileSync(programPath, programText);
+  writeFileSync(programPath, finalProgramText);
 
   try {
     const staticRun = runNodeSeatbelt({
@@ -187,7 +196,8 @@ export function createCompiledAcquisitionCandidate({
         version: 1,
         values: {
           kind: 'compiled-acquisition-v1',
-          mutation: 'goalFit-weight-2.4',
+          mutation,
+          sourceOrigin,
           baselineVariant: 'baseline',
           functionSha256,
         },
@@ -196,7 +206,7 @@ export function createCompiledAcquisitionCandidate({
       source: {
         kind: 'esm-module-bundle',
         entry: COMPILED_SOURCE_PATH,
-        files: [{ path: COMPILED_SOURCE_PATH, content: programText }],
+        files: [{ path: COMPILED_SOURCE_PATH, content: finalProgramText }],
       },
       experiment,
       applicablePlayerCounts: [2, 3, 4, 5],
@@ -218,8 +228,9 @@ export function createCompiledAcquisitionCandidate({
         functionSha256,
         compiledSha256,
         compiledBytes: compiledContent.length,
-        sourceBytes: programText.length,
+        sourceBytes: finalProgramText.length,
         sandbox: 'macos-seatbelt',
+        sourceOrigin,
       },
     };
   } finally {

@@ -3,10 +3,10 @@
  * 规则：
  * - changes / governance-tests / rules-cards 永远必须成功；
  * - 变更范围声明为 true 的分组，其对应作业必须真实成功（skipped 视为静默跳过 → 失败）；
- * - 任何作业 failure/cancelled 都会失败（避免红色作业被汇总掩盖），唯一例外是
- *   promotion-gate 在 verdict=REQUIRES_APPROVAL 时——它必须由独立的人工批准作业放行；
- * - promotion-gate 的 REQUIRES_APPROVAL 绝不被改写成 PASS：汇总会显式保留该状态，
- *   并要求 promotion-approval 作业成功才允许整体通过。
+ * - 任何作业 failure/cancelled 都会失败（避免红色作业被汇总掩盖）；
+ * - 冠军晋级不再有人工批准作业：promotion-gate 必须在 PASS 后由
+ *   promotion-machine-gate 复核证据并自动合并；REQUIRES_APPROVAL 直接阻断，
+ *   不得被任何"批准"路径转换为成功。
  */
 
 const ALWAYS_REQUIRED = ['changes', 'governance-tests', 'rules-cards'];
@@ -29,13 +29,14 @@ export function requiredJobs(scope, { eventName = '', ref = '', promotionVerdict
   if (scope.audit && !scope.promotion) required.add('audit-gate');
   if (scope.promotion) {
     required.add('promotion-gate');
-    if (promotionVerdict === 'REQUIRES_APPROVAL' || promotionRequiresApproval) {
-      required.add('promotion-approval');
-    }
+    required.add('promotion-machine-gate');
   }
   const isMainPush = eventName === 'push' && ref === 'refs/heads/main';
   const isMainDispatch = eventName === 'workflow_dispatch' && ref === 'refs/heads/main';
-  if (scope.pages && (isMainPush || isMainDispatch)) required.add('pages-deploy');
+  if (scope.pages && (isMainPush || isMainDispatch)) {
+    required.add('pages-deploy');
+    required.add('deploy-verify');
+  }
   return required;
 }
 
@@ -48,7 +49,7 @@ export function evaluateSummary({ needs = {}, scope = {}, eventName = '', ref = 
   const rows = [];
 
   const pendingPromotion = scope.promotion && verdict === 'REQUIRES_APPROVAL';
-  const approvalResult = needs['promotion-approval']?.result ?? 'skipped';
+  const machineGateResult = needs['promotion-machine-gate']?.result ?? 'skipped';
 
   for (const [job, data] of Object.entries(needs)) {
     const result = data?.result ?? 'missing';
@@ -58,7 +59,7 @@ export function evaluateSummary({ needs = {}, scope = {}, eventName = '', ref = 
 
     if (result === 'failure' || result === 'cancelled' || result === 'missing') {
       if (job === 'promotion-gate' && pendingPromotion) {
-        note = '⏳ REQUIRES_APPROVAL（治理阻断，等待人工批准；不是代码失败）';
+        note = '⛔ REQUIRES_APPROVAL（治理未决；人工审批已移除，机器门禁不得放行）';
         notes.push(note);
       } else {
         effectiveFailure = true;
@@ -89,12 +90,10 @@ export function evaluateSummary({ needs = {}, scope = {}, eventName = '', ref = 
           effectiveFailure = true;
           failures.push('promotion-gate: REQUIRES_APPROVAL 不得被转换为成功');
           note = 'REQUIRES_APPROVAL 被错误转换为成功';
-        } else if (approvalResult !== 'success') {
-          effectiveFailure = true;
-          failures.push(`promotion-approval: ${approvalResult}（人工批准未完成）`);
-          note = '⏳ REQUIRES_APPROVAL：人工批准未完成';
         } else {
-          note = '⏳ REQUIRES_APPROVAL 已由独立人工批准作业放行（审计证据未改写为 PASS）';
+          effectiveFailure = true;
+          failures.push('promotion-gate: REQUIRES_APPROVAL（治理未决，机器门禁拒绝放行）');
+          note = '⛔ REQUIRES_APPROVAL：人工审批已移除，必须先完成第一名率正式挑战';
         }
       } else if (!verdict) {
         effectiveFailure = true;
@@ -103,14 +102,10 @@ export function evaluateSummary({ needs = {}, scope = {}, eventName = '', ref = 
       }
     }
 
-    if (job === 'promotion-approval' && !required.has('promotion-approval') && result === 'success') {
+    if (job === 'promotion-machine-gate' && !required.has('promotion-machine-gate') && result === 'success') {
       effectiveFailure = true;
-      failures.push('promotion-approval: 在没有 REQUIRES_APPROVAL 的情况下执行成功');
-      note = '异常批准路径（失败关闭）';
-    }
-
-    if (job === 'promotion-approval' && required.has('promotion-approval') && result !== 'success') {
-      note = note || `人工批准未完成（${result}）`;
+      failures.push('promotion-machine-gate: 在非晋级 PR 上执行成功');
+      note = '异常自动合并路径（失败关闭）';
     }
 
     rows.push({ job, result, required: isRequired, note, ok: !effectiveFailure });
@@ -130,7 +125,7 @@ export function evaluateSummary({ needs = {}, scope = {}, eventName = '', ref = 
     notes,
     rows,
     required: [...required],
-    promotion: { verdict, requiresApproval, approvalResult },
+    promotion: { verdict, requiresApproval, machineGateResult },
   };
 }
 
@@ -156,7 +151,7 @@ export function renderMarkdown(result, scope) {
   }
   if (result.promotion.verdict) {
     lines.push(`> 晋级判定：**${result.promotion.verdict}**`
-      + (result.promotion.requiresApproval ? '（REQUIRES_APPROVAL 保留原样，由 promotion-approval 人工批准作业独立放行）' : ''), '');
+      + (result.promotion.requiresApproval ? '（REQUIRES_APPROVAL 阻断；人工审批已移除，机器门禁不得放行）' : ''), '');
   }
   return lines.join('\n');
 }

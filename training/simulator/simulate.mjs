@@ -119,6 +119,9 @@ export function simulateGame(options) {
             version: version.jointVersion ?? 'joint-js5',
             ...(version.gateMode !== undefined ? { gateMode: version.gateMode } : {}),
             ...(version.budgetMs !== undefined ? { budgetMs: version.budgetMs } : {}),
+            // P1：候选的联合搜索配置（search-control 目标）必须真实进入决策；
+            // 不传时行为与旧路径逐字节一致。
+            ...(version.jointOptions ? { ...version.jointOptions } : {}),
             // AI7-A2：席位描述符的参数必须显式传入并通过校验——冻结版本
             // （如 joint-js5 归档快照）不得回退读取活动 CHAMPION_PARAMETERS。
             ...(version.parameters ? { championParameters: validateAIParameters(version.parameters) } : {}),

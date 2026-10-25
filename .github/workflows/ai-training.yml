@@ -182,55 +182,62 @@ jobs:
         with:
           name: evolve-${{ github.run_id }}
           path: training/reports/
-      - name: 检查是否存在已通过确认挑战的候选
+      - name: 检查第一名率晋级证据是否存在
         id: candidate
         run: |
-          file=$(ls training/reports/evolve-*/candidate.json 2>/dev/null | head -1 || true)
-          echo "file=$file" >> "$GITHUB_OUTPUT"
-          if [ -n "$file" ]; then
-            candidate_id=$(node -p "JSON.parse(require('fs').readFileSync('$file','utf8')).id")
+          dir=training/reports/first-place-promotion/latest
+          if [ -s "$dir/challenge-evidence.json" ] && [ -s "$dir/preregistration.json" ] && [ -s "$dir/candidate.json" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "dir=$dir" >> "$GITHUB_OUTPUT"
+            candidate_id=$(node -p "JSON.parse(require('fs').readFileSync('$dir/candidate.json','utf8')).parameters?.id ?? JSON.parse(require('fs').readFileSync('$dir/candidate.json','utf8')).id")
             echo "id=$candidate_id" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "没有第一名率正式挑战证据：保留当前冠军，不晋级。"
           fi
-      - name: 晋级（归档候选 + 同步 champion.json + 落地参数区 + 一致性终检）
-        if: steps.candidate.outputs.file != ''
+      - name: 机器门禁晋级（第一名率证据复核 + 归档 + 参数区落地 + 终检）
+        if: steps.candidate.outputs.ready == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CANDIDATE_FILE: ${{ steps.candidate.outputs.file }}
+          EVIDENCE_DIR: ${{ steps.candidate.outputs.dir }}
           CANDIDATE_ID: ${{ steps.candidate.outputs.id }}
         run: |
           git config user.name "century-ai-bot"
           git config user.email "actions@users.noreply.github.com"
           branch="ai-champion/${CANDIDATE_ID}-$(date +%Y%m%d%H%M)"
-          node training/scripts/promote-champion.mjs --candidate "$CANDIDATE_FILE"
+          node training/scripts/promote-first-place-champion.mjs \
+            --evidence "$EVIDENCE_DIR/challenge-evidence.json" \
+            --plan "$EVIDENCE_DIR/preregistration.json" \
+            --candidate "$EVIDENCE_DIR/candidate.json"
           node training/scripts/apply-champion.mjs --champion training/champions/champion.json
-          # 完整回归与晋级审计在候选 PR 的 ci.yml（promotion 层 + 全代码检查）中执行，
-          # 这里只做参数一致性与轻量门禁，避免与 CI 重复跑 24 分钟测试。
+          (cd web-v1 && npm ci --no-audit --no-fund && npm run build)
           node training/scripts/apply-champion.mjs --check
-          node training/redteam/audit-gate.mjs --tier dev --json training/reports/audit-gate-promote.json
+          node training/redteam/audit-gate.mjs --tier promotion --json training/reports/audit-gate-promote.json
           git checkout -b "$branch"
-          git add training/champions/ web-v1/src/ai/parameters.ts training/reports/
-          git commit -m "feat(ai4): 晋级冠军参数 ${CANDIDATE_ID}（挑战证据见 PR 正文，champion.json 已同步）"
+          git add training/champions/ web-v1/src/ai/parameters.ts web-v1/dist training/reports/
+          git commit -m "feat(ai8): 第一名率晋级冠军 ${CANDIDATE_ID}（机器门禁，无人工审批）"
           git push origin "$branch"
           {
-            echo "## AI 4.0 冠军晋级候选：${CANDIDATE_ID}"
+            echo "## 第一名率冠军晋级：${CANDIDATE_ID}"
             echo
-            echo '### 挑战证据（独立验证种子块，双向混战 + 座位轮换 + 按种子配对统计）'
-            node -e "const d=require('./$CANDIDATE_FILE');console.log('\`\`\`json\\n'+JSON.stringify(d.confirmation,null,2)+'\\n\`\`\`')"
-            echo '### 晋级判定'
-            node -e "const d=require('./$CANDIDATE_FILE');console.log(d.confirmation.decision.reason)"
-            echo '### 审核要求'
-            echo '- CI promotion 层必须给出结构化 verdict（REQUIRES_APPROVAL 不会被转换成 PASS）'
-            echo '- 维护者需在 PR 上添加 `promotion-approved` 标签，并在 promotion-approval 环境批准'
-            echo '- 全量代码检查（web/training/模拟/UI/审计）在 CI 中真实执行'
+            echo "### 主判据"
+            echo '2–5 人配对第一名率增量（预注册 + 固定样本 + 几何 alpha 消耗）；平均得分/资源效率仅诊断。'
+            echo
+            echo '### 完整证据'
+            node -e "const d=require('./$EVIDENCE_DIR/challenge-evidence.json');console.log('\`\`\`json\\n'+JSON.stringify(d.decision,null,2)+'\\n\`\`\`')"
+            echo '### 机器门禁'
+            echo '- promotion-gate：结构化审计 verdict 必须为 PASS'
+            echo '- promotion-machine-gate：独立重算第一名率证据、alpha 账本、种子治理、构建身份'
+            echo '- 全部必需检查通过后自动 squash merge；无人工批准、无管理员强制合并'
           } > pr-body.md
-          pr_url=$(gh pr create --title "AI 4.0 冠军晋级：${CANDIDATE_ID}" --body-file pr-body.md --base main --head "$branch")
+          pr_url=$(gh pr create --title "第一名率冠军晋级：${CANDIDATE_ID}" --body-file pr-body.md --base main --head "$branch")
           echo "候选 PR：$pr_url"
-          # GITHUB_TOKEN 创建的 PR 不会自动触发 pull_request 工作流（GitHub 防递归），
-          # 必须显式 dispatch CI；promotion=true 强制进入晋级门禁并覆盖全代码检查。
           gh workflow run ci.yml --ref "$branch" -f promotion=true || {
-            echo "::error::无法 dispatch ci.yml；请手动运行 'CI' 工作流（ref=$branch, promotion=true）后再审查"
+            echo "::error::无法 dispatch ci.yml";
             exit 1
           }
+          gh pr merge "$pr_url" --squash --auto
+          echo "已启用 auto-merge：全部机器检查通过后自动合并并触发 Pages 部署。"
 
   challenge:
     if: github.event_name == 'schedule' && github.event.schedule == '0 3 * * 1' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'challenge')

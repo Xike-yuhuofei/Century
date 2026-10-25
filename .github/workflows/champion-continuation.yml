@@ -1,0 +1,31 @@
+name: champion-continuation
+
+# P4：冠军落地后自动触发下一代进化（无人值守闭环）。
+# 仅在 main 的 champion.json 变化（即机器门禁晋级合并）时触发；
+# 不参与 PR 验证（PR 入口仍然是唯一 ci.yml）。
+on:
+  push:
+    branches: [main]
+    paths:
+      - training/champions/champion.json
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: champion-continuation
+  cancel-in-progress: false
+
+jobs:
+  dispatch-next-evolution:
+    name: dispatch-next-evolution
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: 触发下一代进化（ai-training evolve）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run ai-training.yml --ref main -f mode=evolve
+          echo "已触发 ai-training.yml（mode=evolve）；冠军晋级后无需人工启动下一轮。"

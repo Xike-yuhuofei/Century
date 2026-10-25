@@ -1,0 +1,52 @@
+{
+  "schema": "century-fault-injection-report-v1",
+  "generatedAt": "2026-10-25T16:49:11.916Z",
+  "verdict": "PASS",
+  "checks": [
+    {
+      "id": "kill-recovery",
+      "status": "PASS",
+      "evidence": "残留锁（pid 不存在）被接管，campaign 状态正常写入"
+    },
+    {
+      "id": "candidate-timeout",
+      "status": "PASS",
+      "evidence": "status=anomaly reason=超出单局时间预算 1ms"
+    },
+    {
+      "id": "illegal-source",
+      "status": "PASS",
+      "evidence": "status=failed fails=2"
+    },
+    {
+      "id": "compile-failure",
+      "status": "PASS",
+      "evidence": "静态检查失败："
+    },
+    {
+      "id": "duplicate-campaign",
+      "status": "PASS",
+      "evidence": "活动锁拒绝第二个进程"
+    },
+    {
+      "id": "seed-conflict",
+      "status": "PASS",
+      "evidence": "重叠区间被中央登记拒绝"
+    },
+    {
+      "id": "corrupt-state",
+      "status": "PASS",
+      "evidence": "损坏 state 导致恢复失败（fail-closed）"
+    },
+    {
+      "id": "resource-exhaustion",
+      "status": "PASS",
+      "evidence": "action=stop reasons=1 分钟负载 3.00/核 超过 1.6；空闲内存比例 3.0% 低于 12%"
+    },
+    {
+      "id": "llm-unavailable",
+      "status": "PASS",
+      "evidence": "best_program.ts 不存在：/var/folders/mq/_2m0mslx2pl08p1gg_n65g040000gn/T/century-fault-w2rXl4/no-such-run/best/best_program.ts"
+    }
+  ]
+}

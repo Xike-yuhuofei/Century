@@ -1,0 +1,146 @@
+{
+  "schema": "century-candidate-artifact-v1",
+  "version": 1,
+  "candidateId": "cand-ai7-goalvalue-r1c1-ca98bd",
+  "parentId": null,
+  "sourceHash": "b74d10ce82e1fbb09e2c4e274ef6c93dfc8032d282cda314fa8b9bec3754bccc",
+  "source": {
+    "kind": "declarative-module",
+    "entry": "module.json",
+    "hashKind": "file-content",
+    "files": [
+      {
+        "path": "module.json",
+        "sha256": "ca98bd38b3d18068649e5522743a4a425c4bacd2040028a8f08698f1010b2d8d",
+        "content": "{\"bias\":0.0094,\"coefficients\":{\"goalFit\":1.9032,\"points\":0.2671,\"remainingCost\":-0.3065,\"stockPotential\":1.5241},\"notes\":null,\"outputClamp\":[0,20],\"schema\":\"century-declarative-linear-module-v1\",\"template\":\"linear-feature-v1\"}"
+      }
+    ]
+  },
+  "algorithmStructure": {
+    "targetIds": [
+      "goalValue"
+    ],
+    "decisionCore": "plugin-only",
+    "adapter": null,
+    "structure": null,
+    "jointVersion": null,
+    "evaluationMode": "proxy",
+    "jointOptionsByPlayerCount": null,
+    "integration": "candidate-plugin-only"
+  },
+  "parameters": {
+    "id": "cand-ai7-goalvalue-r1c1-ca98bd",
+    "version": 1,
+    "values": {
+      "schema": "century-declarative-linear-module-v1",
+      "template": "linear-feature-v1",
+      "coefficients": {
+        "remainingCost": -0.3065,
+        "goalFit": 1.9032,
+        "stockPotential": 1.5241,
+        "points": 0.2671
+      },
+      "bias": 0.0094,
+      "outputClamp": [
+        0,
+        20
+      ],
+      "notes": null
+    },
+    "boundsVersion": "module-bounds-goalValue-v1"
+  },
+  "buildArtifact": {
+    "kind": "declarative-module-bundle-v1",
+    "sha256": "d49151f5f654106e46395e246f1eedc1efcc5fc59c2e9c4bb6f0c789dfb22fd9",
+    "compiled": false,
+    "compiler": null,
+    "reproducible": true
+  },
+  "gameRules": {
+    "version": "century-rules-v1",
+    "engineBundleSha256": "e596a4d64555dd0303b8be8b8d80c3eee5ed32759ad47328e379ebd6d5063df7"
+  },
+  "experiment": {
+    "configRef": "ai7://campaign/default",
+    "configHash": "8d7d4767d0d545967cbe0414892865693e07e58eef5689251fbcccd06ec32ecb",
+    "seedRefs": [
+      {
+        "purpose": "screen",
+        "windowId": "ai7-screen-w002",
+        "base": 1610002000,
+        "count": 2
+      },
+      {
+        "purpose": "deep",
+        "windowId": "ai7-deep-w001",
+        "base": 1620001000,
+        "count": 2
+      }
+    ]
+  },
+  "applicablePlayerCounts": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "evidenceDir": "training/reports/autonomous/ai8-smoke2/evidence/cand-ai7-goalvalue-r1c1-ca98bd",
+  "safety": {
+    "status": "passed",
+    "checks": [
+      {
+        "id": "artifact-schema",
+        "status": "pass",
+        "detail": "schema=century-candidate-artifact-v1, identity=910a6925f448"
+      },
+      {
+        "id": "parameter-bounds",
+        "status": "pass",
+        "detail": "targets=goalValue"
+      },
+      {
+        "id": "compiled-module",
+        "status": "pass",
+        "detail": "not-compiled"
+      },
+      {
+        "id": "hidden-info",
+        "status": "pass",
+        "detail": "no hidden deck/seed/random access"
+      },
+      {
+        "id": "forbidden-constructs",
+        "status": "pass",
+        "detail": "no forbidden constructs"
+      },
+      {
+        "id": "resource-budget",
+        "status": "pass",
+        "detail": "players=2,3,4,5"
+      },
+      {
+        "id": "fallback-declared",
+        "status": "pass",
+        "detail": "fallback strategy present"
+      },
+      {
+        "id": "governance-boundary",
+        "status": "pass",
+        "detail": "dev-only seed references"
+      },
+      {
+        "id": "production-isolation",
+        "status": "pass",
+        "detail": "mode=proxy"
+      },
+      {
+        "id": "identity-reproducible",
+        "status": "pass",
+        "detail": "source=b74d10ce82e1, build=d49151f5f654"
+      }
+    ]
+  },
+  "status": "selected",
+  "identityDigest": "910a6925f448b06d42285bb1fbb765f1bc0530c2c1c0936657dd64b339285d1e",
+  "artifactHash": "67e0edea26351f548c76fce52643525e28ae9e882d2c4e6b06d45aaee8d52d5b"
+}

@@ -40,7 +40,8 @@ export function verifyWorkflows(repoRoot) {
   const ci = text['ci.yml'] ?? '';
   if (!ci) issues.push('缺少 ci.yml');
   for (const needle of [
-    'ci-summary', 'promotion-gate', 'promotion-approval', 'promotion-approved',
+    'ci-summary', 'promotion-gate', 'promotion-machine-gate',
+    'verify-deploy.mjs', 'rollback-on-deploy-failure',
     'web-v1-dist', 'governance-tests', 'rules-cards', 'run-audit-gate.mjs',
     'research-worker', 'research-e2e', 'worker-protocol.test.mjs',
     '--test-name-pattern', '全 node 席位完整对局并按种子复现', 'MLP 席位往返', '回传越界序号被如实记为异常对局',
@@ -49,6 +50,8 @@ export function verifyWorkflows(repoRoot) {
   ]) {
     if (!ci.includes(needle)) issues.push(`ci.yml 缺少必需元素：${needle}`);
   }
+  if (ci.includes('promotion-approved')) issues.push('ci.yml 不得再依赖 promotion-approved 人工标签（人工审批已被机器门禁取代）');
+  if (ci.includes('name: promotion-approval')) issues.push('ci.yml 不得保留 promotion-approval 人工批准作业');
   if (/continue-on-error/.test(ci)) issues.push('ci.yml 不允许 continue-on-error（失败不得被伪装成成功）');
   if (!/permissions:\s*\n\s{2}contents:\s*read/.test(ci)) issues.push('ci.yml 顶层必须声明最小权限 contents: read');
   if (/^\s{2}paths:/m.test(ci)) issues.push('ci.yml 的 PR 触发不允许 paths 过滤（会导致必需检查缺失）；请用变更分类器');
@@ -80,9 +83,18 @@ export function verifyWorkflows(repoRoot) {
     issues.push('ai-training.yml promote 作业缺少 actions: write（无法 dispatch CI）');
   }
 
+  const continuation = text['champion-continuation.yml'] ?? '';
+  if (!continuation) {
+    issues.push('缺少 champion-continuation.yml（冠军晋级后必须自动触发下一代进化）');
+  } else {
+    if (!/champion\.json/.test(continuation)) issues.push('champion-continuation 必须由 champion.json 变更触发');
+    if (!/gh workflow run ai-training\.yml/.test(continuation)) issues.push('champion-continuation 必须 dispatch ai-training.yml');
+  }
+
   const writeContents = files.filter(f => /contents:\s*write/.test(stripComments(text[f])));
-  if (writeContents.length && !(writeContents.length === 1 && writeContents[0] === 'ai-training.yml')) {
-    issues.push(`contents: write 只允许出现在 ai-training.yml promote 作业，实际：${writeContents.join(', ')}`);
+  const allowedWrite = new Set(['ai-training.yml', 'ci.yml']);
+  if (writeContents.some(f => !allowedWrite.has(f))) {
+    issues.push(`contents: write 只允许出现在 ai-training.yml 与 ci.yml 的受控作业，实际：${writeContents.join(', ')}`);
   }
 
   return { ok: issues.length === 0, issues, workflows: files };

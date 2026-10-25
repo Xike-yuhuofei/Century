@@ -17,7 +17,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = join(here, '..', '..', '..');
 const staticCheck = join(repoRoot, 'ai5', 'openevolve', 'node', 'static_check.mjs');
 const maliciousDir = join(repoRoot, 'ai5', 'openevolve', 'experiments', 'malicious');
-const benignFn = join(repoRoot, 'ai5', 'openevolve', 'results', 'evaluations', '66f6a296aa72', 'function.ts');
+const benignFn = join(repoRoot, 'ai5', 'openevolve', 'tests', 'fixtures', 'benign_acquisition_value.ts');
 
 function staticCheckExit(src, tag) {
   const outDir = mkdtempSync(join(tmpdir(), `ai5-static-${tag}-`));

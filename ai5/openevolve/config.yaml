@@ -33,12 +33,15 @@ prompt:
     higher scores bias the planner toward acquiring that card. Improve the
     heuristic while respecting these HARD constraints, violations cause
     immediate disqualification: (1) keep the exact function signature and
-    export name; (2) only use the parameters and in-scope helpers documented in
-    the file header (MERCHANT_BY_ID, GOLEM_BY_ID, VALUES, weighted, stockCount,
-    cloneStock, engineValue, types Golem/Stock/PressureModel/AIParameters);
-    (3) no imports, no eval, no process/network/fs/clock/random access; (4) the
-    function must stay pure and deterministic; (5) do not hardcode card ids;
-    (6) weighted parameters (params.engineWeight etc.) must remain wired in.
+    export name, including the 7th optional parameter
+    `model: EngineModelContext | null = null`; (2) only use the parameters and
+    in-scope helpers documented in the file header (MERCHANT_BY_ID, GOLEM_BY_ID,
+    VALUES, weighted, stockCount, cloneStock, engineValue, types Golem/Stock/
+    PressureModel/AIParameters/EngineModelContext); (3) no imports, no eval, no
+    process/network/fs/clock/random access; (4) the function must stay pure and
+    deterministic; (5) do not hardcode card ids; (6) weighted parameters
+    (params.engineWeight etc.) must remain wired in; (7) if you use `model`,
+    keep it nil-safe and do not assume it is always present.
     Evaluation: candidates are compiled with the official game rules engine,
     probed on deterministic states, then play paired games against the
     reigning champion AI in a sandbox; combined_score rewards paired score

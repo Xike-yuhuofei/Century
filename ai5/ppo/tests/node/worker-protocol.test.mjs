@@ -42,7 +42,10 @@ class WorkerHarness {
 
 test('全 node 席位完整对局并按种子复现', async () => {
   const w = new WorkerHarness();
-  const seats = Array.from({ length: 5 }, () => ({ kind: 'node', variant: 'champion' }));
+  // P3：使用冠军血统的确定性束搜索变体。原 `champion` 走 100ms 墙钟联合搜索，
+  // 5 个 node 席位在 CI 上可超过 30 分钟；本用例只验证「完整对局 + 同种子逐位复现」，
+  // 不依赖墙钟搜索。断言保持不变。
+  const seats = Array.from({ length: 5 }, () => ({ kind: 'node', variant: 'champion-beam' }));
   const run = async (seed) => {
     w.send({ type: 'game', gameId: seed, seed, seats });
     const msg = await w.next();

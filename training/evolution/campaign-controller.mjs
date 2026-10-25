@@ -2,15 +2,15 @@
  *
  * 闭环：
  *   候选生成 → 静态安全检查 → 独立构建校验 → 开发池低成本评估
- *   → 多维候选筛选 → 深度确认 → 生成待人工批准的正式挑战请求
+ *   → 多维候选筛选 → 深度确认 → 机器门禁挑战请求
+ *   → （可选注入 promotionHandler：正式第一名率挑战 + 自动晋级）
  *   → 结果归档 → 失败诊断 → 新一轮候选生成
  *
  * 硬约束：
- * - 只使用 AI7 开发池窗口（governance adapter 分配），绝不消费正式验证池；
- * - 正式挑战与冠军晋级必须人工审批；控制器只产生 pending-human-approval 请求，
- *   永不调用晋级/账本写入；
+ * - 只使用 AI7 开发池窗口（真实种子治理 provider 原子分配），绝不消费正式验证池；
+ * - 冠军晋级只认预注册第一名率证据；控制器只排队，晋级由 promotionHandler/CI 机器门禁执行；
  * - 检查点/断点恢复/安全停止/M4 预算/并发上限/失败隔离/完整日志/重复运行保护；
- * - 评估器与生成器可注入（测试用假评估器，不跑长对局）。
+ * - 评估器与生成器可注入（测试用假评估器，不跑长对局；生产默认真实评估器）。
  */
 
 import {
@@ -23,7 +23,7 @@ import { REPO_ROOT } from '../lib/paths.mjs';
 import {
   SCHEMAS, assertCondition, assertDisjoint, deepFreeze, sha256Canonical,
 } from './core.mjs';
-import { createTestDoubleGovernance, createGovernanceAdapter } from './governance-adapter.mjs';
+import { createLiveGovernanceProvider, createAutonomousGovernanceAdapter } from './governance-provider-v2.mjs';
 import { ArtifactStore } from './artifact-store.mjs';
 import { generateCandidateBatch } from './candidate-generator.mjs';
 import { runSafetyChecks } from './safety-check.mjs';
@@ -115,7 +115,7 @@ function resolvePortable(path) {
 export class CampaignController {
   constructor({
     campaignId, rootDir, store = null, governance = null, config = {},
-    generator = null, evaluator = null, isPidAlive = pidAliveDefault,
+    generator = null, evaluator = null, isPidAlive = pidAliveDefault, promotionHandler = null,
   }) {
     assertCondition(typeof campaignId === 'string' && /^[a-z0-9][a-z0-9._-]{2,63}$/i.test(campaignId),
       `campaignId 非法：${String(campaignId)}`);
@@ -123,10 +123,12 @@ export class CampaignController {
     this.rootDir = resolve(rootDir);
     this.config = normalizeConfig(config);
     this.store = store ?? new ArtifactStore({ root: resolve(this.rootDir, 'artifacts') });
-    this.governance = governance ?? createGovernanceAdapter({ provider: createTestDoubleGovernance() });
+    // 生产默认：真实种子治理 + 机器门禁队列（不再使用测试替身）。
+    this.governance = governance ?? createAutonomousGovernanceAdapter({ provider: createLiveGovernanceProvider() });
     this.generator = generator ?? null;
     this.evaluator = evaluator ?? null;
     this.isPidAlive = isPidAlive;
+    this.promotionHandler = promotionHandler;
     this.statePath = resolve(this.rootDir, 'state.json');
     this.lockPath = resolve(this.rootDir, '.campaign.lock');
     this.logPath = resolve(this.rootDir, 'logs', 'events.jsonl');
@@ -216,8 +218,11 @@ export class CampaignController {
         validationPoolConsumed: false,
         promotionTriggered: false,
         championMutation: 'none',
-        formalChallengeApprovalRequired: true,
+        formalChallengeApprovalRequired: false,
+        machineGateRequired: true,
       },
+      promotionQueue: [],
+      promotionOutcomes: [],
     };
     this._startRound(state);
     return state;
@@ -624,7 +629,7 @@ export class CampaignController {
     return true;
   }
 
-  _approval(state, roundData) {
+  async _approval(state, roundData) {
     const confirmed = roundData.candidates
       .filter(c => c.stage === 'deep-done' && c.deep?.status === 'done')
       .sort((a, b) => (b.deep?.score?.composite ?? 0) - (a.deep?.score?.composite ?? 0));
@@ -655,24 +660,55 @@ export class CampaignController {
           chanceAdjustedRate: chanceAdjusted,
           minWilsonLower: item.deep?.metrics?.minWilsonLower ?? null,
           anomalyRate: item.deep?.metrics?.anomalyRate ?? null,
-          note: '小样本深验只用于人工审核；no-advantage 不构成自动拒绝，但人工应重点复核',
+          note: '小样本深验只用于机器门禁前的排序；正式判定必须使用预注册第一名率挑战',
         },
-        recommendation: deepVerdict === 'promising' ? 'review-required (positive signal)' : 'review-required (weak/inconclusive signal)',
+        recommendation: deepVerdict === 'promising' ? 'queue-formal-challenge (positive signal)' : 'queue-formal-challenge (weak/inconclusive signal)',
         validationPoolConsumed: false,
         promotionTriggered: false,
       },
     });
-    const absoluteRequestPath = resolve(ensureDir(resolve(this.rootDir, 'pending-approval')), `${request.requestId}.json`);
+    const machineGate = request.status === 'queued-machine-gate';
+    const dirName = machineGate ? 'promotion-queue' : 'pending-approval';
+    const absoluteRequestPath = resolve(ensureDir(resolve(this.rootDir, dirName)), `${request.requestId}.json`);
     const requestPath = portablePath(absoluteRequestPath);
     writeJSON(absoluteRequestPath, request);
-    state.pendingApprovals.push({ ...request, requestPath });
-    item.stage = 'pending-approval';
-    this.store.update(item.candidateId, { status: 'pending-approval' });
+    if (machineGate) {
+      state.promotionQueue.push({ ...request, requestPath });
+      item.stage = 'promotion-queued';
+      item.promotionRequest = { requestId: request.requestId, requestPath, status: request.status };
+      this.store.update(item.candidateId, { status: 'promotion-queued' });
+      this._event(state, 'promotion-request-queued', {
+        requestId: request.requestId, requestPath, gates: request.gates,
+      }, item.candidateId);
+      if (this.promotionHandler) {
+        try {
+          const outcome = await this.promotionHandler({
+            campaignId: this.campaignId, artifact, request, requestPath,
+          });
+          state.promotionOutcomes.push({ requestId: request.requestId, at: nowIso(), outcome });
+          this._event(state, 'promotion-handler-completed', {
+            requestId: request.requestId, verdict: outcome?.verdict ?? 'unknown',
+          }, item.candidateId);
+        } catch (error) {
+          state.promotionOutcomes.push({
+            requestId: request.requestId, at: nowIso(),
+            outcome: { verdict: 'ERROR', reason: String(error.message).slice(0, 500) },
+          });
+          this._event(state, 'promotion-handler-failed', {
+            requestId: request.requestId, reason: String(error.message).slice(0, 500),
+          }, item.candidateId);
+        }
+      }
+    } else {
+      state.pendingApprovals.push({ ...request, requestPath });
+      item.stage = 'pending-approval';
+      this.store.update(item.candidateId, { status: 'pending-approval' });
+      this._event(state, 'approval-request-created', {
+        requestId: request.requestId, requestPath, status: request.status,
+        promotionTriggered: request.promotionTriggered,
+      }, item.candidateId);
+    }
     roundData.approvalDone = true;
-    this._event(state, 'approval-request-created', {
-      requestId: request.requestId, requestPath, status: request.status,
-      promotionTriggered: request.promotionTriggered,
-    }, item.candidateId);
   }
 
   _loadDiagnostics(roundData) {
@@ -877,7 +913,9 @@ export class CampaignController {
         })),
       })),
       pendingApprovals: current.pendingApprovals,
-      note: '正式挑战与冠军晋级均需人工审批；控制器未触发任何晋级',
+      promotionQueue: current.promotionQueue ?? [],
+      promotionOutcomes: current.promotionOutcomes ?? [],
+      note: 'autonomous 模式：正式挑战请求进入机器门禁队列；人工审批已被机器门禁取代，门禁本身不删除',
     });
   }
 }

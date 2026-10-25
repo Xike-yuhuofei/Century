@@ -641,7 +641,7 @@ export function assertFormalChallengeAllocation({ registry, base, size, challeng
  * - challengeIndex 唯一且覆盖最近 N 次累计挑战，最大序号 = 治理层累计次数；
  * - 人数覆盖必须完整披露（调用方另行校验 2–5）。
  */
-export function assertPromotionEvidenceRegistered({ registry, seatEvidence }) {
+export function assertPromotionEvidenceRegistered({ registry, seatEvidence, allowSharedChallengeIndex = false }) {
   if (!registry.complete) {
     throw new Error(`种子治理层不完整（缺失来源：${registry.missingSources.join(', ')}）——禁止晋级`);
   }
@@ -711,20 +711,33 @@ export function assertPromotionEvidenceRegistered({ registry, seatEvidence }) {
   }
   const total = formalChallengeCount(registry);
   const unique = [...new Set(indexes)].sort((a, b) => a - b);
-  if (unique.length !== indexes.length) problems.push('多条人数证据复用了同一 challengeIndex');
+  if (!allowSharedChallengeIndex && unique.length !== indexes.length) {
+    problems.push('多条人数证据复用了同一 challengeIndex');
+  }
+  if (allowSharedChallengeIndex && unique.length !== 1) {
+    problems.push(
+      `联合预注册协议要求 2–5 人共享同一个 challengeIndex（一次 alpha 消耗），实际 ${JSON.stringify(unique)}`,
+    );
+  }
   if (unique.length) {
     if (Math.max(...unique) !== total) {
       problems.push(`最大 challengeIndex ${Math.max(...unique)} ≠ 治理层累计挑战次数 ${total}`);
     }
-    if (Math.min(...unique) < total - unique.length + 1) {
-      problems.push(
-        `challengeIndex 集合 ${JSON.stringify(unique)} 未覆盖最近 ${unique.length} 次挑战（累计 ${total}）——疑似伪造历史序号`,
-      );
-    }
-    for (let i = 1; i < unique.length; i++) {
-      if (unique[i] !== unique[i - 1] + 1) {
-        problems.push(`challengeIndex 不连续：${unique.join(',')}`);
-        break;
+    if (allowSharedChallengeIndex) {
+      if (Math.min(...unique) !== total) {
+        problems.push(`联合挑战 challengeIndex ${unique[0]} ≠ 治理层累计挑战次数 ${total}`);
+      }
+    } else {
+      if (Math.min(...unique) < total - unique.length + 1) {
+        problems.push(
+          `challengeIndex 集合 ${JSON.stringify(unique)} 未覆盖最近 ${unique.length} 次挑战（累计 ${total}）——疑似伪造历史序号`,
+        );
+      }
+      for (let i = 1; i < unique.length; i++) {
+        if (unique[i] !== unique[i - 1] + 1) {
+          problems.push(`challengeIndex 不连续：${unique.join(',')}`);
+          break;
+        }
       }
     }
   }

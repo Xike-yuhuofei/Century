@@ -510,7 +510,8 @@ jobs:
         with:
           name: web-v1-dist
           path: web-v1/dist
-      # REQUIRES_APPROVAL 保持红色阻断，绝不转换为成功；由 promotion-approval 独立人工批准。
+      # REQUIRES_APPROVAL 保持红色阻断，绝不转换为成功；人工审批已移除，
+      # 必须先用第一名率正式挑战满足治理条件，机器门禁才会放行。
       - name: 晋级审计（promotion 层，结构化 verdict）
         id: audit
         env:
@@ -527,83 +528,58 @@ jobs:
           if-no-files-found: ignore
           retention-days: 90
 
-  promotion-approval:
-    name: promotion-approval (human sign-off)
-    needs: [changes, build, promotion-gate]
-    if: ${{ always() && needs.changes.outputs.promotion == 'true' && needs.build.result == 'success' && (needs.promotion-gate.outputs.requires_approval == 'true' || (needs.promotion-gate.result != 'success' && needs.promotion-gate.outputs.verdict == '')) }}
+  promotion-machine-gate:
+    name: promotion-machine-gate
+    needs: [changes, build, promotion-gate, web-unit, training-unit, simulation, rules-cards, governance-tests, ui-smoke]
+    if: ${{ always() && github.event_name == 'pull_request' && needs.changes.outputs.promotion == 'true' && needs.promotion-gate.outputs.verdict == 'PASS' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 30
     permissions:
-      contents: read
-      pull-requests: read
-    environment:
-      name: promotion-approval
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
-      - name: 读取晋级审计判定（以产物为准，不信任作业输出）
-        uses: actions/download-artifact@v4
+      - uses: actions/setup-node@v4
         with:
-          name: promotion-audit
-          path: ${{ runner.temp }}/promotion-audit
-      - name: 对账审计 verdict（BLOCKED 不得进入批准流程）
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: 复核全部前置机器检查（任何一项非 success 即拒绝）
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}
+        run: |
+          node -e '
+            const needs = JSON.parse(process.env.NEEDS_JSON);
+            const required = ["build","web-unit","training-unit","simulation","rules-cards","governance-tests","ui-smoke","promotion-gate"];
+            for (const job of required) {
+              const r = needs[job]?.result;
+              if (r !== "success") { console.error(`前置机器检查未成功：${job}=${r}`); process.exit(1); }
+            }
+            console.log("前置机器检查全部成功");
+          '
+      - name: 第一名率证据独立复核（重算 + alpha 账本 + 种子治理 + 身份）
+        run: |
+          DIR=training/reports/first-place-promotion/latest
+          test -s "$DIR/challenge-evidence.json" || { echo "::error::缺少 challenge-evidence.json"; exit 1; }
+          test -s "$DIR/preregistration.json" || { echo "::error::缺少 preregistration.json"; exit 1; }
+          test -s "$DIR/candidate.json" || { echo "::error::缺少 candidate.json"; exit 1; }
+          node training/scripts/promote-first-place-champion.mjs \
+            --evidence "$DIR/challenge-evidence.json" \
+            --plan "$DIR/preregistration.json" \
+            --candidate "$DIR/candidate.json" --dry-run
+      - name: 自动启用 squash auto-merge（不绕过任何检查）
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-          INFO_FILE="$RUNNER_TEMP/promotion-pr.json"
-          gh pr list --head "$BRANCH" --state open --limit 1 \
-            --json number,baseRefName,labels,headRefOid > "$INFO_FILE"
-          AUDIT_JSON="$RUNNER_TEMP/promotion-audit/audit-gate-promotion.json" \
-          INFO_FILE="$INFO_FILE" BRANCH="$BRANCH" node -e '
-            const fs = require("fs");
-            const prs = JSON.parse(fs.readFileSync(process.env.INFO_FILE, "utf8"));
-            const pr = prs[0];
-            if (!pr) { console.error("未找到对应的开放 PR（人工批准必须绑定到 PR）"); process.exit(1); }
-            if (pr.baseRefName !== "main") { console.error(`PR 目标分支必须是 main，实际 ${pr.baseRefName}`); process.exit(1); }
-            let report;
-            try { report = JSON.parse(fs.readFileSync(process.env.AUDIT_JSON, "utf8")); }
-            catch (error) { console.error(`晋级审计产物缺失/损坏（失败关闭）：${error.message}`); process.exit(1); }
-            const verdict = report.verdict;
-            if (verdict === "BLOCKED" || verdict === "FAIL") {
-              console.error(`REQUIRES_APPROVAL 不适用于 BLOCKED/FAIL（实际 ${verdict}）；必须先修复证据/代码，禁止人工绕过`);
-              process.exit(1);
-            }
-            if (verdict !== "REQUIRES_APPROVAL") {
-              console.error(`晋级审计作业失败但 verdict=${verdict}，状态不一致（失败关闭）`);
-              process.exit(1);
-            }
-            const labels = (pr.labels || []).map(l => l.name);
-            if (!labels.includes("promotion-approved")) {
-              console.error("REQUIRES_APPROVAL：维护者必须在 PR 上添加 promotion-approved 标签并重新运行本作业");
-              process.exit(1);
-            }
-            console.log(`人工批准已确认：PR #${pr.number}，分支 ${process.env.BRANCH}，verdict=${verdict}`);
-            fs.writeFileSync(process.env.RUNNER_TEMP + "/promotion-verdict.txt", verdict);
-          '
-      - name: 记录人工批准
-        run: |
-          mkdir -p training/reports
-          node -e '
-            const fs = require("fs");
-            fs.writeFileSync("training/reports/promotion-approval.json", JSON.stringify({
-              approvedAt: new Date().toISOString(),
-              runId: process.env.GITHUB_RUN_ID,
-              workflow: process.env.GITHUB_WORKFLOW,
-              ref: process.env.GITHUB_REF,
-              branch: process.env.GITHUB_HEAD_REF || process.env.GITHUB_REF_NAME,
-              verdict: "REQUIRES_APPROVAL",
-              authorization: "environment:promotion-approval + label:promotion-approved"
-            }, null, 2));
-          '
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: promotion-approval-record
-          path: training/reports/promotion-approval.json
-          if-no-files-found: ignore
-          retention-days: 90
+          test -n "$PR_NUMBER" || { echo "::error::缺少 PR 编号"; exit 1; }
+          gh pr merge "$PR_NUMBER" --squash --auto
+          echo "已启用自动合并：在所有必需检查通过后自动 squash merge，无需人工批准。"
 
   pages-deploy:
     name: pages-deploy
@@ -645,6 +621,61 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
+  deploy-verify:
+    name: deploy-verify
+    needs: [changes, build, pages-deploy]
+    if: ${{ always() && github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && needs.changes.outputs.pages == 'true' && needs.pages-deploy.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: 线上身份核验（产物指纹 + 实际冠军 id + 适配器标记）
+        run: |
+          EXPECTED_ARTIFACT=$(node -p "require('./web-v1/dist/build-manifest.json').artifact.sha256")
+          EXPECTED_CHAMPION=$(node -p "require('./training/champions/champion.json').parameters.id")
+          node scripts/ci/verify-deploy.mjs \
+            --url "https://xike-yuhuofei.github.io/Century/" \
+            --expected-artifact "$EXPECTED_ARTIFACT" \
+            --expected-champion "$EXPECTED_CHAMPION" \
+            --json training/reports/deploy-verification.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deploy-verification
+          path: training/reports/deploy-verification.json
+          if-no-files-found: ignore
+          retention-days: 90
+
+  rollback-on-deploy-failure:
+    name: rollback-on-deploy-failure
+    needs: [deploy-verify]
+    if: ${{ always() && needs.deploy-verify.result == 'failure' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: 自动回滚（revert PR + auto-merge；不绕过任何检查）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/ci/rollback-champion.mjs \
+            --reason "deploy-verify failed (run ${GITHUB_RUN_ID}: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+
   ci-summary:
     name: ci-summary
     needs:
@@ -663,8 +694,10 @@ jobs:
       - research-python
       - research-seatbelt
       - promotion-gate
-      - promotion-approval
+      - promotion-machine-gate
       - pages-deploy
+      - deploy-verify
+      - rollback-on-deploy-failure
     if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 10

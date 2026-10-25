@@ -257,48 +257,125 @@ if (distReady || true) { // 核算是纯数据复算，不依赖 dist
   }
 }
 
-// ---- 6. 晋级治理（promotion 层；区分代码缺陷与治理决定） ----
+// ---- 5.6 第一名率统计核心自检（dev 层；P0 唯一主判据） ----
+{
+  const testPath = resolve(REPO_ROOT, 'training/tests/first-place.test.mjs');
+  if (!existsSync(testPath)) {
+    add({
+      id: 'first-place-stats', tier: 'dev', status: 'BLOCKED', severity: 'P0',
+      title: '第一名率统计核心测试缺失（禁止删除反例测试使门禁变绿）',
+      evidence: 'training/tests/first-place.test.mjs 不存在',
+      remediation: '恢复 P0 反例测试与 evaluator/first-place.mjs',
+    });
+  } else {
+    const r = (() => {
+      try {
+        const raw = execFileSync('node', ['--test', '--test-concurrency=1', testPath], { encoding: 'utf8', timeout: 300_000 });
+        return { code: 0, raw };
+      } catch (error) { return { code: error.status ?? 1, raw: (error.stdout ?? '') + (error.stderr ?? '') }; }
+    })();
+    const pass = Number(/# pass (\d+)/.exec(r.raw)?.[1] ?? 0);
+    const fail = Number(/# fail (\d+)/.exec(r.raw)?.[1] ?? 0);
+    add({
+      id: 'first-place-stats', tier: 'dev',
+      status: r.code !== 0 || fail > 0 ? 'FAIL' : 'PASS',
+      severity: r.code !== 0 || fail > 0 ? 'P0' : 'PASS',
+      title: fail > 0 ? `第一名率统计反例测试存在 ${fail} 项失败` : '第一名率统计反例与正向用例全部通过',
+      evidence: `pass=${pass} fail=${fail} exit=${r.code}`,
+      remediation: fail > 0 ? '修复 first-place.mjs 或预注册/alpha 账本实现；不得放宽断言' : null,
+    });
+  }
+}
+
+// ---- 6. 晋级治理（promotion 层；P0：第一名率唯一判据） ----
 {
   const champPath = resolve(REPO_ROOT, 'training/champions/champion.json');
   const champ = JSON.parse(readFileSync(champPath, 'utf8'));
   const evidence = champ.provenance?.promotionEvidence ?? {};
-  const govNotes = [];
-  // G1：证据人数覆盖——正式挑战证据覆盖的人数 vs 部署口径
-  const seatCountsCovered = evidence.seatCounts ?? [5]; // challenge-11 按 5 人协议执行
-  govNotes.push(`晋级证据覆盖人数=${JSON.stringify(seatCountsCovered)}（正式挑战协议 ${TIER === 'promotion' ? '现已支持 2–5 人独立成次' : ''}）；2p 未有正式证据即全人数部署属治理风险（需按人数补验或人工裁决）`);
-  // G2：证据身份 = 当前重建产物（规范化身份优先；旧记录退回全量 bundle）
-  const recorded = champ.provenance?.engineBundleSha256;
-  const prov = champ.provenance ?? {};
-  let currentProv = null;
-  try { currentProv = (await import(`file://${resolve(REPO_ROOT, 'training/lib/paths.mjs')}`)).buildProvenance(); } catch { /* 无 dist */ }
-  const normalized = prov.decisionSourceSha256 && prov.decisionArtifactSha256 && prov.championParametersSha256;
-  const drift = normalized && currentProv
-    ? ['decisionSourceSha256', 'decisionArtifactSha256', 'championParametersSha256'].some(k => prov[k] !== currentProv[k])
-    : (recorded && currentProv && recorded !== currentProv.engineBundleSha256);
-  if (drift) {
-    govNotes.push(normalized
-      ? '晋级证据规范化身份（决策核心/产物/冠军参数）≠ 当前构建——需人工授权的新独立挑战；已在 version-identity V7b 列为 REQUIRES_APPROVAL'
-      : `晋级证据指纹 ${recorded.slice(0, 12)} ≠ 当前产物 ${currentProv.engineBundleSha256.slice(0, 12)}（受试产物 ≠ 晋级产物——需人工授权的新独立挑战；已在 version-identity V7b 列为 REQUIRES_APPROVAL）`);
+  const isFirstPlace = evidence.metric === 'pairedFirstPlaceRateDelta'
+    && evidence.schema === 'century-first-place-formal-challenge-v1';
+  if (isFirstPlace) {
+    const problems = [];
+    if (evidence.decision?.promote !== true) problems.push('decision.promote != true');
+    if (!/^[0-9a-f]{64}$/.test(String(evidence.planHash ?? ''))) problems.push('缺少预注册 planHash');
+    if (!/^[0-9a-f]{64}$/.test(String(evidence.evidenceHash ?? ''))) problems.push('缺少证据 evidenceHash');
+    if (!Array.isArray(evidence.seatCounts) || ![2, 3, 4, 5].every(n => evidence.seatCounts.includes(n))) {
+      problems.push(`人数覆盖不完整：${JSON.stringify(evidence.seatCounts)}`);
+    }
+    if (evidence.alphaLedger?.outcome?.decision !== 'promote') problems.push('alpha 账本结果不是 promote');
+    if (!evidence.alphaLedger?.reservation?.planId) problems.push('alpha 账本缺少预留记录');
+    if (!evidence.recalculated?.promote) problems.push('独立重算未通过');
+    if (!evidence.decision?.pooled || evidence.decision.pooled.lower <= 0) problems.push('加权第一名率增量下界 ≤ 0');
+    add({
+      id: 'promotion-governance', tier: 'promotion',
+      status: problems.length ? 'BLOCKED' : 'PASS',
+      severity: problems.length ? 'P0' : 'PASS',
+      title: problems.length
+        ? '第一名率晋级证据存在缺陷（fail-closed）'
+        : '第一名率晋级证据完整（预注册 + 2–5 人主检验/非劣效 + alpha 账本）',
+      evidence: problems.length
+        ? problems.join('；')
+        : `冠军=${champ.parameters?.id}；challengeIndex=${evidence.challengeIndex}；α=${evidence.alpha}；` +
+          `加权增量=${evidence.decision.pooled.mean.toFixed(4)}（下界 ${evidence.decision.pooled.lower.toFixed(4)}）；` +
+          `plan=${String(evidence.planHash).slice(0, 12)} evidence=${String(evidence.evidenceHash).slice(0, 12)}`,
+      remediation: problems.length ? '重新生成预注册证据并执行正式挑战；不得以旧判据或手工修改 provenance 放行' : null,
+    });
+  } else {
+    const seatCountsCovered = evidence.seatCounts ?? [5];
+    add({
+      id: 'promotion-governance', tier: 'promotion', status: 'REQUIRES_APPROVAL', severity: 'GOVERNANCE',
+      title: '当前冠军证据仍是旧判据（配对得分优势率），不得作为新晋级依据',
+      evidence: `冠军=${champ.parameters?.id}；metric=${String(evidence.metric ?? 'score-advantage（legacy）')}；` +
+        `人数覆盖=${JSON.stringify(seatCountsCovered)}；旧判据只作历史复现，不参与晋级`,
+      remediation: '执行 run-first-place-challenge.mjs 生成第一名率正式证据；promote-first-place-champion.mjs 通过机器门禁后自动晋级',
+    });
   }
-  add({
-    id: 'promotion-governance', tier: 'promotion', status: 'REQUIRES_APPROVAL', severity: 'GOVERNANCE',
-    title: '正式晋级治理未决（阻断晋级层，不阻断开发/研究层）',
-    evidence: `冠军=${champ.parameters?.id}；promotionEvidence.seeds=${evidence.seeds}；${govNotes.join('；')}`,
-    remediation: '人工授权后执行新一轮正式独立挑战（当前冻结产物 × 需补人数口径）；不得自动消费验证池，不得伪造冠军证明',
-  });
 }
 
-// ---- 6.5 冠军证据待重新验证（AI7-A4：记录问题，不重新晋级/不改写历史） ----
+// ---- 6.5 冠军证据待重新验证（AI7-A4；新第一名率证据可解除） ----
 {
   const revalidationPath = resolve(REPO_ROOT, 'training/champions/revalidation-required.json');
   if (existsSync(revalidationPath)) {
     const doc = JSON.parse(readFileSync(revalidationPath, 'utf8'));
+    const champForCheck = JSON.parse(readFileSync(resolve(REPO_ROOT, 'training/champions/champion.json'), 'utf8'));
+    const currentEvidence = champForCheck.provenance?.promotionEvidence ?? {};
+    const resolvedByFirstPlace = currentEvidence.metric === 'pairedFirstPlaceRateDelta'
+      && currentEvidence.decision?.promote === true
+      && [2, 3, 4, 5].every(n => (currentEvidence.seatCounts ?? []).includes(n))
+      && currentEvidence.championId !== doc.championId;
     add({
-      id: 'champion-revalidation', tier: 'promotion', status: 'REQUIRES_APPROVAL', severity: 'GOVERNANCE',
-      title: `冠军 ${doc.championId} 的既有晋级证据待重新验证（${doc.status}）`,
-      evidence: `受试产物=${String(doc.finding?.evidenceEngineBundleSha256).slice(0, 12)}；人数覆盖=${JSON.stringify(doc.finding?.seatCountsCovered)}；` +
-        '未重新晋级、未改写历史 provenance——需人工授权新的 2–5 人正式挑战',
-      remediation: '按 revalidation-required.json 的 remediation 执行新挑战；在此之前不得宣称全人数已验证',
+      id: 'champion-revalidation', tier: 'promotion',
+      status: resolvedByFirstPlace ? 'PASS' : 'REQUIRES_APPROVAL',
+      severity: resolvedByFirstPlace ? 'PASS' : 'GOVERNANCE',
+      title: resolvedByFirstPlace
+        ? `历史冠军 ${doc.championId} 的重新验证已由新的 2–5 人第一名率证据覆盖`
+        : `冠军 ${doc.championId} 的既有晋级证据待重新验证（${doc.status}）`,
+      evidence: resolvedByFirstPlace
+        ? `新冠军=${champForCheck.parameters?.id}；challengeIndex=${currentEvidence.challengeIndex}；seatCounts=${JSON.stringify(currentEvidence.seatCounts)}`
+        : `受试产物=${String(doc.finding?.evidenceEngineBundleSha256).slice(0, 12)}；人数覆盖=${JSON.stringify(doc.finding?.seatCountsCovered)}；未重新晋级、未改写历史 provenance——需新第一名率挑战`,
+      remediation: resolvedByFirstPlace ? null : '按 revalidation-required.json 的 remediation 执行新的 2–5 人第一名率挑战；在此之前不得宣称全人数已验证',
+    });
+  }
+}
+
+// ---- 6.6 Alpha 消耗账本（research 层；P0 长期错误率控制） ----
+{
+  try {
+    const { readAlphaLedger, alphaLedgerSummary } = await import(`file://${resolve(REPO_ROOT, 'training/lib/alpha-ledger.mjs')}`);
+    const ledger = readAlphaLedger();
+    const summary = alphaLedgerSummary(ledger);
+    add({
+      id: 'alpha-ledger', tier: 'research', status: 'PASS', severity: 'PASS',
+      title: 'Alpha 消耗账本完整（append-only，challengeIndex 连续，累计 ≤ 预算）',
+      evidence: `模式=${summary.spendingPlan.mode}；challenges=${summary.challenges}；completed=${summary.completed}；` +
+        `spent=${summary.spent}；remaining=${summary.remaining}；next=${summary.nextChallengeIndex}`,
+    });
+  } catch (error) {
+    add({
+      id: 'alpha-ledger', tier: 'research', status: 'BLOCKED', severity: 'P0',
+      title: 'Alpha 消耗账本缺失/损坏（fail-closed）',
+      evidence: error.message,
+      remediation: '恢复 training/governance/alpha-ledger.json；禁止重置或重建预算',
     });
   }
 }
@@ -311,6 +388,11 @@ for (const tool of [
   'training/lib/version-lock.mjs', 'training/scripts/version-lock.mjs', 'training/champions/version-lock.json',
   'training/governance/historical-seed-claims.json', 'training/governance/seed-consumption-registry.json',
   'training/champions/revalidation-required.json',
+  'training/evaluator/first-place.mjs', 'training/evaluator/preregistration.mjs',
+  'training/lib/alpha-ledger.mjs', 'training/governance/alpha-ledger.json',
+  'training/tests/first-place.test.mjs',
+  'training/tournament/first-place-challenge.mjs', 'training/tournament/run-first-place-challenge.mjs',
+  'training/scripts/promote-first-place-champion.mjs',
   'web-v1/scripts/build-hash.mjs', 'web-v1/scripts/build-manifest.mjs',
 ]) {
   if (!existsSync(resolve(REPO_ROOT, tool))) {

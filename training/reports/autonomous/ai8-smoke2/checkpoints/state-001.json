@@ -1,0 +1,105 @@
+{
+  "schema": "century-evolution-campaign-v1",
+  "campaignId": "ai8-smoke2",
+  "runFingerprint": "2fa3d79ef5df84df02f6fdb12ea101075f725f3b5a899fecc921a9205e826318",
+  "config": {
+    "version": 1,
+    "configRef": "ai7://campaign/default",
+    "rounds": 2,
+    "playerCounts": [
+      2,
+      3
+    ],
+    "quickSeeds": 2,
+    "deepSeeds": 2,
+    "maxMoves": 400,
+    "deadlineMs": 60000,
+    "retainTopK": 3,
+    "deepConfirmations": 2,
+    "generation": {
+      "count": 2,
+      "seed": 20261025,
+      "targetIds": null
+    },
+    "budget": {
+      "maxCandidates": 4,
+      "maxGames": 40,
+      "maxWallMs": 600000,
+      "maxConcurrent": 1,
+      "maxDeepConfirmations": 4
+    },
+    "diagnosticsPath": "training/reports/diagnostics-latest/analysis.json",
+    "humanAnalyticsFailuresPath": null,
+    "parentCandidateId": null,
+    "continueFromSelected": true
+  },
+  "status": "running",
+  "phase": "running",
+  "currentRoundIndex": 0,
+  "rounds": [
+    {
+      "round": 1,
+      "seedWindows": {
+        "screen": {
+          "windowId": "ai7-screen-w002",
+          "purpose": "screen",
+          "pool": "dev",
+          "base": 1610002000,
+          "count": 1000,
+          "blockStart": 1610000000,
+          "blockEnd": 1620000000,
+          "index": 2
+        },
+        "deep": {
+          "windowId": "ai7-deep-w001",
+          "purpose": "deep",
+          "pool": "dev",
+          "base": 1620001000,
+          "count": 1000,
+          "blockStart": 1620000000,
+          "blockEnd": 1630000000,
+          "index": 1
+        }
+      },
+      "screenSeeds": [
+        1610002000,
+        1610002001
+      ],
+      "deepSeeds": [
+        1620001000,
+        1620001001
+      ],
+      "generated": false,
+      "selected": false,
+      "deepDone": false,
+      "approvalDone": false,
+      "diagnosticsDone": false,
+      "candidates": [],
+      "selectedIds": [],
+      "selectionSummary": null,
+      "diagnostics": null,
+      "rejectedAtGeneration": [],
+      "notes": []
+    }
+  ],
+  "checkpointSeq": 1,
+  "lastEventSeq": 1,
+  "createdAt": "2026-10-25T15:55:40.005Z",
+  "updatedAt": "2026-10-25T15:55:40.017Z",
+  "budgetUsed": {
+    "candidates": 0,
+    "games": 0,
+    "wallMs": 0,
+    "deepConfirmations": 0
+  },
+  "pendingApprovals": [],
+  "guardrails": {
+    "validationPoolConsumed": false,
+    "promotionTriggered": false,
+    "championMutation": "none",
+    "formalChallengeApprovalRequired": false,
+    "machineGateRequired": true
+  },
+  "promotionQueue": [],
+  "promotionOutcomes": []
+}
