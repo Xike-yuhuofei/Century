@@ -16,9 +16,17 @@ import { readAlphaLedger, alphaForChallenge, ALPHA_LEDGER_PATH } from '../lib/al
 import { powerAt, requiredSeeds } from '../evaluator/power.mjs';
 import { readJSON } from '../lib/io.mjs';
 
+/**
+ * 默认挑战资格政策（读取任何正式结果之前固定）：
+ * - 500 种子/人数是 M4 上约 5–6 小时可完成的现实样本；
+ * - 目标效应 20pp、方差上界 1（最保守）、功效 80%：在可持续固定期限家族
+ *   α=5e-4 下功效约 0.88；在当前几何 α=1.22e-5 下仅 0.60，因此当前预算
+ *   会明确 BLOCKED，不会把最后一个 alpha 花在无法检测小效应的挑战上；
+ * - 该政策只决定「是否值得发起挑战」，不改变正式挑战的预注册与判定。
+ */
 const DEFAULT_POLICY = Object.freeze({
-  seedsPerSeat: 250,
-  targetEffect: 0.05,
+  seedsPerSeat: 500,
+  targetEffect: 0.2,
   variance: 1,
   minPower: 0.8,
 });

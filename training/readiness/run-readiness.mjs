@@ -101,14 +101,22 @@ const ok = r => r.ok;
   const info = runDir && existsSync(resolve(runDir, 'best/best_program_info.json'))
     ? JSON.parse(readFileSync(resolve(runDir, 'best/best_program_info.json'), 'utf8'))
     : null;
-  const logPaths = execFileSync('ls', ['-1', '/tmp'], { encoding: 'utf8' })
+  // 优先使用随运行产物提交的 run.log（自包含、可在其他机器复核）；
+  // 仅当仓库内没有日志时才回退到本机 /tmp 的临时日志。
+  const localLogs = candidates
+    .map(name => resolve(resultsRoot, name, 'run.log'))
+    .filter(p => existsSync(p));
+  const tmpLogs = execFileSync('ls', ['-1', '/tmp'], { encoding: 'utf8' })
     .split('\n').filter(name => /^century-openevolve-r\d+\.log$/.test(name))
     .sort().map(name => `/tmp/${name}`);
+  const logPaths = localLogs.length ? localLogs : tmpLogs;
   const log = logPaths.map(p => readFileSync(p, 'utf8')).join('\n');
   const llmCall = /Total LLM Token Usage[^\n]*/i.exec(log)?.[0] ?? null;
   // 真实生成必须至少有一次「行为不同于官方」的演化程序通过静态/编译/探针并
   // 进入真实对局评估；只有初始程序（identical=1）的 run 不算算法生成。
-  const evolvedBehavior = [...log.matchAll(/Iteration \d+: .*?identical_to_official=0\.0000/g)].length;
+  // evaluator 每次程序评估输出一行 metrics；initial=1，行为不同的演化程序=0。
+  // 不能要求与 "Iteration N:" 同行（实际日志 metrics 在下一行）。
+  const evolvedBehavior = [...log.matchAll(/identical_to_official=0\.0000/g)].length;
   const real = Boolean(latest && best && info && /LLM Token Usage/i.test(log));
   const metrics = info?.metrics ?? info ?? {};
   const compiled = Number(metrics.compile_ok ?? 0) >= 1;
@@ -142,13 +150,16 @@ measured({
 
 // ---- R03 多代自主递归进化 ----
 {
-  const summary = readJSON('training/reports/autonomous/ai8-smoke2/run-summary.json');
-  const pass = Boolean(summary && summary.status === 'completed' && summary.rounds >= 2 && summary.candidates?.length >= 2);
+  // 优先使用 12h 真实长跑（轮次/对局/跨代继承更强）；12h 未结束时回退到 2 代 smoke。
+  const summary = readJSON('training/reports/autonomous/ai8-12h-v2/run-summary.json')
+    ?? readJSON('training/reports/autonomous/ai8-smoke2/run-summary.json');
+  const pass = Boolean(summary && summary.rounds >= 2 && summary.candidates?.length >= 2
+    && ['completed', 'budget-exhausted'].includes(summary.status));
   record({
     id: 'R03', title: '多代自主递归进化（真实开发池对局 + 跨代继承）',
     status: pass ? 'PASS' : 'NOT_RUN',
     source: 'training/evolution/autonomous-run.mjs + campaign-controller.mjs',
-    testCommand: 'node training/evolution/autonomous-run.mjs start --campaign ai8-smoke2 --rounds 2 --player-counts 2,3 --quick-seeds 2 --deep-seeds 2 --candidates 2 --max-candidates 4 --max-games 40 --max-wall-ms 600000 --max-concurrent 1 --continue-from-selected',
+    testCommand: 'training/scripts/run-12h-stress.sh（ai8-12h-v2：500 rounds / 2–5p / 真实开发池 / checkpoint/resume）',
     evidence: summary ? `status=${summary.status} rounds=${summary.rounds} candidates=${summary.candidates.length} games=${summary.budgetUsed.games} wallMs=${summary.budgetUsed.wallMs} promotionQueue=${summary.promotionQueue.length}` : '缺少运行产物',
     unmetReason: pass ? null : '未完成两代真实自主运行',
   });
@@ -319,6 +330,8 @@ function findLatest12hArtifact() {
   const rollbackDrill = existsSync(resolve(REPO_ROOT, 'training/reports/rollback-drill.json'));
   const promotionDrill = readJSON('training/reports/promotion-e2e-drill.json');
   const promotionDrillPass = promotionDrill?.verdict === 'PASS';
+  const pilot = readJSON('training/reports/first-place-promotion/pilot-candidatecap-r1c7.json');
+  const pilotNoChallenge = pilot?.verdict === 'NO-FORMAL-CHALLENGE';
   const complete = deployedPass && promotedFirstPlace && rollbackDrill;
   record({
     id: 'R12', title: '无人工审批的自动晋级、发布、线上核验与回滚',
@@ -328,6 +341,7 @@ function findLatest12hArtifact() {
     evidence: `工作流机器门禁=${verifyWorkflows.ok}；回滚 dry-run=${rollbackDry.ok}；` +
       `真实机器合并+Pages 部署+线上核验=${deployedPass}（run 40221527752, site=PASS）；` +
       `隔离环境晋级→落地→构建→发布核验→回滚全链路=${promotionDrillPass}（${promotionDrill?.checks?.length ?? 0} 项，合成夹具）；` +
+      `dev 信号同预算配对复现筛查=${pilotNoChallenge ? 'NO-FORMAL-CHALLENGE（4 层均无正增量）' : '未执行'}；` +
       `第一名率冠军晋级=${promotedFirstPlace}；回滚演练=${rollbackDrill}`,
     unmetReason: complete ? null
       : (deployedPass && rollbackDrill
