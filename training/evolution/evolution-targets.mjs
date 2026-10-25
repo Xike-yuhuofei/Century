@@ -427,6 +427,27 @@ function fallbackResult(targetId, input, reason) {
   });
 }
 
+/** 搜索控制回退：非法值不进入候选，但运行时解析可回退到冻结默认选项。
+ * 生成阶段仍使用 normalizeSearchValues（严格拒绝）；本函数用于运行/审计侧
+ * 的 fail-safe 解析，并显式记录 fallbackHit。 */
+export function resolveSearchTargetValues(targetId, values) {
+  const target = getTarget(targetId);
+  assertCondition(target.kind === 'parameter-vector', `目标 ${targetId} 不是参数向量`);
+  try {
+    return deepFreeze({
+      values: normalizeSearchValues(targetId, values),
+      fallbackHit: false,
+      fallbackReason: null,
+    });
+  } catch (error) {
+    return deepFreeze({
+      values: JSON.parse(JSON.stringify(target.defaultValue)),
+      fallbackHit: true,
+      fallbackReason: error.message.slice(0, 200),
+    });
+  }
+}
+
 /** 目标默认值（模块 = 默认系数；搜索控制 = 冻结默认选项）。 */
 export function defaultTargetValues(targetId) {
   const target = getTarget(targetId);

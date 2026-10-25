@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {
   listTargets, getTarget, normalizeModuleSpec, normalizeSearchValues, assertTargetInput,
   evaluateModule, defaultTargetValues, targetRegression, buildGameCandidatePieces,
-  buildProxyCandidatePieces, jointOptionsForPlayerCount,
+  buildProxyCandidatePieces, jointOptionsForPlayerCount, resolveSearchTargetValues,
 } from '../evolution-targets.mjs';
 
 const RESOURCE_TARGETS = ['acquisitionValue', 'engineValue', 'goalValue', 'keepValue', 'restValue'];
@@ -119,6 +119,22 @@ test('搜索控制 → 分人数适配器选项（不改冠军代码/参数）',
   assert.equal(scope.algorithmStructure.jointOptionsByPlayerCount['4'], undefined);
 
   assert.deepEqual(jointOptionsForPlayerCount('searchBudget', { workUnits: 40 }, 3), { workUnits: 40 });
+});
+
+test('搜索控制回退：非法值 fail-safe 回默认，合法值不回退', () => {
+  const valid = resolveSearchTargetValues('candidateCap', { candidateCap: 5 });
+  assert.equal(valid.fallbackHit, false);
+  assert.equal(valid.values.candidateCap, 5);
+  const invalid = resolveSearchTargetValues('candidateCap', { candidateCap: 99 });
+  assert.equal(invalid.fallbackHit, true);
+  assert.equal(invalid.values.candidateCap, 4);
+  assert.match(invalid.fallbackReason, /越界/);
+  const allocation = resolveSearchTargetValues('searchBudgetAllocation', { 2: 16, 3: 32, 4: 64, 5: 128 });
+  assert.equal(allocation.fallbackHit, false);
+  assert.equal(allocation.values['5'], 128);
+  const badAllocation = resolveSearchTargetValues('searchBudgetAllocation', { 2: 1, 3: 32, 4: 64, 5: 128 });
+  assert.equal(badAllocation.fallbackHit, true);
+  assert.equal(badAllocation.values['2'], 32);
 });
 
 test('声明模块候选结构：plugin-only、非生产接线、适用人数可限定', () => {

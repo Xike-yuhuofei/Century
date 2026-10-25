@@ -391,7 +391,7 @@ npm run evolution:demo:fake
 
 | 套件 | 结果 | 说明 |
 | --- | --- | --- |
-| `npm run evolution:test` | **52/52 pass** | artifact/targets/governance/selection/generator/openevolve/failure-labels/controller/demo |
+| `npm run evolution:test` | **53/53 pass** | artifact/targets/governance/selection/generator/openevolve/failure-labels/controller/demo |
 | `npm test`（既有训练套件） | **153/153 pass** | 运行约 10 分钟，未受影响 |
 | `web-v1 npm run build` | 成功 | 测试依赖的 `dist/js` 已构建；未改源码 |
 | 演示真实对局 | 16 局，0 异常 | `demo-summary.json` |
@@ -399,7 +399,7 @@ npm run evolution:demo:fake
 关键测试文件：
 
 - `training/evolution/tests/artifact.test.mjs`：双哈希、篡改检出、store 覆盖保护、独立加载。
-- `training/evolution/tests/targets.test.mjs`：11 目标、边界、隐藏信息、预算回退、搜索控制映射。
+- `training/evolution/tests/targets.test.mjs`：11 目标、边界、隐藏信息、预算回退、搜索控制映射与 fail-safe 回退。
 - `training/evolution/tests/governance.test.mjs`：dev-only、验证池拒绝、自动批准/晋级拒绝。
 - `training/evolution/tests/selection.test.mjs`：行为距离、去重、多保留、分区、对手轮换。
 - `training/evolution/tests/generator.test.mjs`：确定性、父候选继承、失败隔离。
@@ -417,7 +417,7 @@ npm run evolution:demo:fake
 | 1. Candidate Artifact v1 | `training/evolution/candidate-artifact.mjs`、`artifact-store.mjs` |
 | 2. 多目标进化接口 | `training/evolution/evolution-targets.mjs`、`feature-extractors.mjs`、`openevolve-adapter.mjs` |
 | 3. Campaign Controller 原型 | `training/evolution/campaign-controller.mjs` |
-| 4. 安全与可复现测试 | `training/evolution/tests/`（52 项） |
+| 4. 安全与可复现测试 | `training/evolution/tests/`（53 项） |
 | 5. 轻量闭环演示及日志 | `training/reports/ai7-evolution-demo/` |
 | 6. 报告 | 本文件 |
 | 7. 独立 PR | 分支 `feat/ai7-evolution-pipeline`；PR #46 |
