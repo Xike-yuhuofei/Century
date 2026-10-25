@@ -11,11 +11,11 @@
 
 | 验收项 | 状态 | 证据 |
 |---|---|---|
-| 关键失败模式全部 fail-closed | **完成** | A5 负向测试逐项阻断；`promote.test.mjs` **25** 项、`ai7-trust.test.mjs` **12** 项（含中央登记/历史基线截断/高水位回退/逐种子区间） |
+| 关键失败模式全部 fail-closed | **完成** | A5 负向测试逐项阻断；`promote.test.mjs` **25** 项、`ai7-trust.test.mjs` **13** 项（含中央登记/历史基线截断/高水位回退/逐种子区间/dist 部署产物篡改） |
 | 历史数据不被覆盖 | **完成** | 所有历史账本只读扫描；`historical-seed-claims.json` 保留 long20 未入账区间与不确定状态；未改写任何 `validation-ledger.json` / `champion.json` |
 | 当前正式冠军决策行为不被本任务改变 | **完成** | `champion.json`、`CHAMPION_PARAMETERS` 参数值、`decision.ts` 默认路由均未改；仅把「实际消费的参数」显式注入并纳入身份 |
 | 统一证据/身份校验可复用 | **完成** | `training/lib/seed-governance.mjs`、`training/lib/version-lock.mjs`、`web-v1/scripts/build-hash.mjs` + CLI |
-| 所有相关测试通过 | **完成（本地全量）** | 见 §7（web-v1 220/220、training 175/175）；CI 既有红灯与 main 同源，见 §7.2 |
+| 所有相关测试通过 | **完成（本地全量）** | 见 §7（web-v1 220/220、training 176/176）；CI 既有红灯与 main 同源，见 §7.2 |
 | 验证池零消费 / 未执行正式挑战 | **完成** | `training/governance/seed-consumption-registry.json` entries=0；下一块仍为 `941514652`，下一 challengeIndex=12 |
 
 **最重要的一句话**：本次没有让任何旧证据"变绿"，而是把"缺账本、缺人数、缺源码指纹、序号可伪造、产物可陈旧"的路径全部改成显式拒绝；既有 `joint-js5` 冠军证据仍按治理状态标记为**待重新验证**，没有重新晋级，也没有改写历史 provenance。
@@ -144,6 +144,7 @@ node training/scripts/version-lock.mjs --write --note "有意变更原因"
   "decisionSource": { "sha256": "…", "note": "parameters.ts 生成区替换为固定占位" },
   "championParameters": { "id": "joint-js5", "sha256": "…" },
   "artifact":{ "sha256": "…", "fileCount": 45, "files": [{ "path": "engine.js", "sha256": "…" }] },
+  "distClosure": { "root": "dist", "sha256": "…", "fileCount": 62, "files": [{ "path": "standalone.html", "sha256": "…" }] },
   "decisionArtifact": { "sha256": "…", "note": "运行产物闭包排除 ai/parameters.js" },
   "parametersArtifact": { "path": "ai/parameters.js", "sha256": "…" },
   "toolchain": { "node": "v22…", "esbuild": "…", "typescript": "…" }
@@ -156,6 +157,7 @@ node training/scripts/version-lock.mjs --write --note "有意变更原因"
   - `decisionArtifact`：排除 `ai/parameters.js` 的决策核心产物；
   - `parametersArtifact`：`ai/parameters.js` 单独哈希；
   - `championParameters`：当前 `CHAMPION_PARAMETERS` 的 canonical JSON 哈希。
+- **dist 全量部署闭包**：`dist/**`（页面 `index.html`、`standalone.html`、`styles.css`、全部 `js/**`、`ai-runtime/**`），排除清单自身与 `.DS_Store`。它与运行时 import 闭包分离：前者证明「部署产物 = 本次构建」，后者保留历史 `engineBundleSha256` 口径不被改写。
 - 清单同时记录 Git commit 与 dirty 状态。
 - 规范化身份解决了一个关键闭环问题：晋级会把候选参数写入 `CHAMPION_PARAMETERS`，全量 bundle 指纹必然变化；若只比对全量指纹，晋级证据会在落地瞬间自我失效。现在以「决策核心 + 待发布参数哈希」判定"部署 = 受试"，全量指纹仅作构建快照。
 
@@ -164,7 +166,8 @@ node training/scripts/version-lock.mjs --write --note "有意变更原因"
 `training/lib/paths.mjs#requireBuiltEngine`：
 - 清单缺失 → 抛错；
 - 源码闭包哈希 ≠ 清单 → 抛错（**修改源码但未重新构建 = 拒绝训练/评测/正式挑战**）；
-- 产物闭包哈希 ≠ 清单 → 抛错；
+- 运行时产物闭包哈希 ≠ 清单 → 抛错；
+- **dist 全量部署闭包哈希 ≠ 清单 → 抛错**（手改 `standalone.html` / 样式 / Worker harness 也会被识别）；
 - commit 漂移 / dirty → 记录警告并写入证据（`buildProvenance()` 同时返回产物、源码、构建元数据）。
 
 `evolve-cli`、`challenge-cli`、`simulator/cli`、`benchmark`、`run-formal-challenge-js5`、`apply-champion`、`promote-champion` 均经 `requireBuiltEngine`。
@@ -236,6 +239,7 @@ node training/scripts/promote-champion.mjs --candidate seat5.json \
 | 伪造 challengeIndex | `ai7-trust.test.mjs`、`promote.test.mjs` | `challengeIndex ≠ 累计+1` / 账本覆盖不匹配 → 拒绝 |
 | 重用种子 | `ai7-trust.test.mjs`、`promote.test.mjs` | 区间重叠 / 历史块无匹配序号 → 拒绝 |
 | 修改源码但保留旧 dist | `ai7-trust.test.mjs` | `源码在构建后已变更` → 拒绝 |
+| 手改 dist 部署产物（standalone/样式/harness） | `ai7-trust.test.mjs` | `dist 部署产物与清单不一致` → 拒绝 |
 | 修改活动冠军参数后调用冻结 JS5 | `ai7-trust.test.mjs` | 冻结决策/配置哈希不变；未来参数产生独立配置身份 |
 | 恢复不存在的断点 | `cli.e2e.test.mjs` | `断点不存在` → 拒绝 |
 | 伪造产物指纹 | `promote.test.mjs`、`ai7-trust.test.mjs` | 产物指纹不一致 → 拒绝 |
@@ -259,7 +263,7 @@ node training/scripts/promote-champion.mjs --candidate seat5.json \
 | 晋级账本 | 无 sibling 账本也可晋级 | 无账本 / 账本未累计到最大序号 / 未覆盖全局正式历史 → 拒绝 |
 | 中央登记 | 本地账本可自成证据 | `challengeIndex > 历史累计` 必须匹配中央已完成记录 → 否则拒绝 |
 | 人数覆盖 | 5p 单份证据即可晋级 | 2–5 人缺一不可 |
-| 产物一致性 | `requireBuiltEngine` 只查存在性 | 源码闭包 + 产物闭包 + Git 元数据三方一致 |
+| 产物一致性 | `requireBuiltEngine` 只查存在性 | 源码闭包 + 运行时产物闭包 + dist 全量部署闭包 + Git 元数据一致 |
 | JS5 身份 | 根筛选读活动 `CHAMPION_PARAMETERS` | 显式 `championParameters` + 版本锁 |
 | 构建测试副作用 | `apply-champion` 测试改写真实 `parameters.ts` 并依赖恢复 | 新增 `--target`，测试写临时文件，不再污染仓库源码 |
 
@@ -268,7 +272,7 @@ node training/scripts/promote-champion.mjs --candidate seat5.json \
 | 套件 | 修复前 | 修复后 |
 |---|---|---|
 | `promote.test.mjs` | 21 项（无中央登记 / 完整账本 / 逐种子区间断言） | 25 项（+4 个 fail-closed 负向用例） |
-| `ai7-trust.test.mjs` | 10 项 | 12 项（+历史基线截断 / 高水位回退） |
+| `ai7-trust.test.mjs` | 10 项 | 13 项（+历史基线截断 / 高水位回退 / dist 部署产物篡改） |
 
 ---
 
@@ -279,8 +283,8 @@ node training/scripts/promote-champion.mjs --candidate seat5.json \
 | 套件 | 结果 |
 |---|---|
 | `web-v1` 全量 `npm test`（内含重新构建） | **220/220 pass，0 fail**（本次实测；规范化身份改造后复跑） |
-| `training` 全量 `npm test` | **175/175 pass，0 fail**（最终复跑） |
-| `training` 新增/改写测试 | `promote` **25/25**、`ai7-trust` **12/12**、`cli.e2e` 4/4、`seed-ledger/tournament` 相关全绿 |
+| `training` 全量 `npm test` | **176/176 pass，0 fail**（最终复跑） |
+| `training` 新增/改写测试 | `promote` **25/25**、`ai7-trust` **13/13**、`cli.e2e` 4/4、`seed-ledger/tournament` 相关全绿 |
 | `audit-gate --tier dev` | `dist-freshness` / `version-lock` / `version-identity` / `redteam-regression` 全 PASS |
 | `audit-gate --tier research` | PASS（含 `seed-governance`：15 来源、正式挑战 11 次、PPO 900M 已识别、long20 已占用） |
 | `audit-gate --tier promotion` | 预期 `REQUIRES_APPROVAL`（历史指纹漂移 + 待重新验证），**不伪造 PASS** |
@@ -288,8 +292,8 @@ node training/scripts/promote-champion.mjs --candidate seat5.json \
 ### 7.1 全量实测记录
 
 - `web-v1`：`npm test` → **220 tests / 220 pass / 0 fail**（含 `tsc + esbuild + build-manifest` 与 Playwright/Node 测试）。
-- `training`：`npm test` → **175 tests / 175 pass / 0 fail**（含新增 AI7 信任测试、中央登记强制、历史高水位、逐种子区间校验与全量既有回归）。
-- 针对性复跑：`promote` 25/25、`ai7-trust` 12/12、`cli.e2e` 4/4。
+- `training`：`npm test` → **176 tests / 176 pass / 0 fail**（含新增 AI7 信任测试、中央登记强制、历史高水位、逐种子区间、dist 部署闭包校验与全量既有回归）。
+- 针对性复跑：`promote` 25/25、`ai7-trust` 13/13、`cli.e2e` 4/4。
 - duel JS5 冻结参数注入后针对性复跑：`js5-compare + version-identity + ai7-trust` 全绿（该变更仅训练侧，不触及 `web-v1/src`）。
 - `audit-gate --tier dev`：`dist-freshness`、`version-lock`、`version-identity`、`redteam-regression` 全 PASS。
 - `audit-gate --tier research`：PASS；`seed-governance` 识别 15 个来源、11 次正式挑战、PPO 900M 块、long20 占用区间。
@@ -346,8 +350,9 @@ PR #47 的 CI 有 4 项红/取消；**同样的失败可在 main 的既有运行
 
 - 分支：`fix/ai7-trust-foundation`
 - 基准：`19fa564`
-- 功能提交：`50faccd29456c82a84a15e13d96541707d644356`（中央登记/完整账本/双基线/逐种子区间加强）
-- 文档提交：`8bd9c5d`、`2f7d944`（PR 状态回填）；PR head 以 GitHub 为准
+- 治理功能提交：`50faccd29456c82a84a15e13d96541707d644356`（中央登记/完整账本/双基线/逐种子区间加强）
+- A3 功能提交：本次 `distClosure` 提交（页面/样式/全部 JS/Worker harness 全量部署闭包）
+- PR head 以 GitHub 为准；不自动合并。
 - PR：https://github.com/Xike-yuhuofei/Century/pull/47
 - 合并策略：**不自动合并 main**，等待人工审查。
 - 说明：本任务复用既有独立 PR #47（同一分支、同一基准），未创建重复 PR；本轮通过新提交更新其内容。

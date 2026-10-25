@@ -14,9 +14,10 @@ import { createGame, applyAction } from '../dist/js/engine.js';
 import { chooseAIAction } from '../dist/js/ai.js';
 import { chooseJointAction } from '../dist/js/js/adapter.js';
 import { validateAIParameters } from '../dist/js/ai/parameters.js';
-import { writeFileSync, unlinkSync, readFileSync } from 'node:fs';
+import { writeFileSync, readFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..');
@@ -71,9 +72,11 @@ test('chooseAIAction：无 adapter 字段的冠军路径行为不变（分派零
 
 test('apply-champion.mjs：适配器冠军生成区 --check 往返一致（隔离 target，不改仓库源文件）', () => {
   // AI7-A3 回归教训：旧测试直接改写 web-v1/src/ai/parameters.ts，构建新鲜度校验
-  // 一旦阻断恢复步骤就会把仓库源码留在临时状态。新测试写临时 target。
-  const tmpChampion = resolve(repoRoot, 'web-v1/dist/adapter-champion-fixture.json');
-  const tmpTarget = resolve(repoRoot, 'web-v1/dist/adapter-champion-parameters.ts');
+  // 一旦阻断恢复步骤就会把仓库源码留在临时状态。新测试写仓库外的临时目录，
+  // 且不向 dist 注入任何文件（dist 闭包必须与构建清单逐字节一致）。
+  const tmpDir = mkdtempSync(join(tmpdir(), 'adapter-champion-'));
+  const tmpChampion = join(tmpDir, 'champion.json');
+  const tmpTarget = join(tmpDir, 'parameters.ts');
   writeFileSync(tmpChampion, JSON.stringify({
     id: 'joint-js5',
     parameters: { ...js5Descriptor, acquisitionVariant: 'readiness-efficiency' },
@@ -83,7 +86,6 @@ test('apply-champion.mjs：适配器冠军生成区 --check 往返一致（隔�
     execFileSync('node', ['training/scripts/apply-champion.mjs', '--champion', tmpChampion, '--target', tmpTarget], { cwd: repoRoot, stdio: 'pipe' });
     execFileSync('node', ['training/scripts/apply-champion.mjs', '--champion', tmpChampion, '--target', tmpTarget, '--check'], { cwd: repoRoot, stdio: 'pipe' });
   } finally {
-    unlinkSync(tmpChampion);
-    unlinkSync(tmpTarget);
+    rmSync(tmpDir, { recursive: true, force: true });
   }
 });

@@ -186,12 +186,23 @@ test('A3/A4 规范化身份：仅参数块变化 → 决策核心不变、参数
   assert.notEqual(after.championParameters.sha256, before.championParameters.sha256, '参数身份必须变化');
 });
 
-test('A3 负向：篡改 dist 产物 → 清单指纹不一致', () => {
+test('A3 负向：篡改 dist 运行时产物 → 清单指纹不一致', () => {
   const root = makeBuildFixture();
   writeFileSync(join(root, 'web-v1', 'dist', 'js', 'ai.js'), 'export const tampered = true;\n');
   const result = verifyBuildManifest({ repoRoot: root, webRoot: join(root, 'web-v1') });
   assert.equal(result.ok, false);
   assert.ok(result.errors.some(e => e.includes('产物与清单不一致')), result.errors.join('；'));
+});
+
+test('A3 负向：手改 dist 部署产物（standalone.html）→ dist 闭包不一致', () => {
+  const root = makeBuildFixture();
+  writeFileSync(join(root, 'web-v1', 'dist', 'standalone.html'), '<html>tampered</html>\n');
+  const result = verifyBuildManifest({ repoRoot: root, webRoot: join(root, 'web-v1') });
+  assert.equal(result.ok, false);
+  assert.ok(
+    result.errors.some(e => e.includes('dist 部署产物与清单不一致')),
+    result.errors.join('；'),
+  );
 });
 
 test('A2 冻结身份：不同活动/未来冠军参数不改变冻结 JS5 的决策与配置身份', () => {
@@ -246,10 +257,13 @@ test('A3 溯源：当前构建清单记录 Git commit、dirty 状态与源码/�
   const manifest = JSON.parse(readFileSync(join(root, 'web-v1', BUILD_MANIFEST_PATH), 'utf8'));
   assert.match(manifest.source.sha256, /^[0-9a-f]{64}$/);
   assert.match(manifest.artifact.sha256, /^[0-9a-f]{64}$/);
+  assert.match(manifest.distClosure.sha256, /^[0-9a-f]{64}$/);
   assert.ok('gitCommit' in manifest);
   assert.ok('gitDirty' in manifest);
   assert.ok(manifest.source.files.length > 0);
   assert.ok(manifest.artifact.files.some(f => f.path === 'engine.js'));
+  assert.ok(manifest.distClosure.files.some(f => f.path === 'standalone.html'), 'dist 闭包必须覆盖部署页面');
+  assert.ok(manifest.distClosure.files.some(f => f.path === 'styles.css'), 'dist 闭包必须覆盖样式');
 });
 
 // ---- 夹具 ----
@@ -285,6 +299,9 @@ function makeBuildFixture() {
   writeFileSync(join(web, 'dist/js/ai/parameters.js'), 'export const CHAMPION_PARAMETERS = { id: "test-champion", engineWeight: 1 };\n');
   writeFileSync(join(web, 'dist/js/ai.js'), "import './engine.js';\nimport './ai/parameters.js';\nexport const ai = 1;\n");
   writeFileSync(join(web, 'dist/ai-runtime/harness.html'), '<html></html>\n');
+  writeFileSync(join(web, 'dist/index.html'), '<html>index</html>\n');
+  writeFileSync(join(web, 'dist/standalone.html'), '<html>standalone</html>\n');
+  writeFileSync(join(web, 'dist/styles.css'), 'body {}\n');
   const manifest = createBuildManifest({ repoRoot: root, webRoot: web });
   writeFileSync(join(web, BUILD_MANIFEST_PATH), JSON.stringify(manifest, null, 2));
   return root;

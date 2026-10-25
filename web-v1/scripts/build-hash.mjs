@@ -175,6 +175,28 @@ export function collectArtifactFiles({ distRoot }) {
   }));
 }
 
+/** dist 全量部署闭包：源码构建产生的全部文件（页面、样式、全部 JS、Worker
+ * harness），排除清单自身（自引用）与系统垃圾文件。用于验证「源码改动后
+ * dist 未重建」以及「dist 中任一部署产物被手改」。 */
+export function collectDistFiles({ distRoot }) {
+  const files = [];
+  if (!existsSync(distRoot)) throw new Error(`产物目录缺失：${distRoot}`);
+  const walk = (dir) => {
+    for (const name of readdirSync(dir).sort()) {
+      if (name === '.DS_Store' || name === 'build-manifest.json') continue;
+      const full = resolve(dir, name);
+      const st = statSync(full);
+      if (st.isDirectory()) walk(full);
+      else if (st.isFile()) files.push(full);
+    }
+  };
+  walk(distRoot);
+  return files.sort().map(full => ({
+    absolute: full,
+    path: toPosix(relative(distRoot, full)),
+  }));
+}
+
 /** 产物指纹（旧口径：相对 dist/js 的路径 + 内容）。 */
 export function hashArtifactFiles(files) {
   const hash = createHash('sha256');
@@ -210,14 +232,16 @@ export function captureGitState(repoRoot) {
 
 /** 生成构建清单（build 的最后一步写入 dist/build-manifest.json）。 */
 export function createBuildManifest({ repoRoot, webRoot = resolve(repoRoot, 'web-v1') }) {
-  const distRoot = resolve(webRoot, 'dist', 'js');
+  const jsDistRoot = resolve(webRoot, 'dist', 'js');
+  const distRoot = resolve(webRoot, 'dist');
   const sourceFiles = collectSourceFiles({ repoRoot, webRoot });
   const source = hashFileList(sourceFiles);
   const decisionSource = hashFileList(sourceFiles, { normalizeParameters: true });
   const parametersText = readFileSync(resolve(repoRoot, PARAMETERS_SOURCE_PATH), 'utf8');
   const championParameters = parseChampionParameters(parametersText);
-  const artifactFiles = collectArtifactFiles({ distRoot });
+  const artifactFiles = collectArtifactFiles({ distRoot: jsDistRoot });
   const artifact = hashArtifactFiles(artifactFiles);
+  const distClosure = hashArtifactFiles(collectDistFiles({ distRoot }));
   const parametersArtifactFile = artifactFiles.find(file => file.path === PARAMETERS_ARTIFACT_PATH);
   const decisionArtifact = hashArtifactFiles(artifactFiles.filter(file => file.path !== PARAMETERS_ARTIFACT_PATH));
   const parametersArtifact = parametersArtifactFile
@@ -245,6 +269,17 @@ export function createBuildManifest({ repoRoot, webRoot = resolve(repoRoot, 'web
       sha256: championParametersSha256(championParameters),
     },
     artifact: { root: 'dist/js', algorithm: 'sha256(path\\0content)', sha256: artifact.sha256, fileCount: artifact.files.length, files: artifact.files },
+    // A3：dist 全量部署闭包（页面/样式/全部 JS/Worker harness），
+    // 与运行时 import 闭包 artifact 分开：前者保证「部署产物 = 本次构建」，
+    // 后者保留历史 engineBundleSha256 的逐字节口径。
+    distClosure: {
+      root: 'dist',
+      exclude: ['build-manifest.json', '.DS_Store'],
+      algorithm: 'sha256(path\\0content)',
+      sha256: distClosure.sha256,
+      fileCount: distClosure.files.length,
+      files: distClosure.files,
+    },
     decisionArtifact: {
       algorithm: 'sha256(path\\0content)',
       note: '运行产物闭包排除 ai/parameters.js（参数块单独以 championParameters 身份核验）',
@@ -294,8 +329,10 @@ export function verifyBuildManifest({ repoRoot, webRoot = resolve(repoRoot, 'web
     const decisionSource = hashFileList(sourceFiles, { normalizeParameters: true });
     const parametersText = readFileSync(resolve(repoRoot, PARAMETERS_SOURCE_PATH), 'utf8');
     const championParameters = parseChampionParameters(parametersText);
-    const artifactFiles = collectArtifactFiles({ distRoot: resolve(webRoot, 'dist', 'js') });
+    const jsDistRoot = resolve(webRoot, 'dist', 'js');
+    const artifactFiles = collectArtifactFiles({ distRoot: jsDistRoot });
     const artifact = hashArtifactFiles(artifactFiles);
+    const distClosure = hashArtifactFiles(collectDistFiles({ distRoot: resolve(webRoot, 'dist') }));
     const decisionArtifact = hashArtifactFiles(artifactFiles.filter(file => file.path !== PARAMETERS_ARTIFACT_PATH));
     const parametersArtifactFile = artifactFiles.find(file => file.path === PARAMETERS_ARTIFACT_PATH);
     const parametersArtifact = parametersArtifactFile
@@ -308,6 +345,7 @@ export function verifyBuildManifest({ repoRoot, webRoot = resolve(repoRoot, 'web
       championParametersId: championParameters.id ?? null,
       championParametersSha256: championParametersSha256(championParameters),
       artifactSha256: artifact.sha256,
+      distClosureSha256: distClosure.sha256,
       decisionArtifactSha256: decisionArtifact.sha256,
       parametersArtifactSha256: parametersArtifact.sha256,
       git,
@@ -321,6 +359,12 @@ export function verifyBuildManifest({ repoRoot, webRoot = resolve(repoRoot, 'web
     if (manifest.artifact?.sha256 !== artifact.sha256) {
       errors.push(
         `产物与清单不一致（dist 被改动或未完整构建）：清单 ${String(manifest.artifact?.sha256).slice(0, 12)} ≠ 当前 ${artifact.sha256.slice(0, 12)}`,
+      );
+    }
+    if (manifest.distClosure?.sha256 !== distClosure.sha256) {
+      errors.push(
+        `dist 部署产物与清单不一致（页面/样式/Worker harness 被改动或未完整构建）：` +
+        `清单 ${String(manifest.distClosure?.sha256).slice(0, 12)} ≠ 当前 ${distClosure.sha256.slice(0, 12)}`,
       );
     }
     if (manifest.decisionSource?.sha256 !== decisionSource.sha256) {
