@@ -15,7 +15,7 @@
 
 import { createCandidateFromSpec } from './candidate-generator.mjs';
 import { getTarget, normalizeModuleSpec, normalizeSearchValues } from './evolution-targets.mjs';
-import { assertCondition, canonicalJSON, deepFreeze, SCHEMAS } from './core.mjs';
+import { assertCondition, deepFreeze, sha256Canonical, SCHEMAS } from './core.mjs';
 
 export const OPENEVOLVE_PROPOSAL_SCHEMA = 'century-ai7-openevolve-proposal-v1';
 export const OPENEVOLVE_OUTPUT_CONTRACT = deepFreeze({
@@ -81,7 +81,7 @@ export function parseOpenEvolveProposals(text, { maxCandidates = 8 } = {}) {
     schema: 'century-ai7-openevolve-proposal-parse-v1',
     proposals,
     rejected,
-    proposalDigest: canonicalJSON(proposals).length > 0 ? canonicalJSON(proposals) : null,
+    proposalDigest: proposals.length > 0 ? sha256Canonical(proposals) : null,
   });
 }
 
