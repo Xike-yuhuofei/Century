@@ -1,0 +1,290 @@
+{
+  "schema": "century-statistical-plan-v1",
+  "generatedAt": "2026-10-25T19:17:38.287Z",
+  "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+  "primaryObjective": "firstPlaceWinRate",
+  "primaryMetric": "pairedFirstPlaceRateDelta",
+  "decisionMetric": "weightedPairedFirstPlaceRateDelta",
+  "seatCounts": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "weights": {
+    "2": 0.25,
+    "3": 0.25,
+    "4": 0.25,
+    "5": 0.25
+  },
+  "nonInferiorityMargin": 0.02,
+  "alphaBudget": 0.05,
+  "alphaSpendingPlan": {
+    "mode": "geometric",
+    "createdAt": "2026-10-25T00:00:00.000Z",
+    "authorization": "historical-bootstrap: AI7 P0 migration (challengeIndex 1-11 already consumed)",
+    "authorizedBy": "Xike-yuhuofei",
+    "note": "α_k = 0.05 / 2^k"
+  },
+  "multiplicity": "IUT（主检验 + 各人数非劣效）；跨挑战由 alpha 账本控制",
+  "fixedSample": true,
+  "optionalStopping": false,
+  "minSeedsPerSeatCount": 60,
+  "maxSeedsPerSeatCount": 5000,
+  "powerTarget": 0.8,
+  "varianceAssumptions": {
+    "conservativeUpperBound": 1,
+    "typicalIndependent": 0.5,
+    "note": "Var(delta)=pA(1−pA)+pB(1−pB)−2(p11−pA·pB)；未观测 p11 时使用上界 1"
+  },
+  "currentChallenge": {
+    "challengeIndex": 12,
+    "alpha": 0.00001220703125,
+    "z": 4.220149257790382,
+    "remainingBudget": 0.000024414062499998612,
+    "powerAt250": {
+      "alpha": 0.00001220703125,
+      "power": 0.8,
+      "zAlpha": 4.220149257790382,
+      "rows": [
+        {
+          "variance": 0.5,
+          "effect": 0.02,
+          "requiredSeeds": 32027,
+          "powerAt250": 0.0001,
+          "powerAt500": 0.0002
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.05,
+          "requiredSeeds": 5125,
+          "powerAt250": 0.001,
+          "powerAt500": 0.0042
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.1,
+          "requiredSeeds": 1282,
+          "powerAt250": 0.0236,
+          "powerAt500": 0.1451
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.15,
+          "requiredSeeds": 570,
+          "powerAt250": 0.1932,
+          "powerAt500": 0.6996
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.2,
+          "requiredSeeds": 321,
+          "powerAt250": 0.5995,
+          "powerAt500": 0.9823
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.3,
+          "requiredSeeds": 143,
+          "powerAt250": 0.9936,
+          "powerAt500": 1
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.4,
+          "requiredSeeds": 81,
+          "powerAt250": 1,
+          "powerAt500": 1
+        },
+        {
+          "variance": 1,
+          "effect": 0.02,
+          "requiredSeeds": 64054,
+          "powerAt250": 0,
+          "powerAt500": 0.0001
+        },
+        {
+          "variance": 1,
+          "effect": 0.05,
+          "requiredSeeds": 10249,
+          "powerAt250": 0.0003,
+          "powerAt500": 0.001
+        },
+        {
+          "variance": 1,
+          "effect": 0.1,
+          "requiredSeeds": 2563,
+          "powerAt250": 0.0042,
+          "powerAt500": 0.0236
+        },
+        {
+          "variance": 1,
+          "effect": 0.15,
+          "requiredSeeds": 1139,
+          "powerAt250": 0.0323,
+          "powerAt500": 0.1932
+        },
+        {
+          "variance": 1,
+          "effect": 0.2,
+          "requiredSeeds": 641,
+          "powerAt250": 0.1451,
+          "powerAt500": 0.5995
+        },
+        {
+          "variance": 1,
+          "effect": 0.3,
+          "requiredSeeds": 285,
+          "powerAt250": 0.6996,
+          "powerAt500": 0.9936
+        },
+        {
+          "variance": 1,
+          "effect": 0.4,
+          "requiredSeeds": 161,
+          "powerAt250": 0.9823,
+          "powerAt500": 1
+        }
+      ],
+      "mdeAt250": {
+        "1": 0.3201,
+        "0.5": 0.2264
+      },
+      "mdeAt500": {
+        "1": 0.2264,
+        "0.5": 0.1601
+      }
+    }
+  },
+  "sustainableScenario": {
+    "note": "预注册固定期限 Bonferroni：最多 100 次正式挑战，每次 α=0.05/100；需显式治理授权，不得静默切换",
+    "maxChallenges": 100,
+    "alpha": 0.0005,
+    "z": 3.29052672825886,
+    "powerAt250": {
+      "alpha": 0.0005,
+      "power": 0.8,
+      "zAlpha": 3.29052672825886,
+      "rows": [
+        {
+          "variance": 0.5,
+          "effect": 0.02,
+          "requiredSeeds": 21344,
+          "powerAt250": 0.0022,
+          "powerAt500": 0.0039
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.05,
+          "requiredSeeds": 3415,
+          "powerAt250": 0.0149,
+          "powerAt500": 0.0437
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.1,
+          "requiredSeeds": 854,
+          "powerAt250": 0.1458,
+          "powerAt500": 0.449
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.15,
+          "requiredSeeds": 380,
+          "powerAt250": 0.5253,
+          "powerAt500": 0.9269
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.2,
+          "requiredSeeds": 214,
+          "powerAt250": 0.8813,
+          "powerAt500": 0.9988
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.3,
+          "requiredSeeds": 95,
+          "powerAt250": 0.9997,
+          "powerAt500": 1
+        },
+        {
+          "variance": 0.5,
+          "effect": 0.4,
+          "requiredSeeds": 54,
+          "powerAt250": 1,
+          "powerAt500": 1
+        },
+        {
+          "variance": 1,
+          "effect": 0.02,
+          "requiredSeeds": 42687,
+          "powerAt250": 0.0015,
+          "powerAt500": 0.0022
+        },
+        {
+          "variance": 1,
+          "effect": 0.05,
+          "requiredSeeds": 6830,
+          "powerAt250": 0.0062,
+          "powerAt500": 0.0149
+        },
+        {
+          "variance": 1,
+          "effect": 0.1,
+          "requiredSeeds": 1708,
+          "powerAt250": 0.0437,
+          "powerAt500": 0.1458
+        },
+        {
+          "variance": 1,
+          "effect": 0.15,
+          "requiredSeeds": 759,
+          "powerAt250": 0.1791,
+          "powerAt500": 0.5253
+        },
+        {
+          "variance": 1,
+          "effect": 0.2,
+          "requiredSeeds": 427,
+          "powerAt250": 0.449,
+          "powerAt500": 0.8813
+        },
+        {
+          "variance": 1,
+          "effect": 0.3,
+          "requiredSeeds": 190,
+          "powerAt250": 0.9269,
+          "powerAt500": 0.9997
+        },
+        {
+          "variance": 1,
+          "effect": 0.4,
+          "requiredSeeds": 107,
+          "powerAt250": 0.9988,
+          "powerAt500": 1
+        }
+      ],
+      "mdeAt250": {
+        "1": 0.2613,
+        "0.5": 0.1848
+      },
+      "mdeAt500": {
+        "1": 0.1848,
+        "0.5": 0.1307
+      }
+    }
+  },
+  "decisionRule": [
+    "主检验：2–5 人加权第一名率增量单侧下界 > 0",
+    "非劣效：每个人数单侧下界 ≥ −0.02",
+    "跨人数种子不得复用；固定样本；禁止中途显著提前晋级",
+    "任一条件不通过 → 保留冠军，不晋级"
+  ],
+  "freezeDiscipline": [
+    "本文件在读取正式验证结果之前写出；--check 只允许完全一致",
+    "不得根据正式结果放宽 margin / alpha / 权重 / 最小样本",
+    "统计预算耗尽时明确停止；新家族必须由 initializeAlphaFamily 显式授权并留痕"
+  ],
+  "frozenHash": "bbdcd32ae6e0e59c34967faad1ae05127583b91aecdffd07b9d237fe75e4e66c"
+}
