@@ -79,8 +79,13 @@ if (evidence.planHash !== plan.planHash) {
 }
 if (evidence.planId !== plan.planId) throw new Error('证据 planId 与预注册计划不一致');
 if (evidence.challengeIndex !== plan.challengeIndex) throw new Error('证据 challengeIndex 与预注册计划不一致');
+const planWorkUnits = plan.searchWorkUnits ?? null;
+if (evidence.searchWorkUnits !== planWorkUnits) {
+  throw new Error(`证据 searchWorkUnits ${String(evidence.searchWorkUnits)} ≠ 预注册 ${String(planWorkUnits)}——搜索预算不得在读取结果后改变`);
+}
 const recomputedEvidenceHash = sha256Canonical({
   planHash: plan.planHash,
+  searchWorkUnits: planWorkUnits,
   runs: evidence.runs.map(r => ({ seatCount: r.seatCount, pairs: r.pairs })),
   decision: evidence.decision,
 });
@@ -264,6 +269,7 @@ const record = {
       alpha,
       alphaBudget: plan.alphaBudget,
       nonInferiorityMargin: plan.nonInferiorityMargin,
+      searchWorkUnits: planWorkUnits,
       weights: plan.weights,
       seatCounts: plan.seatCounts,
       seatWindows: plan.seatWindows,

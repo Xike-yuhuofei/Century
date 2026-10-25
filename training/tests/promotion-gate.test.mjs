@@ -100,6 +100,7 @@ function makeFixture(dir) {
   const runs = strata.map(s => ({ seatCount: s.seatCount, seatOffset: 0, pairs: s.pairs }));
   const evidenceHash = sha256Canonical({
     planHash: plan.planHash,
+    searchWorkUnits: plan.searchWorkUnits,
     runs: runs.map(r => ({ seatCount: r.seatCount, pairs: r.pairs })),
     decision,
   });
@@ -110,6 +111,7 @@ function makeFixture(dir) {
     challengeIndex: CHALLENGE_INDEX,
     alpha: ALPHA,
     alphaBudget: 0.05,
+    searchWorkUnits: plan.searchWorkUnits,
     candidateId: candidate.id,
     championId: champion.parameters.id,
     opponents: plan.opponents,
@@ -220,6 +222,7 @@ test('机器门禁反向：相关统计不达标 → 拒绝晋级', () => {
     // 该用例只验证 fail-closed：即使伪造 promote，独立重算也必须拒绝。
     doc.evidenceHash = sha256Canonical({
       planHash: doc.planHash,
+      searchWorkUnits: doc.searchWorkUnits,
       runs: doc.runs.map(r => ({ seatCount: r.seatCount, pairs: r.pairs })),
       decision: doc.decision,
     });

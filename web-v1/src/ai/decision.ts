@@ -22,6 +22,10 @@ export type AIOptions = {
   profile?: Profile;
   /** 结构变体：beam-lineage（冠军基线）/ beam-adaptive / beam-rollout / beam-contest。 */
   structure?: AIStructure | string;
+  /** 固定联合搜索工作量（仅 champion-guided 适配器生效）：固定 workUnits 时
+   * 决策完全由显式种子与固定批次数决定，墙钟仅用于资源保护；缺省保持冠军
+   * 冻结行为（budgetMs 墙钟）。研究配对必须显式传入以消除墙钟抖动。 */
+  workUnits?: number;
 };
 
 export type AIDecision = {
@@ -41,6 +45,7 @@ export function chooseAIAction(game: Game, options?: AIOptions): AIDecision {
     if (!p?.isAI) throw new Error('当前行动者不是 AI');
     const joint = chooseJointAction(game, {
       version: params.jointVersion ?? 'joint-js5',
+      ...(options?.workUnits !== undefined ? { workUnits: options.workUnits } : {}),
       ...(params.budgetMs !== undefined ? { budgetMs: params.budgetMs } : {}),
       // AI7-A2 / AI6-P0：运行时实际消费的冠军基座参数必须显式注入。
       // 冠军本体传入自身（行为逐位不变）；冻结描述符传入归档参数；

@@ -48,6 +48,14 @@ const seedListFile = arg('seed-list');           // 可选：显式种子列表�
 const outPath = arg('out');
 const maxMoves = Number(arg('max-moves', String(DEFAULT_MAX_MOVES)));
 const deadlineMs = Number(arg('deadline-ms', String(DEFAULT_DEADLINE_MS)));
+// P3 确定性：固定 workUnits 让同一 (seed, 席位, 版本) 的决策逐位可复现；
+// 不给定时保持官方冠军冻结行为（budgetMs 墙钟），仅作历史复现/诊断。
+const workUnitsArg = arg('work-units');
+const workUnits = workUnitsArg === null ? null : Number(workUnitsArg);
+if (workUnits !== null && (!Number.isSafeInteger(workUnits) || workUnits < 1 || workUnits > 4096)) {
+  console.error(`--work-units 必须为 1–4096 的整数，实际：${String(workUnitsArg)}`);
+  process.exit(2);
+}
 // P0 迁移：研究 fitness 的主指标也改为「焦点席位配对第一名率增量」。
 // score-advantage 保留为历史复现/诊断口径。
 const primary = arg('primary', 'score-advantage');
@@ -116,6 +124,7 @@ async function playOne(aiModules, candSeat, seed) {
       const response = ai.chooseAIAction(game, {
         parameters: championParams,
         profile: seatProfile(seat),
+        ...(workUnits !== null ? { workUnits } : {}),
       });
       const decisionMs = performance.now() - decisionStart;
       const stats = seats[seat];
@@ -270,7 +279,7 @@ async function main() {
       seeds: seedListFile ? `file:${seedListFile}` : `${seedBase}..${seedBase + seedCount - 1}`,
       seedBlock: AI5_BLOCK,
       uniqueSeedCount: seeds.length,
-      maxMoves, deadlineMs,
+      maxMoves, deadlineMs, workUnits,
       championId: champion.id, championParameters: championParams,
     },
     modules: { engine: 'web-v1/dist/js/engine.js (official)', championAI: 'web-v1/dist/js/ai.js (official)', candidateAI: candidateOfficial ? 'official' : resolve(candidatePath) },

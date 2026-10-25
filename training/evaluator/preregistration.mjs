@@ -28,6 +28,9 @@ export const PREREGISTRATION_LOCK_SCHEMA = 'century-preregistration-lock-v1';
 
 export const REQUIRED_SEAT_COUNTS = Object.freeze([2, 3, 4, 5]);
 export const DEFAULT_WEIGHTS = Object.freeze({ '2': 0.25, '3': 0.25, '4': 0.25, '5': 0.25 });
+/** 正式挑战的固定搜索工作量（P3）：同一决策完全由显式种子与固定批次数决定，
+ * 墙钟只用于资源保护，不参与展开顺序或行动选择。 */
+export const DEFAULT_SEARCH_WORK_UNITS = 64;
 export const DEFAULT_STOPPING_RULE = Object.freeze({
   kind: 'fixed-sample',
   optionalStopping: false,
@@ -92,6 +95,7 @@ function normalizeWeights(weights) {
  * @param {number} options.challengeIndex
  * @param {number} [options.nonInferiorityMargin]
  * @param {number} [options.minSeedsPerSeatCount]
+ * @param {number} [options.searchWorkUnits] 固定联合搜索工作量（1–4096）
  * @param {object} [options.engine] {engineBundleSha256, sourceClosureSha256, codeCommit}
  * @param {string} [options.createdAt]
  */
@@ -107,6 +111,7 @@ export function createPreregistration({
   nonInferiorityMargin = 0.02,
   minSeedsPerSeatCount = 60,
   maxSeedsPerSeatCount = null,
+  searchWorkUnits = DEFAULT_SEARCH_WORK_UNITS,
   engine = null,
   createdAt = null,
 }) {
@@ -119,6 +124,8 @@ export function createPreregistration({
   assertCondition(Number.isFinite(alphaBudget) && alphaBudget > 0 && alphaBudget < 1, 'alphaBudget 必须在 (0,1)');
   assertCondition(Number.isFinite(nonInferiorityMargin) && nonInferiorityMargin >= 0 && nonInferiorityMargin < 1,
     'nonInferiorityMargin 必须在 [0,1)');
+  assertCondition(Number.isSafeInteger(searchWorkUnits) && searchWorkUnits >= 1 && searchWorkUnits <= 4096,
+    `searchWorkUnits 必须为 1–4096 的整数，实际：${String(searchWorkUnits)}`);
 
   assertHex(candidate.parametersSha256, 'candidate.parametersSha256');
   assertHex(candidate.sourceHash, 'candidate.sourceHash');
@@ -177,6 +184,7 @@ export function createPreregistration({
     alphaBudget,
     challengeIndex,
     nonInferiorityMargin,
+    searchWorkUnits,
     stoppingRule: { ...DEFAULT_STOPPING_RULE },
     multiplicity: {
       withinChallenge: 'IUT（主检验 + 各人数非劣效，各自在 alpha 水平，全部通过才晋级）',
