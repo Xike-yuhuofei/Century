@@ -66,6 +66,18 @@ export const AI6_JOINT_PERF_SUBBLOCK = [1_350_000_000, 1_351_000_000];
 export const AI6_JS5_TUNE2_SUBBLOCK = [1_351_000_000, 1_352_000_000];
 export const AI6_JS5_CONFIRM_SUBBLOCK = [1_360_000_000, 1_370_000_000];
 
+/** JS5 Goal 证据优化（2026-10-25，codex/js5-evidence-optimization）专用块。
+ * 与既有调参/确认/正式验证池物理隔离；只用于本任务的机制消融与独立确认，
+ * 不写正式验证账本。子块（左右闭开）：
+ * - [1.370e9, 1.372e9)  开发/先导（机制消融与样本量估计，永不用于结论）；
+ * - [1.380e9, 1.390e9)  独立确认（冻结主候选后一次性使用，不得回炉调参）。
+ * [1.372e9,1.380e9) 与 [1.390e9,1.400e9) 继续预留。 */
+export const AI6_JS5_GOAL_BLOCK = [1_370_000_000, 1_400_000_000];
+export const AI6_JS5_GOAL_DEV_SUBBLOCK = [1_370_000_000, 1_372_000_000];
+export const AI6_JS5_GOAL_CONFIRM_SUBBLOCK = [1_380_000_000, 1_390_000_000];
+/** 性能验证局面生成块（只用于延迟/非法率，不进入任何胜率结论）。 */
+export const AI6_JS5_GOAL_PERF_SUBBLOCK = [1_372_000_000, 1_374_000_000];
+
 /** AI6 对抗性联赛（overnight-adversarial-league，research/overnight-adversarial-league）
  * 评测专用块：独立于 JS6 搜索研发的高水平对手池 / 自动联赛 / 防过拟合双轴评估。
  * 与全部既有块物理隔离；本阶段不消费正式验证池（[900M,1.06e9)）。

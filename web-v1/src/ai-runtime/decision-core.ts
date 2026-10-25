@@ -30,8 +30,9 @@ import {
   createJointPlanner,
 } from '../js/index.js';
 import { JOINT_VERSIONS } from '../js/types.js';
+import { mergeJointOptions, resolveJointConfig, jointConfigHash } from '../js/config.js';
 import type {
-  DecisionBudget, DecisionDiagnostics, DecisionRequestPayload, EvaluationSummary,
+  DecisionBudget, DecisionDiagnostics, DecisionRequestPayload, DecisionSearchOptions, EvaluationSummary,
 } from './protocol.js';
 
 /** 决策核心内部异常：携带协议错误分类。 */
@@ -56,6 +57,47 @@ function plannerFor(versionId: string) {
     planners.set(versionId, planner);
   }
   return planner;
+}
+
+const SEARCH_OPTION_KEYS = new Set([
+  'gateMode', 'contestThreshold', 'candidateCap', 'overrideMargin', 'claimRanking', 'nearTerminalCandidate', 'screenGoalScope', 'batchAdmission',
+]);
+
+/** 搜索选项白名单校验（未知字段显式拒绝；数值范围与 champion-guided 缺省纪律一致）。 */
+function validateSearchOptions(search: unknown): DecisionSearchOptions {
+  if (search === undefined) return {};
+  if (!search || typeof search !== 'object' || Array.isArray(search)) {
+    throw new DecisionCoreError('protocol', 'search 选项必须是对象');
+  }
+  for (const key of Object.keys(search)) {
+    if (!SEARCH_OPTION_KEYS.has(key)) throw new DecisionCoreError('protocol', `未知搜索选项：${key}`);
+  }
+  const s = search as DecisionSearchOptions;
+  if (s.gateMode !== undefined && !['auto', 'always', 'never', 'rerank'].includes(s.gateMode)) {
+    throw new DecisionCoreError('protocol', `gateMode 非法：${String(s.gateMode)}`);
+  }
+  if (s.claimRanking !== undefined && !['enumeration', 'prior'].includes(s.claimRanking)) {
+    throw new DecisionCoreError('protocol', `claimRanking 非法：${String(s.claimRanking)}`);
+  }
+  if (s.nearTerminalCandidate !== undefined && !['off', 'replace', 'add'].includes(s.nearTerminalCandidate)) {
+    throw new DecisionCoreError('protocol', `nearTerminalCandidate 非法：${String(s.nearTerminalCandidate)}`);
+  }
+  if (s.screenGoalScope !== undefined && !['all', 'preferred'].includes(s.screenGoalScope)) {
+    throw new DecisionCoreError('protocol', `screenGoalScope 非法：${String(s.screenGoalScope)}`);
+  }
+  if (s.batchAdmission !== undefined && !['legacy', 'balanced'].includes(s.batchAdmission)) {
+    throw new DecisionCoreError('protocol', `batchAdmission 非法：${String(s.batchAdmission)}`);
+  }
+  if (s.contestThreshold !== undefined && !(Number.isFinite(s.contestThreshold) && s.contestThreshold >= 0 && s.contestThreshold <= 1)) {
+    throw new DecisionCoreError('protocol', 'contestThreshold 必须在 [0,1]');
+  }
+  if (s.candidateCap !== undefined && !(Number.isSafeInteger(s.candidateCap) && s.candidateCap >= 1 && s.candidateCap <= 8)) {
+    throw new DecisionCoreError('protocol', 'candidateCap 必须为 1..8 的整数');
+  }
+  if (s.overrideMargin !== undefined && !(Number.isFinite(s.overrideMargin) && s.overrideMargin >= 0 && s.overrideMargin <= 1)) {
+    throw new DecisionCoreError('protocol', 'overrideMargin 必须在 [0,1]');
+  }
+  return s;
 }
 
 /** 冠军溢出弃置口径（与 js/adapter.ts / ai/decision.ts 同一 trimStock 语义，
@@ -95,6 +137,7 @@ export function decideFromObservation(payload: DecisionRequestPayload): {
   let action: Action;
   let reason: string;
   let gated = false;
+  let config: DecisionDiagnostics['config'];
   let stats: DecisionDiagnostics['stats'];
   let evaluations: { action: Action; prior: number; trials: number; mean: number }[] = [];
 
@@ -109,15 +152,22 @@ export function decideFromObservation(payload: DecisionRequestPayload): {
     };
   } else {
     const planner = plannerFor(ai.jointVersion);
-    const options = {
+    const search = validateSearchOptions(payload.search);
+    const baseOptions = {
       ...(budget.mode === 'fixed-work'
         ? { workUnits: budget.workUnits }
         : { budgetMs: budget.budgetMs }),
       simSeed,
       ...(payload.horizon !== undefined ? { horizon: payload.horizon } : {}),
       ...(payload.worlds !== undefined ? { worlds: payload.worlds } : {}),
+      ...search,
       profileName: ai.profileName,
     };
+    // 版本预设（如 joint-js5-opt 的 claimRanking=prior）与调用方覆盖合并；
+    // 有效配置进入诊断，Worker 不再与正式评测配置脱节。
+    const options = mergeJointOptions(ai.jointVersion, baseOptions);
+    const resolved = resolveJointConfig(ai.jointVersion, options, ai.profileName);
+    config = { ...resolved, hash: jointConfigHash(resolved) };
     const decision = version.kind === 'champion-guided'
       ? (planner as ReturnType<typeof createChampionGuidedPlanner>).decide(observation, options)
       : (planner as ReturnType<typeof createJointPlanner>).decide(observation, options);
@@ -170,6 +220,7 @@ export function decideFromObservation(payload: DecisionRequestPayload): {
       ai,
       budget,
       simSeed,
+      ...(config ? { config } : {}),
       elapsedMs,
       reason: advisoryFallback ? `${reason}` : reason,
       action,

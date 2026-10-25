@@ -20,6 +20,67 @@ const avg = a => a.length ? round2(sum(a) / a.length) : null;
 
 const ACTION_TYPES = ['play', 'acquire', 'claim', 'rest', 'discard'];
 
+/** v2 口径迁移说明（旧 analytics 产物保留为 v1 研究结果，不重写历史）：
+ * - deadCards：v1 = 终局手牌中的非起始卡（把"曾打出后休息收回"误判为未使用）；
+ *   v2 = 取后从未打出（按 acquire/play 时间线）。
+ * - discards/crystalsDiscarded：v1 = 颜色编号求和（黄色编号 0 计 0 颗）；
+ *   v2 = colors.length（每颗水晶恰好一项）。
+ * - missedClaims：v2 区分 claimedLaterBySelf/claimedLaterByOther，并给出
+ *   同一 (席位,目标) 的首次流失标记（跨回合重复不再作为独立流失）。
+ * - contestedLosses：v2 明确为"他人认领时我也付得起"的机会集合（不是 199
+ *   次实际被抢），附唯一 claimEventId 以便下游按事件去重。
+ * - maxEngineSize：v2 = max(hand.length + played.length)；v1 = played 区最大值。
+ * - rest 间隔：v2 用个人回合差（before.turns+1）；v1 首次用个人回合、后续用全局手数。
+ * - lateAcquires：v2 用"触发手之后"（turn 索引）；v1 用 round > 触发轮（规则下恒 0 亦可）。
+ */
+export const METRIC_SCHEMA_VERSION = 'century-human-analytics-metrics-v2';
+
+/** 弃置颗数 = 颜色数组长度（每颗水晶一个元素，绝不是颜色编号之和）。 */
+export function discardedCrystalCount(colors) {
+  return Array.isArray(colors) ? colors.length : 0;
+}
+
+/** 从未打出的购卡：按 (席位) 的 acquire/play 时间线计算。
+ * 输入 events: [{ type:'acquire', cardId }, { type:'play', cardId }]（按时间升序）。
+ * 输出 { deadCards, acquiredNeverPlayed:[{cardId, acquireTurn?}], playedCardIds }。
+ * 起始卡不计入（starters 由调用方判定）；同 id 多次获取以任一被打出为准。 */
+export function unusedAcquisitions(events, starterIds = new Set()) {
+  const acquired = [];
+  const played = new Set();
+  for (const event of events) {
+    if (event.type === 'acquire' && event.cardId && !starterIds.has(event.cardId)) {
+      acquired.push({ cardId: event.cardId, turn: event.turn ?? null });
+    } else if (event.type === 'play' && event.cardId) {
+      played.add(event.cardId);
+    }
+  }
+  const dead = acquired.filter(a => !played.has(a.cardId));
+  return {
+    deadCards: [...new Set(dead.map(a => a.cardId))],
+    acquiredNeverPlayed: dead,
+    playedCardIds: [...played],
+  };
+}
+
+/** 错过认领的语义修正：区分本人稍后认领/他人认领，并把同一 (席位,目标)
+ * 的跨回合重复标注为 repeat（不再当作独立目标流失）。 */
+export function annotateMissedClaims(missedClaims) {
+  const firstByTarget = new Map();
+  return missedClaims.map((m, index) => {
+    const key = `${m.bySeat}|${m.golemId}`;
+    const first = firstByTarget.get(key);
+    if (first === undefined) firstByTarget.set(key, index);
+    return {
+      ...m,
+      claimedLaterBySelf: m.claimedLaterBy != null && m.claimedLaterBy === m.bySeat,
+      claimedLaterByOther: m.claimedLaterBy != null && m.claimedLaterBy !== m.bySeat,
+      firstLossOfTarget: first === undefined,
+      repeatOfEarlierMiss: first !== undefined,
+      lossEventId: `${m.bySeat}|${m.golemId}|${first ?? index}`,
+    };
+  });
+}
+
 function coinAward(marketCoins, index) {
   // 与正式引擎 applyClaim 的发币规则一致（算法计算，依据公开钱币池）
   if (index === 0 && marketCoins.copper > 0) return 'copper';
@@ -48,6 +109,8 @@ function playerProfile(seat, ctx) {
   const stockSeries = [];      // [turnNumber, 黄,绿,蓝,粉]（自己每手行动后）
   let overflowCount = 0;
   const playRoundSet = new Set(); // 有打出行动的轮次（引擎建设持续轮数）
+  const seatEvents = []; // acquire/play 时间线（dead card 口径）
+  const playerTurnOf = entry => entry.turn.before.turns + 1; // 个人回合（1-based）
 
   for (const entry of own) {
     const t = entry.turn;
@@ -55,10 +118,14 @@ function playerProfile(seat, ctx) {
     for (const a of t.actions) actionsByType[a.type]++;
     if (t.actions.some(a => a.type === 'play')) playRoundSet.add(t.round);
     for (const a of t.actions) {
+      if (a.type === 'play' || a.type === 'acquire') {
+        seatEvents.push({ type: a.type, cardId: t.cardId, turn: t.turnNumber, index: entry.index });
+      }
       if (a.type === 'acquire') {
         const marketCard = timeline.merchantMarket[a.index];
         acquires.push({
-          turn: t.turnNumber, round: t.round, cardId: t.cardId,
+          turn: t.turnNumber, round: t.round, playerTurn: playerTurnOf(entry), index: entry.index,
+          cardId: t.cardId,
           payCount: a.payment.length, // 位置深度 = 支付颗数（引擎规则）
           paymentByColor: a.payment.reduce((acc, c) => (acc[c]++, acc), [0, 0, 0, 0]),
           bonusRetrieved: crystalTotal(marketCard?.bonus ?? [0, 0, 0, 0]), // 卡上累积奖励（公开可见）
@@ -66,25 +133,29 @@ function playerProfile(seat, ctx) {
       } else if (a.type === 'claim') {
         const golem = data.GOLEM_BY_ID[t.cardId];
         claims.push({
-          turn: t.turnNumber, round: t.round, golemId: t.cardId,
+          turn: t.turnNumber, round: t.round, playerTurn: playerTurnOf(entry), golemId: t.cardId,
           points: golem.points, index: a.index, cost: golem.cost,
           coin: coinAward(timeline.coins, a.index), // 发币依公开钱币池按引擎规则推导
         });
       } else if (a.type === 'rest') {
-        rests.push({ turn: t.turnNumber, round: t.round, playedSize: t.before.played.length });
+        rests.push({ turn: t.turnNumber, round: t.round, playerTurn: playerTurnOf(entry), playedSize: t.before.played.length });
       } else if (a.type === 'discard') {
-        const lost = crystalTotal(a.colors);
+        const lost = discardedCrystalCount(a.colors); // v2：颜色编号不能求和当颗数
         overflowCount++;
         discards.push({ turn: t.turnNumber, colors: a.colors, count: lost });
       }
     }
     capacitySeries.push([t.turnNumber, crystalTotal(t.after.stock)]);
-    playedSizeSeries.push([t.turnNumber, t.after.played.length]);
+    playedSizeSeries.push([t.turnNumber, t.after.hand.length + t.after.played.length]); // v2：拥有卡总数
     stockSeries.push([t.turnNumber, ...t.after.stock]);
   }
 
   const finalHand = lastAfter.hand ?? [];
-  const deadCards = finalHand.filter(id => !data.MERCHANT_BY_ID[id]?.starter); // 结束时仍在手上的非起始卡（取了没用上）
+  const starterIds = ctx.starterIds;
+  // v2 dead card：取后从未打出（曾打出后休息收回的卡不算）
+  const unused = unusedAcquisitions(seatEvents, starterIds);
+  const deadCards = unused.deadCards;
+  const usedThenRecovered = finalHand.filter(id => !data.MERCHANT_BY_ID[id]?.starter && !deadCards.includes(id));
   const golemPoints = sum(claims.map(c => c.points));
   const copper = lastAfter.copper ?? 0;
   const silver = lastAfter.silver ?? 0;
@@ -92,13 +163,13 @@ function playerProfile(seat, ctx) {
 
   // —— 算法计算 ——
   const ownTurnNumbers = own.map(e => e.turn.turnNumber);
-  const restTurns = rests.map(r => r.turn);
-  const restGaps = restTurns.map((t, i) => i === 0 ? (ownTurnNumbers.indexOf(t) + 1) : t - restTurns[i - 1]);
-  const acquireTurns = acquires.map(a => a.turn);
+  const restTurns = rests.map(r => r.playerTurn);
+  const restGaps = restTurns.map((t, i) => i === 0 ? t : t - restTurns[i - 1]); // v2：个人回合差
+  const acquireTurns = acquires.map(a => a.playerTurn);
   const acquireGaps = acquireTurns.slice(1).map((t, i) => t - acquireTurns[i]);
   const capacityUsed = capacitySeries.map(x => x[1]);
-  const lateRoundStart = meta.triggerRound ?? Infinity;
-  const lateAcquires = acquires.filter(a => meta.triggerPlayer != null && a.round > lateRoundStart).length;
+  // v2：触发手之后（规则保证不会再有下一轮，不能用 round 比较）
+  const lateAcquires = ctx.meta.triggerIndex == null ? 0 : acquires.filter(a => a.index > ctx.meta.triggerIndex).length;
   const claimCostTotal = claims.reduce((s, c) => s + sum(c.cost), 0);
   const claimTurnSet = new Set(claims.map(c => c.turn));
   const affordableButNotClaimed = own.filter(e => {
@@ -137,6 +208,8 @@ function playerProfile(seat, ctx) {
         finalStock: lastAfter.stock ?? null,
         finalHandSize: finalHand.length,
         deadCards,
+        deadCardDetails: unused.acquiredNeverPlayed,
+        usedThenRecovered, // 终局手牌中曾打出、休息后收回的非起始卡（v1 曾误计为死卡）
         finalCopper: copper,
         finalSilver: silver,
         firstTurn: ownTurnNumbers[0] ?? null,
@@ -145,7 +218,7 @@ function playerProfile(seat, ctx) {
           turn: own[own.length - 1].turn.turnNumber,
           round: own[own.length - 1].turn.round,
           actions: own[own.length - 1].turn.actions.map(a =>
-            `${a.type}${a.cardId ? ` ${a.cardId}` : ''}${a.type === 'discard' ? `×${crystalTotal(a.colors)}` : ''}`),
+            `${a.type}${a.cardId ? ` ${a.cardId}` : ''}${a.type === 'discard' ? `×${discardedCrystalCount(a.colors)}` : ''}`),
         } : null,
       },
       computed: {
@@ -231,6 +304,9 @@ export async function computeGameMetrics(imported) {
           contestedLosses.push({
             turn: t.turnNumber, round: t.round, golemId, points: data.GOLEM_BY_ID[golemId].points,
             bySeat: seat, claimedBySeat: t.playerId,
+            // v2：这是"他人认领时我也付得起"的机会集合；不等于我实际锁定了该目标。
+            opportunityOnly: true,
+            claimEventId: `${t.turnNumber}:${t.playerId}:${golemId}`,
           });
         }
       }
@@ -262,17 +338,36 @@ export async function computeGameMetrics(imported) {
       });
     }
   }
+  const annotatedMissedClaims = annotateMissedClaims(missedClaims);
 
   const meta = imported.meta;
-  const triggerTurn = turns.find(t => t.triggersEnd);
+  const triggerIndex = turns.findIndex(t => t.triggersEnd);
+  const triggerTurn = triggerIndex >= 0 ? turns[triggerIndex] : undefined;
+  // 触发时点公开分数（每个席位取触发手及之前最后一次行动后的状态；不拿终态回填）。
+  const triggerScores = triggerIndex >= 0 ? (() => {
+    const latest = Array.from({ length: meta.seatCount }, () => null);
+    for (let i = 0; i <= triggerIndex; i++) latest[turns[i].playerId] = turns[i].after;
+    return latest.map((p, seat) => p ? { seat, score: engine.score(p), copper: p.copper ?? 0, silver: p.silver ?? 0 } : { seat, score: null, copper: null, silver: null });
+  })() : null;
+  const triggerRanking = triggerScores
+    ? [...triggerScores].filter(x => x.score != null).sort((a, b) => b.score - a.score || b.seat - a.seat)
+    : null;
+  const triggerRankBySeat = triggerRanking
+    ? Object.fromEntries(triggerRanking.map((x, i) => [x.seat, i + 1]))
+    : null;
   const fullMeta = {
     ...meta,
     triggerTurn: triggerTurn?.turnNumber ?? null,
     triggerRound: triggerTurn?.round ?? null,
+    triggerIndex: triggerIndex >= 0 ? triggerIndex : null,
     roundsAfterTrigger: triggerTurn && meta.lastRound != null ? meta.lastRound - triggerTurn.round : null,
+    triggerScores,
+    triggerRanking,
+    triggerRankBySeat,
   };
 
-  const ctx = { turnsBySeat, timelineByIndex, initialPlayers: r.initial.players, lastAfterBySeat, meta: fullMeta, data, engine, contestedLosses, missedClaims };
+  const starterIds = new Set(Object.keys(data.MERCHANT_BY_ID).filter(id => data.MERCHANT_BY_ID[id]?.starter));
+  const ctx = { turnsBySeat, timelineByIndex, initialPlayers: r.initial.players, lastAfterBySeat, meta: fullMeta, data, engine, contestedLosses, missedClaims: annotatedMissedClaims, starterIds };
   const players = [];
   for (let seat = 0; seat < meta.seatCount; seat++) {
     const profile = playerProfile(seat, ctx);
@@ -284,7 +379,19 @@ export async function computeGameMetrics(imported) {
   const ranking = meta.finished && imported.game ? engine.ranking(imported.game).map(p => ({ seat: p.id, name: p.name, score: engine.score(p) })) : null;
 
   return {
-    schema: 'century-human-analytics-metrics-v1',
+    schema: METRIC_SCHEMA_VERSION,
+    metricSemantics: {
+      version: 2,
+      previous: 'century-human-analytics-metrics-v1（旧产物保留；以下字段口径已修正，不重写历史）',
+      deadCards: 'acquired-never-played（按 acquire/play 时间线；曾打出后休息收回不算死卡）',
+      discardedCrystals: 'colors.length（每颗水晶一项；不是颜色编号之和）',
+      missedClaims: 'claimedLaterBySelf/Other 分开；firstLossOfTarget 标记同一 (席位,目标) 的首次流失',
+      contestedLosses: 'opportunity-only：他人认领时我也付得起，不证明我锁定了该目标',
+      engineSize: 'hand.length + played.length（拥有卡总数）',
+      restGap: '个人回合差（before.turns+1）',
+      lateAcquires: '触发手之后的获取（turn 索引）；规则下通常为 0',
+      triggerTime: '触发时点公开分数/排名（不拿终态回填）',
+    },
     game: {
       file: imported.file,
       hash: imported.hash,
@@ -292,10 +399,10 @@ export async function computeGameMetrics(imported) {
       meta: fullMeta,
       anomalies: imported.anomalies,
     },
-    contestedLosses,   // 对局级：谁的目标被谁抢走
-    missedClaims,      // 对局级：付得起却没认领（含是否随后被他人拿走）
-    overflowEvents: turns.flatMap((t, i) => t.actions.filter(a => a.type === 'discard')
-      .map(a => ({ turn: t.turnNumber, seat: t.playerId, count: sum(a.colors) }))),
+    contestedLosses,   // 对局级：他人认领时我也付得起（机会集合，非实际被抢次数）
+    missedClaims: annotatedMissedClaims, // 对局级：付得起却没认领（区分自领/他领/重复）
+    overflowEvents: turns.flatMap(t => t.actions.filter(a => a.type === 'discard')
+      .map(a => ({ turn: t.turnNumber, seat: t.playerId, count: discardedCrystalCount(a.colors), colors: [...a.colors] }))),
     players,
     ranking,
   };

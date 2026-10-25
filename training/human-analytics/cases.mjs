@@ -40,7 +40,8 @@ export async function extractCases(imported, metrics, opts = {}) {
 
   // 事件分类（单趟）：kinds[turnNumber:seat] = Set
   const contestedTurns = new Set(metrics.contestedLosses.map(e => e.turn));
-  const missedTurns = new Set(metrics.missedClaims.filter(m => m.claimedLaterBy != null).map(m => m.turn));
+  // v2：错过案例只用"本人放弃 → 他人拿走"（本人稍后自领不是流失）。
+  const missedTurns = new Set(metrics.missedClaims.filter(m => m.claimedLaterByOther).map(m => m.turn));
   const lastOwnTurnBySeat = {};
   for (const t of turns) lastOwnTurnBySeat[t.playerId] = t.turnNumber; // 后写覆盖 → 最后一手
 

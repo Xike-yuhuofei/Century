@@ -1,0 +1,324 @@
+{
+  "schema": "js5-goal-baseline-manifest-v1",
+  "runId": "run-20261025-01",
+  "frozenAt": "2026-10-25T05:04:13.121Z",
+  "objective": "修复计量/对照身份问题，实现并验证临近终局候选保留与预算有效性；不替换正式冠军。",
+  "environment": {
+    "node": "v22.16.0",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "git": {
+    "branch": "codex/js5-evidence-optimization",
+    "baseCommit": "e2361edc28b95c03ee5ccdd461c9afe0086dfe84",
+    "trackedDirty": "0"
+  },
+  "sourceHashes": {
+    "web-v1/src/engine.ts": "861ea5fc22468dbebc835a89c4c898c60f2e12c342f30fe272bfdd8bf7a3214f",
+    "web-v1/src/data.ts": "e242f6a6f3bd07517708a0ab7a652ba9e06ab16fd53273a35cba008f1e1e8f8e",
+    "web-v1/src/replay.ts": "4d2711c2a9e984379f222def0c6622953e8d7bcbe6087ccd38e63ecfcd4ed91c",
+    "web-v1/src/ai/decision.ts": "cbd8c87f71df0064217522aa73409c1bfd3d482b9a373f7a5b0d13495e2fb311",
+    "web-v1/src/ai/parameters.ts": "a25818e6956e85551a7f73597d02895145dd6c834e98fe5eb6a00b60803ef26f",
+    "web-v1/src/ai/planner.ts": "da740aec9ec68402c91148d862425fdde071b0d63a7b3befc564b664306e5add",
+    "web-v1/src/ai/evaluator.ts": "da71165d736588194f7b6ca02fe5c859447625f00ed65a5e6b2ced0eda9037e6",
+    "web-v1/src/ai/observation.ts": "9855cdd830a2176f58c8dc9cd6ba77b89898afca7b44359e85d092b5ad500903",
+    "web-v1/src/js/champion-guided.ts": "f3f2de7ac897fb521254892ed08ab4040fd8040f5d4fc44a06e5cd8d30ce5813",
+    "web-v1/src/js/adapter.ts": "d9eade2044cf01450fa9f0a9207d6115f20b5945dc493bb2e880d5438206e71f",
+    "web-v1/src/js/rollout-policy.ts": "e43948acc98f1066d2f5f79c1780cabd65ff5447604fb40c6898cda5f260596c",
+    "web-v1/src/js/joint-rollout.ts": "4213402b88235b92b9d35d4fd522206432b969c8821dc99c543616f25bf5ed47",
+    "web-v1/src/js/evaluators.ts": "3b5faf2c9a970e72af33dc12d14dd0ce13628f94e864baa8546226af3f96f9f9",
+    "web-v1/src/js/types.ts": "57f39240330ee2272040928f5175c07bb5e8bde40d89f8884e95fe1c589024f2",
+    "web-v1/src/ai-runtime/protocol.ts": "bf9d1b888348fab4e2ff10973eefa754b1c63890b0699e800b8c7361372736a0",
+    "web-v1/src/ai-runtime/decision-core.ts": "8d122ad5a692b42358a0508ecca76040eda3d874966568aade66ceed3d8d2295",
+    "training/champions/champion.json": "0dd409e57afd62546e5ce8cd2b599306a14defdfa34628ea7753d13e39cd3321",
+    "data/cards.json": "17b94186d2563b411a90dd1eafc517002fea1235c587a045d6b10ec1a5f36fe0",
+    "web-v1/package-lock.json": "dc1868ec2877aed119a04f0344819aa924b60d3e32a62832c2953ad0667379c1",
+    "web-v1/dist/js/engine.js": "2335d9fe4c921a952375e1394de39ffd7f0afd7268cd39020a45b53676a9e341",
+    "web-v1/dist/js/js/champion-guided.js": "1c4c3b65a2ff79b4c992580ac7bbac637b3e815a8948793c85eacf85b64eae1b",
+    "web-v1/dist/js/ai/parameters.js": "fde5653418da5f9ea646df7054ba65036a3432ed3b4dba957750eba5ead86352",
+    "ai5/lib/seed_policy.mjs": "1d569d1244cb08470a0011aa53a5759ba56e8a3a003e707843d6e34df225d601",
+    "training/joint/duel.mjs": "f8163f87d4237d208ea406e341b6e1d178048f192f78ef9b12f21f18d6507ae1",
+    "training/human-analytics/metrics.mjs": "0a7eae6171eba4e90d5081e2cccc2eae1216a0b8a91db77ebea86bac6622e97a",
+    "training/human-analytics/failures.mjs": "84635014d546d26cf15c6ca76f07e7a38af26e5b2e49329bfb9171d71dde9b19",
+    "training/human-analytics/cases.mjs": "498ab9c821e0a23c85cda64ad9e2a7cbdaff681399e6a92254ac26bae5a5db6d"
+  },
+  "inputs": {
+    "replayCount": 29,
+    "replaySetHash": "659909de6702d6c80dacbf60f78993d3726540e5b9556f8779b7c166b5d0e634",
+    "files": [
+      {
+        "file": "century-replay-2026-10-24T12-41-00-846Z.json",
+        "sha256": "9f05367ceb453619cd540a546947e614ef75c472e617c9138e65a66686fe37c1"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-02-086Z.json",
+        "sha256": "465baf44f17643314994f486a040fdc2977c5a4ba9d34bddbe5a12557ee61583"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-02-774Z.json",
+        "sha256": "4ede4a2e9e0ccc66aea7e26ea4b94de845d2b22a0dfbae4cc5bc43ec0a4624ed"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-03-613Z.json",
+        "sha256": "d9985dc1da8af5fcdff52bf24be6dff56690e99e1c6c010c296106df799d73ff"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-04-343Z.json",
+        "sha256": "8347e86053f24b97af2c76b8261ebca1203938d6affe3cda1d9c138a6ee5e1ba"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-05-110Z.json",
+        "sha256": "506a04b74746cbf1c6518bc07138eeb5abae25acfdce72cd4314349d51c0b502"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-06-085Z.json",
+        "sha256": "063356234059f76982be43e7b09c68ac167d1c76bc852be38f104f5ab285a75a"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-10-440Z.json",
+        "sha256": "e0362b2eaff8d1b0606cedf3bc067835c3c955f78b6717e510495846ed7f3b20"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-11-205Z.json",
+        "sha256": "61122e254c333d1dd3c6864527f0ceef376b4e8e1c07d21a790ad1b57fc2319f"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-11-844Z.json",
+        "sha256": "8a9b81e063899335508633f1c99467f8343b02906dafba121e30aa31d0bd944d"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-12-805Z.json",
+        "sha256": "7ea6e0f06b98e69355c1efae55bc14eba38a60b6e2a3a2b2f2da46c7d362a65c"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-13-309Z.json",
+        "sha256": "5f47fe65578548dba291d245166713ea796fb4b00fe51014ce9e88d1133a43f4"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-13-950Z.json",
+        "sha256": "e95bb5f355d3d59af023499e36ca1fd118eef1d0e2cc872081297ded451dd7e9"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-14-502Z.json",
+        "sha256": "205efd88256f9e9484e6da1ec2ba31e5807a4743c76f030d5092341b9c7d475f"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-15-526Z.json",
+        "sha256": "b10a2c2c83764ee5e04195d70b5f64af983fec558ff29f56ba6bdbfbb70445d9"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-16-205Z.json",
+        "sha256": "b70e8b23545676c7459d78302aa5c36003d96f309fe69515b1ef029adf6b72f2"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-20-845Z.json",
+        "sha256": "8737a8b6663ab656af2850114cbefc31e25fa56a64866ea43194896d9d04c92e"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-21-430Z.json",
+        "sha256": "f00c9559840bdd1db16b7796e903bb97be1f5f4f42d59ecb6d6f424c24c519dd"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-22-040Z.json",
+        "sha256": "a8cd47de88484fe52c75853d8f9d806600018327b7105788a24948de00ecffd9"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-41-22-774Z.json",
+        "sha256": "dc354c5911add68ee350634916df6cdeb5a54973fa23dc05acc7b448e4236359"
+      },
+      {
+        "file": "century-replay-2026-10-24T12-47-05-705Z.json",
+        "sha256": "24ff906adc9c782c20661d0bd730d88e99755f757e5b71575b3acb46d4482803"
+      },
+      {
+        "file": "century-replay-2026-10-24T16-09-45-974Z.json",
+        "sha256": "85aa137d3c107c98857510ff53ae7f4dceec17476d26ce93d165200d2fe064a5"
+      },
+      {
+        "file": "century-replay-2026-10-24T16-16-13-039Z.json",
+        "sha256": "771ab36d57f1c1029254e20ed01248518772203e59f3be6ccabd834b2cfca767"
+      },
+      {
+        "file": "century-replay-2026-10-24T16-26-56-008Z.json",
+        "sha256": "6dc8d6fdc42b55e1825100c5db1576800b65264fb4e4557cec154639d6f429b4"
+      },
+      {
+        "file": "century-replay-2026-10-24T16-36-58-204Z.json",
+        "sha256": "716d66d65c92ff7df4f5348e12a390feec3f0a4bdbbee262bcc938ac25230c9b"
+      },
+      {
+        "file": "century-replay-2026-10-24T16-46-37-925Z.json",
+        "sha256": "3e63bc82cccd85de822743fbfd1b1ab1e14003ac6c6f5070b2baec54107c2bb6"
+      },
+      {
+        "file": "century-replay-2026-10-24T16-55-46-947Z.json",
+        "sha256": "b787930af4cafab77961fc959c1ed54be3589f42f9b46d0fafed2446648bcf57"
+      },
+      {
+        "file": "century-replay-2026-10-24T17-01-38-639Z.json",
+        "sha256": "68101383b5fa2cbc6b0311999c2ca70310e12694f07894b5dd648c6c1323be6c"
+      },
+      {
+        "file": "century-replay-2026-10-24T17-11-18-358Z.json",
+        "sha256": "56ab9b1fa437a0db8985a1fa9b4d6b3875520daf25974b5c58c8b43bed69825e"
+      }
+    ]
+  },
+  "configs": {
+    "webProduction": {
+      "path": "web-v1/src/app.ts scheduleBot → chooseAIAction(game)（无 options）",
+      "parametersId": "joint-js5",
+      "adapter": "champion-guided",
+      "jointVersion": "joint-js5",
+      "budgetMode": "wall-clock",
+      "budgetMs": 100,
+      "workUnits": null,
+      "profileMode": "omitted→NEUTRAL_PROFILE（app 不注入 profile）",
+      "simSeed": 0,
+      "acquisitionVariant": "readiness-efficiency",
+      "gateMode": "auto",
+      "contestThreshold": 0.85,
+      "candidateCap": 4,
+      "overrideMargin": 0.02,
+      "claimRanking": "enumeration",
+      "championStructure": "beam-rollout",
+      "worlds": 4,
+      "horizon": 48,
+      "opponentMode": "rule",
+      "evaluator": "L2",
+      "candidatePolicy": "baseline",
+      "hash": "dbde7b7ea15cf428a9905e2be060375228f086fac40179106759a60c19576e86"
+    },
+    "trainingDuel": {
+      "path": "training/joint/duel.mjs runGame → chooseJointAction（按席位人格 + simSeed=seed）",
+      "parametersId": "joint-js5",
+      "adapter": "champion-guided",
+      "jointVersion": "joint-js5",
+      "budgetMode": "caller (budgetMs | workUnits)",
+      "profileMode": "seatProfile（seat0=NEUTRAL，seat1..4=PROFILES）",
+      "simSeed": "对局种子",
+      "acquisitionVariant": "readiness-efficiency",
+      "gateMode": "auto",
+      "contestThreshold": 0.85,
+      "candidateCap": 4,
+      "overrideMargin": 0.02,
+      "claimRanking": "enumeration",
+      "championStructure": "beam-rollout",
+      "worlds": 4,
+      "horizon": 48,
+      "opponentMode": "rule",
+      "evaluator": "L2",
+      "candidatePolicy": "baseline",
+      "hash": "5abfecc778731d14e7ec5fcbb55fd80ee43186910eda5fa5d823cf245c1f914d"
+    },
+    "pureBeam": {
+      "path": "显式 legacy fixture → chooseAIAction(parameters, profile=NEUTRAL)",
+      "parametersId": "ai5-readiness-efficiency",
+      "adapter": null,
+      "structure": "beam-rollout",
+      "acquisitionVariant": "readiness-efficiency",
+      "profileName": "中立代理",
+      "budgetMode": "none (beam search, 无联合模拟)",
+      "jointSearch": null,
+      "hash": "1d9adbe66d5f8fd7afd52eeeb3b63df2774933a271357a6ae20bb1d8f6e88445"
+    },
+    "js5OptLabelOnly": {
+      "path": "web-v1/src/app.ts scheduleBot → chooseAIAction(game)（无 options）",
+      "parametersId": "joint-js5",
+      "adapter": "champion-guided",
+      "jointVersion": "joint-js5-opt",
+      "budgetMode": "wall-clock",
+      "budgetMs": 100,
+      "workUnits": null,
+      "profileMode": "omitted→NEUTRAL_PROFILE（app 不注入 profile）",
+      "simSeed": 0,
+      "acquisitionVariant": "readiness-efficiency",
+      "gateMode": "auto",
+      "contestThreshold": 0.85,
+      "candidateCap": 4,
+      "overrideMargin": 0.02,
+      "claimRanking": "enumeration",
+      "championStructure": "beam-rollout",
+      "worlds": 4,
+      "horizon": 48,
+      "opponentMode": "rule",
+      "evaluator": "L2",
+      "candidatePolicy": "baseline",
+      "hash": "035cbb26d52670d3b9ae182ab3ce420df833cc233cf82ce21694452e52b5c8d9"
+    }
+  },
+  "dispatchProbe": {
+    "seed": 1500000000,
+    "position": {
+      "turnNumber": 25,
+      "current": 4,
+      "phase": "turn"
+    },
+    "activeChampionDispatch": {
+      "reason": "js5 联合仲裁：保持冠军行动（联合模拟评价值 0.380，未校准胜率近似，4 轨迹 × 4 世界，争议目标 G07）",
+      "action": {
+        "type": "play",
+        "cardId": "M18",
+        "repeats": 1
+      },
+      "isJointAdapter": true
+    },
+    "explicitLegacyBeam": {
+      "reason": "AI 4.0 中立代理（ai5-readiness-efficiency·beam-rollout）：公开目标 G02，规划4步；未知商人/魔像各32/30张",
+      "action": {
+        "type": "play",
+        "cardId": "M18",
+        "repeats": 1
+      },
+      "isBeamReason": true
+    },
+    "explicitJs5Adapter": {
+      "reason": "js5 联合仲裁：保持冠军行动（联合模拟评价值 0.342，未校准胜率近似，8 轨迹 × 4 世界，争议目标 G07）",
+      "action": {
+        "type": "play",
+        "cardId": "M18",
+        "repeats": 1
+      },
+      "gated": true,
+      "championAction": {
+        "type": "play",
+        "cardId": "M18",
+        "repeats": 1
+      },
+      "stats": {
+        "rollouts": 32,
+        "transitions": 1536,
+        "elapsedMs": 87.251666,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.02804100000003018,
+        "rootActions": 93,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 14.874957999999992,
+        "rootSimMs": 0.22683299999999917,
+        "gateMs": 0.03320899999999938,
+        "screenMs": 0.6421250000000214,
+        "rolloutMs": 71.37904199999997,
+        "aggregateMs": 0.027791999999976724,
+        "rootSimulationsCreated": 4
+      }
+    }
+  },
+  "notes": [
+    "网页生产默认：无 profile → NEUTRAL_PROFILE；simSeed 缺省 0；100ms 墙钟。",
+    "训练 duel：按席位人格 + simSeed=对局种子；预算由 CLI 指定。",
+    "纯束搜索基线必须显式钉定 legacy fixture（web-v1/tests/fixtures/legacy-champion.json），不得传活动 CHAMPION_PARAMETERS。",
+    "joint-js5-opt 在本基线上仅是版本标签：未注入独有预设，resolved options 与 joint-js5 相同。",
+    "对局全部作为发现集；未来评测使用独立研究种子块，不消费正式验证池 [900M,1.06e9)。",
+    "基线可重建工作树 /tmp/century-js5-baseline-e2361ed（node_modules 为主仓符号链接，dist 由同提交 tsc 生成）。"
+  ],
+  "baselineWorktree": "/tmp/century-js5-baseline-e2361ed",
+  "baselineBuild": {
+    "builtFromCommit": "e2361ed",
+    "engine": "2335d9fe4c921a952375e1394de39ffd7f0afd7268cd39020a45b53676a9e341",
+    "championGuided": "1c4c3b65a2ff79b4c992580ac7bbac637b3e815a8948793c85eacf85b64eae1b",
+    "adapter": "73c890b03f940fdb1272721d5e9a95011a434a205d16ec513f24439b80cc8792"
+  }
+}

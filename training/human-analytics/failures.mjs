@@ -45,18 +45,25 @@ function diagnoseSeat(profile, metrics, finished, triggerTurn) {
   const findings = [];
   const inconclusives = [];
 
-  // 1. 目标竞争判断不足：被抢目标 ≥2，或「错过且被他人拿走」≥2（合计）
+  // 1. 目标竞争判断不足：本人放过且随后被他人拿走的目标 ≥2（同一目标只算首次流失）。
+  //    contestedLosses 只是"他人认领时我也付得起"的机会集合，不能与流失事件相加。
   {
-    const contested = c.contestedLosses;
-    const stolenMissed = c.missedClaims.filter(m => m.claimedLaterBy != null);
-    const total = contested.length + stolenMissed.length;
-    if (total >= 2) {
+    const stolenMissed = []; // 去重后的实际流失事件（本人放弃 → 他人拿走）
+    const seenTargets = new Set();
+    for (const m of c.missedClaims) {
+      if (!m.claimedLaterByOther) continue;
+      if (seenTargets.has(m.golemId)) continue;
+      seenTargets.add(m.golemId);
+      stolenMissed.push(m);
+    }
+    const opportunityOnly = c.contestedLosses;
+    if (stolenMissed.length >= 2) {
       findings.push(finding('goal-competition', [
-        ...contested.map(e => `第 ${e.turn} 手：可付的 ${e.golemId}（${e.points} 分）被座位 ${e.claimedBySeat + 1} 认领`),
         ...stolenMissed.map(m => `第 ${m.turn} 手：付得起 ${m.golemId}（${m.points} 分）却选择 ${m.chosen}，随后被座位 ${(m.claimedLaterBy ?? 0) + 1} 认领`),
-      ], { minEvents: 2 }));
-    } else if (total === 1) {
-      inconclusives.push(inconclusive('goal-competition', `仅 1 次被抢/错失事件（阈值 2），不足以判断是竞争意识问题还是运气`));
+        ...(opportunityOnly.length ? [`另有 ${opportunityOnly.length} 次"他人认领时我也付得起"的机会事件（不证明我锁定了该目标）`] : []),
+      ], { minEvents: 2, dedupeByTarget: true }));
+    } else if (stolenMissed.length === 1) {
+      inconclusives.push(inconclusive('goal-competition', `仅 1 次实际流失事件（阈值 2；${opportunityOnly.length} 次机会事件不计入），不足以判断是竞争意识问题还是运气`));
     }
   }
 
@@ -123,9 +130,15 @@ function diagnoseSeat(profile, metrics, finished, triggerTurn) {
     else if (cheapRests.length >= 1) inconclusives.push(inconclusive('rest-cost-high', `仅 ${cheapRests.length} 次低价值休息（阈值 3），无法判断`));
   }
 
-  // 7. 错过关键认领
+  // 7. 错过关键认领（只计"本人放弃 → 他人拿走"；自领/重复目标不计）
   {
-    const stolen = c.missedClaims.filter(m => m.claimedLaterBy != null);
+    const stolen = [];
+    const seen = new Set();
+    for (const m of c.missedClaims) {
+      if (!m.claimedLaterByOther || seen.has(m.golemId)) continue;
+      seen.add(m.golemId);
+      stolen.push(m);
+    }
     const keyMissed = stolen.filter(m => m.points >= 14);
     const postTrigger = triggerTurn != null ? c.affordableButNotClaimed.filter(a => a.turn > triggerTurn) : [];
     const evid = [
@@ -133,21 +146,24 @@ function diagnoseSeat(profile, metrics, finished, triggerTurn) {
       ...postTrigger.map(a => `终局触发后第 ${a.turn} 手：仍付得起 ${a.golems.map(g => `${g.golemId}（${g.points} 分）`).join('、')} 却选择 ${a.chosen}`),
     ];
     if (stolen.length >= 2 || keyMissed.length >= 1 || postTrigger.length >= 2) {
-      findings.push(finding('missed-claims', evid, { stolenMin: 2, keyGolemPoints: 14, postTriggerMin: 2 }));
+      findings.push(finding('missed-claims', evid, { stolenMin: 2, keyGolemPoints: 14, postTriggerMin: 2, claimedByOtherOnly: true }));
     } else if (stolen.length === 1 || postTrigger.length === 1) {
       inconclusives.push(inconclusive('missed-claims', `仅 1 次错过且非关键魔像（<14 分），无法判断`));
     }
   }
 
-  // 8. 终局节奏判断错误（需终局）
+  // 8. 终局节奏判断错误（需终局；用触发时点公开排名，不用终态回填）
   {
     if (!finished) {
       inconclusives.push(inconclusive('endgame-pacing', 'game-unfinished：对局未结束，无终局节奏可评'));
     } else {
       const evid = [];
       const isTriggerer = metrics.game.meta.triggerPlayer === profile.seat;
-      if (isTriggerer && metrics.ranking && metrics.ranking[metrics.ranking.length - 1]?.seat === profile.seat) {
-        evid.push(`由本席触发终局，但触发时点全场估分最低（最终 ${metrics.ranking.at(-1).score} 分）`);
+      const triggerRank = metrics.game.meta.triggerRankBySeat?.[profile.seat] ?? null;
+      const triggerCount = metrics.game.meta.triggerRanking?.length ?? null;
+      if (isTriggerer && triggerRank != null && triggerCount != null && triggerRank === triggerCount) {
+        const triggerScore = metrics.game.meta.triggerScores?.find(x => x.seat === profile.seat)?.score;
+        evid.push(`由本席触发终局，但触发时点全场公开分最低（${triggerScore} 分）——不是用终态反推`);
       }
       const postTriggerMissed = triggerTurn != null ? c.affordableButNotClaimed.filter(a => a.turn > triggerTurn) : [];
       if (postTriggerMissed.length >= 2) {

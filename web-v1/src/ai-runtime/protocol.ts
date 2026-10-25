@@ -68,6 +68,29 @@ export type DecisionRequestPayload = {
   horizon?: number;
   /** 信念世界数（可选；缺省搜索内部口径）。 */
   worlds?: number;
+  /** 搜索选项（可选；2026-10-25 补齐——此前 Worker 只能设预算/种子/世界数，
+   * gate/margin/cap/claimRanking 无法透传，导致"Worker 决策核心"与正式评测
+   * 配置不可比）。所有字段显式白名单，未知字段由决策核心拒绝。 */
+  search?: DecisionSearchOptions;
+};
+
+export type DecisionSearchOptions = {
+  /** 竞争门控模式（auto/always/never/rerank）。 */
+  gateMode?: 'auto' | 'always' | 'never' | 'rerank';
+  /** 争议目标存活阈值（0–1）。 */
+  contestThreshold?: number;
+  /** 联合评估候选上限（含冠军行动）。 */
+  candidateCap?: number;
+  /** 保守覆盖边际。 */
+  overrideMargin?: number;
+  /** 立即认领候选排序（enumeration/prior）。 */
+  claimRanking?: 'enumeration' | 'prior';
+  /** 临近终局候选覆盖策略（off/replace/add）。 */
+  nearTerminalCandidate?: 'off' | 'replace' | 'add';
+  /** 根筛选目标范围（all/preferred）。 */
+  screenGoalScope?: 'all' | 'preferred';
+  /** 墙钟批次准入（legacy/balanced）。 */
+  batchAdmission?: 'legacy' | 'balanced';
 };
 
 /** client → worker 消息。 */
@@ -114,6 +137,8 @@ export type DecisionDiagnostics = {
   ai: AIVersionDescriptor;
   budget: DecisionBudget;
   simSeed: number;
+  /** 有效配置身份与哈希（版本预设 + 覆盖 + 缺省；JSON 可序列化）。 */
+  config?: { hash: string; [key: string]: unknown };
   /** 决策核心侧耗时（worker 内 performance.now 口径）。 */
   elapsedMs: number;
   reason: string;

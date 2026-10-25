@@ -54,6 +54,8 @@ import { heuristicContext, screenRootActions } from './rollout-policy.js';
 import { runJointRollout, type RolloutContext } from './joint-rollout.js';
 import { worldSeed } from './planner.js';
 import { profileByName } from './simview.js';
+import { nearTerminalRisk, maxImmediateScoreAction, type ImmediateScoreCandidate, type NearTerminalRisk } from './near-terminal.js';
+import { batchFloors, fitWorlds, type BatchAdmission } from './budget.js';
 import type {
   JointDecision, JointDecisionStats, JointOpponentMode, JointSearchOptions,
   LeafEvaluatorLevel, RootActionEvaluation, DecisionTrace,
@@ -168,12 +170,14 @@ class ChampionGuidedPlanner {
     const worldCount = Math.max(1, Math.min(8, Math.floor(o.worlds ?? 4)));
     const rootSimStart = performance.now();
     const root = createSimulation(observation, { simSeed: worldSeed(o.simSeed ?? 0, 0), historySummary: o.historySummary });
+    // 互斥分相：rootSimMs 只含 createSimulation，legalGenMs 单独计量
+    // （旧实现 rootSimMs 包含 legalGenMs，阶段相加会重复计时）。
+    phase.rootSimMs = performance.now() - rootSimStart;
     let rootsCreated = 1;
     const roots: PublicSimulation[] = [root];
     const legalStart = performance.now();
     const legalRootActions = enumerateLegalActions(root.view, { dedupe: true });
     phase.legalGenMs = performance.now() - legalStart;
-    phase.rootSimMs = performance.now() - rootSimStart;
     if (!legalRootActions.length) fail('根状态无合法行动（规则引擎不一致）');
     const immediateClaimGoals = new Set<string>(
       legalRootActions.filter(a => a.type === 'claim').map(a => observation.golemMarket[a.index]),
@@ -204,10 +208,12 @@ class ChampionGuidedPlanner {
         trace: { root: { turnNumber: observation.turnNumber, current: observation.current, golemMarket: [...observation.golemMarket], phase: observation.phase }, evaluations: [], rejected: [] },
         stats: {
           rollouts: 0, transitions: 0, elapsedMs, budgetExhausted: false,
-          omTimeMs: 0, cloneMs: 0, legalGenMs: phase.legalGenMs, rootActions: legalRootActions.length,
-          candidateCount: 0, worldsUsed: worldCount,
+          omTimeMs: 0, cloneMs: 0, cloneMsMeasured: false, legalGenMs: phase.legalGenMs, rootActions: legalRootActions.length,
+          candidateCount: 0, worldsUsed: 0, worldsConfigured: worldCount,
           planMs: phase.planMs, rootSimMs: phase.rootSimMs, gateMs: phase.gateMs,
           screenMs: 0, rolloutMs: 0, aggregateMs: 0, rootSimulationsCreated: rootsCreated,
+          batchesStarted: 0, trialWindowMs: 0, zeroTrialReason: 'not-gated', overBudget: false,
+          screenGoalScope: o.screenGoalScope ?? 'all', batchAdmission: o.batchAdmission ?? 'legacy',
         },
         championAction,
         gated: false,
@@ -222,19 +228,27 @@ class ChampionGuidedPlanner {
     //    不足以试验时自然回退冠军行动（保守覆盖语义的退化情形）。
     const screenStart = performance.now();
     const ctxRoot = heuristicContext(root.view, CHAMPION_PARAMETERS, NEUTRAL_PROFILE);
-    const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival);
+    // 根筛选目标范围：缺省 all（冻结语义）；preferred 是文件注释记载的 JS5
+    // 10ms 口径，现在真正接线（此前注释说用 preferred、实现却落 all）。
+    const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
+      goalScope: o.screenGoalScope ?? 'all',
+      preferredGoal: plan?.preferred ?? null,
+    });
     phase.screenMs = performance.now() - screenStart;
     const candidates: Action[] = [];
+    const candidateSources: Array<'champion' | 'claim' | 'prior' | 'near-terminal'> = [];
     const priorOf = new Map<string, number>();
     const seen = new Set<string>();
-    const push = (a: Action | null | undefined) => {
-      if (!a) return;
+    const push = (a: Action | null | undefined, source: 'champion' | 'claim' | 'prior' | 'near-terminal') => {
+      if (!a) return false;
       const k = actionKey(a);
-      if (seen.has(k)) return;
+      if (seen.has(k)) return false;
       seen.add(k);
       candidates.push(a);
+      candidateSources.push(source);
+      return true;
     };
-    push(championAction);
+    push(championAction, 'champion');
     // C2：立即认领候选的选取原则（缺省 enumeration = PR #27 原始语义；
     // prior 模式按根筛选先验降序取前 2，避免枚举顺序偶然排除高分认领）。
     const claimActions = legalRootActions.filter(x => x.type === 'claim');
@@ -242,12 +256,48 @@ class ChampionGuidedPlanner {
       const priorOfAction = new Map(claimActions.map(a => [actionKey(a), screened.find(s => actionKey(s.action) === actionKey(a))?.prior ?? -Infinity]));
       claimActions.sort((x, y) => (priorOfAction.get(actionKey(y)) ?? -Infinity) - (priorOfAction.get(actionKey(x)) ?? -Infinity));
     }
-    for (const a of claimActions.slice(0, 2)) push(a);
-    for (const { action, prior } of screened) {
+    for (const a of claimActions.slice(0, 2)) push(a, 'claim');
+    for (const { action } of screened) {
       if (candidates.length >= (o.candidateCap ?? 4)) break;
-      push(action);
+      push(action, 'prior');
     }
     if (!candidates.length) fail('候选构造为空（规则层缺陷）');
+
+    // P1-C 临近终局候选覆盖（显式 opt-in；缺省 off = 冻结行为）：
+    // 公开风险成立时，把"当步正式净分最大"的合法行动注入候选集。
+    // - replace：替换最后一个先验填充候选（保持 candidateCap 与每候选预算不变）；
+    // - add：追加一个候选（cap+1，明确披露额外轨迹成本）。
+    // 不硬编码对局/回合/卡 ID；不改变后继仲裁规则（仍由联合模拟+保守覆盖裁决）。
+    const nearTerminalPolicy = o.nearTerminalCandidate ?? 'off';
+    const terminalRisk: NearTerminalRisk | null = nearTerminalPolicy === 'off'
+      ? null
+      : nearTerminalRisk(observation);
+    let injected: ImmediateScoreCandidate | null = null;
+    let replacedAction: Action | null = null;
+    let injectionMode: 'off' | 'replace' | 'add' = nearTerminalPolicy;
+    if (terminalRisk?.risky && injectionMode !== 'off') {
+      const best = maxImmediateScoreAction(observation, legalRootActions);
+      if (best && !seen.has(actionKey(best.action))) {
+        injected = best;
+        if (injectionMode === 'add') {
+          push(best.action, 'near-terminal');
+        } else {
+          let idx = candidateSources.lastIndexOf('prior');
+          if (idx < 0) idx = candidateSources.lastIndexOf('claim');
+          if (idx >= 0) {
+            replacedAction = candidates[idx];
+            seen.delete(actionKey(candidates[idx]));
+            candidates[idx] = best.action;
+            candidateSources[idx] = 'near-terminal';
+            seen.add(actionKey(best.action));
+          } else {
+            // 只有冠军行动（cap 极小）时不能替换，退化为追加并如实披露。
+            push(best.action, 'near-terminal');
+            injectionMode = 'add';
+          }
+        }
+      }
+    }
     // 候选先验表（rerank 路线与冠军行动缺省回退用；screened 覆盖全部合法行动）。
     for (const { action, prior } of screened) priorOf.set(actionKey(action), prior);
     const championKey = championAction ? actionKey(championAction) : null;
@@ -281,10 +331,21 @@ class ChampionGuidedPlanner {
         trace: { root: { turnNumber: observation.turnNumber, current: observation.current, golemMarket: [...observation.golemMarket], phase: observation.phase }, evaluations: [], rejected: [] },
         stats: {
           rollouts: 0, transitions: 0, elapsedMs: elapsedRerank, budgetExhausted: false,
-          omTimeMs: 0, cloneMs: 0, legalGenMs: phase.legalGenMs, rootActions: legalRootActions.length,
-          candidateCount: candidates.length, worldsUsed: worldCount,
+          omTimeMs: 0, cloneMs: 0, cloneMsMeasured: false, legalGenMs: phase.legalGenMs, rootActions: legalRootActions.length,
+          candidateCount: candidates.length, worldsUsed: 0, worldsConfigured: worldCount,
+          batchesStarted: 0, trialWindowMs: 0, zeroTrialReason: 'rerank-no-rollout', overBudget: false,
+          screenGoalScope: o.screenGoalScope ?? 'all', batchAdmission: o.batchAdmission ?? 'legacy',
           planMs: phase.planMs, rootSimMs: phase.rootSimMs, gateMs: phase.gateMs,
           screenMs: phase.screenMs, rolloutMs: 0, aggregateMs: 0, rootSimulationsCreated: rootsCreated,
+          ...(terminalRisk && injectionMode !== 'off' ? {
+            nearTerminal: {
+              policy: nearTerminalPolicy, risky: terminalRisk.risky,
+              reason: terminalRisk.reason, threshold: terminalRisk.threshold,
+              threatenedSeats: terminalRisk.threatenedSeats,
+              injected: injected ? { action: injected.action, delta: injected.delta, scoreAfter: injected.scoreAfter, discarded: injected.discarded } : null,
+              replacedAction, mode: injectionMode, candidateSources,
+            },
+          } : {}),
         },
         championAction,
         gated: true,
@@ -315,9 +376,22 @@ class ChampionGuidedPlanner {
     // 防御性默认：budgetMs 与 workUnits 均未给定时按 100ms 墙钟预算（与 planner 同纪律）。
     const budgetMs = o.budgetMs ?? (workUnits !== undefined ? undefined : 100);
     const trialDeadline = workUnits || budgetMs === undefined ? undefined : t0 + budgetMs * 0.95;
-    const PER_TRIAL_FLOOR_MS = 5;
+    // 单轨迹保底窗口：
+    // - legacy（冻结行为）= 5ms + M×5ms 批次门槛，只跑完整 W×M 批次；
+    // - balanced（显式实验）= 2.5ms + W×M×2.5ms 预检，允许全候选缩减批次。
+    // 实测本机 48 转移轨迹约 2.2–2.8ms（0.05–0.06ms/转移，见
+    // run-20261025-01/evidence/budget-*.json）；2.5ms 仍保证近 48 转移窗口。
+    const admission: BatchAdmission = o.batchAdmission ?? 'legacy';
     const M = candidates.length;
+    const floors = batchFloors(admission, worldCount, M);
+    const PER_TRIAL_FLOOR_MS = floors.trialFloorMs;
+    const fullBatchFloorMs = floors.fullBatchFloorMs;
+    const minBatchFloorMs = floors.minBatchFloorMs;
     const rolloutStart = performance.now();
+    const rolloutStartOffsetMs = rolloutStart - t0;
+    const trialWindowMs = trialDeadline === undefined ? null : Math.max(0, trialDeadline - rolloutStart);
+    const worldsUsedSet = new Set<number>();
+    let batchesStarted = 0;
     const runTrial = (index: number, world: number, replica: number): number => {
       const entry = aggregates[index];
       const forkStart = performance.now();
@@ -335,29 +409,59 @@ class ChampionGuidedPlanner {
     /** 完整批次 = 同一 replica 下全部 (world × candidate) 试验。批次一旦启动
      * 全部入账（部分批次绝不出现）⇒ 任意截断点上各候选试验数之差 < M
      * 且 (world, replica) 键集严格相同（CRN 配对成立）。 */
-    const runBatch = (replica: number): void => {
-      for (let w = 0; w < worldCount; w++) {
+    const runBatch = (replica: number, worldsInBatch: number): void => {
+      // 批次内全部 (world × candidate) 试验共同入账；缩减批次只减少 world
+      // 数量、绝不减少候选数量 ⇒ 各候选的 (world,replica) 键集仍严格相同，
+      // CRN 配对无偏。
+      for (let w = 0; w < worldsInBatch; w++) {
+        worldsUsedSet.add(w);
         for (let i = 0; i < M; i++) runTrial(i, w, replica);
       }
+      batchesStarted += 1;
     };
     if (workUnits !== undefined) {
       // 固定工作量模式（确定性）：完整批次向下取整（每候选严格等试验数；
       // workUnits < W×M 时按最小粒度 1 个完整批次执行并披露）。
       const passes = Math.max(1, Math.floor(workUnits / (worldCount * M)));
-      for (let r = 0; r < passes; r++) runBatch(r);
-    } else {
-      // 墙钟预算模式：批次启动前预检（预留 batchFloorMs 保证批内每条轨迹
-      // 至少 PER_TRIAL_FLOOR_MS 深度窗口，避免近零深度轨迹污染聚合——
-      // PR #27 trialLaunchDeadline 教训的批次化版本）。
-      const batchFloorMs = M * PER_TRIAL_FLOOR_MS;
+      for (let r = 0; r < passes; r++) runBatch(r, worldCount);
+    } else if (admission === 'legacy') {
+      // 冻结行为（缺省）：门槛只乘 M（历史实现；低估了 W 倍批次成本），
+      // 且只启动完整 W×M 批次——保留给未显式选择 balanced 的所有调用方。
+      const legacyBatchFloorMs = M * PER_TRIAL_FLOOR_MS;
       let pass = 0;
       while (pass < 100_000 && trialDeadline !== undefined
-        && performance.now() + batchFloorMs <= trialDeadline) {
-        runBatch(pass);
+        && performance.now() + legacyBatchFloorMs <= trialDeadline) {
+        runBatch(pass, worldCount);
+        pass += 1;
+      }
+    } else {
+      // balanced：批次启动前按"整批 W×M 条轨迹 × 单轨迹保底窗口"预检。
+      // 时间不足以跑满 W 个世界时，按可容纳的世界数执行**全候选**缩减批次
+      // ——保持各候选共同键集，不用零试验直接放弃有效仲裁。
+      let pass = 0;
+      while (pass < 100_000 && trialDeadline !== undefined) {
+        const worldsFit = fitWorlds(trialDeadline - performance.now(), worldCount, M);
+        if (worldsFit === 0) break;
+        runBatch(pass, worldsFit);
         pass += 1;
       }
     }
     phase.rolloutMs = performance.now() - rolloutStart;
+    const wallClockMode = workUnits === undefined && budgetMs !== undefined;
+    const stoppedByDeadline = wallClockMode && trialDeadline !== undefined
+      && (batchesStarted === 0 ? rolloutStart >= trialDeadline : performance.now() + minBatchFloorMs > trialDeadline);
+    let zeroTrialReason: JointDecisionStats['zeroTrialReason'] = null;
+    if (rollouts === 0) {
+      if (trialDeadline === undefined) zeroTrialReason = 'no-window';
+      else if (rolloutStart >= trialDeadline) zeroTrialReason = 'plan-and-screen-exhausted';
+      else if (trialWindowMs !== null && trialWindowMs < minBatchFloorMs) zeroTrialReason = 'batch-floor-not-met';
+      else zeroTrialReason = 'no-batch-started';
+    }
+    // 墙钟模式：只要批次因截止而停止，预算就已耗尽（即使零试验或未超名义
+    // 预算）。overBudget 单独表示端到端耗时超过名义 budgetMs。
+    const budgetExhausted = wallClockMode && (rollouts === 0
+      ? (zeroTrialReason === 'plan-and-screen-exhausted' || zeroTrialReason === 'batch-floor-not-met')
+      : true);
 
     // 6. 聚合 + 保守覆盖。
     const aggregateStart = performance.now();
@@ -374,10 +478,14 @@ class ChampionGuidedPlanner {
     if (championEval && championEval.trials > 0) {
       // 保守覆盖：仅当挑战者稳健分超过冠军候选 margin 时换行动。
       const championScore = robustScoreOf(championEval);
+      // 缩减批次（墙钟窗口不足 W 个世界）下至少 3 试验才允许覆盖：
+      // 2 试验的均值会在 C12 类局面把正确认领翻成噪声候选。完整批次保持
+      // 冻结的 trials≥2 语义（固定工作量模式不受影响）。
+      const minChallengerTrials = admission === 'balanced' && worldsUsedSet.size < worldCount ? 3 : 2;
       let challenger = championEval;
       for (const e of evaluations) {
         if (actionKey(e.action) === championKey) continue;
-        if (e.trials < 2) continue; // 单试验挑战者不足以覆盖冠军
+        if (e.trials < minChallengerTrials) continue;
         if (robustScoreOf(e) > robustScoreOf(challenger)) challenger = e;
       }
       bestEval = robustScoreOf(challenger) > championScore + (o.overrideMargin ?? 0.02) ? challenger : championEval;
@@ -405,20 +513,41 @@ class ChampionGuidedPlanner {
       opponentSamples: [],
     };
     const golemTag = (a: Action) => (a.type === 'claim' && GOLEM_BY_ID[observation.golemMarket[a.index]] ? `（${observation.golemMarket[a.index]}，${GOLEM_BY_ID[observation.golemMarket[a.index]].points} 分）` : '');
+    const injectionTag = injected
+      ? `；临近终局候选注入 ${actionKey(injected.action)}（当步正式净分 +${injected.delta}，${injectionMode}${replacedAction ? '，替换先验候选' : ''}）`
+      : '';
     return {
       action: bestEval.action,
-      reason: `js5 ${gated ? '联合仲裁' : '冠军直通'}：${bestEval === championEval ? '保持冠军行动' : '覆盖为联合最优'}（联合模拟评价值 ${bestEval.mean.toFixed(3)}，未校准胜率近似，${bestEval.trials} 轨迹 × ${worldCount} 世界，争议目标 ${risk.contestedGoals.join(',') || '无'}）${golemTag(bestEval.action)}`,
+      reason: `js5 ${gated ? '联合仲裁' : '冠军直通'}：${bestEval === championEval ? '保持冠军行动' : '覆盖为联合最优'}（联合模拟评价值 ${bestEval.mean.toFixed(3)}，未校准胜率近似，${bestEval.trials} 轨迹，实际世界 ${worldsUsedSet.size}/${worldCount}，争议目标 ${risk.contestedGoals.join(',') || '无'}）${golemTag(bestEval.action)}${injectionTag}`,
       evaluations,
       chosen: { action: bestEval.action, prior: 0, trials: bestEval.trials, mean: bestEval.mean, se: bestEval.se },
       trace,
       stats: {
         rollouts, transitions, elapsedMs,
-        budgetExhausted: !workUnits && budgetMs !== undefined && elapsedMs >= budgetMs * 0.98,
-        omTimeMs: omTimeMs.value, cloneMs: 0, legalGenMs: phase.legalGenMs,
-        rootActions: legalRootActions.length, candidateCount: M, worldsUsed: worldCount,
+        budgetExhausted,
+        omTimeMs: omTimeMs.value, cloneMs: 0, cloneMsMeasured: false, legalGenMs: phase.legalGenMs,
+        rootActions: legalRootActions.length, candidateCount: M,
+        worldsUsed: worldsUsedSet.size, worldsConfigured: worldCount,
+        batchesStarted, trialWindowMs, fullBatchFloorMs, minBatchFloorMs,
+        rolloutStartMs: rolloutStartOffsetMs, zeroTrialReason,
+        overBudget: wallClockMode && budgetMs !== undefined && elapsedMs > budgetMs,
+        stoppedByDeadline,
+        overrideMinTrials: admission === 'balanced' && worldsUsedSet.size < worldCount ? 3 : 2,
+        screenGoalScope: o.screenGoalScope ?? 'all', batchAdmission: admission,
+        accountingMs: phase.planMs + phase.rootSimMs + phase.legalGenMs + phase.gateMs + phase.screenMs + phase.rolloutMs + phase.aggregateMs,
+        unaccountedMs: Math.max(0, elapsedMs - (phase.planMs + phase.rootSimMs + phase.legalGenMs + phase.gateMs + phase.screenMs + phase.rolloutMs + phase.aggregateMs)),
         planMs: phase.planMs, rootSimMs: phase.rootSimMs, gateMs: phase.gateMs,
         screenMs: phase.screenMs, rolloutMs: phase.rolloutMs, aggregateMs: phase.aggregateMs,
         rootSimulationsCreated: rootsCreated,
+        ...(terminalRisk && injectionMode !== 'off' ? {
+          nearTerminal: {
+            policy: nearTerminalPolicy, risky: terminalRisk.risky,
+            reason: terminalRisk.reason, threshold: terminalRisk.threshold,
+            threatenedSeats: terminalRisk.threatenedSeats,
+            injected: injected ? { action: injected.action, delta: injected.delta, scoreAfter: injected.scoreAfter, discarded: injected.discarded } : null,
+            replacedAction, mode: injectionMode, candidateSources,
+          },
+        } : {}),
       } satisfies JointDecisionStats,
       ...(trialsLog ? { trials: trialsLog } : {}),
       championAction,
@@ -429,8 +558,16 @@ class ChampionGuidedPlanner {
 }
 
 /** 选项解析：显式缺省集中在一处（JS5 全部参数显式可审计）。 */
-function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required<Pick<ChampionGuidedOptions, 'championStructure' | 'gateMode' | 'overrideMargin' | 'candidateCap' | 'contestThreshold' | 'claimRanking'>> & ChampionGuidedSearchOptions {
+function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required<Pick<ChampionGuidedSearchOptions,
+  'championStructure' | 'gateMode' | 'overrideMargin' | 'candidateCap' | 'contestThreshold' | 'claimRanking' |
+  'nearTerminalCandidate' | 'screenGoalScope' | 'batchAdmission'>> & ChampionGuidedSearchOptions {
   const base = o ?? {};
+  const nearTerminalCandidate = base.nearTerminalCandidate ?? 'off';
+  if (!['off', 'replace', 'add'].includes(nearTerminalCandidate)) fail(`未知 nearTerminalCandidate：${String(nearTerminalCandidate)}`);
+  const screenGoalScope = base.screenGoalScope ?? 'all';
+  if (!['all', 'preferred'].includes(screenGoalScope)) fail(`未知 screenGoalScope：${String(screenGoalScope)}`);
+  const batchAdmission = base.batchAdmission ?? 'legacy';
+  if (!['legacy', 'balanced'].includes(batchAdmission)) fail(`未知 batchAdmission：${String(batchAdmission)}`);
   return {
     ...base,
     championStructure: base.championStructure ?? 'beam-rollout',
@@ -439,6 +576,9 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
     candidateCap: base.candidateCap ?? 4,
     contestThreshold: base.contestThreshold ?? 0.85,
     claimRanking: base.claimRanking ?? 'enumeration',
+    nearTerminalCandidate,
+    screenGoalScope,
+    batchAdmission,
   };
 }
 

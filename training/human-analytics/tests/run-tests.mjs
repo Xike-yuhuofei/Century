@@ -21,7 +21,9 @@ const MOD = resolve(HERE, '..');
 const FIXTURES = resolve(MOD, 'fixtures');
 
 const { importGameFile, importGameFiles, canonicalStringify } = await import(resolve(MOD, 'import-games.mjs'));
-const { computeGameMetrics } = await import(resolve(MOD, 'metrics.mjs'));
+const {
+  computeGameMetrics, discardedCrystalCount, unusedAcquisitions, annotateMissedClaims, METRIC_SCHEMA_VERSION,
+} = await import(resolve(MOD, 'metrics.mjs'));
 const { computeFailureDiagnosis, FAILURE_TYPES } = await import(resolve(MOD, 'failures.mjs'));
 const { extractCases, assertNoHiddenInfo } = await import(resolve(MOD, 'cases.mjs'));
 const { loadEngine } = await import(resolve(MOD, 'engine-link.mjs'));
@@ -276,6 +278,82 @@ test('CLI 端到端：check 拒绝非法文件（退出码 1），aggregate 产�
     assert.equal(aggJson.gameCount, 1);
   } finally {
     rmSync(out, { recursive: true, force: true });
+  }
+});
+
+test('v2 口径：弃置颗数按 colors.length，不按颜色编号求和', () => {
+  assert.equal(discardedCrystalCount([0, 0, 0]), 3, '黄色编号 0 也必须计颗数');
+  assert.equal(discardedCrystalCount([0, 1, 1, 2]), 4);
+  assert.equal(discardedCrystalCount([]), 0);
+  assert.equal(discardedCrystalCount(undefined), 0);
+});
+
+test('v2 口径：死卡 = 取后从未打出；曾打出后休息收回不算死卡', () => {
+  const starters = new Set(['S01', 'S02']);
+  const events = [
+    { type: 'acquire', cardId: 'M35', turn: 3 },
+    { type: 'play', cardId: 'M35', turn: 5 },
+    { type: 'rest', cardId: 'M35', turn: 7 }, // 休息收回不影响"曾使用"
+    { type: 'acquire', cardId: 'M05', turn: 9 },
+    { type: 'acquire', cardId: 'S02', turn: 11 }, // 起始卡永不计死卡
+  ];
+  const r = unusedAcquisitions(events, starters);
+  assert.deepEqual(r.deadCards, ['M05']);
+  assert.deepEqual(r.playedCardIds, ['M35']);
+  assert.equal(r.acquiredNeverPlayed.length, 1);
+  assert.equal(r.acquiredNeverPlayed[0].turn, 9);
+});
+
+test('v2 口径：自领不算被抢；跨回合重复目标只标首次流失', () => {
+  const annotated = annotateMissedClaims([
+    { turn: 10, bySeat: 0, golemId: 'G25', points: 17, chosen: 'play', claimedLaterBy: 0 },
+    { turn: 20, bySeat: 0, golemId: 'G25', points: 17, chosen: 'acquire', claimedLaterBy: 2 },
+    { turn: 30, bySeat: 1, golemId: 'G30', points: 10, chosen: 'rest', claimedLaterBy: 3 },
+    { turn: 40, bySeat: 1, golemId: 'G31', points: 12, chosen: 'rest', claimedLaterBy: null },
+  ]);
+  assert.equal(annotated[0].claimedLaterBySelf, true);
+  assert.equal(annotated[0].claimedLaterByOther, false);
+  assert.equal(annotated[0].firstLossOfTarget, true);
+  assert.equal(annotated[1].claimedLaterBySelf, false);
+  assert.equal(annotated[1].claimedLaterByOther, true);
+  assert.equal(annotated[1].repeatOfEarlierMiss, true);
+  assert.equal(annotated[1].lossEventId, annotated[0].lossEventId, '同一 (席位,目标) 的重复记录共享 lossEventId');
+  assert.equal(annotated[2].claimedLaterByOther, true);
+  assert.equal(annotated[3].claimedLaterByOther, false);
+});
+
+test('v2 集成：指标 schema/弃置守恒/死卡明细/触发时点排名', async () => {
+  for (const f of FINISHED) {
+    const r = await importGameFile(fixture(f));
+    assert.ok(r.ok, f);
+    const m = await computeGameMetrics(r);
+    assert.equal(m.schema, METRIC_SCHEMA_VERSION);
+    assert.equal(m.metricSemantics.version, 2);
+    const discardedTotal = m.overflowEvents.reduce((s, e) => s + e.count, 0);
+    for (const p of m.players) {
+      const o = p.kind.observable;
+      assert.equal(o.crystalsDiscarded, o.discards.reduce((s, d) => s + d.count, 0), `${f} 弃置颗数必须逐事件守恒`);
+      assert.equal(new Set(o.deadCards).size, o.deadCards.length, `${f} 死卡列表不得重复`);
+      assert.equal(o.deadCardDetails.length, o.deadCards.length, `${f} 死卡明细与列表一致`);
+      for (const d of o.deadCardDetails) {
+        assert.ok(typeof d.cardId === 'string' && d.cardId.length > 0);
+        assert.ok(!(o.usedThenRecovered ?? []).includes(d.cardId), `${f} 死卡不能同时被标为使用后收回`);
+      }
+      assert.ok(p.kind.computed.maxEngineSize >= 0);
+    }
+    // 逐事件弃置颗数之和 = 对局级 overflowEvents 之和（跨席位守恒）。
+    const seatDiscarded = m.players.reduce((s, p) => s + p.kind.observable.crystalsDiscarded, 0);
+    assert.equal(seatDiscarded, discardedTotal, `${f} 逐席位弃置与对局级事件守恒`);
+    for (const mc of m.missedClaims) {
+      assert.equal(typeof mc.claimedLaterBySelf, 'boolean');
+      assert.equal(typeof mc.claimedLaterByOther, 'boolean');
+      assert.ok(mc.claimedLaterBySelf === false || mc.claimedLaterByOther === false, '自领与他领互斥');
+    }
+    if (m.game.meta.finished) {
+      assert.ok(m.game.meta.triggerRanking, `${f} 完成局必须有触发时点排名`);
+      assert.equal(m.game.meta.triggerRanking.length, r.meta.seatCount);
+      for (const entry of m.game.meta.triggerScores) assert.equal(typeof entry.score, 'number');
+    }
   }
 });
 
