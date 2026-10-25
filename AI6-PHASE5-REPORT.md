@@ -592,7 +592,8 @@ node training/joint/diagnostics.mjs --players 3 --seeds 10
 ## 附录：独立复核勘误（2026-10-25，AI6 合并后可靠性整改）
 
 > 本附录以勘误方式修正正文声明，正文原文保留不改写。复核脚本与证据见
-> `AI6-POST-MERGE-EVIDENCE-CORRECTIONS.md` 与 `training/redteam/audit-evidence-accounting.mjs`。
+> `AI6-POST-MERGE-EVIDENCE-CORRECTIONS.md` 与 `training/redteam/audit-evidence-accounting.mjs`；
+> 第六阶段 P0 审计（AI6-PHASE6-P0-AUDIT-REPORT.md §3）按公式与原始记录可独立完整重算。
 
 ### 勘误 1：confirm 块总局数 25,600 → 12,800
 
@@ -608,3 +609,9 @@ node training/joint/diagnostics.mjs --players 3 --seeds 10
 - **原始证据来源**：`training/reports/js5-phase5/confirm/*/ablation-confirm-*.json`
   （8 文件，逐局 games 数组在案，未覆盖未改写）。
 - **影响**：不影响挑战判定与晋级结论；样本量声明需按 12,800 引用。
+
+### 勘误 2：唯一种子数（AI6 第六阶段 P0 审计追加，2026-10-24）
+
+- confirm 块实际消费**唯一种子 1,600 个**（4 人数 × 2 池 × 200，分区公式
+  seedBase = 1.36e9 + (人数−2)×1e6 + (diverse ? 5e5 : 0)，配对候选共享同一种子；
+  2 人局各方向数字经核对无误）。

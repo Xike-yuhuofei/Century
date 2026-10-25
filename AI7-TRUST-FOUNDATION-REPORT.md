@@ -15,7 +15,7 @@
 | 历史数据不被覆盖 | **完成** | 所有历史账本只读扫描；`historical-seed-claims.json` 保留 long20 未入账区间与不确定状态；未改写任何 `validation-ledger.json` / `champion.json` |
 | 当前正式冠军决策行为不被本任务改变 | **完成** | `champion.json`、`CHAMPION_PARAMETERS` 参数值、`decision.ts` 默认路由均未改；仅把「实际消费的参数」显式注入并纳入身份 |
 | 统一证据/身份校验可复用 | **完成** | `training/lib/seed-governance.mjs`、`training/lib/version-lock.mjs`、`web-v1/scripts/build-hash.mjs` + CLI |
-| 所有相关测试通过 | **完成（本地全量）** | 见 §7（web-v1 220/220、training 176/176）；CI 既有红灯与 main 同源，见 §7.2 |
+| 所有相关测试通过 | **完成（本地全量）** | 见 §7（web-v1 233/233、training 181/181）；CI 既有红灯与 main 同源，见 §7.2 |
 | 验证池零消费 / 未执行正式挑战 | **完成** | `training/governance/seed-consumption-registry.json` entries=0；下一块仍为 `941514652`，下一 challengeIndex=12 |
 
 **最重要的一句话**：本次没有让任何旧证据"变绿"，而是把"缺账本、缺人数、缺源码指纹、序号可伪造、产物可陈旧"的路径全部改成显式拒绝；既有 `joint-js5` 冠军证据仍按治理状态标记为**待重新验证**，没有重新晋级，也没有改写历史 provenance。
@@ -24,11 +24,12 @@
 
 ## 1. 审计基准、工作区与纪律
 
-- 基准 SHA：`19fa56403aa36ef20d0338e5c3f502de39830802`（`origin/main`）。
+- 审计基准 SHA：`19fa56403aa36ef20d0338e5c3f502de39830802`（任务启动时的 `origin/main`）。
+- 集成：审计期间并行会话把 AI6 第六阶段（PR #48）合并进 `main`（`35f2413`）。为保持独立 PR 可合并，本分支执行 `merge origin/main`，解决 `web-v1/src/ai/decision.ts`、`web-v1/src/js/adapter.ts`、`web-v1/dist/standalone.html` 冲突；保留 AI6 的 JS6/Worker 变更与 AI7 的治理/身份变更。审计证据仍以 `19fa564` 为基线，集成后的新基线为 `35f2413`。
 - 独立 worktree：`/Volumes/Extreme SSD/Projects/Century-ai7-trust`（分支 `fix/ai7-trust-foundation`）。
 - 未修改正式冠军参数、生产默认路由、游戏规则。
 - 未执行任何正式挑战；未消费验证种子池；`seed-consumption-registry.json` 保持空账本。
-- 未直接合并 `main`；交付为独立 PR，等待人工审查。
+- 未把本 PR 合并进 `main`；为保持 PR 可合并性，已将最新 `main` 集成到功能分支（merge commit）；交付仍为独立 PR，等待人工审查。
 
 ---
 
@@ -107,10 +108,10 @@
 | 缺陷 | 修复 |
 |---|---|
 | `champion-guided.ts` 的根筛选 `heuristicContext` 仍写死 `CHAMPION_PARAMETERS` | 统一使用 `o.championParameters ?? CHAMPION_PARAMETERS` 解析出的 `championParameters`；束搜索与根筛选消费同一份参数 |
-| `adapter.ts` 的 JS1 基座 / 溢出 `trimStock` 读活动冠军 | 显式解析并注入 `championParameters`；JS1 基座从该参数 strip-adapter，溢出弃置使用同一参数 |
+| `adapter.ts` 的 JS1 基座 / 溢出 `trimStock` 读活动冠军 | 溢出弃置使用显式解析的 `championParameters`；JS1 基座取自 web 侧 `version-registry` 的冻结 `legacy-js0` 归档（合并 AI6 后的更强身份来源），绝不读活动冠军 |
 | `config.ts` 配置身份无条件读活动 `CHAMPION_PARAMETERS.id/acquisitionVariant` | 改为从实际传入的 `championParameters` 推导；配置哈希随实际消费参数变化 |
 | 模拟器/联赛/duel 只传 `jointVersion/budgetMs`，描述符 `parameters` 无消费路径 | `simulate.mjs`、`league.mjs`、`duel.mjs` 把席位描述符参数校验后显式传入；`duel.candidateVersion('js5')` 解析 `joint-js5-frozen` 归档参数；`decision.ts` 生产路径显式传入活动参数 |
-| 历史版本可被后续源码/归档静默改变 | 新增 `training/champions/version-lock.json` + `training/lib/version-lock.mjs`：冻结 3 份晋级归档 + 10 份决策核心源码的 sha256 |
+| 历史版本可被后续源码/归档静默改变 | 新增 `training/champions/version-lock.json` + `training/lib/version-lock.mjs`：冻结 3 份晋级归档 + 14 份决策核心源码的 sha256（合并 AI6 后新增 `budget.ts` / `simview.ts` / `types.ts` / `version-registry.ts`，显式 `--write --note` 重新基线化） |
 | 归档可被覆盖 | `promote-champion` 拒绝覆盖内容不同的同名归档；拒绝同 id 冠军重晋级改写 provenance |
 
 ### 3.2 可核验的运行时参数
@@ -282,17 +283,17 @@ node training/scripts/promote-champion.mjs --candidate seat5.json \
 
 | 套件 | 结果 |
 |---|---|
-| `web-v1` 全量 `npm test`（内含重新构建） | **220/220 pass，0 fail**（本次实测；规范化身份改造后复跑） |
-| `training` 全量 `npm test` | **176/176 pass，0 fail**（最终复跑） |
-| `training` 新增/改写测试 | `promote` **25/25**、`ai7-trust` **13/13**、`cli.e2e` 4/4、`seed-ledger/tournament` 相关全绿 |
+| `web-v1` 全量 `npm test`（内含重新构建） | **233/233 pass，0 fail**（合并 AI6 第六阶段后复跑；含 main 新增 version-registry / offline-worker 测试） |
+| `training` 全量 `npm test` | **181/181 pass，0 fail**（合并 AI6 第六阶段后复跑；含 main 更新后的 version-identity） |
+| `training` 新增/改写测试 | `promote` **25/25**、`ai7-trust` **13/13**、`cli.e2e` 4/4、`seed-ledger/tournament/version-identity` 相关全绿 |
 | `audit-gate --tier dev` | `dist-freshness` / `version-lock` / `version-identity` / `redteam-regression` 全 PASS |
 | `audit-gate --tier research` | PASS（含 `seed-governance`：15 来源、正式挑战 11 次、PPO 900M 已识别、long20 已占用） |
 | `audit-gate --tier promotion` | 预期 `REQUIRES_APPROVAL`（历史指纹漂移 + 待重新验证），**不伪造 PASS** |
 
 ### 7.1 全量实测记录
 
-- `web-v1`：`npm test` → **220 tests / 220 pass / 0 fail**（含 `tsc + esbuild + build-manifest` 与 Playwright/Node 测试）。
-- `training`：`npm test` → **176 tests / 176 pass / 0 fail**（含新增 AI7 信任测试、中央登记强制、历史高水位、逐种子区间、dist 部署闭包校验与全量既有回归）。
+- `web-v1`：`npm test` → **233 tests / 233 pass / 0 fail**（含 `tsc + esbuild + build-manifest`、main 的 version-registry/offline-worker 测试与 Node 测试）。
+- `training`：`npm test` → **181 tests / 181 pass / 0 fail**（含新增 AI7 信任测试、中央登记强制、历史高水位、逐种子区间、dist 部署闭包校验、main 更新后的 version-identity 与全量既有回归）。
 - 针对性复跑：`promote` 25/25、`ai7-trust` 13/13、`cli.e2e` 4/4。
 - duel JS5 冻结参数注入后针对性复跑：`js5-compare + version-identity + ai7-trust` 全绿（该变更仅训练侧，不触及 `web-v1/src`）。
 - `audit-gate --tier dev`：`dist-freshness`、`version-lock`、`version-identity`、`redteam-regression` 全 PASS。
