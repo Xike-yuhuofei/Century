@@ -3,7 +3,8 @@
 日期：2026-10-25（Asia/Shanghai）
 分支：`codex/js5-evidence-optimization`
 基线：`e2361edc28b95c03ee5ccdd461c9afe0086dfe84`（main）
-本地提交：`ffeb6d0`（代码/测试/计划）、`80ff202`（证据/最终报告）
+本地提交：`ffeb6d0`（代码/测试/计划）、`80ff202`（证据/最终报告）、`387ae4e`（交付注记）、
+`69ec14c`（合并到 main，已推送 origin/main）
 研究目录：`training/reports/js5-goal-optimization/run-20261025-01/`
 
 ## 0. 结论摘要
@@ -198,6 +199,11 @@ C10 局部决策修复；不声明线上或真人棋力提高。
 
 完整逐局数据：`evidence/confirm/`；配对分析：`evidence/confirm-paired.json`。
 
+**合并说明**：确认/性能运行于 `387ae4e`。合并上游 P0-1（js0/js1 版本注册表）与
+P1-2（merchantUsage 商人卡档案）后，`joint-js5` 候选/基线决策路径未改变；
+合并树通过相关 74 + 45 项测试（0 失败）与 tsc，但**未重跑 200 种子确认**。
+因此确认数值按 `387ae4e` 的 JS5 代码披露，不冒充合并后新增证据。
+
 ## 8. 性能验证
 
 配置：1,000 个新公开局面（goal-perf，覆盖开局/中局/后期/终局/溢出）× 每例 3 次，
@@ -240,11 +246,13 @@ C10 局部决策修复；不声明线上或真人棋力提高。
 - `replace`/`add` 只保证"候选可见"，不保证"必然选中"；C10 是唯一在本次证据中
   由注入直接改变选择的案例。
 - `cloneMs` 仍未测量（固定 0，已用 `cloneMsMeasured=false` 显式披露），不能宣称零克隆开销。
-- 未推送、未创建远端 PR、未合并 main、未替换冠军、未消费正式验证池/账本。
+- 已按用户后续明确指示推送 `origin/main`（`69ec14c`）；未创建远端 PR、未发布、
+  未替换 `training/champions/champion.json`、未消费正式验证池/账本、未调整晋级门槛。
 
 ## 10. 交付与复现
 
-- 代码/测试/配置/计划：提交 `ffeb6d0`；证据/最终报告：提交 `80ff202`（不推送）。
+- 代码/测试/配置/计划：`ffeb6d0`；证据/最终报告：`80ff202`；交付注记：`387ae4e`；
+  合并 main 并推送：`69ec14c`（origin/main）。
 - 计划与进度：`PLAN.md`、`PROGRESS.md`。
 - 基线：`BASELINE-MANIFEST.json`、`evidence/frozen-config.json`。
 - 实验记录：`EXPERIMENTS.jsonl`。

@@ -9,6 +9,13 @@
 | human-analytics + duel identity | `node --test training/human-analytics/tests/run-tests.mjs training/joint/tests/duel-identity.test.mjs` | **22 pass / 0 fail** | 终端输出已记录于 `EXPERIMENTS.jsonl` T-001 |
 | C10 / 预算探针 | `probe-c10.mjs`、`probe-budget.mjs` | 见 `evidence/` | `budget-*.json` |
 
+**合并 main 后复跑（69ec14c）**：
+- `web-v1` 相关 11 个测试文件：**74 pass / 0 fail**（92.7s），
+  日志 `merged-web-tests.log`。
+- analytics + duel + version-identity + seed-ledger：**45 pass / 0 fail**（10.3s），
+  日志 `merged-training-tests.log`。
+- `tsc` 通过；C10/预算/配置/Worker 测试均包含在 74 项内。
+
 **未运行**：`ai.test.mjs`、`human-ai.test.mjs`——在默认活动冠军 JS5 100ms 下需 >15min，
 且其分派/公平/结构语义已由上述套件覆盖。该排除在 `EXPERIMENTS.jsonl` T-001 披露。
 **测试通过不等于棋力提高**；它只证明规则/配置/公平性/接口一致性。
