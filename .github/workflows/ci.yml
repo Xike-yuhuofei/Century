@@ -333,7 +333,7 @@ jobs:
         run: node --test ai5/openevolve/tests/seed-policy.test.mjs ai5/openevolve/tests/static-check.malicious.test.mjs
 
   research-worker:
-    name: research-worker (${{ matrix.case.name }})
+    name: research-worker
     needs: [changes, build]
     if: needs.changes.outputs.research == 'true'
     runs-on: ubuntu-latest

@@ -326,6 +326,8 @@ web 单测从 3 份（Focus 14m58s + V2 14m02s + ai-training 内串行 12m31s）
 
 首跑（run 40176731716）失败的具体原因与修复见 §9.4；失败时 `ci-summary` 返回 failure，未伪装为成功。
 
+研究作业（`research-node` / `research-worker` / `research-e2e` / `research-python` / `research-seatbelt`）只在 research 变更时运行，普通 PR 的上表不含它们；full dispatch 实测见 §9.5。
+
 ---
 
 ## 9. 验证记录
@@ -357,10 +359,12 @@ PR #45（`fix/ai7-ci-governance`）的完整 CI：
 
 - run [40179000627](https://github.com/Xike-yuhuofei/Century/actions/runs/40179000627)，head `f345753`，**success**，墙钟 16m49s。
 - `changes`、`governance-tests`、`rules-cards`、`build`、`web-unit`、`training-unit`、`simulation`、`ui-smoke`、`audit-gate`、`ci-summary` 全部真实执行并成功。
-- `research-node`、`research-python`、`research-seatbelt`、`promotion-gate`、`promotion-approval`、`pages-deploy` 为 `skipped`，属于“变更范围不适用”，`ci-summary` 表格中明确标注，未当作必需检查。
+- `research-node`、`research-worker`、`research-e2e`、`research-python`、`research-seatbelt`、`promotion-gate`、`promotion-approval`、`pages-deploy` 为 `skipped`，属于“变更范围不适用”，`ci-summary` 表格中明确标注，未当作必需检查。
 - 普通开发 PR 不触发 promotion 作业：历史晋级的 2 项 `REQUIRES_APPROVAL` 不会阻断本 PR。
 
 路径过滤作用于整个 PR 的 diff（`base...head`），而不是单个提交。若某个 PR 的整体变更只有文档，则只触发 `changes`、`governance-tests`、`rules-cards`、`ci-summary`（分类矩阵由 `scope.test.mjs` 覆盖）；本 PR 自身包含 CI 代码，因此每次 head 更新仍按全代码范围执行，这是“共享/CI 自身变更不得跳过必要测试”的预期行为。
+
+已验证 head `835381e` 的 PR run [40193187465](https://github.com/Xike-yuhuofei/Century/actions/runs/40193187465)：首跑 `web-unit` 在时序敏感用例 `js5-budget` 上失败，重跑失败作业后 `web-unit` 15m15s 通过、`ci-summary` success。该 flake 与失败原因如实记录在 §9.6，未用 `continue-on-error` 或跳过测试掩盖。
 
 ### 9.4 CI 首跑发现的真实问题（已修复，未伪装为成功）
 
@@ -380,6 +384,35 @@ PR 首跑（run 40176731716，attempt 1）暴露两个基础设施问题：
    - 失败时 `ci-summary` 如实返回 failure，证明“失败不会被伪装成成功”。
 
 修复后重跑 CI（run 40179000627，head `f345753`）作为最终验收数据来源。
+
+### 9.5 研究门禁全量验证（workflow_dispatch scope=full）
+
+普通 PR 不会触发 research 作业，为验证它们真实执行，在分支上运行 full dispatch：[run 40193304574](https://github.com/Xike-yuhuofei/Century/actions/runs/40193304574)，head `835381e`。
+
+| 研究作业 | 结果 | 耗时 |
+|---|---|---|
+| research-node（编码/合法性/公平性/种子静态） | success | 2m10s |
+| research-worker (mlp) | success | 13s |
+| research-worker (anomaly) | success | 7s |
+| research-worker (repro) | **cancelled** | 30m10s（超出 30m timeout） |
+| research-e2e（官方自对照 4 种子） | success | 2m47s |
+| research-python | **failure** | 3m10s |
+| research-seatbelt（macOS） | success | 26s |
+| audit-gate（research 层） | success | 16s |
+| ci-summary | **failure**（如实反映上述失败） | 12s |
+
+同期 main 代码作业：web-unit success 15m06s，training-unit success 12m26s，simulation success 8m46s，ui-smoke success 1m31s。run 墙钟 42m31s，其中包含 runner 排队与 repro 的 30m。
+
+两个失败都是**改造前已存在**、与本任务 CI 重构无关：
+
+1. `research-worker (repro)`：`worker-protocol.test.mjs` 的“全 node 席位完整对局并按种子复现”在 30m 内未完成。旧 `ai5.yml` 的 `node-tests` 在 main 基线（run 40171122478）已在 15m 超时被取消，说明旧门禁从未真正完成该文件。该用例包含 2 局全冠军 AI 对局，AI 单次决策的墙钟预算可能导致个别局面极慢；修复属于 AI5 性能/可靠性问题，本任务不修改 AI 决策逻辑。
+2. `research-python`：`TestResumeDeterminismE2E` 的模型 hash 不一致（连续训练 vs 中断恢复），在 main 基线 run 40171122478 同样失败。该测试依赖墙钟采样与训练运行时；修复属于 AI5 训练确定性，本任务不修改训练统计口径。
+
+> 治理结论：这两个失败**没有被跳过、没有 `continue-on-error`、没有改成 PASS**；`ci-summary` 如实 failure。普通 PR 不触发 research 作业（见 §9.3），因此不会被这两个历史失败永久阻断；研究 PR 会看到真实红色结果，需 AI5 负责人修复后再放行。若后续决定把它们移到 nightly，必须单独评审并保留可见失败记录。
+
+### 9.6 运行期 flake 记录
+
+`web-unit` 在 run 40193187465 首跑失败于 `tests/js5-budget.test.mjs` 的“墙钟 balanced”用例（断言“至少应观察到一次有效的墙钟批次”）。该用例依赖 `performance.now` 批次准入，属于时序敏感测试。处理：**只重跑失败作业**，`web-unit` 15m15s 通过、`ci-summary` success。未修改 AI 逻辑、未加 `continue-on-error`、未降低断言强度。
 
 ---
 
