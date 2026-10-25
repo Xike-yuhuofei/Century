@@ -304,5 +304,5 @@ node training/scripts/promote-champion.mjs --candidate seat5.json \
 
 - 分支：`fix/ai7-trust-foundation`
 - 基准：`19fa564`
-- PR 链接：创建后回填。
+- PR：https://github.com/Xike-yuhuofei/Century/pull/47
 - 合并策略：**不自动合并 main**，等待人工审查。
