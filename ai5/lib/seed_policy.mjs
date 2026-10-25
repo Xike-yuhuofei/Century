@@ -66,6 +66,24 @@ export const AI6_JOINT_PERF_SUBBLOCK = [1_350_000_000, 1_351_000_000];
 export const AI6_JS5_TUNE2_SUBBLOCK = [1_351_000_000, 1_352_000_000];
 export const AI6_JS5_CONFIRM_SUBBLOCK = [1_360_000_000, 1_370_000_000];
 
+/** AI6 第六阶段（胜率优先的 JS5 深度强化与搜索算力扩展）子块
+ *（与全部既有块物理隔离；[1.352e9,1.353e9) 与 [1.353e9,1.354e9)、
+ * [1.354e9,1.355e9) 此前预留未消费，2026-10-24 登记）：
+ * - [1.352e9, 1.353e9)  开发/冒烟种子（管线调试，永不用于结论）；
+ * - [1.353e9, 1.354e9)  参数调优/机制消融种子（JS6 机制开发，永不用于结论）；
+ * - [1.354e9, 1.355e9)  性能专用种子（固定工作量复现、负载剖面）；
+ * - [1.37e9, 1.372e9)   任务 A2 双人专项独立验证（全新种子，预注册）；
+ * - [1.372e9, 1.382e9)  任务 B 预算矩阵（分区：seedBase = 1.372e9 +
+ *   (人数−2)×2e6 + (比较类型偏移)；比较类型：0=同算法预算阶梯、1e6=同预算算法对照）；
+ * - [1.382e9, 1.4e9)    独立确认块（F 协议终局确认；分区 = 1.382e9 +
+ *   (人数−2)×3e6 + (池 diverse ? 1.5e6 : 0)，每 (人数,池) 独占 150 万种子）。 */
+export const AI6_PHASE6_DEV_SUBBLOCK = [1_352_000_000, 1_353_000_000];
+export const AI6_PHASE6_TUNE_SUBBLOCK = [1_353_000_000, 1_354_000_000];
+export const AI6_PHASE6_PERF_SUBBLOCK = [1_354_000_000, 1_355_000_000];
+export const AI6_PHASE6_2P_SUBBLOCK = [1_370_000_000, 1_372_000_000];
+export const AI6_PHASE6_BUDGET_SUBBLOCK = [1_372_000_000, 1_382_000_000];
+export const AI6_PHASE6_CONFIRM_SUBBLOCK = [1_382_000_000, 1_400_000_000];
+
 /** JS5 Goal 证据优化（2026-10-25，codex/js5-evidence-optimization）专用块。
  * 与既有调参/确认/正式验证池物理隔离；只用于本任务的机制消融与独立确认，
  * 不写正式验证账本。子块（左右闭开）：
@@ -77,6 +95,15 @@ export const AI6_JS5_GOAL_DEV_SUBBLOCK = [1_370_000_000, 1_372_000_000];
 export const AI6_JS5_GOAL_CONFIRM_SUBBLOCK = [1_380_000_000, 1_390_000_000];
 /** 性能验证局面生成块（只用于延迟/非法率，不进入任何胜率结论）。 */
 export const AI6_JS5_GOAL_PERF_SUBBLOCK = [1_372_000_000, 1_374_000_000];
+
+/** ⚠️ 并行会话登记重叠披露（2026-10-25 合并时发现，登记原文保留不改）：
+ * 第六阶段块（research/ai6-phase6-winrate-scaling，2026-10-24 登记）与 JS5 Goal 块
+ * （codex/js5-evidence-optimization，2026-10-25 合并）由两个并行会话各自登记，存在
+ * 三处区间重叠：PHASE6_2P ≡ GOAL_DEV = [1.37e9,1.372e9)；PHASE6_BUDGET ⊃
+ * GOAL_PERF = [1.372e9,1.374e9)；PHASE6_CONFIRM ⊃ GOAL_CONFIRM = [1.38e9,1.39e9)。
+ * 双方实验均已完成、种子逐局落盘可审计（phase6 报告与 js5-goal 报告各自独立），
+ * 确定性重放不受影响；重叠仅意味着「这些区间不得再被任何新块登记或消费」。
+ * 纪律：后续新块一律从 [1.41e9) 之后或与既有登记逐一核对后分配。 */
 
 /** AI6 对抗性联赛（overnight-adversarial-league，research/overnight-adversarial-league）
  * 评测专用块：独立于 JS6 搜索研发的高水平对手池 / 自动联赛 / 防过拟合双轴评估。

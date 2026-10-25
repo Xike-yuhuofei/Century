@@ -232,3 +232,33 @@ test('非终局状态不触发精确求解（避免中局贪心化）', () => {
   assert.equal(isFinalOwnAction(view), false);
   assert.equal(solveFinalAction(view, legalOf(mid)), null);
 });
+
+test('官方平分规则：同分时座位号大者优先（求解名次与引擎 ranking 一致）', () => {
+  // 终局圈：双方同分（各 1 颗绿水晶），座位号大者为本轮后手 ⇒ 名次更高。
+  const fakeView = (playerId) => ({
+    playerId, current: playerId, phase: 'turn', triggerPlayer: 0, turnNumber: 20,
+    players: [
+      { id: 0, stock: [0, 1, 0, 0], hand: [], played: [], claimed: [], copper: 0, silver: 0 },
+      { id: 1, stock: [0, 1, 0, 0], hand: [], played: [], claimed: [], copper: 0, silver: 0 },
+    ],
+    golemMarket: [], merchantMarket: [], copper: 0, silver: 0,
+  });
+  const legal = [{ type: 'rest' }];
+
+  const seat0 = solveFinalAction(fakeView(0), legal);
+  assert.equal(seat0.ownFinalScore, 1);
+  assert.equal(seat0.guaranteedRank, 2, '座位 0 同分应为名次 2（官方后手优先）');
+  assert.equal(seat0.optimisticRank, 2);
+
+  const seat1 = solveFinalAction(fakeView(1), legal);
+  assert.equal(seat1.ownFinalScore, 1);
+  assert.equal(seat1.guaranteedRank, 1, '座位 1 同分应为名次 1');
+  assert.equal(seat1.optimisticRank, 1);
+
+  // 与正式引擎 ranking 的平分规则逐条一致（score(b) − score(a) || b.id − a.id）。
+  const game = { players: fakeView(0).players.map(p => ({ ...p, name: `P${p.id}`, turns: 0 })) };
+  assert.deepEqual(ranking(game).map(p => p.id), [1, 0]);
+
+  // 求解器不得把“同分但座位更小”误判为领先：座位 0 的最终名次必须等于引擎名次。
+  assert.equal(seat0.guaranteedRank, ranking(game).findIndex(p => p.id === 0) + 1);
+});

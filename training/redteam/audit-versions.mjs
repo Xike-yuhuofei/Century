@@ -184,7 +184,7 @@ const isAdapter = r => r.reason.includes('联合');
   const variants = [];
   for (const [poolName, pool] of Object.entries(pools)) {
     for (const entry of pool) {
-      if (entry.liveChampion || entry.randomLegal) continue; // 冠军本体与随机策略不属权重变体
+      if (entry.liveChampion || entry.randomLegal || entry.championBody) continue; // 冠军本体（活动别名或冻结注册身份）与随机策略不属权重变体
       variants.push({ id: `${poolName}:${entry.id}`, parameters: entry.parameters, structure: entry.structure });
     }
   }

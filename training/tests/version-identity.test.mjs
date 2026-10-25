@@ -1,23 +1,31 @@
-/** 版本身份回归测试（AI6 合并后整改 P0-1）。
+/** 版本身份回归测试（AI6 合并后整改 P0-1 + 第六阶段 P0 合并）。
  *
  * 缺陷背景：PR #30 晋级后 CHAMPION_PARAMETERS 携带 adapter='champion-guided'，
  * duel.mjs 的 js0/js1 候选路径、equivalence-audit 的 js0 侧、adapter.ts 的
  * joint-js1 分支全部实际执行 JS5 联合搜索（audit-versions V2/V3 8/8 探针实锤，
- * 首个动作分歧 @step=1）。修复：不可变版本注册表（training/lib/version-registry.mjs）
+ * 首个动作分歧 @step=1）。修复：不可变版本注册表（training/lib/version-registry.mjs
+ * 与 web-v1/src/ai/version-registry.ts 双通道、同一归档快照来源）
  * + 冻结归档身份 + 全部调用点改经描述符分派。
  *
  * 本测试全部基于**真实行为与有效版本分派**（行动、reason 标记、指纹链接），
  * 不只检查描述符名称。禁止以「把 JS0 改名成 JS5」的方式消除本文件任何断言。
+ *
+ * 两套注册表的关系：training/lib/version-registry.mjs（Node 侧，sha256 指纹，
+ * 读晋级归档）与 web-v1/src/ai/version-registry.ts（浏览器侧，FNV 指纹，
+ * 参数内联自同一归档）——身份语义一致，指纹算法不同（各自登记处披露）。
+ * 对手池单一事实来源 = training/joint/pools.mjs（第六阶段 P0 整改）。
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createGame, applyAction } from '../../web-v1/dist/js/engine.js';
-import { chooseAIAction, BASELINE_PARAMETERS } from '../../web-v1/dist/js/ai.js';
+import { chooseAIAction, BASELINE_PARAMETERS, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
 import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
 import { CHAMPION_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
+import { FROZEN_VERSIONS, frozenVersion, parametersFingerprint } from '../../web-v1/dist/js/ai/version-registry.js';
+import { POOLS, HISTORICAL_POOLS } from '../joint/pools.mjs';
 import {
   resolveAlgorithmVersion, decisionOptions, describeVersionRegistry,
   assertFrozenBaseline, identityFingerprint,
@@ -26,6 +34,7 @@ import { candidateVersion, runGame, classicPool, diversePool } from '../joint/du
 
 const here = resolve(dirname(fileURLToPath(import.meta.url)));
 const REPO_ROOT = resolve(here, '..', '..');
+const CANARY = resolve(REPO_ROOT, 'training/joint/version-canary.json');
 
 /** 公开状态探针：固定种子 5 人局，冻结冠军推进 steps 步后停在确定状态。 */
 function probeState(seed, steps) {
@@ -141,15 +150,22 @@ test('对手池：全部变体 strip-adapter 且权重真实生效（极端权�
   const pools = [...classicPool(), ...diversePool()];
   for (const entry of pools) {
     if (entry.randomLegal) continue;
-    if (!entry.liveChampion) {
+    // 冠军本体席位（live-champion 或冻结注册身份 championBody）按定义携带
+    // 适配器字段（经 decision.ts 适配器分派 = 当前/冻结冠军行为），不属变体。
+    if (!entry.liveChampion && !entry.championBody) {
       for (const key of ['adapter', 'jointVersion', 'budgetMs']) {
         assert.equal(entry.parameters[key], undefined, `池变体 ${entry.id} 不得携带 ${key}`);
       }
     }
   }
-  // 风格变体标签沿归档 id（历史 confirm versionsIds 口径），不得冠以活动冠军 id。
+  // 风格变体标签不得冠以冠军 id（style-* 为第六阶段命名；ai5-readiness-efficiency@*
+  // 为第五阶段历史口径——两者都以冻结 legacy-js0 为权重基座）。
   const classicIds = classicPool().map(e => e.id);
-  assert.ok(classicIds.some(id => id.startsWith('ai5-readiness-efficiency@')), `风格变体标签应沿冻结基座 id，实际：${classicIds.join('、')}`);
+  const variantIds = classicIds.filter(id => id !== 'joint-js5-frozen' && id !== 'neutral-baseline');
+  assert.ok(variantIds.length >= 3, `classic 池应含至少 3 个风格变体，实际：${classicIds.join('、')}`);
+  for (const id of variantIds) {
+    assert.ok(!id.startsWith('joint-js5'), `风格变体标签不得冠以冠军 id：${id}`);
+  }
   // 权重活性：极端 tempo/rest 扰动必须改变行动（权重路径可达、未被适配器劫持）。
   const extreme = { ...base, id: 'extreme-probe', tempoWeight: 5, restWeight: 0.05 };
   let differs = 0;
@@ -166,7 +182,7 @@ test('端到端：duel.runGame js0 候选席位完成对局且版本披露可审
   // 2 人局小样本：对局完成 + 终局指纹在独立复跑间逐位一致（决策分派确定性），
   // 版本披露含冻结候选 id 与冻结对手标签。
   const seed = 1_320_000_100; // AI6_JOINT_TEST_SUBBLOCK 内测试种子
-  const pool = classicPool().filter(e => !e.liveChampion); // 池不含候选本体语义
+  const pool = classicPool().filter(e => !e.liveChampion && !e.championBody); // 池不含候选本体语义
   const run1 = runGame({ seed, seatCount: 2, candidateSeats: [0], candidate: candidateVersion('js0'), opponents: pool });
   const run2 = runGame({ seed, seatCount: 2, candidateSeats: [0], candidate: candidateVersion('js0'), opponents: pool });
   assert.equal(run1.status, 'finished');
@@ -175,7 +191,7 @@ test('端到端：duel.runGame js0 候选席位完成对局且版本披露可审
   assert.equal(run1.winnerSeat, run2.winnerSeat);
   assert.ok(run1.moves > 0);
   assert.ok(run1.versionsIds.includes('js0-frozen-champion'), `候选席位版本披露：${run1.versionsIds.join('、')}`);
-  // 对手席位标签 = 冻结归档 id（不得随活动冠军漂移）。
+  // 对手席位标签 = 冻结池 id（不得随活动冠军漂移）。
   const frozenOpponentIds = new Set(pool.map(e => e.id));
   for (const id of run1.versionsIds) {
     if (id !== 'js0-frozen-champion') assert.ok(frozenOpponentIds.has(id), `对手席位 ${id} 必须来自冻结池`);
@@ -184,7 +200,7 @@ test('端到端：duel.runGame js0 候选席位完成对局且版本披露可审
 
 test('端到端：duel.runGame js0 与 js5 候选在同一受支持配置下行为不同（基线非 JS5 自我对弈）', () => {
   const seed = 1_320_000_102;
-  const pool = classicPool().filter(e => !e.liveChampion);
+  const pool = classicPool().filter(e => !e.liveChampion && !e.championBody);
   const js0Run = runGame({ seed, seatCount: 2, candidateSeats: [0], candidate: candidateVersion('js0'), opponents: pool });
   const js5Run = runGame({ seed, seatCount: 2, candidateSeats: [0], candidate: candidateVersion('js5'), opponents: pool, jointOptions: { budgetMs: 100 } });
   assert.equal(js0Run.status, 'finished');
@@ -209,4 +225,80 @@ test('注册表快照：describeVersionRegistry 披露全部身份字段与指�
   const js0 = snap.versions.find(v => v.registryId === 'legacy-js0');
   assert.equal(js0.parametersId, 'ai5-readiness-efficiency');
   assert.equal(snap.liveChampionParametersId, CHAMPION_PARAMETERS.id);
+});
+
+// ===== AI6 第六阶段追加：金丝雀账本 + pools.mjs 单一事实来源 =====
+
+test('金丝雀账本一致性：version-canary.json 指纹与 web-v1 注册表一致', () => {
+  assert.ok(existsSync(CANARY), 'version-canary.json 必须提交入库（金丝雀登记）');
+  const doc = JSON.parse(readFileSync(CANARY, 'utf8'));
+  for (const [id, fp] of Object.entries(doc.fingerprints)) {
+    assert.equal(parametersFingerprint(FROZEN_VERSIONS[id].parameters), fp, `${id} 冻结参数漂移`);
+  }
+  assert.ok(doc.digests['legacy-js0'], '金丝雀决策摘要必须含 legacy-js0');
+  assert.ok(doc.digests['joint-js5-frozen'], '金丝雀决策摘要必须含 joint-js5-frozen');
+});
+
+test('classic 池（pools.mjs）：风格变体参数 ≠ 基座且走束搜索结构；冠军席 = joint-js5-frozen', () => {
+  const pool = POOLS.classic();
+  const ids = pool.map(m => m.id);
+  assert.equal(ids[0], 'joint-js5-frozen');
+  assert.ok(ids.includes('neutral-baseline'));
+  const legacy = frozenVersion('legacy-js0');
+  for (const id of ['style-tempo', 'style-contest', 'style-engine']) {
+    const m = pool.find(x => x.id === id);
+    assert.ok(m, `${id} 缺失`);
+    assert.notDeepEqual(m.parameters, legacy.parameters, `${id} 权重修改无效`);
+    assert.equal(m.structure, 'beam-rollout');
+  }
+  // 冠军席参数 = 冻结 js5（适配器分派）。
+  assert.deepEqual(pool[0].parameters, FROZEN_VERSIONS['joint-js5-frozen'].parameters);
+});
+
+test('diverse 池（pools.mjs）：结构多样性成员齐全且变体参数互不相同', () => {
+  const pool = POOLS.diverse();
+  const ids = pool.map(m => m.id);
+  for (const expected of ['joint-js5-frozen', 'ai4-struct-beam-rollout', 'style-rush', 'style-engine', 'random-legal']) {
+    assert.ok(ids.includes(expected), `diverse 池缺少 ${expected}`);
+  }
+  const rush = pool.find(m => m.id === 'style-rush');
+  const eng = pool.find(m => m.id === 'style-engine');
+  assert.notDeepEqual(rush.parameters, eng.parameters);
+  assert.equal(pool.find(m => m.id === 'random-legal').randomLegal, true);
+});
+
+test('phase5 历史池：冠军席 id = ai5-readiness-efficiency（历史重放专用）', () => {
+  const pool = HISTORICAL_POOLS.classic();
+  assert.equal(pool[0].id, 'ai5-readiness-efficiency');
+  assert.equal(pool[0].parameters.id, 'ai5-readiness-efficiency');
+  const dpool = HISTORICAL_POOLS.diverse();
+  assert.equal(dpool[0].id, 'ai5-readiness-efficiency');
+});
+
+test('决策级身份不等式：legacy-js0 ≠ legacy-js1 ≠ joint-js5（单局自对局）', () => {
+  const seed = 1300500000;
+  const selfPlay = play => {
+    let game = createGame(['A', 'B'], seed, [1]);
+    game.players[0].isAI = true;
+    const decisions = [];
+    let moves = 0;
+    while (game.phase !== 'finished' && moves < 1500) {
+      const seat = game.current;
+      const profile = seat === 0 ? NEUTRAL_PROFILE : PROFILES[(seat - 1) % PROFILES.length];
+      const action = play(game, seat, profile);
+      decisions.push(JSON.stringify(action));
+      game = applyAction(game, action);
+      moves += 1;
+    }
+    return JSON.stringify(decisions);
+  };
+  const beam = (v) => selfPlay((g, seat, profile) =>
+    chooseAIAction(g, { parameters: frozenVersion(v).parameters, structure: frozenVersion(v).structure, profile }).action);
+  const js5 = selfPlay((g, seat, profile) =>
+    chooseJointAction(g, { version: 'joint-js5', workUnits: 16, simSeed: seed, profile }).action);
+  const d0 = beam('legacy-js0');
+  const d1 = beam('legacy-js1');
+  assert.notEqual(d0, d1, 'legacy-js0 与 legacy-js1（beam-contest）必须有行为差异');
+  assert.notEqual(d0, js5, 'legacy-js0 与 joint-js5 必须有行为差异');
+  assert.notEqual(d1, js5, 'legacy-js1 与 joint-js5 必须有行为差异');
 });

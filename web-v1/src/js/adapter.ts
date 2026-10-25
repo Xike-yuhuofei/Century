@@ -19,6 +19,7 @@ import type { Game, Action, Color } from '../engine.js';
 import { applyAction } from '../engine.js';
 import { buildObservation } from '../ai/observation.js';
 import { CHAMPION_PARAMETERS, validateAIParameters, type AIParameters } from '../ai/parameters.js';
+import { FROZEN_VERSIONS } from '../ai/version-registry.js';
 import { trimStock } from '../ai/evaluator.js';
 import { chooseAIAction } from '../ai/decision.js';
 import type { Profile } from '../ai/profiles.js';
@@ -38,6 +39,10 @@ export type JointAdapterOptions = JointSearchOptions & {
   profile?: Profile;
   /** 决策席位（缺省 game.current；非当前席位抛错）。 */
   playerId?: number;
+  /** 冠军基座参数（AI6 第六阶段 P0 版本身份透传）：决策入口把完整参数对象
+   * 传入适配器——冠军本体传自身（行为不变），风格变体的权重修改经此真实
+   * 影响冠军基座规划；缺省时 champion-guided 使用 CHAMPION_PARAMETERS。 */
+  championParameters?: AIParameters;
 };
 
 export type JointAdapterDecision = {
@@ -81,19 +86,17 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
 
   // JS1：冠军 + 静态目标存活折扣 = beam-contest 结构（冠军 beam-rollout +
   // golemSurvivalModel），委托正式冠军入口，保证与冠军代码逐位同源。
-  // P0-1 整改（2026-10-25）：基座必须剥离适配器字段——晋级后 CHAMPION_PARAMETERS
-  // 携带 adapter='champion-guided'，直接透传会被 decision.ts 静默分派回联合搜索，
-  // beam-contest 结构被忽略（js1 实际执行 JS5 的身份污染）。基座 = 冠军参数的
-  // 束搜索形态（适配器冠军权重缺省补 1.0 + 结构 beam-rollout，与训练侧
-  // beamBaseParameters 同口径）；冠军决策路径（champion-guided 分支）不受影响。
+  // AI6 第六阶段 P0 版本身份修复（合并 P0-1 整改语义）：JS1 的"冠军"指
+  // 冻结历史冠军 legacy-js0（ai5-readiness-efficiency 晋级归档）。此前委托
+  // CHAMPION_PARAMETERS——PR #30 晋级后该常量携带 adapter 字段，决策入口
+  // 适配器分支优先于 structure，JS1 会静默运行 JS5（修复前失败证据：
+  // confirm-replay-check js0/js1 重放 24/24 → 1-2/12）。基座取自不可变
+  // 版本注册表（与训练侧 legacy-js1 = 冻结归档 + beam-contest 同一身份），
+  // 与活动冠军解耦——活动冠军切换不得改变历史版本行为；strip-adapter
+  // 形态只作参数消毒（适配器字段绝不入束搜索参数）。
   if (version.kind === 'champion-contest') {
-    const beamBase: Record<string, unknown> = { ...CHAMPION_PARAMETERS };
-    const wasAdapter = beamBase.adapter !== undefined;
-    for (const key of ['adapter', 'jointVersion', 'budgetMs']) delete beamBase[key];
-    if (wasAdapter && beamBase.structure === undefined) beamBase.structure = 'beam-rollout';
-    const base = validateAIParameters(beamBase as AIParameters);
     const response = chooseAIAction(game, {
-      parameters: base,
+      parameters: validateAIParameters(FROZEN_VERSIONS['legacy-js0'].parameters),
       structure: 'beam-contest',
       profile: options.profile,
     });
@@ -121,8 +124,13 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   // profile → profileName 映射对全部 joint 版本一致（champion-guided 的冠军基座
   // 与轨迹内策略都必须消费同一人格注入，否则评测席位人格失配——回归审计
   // gate=never vs js0 逐决策一致性强制此项）。
+  // 版本化 guided 缺省（AI6 第六阶段）：JOINT_VERSIONS[version].guided 与
+  // optionPreset 都在显式注入之前合并（显式选项最终优先）——使 joint-js5-opt /
+  // joint-js6 等 champion-guided 版本自描述（版本身份不依赖调用方记得传对选项）。
+  const guidedDefaults = (version as { guided?: Record<string, unknown> }).guided ?? {};
   const decision = version.kind === 'champion-guided'
     ? (planner as ReturnType<typeof createChampionGuidedPlanner>).decide(observation, {
+        ...guidedDefaults,
         ...resolvedOptions,
         profileName: options.profile?.name,
       } as ChampionGuidedSearchOptions)

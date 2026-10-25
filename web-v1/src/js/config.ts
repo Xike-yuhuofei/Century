@@ -113,11 +113,16 @@ export const AI7_CANDIDATE_PARAMETERS = Object.freeze({
   'engine-v2-seat': engineVariantParameters('stratified'),
 });
 
-/** 版本预设（仅已记载配置；preset 为空 = 与冻结缺省逐项相同）。 */
+/** 版本预设（仅已记载配置；preset 为空 = 与冻结缺省逐项相同）。
+ * AI6 第六阶段：champion-guided 版本可另带 guided 缺省（如 joint-js6 的
+ * allocation/endgameMode）——一并落入 preset 参与 resolved 披露与哈希；
+ * guided 先落位、optionPreset 后落位（后者优先），显式注入最终覆盖。
+ * AI7：parameterVariant 额外注入候选基座参数集（同样进入 resolved 与哈希）。 */
 export function versionOptionPreset(versionId: string): Record<string, unknown> {
   const version = JOINT_VERSIONS[versionId as keyof typeof JOINT_VERSIONS];
   if (!version) throw new Error(`未知联合规划版本：${String(versionId)}`);
-  const preset: Record<string, unknown> = { ...(version.optionPreset ?? {}) };
+  const guided = (version as { guided?: Record<string, unknown> }).guided ?? {};
+  const preset: Record<string, unknown> = { ...guided, ...(version.optionPreset ?? {}) };
   if (version.parameterVariant) {
     preset.championParameters = AI7_CANDIDATE_PARAMETERS[version.parameterVariant];
   }

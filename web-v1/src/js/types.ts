@@ -92,6 +92,8 @@ export type JointDecisionStats = {
   aggregateMs?: number;
   /** 实际创建的根信念模拟数（B 优化披露：非门控决策 = 1，门控 = worlds）。 */
   rootSimulationsCreated?: number;
+  /** racing 淘汰的非冠军候选累计数（C2 allocation=racing 披露；balanced 恒 0）。 */
+  racingEliminated?: number;
   /** 本决策实际参与试验的信念世界数（零试验 = 0；与配置数分开披露）。 */
   worldsConfigured?: number;
   /** 已启动的完整候选批次（每批 = 全部候选 × 批内世界数）。 */
@@ -266,13 +268,14 @@ export interface JointPlanner {
  * JS5 = PR #26 修复后的 Champion-Guided Joint Search（champion-guided 结构）。
  * joint-js5-opt = AI6 第五阶段优化配置（champion-guided 结构 + tune2 块
  * 选出的选项覆盖；配置经评测选项显式注入并记录于报告 jointOptions）。
+ * AI6 第六阶段：joint-js6 = JS6 冠军引导结构（guided 缺省见 JOINT_VERSIONS）。
  * AI7 候选（全部缺省不参与生产决策）：
  * - joint-js6-endgame：终局圈精确求解 + 官方得分弃置；
  * - joint-js7-arb：JS5 配对仲裁 + 置信下界 + 高价值认领保护；
  * - joint-js8-engine：引擎价值 V2（剩余回合/重复产出/循环成本）；
  * - joint-js8-engine-seat：引擎价值 V2 + 人数条件竞争折扣（独立消融）。 */
 export type JointVersionId =
-  | 'joint-js1' | 'joint-js2' | 'joint-js3' | 'joint-js4' | 'joint-js5' | 'joint-js5-opt'
+  | 'joint-js1' | 'joint-js2' | 'joint-js3' | 'joint-js4' | 'joint-js5' | 'joint-js5-opt' | 'joint-js6'
   | 'joint-js6-endgame' | 'joint-js7-arb' | 'joint-js8-engine' | 'joint-js8-engine-seat';
 
 export type JointVersionSpec = {
@@ -283,6 +286,10 @@ export type JointVersionSpec = {
    * + golemSurvivalModel 静态目标存活折扣，即 JS1 定义）；kind=joint：本模块联合搜索；
    * kind=champion-guided：JS5 冠军引导选择性联合搜索（champion-guided.ts）。 */
   defaults: Required<Pick<JointSearchOptions, 'variant' | 'opponentMode' | 'evaluator'>>;
+  /** champion-guided 专属缺省（AI6 第六阶段：JS6 版本化组合；显式注入可逐项覆盖）。
+   * Record 形态避免与 champion-guided.ts 的循环类型依赖；键 = ChampionGuidedOptions。
+   * 合并后与 optionPreset 并存：guided 先落位，optionPreset 后落位（显式注入最终覆盖）。 */
+  guided?: Record<string, unknown>;
   /** 版本独有选项预设（显式注入；空/缺省 = 与冻结缺省相同）。预设必须来自
    * 已有评测记载，禁止把标签当成配置。 */
   optionPreset?: Partial<Pick<JointSearchOptions,
@@ -356,5 +363,14 @@ export const JOINT_VERSIONS: Record<JointVersionId, JointVersionSpec> = {
     id: 'joint-js8-engine-seat', label: 'AI7-C4 引擎价值 V2 + 人数条件竞争折扣（独立消融）', kind: 'champion-guided',
     defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
     parameterVariant: 'engine-v2-seat',
+  },
+  'joint-js6': {
+    id: 'joint-js6', label: 'JS6 第六阶段实验候选（champion-guided + C2 racing 预算分配 + C4 终局认领聚焦）',
+    kind: 'champion-guided',
+    defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
+    // JS6 组合 = JS5 语义 + racing 自适应预算分配 + 终局认领聚焦。
+    // worlds/candidateCap 保持 JS5 缺省（4/4）——单因子消融（任务 C1/C3）决定是否升级；
+    // 任何组件若无独立正向证据则从组合中移除（任务 E 纪律：只合并可靠正向证据）。
+    guided: { allocation: 'racing', endgameMode: 'claimFocus' },
   },
 };
