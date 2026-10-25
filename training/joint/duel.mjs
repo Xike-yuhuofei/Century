@@ -25,7 +25,10 @@ import { createGame, applyAction, score as engineScore, ranking } from '../../we
 import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
 import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
 import { CHAMPION_PARAMETERS, BASELINE_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
-import { assertInBlock, AI6_JS5_CONFIRM_SUBBLOCK, AI6_JS5_TUNE2_SUBBLOCK } from '../../ai5/lib/seed_policy.mjs';
+import {
+  assertInBlock, AI6_JS5_CONFIRM_SUBBLOCK, AI6_JS5_TUNE2_SUBBLOCK,
+  AI6_JS5_GOAL_DEV_SUBBLOCK, AI6_JS5_GOAL_CONFIRM_SUBBLOCK,
+} from '../../ai5/lib/seed_policy.mjs';
 import { firstPlaceClusterCI, pairedDiffSummary, latencySummary } from '../baseline/stats.mjs';
 import { wilsonCI, meanCI } from '../evaluator/stats.mjs';
 import { REPO_ROOT, engineBundleSha256 } from '../lib/paths.mjs';
@@ -218,7 +221,8 @@ export function runGame({ seed, seatCount, candidateSeats, candidate, opponents,
             gated: r.joint?.gated ?? null,
             action: r.action, championAction: r.joint?.championAction ?? null,
             reason: r.reason,
-            candidateSeats,
+            candidateSeats, candidateId: version.id,
+            configHash: r.config?.hash ?? null,
           });
         }
       } else if (version.candidate && version.kind === 'champion') {
@@ -228,6 +232,15 @@ export function runGame({ seed, seatCount, candidateSeats, candidate, opponents,
         const opts = decisionOptions(d);
         const r = chooseAIAction(game, { ...opts.beam, profile: seatProfile(seat) });
         action = r.action;
+        if (diagnostics) {
+          diagnostics.push({
+            seed, seatCount, direction: candidateSeats.length === 1 ? 'A' : 'B', seat,
+            turnNumber: game.turnNumber, phase: game.phase,
+            elapsedMs: 0, rollouts: 0, gated: null,
+            action: r.action, championAction: r.action, reason: r.reason,
+            candidateSeats, candidateId: version.id,
+          });
+        }
       } else if (version.randomLegal) {
         action = randomLegalAction(game, rngFor(seat));
       } else {
@@ -272,14 +285,16 @@ export function runGame({ seed, seatCount, candidateSeats, candidate, opponents,
 /** 运行一个 (版本, 人数) 消融单元：双向配对 + 座位轮换。
  * pool：'classic'（缺省）| 'diverse'（第五阶段 D2 对手池维度）。
  * diagnostics：可选数组（任务 G 逐决策诊断流；调用方收集后落盘 JSONL）。 */
-export function runAblationCell({ candidateId, seatCount, seeds, seedBase, jointOptions, pool = 'classic', diagnostics }) {
+export function runAblationCell({ candidateId, seatCount, seeds, seedBase, jointOptions, pool = 'classic', diagnostics, directions = ['A', 'B'] }) {
   assertInBlock(seedBase, seedBase < 1_310_000_000
     ? [1_300_000_000, 1_310_000_000]
     : seedBase < 1_320_000_000 ? [1_310_000_000, 1_320_000_000]
     : seedBase < 1_330_000_000 ? [1_320_000_000, 1_330_000_000]
     : seedBase < 1_340_000_000 ? [1_330_000_000, 1_340_000_000]
     : seedBase < AI6_JS5_TUNE2_SUBBLOCK[1] ? AI6_JS5_TUNE2_SUBBLOCK
-    : AI6_JS5_CONFIRM_SUBBLOCK, 'seedBase');
+    : seedBase < AI6_JS5_CONFIRM_SUBBLOCK[1] ? AI6_JS5_CONFIRM_SUBBLOCK
+    : seedBase < AI6_JS5_GOAL_DEV_SUBBLOCK[1] ? AI6_JS5_GOAL_DEV_SUBBLOCK
+    : AI6_JS5_GOAL_CONFIRM_SUBBLOCK, 'seedBase');
   const candidate = candidateVersion(candidateId);
   const opponents = pool === 'diverse' ? diversePool() : classicPool();
   const games = [];
@@ -288,28 +303,38 @@ export function runAblationCell({ candidateId, seatCount, seeds, seedBase, joint
     const seed = seedBase + i;
     const seatA = [i % seatCount];
     const seatB = Array.from({ length: seatCount }, (_, s) => s).filter(s => s !== i % seatCount);
-    const a = runGame({ seed, seatCount, candidateSeats: seatA, candidate, opponents, jointOptions, diagnostics });
-    const b = runGame({ seed, seatCount, candidateSeats: seatB, candidate, opponents, jointOptions, diagnostics });
+    const a = directions.includes('A')
+      ? runGame({ seed, seatCount, candidateSeats: seatA, candidate, opponents, jointOptions, diagnostics })
+      : null;
+    const b = directions.includes('B')
+      ? runGame({ seed, seatCount, candidateSeats: seatB, candidate, opponents, jointOptions, diagnostics })
+      : null;
     for (const [direction, r, seats] of [['A', a, seatA], ['B', b, seatB]]) {
+      if (!r) continue;
       games.push({ seed, direction, candidateSeats: seats, seatCount, ...r });
     }
-    if (a.status === 'finished' && b.status === 'finished') {
-      seedPairs.push({ seed, status: 'finished', diff: Number(((a.scoreDiff + b.scoreDiff) / 2).toFixed(4)), anomalies: 0 });
+    const finished = [a, b].filter(Boolean);
+    if (finished.length && finished.every(r => r.status === 'finished')) {
+      seedPairs.push({
+        seed, status: 'finished',
+        diff: Number((finished.reduce((s, r) => s + r.scoreDiff, 0) / finished.length).toFixed(4)),
+        anomalies: 0,
+      });
     } else {
-      seedPairs.push({ seed, status: 'anomaly', diff: null, anomalies: (a.status !== 'finished') + (b.status !== 'finished') });
+      seedPairs.push({ seed, status: 'anomaly', diff: null, anomalies: finished.filter(r => r.status !== 'finished').length });
     }
   }
-  return summarizeCell({ candidateId, seatCount, games, seedPairs });
+  return summarizeCell({ candidateId, seatCount, games, seedPairs, directions });
 }
 
 /** 汇总一个消融单元（对齐 runner.mjs 指标口径；方向分开披露）。
  * games 数组逐局披露（seed/direction/firstPlace/scoreDiff）——配对比较
  * （compare.mjs 的种子级配对 bootstrap）与审计复算必需。 */
-function summarizeCell({ candidateId, seatCount, games, seedPairs }) {
+function summarizeCell({ candidateId, seatCount, games, seedPairs, directions = ['A', 'B'] }) {
   const finished = games.filter(g => g.status === 'finished');
   const anomalies = games.length - finished.length;
   const summary = {
-    candidateId, seatCount,
+    candidateId, seatCount, directions,
     totalGames: games.length, finishedGames: finished.length, anomalies,
     anomalyReasons: Object.entries(games.filter(g => g.status !== 'finished').reduce((acc, g) => {
       const key = (g.reason ?? 'unknown').replace(/ seed.*$/, '').slice(0, 80);
@@ -391,6 +416,8 @@ function parseArgs() {
     budgetMs: undefined, workUnits: undefined, horizon: undefined, worlds: undefined,
     gateMode: undefined, evaluator: undefined, overrideMargin: undefined,
     contestThreshold: undefined, candidateCap: undefined, claimRanking: undefined,
+    nearTerminalCandidate: undefined, screenGoalScope: undefined, batchAdmission: undefined,
+    directions: ['A', 'B'],
     outDir: resolve(REPO_ROOT, 'training/reports/joint-search-v1'), diagnostics: undefined,
   };
   const argv = process.argv.slice(2);
@@ -410,6 +437,10 @@ function parseArgs() {
     else if (argv[i] === '--threshold') args.contestThreshold = Number(argv[++i]);
     else if (argv[i] === '--cap') args.candidateCap = Number(argv[++i]);
     else if (argv[i] === '--claim-ranking') args.claimRanking = argv[++i];
+    else if (argv[i] === '--near-terminal') args.nearTerminalCandidate = argv[++i];
+    else if (argv[i] === '--screen-scope') args.screenGoalScope = argv[++i];
+    else if (argv[i] === '--batch-admission') args.batchAdmission = argv[++i];
+    else if (argv[i] === '--directions') args.directions = argv[++i].split(',').map(s => s.trim().toUpperCase()).filter(Boolean);
     else if (argv[i] === '--diagnostics') args.diagnostics = resolve(argv[++i]);
     else if (argv[i] === '--out') args.outDir = resolve(argv[++i]);
   }
@@ -437,12 +468,14 @@ async function main() {
   }
   const seedBase = args.block === 'confirm'
     ? null // 按 (人数, 池) 逐 cell 决定
+    : args.block === 'goal-confirm' ? AI6_JS5_GOAL_CONFIRM_SUBBLOCK[0]
+    : args.block === 'goal-dev' ? AI6_JS5_GOAL_DEV_SUBBLOCK[0]
     : args.block === 'tune2' ? 1_351_000_000
     : args.block === 'tune' ? 1_310_000_000
     : args.block === 'test' ? 1_320_000_000
     : args.block === 'audit' ? 1_300_000_000
     : args.block === 'verify' ? 1_330_000_000
-    : (() => { throw new Error(`--block 必须是 tune|tune2|test|audit|verify|confirm，实际：${args.block}`); })();
+    : (() => { throw new Error(`--block 必须是 tune|tune2|test|audit|verify|confirm|goal-dev|goal-confirm，实际：${args.block}`); })();
   const jointOptions = {
     ...(args.budgetMs !== undefined ? { budgetMs: args.budgetMs } : {}),
     ...(args.workUnits !== undefined ? { workUnits: args.workUnits } : {}),
@@ -454,6 +487,9 @@ async function main() {
     ...(args.contestThreshold !== undefined ? { contestThreshold: args.contestThreshold } : {}),
     ...(args.candidateCap !== undefined ? { candidateCap: args.candidateCap } : {}),
     ...(args.claimRanking !== undefined ? { claimRanking: args.claimRanking } : {}),
+    ...(args.nearTerminalCandidate !== undefined ? { nearTerminalCandidate: args.nearTerminalCandidate } : {}),
+    ...(args.screenGoalScope !== undefined ? { screenGoalScope: args.screenGoalScope } : {}),
+    ...(args.batchAdmission !== undefined ? { batchAdmission: args.batchAdmission } : {}),
   };
   const diagnostics = args.diagnostics ? [] : null;
   const cells = [];
@@ -462,7 +498,7 @@ async function main() {
       const cellSeedBase = args.block === 'confirm' ? confirmSeedBase(seatCount, args.pool) : seedBase;
       process.stdout.write(`运行 ${candidateId} ${seatCount}人 ${args.seeds}种子(${args.block},${args.pool}) ...\n`);
       const t0 = performance.now();
-      const cell = runAblationCell({ candidateId, seatCount, seeds: args.seeds, seedBase: cellSeedBase, jointOptions, pool: args.pool, diagnostics });
+      const cell = runAblationCell({ candidateId, seatCount, seeds: args.seeds, seedBase: cellSeedBase, jointOptions, pool: args.pool, diagnostics, directions: args.directions });
       const fmt = d => cell[d] ? `${(cell[d].firstPlace.point * 100).toFixed(1)}% [${(cell[d].firstPlace.lower * 100).toFixed(1)},${(cell[d].firstPlace.upper * 100).toFixed(1)}]` : '-';
       process.stdout.write(`  完成 ${Math.round(performance.now() - t0)}ms｜方向A ${fmt('directionA')} 方向B ${fmt('directionB')} 异常 ${cell.anomalies}\n`);
       cells.push(cell);
@@ -473,7 +509,7 @@ async function main() {
     date: new Date().toISOString(),
     engineBundleSha256: engineBundleSha256(),
     block: args.block, seedBase: args.block === 'confirm' ? 'partitioned-by-(players,pool)' : seedBase, seeds: args.seeds,
-    pool: args.pool,
+    pool: args.pool, directions: args.directions,
     // P0-1 整改：报告披露不可变版本注册表快照与候选描述符——
     // 「标签身份 = 执行身份」可由指纹独立复核（运行指纹另列）。
     versionRegistry: describeVersionRegistry(),
@@ -481,11 +517,19 @@ async function main() {
     candidateDescriptors: args.candidates
       .filter(id => id === 'js0' || id === 'js1')
       .map(id => { const d = candidateVersion(id).descriptor; return { registryId: d.registryId, core: d.core, structure: d.structure, fingerprint: d.fingerprint, source: d.source }; }),
-    jointOptions, note: 'JS 编号为本阶段消融编号（JS0–JS5），非 PR #22 的 B0/B1/B2。confirm 块分区见 seed_policy.mjs AI6_JS5_CONFIRM_SUBBLOCK。',
+    jointOptions, note: 'JS 编号为本阶段消融编号（JS0–JS5），非 PR #22 的 B0/B1/B2。confirm 块分区见 seed_policy.mjs AI6_JS5_CONFIRM_SUBBLOCK；goal-dev/goal-confirm 见 AI6_JS5_GOAL_*（本任务研究块，不写正式账本）。',
     cells,
   };
   mkdirSync(args.outDir, { recursive: true });
-  const suffix = `${args.block}-${args.candidates.join('_')}-${args.players.join('_')}-${args.seeds}s${args.pool === 'diverse' ? '-div' : ''}`;
+  const optionTag = [
+    args.workUnits !== undefined ? `w${args.workUnits}` : null,
+    args.budgetMs !== undefined ? `b${args.budgetMs}` : null,
+    args.nearTerminalCandidate ? `nt-${args.nearTerminalCandidate}` : null,
+    args.screenGoalScope ? `sc-${args.screenGoalScope}` : null,
+    args.batchAdmission ? `ba-${args.batchAdmission}` : null,
+    args.claimRanking ? `cr-${args.claimRanking}` : null,
+  ].filter(Boolean).join('-') || 'base';
+  const suffix = `${args.block}-${args.candidates.join('_')}-${args.players.join('_')}-${args.seeds}s${args.pool === 'diverse' ? '-div' : ''}-${optionTag}`;
   const out = resolve(args.outDir, `ablation-${suffix}.json`);
   writeFileSync(out, JSON.stringify(report, null, 2));
   if (diagnostics) {

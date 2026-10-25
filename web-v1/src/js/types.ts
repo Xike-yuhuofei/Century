@@ -92,6 +92,48 @@ export type JointDecisionStats = {
   aggregateMs?: number;
   /** 实际创建的根信念模拟数（B 优化披露：非门控决策 = 1，门控 = worlds）。 */
   rootSimulationsCreated?: number;
+  /** 本决策实际参与试验的信念世界数（零试验 = 0；与配置数分开披露）。 */
+  worldsConfigured?: number;
+  /** 已启动的完整候选批次（每批 = 全部候选 × 批内世界数）。 */
+  batchesStarted?: number;
+  /** 进入 rollout 时的剩余试验窗口（毫秒；固定工作量模式为 null）。 */
+  trialWindowMs?: number | null;
+  /** 整批（W×M 条轨迹）的启动门槛；minBatchFloorMs = 缩减批次门槛。 */
+  fullBatchFloorMs?: number;
+  minBatchFloorMs?: number;
+  /** 进入 rollout 前的已耗时（plan/root/legal/gate/screen 合计）。 */
+  rolloutStartMs?: number;
+  /** 零试验原因（rollouts>0 时为 null；非门控为 not-gated）。 */
+  zeroTrialReason?: 'not-gated' | 'rerank-no-rollout' | 'no-window' | 'plan-and-screen-exhausted' | 'batch-floor-not-met' | 'no-batch-started' | null;
+  /** 端到端耗时是否超过名义预算（墙钟模式）。 */
+  overBudget?: boolean;
+  /** 是否因试验窗口截止而停止（墙钟模式）。 */
+  stoppedByDeadline?: boolean;
+  /** 本次允许覆盖冠军的最低挑战者试验数（完整批次=2；缩减批次=3）。 */
+  overrideMinTrials?: number;
+  /** 根筛选目标范围（all / preferred）。 */
+  screenGoalScope?: 'all' | 'preferred';
+  /** 墙钟批次准入模式（legacy / balanced）。 */
+  batchAdmission?: 'legacy' | 'balanced';
+  /** 互斥阶段计时之和；unaccounted = elapsed − 各阶段（不得把包含关系相加）。 */
+  accountingMs?: number;
+  unaccountedMs?: number;
+  /** cloneMs 是否真实测量（当前未测量时固定 0，不得据此宣称零开销）。 */
+  cloneMsMeasured?: boolean;
+  /** 临近终局候选覆盖遥测（仅显式 nearTerminalCandidate≠off 时填写）。 */
+  nearTerminal?: {
+    policy: string;
+    risky: boolean;
+    reason: string | null;
+    threshold: number;
+    threatenedSeats: number[];
+    /** 被注入的当步正式净分最大行动（未注入为 null）。 */
+    injected: { action: Action; delta: number; scoreAfter: number; discarded: number } | null;
+    replacedAction: Action | null;
+    mode: string;
+    /** 候选来源（与 evaluations 同序）：champion/claim/prior/near-terminal。 */
+    candidateSources: string[];
+  };
 };
 
 export type JointDecision = {
@@ -122,7 +164,8 @@ export type JointSearchOptions = {
   workUnits?: number;
   /** 模拟随机流基础种子（信念采样 + 对手采样；缺省 0）。 */
   simSeed?: number;
-  /** 单条轨迹最大转移步数（防长尾；缺省 90）。 */
+  /** 单条轨迹最大转移步数（防长尾；champion-guided 缺省 48，见 champion-guided.ts；
+   * 旧注释的 90 与实现不一致，已按实现更正）。 */
   horizon?: number;
   /** 信念世界数（P1-1 多世界采样；缺省 4，固定工作量模式按预算收缩）。
    * 同一根行动的试验分布到不同未知牌序世界；同一 (world, replica) 跨根行动
@@ -140,6 +183,16 @@ export type JointSearchOptions = {
   opponentModel?: OpponentModel;
   /** 决策者人格（缺省 NEUTRAL_PROFILE；训练按席位映射注入）。 */
   profileName?: string;
+  /** 临近终局候选覆盖策略（仅 champion-guided 消费；缺省 off = 冻结行为）：
+   * off=不注入；replace=替换一个先验填充候选；add=追加一个候选（cap+1）。 */
+  nearTerminalCandidate?: 'off' | 'replace' | 'add';
+  /** 根筛选目标范围（仅 champion-guided）：all=全部市场目标（冻结语义）；
+   * preferred=只对 [null, 冠军偏好目标] 打分（JS5 注释记载的 10ms 口径）。 */
+  screenGoalScope?: 'all' | 'preferred';
+  /** 墙钟批次准入（仅 champion-guided）：legacy=冻结行为（M×5ms 门槛、
+   * 只跑完整 W×M 批次）；balanced=W×M 成本预检 + 全候选缩减批次 +
+   * 缩减批次最低 3 试验覆盖门槛。固定工作量模式不受影响。 */
+  batchAdmission?: 'legacy' | 'balanced';
 };
 
 // === 规划器接口（任务 A 推荐接口） ===
@@ -164,6 +217,17 @@ export type JointVersionSpec = {
    * + golemSurvivalModel 静态目标存活折扣，即 JS1 定义）；kind=joint：本模块联合搜索；
    * kind=champion-guided：JS5 冠军引导选择性联合搜索（champion-guided.ts）。 */
   defaults: Required<Pick<JointSearchOptions, 'variant' | 'opponentMode' | 'evaluator'>>;
+  /** 版本独有选项预设（显式注入；空/缺省 = 与冻结缺省相同）。预设必须来自
+   * 已有评测记载，禁止把标签当成配置。 */
+  optionPreset?: Partial<Pick<JointSearchOptions,
+    'opponentMode' | 'evaluator' | 'horizon' | 'worlds' | 'nearTerminalCandidate'>> & {
+      championStructure?: string;
+      gateMode?: 'auto' | 'always' | 'never' | 'rerank';
+      contestThreshold?: number;
+      candidateCap?: number;
+      overrideMargin?: number;
+      claimRanking?: 'enumeration' | 'prior';
+    };
 };
 
 export const JOINT_VERSIONS: Record<JointVersionId, JointVersionSpec> = {
@@ -190,5 +254,8 @@ export const JOINT_VERSIONS: Record<JointVersionId, JointVersionSpec> = {
   'joint-js5-opt': {
     id: 'joint-js5-opt', label: 'JS5-opt 第五阶段优化配置（champion-guided + tune2 选项覆盖）', kind: 'champion-guided',
     defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
+    // 第五阶段 tune2 冻结：唯一独有选项 claimRanking='prior'
+    // （AI6-PHASE5-REPORT.md §4.3；确认集 inconclusive，未晋级）。
+    optionPreset: { claimRanking: 'prior' },
   },
 };

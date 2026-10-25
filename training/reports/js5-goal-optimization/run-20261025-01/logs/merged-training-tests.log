@@ -1,0 +1,280 @@
+TAP version 13
+# Subtest: 前置：fixtures 齐备（2–5 人 + 未完成 + 旧存档）
+ok 1 - 前置：fixtures 齐备（2–5 人 + 未完成 + 旧存档）
+  ---
+  duration_ms: 1.362958
+  type: 'test'
+  ...
+# Subtest: 2–5 人完整对局全部通过导入与引擎重放验证
+ok 2 - 2–5 人完整对局全部通过导入与引擎重放验证
+  ---
+  duration_ms: 63.899791
+  type: 'test'
+  ...
+# Subtest: 导入结果：席位人数与完成状态正确
+ok 3 - 导入结果：席位人数与完成状态正确
+  ---
+  duration_ms: 37.69375
+  type: 'test'
+  ...
+# Subtest: 指标与正式引擎一致：总分、排名、认领目标
+ok 4 - 指标与正式引擎一致：总分、排名、认领目标
+  ---
+  duration_ms: 54.467
+  type: 'test'
+  ...
+# Subtest: 非法记录拒绝：坏 JSON / 错 format / 负库存 / 手数断裂 / 非法行动 / 6 人 / 牌库篡改 / current 篡改
+ok 5 - 非法记录拒绝：坏 JSON / 错 format / 负库存 / 手数断裂 / 非法行动 / 6 人 / 牌库篡改 / current 篡改
+  ---
+  duration_ms: 59.737416
+  type: 'test'
+  ...
+# Subtest: 重复记录检测：批内同文件两次导入 → duplicate
+ok 6 - 重复记录检测：批内同文件两次导入 → duplicate
+  ---
+  duration_ms: 18.820208
+  type: 'test'
+  ...
+# Subtest: 未完成对局：通过校验但带 unfinished 警告；终局诊断输出「无法判断」
+ok 7 - 未完成对局：通过校验但带 unfinished 警告；终局诊断输出「无法判断」
+  ---
+  duration_ms: 2.724625
+  type: 'test'
+  ...
+# Subtest: 旧存档（replay=null）明确拒绝并给出原因
+ok 8 - 旧存档（replay=null）明确拒绝并给出原因
+  ---
+  duration_ms: 0.502833
+  type: 'test'
+  ...
+# Subtest: 隐藏信息剔除：案例无牌库键、无他人手牌；泄漏检查可捕获注入
+ok 9 - 隐藏信息剔除：案例无牌库键、无他人手牌；泄漏检查可捕获注入
+  ---
+  duration_ms: 39.95875
+  type: 'test'
+  ...
+# Subtest: 确定性：同一记录重复生成逐字节一致的指标/案例/报告
+ok 10 - 确定性：同一记录重复生成逐字节一致的指标/案例/报告
+  ---
+  duration_ms: 243.3165
+  type: 'test'
+  ...
+# Subtest: 失败诊断：8 类类型齐备；findings 必附证据；不能只凭输赢
+ok 11 - 失败诊断：8 类类型齐备；findings 必附证据；不能只凭输赢
+  ---
+  duration_ms: 9.6405
+  type: 'test'
+  ...
+# Subtest: 案例提取：优先级与去重正确（trigger > contested > overflow > endgame）
+ok 12 - 案例提取：优先级与去重正确（trigger > contested > overflow > endgame）
+  ---
+  duration_ms: 8.524375
+  type: 'test'
+  ...
+# Subtest: CLI 端到端：check 拒绝非法文件（退出码 1），aggregate 产出报告
+ok 13 - CLI 端到端：check 拒绝非法文件（退出码 1），aggregate 产出报告
+  ---
+  duration_ms: 150.122708
+  type: 'test'
+  ...
+# Subtest: v2 口径：弃置颗数按 colors.length，不按颜色编号求和
+ok 14 - v2 口径：弃置颗数按 colors.length，不按颜色编号求和
+  ---
+  duration_ms: 0.090792
+  type: 'test'
+  ...
+# Subtest: v2 口径：死卡 = 取后从未打出；曾打出后休息收回不算死卡
+ok 15 - v2 口径：死卡 = 取后从未打出；曾打出后休息收回不算死卡
+  ---
+  duration_ms: 0.068583
+  type: 'test'
+  ...
+# Subtest: v2 口径：自领不算被抢；跨回合重复目标只标首次流失
+ok 16 - v2 口径：自领不算被抢；跨回合重复目标只标首次流失
+  ---
+  duration_ms: 0.076792
+  type: 'test'
+  ...
+# Subtest: v2 集成：指标 schema/弃置守恒/死卡明细/触发时点排名
+ok 17 - v2 集成：指标 schema/弃置守恒/死卡明细/触发时点排名
+  ---
+  duration_ms: 33.813792
+  type: 'test'
+  ...
+# Subtest: fixtures 生成器：同种子两次生成逐字节一致
+ok 18 - fixtures 生成器：同种子两次生成逐字节一致
+  ---
+  duration_ms: 15.371375
+  type: 'test'
+  ...
+# Subtest: P1-2 输入缺失：全部输入不存在时 check/analyze 必须非零退出（空集合≠全部通过）
+ok 19 - P1-2 输入缺失：全部输入不存在时 check/analyze 必须非零退出（空集合≠全部通过）
+  ---
+  duration_ms: 66.962334
+  type: 'test'
+  ...
+# Subtest: P1-2 输入缺失：部分输入缺失按批处理失败策略返回非零并披露计数
+ok 20 - P1-2 输入缺失：部分输入缺失按批处理失败策略返回非零并披露计数
+  ---
+  duration_ms: 56.703334
+  type: 'test'
+  ...
+# Subtest: P1-2 商人卡使用档案：从未打出的已获取卡 ≠ 终局在手的卡（打出事件追踪）
+ok 21 - P1-2 商人卡使用档案：从未打出的已获取卡 ≠ 终局在手的卡（打出事件追踪）
+  ---
+  duration_ms: 8.698375
+  type: 'test'
+  ...
+# Subtest: P1-2 商人卡档案：打出后又休息收回的卡不误判为未使用
+ok 22 - P1-2 商人卡档案：打出后又休息收回的卡不误判为未使用
+  ---
+  duration_ms: 35.182875
+  type: 'test'
+  ...
+# Subtest: P1-2 数据来源：模拟数据必须带来源戳，不得标注为真人
+ok 23 - P1-2 数据来源：模拟数据必须带来源戳，不得标注为真人
+  ---
+  duration_ms: 33.721125
+  type: 'test'
+  ...
+# Subtest: js0 = 冻结束搜索冠军（无 adapter），不是 JS5
+ok 24 - js0 = 冻结束搜索冠军（无 adapter），不是 JS5
+  ---
+  duration_ms: 3.022083
+  type: 'test'
+  ...
+# Subtest: js1 = 冻结基座 + beam-contest 结构（结构真实生效）
+ok 25 - js1 = 冻结基座 + beam-contest 结构（结构真实生效）
+  ---
+  duration_ms: 0.441333
+  type: 'test'
+  ...
+# Subtest: js5 / js5-opt 仍走联合适配器版本
+ok 26 - js5 / js5-opt 仍走联合适配器版本
+  ---
+  duration_ms: 0.05925
+  type: 'test'
+  ...
+# Subtest: 缺失账本 fail-closed：分配/加载直接抛错，绝不静默按空白区处理
+ok 27 - 缺失账本 fail-closed：分配/加载直接抛错，绝不静默按空白区处理
+  ---
+  duration_ms: 2.473375
+  type: 'test'
+  ...
+# Subtest: 仓库账本：历史导入结构健康（verifyLedger 零缺陷）+ prereg 区间在场
+ok 28 - 仓库账本：历史导入结构健康（verifyLedger 零缺陷）+ prereg 区间在场
+  ---
+  duration_ms: 0.759708
+  type: 'test'
+  ...
+# Subtest: 已消费区间不得被新独立实验复用（改名/换输出目录不可规避）
+ok 29 - 已消费区间不得被新独立实验复用（改名/换输出目录不可规避）
+  ---
+  duration_ms: 43.730375
+  type: 'test'
+  ...
+# Subtest: 有意 CRN 配对：显式声明同组才允许共享；未声明/组不同一律拒绝
+ok 30 - 有意 CRN 配对：显式声明同组才允许共享；未声明/组不同一律拒绝
+  ---
+  duration_ms: 43.119084
+  type: 'test'
+  ...
+# Subtest: 并发申请不能分配相同种子（多进程文件锁串行化）
+ok 31 - 并发申请不能分配相同种子（多进程文件锁串行化）
+  ---
+  duration_ms: 239.839709
+  type: 'test'
+  ...
+# Subtest: 断点续跑：resume 返回已注册区间末端；重复注册同 ID 抛错；续跑不新增对局种子
+ok 32 - 断点续跑：resume 返回已注册区间末端；重复注册同 ID 抛错；续跑不新增对局种子
+  ---
+  duration_ms: 22.910125
+  type: 'test'
+  ...
+# Subtest: 作废实验：区间继续占用（防相关样本）、必须留痕 reason、禁止续跑
+ok 33 - 作废实验：区间继续占用（防相关样本）、必须留痕 reason、禁止续跑
+  ---
+  duration_ms: 43.239333
+  type: 'test'
+  ...
+# Subtest: 账本记录完备性：seedStart/seedEnd/runId/commit/指纹/用途逐项落盘
+ok 34 - 账本记录完备性：seedStart/seedEnd/runId/commit/指纹/用途逐项落盘
+  ---
+  duration_ms: 23.09125
+  type: 'test'
+  ...
+# Subtest: 注册表：冻结描述符结构不变量（legacy 无适配器字段、js1=beam-contest、深冻结）
+ok 35 - 注册表：冻结描述符结构不变量（legacy 无适配器字段、js1=beam-contest、深冻结）
+  ---
+  duration_ms: 3.092333
+  type: 'test'
+  ...
+# Subtest: 注册表：js0 参数逐字等于晋级归档文件（活动冠军切换不得漂移历史身份）
+ok 36 - 注册表：js0 参数逐字等于晋级归档文件（活动冠军切换不得漂移历史身份）
+  ---
+  duration_ms: 2.46875
+  type: 'test'
+  ...
+# Subtest: 注册表：live-champion 禁止用于历史对照（assertFrozenBaseline）
+ok 37 - 注册表：live-champion 禁止用于历史对照（assertFrozenBaseline）
+  ---
+  duration_ms: 1.234416
+  type: 'test'
+  ...
+# Subtest: 行为学：js0 实际执行冻结束搜索（= 归档冠军逐行动一致；不进 JS5 适配器）
+ok 38 - 行为学：js0 实际执行冻结束搜索（= 归档冠军逐行动一致；不进 JS5 适配器）
+  ---
+  duration_ms: 228.942458
+  type: 'test'
+  ...
+# Subtest: 行为学：js1 实际执行 beam-contest（结构标记在场 + 与 js0 存在行动分歧 + 不进适配器）
+ok 39 - 行为学：js1 实际执行 beam-contest（结构标记在场 + 与 js0 存在行动分歧 + 不进适配器）
+  ---
+  duration_ms: 234.285625
+  type: 'test'
+  ...
+# Subtest: 行为学：JS5 候选实际执行联合搜索（duel joint 分派 + 适配器 reason）
+ok 40 - 行为学：JS5 候选实际执行联合搜索（duel joint 分派 + 适配器 reason）
+  ---
+  duration_ms: 864.612625
+  type: 'test'
+  ...
+# Subtest: 调用点链接：duel 与 equivalence-audit 的 js0/js1 解析到同一冻结描述符
+ok 41 - 调用点链接：duel 与 equivalence-audit 的 js0/js1 解析到同一冻结描述符
+  ---
+  duration_ms: 2.223167
+  type: 'test'
+  ...
+# Subtest: 对手池：全部变体 strip-adapter 且权重真实生效（极端权重探针可达束搜索核）
+ok 42 - 对手池：全部变体 strip-adapter 且权重真实生效（极端权重探针可达束搜索核）
+  ---
+  duration_ms: 247.160667
+  type: 'test'
+  ...
+# Subtest: 端到端：duel.runGame js0 候选席位完成对局且版本披露可审计
+ok 43 - 端到端：duel.runGame js0 候选席位完成对局且版本披露可审计
+  ---
+  duration_ms: 2829.616
+  type: 'test'
+  ...
+# Subtest: 端到端：duel.runGame js0 与 js5 候选在同一受支持配置下行为不同（基线非 JS5 自我对弈）
+ok 44 - 端到端：duel.runGame js0 与 js5 候选在同一受支持配置下行为不同（基线非 JS5 自我对弈）
+  ---
+  duration_ms: 5179.632917
+  type: 'test'
+  ...
+# Subtest: 注册表快照：describeVersionRegistry 披露全部身份字段与指纹（报告可审计）
+ok 45 - 注册表快照：describeVersionRegistry 披露全部身份字段与指纹（报告可审计）
+  ---
+  duration_ms: 45.720958
+  type: 'test'
+  ...
+1..45
+# tests 45
+# suites 0
+# pass 45
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10327.861083

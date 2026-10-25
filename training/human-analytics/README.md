@@ -45,6 +45,30 @@ analyze 对每个输入文件产出 4 个文件：
 
 聚合产出 `aggregate.md` + `aggregate.json`。
 
+### 指标口径 v2（2026-10-25）
+
+`metrics.json` 的 schema 从 `century-human-analytics-metrics-v1` 升为 `-v2`。
+旧产物保留为 v1 研究结果，不重写历史；v2 修正以下已确认口径错误（详见
+`js5-goal-optimization/run-20261025-01/evidence/metrics-v2-summary.json`）：
+
+- `deadCards`：保持上游 P1-2 的**终局手牌快照**语义（兼容字段，本批 472）。
+  v2 新增 `deadCardDetails` 与 `merchantUsage.neverPlayed`（按 acquire/play 时间线的
+  "取后从未打出"，本批 179）；`usedThenRecovered` 记录终局在手但打出过的卡（293）。
+  `failures.mjs` 使用 `neverPlayedAcquiredCount`，不再用快照数字判"死卡"。
+- `discards.count` / `crystalsDiscarded`：v1 = 颜色编号求和（黄色编号 0 计 0 颗）；
+  v2 = `colors.length`。本批旧累计 4 → 26 次弃置 / 47 颗。
+- `missedClaims`：新增 `claimedLaterBySelf` / `claimedLaterByOther` /
+  `firstLossOfTarget` / `repeatOfEarlierMiss` / `lossEventId`；本人稍后认领不再算被抢，
+  同一 (席位,目标) 的跨回合重复只计首次流失。本批 150 条中自领 69、他领 76、
+  始终无人 5；去重后唯一流失目标 52。
+- `contestedLosses`：明确为 opportunity-only（他人认领时我也付得起），附
+  `claimEventId`；不是"实际被抢次数"。本批 199 个席位机会事件 / 157 个唯一 claim 事件。
+- `maxEngineSize` = hand+played；rest 间隔 = 个人回合差；`lateAcquires` = 触发手之后；
+  新增 `meta.triggerScores/triggerRanking/triggerRankBySeat`（不拿终态回填）。
+
+`failures.mjs` 同步停止把 contestedLosses 与自领事件相加；`cases.mjs` 的
+missed-claim 案例只取 `claimedLaterByOther`。
+
 ## 输入格式
 
 唯一权威来源：`web-v1/src/replay.ts` 的 `replayJSON()`（PR #28 自动导出）。

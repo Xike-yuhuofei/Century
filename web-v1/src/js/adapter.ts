@@ -27,6 +27,7 @@ import { enumerateLegalActions } from '../sim/legal.js';
 import { createJointPlanner } from './planner.js';
 import { createChampionGuidedPlanner, type ChampionGuidedSearchOptions } from './champion-guided.js';
 import { JOINT_VERSIONS, type JointDecision, JointSearchOptions, JointVersionId } from './types.js';
+import { mergeJointOptions, resolveJointConfig, jointConfigHash, type JointSearchResolved } from './config.js';
 
 export type JointAdapterOptions = JointSearchOptions & {
   /** 版本 id（必填；未注册版本抛错——禁止静默回退到任何未声明行为）。 */
@@ -43,6 +44,8 @@ export type JointAdapterDecision = {
   /** 联合搜索完整决策（joint 版本有值；js1 委托冠军时为 null）。 */
   joint: JointDecision | null;
   version: string;
+  /** 有效配置身份（版本预设 + 调用方覆盖 + 缺省）与哈希；版本名≠配置。 */
+  config: JointSearchResolved & { hash: string };
 };
 
 /** planner 实例按版本缓存（无状态；decide 每次独立）。
@@ -69,6 +72,11 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   if (game.phase === 'finished') throw new Error('游戏结束，无法决策');
   if (game.current !== seat) throw new Error('决策席位不是当前行动者');
 
+  // 有效配置：版本预设 + 调用方覆盖（opt 不再只是标签）。
+  const resolvedOptions = mergeJointOptions(versionId, options) as JointAdapterOptions;
+  const baseConfig = resolveJointConfig(versionId, resolvedOptions, options.profile?.name);
+  const config = { ...baseConfig, hash: jointConfigHash(baseConfig) };
+
   // JS1：冠军 + 静态目标存活折扣 = beam-contest 结构（冠军 beam-rollout +
   // golemSurvivalModel），委托正式冠军入口，保证与冠军代码逐位同源。
   // P0-1 整改（2026-10-25）：基座必须剥离适配器字段——晋级后 CHAMPION_PARAMETERS
@@ -87,14 +95,14 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
       structure: 'beam-contest',
       profile: options.profile,
     });
-    return { action: response.action, reason: `JS1: ${response.reason}`, joint: null, version: versionId };
+    return { action: response.action, reason: `JS1: ${response.reason}`, joint: null, version: versionId, config };
   }
 
   // 溢出：冠军 trimStock 弃置口径（与正式冠军 decision.ts 同一语义）。
   if (game.phase === 'overflow') {
     const p = game.players[seat];
     const discarded = trimStock(p.stock, game.golemMarket, null, CHAMPION_PARAMETERS).discarded as Color[];
-    return { action: { type: 'discard', colors: discarded }, reason: '溢出弃置（冠军 trimStock 口径）', joint: null, version: versionId };
+    return { action: { type: 'discard', colors: discarded }, reason: '溢出弃置（冠军 trimStock 口径）', joint: null, version: versionId, config };
   }
 
   const observation = buildObservation(game, seat);
@@ -104,11 +112,11 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   // gate=never vs js0 逐决策一致性强制此项）。
   const decision = version.kind === 'champion-guided'
     ? (planner as ReturnType<typeof createChampionGuidedPlanner>).decide(observation, {
-        ...options,
+        ...resolvedOptions,
         profileName: options.profile?.name,
       } as ChampionGuidedSearchOptions)
     : (planner as ReturnType<typeof createJointPlanner>).decide(observation, {
-        ...options,
+        ...resolvedOptions,
         profileName: options.profile?.name,
       });
   const action = decision.action;
@@ -120,9 +128,9 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
     const legal = enumerateLegalActions(sim.view, { dedupe: true });
     const fallback = legal[0];
     if (!fallback) throw new Error('联合规划决策非法且无合法回退');
-    return { action: fallback, reason: '联合规划决策非法，回退首个合法行动（缺陷暴露）', joint: decision, version: versionId };
+    return { action: fallback, reason: '联合规划决策非法，回退首个合法行动（缺陷暴露）', joint: decision, version: versionId, config };
   }
-  return { action, reason: decision.reason, joint: decision, version: versionId };
+  return { action, reason: decision.reason, joint: decision, version: versionId, config };
 }
 
 /** 参数校验工具：版本注册表的外部可读视图（评测 runner 用）。 */

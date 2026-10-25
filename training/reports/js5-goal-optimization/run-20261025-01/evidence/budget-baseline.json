@@ -1,0 +1,1461 @@
+{
+  "schema": "js5-goal-budget-probe-v1",
+  "label": "baseline",
+  "budgetMs": 100,
+  "repeats": 6,
+  "distRoot": "/tmp/century-js5-baseline-e2361ed/web-v1/dist/js",
+  "fixtures": {
+    "C04": {
+      "note": "可付 3 目标时休息；100ms 曾零试验",
+      "wallClock": {
+        "repeats": 6,
+        "elapsed": {
+          "n": 6,
+          "min": 78.6255,
+          "p50": 87.13595800000002,
+          "p95": 108.13462500000001,
+          "p99": 108.13462500000001,
+          "max": 108.13462500000001,
+          "mean": 89.401
+        },
+        "overBudget": 1,
+        "zeroTrials": 1,
+        "budgetExhaustedFlagged": 1,
+        "zeroTrialReasons": {
+          "none": 6
+        },
+        "meanRollouts": 13.33,
+        "phaseMedians": {
+          "planMs": 51.065083999999985,
+          "rootSimMs": 0.3131249999999852,
+          "legalGenMs": 0.02783300000004374,
+          "gateMs": 0.03212499999995089,
+          "screenMs": 1.3694590000000062,
+          "rolloutMs": 36.258375
+        },
+        "trialWindowP50": 0,
+        "accountingCheck": [
+          {
+            "elapsed": 78.626,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 108.135,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 91.25,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 87.136,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 86.786,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 84.474,
+            "sum": 0,
+            "unaccounted": 0
+          }
+        ],
+        "actions": [
+          {
+            "action": {
+              "type": "claim",
+              "index": 1
+            },
+            "champion": {
+              "type": "claim",
+              "index": 1
+            },
+            "trials": 0,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "rest"
+            },
+            "champion": {
+              "type": "claim",
+              "index": 1
+            },
+            "trials": 16,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "rest"
+            },
+            "champion": {
+              "type": "claim",
+              "index": 1
+            },
+            "trials": 16,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "rest"
+            },
+            "champion": {
+              "type": "claim",
+              "index": 1
+            },
+            "trials": 16,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "rest"
+            },
+            "champion": {
+              "type": "claim",
+              "index": 1
+            },
+            "trials": 16,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "rest"
+            },
+            "champion": {
+              "type": "claim",
+              "index": 1
+            },
+            "trials": 16,
+            "worlds": 4
+          }
+        ]
+      },
+      "fixedWork": [
+        {
+          "workUnits": 32,
+          "action": {
+            "type": "claim",
+            "index": 1
+          },
+          "champion": {
+            "type": "claim",
+            "index": 1
+          },
+          "deterministic": true,
+          "rollouts": 32,
+          "worlds": 4,
+          "candidateCount": 4,
+          "trialsPerCandidate": null
+        },
+        {
+          "workUnits": 64,
+          "action": {
+            "type": "claim",
+            "index": 1
+          },
+          "champion": {
+            "type": "claim",
+            "index": 1
+          },
+          "deterministic": true,
+          "rollouts": 64,
+          "worlds": 4,
+          "candidateCount": 4,
+          "trialsPerCandidate": null
+        }
+      ]
+    },
+    "C09": {
+      "note": "0 vs 16 rollout 动作翻转（agent-a）",
+      "wallClock": {
+        "repeats": 6,
+        "elapsed": {
+          "n": 6,
+          "min": 84.35408400000006,
+          "p50": 107.08533299999999,
+          "p95": 108.9057499999999,
+          "p99": 108.9057499999999,
+          "max": 108.9057499999999,
+          "mean": 103.723
+        },
+        "overBudget": 5,
+        "zeroTrials": 0,
+        "budgetExhaustedFlagged": 5,
+        "zeroTrialReasons": {
+          "none": 6
+        },
+        "meanRollouts": 29.33,
+        "phaseMedians": {
+          "planMs": 31.7204999999999,
+          "rootSimMs": 0.20145800000000236,
+          "legalGenMs": 0.02795800000012605,
+          "gateMs": 0.02108300000008967,
+          "screenMs": 7.396165999999994,
+          "rolloutMs": 68.20870799999989
+        },
+        "trialWindowP50": 0,
+        "accountingCheck": [
+          {
+            "elapsed": 84.354,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 108.83,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 107.085,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 108.906,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 106.595,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 106.569,
+            "sum": 0,
+            "unaccounted": 0
+          }
+        ],
+        "actions": [
+          {
+            "action": {
+              "type": "claim",
+              "index": 4
+            },
+            "champion": {
+              "type": "claim",
+              "index": 0
+            },
+            "trials": 16,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "claim",
+              "index": 4
+            },
+            "champion": {
+              "type": "claim",
+              "index": 0
+            },
+            "trials": 32,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "claim",
+              "index": 4
+            },
+            "champion": {
+              "type": "claim",
+              "index": 0
+            },
+            "trials": 32,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "claim",
+              "index": 4
+            },
+            "champion": {
+              "type": "claim",
+              "index": 0
+            },
+            "trials": 32,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "claim",
+              "index": 4
+            },
+            "champion": {
+              "type": "claim",
+              "index": 0
+            },
+            "trials": 32,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "claim",
+              "index": 4
+            },
+            "champion": {
+              "type": "claim",
+              "index": 0
+            },
+            "trials": 32,
+            "worlds": 4
+          }
+        ]
+      },
+      "fixedWork": [
+        {
+          "workUnits": 32,
+          "action": {
+            "type": "claim",
+            "index": 4
+          },
+          "champion": {
+            "type": "claim",
+            "index": 0
+          },
+          "deterministic": true,
+          "rollouts": 32,
+          "worlds": 4,
+          "candidateCount": 4,
+          "trialsPerCandidate": null
+        },
+        {
+          "workUnits": 64,
+          "action": {
+            "type": "claim",
+            "index": 4
+          },
+          "champion": {
+            "type": "claim",
+            "index": 0
+          },
+          "deterministic": true,
+          "rollouts": 64,
+          "worlds": 4,
+          "candidateCount": 4,
+          "trialsPerCandidate": null
+        }
+      ]
+    },
+    "C12": {
+      "note": "固定工作可仲裁，100ms 曾零试验",
+      "wallClock": {
+        "repeats": 6,
+        "elapsed": {
+          "n": 6,
+          "min": 100.90854100000024,
+          "p50": 101.60149999999976,
+          "p95": 102.98179100000016,
+          "p99": 102.98179100000016,
+          "max": 102.98179100000016,
+          "mean": 101.761
+        },
+        "overBudget": 6,
+        "zeroTrials": 0,
+        "budgetExhaustedFlagged": 6,
+        "zeroTrialReasons": {
+          "none": 6
+        },
+        "meanRollouts": 16,
+        "phaseMedians": {
+          "planMs": 49.14733299999989,
+          "rootSimMs": 0.19262599999956365,
+          "legalGenMs": 0.04641700000001947,
+          "gateMs": 0.024625000000014552,
+          "screenMs": 13.27520800000002,
+          "rolloutMs": 38.96920900000032
+        },
+        "trialWindowP50": 0,
+        "accountingCheck": [
+          {
+            "elapsed": 101.546,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 102.982,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 101.115,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 102.412,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 101.601,
+            "sum": 0,
+            "unaccounted": 0
+          },
+          {
+            "elapsed": 100.909,
+            "sum": 0,
+            "unaccounted": 0
+          }
+        ],
+        "actions": [
+          {
+            "action": {
+              "type": "claim",
+              "index": 3
+            },
+            "champion": {
+              "type": "claim",
+              "index": 4
+            },
+            "trials": 16,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "claim",
+              "index": 3
+            },
+            "champion": {
+              "type": "claim",
+              "index": 4
+            },
+            "trials": 16,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "claim",
+              "index": 3
+            },
+            "champion": {
+              "type": "claim",
+              "index": 4
+            },
+            "trials": 16,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "claim",
+              "index": 3
+            },
+            "champion": {
+              "type": "claim",
+              "index": 4
+            },
+            "trials": 16,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "claim",
+              "index": 3
+            },
+            "champion": {
+              "type": "claim",
+              "index": 4
+            },
+            "trials": 16,
+            "worlds": 4
+          },
+          {
+            "action": {
+              "type": "claim",
+              "index": 3
+            },
+            "champion": {
+              "type": "claim",
+              "index": 4
+            },
+            "trials": 16,
+            "worlds": 4
+          }
+        ]
+      },
+      "fixedWork": [
+        {
+          "workUnits": 32,
+          "action": {
+            "type": "claim",
+            "index": 3
+          },
+          "champion": {
+            "type": "claim",
+            "index": 4
+          },
+          "deterministic": true,
+          "rollouts": 32,
+          "worlds": 4,
+          "candidateCount": 4,
+          "trialsPerCandidate": null
+        },
+        {
+          "workUnits": 64,
+          "action": {
+            "type": "claim",
+            "index": 3
+          },
+          "champion": {
+            "type": "claim",
+            "index": 4
+          },
+          "deterministic": true,
+          "rollouts": 64,
+          "worlds": 4,
+          "candidateCount": 4,
+          "trialsPerCandidate": null
+        }
+      ]
+    }
+  },
+  "raw": [
+    {
+      "kind": "wall-clock",
+      "fixture": "C04",
+      "repeat": 0,
+      "totalMs": 78.6255,
+      "action": {
+        "type": "claim",
+        "index": 1
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 1
+      },
+      "stats": {
+        "rollouts": 0,
+        "transitions": 0,
+        "elapsedMs": 77.90549999999999,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.0777920000000023,
+        "rootActions": 76,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 73.507959,
+        "rootSimMs": 0.9318760000000026,
+        "gateMs": 0.2148339999999962,
+        "screenMs": 3.050124999999994,
+        "rolloutMs": 0.0008330000000000837,
+        "aggregateMs": 0.03249999999999886,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C04",
+      "repeat": 1,
+      "totalMs": 108.13462500000001,
+      "action": {
+        "type": "rest"
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 1
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 768,
+        "elapsedMs": 108.03774999999999,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.06925000000001091,
+        "rootActions": 76,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 54.264375,
+        "rootSimMs": 0.3131249999999852,
+        "gateMs": 0.02966699999998923,
+        "screenMs": 1.554124999999999,
+        "rolloutMs": 51.744207999999986,
+        "aggregateMs": 0.053832999999997355,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C04",
+      "repeat": 2,
+      "totalMs": 91.25012500000003,
+      "action": {
+        "type": "rest"
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 1
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 768,
+        "elapsedMs": 91.158459,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.02783300000004374,
+        "rootActions": 76,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 51.065083999999985,
+        "rootSimMs": 0.5074160000000347,
+        "gateMs": 0.024208000000044194,
+        "screenMs": 1.315208000000041,
+        "rolloutMs": 38.157291999999984,
+        "aggregateMs": 0.031124999999974534,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C04",
+      "repeat": 3,
+      "totalMs": 87.13595800000002,
+      "action": {
+        "type": "rest"
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 1
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 768,
+        "elapsedMs": 87.044916,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.018624999999985903,
+        "rootActions": 76,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 49.49466700000005,
+        "rootSimMs": 0.15054100000003245,
+        "gateMs": 0.026333000000022366,
+        "screenMs": 1.0447089999999548,
+        "rolloutMs": 36.258375,
+        "aggregateMs": 0.010832999999990989,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C04",
+      "repeat": 4,
+      "totalMs": 86.78612500000003,
+      "action": {
+        "type": "rest"
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 1
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 768,
+        "elapsedMs": 86.70379200000002,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.020416000000011536,
+        "rootActions": 76,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 49.89429200000001,
+        "rootSimMs": 0.1776659999999879,
+        "gateMs": 0.033415999999988344,
+        "screenMs": 1.3694590000000062,
+        "rolloutMs": 35.166750000000036,
+        "aggregateMs": 0.013917000000049029,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C04",
+      "repeat": 5,
+      "totalMs": 84.47433300000006,
+      "action": {
+        "type": "rest"
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 1
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 768,
+        "elapsedMs": 84.39741599999996,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.013624999999933607,
+        "rootActions": 76,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 49.424833999999976,
+        "rootSimMs": 0.1676670000000513,
+        "gateMs": 0.03212499999995089,
+        "screenMs": 1.2542080000000624,
+        "rolloutMs": 33.472541999999976,
+        "aggregateMs": 0.011875000000031832,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "fixed-work",
+      "fixture": "C04",
+      "workUnits": 32,
+      "action": {
+        "type": "claim",
+        "index": 1
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 1
+      },
+      "deterministic": true,
+      "stats": {
+        "rollouts": 32,
+        "transitions": 1536,
+        "elapsedMs": 117.68975,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.014167000000043117,
+        "rootActions": 76,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 49.58491700000002,
+        "rootSimMs": 0.13800100000003113,
+        "gateMs": 0.030374999999935426,
+        "screenMs": 1.0985420000000659,
+        "rolloutMs": 66.77558299999998,
+        "aggregateMs": 0.018541000000027452,
+        "rootSimulationsCreated": 4
+      },
+      "trials": null
+    },
+    {
+      "kind": "fixed-work",
+      "fixture": "C04",
+      "workUnits": 64,
+      "action": {
+        "type": "claim",
+        "index": 1
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 1
+      },
+      "deterministic": true,
+      "stats": {
+        "rollouts": 64,
+        "transitions": 3072,
+        "elapsedMs": 184.87516699999992,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.014625000000023647,
+        "rootActions": 76,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 48.558874999999944,
+        "rootSimMs": 0.1479580000000169,
+        "gateMs": 0.03216700000007222,
+        "screenMs": 1.222417000000064,
+        "rolloutMs": 134.86816700000008,
+        "aggregateMs": 0.010125000000016371,
+        "rootSimulationsCreated": 4
+      },
+      "trials": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C09",
+      "repeat": 0,
+      "totalMs": 84.35408400000006,
+      "action": {
+        "type": "claim",
+        "index": 4
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 0
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 768,
+        "elapsedMs": 84.24179099999992,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.07620799999995143,
+        "rootActions": 682,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 34.6239579999999,
+        "rootSimMs": 0.2150410000001557,
+        "gateMs": 0.02970799999980045,
+        "screenMs": 7.237333000000035,
+        "rolloutMs": 41.94058299999983,
+        "aggregateMs": 0.010375000000067303,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C09",
+      "repeat": 1,
+      "totalMs": 108.830375,
+      "action": {
+        "type": "claim",
+        "index": 4
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 0
+      },
+      "stats": {
+        "rollouts": 32,
+        "transitions": 1536,
+        "elapsedMs": 108.75625000000014,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.09316599999988284,
+        "rootActions": 682,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 31.7204999999999,
+        "rootSimMs": 0.2295409999999265,
+        "gateMs": 0.020083999999997104,
+        "screenMs": 7.515415999999959,
+        "rolloutMs": 69.04733299999998,
+        "aggregateMs": 0.009749999999939973,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C09",
+      "repeat": 2,
+      "totalMs": 107.08533299999999,
+      "action": {
+        "type": "claim",
+        "index": 4
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 0
+      },
+      "stats": {
+        "rollouts": 32,
+        "transitions": 1536,
+        "elapsedMs": 107.00304099999994,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.026957999999922322,
+        "rootActions": 682,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 31.29408400000011,
+        "rootSimMs": 0.16183300000011513,
+        "gateMs": 0.020374999999830834,
+        "screenMs": 7.130166000000145,
+        "rolloutMs": 68.20870799999989,
+        "aggregateMs": 0.010917000000063126,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C09",
+      "repeat": 3,
+      "totalMs": 108.9057499999999,
+      "action": {
+        "type": "claim",
+        "index": 4
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 0
+      },
+      "stats": {
+        "rollouts": 32,
+        "transitions": 1536,
+        "elapsedMs": 108.7672090000001,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.02795800000012605,
+        "rootActions": 682,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 32.518166000000065,
+        "rootSimMs": 0.20145800000000236,
+        "gateMs": 0.0257090000000062,
+        "screenMs": 7.5019589999999425,
+        "rolloutMs": 68.24483299999997,
+        "aggregateMs": 0.009291999999959444,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C09",
+      "repeat": 4,
+      "totalMs": 106.59470800000008,
+      "action": {
+        "type": "claim",
+        "index": 4
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 0
+      },
+      "stats": {
+        "rollouts": 32,
+        "transitions": 1536,
+        "elapsedMs": 106.48233299999993,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.024750000000040018,
+        "rootActions": 682,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 30.513916999999992,
+        "rootSimMs": 0.19870799999989686,
+        "gateMs": 0.02108300000008967,
+        "screenMs": 7.396165999999994,
+        "rolloutMs": 68.16991700000017,
+        "aggregateMs": 0.009540999999899213,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C09",
+      "repeat": 5,
+      "totalMs": 106.56920800000012,
+      "action": {
+        "type": "claim",
+        "index": 4
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 0
+      },
+      "stats": {
+        "rollouts": 32,
+        "transitions": 1536,
+        "elapsedMs": 106.48783300000014,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.0253339999999298,
+        "rootActions": 682,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 30.849917000000005,
+        "rootSimMs": 0.1661250000001928,
+        "gateMs": 0.019499999999879947,
+        "screenMs": 7.301208999999972,
+        "rolloutMs": 67.88149999999996,
+        "aggregateMs": 0.009833000000071479,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "fixed-work",
+      "fixture": "C09",
+      "workUnits": 32,
+      "action": {
+        "type": "claim",
+        "index": 4
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 0
+      },
+      "deterministic": true,
+      "stats": {
+        "rollouts": 32,
+        "transitions": 1536,
+        "elapsedMs": 106.84791700000005,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.026209000000108063,
+        "rootActions": 682,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 30.731207999999924,
+        "rootSimMs": 0.1775830000001406,
+        "gateMs": 0.02133400000002439,
+        "screenMs": 7.186582999999928,
+        "rolloutMs": 68.53416700000002,
+        "aggregateMs": 0.009459000000106244,
+        "rootSimulationsCreated": 4
+      },
+      "trials": null
+    },
+    {
+      "kind": "fixed-work",
+      "fixture": "C09",
+      "workUnits": 64,
+      "action": {
+        "type": "claim",
+        "index": 4
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 0
+      },
+      "deterministic": true,
+      "stats": {
+        "rollouts": 64,
+        "transitions": 3072,
+        "elapsedMs": 174.23645899999997,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.02633400000013353,
+        "rootActions": 682,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 30.743207999999868,
+        "rootSimMs": 0.17154200000004494,
+        "gateMs": 0.02204200000005585,
+        "screenMs": 7.321833999999853,
+        "rolloutMs": 135.78412499999968,
+        "aggregateMs": 0.009790999999950145,
+        "rootSimulationsCreated": 4
+      },
+      "trials": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C12",
+      "repeat": 0,
+      "totalMs": 101.54579199999989,
+      "action": {
+        "type": "claim",
+        "index": 3
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 4
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 731,
+        "elapsedMs": 101.46099999999979,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.1714999999999236,
+        "rootActions": 1009,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 48.09216699999979,
+        "rootSimMs": 0.3337080000005699,
+        "gateMs": 0.028374999999869033,
+        "screenMs": 13.128375000000233,
+        "rolloutMs": 39.61912500000017,
+        "aggregateMs": 0.009583999999904336,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C12",
+      "repeat": 1,
+      "totalMs": 102.98179100000016,
+      "action": {
+        "type": "claim",
+        "index": 3
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 4
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 731,
+        "elapsedMs": 102.91091599999982,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.03804100000024846,
+        "rootActions": 1009,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 49.14733299999989,
+        "rootSimMs": 0.18166700000028868,
+        "gateMs": 0.023166999999830296,
+        "screenMs": 13.24454199999991,
+        "rolloutMs": 40.05870799999957,
+        "aggregateMs": 0.008667000000059488,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C12",
+      "repeat": 2,
+      "totalMs": 101.1145419999998,
+      "action": {
+        "type": "claim",
+        "index": 3
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 4
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 731,
+        "elapsedMs": 101.04516700000022,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.05045900000004622,
+        "rootActions": 1009,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 49.40712499999972,
+        "rootSimMs": 0.1922500000000582,
+        "gateMs": 0.024625000000014552,
+        "screenMs": 13.383874999999989,
+        "rolloutMs": 37.78779200000008,
+        "aggregateMs": 0.009458000000449829,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C12",
+      "repeat": 3,
+      "totalMs": 102.41212500000029,
+      "action": {
+        "type": "claim",
+        "index": 3
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 4
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 731,
+        "elapsedMs": 102.3388329999998,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.04241700000011406,
+        "rootActions": 1009,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 50.59004199999981,
+        "rootSimMs": 0.19262599999956365,
+        "gateMs": 0.024292000000059488,
+        "screenMs": 13.27520800000002,
+        "rolloutMs": 37.99274999999989,
+        "aggregateMs": 0.0099169999998594,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C12",
+      "repeat": 4,
+      "totalMs": 101.60149999999976,
+      "action": {
+        "type": "claim",
+        "index": 3
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 4
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 731,
+        "elapsedMs": 101.52754199999981,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.042916999999761174,
+        "rootActions": 1009,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 48.95408299999963,
+        "rootSimMs": 0.21183399999972607,
+        "gateMs": 0.027084000000286323,
+        "screenMs": 13.085541999999805,
+        "rolloutMs": 38.96920900000032,
+        "aggregateMs": 0.015082999999776803,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "wall-clock",
+      "fixture": "C12",
+      "repeat": 5,
+      "totalMs": 100.90854100000024,
+      "action": {
+        "type": "claim",
+        "index": 3
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 4
+      },
+      "stats": {
+        "rollouts": 16,
+        "transitions": 731,
+        "elapsedMs": 100.83558300000004,
+        "budgetExhausted": true,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.04641700000001947,
+        "rootActions": 1009,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 48.73020799999995,
+        "rootSimMs": 0.18416600000000471,
+        "gateMs": 0.02454200000011042,
+        "screenMs": 13.288666999999805,
+        "rolloutMs": 38.33945800000038,
+        "aggregateMs": 0.009666999999808468,
+        "rootSimulationsCreated": 4
+      },
+      "configHash": null,
+      "candidateSources": null
+    },
+    {
+      "kind": "fixed-work",
+      "fixture": "C12",
+      "workUnits": 32,
+      "action": {
+        "type": "claim",
+        "index": 3
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 4
+      },
+      "deterministic": true,
+      "stats": {
+        "rollouts": 32,
+        "transitions": 1474,
+        "elapsedMs": 139.4786250000002,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.04366600000003018,
+        "rootActions": 1009,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 48.42087500000025,
+        "rootSimMs": 0.17824999999947977,
+        "gateMs": 0.024332999999842286,
+        "screenMs": 13.387041999999838,
+        "rolloutMs": 77.20699999999988,
+        "aggregateMs": 0.010249999999814463,
+        "rootSimulationsCreated": 4
+      },
+      "trials": null
+    },
+    {
+      "kind": "fixed-work",
+      "fixture": "C12",
+      "workUnits": 64,
+      "action": {
+        "type": "claim",
+        "index": 3
+      },
+      "championAction": {
+        "type": "claim",
+        "index": 4
+      },
+      "deterministic": true,
+      "stats": {
+        "rollouts": 64,
+        "transitions": 2953,
+        "elapsedMs": 222.02208299999984,
+        "budgetExhausted": false,
+        "omTimeMs": 0,
+        "cloneMs": 0,
+        "legalGenMs": 0.067290999999841,
+        "rootActions": 1009,
+        "candidateCount": 4,
+        "worldsUsed": 4,
+        "planMs": 48.92608399999972,
+        "rootSimMs": 0.2049170000000231,
+        "gateMs": 0.024167000000034022,
+        "screenMs": 13.847790999999688,
+        "rolloutMs": 158.74658399999998,
+        "aggregateMs": 0.009500000000116415,
+        "rootSimulationsCreated": 4
+      },
+      "trials": null
+    }
+  ],
+  "summary": {
+    "C04": {
+      "elapsed": {
+        "n": 6,
+        "min": 78.6255,
+        "p50": 87.13595800000002,
+        "p95": 108.13462500000001,
+        "p99": 108.13462500000001,
+        "max": 108.13462500000001,
+        "mean": 89.401
+      },
+      "zeroTrials": 1,
+      "budgetExhaustedFlagged": 1,
+      "meanRollouts": 13.33,
+      "zeroTrialReasons": {
+        "none": 6
+      },
+      "fixedWork": [
+        {
+          "workUnits": 32,
+          "rollouts": 32,
+          "deterministic": true,
+          "action": {
+            "type": "claim",
+            "index": 1
+          }
+        },
+        {
+          "workUnits": 64,
+          "rollouts": 64,
+          "deterministic": true,
+          "action": {
+            "type": "claim",
+            "index": 1
+          }
+        }
+      ]
+    },
+    "C09": {
+      "elapsed": {
+        "n": 6,
+        "min": 84.35408400000006,
+        "p50": 107.08533299999999,
+        "p95": 108.9057499999999,
+        "p99": 108.9057499999999,
+        "max": 108.9057499999999,
+        "mean": 103.723
+      },
+      "zeroTrials": 0,
+      "budgetExhaustedFlagged": 5,
+      "meanRollouts": 29.33,
+      "zeroTrialReasons": {
+        "none": 6
+      },
+      "fixedWork": [
+        {
+          "workUnits": 32,
+          "rollouts": 32,
+          "deterministic": true,
+          "action": {
+            "type": "claim",
+            "index": 4
+          }
+        },
+        {
+          "workUnits": 64,
+          "rollouts": 64,
+          "deterministic": true,
+          "action": {
+            "type": "claim",
+            "index": 4
+          }
+        }
+      ]
+    },
+    "C12": {
+      "elapsed": {
+        "n": 6,
+        "min": 100.90854100000024,
+        "p50": 101.60149999999976,
+        "p95": 102.98179100000016,
+        "p99": 102.98179100000016,
+        "max": 102.98179100000016,
+        "mean": 101.761
+      },
+      "zeroTrials": 0,
+      "budgetExhaustedFlagged": 6,
+      "meanRollouts": 16,
+      "zeroTrialReasons": {
+        "none": 6
+      },
+      "fixedWork": [
+        {
+          "workUnits": 32,
+          "rollouts": 32,
+          "deterministic": true,
+          "action": {
+            "type": "claim",
+            "index": 3
+          }
+        },
+        {
+          "workUnits": 64,
+          "rollouts": 64,
+          "deterministic": true,
+          "action": {
+            "type": "claim",
+            "index": 3
+          }
+        }
+      ]
+    }
+  }
+}
