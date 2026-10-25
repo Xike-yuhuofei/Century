@@ -1,0 +1,6206 @@
+{
+  "schema": "century-adversarial-league-stratified-corrections-v1",
+  "date": "2026-10-25T03:08:17.393Z",
+  "source": {
+    "file": "/Volumes/Extreme SSD/Projects/Century-reliability/training/reports/adversarial-league/prereg/prereg-15s-official/league-report.json",
+    "schema": "century-adversarial-league-v1",
+    "engineBundleSha256": "a0da8883695a99d134f387c36d46f375aa878ce1bebe9e13e8ffc01b4f5616f0",
+    "registryFingerprint": "cf89c3933a94914d4ed2fbee895b7381a835c2db3c5a23b04c5b5e925647a221",
+    "jointOverrides": null,
+    "totals": {
+      "games": 1620,
+      "finished": 1620,
+      "anomalies": 0,
+      "anomalyRate": 0,
+      "anomalyReasons": [],
+      "meanMoves": 143.4,
+      "meanWallMs": 3620
+    }
+  },
+  "method": "从逐局原始 games 数组重算；(seatCount, protocol, focus, opponent) 分层统计；Wilson 95% CI 按层独立计算，绝不跨人数/协议合并。异常局不计入胜率、按层披露。",
+  "v1Reconciliation": {
+    "note": "原 v1 报告以 (focus, opponent) 合并各人数/协议——分层合计与原合并单元格对账（逐局数守恒）。",
+    "mismatches": []
+  },
+  "stratifiedCells": [
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "neutral-baseline",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 10,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 6,
+          "firstPlaceRate": 0.75
+        },
+        "1": {
+          "games": 7,
+          "wins": 4,
+          "firstPlaceRate": 0.5714
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.6667,
+      "wilson": {
+        "point": 0.6666666666666666,
+        "lower": 0.41713547738519774,
+        "upper": 0.8482367556028526
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "random-legal",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 8,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 7,
+          "wins": 7,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "style-balanced",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 2,
+          "firstPlaceRate": 0.25
+        },
+        "1": {
+          "games": 7,
+          "wins": 2,
+          "firstPlaceRate": 0.2857
+        }
+      },
+      "focusFingerprints": [
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "style-contest",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 8,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 4,
+          "firstPlaceRate": 0.5714
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.5333,
+      "wilson": {
+        "point": 0.5333333333333333,
+        "lower": 0.30116980025498397,
+        "upper": 0.7519046463426261
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "style-engine",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 3,
+          "firstPlaceRate": 0.375
+        },
+        "1": {
+          "games": 7,
+          "wins": 1,
+          "firstPlaceRate": 0.1429
+        }
+      },
+      "focusFingerprints": [
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "style-rush",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 5,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 3,
+          "firstPlaceRate": 0.375
+        },
+        "1": {
+          "games": 7,
+          "wins": 2,
+          "firstPlaceRate": 0.2857
+        }
+      },
+      "focusFingerprints": [
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.3333,
+      "wilson": {
+        "point": 0.3333333333333333,
+        "lower": 0.1517632443971473,
+        "upper": 0.5828645226148023
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "ai4-struct-beam-rollout",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 8,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 6,
+          "firstPlaceRate": 0.75
+        },
+        "1": {
+          "games": 7,
+          "wins": 2,
+          "firstPlaceRate": 0.2857
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.5333,
+      "wilson": {
+        "point": 0.5333333333333333,
+        "lower": 0.30116980025498397,
+        "upper": 0.7519046463426261
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "neutral-baseline",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 10,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 5,
+          "firstPlaceRate": 0.625
+        },
+        "1": {
+          "games": 7,
+          "wins": 5,
+          "firstPlaceRate": 0.7143
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 0.6667,
+      "wilson": {
+        "point": 0.6666666666666666,
+        "lower": 0.41713547738519774,
+        "upper": 0.8482367556028526
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "random-legal",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 8,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 7,
+          "wins": 7,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "style-balanced",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 6,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 2,
+          "firstPlaceRate": 0.2857
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.4,
+      "wilson": {
+        "point": 0.4,
+        "lower": 0.1982449614134158,
+        "upper": 0.6425316987937539
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "style-contest",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 10,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 5,
+          "firstPlaceRate": 0.625
+        },
+        "1": {
+          "games": 7,
+          "wins": 5,
+          "firstPlaceRate": 0.7143
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 0.6667,
+      "wilson": {
+        "point": 0.6666666666666666,
+        "lower": 0.41713547738519774,
+        "upper": 0.8482367556028526
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "style-engine",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 7,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 3,
+          "firstPlaceRate": 0.4286
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.4667,
+      "wilson": {
+        "point": 0.4666666666666667,
+        "lower": 0.24809535365737387,
+        "upper": 0.698830199745016
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "style-rush",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 8,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 2,
+          "firstPlaceRate": 0.25
+        },
+        "1": {
+          "games": 7,
+          "wins": 6,
+          "firstPlaceRate": 0.8571
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.5333,
+      "wilson": {
+        "point": 0.5333333333333333,
+        "lower": 0.30116980025498397,
+        "upper": 0.7519046463426261
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "ai4-struct-beam-rollout",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 11,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 6,
+          "firstPlaceRate": 0.75
+        },
+        "1": {
+          "games": 7,
+          "wins": 5,
+          "firstPlaceRate": 0.7143
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.7333,
+      "wilson": {
+        "point": 0.7333333333333333,
+        "lower": 0.4804956594401943,
+        "upper": 0.8910254667430761
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "ai5-readiness-efficiency",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 12,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 6,
+          "firstPlaceRate": 0.75
+        },
+        "1": {
+          "games": 7,
+          "wins": 6,
+          "firstPlaceRate": 0.8571
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 0.8,
+      "wilson": {
+        "point": 0.8,
+        "lower": 0.5481455128483065,
+        "upper": 0.9295245065301844
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "neutral-baseline",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 11,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 7,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87"
+      ],
+      "firstPlaceRate": 0.7333,
+      "wilson": {
+        "point": 0.7333333333333333,
+        "lower": 0.4804956594401943,
+        "upper": 0.8910254667430761
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "random-legal",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 8,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 7,
+          "wins": 7,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "style-balanced",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 12,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 7,
+          "firstPlaceRate": 0.875
+        },
+        "1": {
+          "games": 7,
+          "wins": 5,
+          "firstPlaceRate": 0.7143
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.8,
+      "wilson": {
+        "point": 0.8,
+        "lower": 0.5481455128483065,
+        "upper": 0.9295245065301844
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "style-contest",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 9,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 5,
+          "firstPlaceRate": 0.7143
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+      ],
+      "firstPlaceRate": 0.6,
+      "wilson": {
+        "point": 0.6,
+        "lower": 0.357468301206246,
+        "upper": 0.8017550385865841
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "style-engine",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 6,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 2,
+          "firstPlaceRate": 0.2857
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.4,
+      "wilson": {
+        "point": 0.4,
+        "lower": 0.1982449614134158,
+        "upper": 0.6425316987937539
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "style-rush",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 9,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 5,
+          "firstPlaceRate": 0.7143
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.6,
+      "wilson": {
+        "point": 0.6,
+        "lower": 0.357468301206246,
+        "upper": 0.8017550385865841
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "random-legal",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 8,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 7,
+          "wins": 7,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "style-balanced",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 8,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 4,
+          "firstPlaceRate": 0.5714
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.5333,
+      "wilson": {
+        "point": 0.5333333333333333,
+        "lower": 0.30116980025498397,
+        "upper": 0.7519046463426261
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "style-contest",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 7,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 3,
+          "firstPlaceRate": 0.4286
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+      ],
+      "firstPlaceRate": 0.4667,
+      "wilson": {
+        "point": 0.4666666666666667,
+        "lower": 0.24809535365737387,
+        "upper": 0.698830199745016
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "style-engine",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 6,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 2,
+          "firstPlaceRate": 0.2857
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.4,
+      "wilson": {
+        "point": 0.4,
+        "lower": 0.1982449614134158,
+        "upper": 0.6425316987937539
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "style-rush",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 7,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 3,
+          "firstPlaceRate": 0.4286
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.4667,
+      "wilson": {
+        "point": 0.4666666666666667,
+        "lower": 0.24809535365737387,
+        "upper": 0.698830199745016
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-balanced",
+      "opponentId": "random-legal",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 8,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 7,
+          "wins": 7,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "style-contest",
+      "opponentId": "random-legal",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 8,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 7,
+          "wins": 7,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "style-contest",
+      "opponentId": "style-balanced",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 8,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 4,
+          "firstPlaceRate": 0.5714
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.5333,
+      "wilson": {
+        "point": 0.5333333333333333,
+        "lower": 0.30116980025498397,
+        "upper": 0.7519046463426261
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-engine",
+      "opponentId": "random-legal",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 8,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 7,
+          "wins": 7,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "style-engine",
+      "opponentId": "style-balanced",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 10,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 7,
+          "firstPlaceRate": 0.875
+        },
+        "1": {
+          "games": 7,
+          "wins": 3,
+          "firstPlaceRate": 0.4286
+        }
+      },
+      "focusFingerprints": [
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.6667,
+      "wilson": {
+        "point": 0.6666666666666666,
+        "lower": 0.41713547738519774,
+        "upper": 0.8482367556028526
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-engine",
+      "opponentId": "style-contest",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 13,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 7,
+          "firstPlaceRate": 0.875
+        },
+        "1": {
+          "games": 7,
+          "wins": 6,
+          "firstPlaceRate": 0.8571
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.8667,
+      "wilson": {
+        "point": 0.8666666666666667,
+        "lower": 0.6211801716767764,
+        "upper": 0.9626387408969346
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "random-legal",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 8,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 7,
+          "wins": 7,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "style-balanced",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 11,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 6,
+          "firstPlaceRate": 0.75
+        },
+        "1": {
+          "games": 7,
+          "wins": 5,
+          "firstPlaceRate": 0.7143
+        }
+      },
+      "focusFingerprints": [
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.7333,
+      "wilson": {
+        "point": 0.7333333333333333,
+        "lower": 0.4804956594401943,
+        "upper": 0.8910254667430761
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "style-contest",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 5,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 2,
+          "firstPlaceRate": 0.25
+        },
+        "1": {
+          "games": 7,
+          "wins": 3,
+          "firstPlaceRate": 0.4286
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.3333,
+      "wilson": {
+        "point": 0.3333333333333333,
+        "lower": 0.1517632443971473,
+        "upper": 0.5828645226148023
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "style-engine",
+      "direction": "h2h",
+      "seatCount": 2,
+      "protocol": "h2h@2",
+      "games": 15,
+      "wins": 7,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 8,
+          "wins": 4,
+          "firstPlaceRate": 0.5
+        },
+        "1": {
+          "games": 7,
+          "wins": 3,
+          "firstPlaceRate": 0.4286
+        }
+      },
+      "focusFingerprints": [
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.4667,
+      "wilson": {
+        "point": 0.4666666666666667,
+        "lower": 0.24809535365737387,
+        "upper": 0.698830199745016
+      },
+      "chanceBaseline": 0.5,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "ai5-readiness-efficiency",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "js5-frozen-champion",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "neutral-baseline",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "random-legal",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "2": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "3": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "4": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "style-balanced",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "style-contest",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "style-engine",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 1,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.0667,
+      "wilson": {
+        "point": 0.06666666666666667,
+        "lower": 0.011866895493268553,
+        "upper": 0.2981652987378003
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai4-struct-beam-rollout",
+      "opponentId": "style-rush",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "ai4-struct-beam-rollout",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 1,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.0667,
+      "wilson": {
+        "point": 0.06666666666666667,
+        "lower": 0.011866895493268553,
+        "upper": 0.2981652987378003
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "js5-frozen-champion",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "neutral-baseline",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "random-legal",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "2": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "3": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "4": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "style-balanced",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 0,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0,
+      "wilson": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.20388330103584862
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "style-contest",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 7,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 0.4667,
+      "wilson": {
+        "point": 0.4666666666666667,
+        "lower": 0.24809535365737387,
+        "upper": 0.698830199745016
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "style-engine",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "ai5-readiness-efficiency",
+      "opponentId": "style-rush",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "ai4-struct-beam-rollout",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 9,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.6,
+      "wilson": {
+        "point": 0.6,
+        "lower": 0.357468301206246,
+        "upper": 0.8017550385865841
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "ai5-readiness-efficiency",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "neutral-baseline",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 8,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87"
+      ],
+      "firstPlaceRate": 0.5333,
+      "wilson": {
+        "point": 0.5333333333333333,
+        "lower": 0.30116980025498397,
+        "upper": 0.7519046463426261
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "random-legal",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "2": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "3": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "4": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "style-balanced",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 9,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "2": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "3": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "4": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.6,
+      "wilson": {
+        "point": 0.6,
+        "lower": 0.357468301206246,
+        "upper": 0.8017550385865841
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "style-contest",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "style-engine",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "js5-frozen-champion",
+      "opponentId": "style-rush",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 6,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.4,
+      "wilson": {
+        "point": 0.4,
+        "lower": 0.1982449614134158,
+        "upper": 0.6425316987937539
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "ai4-struct-beam-rollout",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "ai5-readiness-efficiency",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 5,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 0.3333,
+      "wilson": {
+        "point": 0.3333333333333333,
+        "lower": 0.1517632443971473,
+        "upper": 0.5828645226148023
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "js5-frozen-champion",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "random-legal",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "2": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "3": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "4": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "style-balanced",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "style-contest",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 1,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+      ],
+      "firstPlaceRate": 0.0667,
+      "wilson": {
+        "point": 0.06666666666666667,
+        "lower": 0.011866895493268553,
+        "upper": 0.2981652987378003
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "style-engine",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "neutral-baseline",
+      "opponentId": "style-rush",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "random-legal",
+      "opponentId": "ai4-struct-beam-rollout",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 0,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0,
+      "wilson": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.20388330103584862
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "random-legal",
+      "opponentId": "ai5-readiness-efficiency",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 0,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 0,
+      "wilson": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.20388330103584862
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "random-legal",
+      "opponentId": "js5-frozen-champion",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 0,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1"
+      ],
+      "firstPlaceRate": 0,
+      "wilson": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.20388330103584862
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "random-legal",
+      "opponentId": "neutral-baseline",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 0,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87"
+      ],
+      "firstPlaceRate": 0,
+      "wilson": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.20388330103584862
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "random-legal",
+      "opponentId": "style-balanced",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 0,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0,
+      "wilson": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.20388330103584862
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "random-legal",
+      "opponentId": "style-contest",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 0,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+      ],
+      "firstPlaceRate": 0,
+      "wilson": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.20388330103584862
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "random-legal",
+      "opponentId": "style-engine",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 0,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0,
+      "wilson": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.20388330103584862
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "random-legal",
+      "opponentId": "style-rush",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 0,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0,
+      "wilson": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.20388330103584862
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-balanced",
+      "opponentId": "ai4-struct-beam-rollout",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-balanced",
+      "opponentId": "ai5-readiness-efficiency",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-balanced",
+      "opponentId": "js5-frozen-champion",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-balanced",
+      "opponentId": "neutral-baseline",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-balanced",
+      "opponentId": "random-legal",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "2": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "3": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "4": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "style-balanced",
+      "opponentId": "style-contest",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-balanced",
+      "opponentId": "style-engine",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-balanced",
+      "opponentId": "style-rush",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 5,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.3333,
+      "wilson": {
+        "point": 0.3333333333333333,
+        "lower": 0.1517632443971473,
+        "upper": 0.5828645226148023
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-contest",
+      "opponentId": "ai4-struct-beam-rollout",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-contest",
+      "opponentId": "ai5-readiness-efficiency",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-contest",
+      "opponentId": "js5-frozen-champion",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 1,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+      ],
+      "firstPlaceRate": 0.0667,
+      "wilson": {
+        "point": 0.06666666666666667,
+        "lower": 0.011866895493268553,
+        "upper": 0.2981652987378003
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-contest",
+      "opponentId": "neutral-baseline",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 5,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+      ],
+      "firstPlaceRate": 0.3333,
+      "wilson": {
+        "point": 0.3333333333333333,
+        "lower": 0.1517632443971473,
+        "upper": 0.5828645226148023
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-contest",
+      "opponentId": "random-legal",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "2": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "3": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "4": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "style-contest",
+      "opponentId": "style-balanced",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-contest",
+      "opponentId": "style-engine",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-contest",
+      "opponentId": "style-rush",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 6,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.4,
+      "wilson": {
+        "point": 0.4,
+        "lower": 0.1982449614134158,
+        "upper": 0.6425316987937539
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-engine",
+      "opponentId": "ai4-struct-beam-rollout",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 7,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.4667,
+      "wilson": {
+        "point": 0.4666666666666667,
+        "lower": 0.24809535365737387,
+        "upper": 0.698830199745016
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "style-engine",
+      "opponentId": "ai5-readiness-efficiency",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-engine",
+      "opponentId": "js5-frozen-champion",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 1,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.0667,
+      "wilson": {
+        "point": 0.06666666666666667,
+        "lower": 0.011866895493268553,
+        "upper": 0.2981652987378003
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-engine",
+      "opponentId": "neutral-baseline",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-engine",
+      "opponentId": "random-legal",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "2": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "3": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "4": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "style-engine",
+      "opponentId": "style-balanced",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 1,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.0667,
+      "wilson": {
+        "point": 0.06666666666666667,
+        "lower": 0.011866895493268553,
+        "upper": 0.2981652987378003
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-engine",
+      "opponentId": "style-contest",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-engine",
+      "opponentId": "style-rush",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "ai4-struct-beam-rollout",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "ai5-readiness-efficiency",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "js5-frozen-champion",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 1,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.0667,
+      "wilson": {
+        "point": 0.06666666666666667,
+        "lower": 0.011866895493268553,
+        "upper": 0.2981652987378003
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "neutral-baseline",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 4,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 2,
+          "firstPlaceRate": 0.6667
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.2667,
+      "wilson": {
+        "point": 0.26666666666666666,
+        "lower": 0.10897453325692374,
+        "upper": 0.5195043405598057
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "random-legal",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 15,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "1": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "2": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "3": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        },
+        "4": {
+          "games": 3,
+          "wins": 3,
+          "firstPlaceRate": 1
+        }
+      },
+      "focusFingerprints": [
+        "2467e4b867105de1b0566bd1ab3cf1c619bdde5f780fe779d41610a820dd47c1",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 1,
+      "wilson": {
+        "point": 1,
+        "lower": 0.7961166989641515,
+        "upper": 1
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "above"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "style-balanced",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 2,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        }
+      },
+      "focusFingerprints": [
+        "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.1333,
+      "wilson": {
+        "point": 0.13333333333333333,
+        "lower": 0.03736125910306537,
+        "upper": 0.37881982832322364
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "style-contest",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "1": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    },
+    {
+      "focusId": "style-rush",
+      "opponentId": "style-engine",
+      "direction": "field",
+      "seatCount": 5,
+      "protocol": "field@5",
+      "games": 15,
+      "wins": 3,
+      "anomalies": 0,
+      "bySeat": {
+        "0": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "1": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "2": {
+          "games": 3,
+          "wins": 0,
+          "firstPlaceRate": 0
+        },
+        "3": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        },
+        "4": {
+          "games": 3,
+          "wins": 1,
+          "firstPlaceRate": 0.3333
+        }
+      },
+      "focusFingerprints": [
+        "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712",
+        "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+      ],
+      "firstPlaceRate": 0.2,
+      "wilson": {
+        "point": 0.2,
+        "lower": 0.07047549346981563,
+        "upper": 0.45185448715169363
+      },
+      "chanceBaseline": 0.2,
+      "vsChance": "inconclusive"
+    }
+  ],
+  "byOpponent": {
+    "ai4-struct-beam-rollout": {
+      "neutral-baseline@h2h@2": {
+        "games": 15,
+        "wins": 10,
+        "firstPlaceRate": 0.6667,
+        "wilson": {
+          "point": 0.6666666666666666,
+          "lower": 0.41713547738519774,
+          "upper": 0.8482367556028526
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "random-legal@h2h@2": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@h2h@2": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-contest@h2h@2": {
+        "games": 15,
+        "wins": 8,
+        "firstPlaceRate": 0.5333,
+        "wilson": {
+          "point": 0.5333333333333333,
+          "lower": 0.30116980025498397,
+          "upper": 0.7519046463426261
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@h2h@2": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@h2h@2": {
+        "games": 15,
+        "wins": 5,
+        "firstPlaceRate": 0.3333,
+        "wilson": {
+          "point": 0.3333333333333333,
+          "lower": 0.1517632443971473,
+          "upper": 0.5828645226148023
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai5-readiness-efficiency@field@5": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "js5-frozen-champion@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "neutral-baseline@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "random-legal@field@5": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-contest@field@5": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@field@5": {
+        "games": 15,
+        "wins": 1,
+        "firstPlaceRate": 0.0667,
+        "wilson": {
+          "point": 0.06666666666666667,
+          "lower": 0.011866895493268553,
+          "upper": 0.2981652987378003
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      }
+    },
+    "ai5-readiness-efficiency": {
+      "ai4-struct-beam-rollout@h2h@2": {
+        "games": 15,
+        "wins": 8,
+        "firstPlaceRate": 0.5333,
+        "wilson": {
+          "point": 0.5333333333333333,
+          "lower": 0.30116980025498397,
+          "upper": 0.7519046463426261
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "neutral-baseline@h2h@2": {
+        "games": 15,
+        "wins": 10,
+        "firstPlaceRate": 0.6667,
+        "wilson": {
+          "point": 0.6666666666666666,
+          "lower": 0.41713547738519774,
+          "upper": 0.8482367556028526
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "random-legal@h2h@2": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@h2h@2": {
+        "games": 15,
+        "wins": 6,
+        "firstPlaceRate": 0.4,
+        "wilson": {
+          "point": 0.4,
+          "lower": 0.1982449614134158,
+          "upper": 0.6425316987937539
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-contest@h2h@2": {
+        "games": 15,
+        "wins": 10,
+        "firstPlaceRate": 0.6667,
+        "wilson": {
+          "point": 0.6666666666666666,
+          "lower": 0.41713547738519774,
+          "upper": 0.8482367556028526
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@h2h@2": {
+        "games": 15,
+        "wins": 7,
+        "firstPlaceRate": 0.4667,
+        "wilson": {
+          "point": 0.4666666666666667,
+          "lower": 0.24809535365737387,
+          "upper": 0.698830199745016
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@h2h@2": {
+        "games": 15,
+        "wins": 8,
+        "firstPlaceRate": 0.5333,
+        "wilson": {
+          "point": 0.5333333333333333,
+          "lower": 0.30116980025498397,
+          "upper": 0.7519046463426261
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai4-struct-beam-rollout@field@5": {
+        "games": 15,
+        "wins": 1,
+        "firstPlaceRate": 0.0667,
+        "wilson": {
+          "point": 0.06666666666666667,
+          "lower": 0.011866895493268553,
+          "upper": 0.2981652987378003
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "js5-frozen-champion@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "neutral-baseline@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "random-legal@field@5": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@field@5": {
+        "games": 15,
+        "wins": 0,
+        "firstPlaceRate": 0,
+        "wilson": {
+          "point": 0,
+          "lower": 0,
+          "upper": 0.20388330103584862
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-contest@field@5": {
+        "games": 15,
+        "wins": 7,
+        "firstPlaceRate": 0.4667,
+        "wilson": {
+          "point": 0.4666666666666667,
+          "lower": 0.24809535365737387,
+          "upper": 0.698830199745016
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-engine@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      }
+    },
+    "js5-frozen-champion": {
+      "ai4-struct-beam-rollout@h2h@2": {
+        "games": 15,
+        "wins": 11,
+        "firstPlaceRate": 0.7333,
+        "wilson": {
+          "point": 0.7333333333333333,
+          "lower": 0.4804956594401943,
+          "upper": 0.8910254667430761
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai5-readiness-efficiency@h2h@2": {
+        "games": 15,
+        "wins": 12,
+        "firstPlaceRate": 0.8,
+        "wilson": {
+          "point": 0.8,
+          "lower": 0.5481455128483065,
+          "upper": 0.9295245065301844
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "neutral-baseline@h2h@2": {
+        "games": 15,
+        "wins": 11,
+        "firstPlaceRate": 0.7333,
+        "wilson": {
+          "point": 0.7333333333333333,
+          "lower": 0.4804956594401943,
+          "upper": 0.8910254667430761
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "random-legal@h2h@2": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@h2h@2": {
+        "games": 15,
+        "wins": 12,
+        "firstPlaceRate": 0.8,
+        "wilson": {
+          "point": 0.8,
+          "lower": 0.5481455128483065,
+          "upper": 0.9295245065301844
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-contest@h2h@2": {
+        "games": 15,
+        "wins": 9,
+        "firstPlaceRate": 0.6,
+        "wilson": {
+          "point": 0.6,
+          "lower": 0.357468301206246,
+          "upper": 0.8017550385865841
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@h2h@2": {
+        "games": 15,
+        "wins": 6,
+        "firstPlaceRate": 0.4,
+        "wilson": {
+          "point": 0.4,
+          "lower": 0.1982449614134158,
+          "upper": 0.6425316987937539
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@h2h@2": {
+        "games": 15,
+        "wins": 9,
+        "firstPlaceRate": 0.6,
+        "wilson": {
+          "point": 0.6,
+          "lower": 0.357468301206246,
+          "upper": 0.8017550385865841
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai4-struct-beam-rollout@field@5": {
+        "games": 15,
+        "wins": 9,
+        "firstPlaceRate": 0.6,
+        "wilson": {
+          "point": 0.6,
+          "lower": 0.357468301206246,
+          "upper": 0.8017550385865841
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "ai5-readiness-efficiency@field@5": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "neutral-baseline@field@5": {
+        "games": 15,
+        "wins": 8,
+        "firstPlaceRate": 0.5333,
+        "wilson": {
+          "point": 0.5333333333333333,
+          "lower": 0.30116980025498397,
+          "upper": 0.7519046463426261
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "random-legal@field@5": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@field@5": {
+        "games": 15,
+        "wins": 9,
+        "firstPlaceRate": 0.6,
+        "wilson": {
+          "point": 0.6,
+          "lower": 0.357468301206246,
+          "upper": 0.8017550385865841
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-contest@field@5": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@field@5": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@field@5": {
+        "games": 15,
+        "wins": 6,
+        "firstPlaceRate": 0.4,
+        "wilson": {
+          "point": 0.4,
+          "lower": 0.1982449614134158,
+          "upper": 0.6425316987937539
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      }
+    },
+    "neutral-baseline": {
+      "random-legal@h2h@2": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@h2h@2": {
+        "games": 15,
+        "wins": 8,
+        "firstPlaceRate": 0.5333,
+        "wilson": {
+          "point": 0.5333333333333333,
+          "lower": 0.30116980025498397,
+          "upper": 0.7519046463426261
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-contest@h2h@2": {
+        "games": 15,
+        "wins": 7,
+        "firstPlaceRate": 0.4667,
+        "wilson": {
+          "point": 0.4666666666666667,
+          "lower": 0.24809535365737387,
+          "upper": 0.698830199745016
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@h2h@2": {
+        "games": 15,
+        "wins": 6,
+        "firstPlaceRate": 0.4,
+        "wilson": {
+          "point": 0.4,
+          "lower": 0.1982449614134158,
+          "upper": 0.6425316987937539
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@h2h@2": {
+        "games": 15,
+        "wins": 7,
+        "firstPlaceRate": 0.4667,
+        "wilson": {
+          "point": 0.4666666666666667,
+          "lower": 0.24809535365737387,
+          "upper": 0.698830199745016
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai4-struct-beam-rollout@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai5-readiness-efficiency@field@5": {
+        "games": 15,
+        "wins": 5,
+        "firstPlaceRate": 0.3333,
+        "wilson": {
+          "point": 0.3333333333333333,
+          "lower": 0.1517632443971473,
+          "upper": 0.5828645226148023
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "js5-frozen-champion@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "random-legal@field@5": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@field@5": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-contest@field@5": {
+        "games": 15,
+        "wins": 1,
+        "firstPlaceRate": 0.0667,
+        "wilson": {
+          "point": 0.06666666666666667,
+          "lower": 0.011866895493268553,
+          "upper": 0.2981652987378003
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      }
+    },
+    "style-balanced": {
+      "random-legal@h2h@2": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "ai4-struct-beam-rollout@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai5-readiness-efficiency@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "js5-frozen-champion@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "neutral-baseline@field@5": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "random-legal@field@5": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-contest@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@field@5": {
+        "games": 15,
+        "wins": 5,
+        "firstPlaceRate": 0.3333,
+        "wilson": {
+          "point": 0.3333333333333333,
+          "lower": 0.1517632443971473,
+          "upper": 0.5828645226148023
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      }
+    },
+    "style-contest": {
+      "random-legal@h2h@2": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@h2h@2": {
+        "games": 15,
+        "wins": 8,
+        "firstPlaceRate": 0.5333,
+        "wilson": {
+          "point": 0.5333333333333333,
+          "lower": 0.30116980025498397,
+          "upper": 0.7519046463426261
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai4-struct-beam-rollout@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai5-readiness-efficiency@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "js5-frozen-champion@field@5": {
+        "games": 15,
+        "wins": 1,
+        "firstPlaceRate": 0.0667,
+        "wilson": {
+          "point": 0.06666666666666667,
+          "lower": 0.011866895493268553,
+          "upper": 0.2981652987378003
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "neutral-baseline@field@5": {
+        "games": 15,
+        "wins": 5,
+        "firstPlaceRate": 0.3333,
+        "wilson": {
+          "point": 0.3333333333333333,
+          "lower": 0.1517632443971473,
+          "upper": 0.5828645226148023
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "random-legal@field@5": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@field@5": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@field@5": {
+        "games": 15,
+        "wins": 6,
+        "firstPlaceRate": 0.4,
+        "wilson": {
+          "point": 0.4,
+          "lower": 0.1982449614134158,
+          "upper": 0.6425316987937539
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      }
+    },
+    "style-engine": {
+      "random-legal@h2h@2": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@h2h@2": {
+        "games": 15,
+        "wins": 10,
+        "firstPlaceRate": 0.6667,
+        "wilson": {
+          "point": 0.6666666666666666,
+          "lower": 0.41713547738519774,
+          "upper": 0.8482367556028526
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-contest@h2h@2": {
+        "games": 15,
+        "wins": 13,
+        "firstPlaceRate": 0.8667,
+        "wilson": {
+          "point": 0.8666666666666667,
+          "lower": 0.6211801716767764,
+          "upper": 0.9626387408969346
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "ai4-struct-beam-rollout@field@5": {
+        "games": 15,
+        "wins": 7,
+        "firstPlaceRate": 0.4667,
+        "wilson": {
+          "point": 0.4666666666666667,
+          "lower": 0.24809535365737387,
+          "upper": 0.698830199745016
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "ai5-readiness-efficiency@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "js5-frozen-champion@field@5": {
+        "games": 15,
+        "wins": 1,
+        "firstPlaceRate": 0.0667,
+        "wilson": {
+          "point": 0.06666666666666667,
+          "lower": 0.011866895493268553,
+          "upper": 0.2981652987378003
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "neutral-baseline@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "random-legal@field@5": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@field@5": {
+        "games": 15,
+        "wins": 1,
+        "firstPlaceRate": 0.0667,
+        "wilson": {
+          "point": 0.06666666666666667,
+          "lower": 0.011866895493268553,
+          "upper": 0.2981652987378003
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-contest@field@5": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      }
+    },
+    "style-rush": {
+      "random-legal@h2h@2": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@h2h@2": {
+        "games": 15,
+        "wins": 11,
+        "firstPlaceRate": 0.7333,
+        "wilson": {
+          "point": 0.7333333333333333,
+          "lower": 0.4804956594401943,
+          "upper": 0.8910254667430761
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-contest@h2h@2": {
+        "games": 15,
+        "wins": 5,
+        "firstPlaceRate": 0.3333,
+        "wilson": {
+          "point": 0.3333333333333333,
+          "lower": 0.1517632443971473,
+          "upper": 0.5828645226148023
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@h2h@2": {
+        "games": 15,
+        "wins": 7,
+        "firstPlaceRate": 0.4667,
+        "wilson": {
+          "point": 0.4666666666666667,
+          "lower": 0.24809535365737387,
+          "upper": 0.698830199745016
+        },
+        "chanceBaseline": 0.5,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai4-struct-beam-rollout@field@5": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai5-readiness-efficiency@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "js5-frozen-champion@field@5": {
+        "games": 15,
+        "wins": 1,
+        "firstPlaceRate": 0.0667,
+        "wilson": {
+          "point": 0.06666666666666667,
+          "lower": 0.011866895493268553,
+          "upper": 0.2981652987378003
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "neutral-baseline@field@5": {
+        "games": 15,
+        "wins": 4,
+        "firstPlaceRate": 0.2667,
+        "wilson": {
+          "point": 0.26666666666666666,
+          "lower": 0.10897453325692374,
+          "upper": 0.5195043405598057
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "random-legal@field@5": {
+        "games": 15,
+        "wins": 15,
+        "firstPlaceRate": 1,
+        "wilson": {
+          "point": 1,
+          "lower": 0.7961166989641515,
+          "upper": 1
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "above",
+        "anomalies": 0
+      },
+      "style-balanced@field@5": {
+        "games": 15,
+        "wins": 2,
+        "firstPlaceRate": 0.1333,
+        "wilson": {
+          "point": 0.13333333333333333,
+          "lower": 0.03736125910306537,
+          "upper": 0.37881982832322364
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-contest@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@field@5": {
+        "games": 15,
+        "wins": 3,
+        "firstPlaceRate": 0.2,
+        "wilson": {
+          "point": 0.2,
+          "lower": 0.07047549346981563,
+          "upper": 0.45185448715169363
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      }
+    },
+    "random-legal": {
+      "ai4-struct-beam-rollout@field@5": {
+        "games": 15,
+        "wins": 0,
+        "firstPlaceRate": 0,
+        "wilson": {
+          "point": 0,
+          "lower": 0,
+          "upper": 0.20388330103584862
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "ai5-readiness-efficiency@field@5": {
+        "games": 15,
+        "wins": 0,
+        "firstPlaceRate": 0,
+        "wilson": {
+          "point": 0,
+          "lower": 0,
+          "upper": 0.20388330103584862
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "js5-frozen-champion@field@5": {
+        "games": 15,
+        "wins": 0,
+        "firstPlaceRate": 0,
+        "wilson": {
+          "point": 0,
+          "lower": 0,
+          "upper": 0.20388330103584862
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "neutral-baseline@field@5": {
+        "games": 15,
+        "wins": 0,
+        "firstPlaceRate": 0,
+        "wilson": {
+          "point": 0,
+          "lower": 0,
+          "upper": 0.20388330103584862
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-balanced@field@5": {
+        "games": 15,
+        "wins": 0,
+        "firstPlaceRate": 0,
+        "wilson": {
+          "point": 0,
+          "lower": 0,
+          "upper": 0.20388330103584862
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-contest@field@5": {
+        "games": 15,
+        "wins": 0,
+        "firstPlaceRate": 0,
+        "wilson": {
+          "point": 0,
+          "lower": 0,
+          "upper": 0.20388330103584862
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-engine@field@5": {
+        "games": 15,
+        "wins": 0,
+        "firstPlaceRate": 0,
+        "wilson": {
+          "point": 0,
+          "lower": 0,
+          "upper": 0.20388330103584862
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      },
+      "style-rush@field@5": {
+        "games": 15,
+        "wins": 0,
+        "firstPlaceRate": 0,
+        "wilson": {
+          "point": 0,
+          "lower": 0,
+          "upper": 0.20388330103584862
+        },
+        "chanceBaseline": 0.2,
+        "vsChance": "inconclusive",
+        "anomalies": 0
+      }
+    }
+  },
+  "interpretation": {
+    "note": "vsChance 仅描述该层样本下 Wilson 95% CI 相对机会基准的位置；2p 基准 0.5、≥3p 方向 A 基准 1/N。跨层不得合并判定；结论外推需独立验证。"
+  }
+}

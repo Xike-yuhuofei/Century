@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<!-- AI Worker 运行时显式 opt-in 验收页（夜间任务 C）。
+     不接入任何默认页面；仅用于验证 Worker 运行时在真实浏览器的行为：
+     1) Worker 与直调等价（固定工作量）；2) 正式引擎合法性；3) 协议防火墙；
+     4) 500ms/1000ms 思考预算下的主线程响应性（rAF 帧间隙 + longtask）；
+     5) 延迟分布报告。
+     打开方式：npm run build 后经 http 服务访问 /ai-runtime/harness.html
+     （file:// 下 module Worker 受浏览器限制，不支持直开）。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>AI Runtime Worker 验收（opt-in）</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", sans-serif; margin: 2rem; background: #10141c; color: #dce3ee; }
+  h1 { font-size: 1.2rem; } h2 { font-size: 1rem; margin-top: 1.2rem; }
+  table { border-collapse: collapse; margin: .5rem 0; font-size: .85rem; }
+  td, th { border: 1px solid #2c3547; padding: .3rem .6rem; text-align: left; }
+  .pass { color: #6fe3a5; } .fail { color: #ff7a7a; } .info { color: #8fa3c0; }
+  pre { background: #0b0e14; padding: .6rem; font-size: .75rem; overflow-x: auto; }
+</style>
+</head>
+<body>
+<h1>Century AI Worker 运行时验收（显式 opt-in，不影响默认页面）</h1>
+<div id="panel"><p class="info">运行中…</p></div>
+<pre id="log"></pre>
+<script type="module">
+import { createGame, applyAction } from '../js/engine.js';
+import { buildObservation } from '../js/ai/observation.js';
+import { createAIDecisionClient } from '../js/ai-runtime/client.js';
+import { decideFromObservation } from '../js/ai-runtime/decision-core.js';
+import { chooseVerifiedFallback } from '../js/ai-runtime/fallback.js';
+
+const log = [];
+const logLine = (text, cls = 'info') => {
+  log.push(text);
+  const el = document.getElementById('log');
+  el.textContent = log.join('\n');
+  void cls;
+};
+
+/** 推进到指定回合数的 AI 中局（确定性种子）。 */
+function midgameGame(seed, minTurn) {
+  let g = createGame(['A', 'B', 'C', 'D'], seed, [1, 2, 3]);
+  let moves = 0;
+  while (g.phase !== 'finished' && moves < 400 && (g.turnNumber < minTurn || g.phase !== 'turn')) {
+    const core = decideFromObservation({
+      observation: buildObservation(g, g.current), ai: { jointVersion: 'joint-js2' },
+      budget: { mode: 'fixed-work', workUnits: 2 }, simSeed: 7, horizon: 30,
+    });
+    g = applyAction(g, core.action);
+    moves++;
+  }
+  return g;
+}
+
+/** 主线程响应性探针：决策期间逐帧计数 + longtask 观测。 */
+async function responsivenessProbe(run) {
+  let frames = 0;
+  let lastTs = 0;
+  let maxGap = 0;
+  let longtaskCount = 0;
+  let longtaskTotal = 0;
+  let longtasks = [];
+  const observer = new PerformanceObserver(list => {
+    for (const entry of list.getEntries()) {
+      longtaskCount++;
+      longtaskTotal += entry.duration;
+      longtasks.push(Math.round(entry.duration));
+    }
+  });
+  observer.observe({ type: 'longtask', buffered: false });
+  let rafId = 0;
+  let stopped = false;
+  const tick = ts => {
+    if (stopped) return;
+    frames++;
+    if (lastTs > 0) maxGap = Math.max(maxGap, ts - lastTs);
+    lastTs = ts;
+    rafId = requestAnimationFrame(tick);
+  };
+  rafId = requestAnimationFrame(tick);
+  const t0 = performance.now();
+  const result = await run();
+  const latency = performance.now() - t0;
+  stopped = true;
+  cancelAnimationFrame(rafId);
+  observer.disconnect();
+  return { frames, maxGapMs: Math.round(maxGap), longtaskCount, longtaskTotalMs: Math.round(longtaskTotal), longtasks, latencyMs: Math.round(latency), result };
+}
+
+const checks = [];
+const check = (name, pass, detail) => { checks.push({ name, pass, detail }); logLine(`${pass ? 'PASS' : 'FAIL'} ${name} ${detail ?? ''}`, pass ? 'pass' : 'fail'); };
+
+const panel = document.getElementById('panel');
+try {
+  const game = midgameGame(2026, 3);
+  const observation = buildObservation(game, game.current);
+  const client = createAIDecisionClient({
+    spawn: () => new Worker('../js/ai-runtime/worker.js', { type: 'module' }),
+    watchdogGraceMs: 4000,
+  });
+  await client.ready();
+
+  // 1) 固定工作量等价：worker 往返 == 主线程直调。
+  const direct = decideFromObservation({
+    observation, ai: { jointVersion: 'joint-js5' },
+    budget: { mode: 'fixed-work', workUnits: 8 }, simSeed: 911, horizon: 40,
+  });
+  const workerOutcome = await client.requestDecision({
+    gameStateVersion: game.turnNumber * 10 + game.current, observation,
+    ai: { jointVersion: 'joint-js5' }, budget: { mode: 'fixed-work', workUnits: 8 },
+    simSeed: 911, horizon: 40, expectedMs: 5000,
+  });
+  check('等价性：worker == 直调（固定工作量 8）',
+    workerOutcome.status === 'decision' && JSON.stringify(workerOutcome.action) === JSON.stringify(direct.action),
+    JSON.stringify(workerOutcome.action));
+
+  // 2) 合法性：正式引擎接受 worker 行动。
+  let legal = false;
+  try { applyAction(JSON.parse(JSON.stringify(game)), workerOutcome.action); legal = true; } catch { legal = false; }
+  check('合法性：正式引擎 applyAction 接受', legal, JSON.stringify(workerOutcome.action));
+
+  // 3) 协议防火墙：越权载荷（携带 merchantDeck）被拒且回退合法。
+  const poisoned = await client.requestDecision({
+    gameStateVersion: 1, observation: { ...observation, merchantDeck: ['M01'] },
+    ai: { jointVersion: 'joint-js5' }, budget: { mode: 'fixed-work', workUnits: 2 },
+    simSeed: 1, expectedMs: 3000,
+  });
+  check('防火墙：隐藏牌库载荷被拒并安全回退',
+    poisoned.status === 'fallback' && /防火墙/.test(poisoned.error ?? ''), poisoned.error ?? poisoned.status);
+
+  // 4) 500ms / 1000ms 思考预算的主线程响应性。
+  const responsiveness = {};
+  for (const budgetMs of [500, 1000]) {
+    const probe = await responsivenessProbe(() => client.requestDecision({
+      gameStateVersion: game.turnNumber * 10 + game.current, observation,
+      ai: { jointVersion: 'joint-js5' }, budget: { mode: 'wall-clock', budgetMs },
+      simSeed: 950 + budgetMs, expectedMs: budgetMs + 3000,
+    }));
+    responsiveness[budgetMs] = probe;
+    check(`主线程响应性 @${budgetMs}ms 预算（无长任务、帧隙 < 250ms）`,
+      probe.longtaskCount === 0 && probe.maxGapMs < 250,
+      `帧 ${probe.frames}，最大帧隙 ${probe.maxGapMs}ms，longtask ${probe.longtaskCount} 个/${probe.longtaskTotalMs}ms，延迟 ${probe.latencyMs}ms`);
+    logLine(`  [${budgetMs}ms] 延迟 ${probe.latencyMs}ms，rollouts ${probe.result?.diagnostics?.stats?.rollouts ?? '?'}`);
+  }
+
+  // 5) 对照组：主线程同步直调 500ms 预算（展示旧行为的阻塞，仅记录不判定）。
+  const control = await responsivenessProbe(() => {
+    const r = decideFromObservation({
+      observation, ai: { jointVersion: 'joint-js5' },
+      budget: { mode: 'wall-clock', budgetMs: 500 }, simSeed: 970,
+    });
+    return r;
+  });
+  logLine(`对照组（主线程直调 500ms）：longtask ${control.longtaskCount} 个/${control.longtaskTotalMs}ms，最大帧隙 ${control.maxGapMs}ms（旧行为阻塞证据）`);
+
+  // 6) 回退路径合法性（正式引擎验证）。
+  const fallback = chooseVerifiedFallback(observation);
+  let fallbackLegal = false;
+  try { applyAction(JSON.parse(JSON.stringify(game)), fallback.action); fallbackLegal = true; } catch { fallbackLegal = false; }
+  check('回退路径合法性（正式引擎验证）', fallbackLegal, `${fallback.source} ${JSON.stringify(fallback.action)}`);
+
+  client.dispose();
+
+  const pass = checks.every(c => c.pass);
+  panel.innerHTML = `<p class="${pass ? 'pass' : 'fail'}">${pass ? '全部通过' : '存在失败'}（${checks.filter(c => c.pass).length}/${checks.length}）</p>`;
+  window.__AI_RUNTIME_HARNESS__ = {
+    pass,
+    checks,
+    userAgent: navigator.userAgent,
+    responsiveness: Object.fromEntries(Object.entries(responsiveness).map(([k, v]) => [k, {
+      frames: v.frames, maxGapMs: v.maxGapMs, longtaskCount: v.longtaskCount,
+      longtaskTotalMs: v.longtaskTotalMs, latencyMs: v.latencyMs,
+      rollouts: v.result?.diagnostics?.stats?.rollouts ?? null,
+    }])),
+    control: { longtaskCount: control.longtaskCount, longtaskTotalMs: control.longtaskTotalMs, maxGapMs: control.maxGapMs },
+  };
+  document.title = pass ? 'HARNESS-PASS' : 'HARNESS-FAIL';
+} catch (error) {
+  panel.innerHTML = '<p class="fail">运行异常</p>';
+  logLine(`FATAL ${error instanceof Error ? error.stack : String(error)}`, 'fail');
+  window.__AI_RUNTIME_HARNESS__ = { pass: false, fatal: String(error), checks };
+  document.title = 'HARNESS-FAIL';
+}
+</script>
+</body>
+</html>

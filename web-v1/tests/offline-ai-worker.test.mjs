@@ -50,18 +50,6 @@ test('桌面 standalone：嵌入 AI Worker 含完整冠军闭包并能实跑 JS5
   assert.ok(response.action && typeof response.action.type === 'string', '决策缺少合法行动');
 });
 
-test('移动端 standalone：offline-worker 含完整冠军闭包（JS5 晋级后不回退）', () => {
-  const worker = loadEmbeddedWorker('../dist/mobile/standalone.html', 'offline-worker');
-  const game = createGame(['人类', 'AI 甲'], 99_000_002, [1]);
-  game.players[1].isAI = true;
-  game.players[0].isAI = true;
-  let response = null;
-  worker.postMessage = (msg) => { response = msg; };
-  worker.onmessage({ data: game });
-  assert.ok(response, 'Worker 未返回决策');
-  assert.ok(!response.error, `Worker 决策报错：${response.error}`);
-});
-
 test('桌面 standalone 主内联脚本含适配器冠军路径（chooseJointAction 可用）', () => {
   const html = readFileSync(resolve(HERE, '../dist/standalone.html'), 'utf8');
   assert.ok(html.includes('function chooseJointAction'), '主内联缺少 js/adapter 闭包');

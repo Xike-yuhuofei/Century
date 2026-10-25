@@ -1,0 +1,223 @@
+{
+  "schema": "js5-goal-paired-analysis-v1",
+  "generatedAt": "2026-10-25T05:45:32.651Z",
+  "baselineReport": "training/reports/js5-goal-optimization/run-20261025-01/evidence/ablation/pilot-A0/ablation-goal-dev-js5-5-40s-w16.json",
+  "candidateReports": [
+    "training/reports/js5-goal-optimization/run-20261025-01/evidence/ablation/pilot-A1/ablation-goal-dev-js5-5-40s-w16-nt-replace.json",
+    "training/reports/js5-goal-optimization/run-20261025-01/evidence/ablation/pilot-A4/ablation-goal-dev-js5-5-40s-w16-nt-replace-sc-preferred-ba-balanced.json"
+  ],
+  "results": [
+    {
+      "candidate": "training/reports/js5-goal-optimization/run-20261025-01/evidence/ablation/pilot-A1/ablation-goal-dev-js5-5-40s-w16-nt-replace.json",
+      "baseline": "training/reports/js5-goal-optimization/run-20261025-01/evidence/ablation/pilot-A0/ablation-goal-dev-js5-5-40s-w16.json",
+      "players": 5,
+      "direction": "A",
+      "seeds": 40,
+      "firstPlace": {
+        "baselineRate": 0.225,
+        "candidateRate": 0.275,
+        "pointDiff": 0.05,
+        "bootstrap95": [
+          -0.075,
+          0.175
+        ],
+        "wins": 4,
+        "losses": 2,
+        "ties": 34,
+        "discordance": 0.15,
+        "exactMcNemarP": 0.6875,
+        "nFor8pp": 184,
+        "nFor5pp": 471,
+        "nFor3pp": 1309
+      },
+      "auxiliary": {
+        "baselineMeanScoreDiff": 3.03125,
+        "candidateMeanScoreDiff": 2.675,
+        "scoreDiffDelta": -0.35625,
+        "baselineAnomalies": 0,
+        "candidateAnomalies": 0,
+        "baselineJoint": {
+          "decisions": 1369,
+          "meanRolloutsPerDecision": 14.69,
+          "meanTransitionsPerDecision": 613.9,
+          "omTimeMsTotal": 0,
+          "omTimeShare": 0,
+          "gateTriggerRate": 0.9211,
+          "overrideRate": 0.3624,
+          "gatedChampionKeepRate": 0.6376,
+          "gatedStarvedFallbackRate": 0
+        },
+        "candidateJoint": {
+          "decisions": 1395,
+          "meanRolloutsPerDecision": 14.72,
+          "meanTransitionsPerDecision": 611.8,
+          "omTimeMsTotal": 0,
+          "omTimeShare": 0,
+          "gateTriggerRate": 0.9226,
+          "overrideRate": 0.3535,
+          "gatedChampionKeepRate": 0.6465,
+          "gatedStarvedFallbackRate": 0
+        },
+        "baselineLatency": {
+          "count": 6892,
+          "meanMs": 46.932,
+          "p50Ms": 27.907,
+          "p95Ms": 125.362,
+          "p99Ms": 156.985,
+          "maxMs": 814.642
+        },
+        "candidateLatency": {
+          "count": 7012,
+          "meanMs": 46.772,
+          "p50Ms": 28.19,
+          "p95Ms": 124.293,
+          "p99Ms": 154.814,
+          "maxMs": 645.57
+        }
+      },
+      "bySeat": [
+        {
+          "seat": "0",
+          "n": 8,
+          "baseWins": 3,
+          "candWins": 3,
+          "pointDiff": 0
+        },
+        {
+          "seat": "1",
+          "n": 8,
+          "baseWins": 3,
+          "candWins": 3,
+          "pointDiff": 0
+        },
+        {
+          "seat": "2",
+          "n": 8,
+          "baseWins": 1,
+          "candWins": 1,
+          "pointDiff": 0
+        },
+        {
+          "seat": "3",
+          "n": 8,
+          "baseWins": 1,
+          "candWins": 3,
+          "pointDiff": 0.25
+        },
+        {
+          "seat": "4",
+          "n": 8,
+          "baseWins": 1,
+          "candWins": 1,
+          "pointDiff": 0
+        }
+      ]
+    },
+    {
+      "candidate": "training/reports/js5-goal-optimization/run-20261025-01/evidence/ablation/pilot-A4/ablation-goal-dev-js5-5-40s-w16-nt-replace-sc-preferred-ba-balanced.json",
+      "baseline": "training/reports/js5-goal-optimization/run-20261025-01/evidence/ablation/pilot-A0/ablation-goal-dev-js5-5-40s-w16.json",
+      "players": 5,
+      "direction": "A",
+      "seeds": 40,
+      "firstPlace": {
+        "baselineRate": 0.225,
+        "candidateRate": 0.225,
+        "pointDiff": 0,
+        "bootstrap95": [
+          -0.15,
+          0.15
+        ],
+        "wins": 4,
+        "losses": 4,
+        "ties": 32,
+        "discordance": 0.2,
+        "exactMcNemarP": 1,
+        "nFor8pp": 246,
+        "nFor5pp": 628,
+        "nFor3pp": 1745
+      },
+      "auxiliary": {
+        "baselineMeanScoreDiff": 3.03125,
+        "candidateMeanScoreDiff": 3.2,
+        "scoreDiffDelta": 0.16875,
+        "baselineAnomalies": 0,
+        "candidateAnomalies": 0,
+        "baselineJoint": {
+          "decisions": 1369,
+          "meanRolloutsPerDecision": 14.69,
+          "meanTransitionsPerDecision": 613.9,
+          "omTimeMsTotal": 0,
+          "omTimeShare": 0,
+          "gateTriggerRate": 0.9211,
+          "overrideRate": 0.3624,
+          "gatedChampionKeepRate": 0.6376,
+          "gatedStarvedFallbackRate": 0
+        },
+        "candidateJoint": {
+          "decisions": 1382,
+          "meanRolloutsPerDecision": 14.63,
+          "meanTransitionsPerDecision": 617,
+          "omTimeMsTotal": 0,
+          "omTimeShare": 0,
+          "gateTriggerRate": 0.9182,
+          "overrideRate": 0.353,
+          "gatedChampionKeepRate": 0.647,
+          "gatedStarvedFallbackRate": 0
+        },
+        "baselineLatency": {
+          "count": 6892,
+          "meanMs": 46.932,
+          "p50Ms": 27.907,
+          "p95Ms": 125.362,
+          "p99Ms": 156.985,
+          "maxMs": 814.642
+        },
+        "candidateLatency": {
+          "count": 6951,
+          "meanMs": 46.297,
+          "p50Ms": 27.258,
+          "p95Ms": 122.971,
+          "p99Ms": 150.466,
+          "maxMs": 582.201
+        }
+      },
+      "bySeat": [
+        {
+          "seat": "0",
+          "n": 8,
+          "baseWins": 3,
+          "candWins": 3,
+          "pointDiff": 0
+        },
+        {
+          "seat": "1",
+          "n": 8,
+          "baseWins": 3,
+          "candWins": 3,
+          "pointDiff": 0
+        },
+        {
+          "seat": "2",
+          "n": 8,
+          "baseWins": 1,
+          "candWins": 2,
+          "pointDiff": 0.125
+        },
+        {
+          "seat": "3",
+          "n": 8,
+          "baseWins": 1,
+          "candWins": 1,
+          "pointDiff": 0
+        },
+        {
+          "seat": "4",
+          "n": 8,
+          "baseWins": 1,
+          "candWins": 0,
+          "pointDiff": -0.125
+        }
+      ]
+    }
+  ]
+}

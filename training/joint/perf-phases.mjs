@@ -33,14 +33,18 @@ import { resolve } from 'node:path';
 import { createGame, applyAction, ranking } from '../../web-v1/dist/js/engine.js';
 import { chooseAIAction, PROFILES, NEUTRAL_PROFILE } from '../../web-v1/dist/js/ai.js';
 import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
-import { CHAMPION_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
 import { GOLEM_BY_ID } from '../../web-v1/dist/js/data.js';
 import { assertInBlock } from '../../ai5/lib/seed_policy.mjs';
 import { latencySummary } from '../baseline/stats.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
 import { mulberry32 } from '../lib/rng.mjs';
+import { resolveAlgorithmVersion } from '../lib/version-registry.mjs';
 
 const seatProfile = seat => (seat === 0 ? NEUTRAL_PROFILE : PROFILES[(seat - 1) % PROFILES.length]);
+// P0-1 整改：js0 计时与状态驱动 = 冻结 legacy-js0（晋级前 CHAMPION_PARAMETERS 即
+// 该参数；晋级后 CHAMPION_PARAMETERS 变为 JS5 适配器，直接透传会把 timeJs0 变成
+// JS5-auto 计时、状态驱动变成 JS5 驱动——身份与历史口径漂移）。
+const JS0 = resolveAlgorithmVersion('legacy-js0');
 
 function parseArgs() {
   const args = { players: [2, 3, 4, 5], games: 8, budget: 100, budgets: [25, 50, 100, 200], outDir: resolve(REPO_ROOT, 'training/reports/js5-phase5') };
@@ -91,7 +95,7 @@ function collectStates({ seatCount, seed, stageCaps }) {
         captured.push({ stage, game: JSON.parse(JSON.stringify(g)) });
       }
     }
-    const r = chooseAIAction(g, { parameters: CHAMPION_PARAMETERS, profile: seatProfile(g.current) });
+    const r = chooseAIAction(g, { parameters: JS0.parameters, structure: JS0.structure, profile: seatProfile(g.current) });
     g = applyAction(g, r.action);
     moves += 1;
   }
@@ -102,7 +106,7 @@ function collectStates({ seatCount, seed, stageCaps }) {
 function timeJs0(game) {
   const g = JSON.parse(JSON.stringify(game));
   const t0 = performance.now();
-  const r = chooseAIAction(g, { parameters: CHAMPION_PARAMETERS, profile: seatProfile(g.current) });
+  const r = chooseAIAction(g, { parameters: JS0.parameters, structure: JS0.structure, profile: seatProfile(g.current) });
   return { ms: performance.now() - t0, action: r.action };
 }
 

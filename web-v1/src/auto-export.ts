@@ -2,7 +2,7 @@ import { archiveKey } from './archive.js';
 import { downloadReplay } from './replay.js';
 import type { Game } from './engine.js';
 
-/** 自动导出：对局结束后自动把复盘 Markdown + JSON 下载到浏览器默认下载文件夹（~/Downloads）。
+/** 自动导出：对局结束后自动把复盘 JSON 下载到浏览器默认下载文件夹（~/Downloads）。
  * 走普通浏览器下载机制（downloadReplay 同款），不涉及任何权限 API，刷新后无需重新授权。
  * 如需固定到专属文件夹，在浏览器设置中把下载目录指向该文件夹即可。 */
 
@@ -39,12 +39,11 @@ export function autoExportPlan(g: Game, ctx: AutoExportContext): AutoExportPlan 
 
 const autoExported = new Set<string>();
 
-/** 对局结束时调用。下载 Markdown + JSON 两份复盘；未触发返回 null，触发返回 'download'。 */
+/** 对局结束时调用。下载 JSON 复盘；未触发返回 null，触发返回 'download'。 */
 export function maybeAutoExport(g: Game): 'download' | null {
   const plan = autoExportPlan(g, { enabled: autoExportEnabled(), exported: autoExported });
   if (plan.kind === 'skip') return null;
   autoExported.add(archiveKey(g));
-  downloadReplay(g, 'md');
-  downloadReplay(g, 'json');
+  downloadReplay(g);
   return 'download';
 }

@@ -1,6 +1,6 @@
 /** AI 模块公共出口（兼容层）。
- * 历史调用点：src/app.ts、src/mobile/worker.ts、src/mobile/app.ts、
- * tests/*.test.mjs、scripts/benchmark-ai.mjs 均从 './ai.js' 导入 chooseAIAction。
+ * 历史调用点：src/app.ts、tests/*.test.mjs、scripts/benchmark-ai.mjs
+ * 均从 './ai.js' 导入 chooseAIAction。
  */
 
 export { chooseAIAction, type AIOptions, type AIDecision } from './ai/decision.js';

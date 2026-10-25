@@ -84,6 +84,50 @@ export const AI6_PHASE6_2P_SUBBLOCK = [1_370_000_000, 1_372_000_000];
 export const AI6_PHASE6_BUDGET_SUBBLOCK = [1_372_000_000, 1_382_000_000];
 export const AI6_PHASE6_CONFIRM_SUBBLOCK = [1_382_000_000, 1_400_000_000];
 
+/** JS5 Goal 证据优化（2026-10-25，codex/js5-evidence-optimization）专用块。
+ * 与既有调参/确认/正式验证池物理隔离；只用于本任务的机制消融与独立确认，
+ * 不写正式验证账本。子块（左右闭开）：
+ * - [1.370e9, 1.372e9)  开发/先导（机制消融与样本量估计，永不用于结论）；
+ * - [1.380e9, 1.390e9)  独立确认（冻结主候选后一次性使用，不得回炉调参）。
+ * [1.372e9,1.380e9) 与 [1.390e9,1.400e9) 继续预留。 */
+export const AI6_JS5_GOAL_BLOCK = [1_370_000_000, 1_400_000_000];
+export const AI6_JS5_GOAL_DEV_SUBBLOCK = [1_370_000_000, 1_372_000_000];
+export const AI6_JS5_GOAL_CONFIRM_SUBBLOCK = [1_380_000_000, 1_390_000_000];
+/** 性能验证局面生成块（只用于延迟/非法率，不进入任何胜率结论）。 */
+export const AI6_JS5_GOAL_PERF_SUBBLOCK = [1_372_000_000, 1_374_000_000];
+
+/** ⚠️ 并行会话登记重叠披露（2026-10-25 合并时发现，登记原文保留不改）：
+ * 第六阶段块（research/ai6-phase6-winrate-scaling，2026-10-24 登记）与 JS5 Goal 块
+ * （codex/js5-evidence-optimization，2026-10-25 合并）由两个并行会话各自登记，存在
+ * 三处区间重叠：PHASE6_2P ≡ GOAL_DEV = [1.37e9,1.372e9)；PHASE6_BUDGET ⊃
+ * GOAL_PERF = [1.372e9,1.374e9)；PHASE6_CONFIRM ⊃ GOAL_CONFIRM = [1.38e9,1.39e9)。
+ * 双方实验均已完成、种子逐局落盘可审计（phase6 报告与 js5-goal 报告各自独立），
+ * 确定性重放不受影响；重叠仅意味着「这些区间不得再被任何新块登记或消费」。
+ * 纪律：后续新块一律从 [1.41e9) 之后或与既有登记逐一核对后分配。 */
+
+/** AI6 对抗性联赛（overnight-adversarial-league，research/overnight-adversarial-league）
+ * 评测专用块：独立于 JS6 搜索研发的高水平对手池 / 自动联赛 / 防过拟合双轴评估。
+ * 与全部既有块物理隔离；本阶段不消费正式验证池（[900M,1.06e9)）。
+ * 子块布局（左右闭开；沿用 PR #26 先例只登记 .mjs）：
+ * - [1.40e9, 1.401e9)  开发/审计探针（注册表行为探针、注入审计，永不用于结论）；
+ * - [1.401e9, 1.402e9) 联赛端到端冒烟（2–5 人少量种子，框架验收）；
+ * - [1.402e9, 1.403e9) 夜间开发用小型胜率矩阵（候选初筛读数，非结论）；
+ * - [1.403e9, 1.41e9)  预注册大规模联赛（只生成方案不夜间执行，人工批准后消费）。
+ * [1.41e9, 1.5e9) 预留。 */
+export const AI6_ADVERSARIAL_LEAGUE_BLOCK = [1_400_000_000, 1_500_000_000];
+export const AI6_LEAGUE_DEV_SUBBLOCK = [1_400_000_000, 1_401_000_000];
+export const AI6_LEAGUE_SMOKE_SUBBLOCK = [1_401_000_000, 1_402_000_000];
+export const AI6_LEAGUE_MATRIX_DEV_SUBBLOCK = [1_402_000_000, 1_403_000_000];
+export const AI6_LEAGUE_PREREG_SUBBLOCK = [1_403_000_000, 1_410_000_000];
+
+/** AI6 战术基准局面库专用块（research/overnight-tactical-benchmark，PR 合并时换块）：
+ * 原拟 [1.4e9,1.5e9) 与对抗性联赛块重叠（并行会话先合并），按块不重叠纪律改登记
+ * [1.5e9,1.6e9)，语料随之用新种子确定性重生成（见 training/scenarios/data/）。
+ * 仅用于基准局面的引擎 replay 种子与固定工作量测试，不用于任何胜率/晋级统计；
+ * 与训练/验证/进化/基线/联合搜索/对抗联赛各池物理隔离。种子消耗清单随语料落盘
+ * （training/scenarios/data/generation-summary.json），逐局顺序分配、可审计。 */
+export const AI6_SCENARIO_BLOCK = [1_500_000_000, 1_600_000_000];
+
 /** 断言种子落在指定区间内（含头不含尾）。 */
 export function assertInBlock(seed, block, name = 'seed') {
   if (!Number.isSafeInteger(seed)) {

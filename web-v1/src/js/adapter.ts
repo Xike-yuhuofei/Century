@@ -18,7 +18,7 @@
 import type { Game, Action, Color } from '../engine.js';
 import { applyAction } from '../engine.js';
 import { buildObservation } from '../ai/observation.js';
-import { CHAMPION_PARAMETERS, type AIParameters } from '../ai/parameters.js';
+import { CHAMPION_PARAMETERS, validateAIParameters, type AIParameters } from '../ai/parameters.js';
 import { FROZEN_VERSIONS } from '../ai/version-registry.js';
 import { trimStock } from '../ai/evaluator.js';
 import { chooseAIAction } from '../ai/decision.js';
@@ -28,6 +28,7 @@ import { enumerateLegalActions } from '../sim/legal.js';
 import { createJointPlanner } from './planner.js';
 import { createChampionGuidedPlanner, type ChampionGuidedSearchOptions } from './champion-guided.js';
 import { JOINT_VERSIONS, type JointDecision, JointSearchOptions, JointVersionId } from './types.js';
+import { mergeJointOptions, resolveJointConfig, jointConfigHash, type JointSearchResolved } from './config.js';
 
 export type JointAdapterOptions = JointSearchOptions & {
   /** 版本 id（必填；未注册版本抛错——禁止静默回退到任何未声明行为）。 */
@@ -48,6 +49,8 @@ export type JointAdapterDecision = {
   /** 联合搜索完整决策（joint 版本有值；js1 委托冠军时为 null）。 */
   joint: JointDecision | null;
   version: string;
+  /** 有效配置身份（版本预设 + 调用方覆盖 + 缺省）与哈希；版本名≠配置。 */
+  config: JointSearchResolved & { hash: string };
 };
 
 /** planner 实例按版本缓存（无状态；decide 每次独立）。
@@ -74,27 +77,35 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   if (game.phase === 'finished') throw new Error('游戏结束，无法决策');
   if (game.current !== seat) throw new Error('决策席位不是当前行动者');
 
+  // 有效配置：版本预设 + 调用方覆盖（opt 不再只是标签）。
+  const resolvedOptions = mergeJointOptions(versionId, options) as JointAdapterOptions;
+  const baseConfig = resolveJointConfig(versionId, resolvedOptions, options.profile?.name);
+  const config = { ...baseConfig, hash: jointConfigHash(baseConfig) };
+
   // JS1：冠军 + 静态目标存活折扣 = beam-contest 结构（冠军 beam-rollout +
   // golemSurvivalModel），委托正式冠军入口，保证与冠军代码逐位同源。
-  // AI6 第六阶段 P0 版本身份修复：JS1 的"冠军"指冻结历史冠军
-  // legacy-js0（ai5-readiness-efficiency）。此前委托 CHAMPION_PARAMETERS——
-  // PR #30 晋级后该常量携带 adapter 字段，决策入口适配器分支优先于
-  // structure，JS1 会静默运行 JS5（修复前失败证据：confirm-replay-check
-  // js0/js1 重放 24/24 → 1-2/12）。冻结参数从版本注册表取，与当前冠军解耦。
+  // AI6 第六阶段 P0 版本身份修复（合并 P0-1 整改语义）：JS1 的"冠军"指
+  // 冻结历史冠军 legacy-js0（ai5-readiness-efficiency 晋级归档）。此前委托
+  // CHAMPION_PARAMETERS——PR #30 晋级后该常量携带 adapter 字段，决策入口
+  // 适配器分支优先于 structure，JS1 会静默运行 JS5（修复前失败证据：
+  // confirm-replay-check js0/js1 重放 24/24 → 1-2/12）。基座取自不可变
+  // 版本注册表（与训练侧 legacy-js1 = 冻结归档 + beam-contest 同一身份），
+  // 与活动冠军解耦——活动冠军切换不得改变历史版本行为；strip-adapter
+  // 形态只作参数消毒（适配器字段绝不入束搜索参数）。
   if (version.kind === 'champion-contest') {
     const response = chooseAIAction(game, {
-      parameters: FROZEN_VERSIONS['legacy-js0'].parameters,
+      parameters: validateAIParameters(FROZEN_VERSIONS['legacy-js0'].parameters),
       structure: 'beam-contest',
       profile: options.profile,
     });
-    return { action: response.action, reason: `JS1: ${response.reason}`, joint: null, version: versionId };
+    return { action: response.action, reason: `JS1: ${response.reason}`, joint: null, version: versionId, config };
   }
 
   // 溢出：冠军 trimStock 弃置口径（与正式冠军 decision.ts 同一语义）。
   if (game.phase === 'overflow') {
     const p = game.players[seat];
     const discarded = trimStock(p.stock, game.golemMarket, null, CHAMPION_PARAMETERS).discarded as Color[];
-    return { action: { type: 'discard', colors: discarded }, reason: '溢出弃置（冠军 trimStock 口径）', joint: null, version: versionId };
+    return { action: { type: 'discard', colors: discarded }, reason: '溢出弃置（冠军 trimStock 口径）', joint: null, version: versionId, config };
   }
 
   const observation = buildObservation(game, seat);
@@ -102,18 +113,18 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   // profile → profileName 映射对全部 joint 版本一致（champion-guided 的冠军基座
   // 与轨迹内策略都必须消费同一人格注入，否则评测席位人格失配——回归审计
   // gate=never vs js0 逐决策一致性强制此项）。
-  // 版本化 guided 缺省（AI6 第六阶段）：JOINT_VERSIONS[version].guided 在
-  // 显式注入之前合并（显式选项优先）——使 joint-js5-opt / joint-js6 等
-  // champion-guided 版本自描述（版本身份不依赖调用方记得传对选项）。
+  // 版本化 guided 缺省（AI6 第六阶段）：JOINT_VERSIONS[version].guided 与
+  // optionPreset 都在显式注入之前合并（显式选项最终优先）——使 joint-js5-opt /
+  // joint-js6 等 champion-guided 版本自描述（版本身份不依赖调用方记得传对选项）。
   const guidedDefaults = (version as { guided?: Record<string, unknown> }).guided ?? {};
   const decision = version.kind === 'champion-guided'
     ? (planner as ReturnType<typeof createChampionGuidedPlanner>).decide(observation, {
         ...guidedDefaults,
-        ...options,
+        ...resolvedOptions,
         profileName: options.profile?.name,
       } as ChampionGuidedSearchOptions)
     : (planner as ReturnType<typeof createJointPlanner>).decide(observation, {
-        ...options,
+        ...resolvedOptions,
         profileName: options.profile?.name,
       });
   const action = decision.action;
@@ -125,9 +136,9 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
     const legal = enumerateLegalActions(sim.view, { dedupe: true });
     const fallback = legal[0];
     if (!fallback) throw new Error('联合规划决策非法且无合法回退');
-    return { action: fallback, reason: '联合规划决策非法，回退首个合法行动（缺陷暴露）', joint: decision, version: versionId };
+    return { action: fallback, reason: '联合规划决策非法，回退首个合法行动（缺陷暴露）', joint: decision, version: versionId, config };
   }
-  return { action, reason: decision.reason, joint: decision, version: versionId };
+  return { action, reason: decision.reason, joint: decision, version: versionId, config };
 }
 
 /** 参数校验工具：版本注册表的外部可读视图（评测 runner 用）。 */

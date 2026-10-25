@@ -1,0 +1,5248 @@
+{
+  "schema": "century-adversarial-evaluation-v1",
+  "date": "2026-10-24T15:18:28.195Z",
+  "registryFingerprint": "c5f3c42702e67ac96039ee315b7b1243117cbcfd584a19df137e1a91d80deabc",
+  "engineBundleSha256": "a0da8883695a99d134f387c36d46f375aa878ce1bebe9e13e8ffc01b4f5616f0",
+  "block": [
+    1400000000,
+    1401000000
+  ],
+  "jointOverrides": {
+    "workUnits": 64
+  },
+  "seedsPerCell": 4,
+  "players": [
+    2,
+    5
+  ],
+  "generalityPool": [
+    "style-rush",
+    "style-engine",
+    "style-contest",
+    "style-balanced",
+    "ai5-readiness-efficiency",
+    "ai4-struct-beam-rollout",
+    "neutral-baseline"
+  ],
+  "selection": {
+    "schema": "century-adversarial-strong-opponents-v1",
+    "criteria": {
+      "minAxisALower": 0.5,
+      "minAxisGLower": 0.2,
+      "minAxisGDiff": -3
+    },
+    "strongOpponents": [],
+    "all": [
+      {
+        "candidateId": "cand-js5-fast-gate",
+        "fingerprint": "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+        "axisA": {
+          "firstPlaceRate": 0.375,
+          "wilsonLower": 0.13684428582359737,
+          "cells": [
+            {
+              "seatCount": 2,
+              "direction": "h2h",
+              "games": 8,
+              "wins": 3,
+              "firstPlaceRate": 0.375,
+              "wilson": {
+                "point": 0.375,
+                "lower": 0.13684428582359737,
+                "upper": 0.6942576053973728
+              },
+              "seatCoverage": "0+1+2+3"
+            },
+            {
+              "seatCount": 5,
+              "direction": "field",
+              "games": 8,
+              "wins": 3,
+              "firstPlaceRate": 0.375,
+              "wilson": {
+                "point": 0.375,
+                "lower": 0.13684428582359737,
+                "upper": 0.6942576053973728
+              },
+              "seatCoverage": "0+1+2+3"
+            },
+            {
+              "seatCount": 5,
+              "direction": "field",
+              "games": 8,
+              "wins": 3,
+              "firstPlaceRate": 0.375,
+              "wilson": {
+                "point": 0.375,
+                "lower": 0.13684428582359737,
+                "upper": 0.6942576053973728
+              },
+              "seatCoverage": "0+1+2+3"
+            }
+          ]
+        },
+        "axisG": {
+          "wilsonLowerMin": 0.15003898915214953,
+          "scoreDiffMin": 4.88,
+          "cells": [
+            {
+              "seatCount": 2,
+              "games": 4,
+              "wins": 4,
+              "firstPlaceRate": 1,
+              "wilson": {
+                "point": 1,
+                "lower": 0.5101091635454027,
+                "upper": 1
+              },
+              "meanScore": 79.25,
+              "meanOpponentScore": 69.75,
+              "scoreDiff": 9.5
+            },
+            {
+              "seatCount": 5,
+              "games": 4,
+              "wins": 2,
+              "firstPlaceRate": 0.5,
+              "wilson": {
+                "point": 0.5,
+                "lower": 0.15003898915214953,
+                "upper": 0.8499610108478505
+              },
+              "meanScore": 58.25,
+              "meanOpponentScore": 53.38,
+              "scoreDiff": 4.88
+            }
+          ]
+        },
+        "verdict": "reject",
+        "criteria": {
+          "minAxisALower": 0.5,
+          "minAxisGLower": 0.2,
+          "minAxisGDiff": -3
+        }
+      },
+      {
+        "candidateId": "cand-goal-remaining",
+        "fingerprint": "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+        "axisA": {
+          "firstPlaceRate": 0.375,
+          "wilsonLower": 0.13684428582359737,
+          "cells": [
+            {
+              "seatCount": 2,
+              "direction": "h2h",
+              "games": 8,
+              "wins": 3,
+              "firstPlaceRate": 0.375,
+              "wilson": {
+                "point": 0.375,
+                "lower": 0.13684428582359737,
+                "upper": 0.6942576053973728
+              },
+              "seatCoverage": "0+1+2+3"
+            },
+            {
+              "seatCount": 5,
+              "direction": "field",
+              "games": 8,
+              "wins": 3,
+              "firstPlaceRate": 0.375,
+              "wilson": {
+                "point": 0.375,
+                "lower": 0.13684428582359737,
+                "upper": 0.6942576053973728
+              },
+              "seatCoverage": "0+1+2+3"
+            },
+            {
+              "seatCount": 5,
+              "direction": "field",
+              "games": 8,
+              "wins": 3,
+              "firstPlaceRate": 0.375,
+              "wilson": {
+                "point": 0.375,
+                "lower": 0.13684428582359737,
+                "upper": 0.6942576053973728
+              },
+              "seatCoverage": "0+1+2+3"
+            }
+          ]
+        },
+        "axisG": {
+          "wilsonLowerMin": 0,
+          "scoreDiffMin": -3.25,
+          "cells": [
+            {
+              "seatCount": 2,
+              "games": 4,
+              "wins": 2,
+              "firstPlaceRate": 0.5,
+              "wilson": {
+                "point": 0.5,
+                "lower": 0.15003898915214953,
+                "upper": 0.8499610108478505
+              },
+              "meanScore": 66.25,
+              "meanOpponentScore": 69.5,
+              "scoreDiff": -3.25
+            },
+            {
+              "seatCount": 5,
+              "games": 4,
+              "wins": 0,
+              "firstPlaceRate": 0,
+              "wilson": {
+                "point": 0,
+                "lower": 0,
+                "upper": 0.4898908364545973
+              },
+              "meanScore": 52.25,
+              "meanOpponentScore": 55.38,
+              "scoreDiff": -3.13
+            }
+          ]
+        },
+        "verdict": "reject",
+        "criteria": {
+          "minAxisALower": 0.5,
+          "minAxisGLower": 0.2,
+          "minAxisGDiff": -3
+        }
+      },
+      {
+        "candidateId": "cand-rush-plus",
+        "fingerprint": "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+        "axisA": {
+          "firstPlaceRate": 0.25,
+          "wilsonLower": 0.071479212752109,
+          "cells": [
+            {
+              "seatCount": 2,
+              "direction": "h2h",
+              "games": 8,
+              "wins": 2,
+              "firstPlaceRate": 0.25,
+              "wilson": {
+                "point": 0.25,
+                "lower": 0.071479212752109,
+                "upper": 0.5907245696898311
+              },
+              "seatCoverage": "0+1+2+3"
+            },
+            {
+              "seatCount": 5,
+              "direction": "field",
+              "games": 8,
+              "wins": 2,
+              "firstPlaceRate": 0.25,
+              "wilson": {
+                "point": 0.25,
+                "lower": 0.071479212752109,
+                "upper": 0.5907245696898311
+              },
+              "seatCoverage": "0+1+2+3"
+            },
+            {
+              "seatCount": 5,
+              "direction": "field",
+              "games": 8,
+              "wins": 4,
+              "firstPlaceRate": 0.5,
+              "wilson": {
+                "point": 0.5,
+                "lower": 0.21521606221387757,
+                "upper": 0.7847839377861224
+              },
+              "seatCoverage": "0+1+2+3"
+            }
+          ]
+        },
+        "axisG": {
+          "wilsonLowerMin": 0,
+          "scoreDiffMin": -2.94,
+          "cells": [
+            {
+              "seatCount": 2,
+              "games": 4,
+              "wins": 3,
+              "firstPlaceRate": 0.75,
+              "wilson": {
+                "point": 0.75,
+                "lower": 0.30064184258240184,
+                "upper": 0.9544127391902995
+              },
+              "meanScore": 76.75,
+              "meanOpponentScore": 69,
+              "scoreDiff": 7.75
+            },
+            {
+              "seatCount": 5,
+              "games": 4,
+              "wins": 0,
+              "firstPlaceRate": 0,
+              "wilson": {
+                "point": 0,
+                "lower": 0,
+                "upper": 0.4898908364545973
+              },
+              "meanScore": 51.25,
+              "meanOpponentScore": 54.19,
+              "scoreDiff": -2.94
+            }
+          ]
+        },
+        "verdict": "reject",
+        "criteria": {
+          "minAxisALower": 0.5,
+          "minAxisGLower": 0.2,
+          "minAxisGDiff": -3
+        }
+      }
+    ]
+  },
+  "evaluations": [
+    {
+      "candidateId": "cand-rush-plus",
+      "fingerprint": "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+      "axisA": {
+        "cells": [
+          {
+            "seatCount": 2,
+            "direction": "h2h",
+            "games": 8,
+            "wins": 2,
+            "firstPlaceRate": 0.25,
+            "wilson": {
+              "point": 0.25,
+              "lower": 0.071479212752109,
+              "upper": 0.5907245696898311
+            },
+            "seatCoverage": "0+1+2+3"
+          },
+          {
+            "seatCount": 5,
+            "direction": "field",
+            "games": 8,
+            "wins": 2,
+            "firstPlaceRate": 0.25,
+            "wilson": {
+              "point": 0.25,
+              "lower": 0.071479212752109,
+              "upper": 0.5907245696898311
+            },
+            "seatCoverage": "0+1+2+3"
+          },
+          {
+            "seatCount": 5,
+            "direction": "field",
+            "games": 8,
+            "wins": 4,
+            "firstPlaceRate": 0.5,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.21521606221387757,
+              "upper": 0.7847839377861224
+            },
+            "seatCoverage": "0+1+2+3"
+          }
+        ],
+        "anomalies": 0,
+        "totalGames": 12
+      },
+      "axisG": {
+        "cells": [
+          {
+            "seatCount": 2,
+            "games": 4,
+            "wins": 3,
+            "firstPlaceRate": 0.75,
+            "wilson": {
+              "point": 0.75,
+              "lower": 0.30064184258240184,
+              "upper": 0.9544127391902995
+            },
+            "meanScore": 76.75,
+            "meanOpponentScore": 69,
+            "scoreDiff": 7.75
+          },
+          {
+            "seatCount": 5,
+            "games": 4,
+            "wins": 0,
+            "firstPlaceRate": 0,
+            "wilson": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.4898908364545973
+            },
+            "meanScore": 51.25,
+            "meanOpponentScore": 54.19,
+            "scoreDiff": -2.94
+          }
+        ],
+        "anomalies": 0,
+        "totalGames": 8
+      },
+      "axisAGames": [
+        {
+          "matchId": "cand-rush-plus--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-rush-plus",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000000,
+          "seatCount": 2,
+          "versions": [
+            "cand-rush-plus",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 74,
+          "wallMs": 4137.29,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 65,
+              "golems": 6,
+              "turns": 37
+            },
+            {
+              "seat": 1,
+              "score": 57,
+              "golems": 5,
+              "turns": 37
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 1,
+              "claim": 6,
+              "rest": 8,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 9,
+              "claim": 5,
+              "rest": 4,
+              "play": 19,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-rush-plus--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-rush-plus",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000001,
+          "seatCount": 2,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-rush-plus"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3"
+          ],
+          "moves": 68,
+          "wallMs": 3168.84,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 66,
+              "golems": 6,
+              "turns": 34
+            },
+            {
+              "seat": 0,
+              "score": 45,
+              "golems": 4,
+              "turns": 34
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 6,
+              "claim": 4,
+              "rest": 6,
+              "play": 18,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 6,
+              "rest": 7,
+              "play": 18,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-rush-plus--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-rush-plus",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000002,
+          "seatCount": 2,
+          "versions": [
+            "cand-rush-plus",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 98,
+          "wallMs": 5139.9,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 101,
+              "golems": 6,
+              "turns": 49
+            },
+            {
+              "seat": 0,
+              "score": 59,
+              "golems": 5,
+              "turns": 49
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 5,
+              "rest": 11,
+              "play": 28,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 6,
+              "rest": 10,
+              "play": 27,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-rush-plus--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-rush-plus",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000003,
+          "seatCount": 2,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-rush-plus"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3"
+          ],
+          "moves": 80,
+          "wallMs": 5434.71,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 75,
+              "golems": 6,
+              "turns": 40
+            },
+            {
+              "seat": 1,
+              "score": 69,
+              "golems": 5,
+              "turns": 40
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 7,
+              "claim": 6,
+              "rest": 6,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 5,
+              "rest": 8,
+              "play": 24,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-rush-plus--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000004,
+          "seatCount": 5,
+          "versions": [
+            "cand-rush-plus",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 171,
+          "wallMs": 27418.18,
+          "winnerSeat": 2,
+          "ranking": [
+            {
+              "seat": 2,
+              "score": 65,
+              "golems": 5,
+              "turns": 34
+            },
+            {
+              "seat": 4,
+              "score": 58,
+              "golems": 3,
+              "turns": 34
+            },
+            {
+              "seat": 3,
+              "score": 49,
+              "golems": 4,
+              "turns": 34
+            },
+            {
+              "seat": 1,
+              "score": 46,
+              "golems": 3,
+              "turns": 34
+            },
+            {
+              "seat": 0,
+              "score": 39,
+              "golems": 2,
+              "turns": 34
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 4,
+              "claim": 2,
+              "rest": 8,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 3,
+              "rest": 8,
+              "play": 18,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 5,
+              "rest": 4,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 7,
+              "play": 18,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 3,
+              "rest": 6,
+              "play": 20,
+              "discard": 1
+            }
+          ]
+        },
+        {
+          "matchId": "cand-rush-plus--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000005,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-rush-plus",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 191,
+          "wallMs": 28899.27,
+          "winnerSeat": 4,
+          "ranking": [
+            {
+              "seat": 4,
+              "score": 64,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 0,
+              "score": 59,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 2,
+              "score": 56,
+              "golems": 3,
+              "turns": 38
+            },
+            {
+              "seat": 3,
+              "score": 53,
+              "golems": 5,
+              "turns": 38
+            },
+            {
+              "seat": 1,
+              "score": 46,
+              "golems": 4,
+              "turns": 38
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 4,
+              "claim": 4,
+              "rest": 7,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 2,
+              "claim": 4,
+              "rest": 11,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 2,
+              "claim": 3,
+              "rest": 10,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 9,
+              "claim": 5,
+              "rest": 7,
+              "play": 17,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 5,
+              "play": 22,
+              "discard": 1
+            }
+          ]
+        },
+        {
+          "matchId": "cand-rush-plus--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 2,
+          "status": "finished",
+          "seed": 1400000006,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "cand-rush-plus",
+            "js5-frozen-champion",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 191,
+          "wallMs": 29648.75,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 69,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 1,
+              "score": 66,
+              "golems": 5,
+              "turns": 38
+            },
+            {
+              "seat": 4,
+              "score": 60,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 3,
+              "score": 55,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 2,
+              "score": 52,
+              "golems": 4,
+              "turns": 38
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 8,
+              "claim": 4,
+              "rest": 5,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 5,
+              "rest": 7,
+              "play": 19,
+              "discard": 1
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 9,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 2,
+              "claim": 4,
+              "rest": 10,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 4,
+              "rest": 7,
+              "play": 21,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-rush-plus--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 3,
+          "status": "finished",
+          "seed": 1400000007,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "cand-rush-plus",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 175,
+          "wallMs": 32926.58,
+          "winnerSeat": 4,
+          "ranking": [
+            {
+              "seat": 4,
+              "score": 61,
+              "golems": 5,
+              "turns": 34
+            },
+            {
+              "seat": 1,
+              "score": 60,
+              "golems": 3,
+              "turns": 34
+            },
+            {
+              "seat": 0,
+              "score": 54,
+              "golems": 4,
+              "turns": 34
+            },
+            {
+              "seat": 3,
+              "score": 51,
+              "golems": 4,
+              "turns": 34
+            },
+            {
+              "seat": 2,
+              "score": 48,
+              "golems": 3,
+              "turns": 34
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 6,
+              "claim": 4,
+              "rest": 7,
+              "play": 17,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 3,
+              "rest": 5,
+              "play": 20,
+              "discard": 2
+            },
+            {
+              "acquire": 4,
+              "claim": 3,
+              "rest": 7,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 4,
+              "rest": 6,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 6,
+              "play": 19,
+              "discard": 3
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-rush-plus@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-rush-plus",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000008,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-rush-plus",
+            "cand-rush-plus",
+            "cand-rush-plus",
+            "cand-rush-plus"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3"
+          ],
+          "moves": 191,
+          "wallMs": 10455.04,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 70,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 1,
+              "score": 54,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 4,
+              "score": 45,
+              "golems": 5,
+              "turns": 38
+            },
+            {
+              "seat": 3,
+              "score": 43,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 2,
+              "score": 43,
+              "golems": 3,
+              "turns": 38
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 8,
+              "claim": 4,
+              "rest": 4,
+              "play": 22,
+              "discard": 1
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 7,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 3,
+              "rest": 13,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 8,
+              "claim": 4,
+              "rest": 7,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 5,
+              "rest": 8,
+              "play": 19,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-rush-plus@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-rush-plus",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000009,
+          "seatCount": 5,
+          "versions": [
+            "cand-rush-plus",
+            "js5-frozen-champion",
+            "cand-rush-plus",
+            "cand-rush-plus",
+            "cand-rush-plus"
+          ],
+          "fingerprints": [
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3"
+          ],
+          "moves": 180,
+          "wallMs": 11707.33,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 63,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 0,
+              "score": 63,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 3,
+              "score": 60,
+              "golems": 5,
+              "turns": 36
+            },
+            {
+              "seat": 4,
+              "score": 58,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 2,
+              "score": 54,
+              "golems": 4,
+              "turns": 36
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 2,
+              "claim": 4,
+              "rest": 10,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 5,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 6,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 6,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 4,
+              "rest": 7,
+              "play": 19,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-rush-plus@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-rush-plus",
+          "focusSeat": 2,
+          "status": "finished",
+          "seed": 1400000010,
+          "seatCount": 5,
+          "versions": [
+            "cand-rush-plus",
+            "cand-rush-plus",
+            "js5-frozen-champion",
+            "cand-rush-plus",
+            "cand-rush-plus"
+          ],
+          "fingerprints": [
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3"
+          ],
+          "moves": 180,
+          "wallMs": 10371.38,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 65,
+              "golems": 5,
+              "turns": 36
+            },
+            {
+              "seat": 2,
+              "score": 56,
+              "golems": 3,
+              "turns": 36
+            },
+            {
+              "seat": 3,
+              "score": 48,
+              "golems": 3,
+              "turns": 36
+            },
+            {
+              "seat": 0,
+              "score": 46,
+              "golems": 3,
+              "turns": 36
+            },
+            {
+              "seat": 4,
+              "score": 42,
+              "golems": 4,
+              "turns": 36
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 4,
+              "claim": 3,
+              "rest": 10,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 2,
+              "claim": 5,
+              "rest": 7,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 9,
+              "claim": 3,
+              "rest": 5,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 3,
+              "rest": 10,
+              "play": 17,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 8,
+              "play": 19,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-rush-plus@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-rush-plus",
+          "focusSeat": 3,
+          "status": "finished",
+          "seed": 1400000011,
+          "seatCount": 5,
+          "versions": [
+            "cand-rush-plus",
+            "cand-rush-plus",
+            "cand-rush-plus",
+            "js5-frozen-champion",
+            "cand-rush-plus"
+          ],
+          "fingerprints": [
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3"
+          ],
+          "moves": 205,
+          "wallMs": 12656.95,
+          "winnerSeat": 4,
+          "ranking": [
+            {
+              "seat": 4,
+              "score": 81,
+              "golems": 4,
+              "turns": 41
+            },
+            {
+              "seat": 3,
+              "score": 72,
+              "golems": 4,
+              "turns": 41
+            },
+            {
+              "seat": 2,
+              "score": 69,
+              "golems": 5,
+              "turns": 41
+            },
+            {
+              "seat": 1,
+              "score": 48,
+              "golems": 4,
+              "turns": 41
+            },
+            {
+              "seat": 0,
+              "score": 42,
+              "golems": 4,
+              "turns": 41
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 11,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 10,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 9,
+              "claim": 5,
+              "rest": 5,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 9,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 8,
+              "claim": 4,
+              "rest": 6,
+              "play": 23,
+              "discard": 0
+            }
+          ]
+        }
+      ],
+      "axisGGames": [
+        {
+          "matchId": "axisG--cand-rush-plus@2",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "generality-pool",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000012,
+          "seatCount": 2,
+          "versions": [
+            "cand-rush-plus",
+            "neutral-baseline"
+          ],
+          "fingerprints": [
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87"
+          ],
+          "moves": 78,
+          "wallMs": 1643.3,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 75,
+              "golems": 6,
+              "turns": 39
+            },
+            {
+              "seat": 1,
+              "score": 60,
+              "golems": 5,
+              "turns": 39
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 2,
+              "claim": 6,
+              "rest": 10,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 10,
+              "claim": 5,
+              "rest": 6,
+              "play": 18,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-rush-plus@2",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "generality-pool",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000013,
+          "seatCount": 2,
+          "versions": [
+            "neutral-baseline",
+            "cand-rush-plus"
+          ],
+          "fingerprints": [
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3"
+          ],
+          "moves": 88,
+          "wallMs": 1915.8,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 70,
+              "golems": 6,
+              "turns": 44
+            },
+            {
+              "seat": 0,
+              "score": 62,
+              "golems": 4,
+              "turns": 44
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 2,
+              "claim": 4,
+              "rest": 10,
+              "play": 28,
+              "discard": 0
+            },
+            {
+              "acquire": 2,
+              "claim": 6,
+              "rest": 10,
+              "play": 26,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-rush-plus@2",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "generality-pool",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000014,
+          "seatCount": 2,
+          "versions": [
+            "cand-rush-plus",
+            "ai5-readiness-efficiency"
+          ],
+          "fingerprints": [
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+          ],
+          "moves": 92,
+          "wallMs": 2020.3,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 83,
+              "golems": 6,
+              "turns": 46
+            },
+            {
+              "seat": 0,
+              "score": 72,
+              "golems": 6,
+              "turns": 46
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 6,
+              "rest": 9,
+              "play": 26,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 6,
+              "rest": 9,
+              "play": 28,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-rush-plus@2",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "generality-pool",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000015,
+          "seatCount": 2,
+          "versions": [
+            "ai5-readiness-efficiency",
+            "cand-rush-plus"
+          ],
+          "fingerprints": [
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3"
+          ],
+          "moves": 98,
+          "wallMs": 2133.17,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 90,
+              "golems": 6,
+              "turns": 49
+            },
+            {
+              "seat": 0,
+              "score": 71,
+              "golems": 5,
+              "turns": 49
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 3,
+              "claim": 5,
+              "rest": 13,
+              "play": 28,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 6,
+              "rest": 10,
+              "play": 29,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-rush-plus@5",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "generality-pool",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000016,
+          "seatCount": 5,
+          "versions": [
+            "cand-rush-plus",
+            "neutral-baseline",
+            "ai4-struct-beam-rollout",
+            "ai5-readiness-efficiency",
+            "style-balanced"
+          ],
+          "fingerprints": [
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+            "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+          ],
+          "moves": 191,
+          "wallMs": 3439.87,
+          "winnerSeat": 3,
+          "ranking": [
+            {
+              "seat": 3,
+              "score": 78,
+              "golems": 5,
+              "turns": 38
+            },
+            {
+              "seat": 4,
+              "score": 49,
+              "golems": 3,
+              "turns": 38
+            },
+            {
+              "seat": 1,
+              "score": 46,
+              "golems": 3,
+              "turns": 38
+            },
+            {
+              "seat": 0,
+              "score": 45,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 2,
+              "score": 44,
+              "golems": 3,
+              "turns": 38
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 2,
+              "claim": 4,
+              "rest": 9,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 11,
+              "claim": 3,
+              "rest": 5,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 3,
+              "rest": 11,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 6,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 3,
+              "rest": 9,
+              "play": 22,
+              "discard": 1
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-rush-plus@5",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "generality-pool",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000017,
+          "seatCount": 5,
+          "versions": [
+            "neutral-baseline",
+            "cand-rush-plus",
+            "ai5-readiness-efficiency",
+            "style-balanced",
+            "style-contest"
+          ],
+          "fingerprints": [
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+            "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+          ],
+          "moves": 190,
+          "wallMs": 4392.2,
+          "winnerSeat": 2,
+          "ranking": [
+            {
+              "seat": 2,
+              "score": 67,
+              "golems": 5,
+              "turns": 38
+            },
+            {
+              "seat": 4,
+              "score": 65,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 0,
+              "score": 59,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 1,
+              "score": 50,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 3,
+              "score": 41,
+              "golems": 4,
+              "turns": 38
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 9,
+              "claim": 4,
+              "rest": 5,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 4,
+              "rest": 8,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 8,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 10,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 4,
+              "rest": 7,
+              "play": 23,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-rush-plus@5",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "generality-pool",
+          "focusSeat": 2,
+          "status": "finished",
+          "seed": 1400000018,
+          "seatCount": 5,
+          "versions": [
+            "ai4-struct-beam-rollout",
+            "ai5-readiness-efficiency",
+            "cand-rush-plus",
+            "style-contest",
+            "style-engine"
+          ],
+          "fingerprints": [
+            "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+            "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+          ],
+          "moves": 195,
+          "wallMs": 3679.7,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 60,
+              "golems": 5,
+              "turns": 39
+            },
+            {
+              "seat": 2,
+              "score": 56,
+              "golems": 4,
+              "turns": 39
+            },
+            {
+              "seat": 4,
+              "score": 50,
+              "golems": 3,
+              "turns": 39
+            },
+            {
+              "seat": 0,
+              "score": 46,
+              "golems": 4,
+              "turns": 39
+            },
+            {
+              "seat": 3,
+              "score": 45,
+              "golems": 3,
+              "turns": 39
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 4,
+              "claim": 4,
+              "rest": 8,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 5,
+              "rest": 9,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 1,
+              "claim": 4,
+              "rest": 10,
+              "play": 24,
+              "discard": 0
+            },
+            {
+              "acquire": 1,
+              "claim": 3,
+              "rest": 13,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 3,
+              "rest": 8,
+              "play": 23,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-rush-plus@5",
+          "direction": "field",
+          "focusId": "cand-rush-plus",
+          "opponentId": "generality-pool",
+          "focusSeat": 3,
+          "status": "finished",
+          "seed": 1400000019,
+          "seatCount": 5,
+          "versions": [
+            "ai5-readiness-efficiency",
+            "style-balanced",
+            "style-contest",
+            "cand-rush-plus",
+            "style-rush"
+          ],
+          "fingerprints": [
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+            "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+            "aa24564f999a5e4b33c34a20c6210ed93d891c8c008538b46a4a4cd283eee0a3",
+            "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+          ],
+          "moves": 217,
+          "wallMs": 4095.17,
+          "winnerSeat": 2,
+          "ranking": [
+            {
+              "seat": 2,
+              "score": 65,
+              "golems": 4,
+              "turns": 43
+            },
+            {
+              "seat": 3,
+              "score": 54,
+              "golems": 4,
+              "turns": 43
+            },
+            {
+              "seat": 1,
+              "score": 54,
+              "golems": 4,
+              "turns": 43
+            },
+            {
+              "seat": 0,
+              "score": 53,
+              "golems": 5,
+              "turns": 43
+            },
+            {
+              "seat": 4,
+              "score": 45,
+              "golems": 3,
+              "turns": 43
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 8,
+              "claim": 5,
+              "rest": 8,
+              "play": 22,
+              "discard": 1
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 10,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 4,
+              "rest": 10,
+              "play": 23,
+              "discard": 1
+            },
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 12,
+              "play": 24,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 3,
+              "rest": 13,
+              "play": 23,
+              "discard": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "candidateId": "cand-js5-fast-gate",
+      "fingerprint": "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+      "axisA": {
+        "cells": [
+          {
+            "seatCount": 2,
+            "direction": "h2h",
+            "games": 8,
+            "wins": 3,
+            "firstPlaceRate": 0.375,
+            "wilson": {
+              "point": 0.375,
+              "lower": 0.13684428582359737,
+              "upper": 0.6942576053973728
+            },
+            "seatCoverage": "0+1+2+3"
+          },
+          {
+            "seatCount": 5,
+            "direction": "field",
+            "games": 8,
+            "wins": 3,
+            "firstPlaceRate": 0.375,
+            "wilson": {
+              "point": 0.375,
+              "lower": 0.13684428582359737,
+              "upper": 0.6942576053973728
+            },
+            "seatCoverage": "0+1+2+3"
+          },
+          {
+            "seatCount": 5,
+            "direction": "field",
+            "games": 8,
+            "wins": 3,
+            "firstPlaceRate": 0.375,
+            "wilson": {
+              "point": 0.375,
+              "lower": 0.13684428582359737,
+              "upper": 0.6942576053973728
+            },
+            "seatCoverage": "0+1+2+3"
+          }
+        ],
+        "anomalies": 0,
+        "totalGames": 12
+      },
+      "axisG": {
+        "cells": [
+          {
+            "seatCount": 2,
+            "games": 4,
+            "wins": 4,
+            "firstPlaceRate": 1,
+            "wilson": {
+              "point": 1,
+              "lower": 0.5101091635454027,
+              "upper": 1
+            },
+            "meanScore": 79.25,
+            "meanOpponentScore": 69.75,
+            "scoreDiff": 9.5
+          },
+          {
+            "seatCount": 5,
+            "games": 4,
+            "wins": 2,
+            "firstPlaceRate": 0.5,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            },
+            "meanScore": 58.25,
+            "meanOpponentScore": 53.38,
+            "scoreDiff": 4.88
+          }
+        ],
+        "anomalies": 0,
+        "totalGames": 8
+      },
+      "axisAGames": [
+        {
+          "matchId": "cand-js5-fast-gate--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000000,
+          "seatCount": 2,
+          "versions": [
+            "cand-js5-fast-gate",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 64,
+          "wallMs": 7855.23,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 62,
+              "golems": 6,
+              "turns": 32
+            },
+            {
+              "seat": 0,
+              "score": 57,
+              "golems": 4,
+              "turns": 32
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 6,
+              "claim": 4,
+              "rest": 5,
+              "play": 17,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 6,
+              "rest": 5,
+              "play": 17,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-js5-fast-gate--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000001,
+          "seatCount": 2,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-js5-fast-gate"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00"
+          ],
+          "moves": 72,
+          "wallMs": 10082.47,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 67,
+              "golems": 6,
+              "turns": 35
+            },
+            {
+              "seat": 0,
+              "score": 51,
+              "golems": 4,
+              "turns": 35
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 6,
+              "play": 20,
+              "discard": 2
+            },
+            {
+              "acquire": 4,
+              "claim": 6,
+              "rest": 6,
+              "play": 19,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-js5-fast-gate--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000002,
+          "seatCount": 2,
+          "versions": [
+            "cand-js5-fast-gate",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 76,
+          "wallMs": 7254.61,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 77,
+              "golems": 6,
+              "turns": 38
+            },
+            {
+              "seat": 1,
+              "score": 59,
+              "golems": 4,
+              "turns": 38
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 6,
+              "claim": 6,
+              "rest": 6,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 7,
+              "play": 22,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-js5-fast-gate--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000003,
+          "seatCount": 2,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-js5-fast-gate"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00"
+          ],
+          "moves": 88,
+          "wallMs": 7414.2,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 80,
+              "golems": 6,
+              "turns": 44
+            },
+            {
+              "seat": 0,
+              "score": 62,
+              "golems": 5,
+              "turns": 44
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 7,
+              "claim": 5,
+              "rest": 9,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 6,
+              "rest": 9,
+              "play": 25,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-js5-fast-gate--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000004,
+          "seatCount": 5,
+          "versions": [
+            "cand-js5-fast-gate",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 167,
+          "wallMs": 38598.45,
+          "winnerSeat": 2,
+          "ranking": [
+            {
+              "seat": 2,
+              "score": 73,
+              "golems": 5,
+              "turns": 33
+            },
+            {
+              "seat": 1,
+              "score": 52,
+              "golems": 4,
+              "turns": 33
+            },
+            {
+              "seat": 0,
+              "score": 44,
+              "golems": 2,
+              "turns": 33
+            },
+            {
+              "seat": 4,
+              "score": 40,
+              "golems": 3,
+              "turns": 33
+            },
+            {
+              "seat": 3,
+              "score": 40,
+              "golems": 3,
+              "turns": 33
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 2,
+              "rest": 6,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 7,
+              "play": 17,
+              "discard": 0
+            },
+            {
+              "acquire": 8,
+              "claim": 5,
+              "rest": 3,
+              "play": 17,
+              "discard": 2
+            },
+            {
+              "acquire": 5,
+              "claim": 3,
+              "rest": 8,
+              "play": 17,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 3,
+              "rest": 9,
+              "play": 18,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-js5-fast-gate--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000005,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-js5-fast-gate",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 188,
+          "wallMs": 54313.47,
+          "winnerSeat": 3,
+          "ranking": [
+            {
+              "seat": 3,
+              "score": 71,
+              "golems": 4,
+              "turns": 37
+            },
+            {
+              "seat": 4,
+              "score": 67,
+              "golems": 5,
+              "turns": 37
+            },
+            {
+              "seat": 0,
+              "score": 61,
+              "golems": 4,
+              "turns": 37
+            },
+            {
+              "seat": 2,
+              "score": 56,
+              "golems": 3,
+              "turns": 37
+            },
+            {
+              "seat": 1,
+              "score": 51,
+              "golems": 4,
+              "turns": 37
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 4,
+              "claim": 4,
+              "rest": 7,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 10,
+              "claim": 4,
+              "rest": 6,
+              "play": 17,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 3,
+              "rest": 8,
+              "play": 20,
+              "discard": 2
+            },
+            {
+              "acquire": 10,
+              "claim": 4,
+              "rest": 5,
+              "play": 18,
+              "discard": 1
+            },
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 7,
+              "play": 21,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-js5-fast-gate--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 2,
+          "status": "finished",
+          "seed": 1400000006,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "cand-js5-fast-gate",
+            "js5-frozen-champion",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 187,
+          "wallMs": 45483.95,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 71,
+              "golems": 4,
+              "turns": 37
+            },
+            {
+              "seat": 3,
+              "score": 66,
+              "golems": 5,
+              "turns": 37
+            },
+            {
+              "seat": 2,
+              "score": 65,
+              "golems": 4,
+              "turns": 37
+            },
+            {
+              "seat": 4,
+              "score": 64,
+              "golems": 4,
+              "turns": 37
+            },
+            {
+              "seat": 0,
+              "score": 59,
+              "golems": 4,
+              "turns": 37
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 5,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 6,
+              "play": 20,
+              "discard": 2
+            },
+            {
+              "acquire": 9,
+              "claim": 4,
+              "rest": 3,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 5,
+              "rest": 8,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 8,
+              "claim": 4,
+              "rest": 5,
+              "play": 20,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-js5-fast-gate--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 3,
+          "status": "finished",
+          "seed": 1400000007,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "cand-js5-fast-gate",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 181,
+          "wallMs": 48741.42,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 68,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 1,
+              "score": 60,
+              "golems": 5,
+              "turns": 36
+            },
+            {
+              "seat": 4,
+              "score": 59,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 3,
+              "score": 52,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 2,
+              "score": 52,
+              "golems": 3,
+              "turns": 36
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 6,
+              "play": 19,
+              "discard": 1
+            },
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 8,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 3,
+              "rest": 6,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 8,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 10,
+              "claim": 4,
+              "rest": 5,
+              "play": 17,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-js5-fast-gate@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-js5-fast-gate",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000008,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-js5-fast-gate",
+            "cand-js5-fast-gate",
+            "cand-js5-fast-gate",
+            "cand-js5-fast-gate"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00"
+          ],
+          "moves": 155,
+          "wallMs": 41206.09,
+          "winnerSeat": 2,
+          "ranking": [
+            {
+              "seat": 2,
+              "score": 69,
+              "golems": 5,
+              "turns": 30
+            },
+            {
+              "seat": 1,
+              "score": 52,
+              "golems": 4,
+              "turns": 30
+            },
+            {
+              "seat": 0,
+              "score": 45,
+              "golems": 3,
+              "turns": 30
+            },
+            {
+              "seat": 3,
+              "score": 37,
+              "golems": 2,
+              "turns": 30
+            },
+            {
+              "seat": 4,
+              "score": 35,
+              "golems": 3,
+              "turns": 30
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 3,
+              "rest": 4,
+              "play": 18,
+              "discard": 2
+            },
+            {
+              "acquire": 6,
+              "claim": 4,
+              "rest": 4,
+              "play": 16,
+              "discard": 3
+            },
+            {
+              "acquire": 9,
+              "claim": 5,
+              "rest": 2,
+              "play": 14,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 2,
+              "rest": 5,
+              "play": 18,
+              "discard": 0
+            },
+            {
+              "acquire": 2,
+              "claim": 3,
+              "rest": 8,
+              "play": 17,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-js5-fast-gate@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-js5-fast-gate",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000009,
+          "seatCount": 5,
+          "versions": [
+            "cand-js5-fast-gate",
+            "js5-frozen-champion",
+            "cand-js5-fast-gate",
+            "cand-js5-fast-gate",
+            "cand-js5-fast-gate"
+          ],
+          "fingerprints": [
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00"
+          ],
+          "moves": 170,
+          "wallMs": 42250.54,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 69,
+              "golems": 5,
+              "turns": 34
+            },
+            {
+              "seat": 3,
+              "score": 55,
+              "golems": 3,
+              "turns": 34
+            },
+            {
+              "seat": 2,
+              "score": 55,
+              "golems": 4,
+              "turns": 34
+            },
+            {
+              "seat": 4,
+              "score": 48,
+              "golems": 4,
+              "turns": 34
+            },
+            {
+              "seat": 0,
+              "score": 43,
+              "golems": 3,
+              "turns": 34
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 9,
+              "claim": 3,
+              "rest": 6,
+              "play": 16,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 5,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 6,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 3,
+              "rest": 5,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 7,
+              "play": 18,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-js5-fast-gate@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-js5-fast-gate",
+          "focusSeat": 2,
+          "status": "finished",
+          "seed": 1400000010,
+          "seatCount": 5,
+          "versions": [
+            "cand-js5-fast-gate",
+            "cand-js5-fast-gate",
+            "js5-frozen-champion",
+            "cand-js5-fast-gate",
+            "cand-js5-fast-gate"
+          ],
+          "fingerprints": [
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00"
+          ],
+          "moves": 181,
+          "wallMs": 46255.53,
+          "winnerSeat": 3,
+          "ranking": [
+            {
+              "seat": 3,
+              "score": 74,
+              "golems": 5,
+              "turns": 36
+            },
+            {
+              "seat": 4,
+              "score": 66,
+              "golems": 5,
+              "turns": 36
+            },
+            {
+              "seat": 2,
+              "score": 64,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 0,
+              "score": 60,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 1,
+              "score": 57,
+              "golems": 4,
+              "turns": 36
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 7,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 8,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 4,
+              "rest": 7,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 8,
+              "claim": 5,
+              "rest": 3,
+              "play": 20,
+              "discard": 1
+            },
+            {
+              "acquire": 5,
+              "claim": 5,
+              "rest": 6,
+              "play": 20,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-js5-fast-gate@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-js5-fast-gate",
+          "focusSeat": 3,
+          "status": "finished",
+          "seed": 1400000011,
+          "seatCount": 5,
+          "versions": [
+            "cand-js5-fast-gate",
+            "cand-js5-fast-gate",
+            "cand-js5-fast-gate",
+            "js5-frozen-champion",
+            "cand-js5-fast-gate"
+          ],
+          "fingerprints": [
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00"
+          ],
+          "moves": 180,
+          "wallMs": 50924.87,
+          "winnerSeat": 3,
+          "ranking": [
+            {
+              "seat": 3,
+              "score": 66,
+              "golems": 5,
+              "turns": 35
+            },
+            {
+              "seat": 2,
+              "score": 63,
+              "golems": 4,
+              "turns": 35
+            },
+            {
+              "seat": 0,
+              "score": 60,
+              "golems": 4,
+              "turns": 35
+            },
+            {
+              "seat": 4,
+              "score": 58,
+              "golems": 4,
+              "turns": 35
+            },
+            {
+              "seat": 1,
+              "score": 49,
+              "golems": 3,
+              "turns": 35
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 4,
+              "play": 20,
+              "discard": 1
+            },
+            {
+              "acquire": 9,
+              "claim": 3,
+              "rest": 5,
+              "play": 18,
+              "discard": 1
+            },
+            {
+              "acquire": 9,
+              "claim": 4,
+              "rest": 7,
+              "play": 15,
+              "discard": 1
+            },
+            {
+              "acquire": 5,
+              "claim": 5,
+              "rest": 5,
+              "play": 20,
+              "discard": 2
+            },
+            {
+              "acquire": 4,
+              "claim": 4,
+              "rest": 9,
+              "play": 18,
+              "discard": 0
+            }
+          ]
+        }
+      ],
+      "axisGGames": [
+        {
+          "matchId": "axisG--cand-js5-fast-gate@2",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "generality-pool",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000012,
+          "seatCount": 2,
+          "versions": [
+            "cand-js5-fast-gate",
+            "neutral-baseline"
+          ],
+          "fingerprints": [
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87"
+          ],
+          "moves": 82,
+          "wallMs": 4764.73,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 80,
+              "golems": 5,
+              "turns": 41
+            },
+            {
+              "seat": 1,
+              "score": 67,
+              "golems": 6,
+              "turns": 41
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 8,
+              "claim": 5,
+              "rest": 6,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 6,
+              "rest": 7,
+              "play": 22,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-js5-fast-gate@2",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "generality-pool",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000013,
+          "seatCount": 2,
+          "versions": [
+            "neutral-baseline",
+            "cand-js5-fast-gate"
+          ],
+          "fingerprints": [
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00"
+          ],
+          "moves": 75,
+          "wallMs": 7077.35,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 72,
+              "golems": 5,
+              "turns": 37
+            },
+            {
+              "seat": 0,
+              "score": 70,
+              "golems": 6,
+              "turns": 37
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 6,
+              "rest": 5,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 8,
+              "claim": 5,
+              "rest": 6,
+              "play": 18,
+              "discard": 1
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-js5-fast-gate@2",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "generality-pool",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000014,
+          "seatCount": 2,
+          "versions": [
+            "cand-js5-fast-gate",
+            "ai5-readiness-efficiency"
+          ],
+          "fingerprints": [
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+          ],
+          "moves": 96,
+          "wallMs": 3320.67,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 77,
+              "golems": 6,
+              "turns": 48
+            },
+            {
+              "seat": 1,
+              "score": 57,
+              "golems": 5,
+              "turns": 48
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 6,
+              "rest": 9,
+              "play": 28,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 12,
+              "play": 27,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-js5-fast-gate@2",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "generality-pool",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000015,
+          "seatCount": 2,
+          "versions": [
+            "ai5-readiness-efficiency",
+            "cand-js5-fast-gate"
+          ],
+          "fingerprints": [
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00"
+          ],
+          "moves": 96,
+          "wallMs": 7195.61,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 88,
+              "golems": 6,
+              "turns": 48
+            },
+            {
+              "seat": 0,
+              "score": 85,
+              "golems": 5,
+              "turns": 48
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 3,
+              "claim": 5,
+              "rest": 11,
+              "play": 29,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 6,
+              "rest": 8,
+              "play": 29,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-js5-fast-gate@5",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "generality-pool",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000016,
+          "seatCount": 5,
+          "versions": [
+            "cand-js5-fast-gate",
+            "neutral-baseline",
+            "ai4-struct-beam-rollout",
+            "ai5-readiness-efficiency",
+            "style-balanced"
+          ],
+          "fingerprints": [
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+            "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+          ],
+          "moves": 195,
+          "wallMs": 9410.33,
+          "winnerSeat": 3,
+          "ranking": [
+            {
+              "seat": 3,
+              "score": 64,
+              "golems": 4,
+              "turns": 39
+            },
+            {
+              "seat": 1,
+              "score": 59,
+              "golems": 5,
+              "turns": 39
+            },
+            {
+              "seat": 0,
+              "score": 49,
+              "golems": 3,
+              "turns": 39
+            },
+            {
+              "seat": 2,
+              "score": 48,
+              "golems": 4,
+              "turns": 39
+            },
+            {
+              "seat": 4,
+              "score": 47,
+              "golems": 3,
+              "turns": 39
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 11,
+              "claim": 3,
+              "rest": 6,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 9,
+              "claim": 5,
+              "rest": 6,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 4,
+              "rest": 10,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 4,
+              "rest": 6,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 8,
+              "claim": 3,
+              "rest": 9,
+              "play": 19,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-js5-fast-gate@5",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "generality-pool",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000017,
+          "seatCount": 5,
+          "versions": [
+            "neutral-baseline",
+            "cand-js5-fast-gate",
+            "ai5-readiness-efficiency",
+            "style-balanced",
+            "style-contest"
+          ],
+          "fingerprints": [
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+            "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+          ],
+          "moves": 195,
+          "wallMs": 9579.57,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 69,
+              "golems": 4,
+              "turns": 39
+            },
+            {
+              "seat": 2,
+              "score": 65,
+              "golems": 4,
+              "turns": 39
+            },
+            {
+              "seat": 3,
+              "score": 60,
+              "golems": 4,
+              "turns": 39
+            },
+            {
+              "seat": 4,
+              "score": 53,
+              "golems": 4,
+              "turns": 39
+            },
+            {
+              "seat": 0,
+              "score": 51,
+              "golems": 5,
+              "turns": 39
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 12,
+              "claim": 5,
+              "rest": 4,
+              "play": 18,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 7,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 8,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 10,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 8,
+              "play": 22,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-js5-fast-gate@5",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "generality-pool",
+          "focusSeat": 2,
+          "status": "finished",
+          "seed": 1400000018,
+          "seatCount": 5,
+          "versions": [
+            "ai4-struct-beam-rollout",
+            "ai5-readiness-efficiency",
+            "cand-js5-fast-gate",
+            "style-contest",
+            "style-engine"
+          ],
+          "fingerprints": [
+            "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+            "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+          ],
+          "moves": 182,
+          "wallMs": 9167.36,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 64,
+              "golems": 5,
+              "turns": 36
+            },
+            {
+              "seat": 4,
+              "score": 56,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 2,
+              "score": 56,
+              "golems": 3,
+              "turns": 36
+            },
+            {
+              "seat": 0,
+              "score": 45,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 3,
+              "score": 37,
+              "golems": 2,
+              "turns": 36
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 2,
+              "claim": 4,
+              "rest": 10,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 5,
+              "rest": 7,
+              "play": 21,
+              "discard": 1
+            },
+            {
+              "acquire": 5,
+              "claim": 3,
+              "rest": 8,
+              "play": 20,
+              "discard": 1
+            },
+            {
+              "acquire": 2,
+              "claim": 2,
+              "rest": 12,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 5,
+              "play": 20,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-js5-fast-gate@5",
+          "direction": "field",
+          "focusId": "cand-js5-fast-gate",
+          "opponentId": "generality-pool",
+          "focusSeat": 3,
+          "status": "finished",
+          "seed": 1400000019,
+          "seatCount": 5,
+          "versions": [
+            "ai5-readiness-efficiency",
+            "style-balanced",
+            "style-contest",
+            "cand-js5-fast-gate",
+            "style-rush"
+          ],
+          "fingerprints": [
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+            "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+            "01ad598815e1132ca5b266883cd3767a075a54c54dc4073c6211edf146b39d00",
+            "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+          ],
+          "moves": 207,
+          "wallMs": 11836.32,
+          "winnerSeat": 3,
+          "ranking": [
+            {
+              "seat": 3,
+              "score": 59,
+              "golems": 4,
+              "turns": 41
+            },
+            {
+              "seat": 2,
+              "score": 57,
+              "golems": 5,
+              "turns": 41
+            },
+            {
+              "seat": 4,
+              "score": 56,
+              "golems": 3,
+              "turns": 41
+            },
+            {
+              "seat": 0,
+              "score": 48,
+              "golems": 3,
+              "turns": 41
+            },
+            {
+              "seat": 1,
+              "score": 44,
+              "golems": 4,
+              "turns": 41
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 3,
+              "rest": 9,
+              "play": 24,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 4,
+              "rest": 9,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 5,
+              "rest": 10,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 8,
+              "play": 22,
+              "discard": 2
+            },
+            {
+              "acquire": 4,
+              "claim": 3,
+              "rest": 12,
+              "play": 22,
+              "discard": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "candidateId": "cand-goal-remaining",
+      "fingerprint": "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+      "axisA": {
+        "cells": [
+          {
+            "seatCount": 2,
+            "direction": "h2h",
+            "games": 8,
+            "wins": 3,
+            "firstPlaceRate": 0.375,
+            "wilson": {
+              "point": 0.375,
+              "lower": 0.13684428582359737,
+              "upper": 0.6942576053973728
+            },
+            "seatCoverage": "0+1+2+3"
+          },
+          {
+            "seatCount": 5,
+            "direction": "field",
+            "games": 8,
+            "wins": 3,
+            "firstPlaceRate": 0.375,
+            "wilson": {
+              "point": 0.375,
+              "lower": 0.13684428582359737,
+              "upper": 0.6942576053973728
+            },
+            "seatCoverage": "0+1+2+3"
+          },
+          {
+            "seatCount": 5,
+            "direction": "field",
+            "games": 8,
+            "wins": 3,
+            "firstPlaceRate": 0.375,
+            "wilson": {
+              "point": 0.375,
+              "lower": 0.13684428582359737,
+              "upper": 0.6942576053973728
+            },
+            "seatCoverage": "0+1+2+3"
+          }
+        ],
+        "anomalies": 0,
+        "totalGames": 12
+      },
+      "axisG": {
+        "cells": [
+          {
+            "seatCount": 2,
+            "games": 4,
+            "wins": 2,
+            "firstPlaceRate": 0.5,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            },
+            "meanScore": 66.25,
+            "meanOpponentScore": 69.5,
+            "scoreDiff": -3.25
+          },
+          {
+            "seatCount": 5,
+            "games": 4,
+            "wins": 0,
+            "firstPlaceRate": 0,
+            "wilson": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.4898908364545973
+            },
+            "meanScore": 52.25,
+            "meanOpponentScore": 55.38,
+            "scoreDiff": -3.13
+          }
+        ],
+        "anomalies": 0,
+        "totalGames": 8
+      },
+      "axisAGames": [
+        {
+          "matchId": "cand-goal-remaining--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000000,
+          "seatCount": 2,
+          "versions": [
+            "cand-goal-remaining",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 79,
+          "wallMs": 5241.05,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 71,
+              "golems": 6,
+              "turns": 39
+            },
+            {
+              "seat": 1,
+              "score": 59,
+              "golems": 5,
+              "turns": 39
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 3,
+              "claim": 6,
+              "rest": 8,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 12,
+              "claim": 5,
+              "rest": 3,
+              "play": 19,
+              "discard": 1
+            }
+          ]
+        },
+        {
+          "matchId": "cand-goal-remaining--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000001,
+          "seatCount": 2,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-goal-remaining"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49"
+          ],
+          "moves": 71,
+          "wallMs": 4011.89,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 79,
+              "golems": 6,
+              "turns": 35
+            },
+            {
+              "seat": 0,
+              "score": 52,
+              "golems": 4,
+              "turns": 35
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 6,
+              "claim": 4,
+              "rest": 5,
+              "play": 20,
+              "discard": 1
+            },
+            {
+              "acquire": 4,
+              "claim": 6,
+              "rest": 6,
+              "play": 19,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-goal-remaining--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000002,
+          "seatCount": 2,
+          "versions": [
+            "cand-goal-remaining",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 90,
+          "wallMs": 5126.75,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 91,
+              "golems": 6,
+              "turns": 45
+            },
+            {
+              "seat": 0,
+              "score": 56,
+              "golems": 5,
+              "turns": 45
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 0,
+              "claim": 5,
+              "rest": 15,
+              "play": 25,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 6,
+              "rest": 10,
+              "play": 26,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-goal-remaining--vs--js5-frozen-champion@2",
+          "direction": "h2h",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000003,
+          "seatCount": 2,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-goal-remaining"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49"
+          ],
+          "moves": 88,
+          "wallMs": 5616.67,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 81,
+              "golems": 6,
+              "turns": 43
+            },
+            {
+              "seat": 0,
+              "score": 62,
+              "golems": 4,
+              "turns": 43
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 9,
+              "play": 23,
+              "discard": 2
+            },
+            {
+              "acquire": 5,
+              "claim": 6,
+              "rest": 6,
+              "play": 26,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-goal-remaining--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000004,
+          "seatCount": 5,
+          "versions": [
+            "cand-goal-remaining",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 173,
+          "wallMs": 33095.63,
+          "winnerSeat": 2,
+          "ranking": [
+            {
+              "seat": 2,
+              "score": 70,
+              "golems": 4,
+              "turns": 34
+            },
+            {
+              "seat": 3,
+              "score": 67,
+              "golems": 5,
+              "turns": 34
+            },
+            {
+              "seat": 4,
+              "score": 61,
+              "golems": 4,
+              "turns": 34
+            },
+            {
+              "seat": 1,
+              "score": 52,
+              "golems": 3,
+              "turns": 34
+            },
+            {
+              "seat": 0,
+              "score": 35,
+              "golems": 3,
+              "turns": 34
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 3,
+              "rest": 9,
+              "play": 17,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 3,
+              "rest": 8,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 6,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 5,
+              "rest": 6,
+              "play": 18,
+              "discard": 1
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 3,
+              "play": 20,
+              "discard": 2
+            }
+          ]
+        },
+        {
+          "matchId": "cand-goal-remaining--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000005,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-goal-remaining",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 196,
+          "wallMs": 31392.8,
+          "winnerSeat": 3,
+          "ranking": [
+            {
+              "seat": 3,
+              "score": 67,
+              "golems": 4,
+              "turns": 39
+            },
+            {
+              "seat": 0,
+              "score": 67,
+              "golems": 5,
+              "turns": 39
+            },
+            {
+              "seat": 1,
+              "score": 60,
+              "golems": 4,
+              "turns": 39
+            },
+            {
+              "seat": 2,
+              "score": 52,
+              "golems": 4,
+              "turns": 39
+            },
+            {
+              "seat": 4,
+              "score": 48,
+              "golems": 4,
+              "turns": 39
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 6,
+              "claim": 5,
+              "rest": 7,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 10,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 4,
+              "rest": 9,
+              "play": 22,
+              "discard": 1
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 7,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 8,
+              "play": 22,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-goal-remaining--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 2,
+          "status": "finished",
+          "seed": 1400000006,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "cand-goal-remaining",
+            "js5-frozen-champion",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 188,
+          "wallMs": 34395.87,
+          "winnerSeat": 3,
+          "ranking": [
+            {
+              "seat": 3,
+              "score": 75,
+              "golems": 5,
+              "turns": 37
+            },
+            {
+              "seat": 2,
+              "score": 59,
+              "golems": 4,
+              "turns": 37
+            },
+            {
+              "seat": 1,
+              "score": 59,
+              "golems": 4,
+              "turns": 37
+            },
+            {
+              "seat": 0,
+              "score": 54,
+              "golems": 4,
+              "turns": 37
+            },
+            {
+              "seat": 4,
+              "score": 47,
+              "golems": 4,
+              "turns": 37
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 10,
+              "claim": 4,
+              "rest": 5,
+              "play": 18,
+              "discard": 1
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 6,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 7,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 9,
+              "claim": 5,
+              "rest": 4,
+              "play": 19,
+              "discard": 2
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 8,
+              "play": 20,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "cand-goal-remaining--vs--js5-frozen-champion@5",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "js5-frozen-champion",
+          "focusSeat": 3,
+          "status": "finished",
+          "seed": 1400000007,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "js5-frozen-champion",
+            "cand-goal-remaining",
+            "js5-frozen-champion"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696"
+          ],
+          "moves": 194,
+          "wallMs": 34999.63,
+          "winnerSeat": 2,
+          "ranking": [
+            {
+              "seat": 2,
+              "score": 68,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 1,
+              "score": 65,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 0,
+              "score": 64,
+              "golems": 5,
+              "turns": 38
+            },
+            {
+              "seat": 4,
+              "score": 56,
+              "golems": 4,
+              "turns": 38
+            },
+            {
+              "seat": 3,
+              "score": 53,
+              "golems": 4,
+              "turns": 38
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 7,
+              "claim": 5,
+              "rest": 4,
+              "play": 22,
+              "discard": 3
+            },
+            {
+              "acquire": 6,
+              "claim": 4,
+              "rest": 5,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 7,
+              "play": 22,
+              "discard": 1
+            },
+            {
+              "acquire": 8,
+              "claim": 4,
+              "rest": 5,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 11,
+              "play": 20,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-goal-remaining@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-goal-remaining",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000008,
+          "seatCount": 5,
+          "versions": [
+            "js5-frozen-champion",
+            "cand-goal-remaining",
+            "cand-goal-remaining",
+            "cand-goal-remaining",
+            "cand-goal-remaining"
+          ],
+          "fingerprints": [
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49"
+          ],
+          "moves": 181,
+          "wallMs": 8697.23,
+          "winnerSeat": 3,
+          "ranking": [
+            {
+              "seat": 3,
+              "score": 64,
+              "golems": 5,
+              "turns": 36
+            },
+            {
+              "seat": 2,
+              "score": 61,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 0,
+              "score": 51,
+              "golems": 3,
+              "turns": 36
+            },
+            {
+              "seat": 4,
+              "score": 44,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 1,
+              "score": 44,
+              "golems": 4,
+              "turns": 36
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 7,
+              "claim": 3,
+              "rest": 7,
+              "play": 19,
+              "discard": 1
+            },
+            {
+              "acquire": 12,
+              "claim": 4,
+              "rest": 4,
+              "play": 16,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 7,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 5,
+              "rest": 5,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 2,
+              "claim": 4,
+              "rest": 12,
+              "play": 18,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-goal-remaining@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-goal-remaining",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000009,
+          "seatCount": 5,
+          "versions": [
+            "cand-goal-remaining",
+            "js5-frozen-champion",
+            "cand-goal-remaining",
+            "cand-goal-remaining",
+            "cand-goal-remaining"
+          ],
+          "fingerprints": [
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49"
+          ],
+          "moves": 180,
+          "wallMs": 10410.38,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 74,
+              "golems": 5,
+              "turns": 36
+            },
+            {
+              "seat": 3,
+              "score": 61,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 0,
+              "score": 55,
+              "golems": 3,
+              "turns": 36
+            },
+            {
+              "seat": 2,
+              "score": 54,
+              "golems": 4,
+              "turns": 36
+            },
+            {
+              "seat": 4,
+              "score": 48,
+              "golems": 3,
+              "turns": 36
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 2,
+              "claim": 3,
+              "rest": 10,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 5,
+              "rest": 6,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 8,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 8,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 3,
+              "rest": 6,
+              "play": 20,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-goal-remaining@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-goal-remaining",
+          "focusSeat": 2,
+          "status": "finished",
+          "seed": 1400000010,
+          "seatCount": 5,
+          "versions": [
+            "cand-goal-remaining",
+            "cand-goal-remaining",
+            "js5-frozen-champion",
+            "cand-goal-remaining",
+            "cand-goal-remaining"
+          ],
+          "fingerprints": [
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49"
+          ],
+          "moves": 165,
+          "wallMs": 9414.18,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 60,
+              "golems": 5,
+              "turns": 33
+            },
+            {
+              "seat": 3,
+              "score": 58,
+              "golems": 4,
+              "turns": 33
+            },
+            {
+              "seat": 2,
+              "score": 55,
+              "golems": 3,
+              "turns": 33
+            },
+            {
+              "seat": 4,
+              "score": 53,
+              "golems": 3,
+              "turns": 33
+            },
+            {
+              "seat": 0,
+              "score": 49,
+              "golems": 4,
+              "turns": 33
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 6,
+              "play": 18,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 6,
+              "play": 18,
+              "discard": 0
+            },
+            {
+              "acquire": 8,
+              "claim": 3,
+              "rest": 4,
+              "play": 18,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 6,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 3,
+              "rest": 6,
+              "play": 17,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "js5-frozen-champion--vs--cand-goal-remaining@5",
+          "direction": "field",
+          "focusId": "js5-frozen-champion",
+          "opponentId": "cand-goal-remaining",
+          "focusSeat": 3,
+          "status": "finished",
+          "seed": 1400000011,
+          "seatCount": 5,
+          "versions": [
+            "cand-goal-remaining",
+            "cand-goal-remaining",
+            "cand-goal-remaining",
+            "js5-frozen-champion",
+            "cand-goal-remaining"
+          ],
+          "fingerprints": [
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "169e0d59008ca4f9ad6d41efcb4aa95d5aca4474456bb0e1dd68a6cb91724696",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49"
+          ],
+          "moves": 205,
+          "wallMs": 10537.2,
+          "winnerSeat": 3,
+          "ranking": [
+            {
+              "seat": 3,
+              "score": 62,
+              "golems": 4,
+              "turns": 41
+            },
+            {
+              "seat": 2,
+              "score": 62,
+              "golems": 4,
+              "turns": 41
+            },
+            {
+              "seat": 4,
+              "score": 60,
+              "golems": 4,
+              "turns": 41
+            },
+            {
+              "seat": 1,
+              "score": 56,
+              "golems": 5,
+              "turns": 41
+            },
+            {
+              "seat": 0,
+              "score": 50,
+              "golems": 4,
+              "turns": 41
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 1,
+              "claim": 4,
+              "rest": 12,
+              "play": 24,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 11,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 8,
+              "claim": 4,
+              "rest": 5,
+              "play": 24,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 11,
+              "play": 23,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 4,
+              "rest": 9,
+              "play": 24,
+              "discard": 0
+            }
+          ]
+        }
+      ],
+      "axisGGames": [
+        {
+          "matchId": "axisG--cand-goal-remaining@2",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "generality-pool",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000012,
+          "seatCount": 2,
+          "versions": [
+            "cand-goal-remaining",
+            "neutral-baseline"
+          ],
+          "fingerprints": [
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87"
+          ],
+          "moves": 78,
+          "wallMs": 1578.57,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 74,
+              "golems": 6,
+              "turns": 39
+            },
+            {
+              "seat": 1,
+              "score": 60,
+              "golems": 5,
+              "turns": 39
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 2,
+              "claim": 6,
+              "rest": 9,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 10,
+              "claim": 5,
+              "rest": 6,
+              "play": 18,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-goal-remaining@2",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "generality-pool",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000013,
+          "seatCount": 2,
+          "versions": [
+            "neutral-baseline",
+            "cand-goal-remaining"
+          ],
+          "fingerprints": [
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49"
+          ],
+          "moves": 80,
+          "wallMs": 1660.66,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 79,
+              "golems": 6,
+              "turns": 40
+            },
+            {
+              "seat": 1,
+              "score": 45,
+              "golems": 4,
+              "turns": 40
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 2,
+              "claim": 6,
+              "rest": 7,
+              "play": 25,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 4,
+              "rest": 8,
+              "play": 21,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-goal-remaining@2",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "generality-pool",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000014,
+          "seatCount": 2,
+          "versions": [
+            "cand-goal-remaining",
+            "ai5-readiness-efficiency"
+          ],
+          "fingerprints": [
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322"
+          ],
+          "moves": 96,
+          "wallMs": 1573.89,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 73,
+              "golems": 5,
+              "turns": 48
+            },
+            {
+              "seat": 0,
+              "score": 68,
+              "golems": 6,
+              "turns": 48
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 6,
+              "claim": 6,
+              "rest": 8,
+              "play": 28,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 5,
+              "rest": 10,
+              "play": 30,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-goal-remaining@2",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "generality-pool",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000015,
+          "seatCount": 2,
+          "versions": [
+            "ai5-readiness-efficiency",
+            "cand-goal-remaining"
+          ],
+          "fingerprints": [
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49"
+          ],
+          "moves": 86,
+          "wallMs": 1682.46,
+          "winnerSeat": 1,
+          "ranking": [
+            {
+              "seat": 1,
+              "score": 78,
+              "golems": 6,
+              "turns": 43
+            },
+            {
+              "seat": 0,
+              "score": 66,
+              "golems": 4,
+              "turns": 43
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 10,
+              "play": 26,
+              "discard": 0
+            },
+            {
+              "acquire": 4,
+              "claim": 6,
+              "rest": 9,
+              "play": 24,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-goal-remaining@5",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "generality-pool",
+          "focusSeat": 0,
+          "status": "finished",
+          "seed": 1400000016,
+          "seatCount": 5,
+          "versions": [
+            "cand-goal-remaining",
+            "neutral-baseline",
+            "ai4-struct-beam-rollout",
+            "ai5-readiness-efficiency",
+            "style-balanced"
+          ],
+          "fingerprints": [
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+            "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc"
+          ],
+          "moves": 185,
+          "wallMs": 3195.66,
+          "winnerSeat": 3,
+          "ranking": [
+            {
+              "seat": 3,
+              "score": 69,
+              "golems": 4,
+              "turns": 37
+            },
+            {
+              "seat": 1,
+              "score": 52,
+              "golems": 3,
+              "turns": 37
+            },
+            {
+              "seat": 0,
+              "score": 51,
+              "golems": 5,
+              "turns": 37
+            },
+            {
+              "seat": 2,
+              "score": 43,
+              "golems": 3,
+              "turns": 37
+            },
+            {
+              "seat": 4,
+              "score": 42,
+              "golems": 3,
+              "turns": 37
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 8,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 3,
+              "rest": 6,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 2,
+              "claim": 3,
+              "rest": 12,
+              "play": 20,
+              "discard": 0
+            },
+            {
+              "acquire": 5,
+              "claim": 4,
+              "rest": 6,
+              "play": 22,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 3,
+              "rest": 8,
+              "play": 19,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-goal-remaining@5",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "generality-pool",
+          "focusSeat": 1,
+          "status": "finished",
+          "seed": 1400000017,
+          "seatCount": 5,
+          "versions": [
+            "neutral-baseline",
+            "cand-goal-remaining",
+            "ai5-readiness-efficiency",
+            "style-balanced",
+            "style-contest"
+          ],
+          "fingerprints": [
+            "397aad248471a77358feb894bb201b381d049030304f9e9adaee862685494e87",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+            "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39"
+          ],
+          "moves": 170,
+          "wallMs": 3242.93,
+          "winnerSeat": 2,
+          "ranking": [
+            {
+              "seat": 2,
+              "score": 60,
+              "golems": 4,
+              "turns": 34
+            },
+            {
+              "seat": 0,
+              "score": 60,
+              "golems": 5,
+              "turns": 34
+            },
+            {
+              "seat": 1,
+              "score": 57,
+              "golems": 4,
+              "turns": 34
+            },
+            {
+              "seat": 3,
+              "score": 54,
+              "golems": 3,
+              "turns": 34
+            },
+            {
+              "seat": 4,
+              "score": 50,
+              "golems": 3,
+              "turns": 34
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 6,
+              "claim": 5,
+              "rest": 5,
+              "play": 18,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 8,
+              "play": 19,
+              "discard": 0
+            },
+            {
+              "acquire": 2,
+              "claim": 4,
+              "rest": 7,
+              "play": 21,
+              "discard": 0
+            },
+            {
+              "acquire": 7,
+              "claim": 3,
+              "rest": 7,
+              "play": 17,
+              "discard": 0
+            },
+            {
+              "acquire": 2,
+              "claim": 3,
+              "rest": 9,
+              "play": 20,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-goal-remaining@5",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "generality-pool",
+          "focusSeat": 2,
+          "status": "finished",
+          "seed": 1400000018,
+          "seatCount": 5,
+          "versions": [
+            "ai4-struct-beam-rollout",
+            "ai5-readiness-efficiency",
+            "cand-goal-remaining",
+            "style-contest",
+            "style-engine"
+          ],
+          "fingerprints": [
+            "7154849dad10b958e89bea3df7a19a4403dc2297af30a640c6fb79cbe714e36b",
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+            "a77dedbe9e618fe8159aed09b348e6cf7eb4da05e8c7794ff23434a4430f5dc9"
+          ],
+          "moves": 210,
+          "wallMs": 3077.29,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 65,
+              "golems": 5,
+              "turns": 42
+            },
+            {
+              "seat": 4,
+              "score": 64,
+              "golems": 5,
+              "turns": 42
+            },
+            {
+              "seat": 2,
+              "score": 57,
+              "golems": 4,
+              "turns": 42
+            },
+            {
+              "seat": 3,
+              "score": 55,
+              "golems": 3,
+              "turns": 42
+            },
+            {
+              "seat": 1,
+              "score": 55,
+              "golems": 5,
+              "turns": 42
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 4,
+              "claim": 5,
+              "rest": 9,
+              "play": 24,
+              "discard": 0
+            },
+            {
+              "acquire": 2,
+              "claim": 5,
+              "rest": 10,
+              "play": 25,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 11,
+              "play": 24,
+              "discard": 0
+            },
+            {
+              "acquire": 1,
+              "claim": 3,
+              "rest": 13,
+              "play": 25,
+              "discard": 0
+            },
+            {
+              "acquire": 6,
+              "claim": 5,
+              "rest": 9,
+              "play": 22,
+              "discard": 0
+            }
+          ]
+        },
+        {
+          "matchId": "axisG--cand-goal-remaining@5",
+          "direction": "field",
+          "focusId": "cand-goal-remaining",
+          "opponentId": "generality-pool",
+          "focusSeat": 3,
+          "status": "finished",
+          "seed": 1400000019,
+          "seatCount": 5,
+          "versions": [
+            "ai5-readiness-efficiency",
+            "style-balanced",
+            "style-contest",
+            "cand-goal-remaining",
+            "style-rush"
+          ],
+          "fingerprints": [
+            "59482073f403ba0f408b90ae34d3f6e4c7f3200b059b5e78cf8790aa73d96322",
+            "894a343a3d816e6830f7fc27febcc4c67e0084a6e3da34a06d87ec3a7d0361cc",
+            "4fc68a101b5e523b5be6390118ce5b7ac354dc97fa102e589324ed5b21c57e39",
+            "bd1f66f01ebb0364b26e333c867a1e6ed092b6ef26c2e51eddf46718280e5a49",
+            "9d7de540311b6ed861d903379954cc364c71500436015a59d4769443404a1712"
+          ],
+          "moves": 220,
+          "wallMs": 3344.2,
+          "winnerSeat": 0,
+          "ranking": [
+            {
+              "seat": 0,
+              "score": 62,
+              "golems": 5,
+              "turns": 44
+            },
+            {
+              "seat": 1,
+              "score": 59,
+              "golems": 4,
+              "turns": 44
+            },
+            {
+              "seat": 2,
+              "score": 52,
+              "golems": 4,
+              "turns": 44
+            },
+            {
+              "seat": 4,
+              "score": 44,
+              "golems": 3,
+              "turns": 44
+            },
+            {
+              "seat": 3,
+              "score": 44,
+              "golems": 3,
+              "turns": 44
+            }
+          ],
+          "actionCounts": [
+            {
+              "acquire": 2,
+              "claim": 5,
+              "rest": 11,
+              "play": 26,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 4,
+              "rest": 12,
+              "play": 25,
+              "discard": 0
+            },
+            {
+              "acquire": 1,
+              "claim": 4,
+              "rest": 15,
+              "play": 24,
+              "discard": 0
+            },
+            {
+              "acquire": 3,
+              "claim": 3,
+              "rest": 13,
+              "play": 25,
+              "discard": 0
+            },
+            {
+              "acquire": 0,
+              "claim": 3,
+              "rest": 16,
+              "play": 25,
+              "discard": 0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

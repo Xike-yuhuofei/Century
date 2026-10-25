@@ -39,7 +39,7 @@ export function classicPool() {
   const legacy = frozenVersion('legacy-js0');
   const b = legacy.parameters;
   return [
-    { id: 'joint-js5-frozen', parameters: champ.parameters },
+    { id: 'joint-js5-frozen', parameters: champ.parameters, championBody: true },
     { id: 'neutral-baseline', parameters: BASELINE_PARAMETERS, structure: BASELINE_PARAMETERS.structure },
     { id: 'style-tempo', parameters: { ...b, tempoWeight: Math.min(1.5, b.tempoWeight * 1.35), restWeight: Math.max(0.5, b.restWeight * 0.8) }, structure: legacy.structure },
     { id: 'style-contest', parameters: { ...b, contestWeight: Math.min(2, b.contestWeight * 1.4), goalWeight: Math.min(1.5, b.goalWeight * 1.15) }, structure: legacy.structure },
@@ -55,7 +55,7 @@ export function diversePool() {
   const b = legacy.parameters;
   const hist = ai4StructBeamRolloutParameters();
   return [
-    { id: 'joint-js5-frozen', parameters: champ.parameters },
+    { id: 'joint-js5-frozen', parameters: champ.parameters, championBody: true },
     { id: 'ai4-struct-beam-rollout', parameters: hist, structure: hist.structure },
     { id: 'style-rush', parameters: { ...b, tempoWeight: 1.6, restWeight: 0.5, engineWeight: 0.5, endgameWeight: 0.6 }, structure: legacy.structure },
     { id: 'style-engine', parameters: { ...b, engineWeight: 1.6, capacityWeight: 1.4, tempoWeight: 0.7 }, structure: legacy.structure },

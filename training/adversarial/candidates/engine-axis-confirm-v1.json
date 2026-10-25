@@ -1,0 +1,19 @@
+[
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-baseline-acq",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "engineWeight": 1.7 },
+    "acquisitionVariant": "baseline",
+    "notes": "引擎轴确认批次：初筛唯一 weak-vs-champion（轴A 45% 下界 0.258；轴G 70%/50% 分差 +3.92）"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-eng-cap-12",
+    "base": "style-engine",
+    "decisionCore": "beam-search",
+    "mutations": { "capacityWeight": 1.2 },
+    "notes": "引擎轴确认批次：初筛轴A并列最高 45%（但泛化分差 -4.3，需 official 复核）"
+  }
+]

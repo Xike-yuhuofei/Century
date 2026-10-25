@@ -1,0 +1,38 @@
+[
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-rush-plus",
+    "base": "style-rush",
+    "decisionCore": "beam-search",
+    "mutations": { "tempoWeight": 1.8, "restWeight": 0.4 },
+    "notes": "示例：速攻族加强变异（冒烟演示用，非训练产物）"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-js5-fast-gate",
+    "base": "js5-frozen-champion",
+    "decisionCore": "champion-guided",
+    "jointOptions": { "workUnits": 96 },
+    "notes": "示例：JS5 结构候选——确定性工作量档位（冒烟演示用，非训练产物）"
+  },
+  {
+    "schema": "century-adversarial-candidate-v1",
+    "id": "cand-goal-remaining",
+    "base": "custom",
+    "decisionCore": "beam-search",
+    "parameters": {
+      "id": "cand-goal-remaining",
+      "structure": "beam-rollout",
+      "acquisitionVariant": "goal-remaining",
+      "engineWeight": 1,
+      "tempoWeight": 1,
+      "contestWeight": 1,
+      "synergyWeight": 1,
+      "goalWeight": 1,
+      "capacityWeight": 1,
+      "restWeight": 1,
+      "endgameWeight": 1
+    },
+    "notes": "示例：custom 参数基座 + 历史获取估值变体血统（冒烟演示用，非训练产物）"
+  }
+]
