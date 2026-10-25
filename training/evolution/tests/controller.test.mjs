@@ -149,17 +149,22 @@ test('预算上限：game 预算耗尽时安全停止，不越界消费', async 
   assert.ok(results.budgetUsed.games <= 1, `games=${results.budgetUsed.games} 超过预算`);
 });
 
-test('两轮 campaign：第二轮使用轮换窗口，并消费上一轮失败研究提示', async () => {
+test('两轮 campaign：轮换窗口、消费上一轮提示，并从上一轮保留候选继续', async () => {
   const root = tempRoot();
   const seen = [];
   const generator = opts => {
-    seen.push({ round: opts.round, hints: opts.hints, experiment: opts.experiment });
-    return scriptedCandidates({ experiment: opts.experiment, round: opts.round });
+    seen.push({
+      round: opts.round, hints: opts.hints, experiment: opts.experiment,
+      parentId: opts.parentArtifact?.candidateId ?? null,
+    });
+    return scriptedCandidates({
+      experiment: opts.experiment, round: opts.round, parentArtifact: opts.parentArtifact,
+    });
   };
   const { controller } = makeController({
     root,
     config: {
-      rounds: 2, quickSeeds: 1, deepSeeds: 1, retainTopK: 2,
+      rounds: 2, quickSeeds: 1, deepSeeds: 1, retainTopK: 2, continueFromSelected: true,
       generation: { count: 4, seed: 12 },
       budget: { maxCandidates: 12, maxGames: 24, maxWallMs: 60_000, maxConcurrent: 1, maxDeepConfirmations: 2 },
     },
@@ -173,6 +178,13 @@ test('两轮 campaign：第二轮使用轮换窗口，并消费上一轮失败�
   assert.equal(seen.length, 2);
   assert.equal(seen[1].hints?.discipline?.advisoryOnly, true);
   assert.ok(results.rounds[0].diagnostics.labels.length > 0);
+  // 第二轮从上一轮保留候选继续：父候选 id 必须出现在下一轮 artifact.parentId。
+  const firstSelected = results.rounds[0].candidates
+    .find(c => ['selected', 'deep-done', 'pending-approval'].includes(c.stage));
+  assert.ok(firstSelected, '第一轮应有保留候选');
+  assert.equal(seen[1].parentId, firstSelected.candidateId);
+  assert.ok(results.rounds[1].candidates.some(c => c.parentId === firstSelected.candidateId),
+    '第二轮候选应记录父候选关系');
 });
 
 test('安全停止（外部 requestStop）后可恢复', async () => {

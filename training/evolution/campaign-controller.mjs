@@ -357,6 +357,7 @@ export class CampaignController {
       state.budgetUsed.candidates += 1;
       roundData.candidates.push({
         candidateId: artifact.candidateId,
+        parentId: artifact.parentId,
         identityDigest: artifact.identityDigest,
         evaluationMode: artifact.algorithmStructure.evaluationMode,
         targetIds: [...artifact.algorithmStructure.targetIds],
@@ -860,6 +861,7 @@ export class CampaignController {
         } : null,
         candidates: round.candidates.map(c => ({
           candidateId: c.candidateId,
+          parentId: c.parentId ?? null,
           identityDigest: c.identityDigest,
           evaluationMode: c.evaluationMode,
           targetIds: c.targetIds,
