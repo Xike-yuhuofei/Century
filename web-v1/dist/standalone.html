@@ -11897,6 +11897,7 @@
       if (!p2?.isAI) throw new Error("当前行动者不是 AI");
       const joint = chooseJointAction(game2, {
         version: params.jointVersion ?? "joint-js5",
+        ...options?.workUnits !== void 0 ? { workUnits: options.workUnits } : {},
         ...params.budgetMs !== void 0 ? { budgetMs: params.budgetMs } : {},
         // AI7-A2 / AI6-P0：运行时实际消费的冠军基座参数必须显式注入。
         // 冠军本体传入自身（行为逐位不变）；冻结描述符传入归档参数；
