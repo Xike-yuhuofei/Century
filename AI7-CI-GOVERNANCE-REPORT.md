@@ -1,0 +1,327 @@
+# Century AI 7.0｜任务 B：CI/CD 与工程治理升级报告
+
+- 分支：`fix/ai7-ci-governance`
+- 基线：`main@19fa56403aa36ef20d0338e5c3f502de39830802`（统一 main SHA，独立 worktree）
+- 范围：CI 结构、测试编排、分支治理、辅助脚本；**未修改游戏规则、AI 算法、训练统计口径、冠军参数、种子账本与审计核心**
+- 结论：PR CI 从“多工作流重复 + 30 分钟超时”收敛为“单次共享构建 + 并行分组 + 唯一聚合门禁”；main 分支保护完成方案与可审计申请脚本，未擅自修改仓库设置
+
+---
+
+## 1. 基线审计（改造前）
+
+### 1.1 工作流清单
+
+| 工作流 | PR 触发 | 主要工作 | 重复项 |
+|---|---|---|---|
+| `ai-training.yml` | 是（无 paths 过滤） | 构建 + web 单测 + training 单测 + 100 局模拟 + 审计 | 与 3 个工作流重复 web 测试；单 job 串行超时 |
+| `web-v1-ai.yml` | 是（无 paths 过滤） | 构建 + web 单测 + Playwright 冒烟 | 重复 web 测试/构建 |
+| `ai-v2.yml` | 是（无 paths 过滤） | 构建 + web 单测 + benchmark | 重复 web 测试/构建 |
+| `pages.yml` | 仅 push main | 构建 + web 单测 + 复盘冒烟 + 部署 | 重复 web 测试/构建 |
+| `ai5.yml` | 是（paths） | 5 个 job 各自 `npm install + build` | 同一次提交重复构建 5 次 |
+| `card-data-validation.yml` | 是（无过滤） | 卡牌校验 | 与 web 测试内的 sync/validate 重叠 |
+
+### 1.2 实测耗时（GitHub Actions，2026-10-25）
+
+同一提交 `19fa564` push main（run 40171122424 / 450 / 471 / 443 / 478）：
+
+| 作业 | 耗时 | 说明 |
+|---|---|---|
+| Focus UI `test-and-build` | **16m30s** | 构建 + web 单测 + 浏览器冒烟 |
+| Offline AI V2 `test` | **12m55s** | 构建 + 同一套 web 单测 |
+| Pages `build` | **15m21s** | 构建 + 同一套 web 单测 + 复盘冒烟 |
+| AI5 `node-tests` 等 5 job | **15m20s** | 每个 job 自行构建，整体失败 |
+| 卡牌校验 | 14s | |
+
+PR `fix/ai6-post-merge-reliability`（run 40164344553）：
+
+| 作业 | 耗时 | 说明 |
+|---|---|---|
+| `ai-training` / `test` | **30m18s cancelled** | web 12m31 + training 11m35 + 模拟 30m（串行）→ 30 分钟 job 上限 |
+| `ai-training` / `audit-gate` | 24s | |
+| Focus UI | 14m56s | 第四份 web 单测 |
+| Offline AI V2 | 13m55s | 第五份 web 单测 |
+
+### 1.3 根因
+
+1. **`web-v1` 的 `npm test` 内含 `npm run build`**，每个工作流都调用 `npm test`，同一份 dist 被重复生成。
+2. **PR 触发缺少路径过滤**（`web-v1-ai.yml` / `ai-v2.yml` / `ai-training.yml`），文档变更也触发 14 分钟级 web 测试。
+3. **一个 job 串行执行三个独立测试域**（web 12.5m / training 11.5m / 100 局模拟约 30m），30 分钟上限必然超时；提高 timeout 只会掩盖问题。
+4. **100 局模拟单进程串行**，每局约 18s，本身约 30 分钟。
+5. **main 无 Branch Protection / Rulesets**：所有必需检查只是“建议”，可直接 push、force push、删除。
+6. **晋级审计的 REQUIRES_APPROVAL 无独立人工批准通道**，历史指纹漂移与普通开发共用一套检查，存在“把批准状态伪装成通过”或“所有 PR 永久失败”的两难。
+
+---
+
+## 2. 目标结构（改造后）
+
+```
+                         ┌─ governance-tests（始终）
+                         ├─ rules-cards（始终）
+changes ────────────────┐
+                         └─ build（npm ci + 一次构建 → web-v1-dist）
+                                  ├─ web-unit（复用 dist）
+                                  ├─ training-unit（复用 dist，无 npm 依赖）
+                                  ├─ simulation（100 局 / 4 分片并行，种子连续不重叠）
+                                  ├─ ui-smoke（Chromium + WebKit）
+                                  ├─ audit-gate（dev 或 research 层，二选一）
+                                  ├─ research-node
+                                  ├─ research-python
+                                  ├─ research-seatbelt（仅 macOS）
+                                  └─ promotion-gate ──→ promotion-approval（Environment + 标签）
+                         └─ ci-summary（唯一必需检查；独立复算变更范围）
+pages-deploy（仅 main push，复用同一 dist）
+```
+
+`ai-training.yml` 只保留 `schedule` / `workflow_dispatch`，不再在 PR 上触发。
+
+关键点：
+
+- **共享构建只做一次**：`build` 上传 `web-v1-dist`，所有测试/部署作业下载复用；`web-v1` 新增 `test:unit` 供 CI 使用，本地 `npm test` 仍保持“构建 + 测试”语义。
+- **独立测试域并行**：web / training / simulation / UI / audit 各自 runner，互不阻塞；timeout 按实测留 2 倍余量，而不是盲目抬高。
+- **路径过滤 + 共享模块白名单**：文档变更只跑 `rules-cards` + `governance-tests`；引擎/AI/卡牌/锁文件/训练公共库/审计工具/CI 自身变更强制全代码检查。
+- **失败关闭**：`ci-summary` 独立复算变更范围；必需作业 `skipped/failure/cancelled` 一律失败，关键检查无法被静默跳过。
+
+---
+
+## 3. 任务 B1：CI 结构重构
+
+### 3.1 新增/改造文件
+
+| 文件 | 作用 |
+|---|---|
+| `.github/workflows/ci.yml` | 唯一 CI 入口：变更分类、共享构建、web/training 单测、规则卡牌、UI 冒烟、审计、研究、晋级、部署、汇总 |
+| `.github/workflows/ai-training.yml` | 仅保留定时训练/周挑战/自动晋级；构建改用 `npm ci`；晋级后显式 dispatch CI |
+| `web-v1/package.json` | 新增 `test:unit`（不重复编译） |
+| `scripts/ci/lib/scope.mjs` | 变更分类纯函数与共享模块白名单 |
+| `scripts/ci/change-scope.mjs` | 计算 diff 并输出 GitHub Actions outputs；diff 不可用则全量 |
+| `scripts/ci/lib/summary.mjs` | 汇总门禁判定纯函数 |
+| `scripts/ci/summarize.mjs` | `ci-summary` 入口；独立复算 + 失败关闭 |
+| `scripts/ci/run-audit-gate.mjs` | 审计 CLI 松耦合适配层（只依赖 `--tier/--json` 契约） |
+| `scripts/ci/verify-dist.mjs` | 构建产物完整性校验 |
+| `scripts/ci/run-sim-shards.mjs` | 100 局模拟按连续种子区间并行分片并合并 |
+| `scripts/ci/verify-workflows.mjs` | 工作流结构不变量（单一 PR 入口、无 `npm install`、必需门禁在场） |
+| `scripts/ci/ci-metrics.mjs` | 采集运行/作业耗时与失败步骤 |
+| `docs/ci/BRANCH-PROTECTION.md` | Rulesets/Environment/回滚/紧急流程方案 |
+| `scripts/ci/apply-main-protection.mjs` | 默认 dry-run 的分支保护申请脚本 |
+
+删除：`web-v1-ai.yml`、`ai-v2.yml`、`pages.yml`、`card-data-validation.yml`、`ai5.yml`（能力全部并入 `ci.yml`）。
+
+### 3.2 变更分类规则（摘要）
+
+| 变更 | 触发 |
+|---|---|
+| 纯文档（`*.md` / `docs/**`） | `rules-cards`、`governance-tests`、`ci-summary` |
+| `web-v1/src/engine.ts`、`src/ai/**`、`src/js/**`、`src/om/**`、`src/sim/**`、`src/data.ts` | 全代码：build/web/training/simulation/ui/audit |
+| `web-v1/src/**`（UI/样式/存档）、`index.html`、`scripts/**` | build/web/ui/pages（不跑训练、模拟、审计） |
+| `training/**`（代码） | build/training/audit |
+| `training/reports/**`（证据 JSON） | build/audit（不跑训练单测） |
+| `training/lib/**`、`training/redteam/**`、`training/package.json` | build/training/audit；seeds/stats 额外 research |
+| `ai5/**` | build/audit/research + 研究三项；`ai5/lib/**` 额外 training |
+| `data/cards.json`、`web-v1/package*.json`、`tsconfig` | 全代码 |
+| `.github/workflows/**`、`scripts/ci/**` | 全代码（CI 自身不得弱化门禁） |
+| `training/champions/**`、`web-v1/src/ai/parameters.ts`、`promotion` 标签 | 晋级门禁 + 全代码 |
+
+共享模块的改动不会被跳过；未知文件只跑快速门禁，不触发高成本测试。
+
+---
+
+## 4. 任务 B2：门禁接入
+
+### 4.1 三层审计
+
+- **dev**：普通开发 PR（代码合法性、版本身份、信息公平、回归测试）。
+- **research**：AI5/种子/stats/审计工具相关变更自动升到 research 层（含 dev），避免同一提交跑两遍 dev。
+- **promotion**：仅晋级 PR（路径命中或 `promotion` 标签或 dispatch `promotion=true`）。
+
+### 4.2 REQUIRES_APPROVAL 语义
+
+- `promotion-gate` 直接调用 `audit-gate --tier promotion`，结果结构化输出。
+- `BLOCKED` / `FAIL` → 作业失败，人工批准不能绕过。
+- `REQUIRES_APPROVAL` → **保留原状态**：`promotion-gate` 红色失败 + Step Summary 明示，不转换为 PASS。
+- 独立 `promotion-approval` 作业（Environment `promotion-approval` + PR 标签 `promotion-approved`）成功后，`ci-summary` 才可能放行。
+- 判定以 `promotion-audit` 产物为准，不依赖失败作业的 outputs；产物缺失/损坏一律失败关闭。
+- 普通 PR 不触发 promotion 作业，历史晋级阻断（当前 2 项 REQUIRES_APPROVAL）不会导致所有 PR 永久失败。
+
+### 4.3 Agent A 审计接口适配
+
+`run-audit-gate.mjs` 不导入审计实现，只依赖文档化 CLI 契约：
+
+```
+node training/redteam/audit-gate.mjs --tier dev|research|promotion --json <path> --md <path>
+exit 0=PASS / 2=BLOCKED|REQUIRES_APPROVAL / 1=参数或环境错误
+JSON: { verdict, summary, checks }
+```
+
+若 Agent A 升级审计接口，只需保持或适配该契约；适配层不做审计逻辑复制，缺失 JSON / verdict 与退出码不一致时失败关闭。
+
+---
+
+## 5. 任务 B3：main 分支保护
+
+### 5.1 实测现状
+
+- `GET /repos/Xike-yuhuofei/Century/branches/main/protection` → **404 Branch not protected**
+- `GET /repos/Xike-yuhuofei/Century/rulesets` → **[]**
+- 仓库 public，当前账户 admin=true
+
+### 5.2 目标规则集 `main-protection`
+
+- 必须通过 PR 合并（审批数 0，单维护者；有第二维护者后改 1）
+- 禁止 force push（`non_fast_forward`）
+- 禁止分支删除（`deletion`）
+- 必需检查：`ci-summary`、`rules-cards`、`governance-tests`
+- strict：合并前必须与 main 同步并重新通过检查
+- 允许 squash / merge
+- 默认无 bypass actor；紧急流程见文档
+
+### 5.3 晋级特殊审核
+
+- `promotion-approved` 标签 + `promotion-approval` Environment 必需审核人，双因子留痕
+- `prevent_self_review=false`（单维护者可批准由 bot 触发的部署），避免所有 PR 被作者审批规则卡死
+- `deployment_branch_policy=null`（晋级分支不是受保护分支）
+
+### 5.4 交付状态
+
+未修改仓库级权限（任务约束：未经明确授权不擅自配置）。交付：
+
+- `docs/ci/BRANCH-PROTECTION.md`：配置步骤、验证清单、回滚与紧急流程
+- `scripts/ci/apply-main-protection.mjs`：默认 dry-run；`--apply` 需 `CONFIRM_APPLY_MAIN_PROTECTION=yes`
+
+应用命令（需维护者明确授权后执行）：
+
+```bash
+CONFIRM_APPLY_MAIN_PROTECTION=yes \
+  node scripts/ci/apply-main-protection.mjs --apply --reviewer-login Xike-yuhuofei
+```
+
+---
+
+## 6. 任务 B4：研发效率与最小权限
+
+| 项 | 改造 |
+|---|---|
+| 依赖安装 | 全部 `npm ci`（lockfile 可复现）；training 无 npm 依赖，测试作业零安装 |
+| 构建复用 | 一次 `build` → artifact；所有测试/部署下载，不再重复 tsc/esbuild |
+| 缓存 | npm（setup-node cache）、Playwright 浏览器（`~/.cache/ms-playwright`）、pip torch |
+| 模拟并行 | 100 局切 4 片，种子 `[1,101)` 连续不重叠，总覆盖不变；单进程约 30m → 实测约 7-8m |
+| 产物追溯 | `web-v1-dist`、JUnit、training 日志、模拟 summary/results、审计 JSON/MD、UI 证据、CI summary，保留 7-90 天 |
+| 权限 | 顶层 `contents: read` + `actions: read`；仅 `pages-deploy` 有 `pages/id-token`；仅自动晋级 job 有 `contents/pull-requests/actions: write` |
+| 凭据 | 普通 checkout `persist-credentials: false` |
+| 指标采集 | `scripts/ci/ci-metrics.mjs` 采集 run/job/失败步骤耗时 |
+
+> 未通过提高 timeout 或减少测试来“换时间”。web/training 全量测试、100 局模拟、浏览器冒烟、审计门禁均保留。
+
+---
+
+## 7. 任务 B5：自动验收矩阵
+
+| 变更类型 | 期望检查集合 | 验收方式 |
+|---|---|---|
+| 文档变更 | `rules-cards` + `governance-tests` + `ci-summary` | `scope.test.mjs` + `summary.test.mjs` |
+| AI 核心变更 | build + web-unit + training-unit + simulation + ui-smoke + audit-gate | 同上 |
+| UI 变更 | build + web-unit + ui-smoke + pages（main） | 同上 |
+| 训练脚本变更 | build + training-unit + audit-gate | 同上 |
+| 冠军参数/归档 | promotion 门禁 + 全代码检查 | 同上 + `promotion` 路径/标签用例 |
+| 错误构建产物 | `verify-dist` 失败 → build 失败 → summary 失败 | `verify-dist.test.mjs` + summary build failure 用例 |
+| 审计失败 | `audit-gate` / `promotion-gate` 失败 → summary 失败 | summary audit failure 用例 |
+| 测试超时 | `cancelled` 不得视为通过 | summary cancelled 用例 |
+| 静默跳过 | 必需作业 `skipped` → summary 失败 | summary skipped / missing 用例 |
+| 研究变更 | 三个 research 作业 + research 层审计 | scope/summary 用例 |
+
+单元测试共 **54 项**，另有工作流结构不变量：
+
+- 只有一个工作流含 `pull_request` 且必须是 `ci.yml`；
+- `ai-training.yml` 不得在 PR 触发；
+- 所有工作流禁止 `npm install`、`pull_request_target`、`write-all`；
+- `ci.yml` 必须有 `ci-summary` / promotion / 共享产物 / 无 `continue-on-error` / 无 `paths` 过滤；
+- 每个作业必须有 `timeout-minutes`；
+- 自动晋级必须 dispatch `ci.yml`。
+
+运行：
+
+```bash
+node --test --test-concurrency=2 scripts/ci/tests/*.test.mjs
+node scripts/ci/verify-workflows.mjs
+```
+
+---
+
+## 8. 改造前后对比
+
+### 8.1 结构性对比
+
+| 指标 | 改造前 | 改造后 |
+|---|---|---|
+| PR CI 工作流 | 4 个（ai-training、web-v1-ai、ai-v2、card）+ Pages（main） | 1 个（`ci.yml`） |
+| 每次提交 web 单测执行次数 | 4–5 次 | 1 次 |
+| 每次提交共享构建次数 | 4–5 次（ai5 另有 5 次） | 1 次 |
+| 文档变更是否触发大测试 | 是（PR 侧约 60 分钟 runner 时间，含 ai-training 30m 超时） | 否（仅快速门禁） |
+| 100 局模拟 | 串行约 30m，导致 job 30m 超时 | 4 片并行，约 7-8m |
+| PR 最长作业 | 30m18s（cancelled） | web-unit 约 12.5m（25m timeout 余量） |
+| 必需检查 | 无（main 未保护） | `ci-summary` 聚合 + rules/governance |
+| REQUIRES_APPROVAL | 可能被当作通过，或阻断所有 PR | 保持红色阻断，独立人工批准作业 |
+
+### 8.2 实测耗时（改造后）
+
+> 本次 PR 的 `CI` 运行完成后回填（run URL 与 job 级耗时见 PR 评论 / `ci-metrics.mjs`）。
+
+| 作业 | 实测 | timeout | 余量 |
+|---|---|---|---|
+| changes | 待回填 | 5m | |
+| governance-tests | 待回填 | 5m | |
+| rules-cards | 待回填 | 5m | |
+| build | 待回填 | 10m | |
+| web-unit | 待回填 | 25m | |
+| training-unit | 待回填 | 25m | |
+| simulation | 待回填 | 25m | |
+| ui-smoke | 待回填 | 20m | |
+| audit-gate | 待回填 | 15m | |
+| ci-summary | 待回填 | 10m | |
+| **PR 墙钟** | 待回填 | — | |
+
+---
+
+## 9. 验证记录
+
+### 9.1 本地
+
+- `npm ci && npm run build`：通过
+- `node scripts/ci/verify-dist.mjs --dist web-v1/dist`：通过
+- `node --test scripts/ci/tests/*.test.mjs`：54/54 通过
+- `node scripts/ci/verify-workflows.mjs`：通过
+- `run-audit-gate --tier dev`：PASS（约 7.5s）
+- `run-audit-gate --tier research`：PASS（约 7.7s）
+- `run-audit-gate --tier promotion`：REQUIRES_APPROVAL ×2，exit=2，输出 `requires_approval=true`（符合预期，不转换为通过）
+- `run-sim-shards` 8 局冒烟：4 片、8 唯一种子、0 异常
+- web-v1 全量单测：见 §9.2
+- training 全量单测：见 §9.2
+
+### 9.2 全量回归
+
+| 套件 | 结果 |
+|---|---|
+| web-v1 | 待回填 |
+| training | 待回填 |
+
+### 9.3 PR CI
+
+待 PR 创建后回填运行链接与结论。
+
+---
+
+## 10. 回滚
+
+- CI 改造本身：revert 本 PR；旧工作流随 revert 恢复。
+- 若新 CI 误判范围：以 `workflow_dispatch` + `scope=full` 强制全量，修复分类器后再合入。
+- 晋级门禁：`REQUIRES_APPROVAL` 是预期治理状态；如需撤销，只能修复证据或由维护者显式授权，禁止把状态改成 PASS。
+- 分支保护：`docs/ci/BRANCH-PROTECTION.md` §5 提供紧急禁用/恢复流程与事后补跑要求。
+
+---
+
+## 11. 明确未改变
+
+- 未修改 `web-v1/src/engine.ts`、`src/ai/**`、`src/js/**`、`src/om/**` 任何游戏/AI 逻辑。
+- 未修改 `training/lib/seeds.mjs`、`training/adversarial/seed-ledger.json`、`training/redteam/audit-gate.mjs`。
+- 未修改 `training/champions/champion.json`、`web-v1/src/ai/parameters.ts`。
+- 未运行正式冠军挑战、未消费验证池种子。
+- 未修改训练统计口径、晋级判定阈值、alpha 消耗机制。
