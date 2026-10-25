@@ -11,7 +11,7 @@
  * 用法：node training/joint/budget-curve.mjs [--dir training/reports/phase6-task-b]
  */
 
-import { readFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, existsSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { pairedComparison, pairedComparisonDirectional } from './compare.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
@@ -66,8 +66,8 @@ async function main() {
   lines.push('# 预算—胜率曲线（同算法 JS5 阶梯）\n');
   for (const players of playersList) {
     lines.push(`## ${players} 人\n`);
-    lines.push('| 预算 | 方向A 第一名率 | 方向B 阵营率 | 平均名次 | 门控率 | 每决策试验 | 饥饿回退率 | p95 延迟 ms |');
-    lines.push('|---|---|---|---|---|---|---|---|');
+    lines.push('| 预算 | 方向A 第一名率 | 方向B 阵营率 | 平均名次 | 门控率 | 每决策试验 | 饥饿回退率 | 覆盖率 | p95 延迟 ms |');
+    lines.push('|---|---|---|---|---|---|---|---|---|');
     for (const budget of budgets) {
       const v = byKey.get(`${players}p:js5:b${budget}`);
       if (!v) continue;
@@ -75,7 +75,10 @@ async function main() {
       const a = cell.directionA?.firstPlace, b = cell.directionB?.firstPlace;
       const joint = cell.jointSearch ?? {};
       const p95 = cell.latency?.p95 ?? cell.latency?.p95Ms ?? null;
-      lines.push(`| ${budget}ms | ${a ? (a.point * 100).toFixed(1) + '% ' + fmtCI([a.lower, a.upper]) : '-'} | ${b ? (b.point * 100).toFixed(1) + '%' : '-'} | ${cell.meanRank ? cell.meanRank.mean.toFixed(2) : '-'} | ${joint.gateTriggerRate ?? '-'} | ${joint.meanRolloutsPerDecision ?? '-'} | ${joint.gatedStarvedFallbackRate ?? '-'} | ${p95 ?? '-'} |`);
+      // B4 错误覆盖率分析：覆盖率 = 门控触发后联合仲裁覆盖冠军行动的比率
+      //（overrideRate = overrides/gated）——预算不足时覆盖率被动压低（饥饿），
+      // 预算充裕时覆盖率反映仲裁的真实分歧率。
+      lines.push(`| ${budget}ms | ${a ? (a.point * 100).toFixed(1) + '% ' + fmtCI([a.lower, a.upper]) : '-'} | ${b ? (b.point * 100).toFixed(1) + '%' : '-'} | ${cell.meanRank ? cell.meanRank.mean.toFixed(2) : '-'} | ${joint.gateTriggerRate ?? '-'} | ${joint.meanRolloutsPerDecision ?? '-'} | ${joint.gatedStarvedFallbackRate ?? '-'} | ${joint.overrideRate ?? '-'} | ${p95 ?? '-'} |`);
     }
     lines.push('');
     // 相邻预算配对边际收益（同人数相邻预算：共享种子配对）。
