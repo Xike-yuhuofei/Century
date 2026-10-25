@@ -97,6 +97,17 @@
 - `training/lib/resource-scheduler.mjs`：macOS 用 `vm_stat` 计算可回收内存（修复 `os.freemem()` 在内存充足时误判 2.5% 的问题）；CPU 负载、磁盘、并发上限、低内存停止。
 - `training/scripts/fault-injection.mjs`：9 类故障全部 PASS（强杀恢复、超时、非法源码、编译失败、重复 Campaign、种子冲突、损坏 state、资源耗尽、LLM 不可用）。
 
+### 2.5 顺带修复的既有红灯
+
+- **PPO 断点恢复逐位不一致**（`TestResumeDeterminismE2E`，既有 CI 红灯）：
+  - 根因一：训练对手 `node:champion` 使用墙钟 100ms 的联合搜索，搜索展开随机器负载漂移；
+  - 根因二：CPU 小模型的多线程浮点归约顺序不稳定；
+  - 修复：新增 `node:champion-beam`（冠军血统束搜索，完全确定性）与 `node:champion-det-<N>`
+    （固定 workUnits + `opponentMode=rule`）；训练入口强制 `torch.set_num_threads(1)` 并关闭 oneDNN；
+  - 结果：`ai5.ppo.tests.python.test_training_reliability` 13/13 PASS，恢复测试从约 100s 降至约 21s。
+- **OpenEvolve 静态检查 fixture 签名过期**：`static-check.malicious.test.mjs` 仍指向旧 6 参数样例；
+  已同步到第 7 参数 `model` 的新 fixture，研究 Node 测试恢复通过。
+
 ---
 
 ## 3. 真实运行证据
@@ -123,6 +134,8 @@
 | `scripts/ci/tests/*.test.mjs` | 59 / 59 PASS |
 | `ai5/openevolve/tests/test_security_sandbox.py` | 6 / 6 PASS |
 | `training/evolution/tests/compiled.test.mjs` | 5 / 5 PASS |
+| `ai5/ppo/tests/python/test_training_reliability.py` | 13 / 13 PASS（含恢复逐位一致） |
+| `ai5/openevolve/tests/static-check.malicious.test.mjs` | 4 / 4 PASS |
 | `training/tests/first-place*.test.mjs` | 23 / 23 PASS |
 | `training/tests/promotion-gate.test.mjs` | 3 / 3 PASS |
 | `training/redteam/audit-gate.mjs --tier dev` | 放行 |
