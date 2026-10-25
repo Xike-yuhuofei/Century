@@ -42,6 +42,7 @@ export function verifyWorkflows(repoRoot) {
   for (const needle of [
     'ci-summary', 'promotion-gate', 'promotion-approval', 'promotion-approved',
     'web-v1-dist', 'governance-tests', 'rules-cards', 'run-audit-gate.mjs',
+    'ai5/openevolve/node/duel_runner.mjs', 'ai5.ppo.tests.python.test_seed_policy',
     'npm ci', 'actions/upload-artifact', 'actions/download-artifact',
   ]) {
     if (!ci.includes(needle)) issues.push(`ci.yml 缺少必需元素：${needle}`);

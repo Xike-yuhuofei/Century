@@ -156,6 +156,28 @@ JSON: { verdict, summary, checks }
 
 若 Agent A 升级审计接口，只需保持或适配该契约；适配层不做审计逻辑复制，缺失 JSON / verdict 与退出码不一致时失败关闭。
 
+### 4.4 被合并工作流的测试覆盖对照
+
+删除旧工作流的唯一前提是测试覆盖不缩水。逐项对照如下：
+
+| 原工作流 / 作业 | 现位置 | 覆盖 |
+|---|---|---|
+| Focus UI `test-and-build`（web 单测 + 4 个浏览器冒烟） | `web-unit` + `ui-smoke` | 保留 |
+| Offline AI V2 `test`（web 单测 + standalone + benchmark） | `web-unit` | 保留 |
+| Pages `build`（web 单测 + 复盘冒烟 + 部署） | `pages-deploy`（复用 dist，且依赖 `ui-smoke` 成功） | 保留；`smoke_replay.py` 在 `ui-smoke` 中执行 |
+| `ai-training` PR `test`（web + training + 100 局 + 审计） | `web-unit` + `training-unit` + `simulation` + `audit-gate` | 保留 |
+| AI5 `ppo-python-tests` | `research-python` | 保留（含 `test_seed_policy`） |
+| AI5 `node-tests` | `research-node` | 保留 |
+| AI5 `seed-discipline` | `research-node`（Node 种子政策）+ `research-python`（Python 账本隔离） | 保留 |
+| AI5 `openevolve-static-security` | `research-node` | 保留 |
+| AI5 `macos-seatbelt` | `research-seatbelt`（macos-14） | 保留 |
+| AI5 `e2e-smoke`（`duel_runner` 官方自对照 4 种子） | `research-node` 新增同名步骤 | **首版遗漏，已补齐**（CI 元测试新增断言防止再次丢失） |
+| 卡牌校验 | `rules-cards` | 保留 |
+
+> 首版重构在对照旧 `ai5.yml` 时发现 `e2e-smoke` 未被迁移，且该旧作业在改造前基线中已经失败（run 40171122478）。根因是旧断言要求“官方自对照分差 = 0”，但 AI 搜索预算按 `performance.now` 墙钟分配，两局顺序执行时决策数不同即产生非零分差；这是断言本身不成立，不是管线缺陷。
+>
+> 处理：补回 `duel_runner.mjs --candidate-official --seeds 4`，断言改为验证管线完整性（8 局、4 唯一种子、0 异常、A/B 双向、每局 5 席终局排名），并保留 `uniqueSeedCount` 与异常率检查；**不修改 AI 预算、不修改训练统计口径**。该步骤在本地以 8 局 / 4 种子 / 0 异常通过。
+
 ---
 
 ## 5. 任务 B3：main 分支保护
@@ -316,6 +338,7 @@ web 单测从 3 份（Focus 14m58s + V2 14m02s + ai-training 内串行 12m31s）
 - `run-audit-gate --tier research`：PASS（约 7.7s）
 - `run-audit-gate --tier promotion`：REQUIRES_APPROVAL ×2，exit=2，输出 `requires_approval=true`（符合预期，不转换为通过）
 - `run-sim-shards` 8 局冒烟：4 片、8 唯一种子、0 异常
+- `duel_runner --candidate-official --seeds 4`：8 局、4 唯一种子、0 异常、A/B 双向、每局 5 席终局排名（补齐自旧 `ai5.yml` 的端到端冒烟）
 - web-v1 全量单测：见 §9.2
 - training 全量单测：见 §9.2
 

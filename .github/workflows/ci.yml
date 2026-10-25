@@ -331,6 +331,23 @@ jobs:
         run: node --test ai5/ppo/tests/node/*.test.mjs
       - name: 种子政策与恶意样例静态拦截
         run: node --test ai5/openevolve/tests/seed-policy.test.mjs ai5/openevolve/tests/static-check.malicious.test.mjs
+      - name: 端到端冒烟：同局双版本对战（官方自对照，4 唯一种子）
+        run: |
+          node ai5/openevolve/node/duel_runner.mjs --candidate-official \
+            --seed-base 300000000 --seeds 4 --out /tmp/duel-smoke.json
+          # 旧 ai5.yml 的零分差断言不成立：AI 预算按 performance.now 墙钟分配，
+          # 两局执行顺序不同即可能产生不同决策数；这里验证管线完整性，不改 AI 行为。
+          node -e "
+            const r = require('/tmp/duel-smoke.json');
+            if (r.config.uniqueSeedCount !== 4) process.exit(1);
+            if (r.stats.totalGames !== 8) process.exit(1);
+            if (r.stats.anomalyGames !== 0) process.exit(1);
+            if (new Set(r.games.map(g => g.direction)).size !== 2) process.exit(1);
+            for (const g of r.games) {
+              if (g.status !== 'finished' || (g.ranking ?? []).length !== 5) process.exit(1);
+            }
+            console.log('duel smoke OK:', r.stats.totalGames, 'games,', r.config.uniqueSeedCount, 'unique seeds');
+          "
 
   research-python:
     name: research-python
