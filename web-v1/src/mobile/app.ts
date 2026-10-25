@@ -122,7 +122,7 @@ function mPicker(colors:Color[],limit:number,stock:Stock):string {
   return `<p>已选择 ${colors.length} / ${limit} 颗</p><div class="picker">${stock.map((n,c)=>mBtn(`${mGems(Array.from({length:4},(_,i)=>i===c?1:0) as Stock)}<b>${n-colors.filter(x=>x===c).length}</b>`,'pick',`data-color="${c}" aria-label="选择${mColors[c]}水晶" ${colors.length>=limit||colors.filter(x=>x===c).length>=n?'disabled':''}`)).join('')}</div><div class="selected-gems">${mGems(colors.reduce((s,c)=>{s[c]++;return s;},[0,0,0,0] as Stock))}</div>${mBtn('撤销选择','undo',!colors.length?'disabled':'')}`;
 }
 function mReplayControls(g: Game): string {
-  return `<p>${mEsc(replayCoverage(g))}</p><div class="menu-list">${mBtn('导出复盘 Markdown','export-replay-md')}${mBtn('导出复盘 JSON','export-replay-json')}</div>`;
+  return `<p>${mEsc(replayCoverage(g))}</p><div class="menu-list">${mBtn('导出复盘 JSON','export-replay-json')}</div>`;
 }
 function mSheetBody():{title:string;body:string;confirm?:string;disabled?:boolean} {
   const s=mSheet!,g=mGame,p=g?.players[g.current];
@@ -188,7 +188,7 @@ function mControl(el:HTMLElement){
   if(a==='menu'||a==='log'||a==='new'){mSheet={kind:a};mRender();return;}
   if(a==='pause'){mPaused=!mPaused;mStopAI();mSheet=null;mRender();return;}
   if(a==='home'){mStopAI();mSave();mGame=null;mSheet=null;mRender();return;}
-  if(a==='export-replay-md'||a==='export-replay-json'){downloadReplay(mGame,a==='export-replay-md'?'md':'json');return;}
+  if(a==='export-replay-json'){downloadReplay(mGame);return;}
   if(a==='export'){const url=URL.createObjectURL(new Blob([JSON.stringify(mGame,null,2)],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download='century-mobile-v2.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);return;}
   if(a==='player'){mSheet={kind:'player',index:i};mRender();return;}
   if(mHandoff)return;

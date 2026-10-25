@@ -36,12 +36,11 @@ export function replayJSON(g: Game): string {
   return JSON.stringify({format: 'century-replay', version: 1, coverage: replayCoverage(g), replay: g.replay ?? null, current: {...g, replay: undefined}}, null, 2);
 }
 
-export function downloadReplay(g: Game, format: 'md' | 'json'): void {
-  const content = format === 'md' ? replayMarkdown(g) : replayJSON(g);
-  const url = URL.createObjectURL(new Blob([content], {type: format === 'md' ? 'text/markdown;charset=utf-8' : 'application/json;charset=utf-8'}));
+export function downloadReplay(g: Game): void {
+  const url = URL.createObjectURL(new Blob([replayJSON(g)], {type: 'application/json;charset=utf-8'}));
   const link = document.createElement('a');
   link.href = url;
-  link.download = `century-replay-${new Date().toISOString().replace(/[:.]/g, '-')}.${format}`;
+  link.download = `century-replay-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
   document.body.append(link);
   link.click();
   link.remove();
