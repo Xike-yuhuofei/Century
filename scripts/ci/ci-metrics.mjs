@@ -41,7 +41,8 @@ function formatDuration(sec) {
 
 function collectRun(repo, runId) {
   const run = JSON.parse(gh(['api', `repos/${repo}/actions/runs/${runId}`]));
-  const jobs = JSON.parse(gh(['api', `repos/${repo}/actions/runs/${runId}/jobs?per_page=100`])).jobs ?? [];
+  const jobs = (JSON.parse(gh(['api', `repos/${repo}/actions/runs/${runId}/jobs?per_page=100`])).jobs ?? [])
+    .filter(job => job.run_attempt === run.run_attempt);
   const jobRows = jobs.map(job => ({
     name: job.name,
     conclusion: job.conclusion,
