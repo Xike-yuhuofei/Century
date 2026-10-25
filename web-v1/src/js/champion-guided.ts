@@ -54,7 +54,11 @@ import { heuristicContext, screenRootActions } from './rollout-policy.js';
 import { runJointRollout, type RolloutContext } from './joint-rollout.js';
 import { worldSeed } from './planner.js';
 import { profileByName } from './simview.js';
-import { nearTerminalRisk, maxImmediateScoreAction, type ImmediateScoreCandidate, type NearTerminalRisk } from './near-terminal.js';
+import {
+  nearTerminalRisk, maxImmediateScoreAction, immediateOfficialScoreDelta,
+  type ImmediateScoreCandidate, type NearTerminalRisk,
+} from './near-terminal.js';
+import { isFinalOwnAction, solveFinalAction, type EndgameSolution } from './endgame.js';
 import { batchFloors, fitWorlds, type BatchAdmission } from './budget.js';
 import type {
   JointDecision, JointDecisionStats, JointOpponentMode, JointSearchOptions,
@@ -88,6 +92,30 @@ export type ChampionGuidedOptions = {
   /** 立即认领候选进入联合评估的选取原则（缺省 enumeration = PR #27 原始语义：
    * 合法枚举顺序前 2 个；prior = js5-opt 消融：按根筛选先验降序取前 2）。 */
   claimRanking?: 'enumeration' | 'prior';
+  // === AI7 任务 C1：终局精确求解 ===
+  /** 终局圈精确求解（缺省 off = 冻结行为）：触发终局后枚举全部合法行动，
+   * 按"保证名次 + 官方最终得分"直接选择，不再走束搜索/联合仲裁。 */
+  endgameSolver?: 'off' | 'exact';
+  /** 终局圈强制弃置按官方得分口径（非黄留存）；缺省 false = 冻结 trimStock。
+   * 同时作用于根决策与轨迹内己方弃置。 */
+  endgameDiscard?: boolean;
+  // === AI7 任务 C3：联合仲裁稳健性 ===
+  /** 仲裁统计（缺省 legacy = 冻结 mean − 0.25·se 独立口径）：
+   * paired = 同一 (world, replica) 的配对差 + 单侧置信下界。 */
+  arbitration?: 'legacy' | 'paired';
+  /** 挑战者允许覆盖冠军所需的最少配对试验数（缺省 legacy=2；paired 建议 4）。 */
+  minPairedTrials?: number;
+  /** 配对差单侧置信倍数（paired 模式；缺省 1.645 ≈ 95% 单侧）。 */
+  pairedZ?: number;
+  /** 高价值认领保护（缺省 false = 冻结行为）：冠军行动是"立即可得且当步
+   * 正式净分 ≥ claimProtectDelta"的认领时，挑战者需额外跨越 claimProtectMargin。 */
+  claimProtection?: boolean;
+  /** 受保护认领的当步正式净分门槛（缺省 10 分）。 */
+  claimProtectDelta?: number;
+  /** 受保护认领的额外覆盖边际（缺省 0.10，稳健分单位）。 */
+  claimProtectMargin?: number;
+  /** 候选构造保证"当步正式净分最大的可立即认领行动"进入候选集（缺省 false）。 */
+  ensureBestClaimCandidate?: boolean;
 };
 
 export type ChampionGuidedSearchOptions = JointSearchOptions & ChampionGuidedOptions;
@@ -183,6 +211,69 @@ class ChampionGuidedPlanner {
       legalRootActions.filter(a => a.type === 'claim').map(a => observation.golemMarket[a.index]),
     );
 
+    // AI7 C1：终局圈精确求解。终局触发后当前席位只剩最后一次行动——直接
+    // 按官方最终得分与保证名次枚举全部合法根行动，不再用静态目标价值或
+    // 低置信度联合模拟决定最后一手。只在显式 endgameSolver='exact' 时启用。
+    if (o.endgameSolver === 'exact' && isFinalOwnAction(observation)) {
+      const solveStart = performance.now();
+      const solved: EndgameSolution | null = solveFinalAction(observation, legalRootActions);
+      phase.screenMs += performance.now() - solveStart;
+      if (solved) {
+        const elapsedMs = performance.now() - t0;
+        const scoreTag = solved.action.type === 'claim'
+          ? `认领 ${observation.golemMarket[solved.action.index]}`
+          : JSON.stringify(solved.action);
+        const rejected = solved.alternatives
+          .filter(a => JSON.stringify(a.action) !== JSON.stringify(solved.action))
+          .slice(0, 4)
+          .map(a => ({
+            action: a.action,
+            mean: a.ownFinalScore,
+            why: `终局精确结算：最终 ${a.ownFinalScore} 分，保证名次 ${a.guaranteedRank}（乐观 ${a.optimisticRank}）`,
+          }));
+        return {
+          action: solved.action,
+          reason: `js6 终局精确求解（${scoreTag}）：最终 ${solved.ownFinalScore} 分，保证名次 ${solved.guaranteedRank}（乐观 ${solved.optimisticRank}），`
+            + `枚举 ${solved.evaluatedActions} 个合法行动；对手单动作上界 ${solved.opponents.map(x => `座${x.seat}:${x.upper}`).join('/')}`,
+          evaluations: [],
+          chosen: { action: solved.action, prior: 0, trials: 0, mean: solved.ownFinalScore, se: null },
+          trace: {
+            root: { turnNumber: observation.turnNumber, current: observation.current, golemMarket: [...observation.golemMarket], phase: observation.phase },
+            evaluations: [],
+            rejected,
+          },
+          stats: {
+            rollouts: 0, transitions: 0, elapsedMs, budgetExhausted: false,
+            omTimeMs: 0, cloneMs: 0, cloneMsMeasured: false, legalGenMs: phase.legalGenMs,
+            rootActions: legalRootActions.length, candidateCount: solved.evaluatedActions,
+            worldsUsed: 0, worldsConfigured: worldCount, batchesStarted: 0,
+            trialWindowMs: 0, zeroTrialReason: 'not-gated',
+            overBudget: false,
+            planMs: phase.planMs, rootSimMs: phase.rootSimMs, gateMs: phase.gateMs,
+            screenMs: phase.screenMs, rolloutMs: 0, aggregateMs: 0,
+            rootSimulationsCreated: rootsCreated,
+            screenGoalScope: o.screenGoalScope ?? 'all', batchAdmission: o.batchAdmission ?? 'legacy',
+            endgame: {
+              solver: 'exact',
+              ownFinalScore: solved.ownFinalScore,
+              guaranteedRank: solved.guaranteedRank,
+              optimisticRank: solved.optimisticRank,
+              discarded: [...solved.discarded],
+              denial: solved.denial,
+              rankModel: solved.rankModel,
+              evaluatedActions: solved.evaluatedActions,
+              opponents: solved.opponents,
+              alternatives: solved.alternatives,
+              championAction: championAction ? championAction : null,
+            },
+          } satisfies JointDecisionStats,
+          championAction,
+          gated: false,
+          contestedGoals: [...observation.golemMarket],
+        };
+      }
+    }
+
     // 3. 竞争检测（公开信息；survival 只算一次，gating 与根筛选共享——
     //    v1 在 competitionRisk 与根筛选各算一次；无条件计算保持 gate=never
     //    审计模式下 contestedGoals 披露与 v1 逐字段一致）。
@@ -252,6 +343,30 @@ class ChampionGuidedPlanner {
     // C2：立即认领候选的选取原则（缺省 enumeration = PR #27 原始语义；
     // prior 模式按根筛选先验降序取前 2，避免枚举顺序偶然排除高分认领）。
     const claimActions = legalRootActions.filter(x => x.type === 'claim');
+    // AI7 C3：认领候选的当步正式净分/毛分（与 near-terminal 同一口径）。
+    // 毛分 = 魔像分值 + 硬币（支付水晶是认领的必要成本，保护门槛按毛分判断
+    // "这是不是一个明确的高分机会"）；净分仍用于候选补全的优先序。
+    const claimDeltas = new Map<string, number>();
+    const claimGross = new Map<string, number>();
+    for (const a of claimActions) {
+      const scored = immediateOfficialScoreDelta(observation, a);
+      if (!scored) continue;
+      claimDeltas.set(actionKey(a), scored.delta);
+      const goal = a.type === 'claim' ? GOLEM_BY_ID[observation.golemMarket[a.index]] : null;
+      const nonYellowCost = goal ? goal.cost.slice(1).reduce((s, x) => s + x, 0) : 0;
+      claimGross.set(actionKey(a), scored.delta + nonYellowCost);
+    }
+    let bestClaim: { action: Action; delta: number; gross: number } | null = null;
+    for (const a of claimActions) {
+      const delta = claimDeltas.get(actionKey(a));
+      if (delta === undefined) continue;
+      if (!bestClaim || delta > bestClaim.delta) {
+        bestClaim = { action: a, delta, gross: claimGross.get(actionKey(a)) ?? delta };
+      }
+    }
+    // 候选补全（显式 opt-in）：保证当步净分最大的可立即认领行动进入候选集，
+    // 防止"明确得分机会"因枚举顺序/先验排序被低置信度模拟直接覆盖。
+    if (o.ensureBestClaimCandidate && bestClaim) push(bestClaim.action, 'claim');
     if (o.claimRanking === 'prior') {
       const priorOfAction = new Map(claimActions.map(a => [actionKey(a), screened.find(s => actionKey(s.action) === actionKey(a))?.prior ?? -Infinity]));
       claimActions.sort((x, y) => (priorOfAction.get(actionKey(y)) ?? -Infinity) - (priorOfAction.get(actionKey(x)) ?? -Infinity));
@@ -365,9 +480,15 @@ class ChampionGuidedPlanner {
       horizon: o.horizon ?? 48,
       om,
       profileName: o.profileName,
+      params: o.championParameters ?? CHAMPION_PARAMETERS,
+      endgameDiscard: o.endgameDiscard === true,
     } satisfies Omit<RolloutContext, 'events' | 'omTimeMs'>;
 
-    const aggregates = candidates.map(action => ({ action, trials: 0, sum: 0, sqSum: 0 }));
+    const aggregates = candidates.map(action => ({
+      action, trials: 0, sum: 0, sqSum: 0,
+      // AI7 C3：按 (world, replica) 记录逐试验值，供配对差统计（CRN）。
+      pairs: new Map<string, number>(),
+    }));
     const trialsLog: { actionIndex: number; world: number; replica: number; value: number }[] | undefined = o.collectTrials === true ? [] : undefined;
     const omTimeMs = { value: 0 };
     let transitions = 0;
@@ -403,6 +524,7 @@ class ChampionGuidedPlanner {
       entry.trials += 1;
       entry.sum += outcome.value;
       entry.sqSum += outcome.value * outcome.value;
+      entry.pairs.set(`${world}:${replica}`, outcome.value);
       trialsLog?.push({ actionIndex: index, world, replica, value: outcome.value });
       return outcome.value;
     };
@@ -474,21 +596,81 @@ class ChampionGuidedPlanner {
     const robustScoreOf = (e: RootActionEvaluation) =>
       e.trials > 0 ? e.mean - ROBUST_LAMBDA * (e.se ?? 0) : -Infinity;
     const championEval = championKey ? evaluations.find(e => actionKey(e.action) === championKey) : undefined;
+    const aggregateOf = (key: string) => aggregates.find(a => actionKey(a.action) === key);
+
+    // === AI7 C3：仲裁稳健性 ===
+    // 1. 统计口径：legacy = 冻结的独立 mean−0.25·se；paired = 同一
+    //    (world, replica) 的配对差单侧置信下界（CRN 已由试验调度保证）。
+    // 2. 统一候选样本：只使用冠军与挑战者共同拥有的 (world, replica) 键。
+    // 3. 覆盖边际：基础 margin + 受保护认领的额外边际。
+    const arbitrationMode = o.arbitration ?? 'legacy';
+    const baseMargin = o.overrideMargin ?? 0.02;
+    const protectMargin = o.claimProtectMargin ?? 0.10;
+    const protectDelta = o.claimProtectDelta ?? 10;
+    const protectedKeys = new Set<string>(
+      o.claimProtection === true
+        ? [...claimGross.entries()].filter(([, gross]) => gross >= protectDelta).map(([key]) => key)
+        : [],
+    );
+    const protectedClaims = [...protectedKeys];
+    const championProtected = championKey !== null && protectedKeys.has(championKey);
+    const minChallengerTrials = Math.max(
+      arbitrationMode === 'paired' ? (o.minPairedTrials ?? 4) : 2,
+      admission === 'balanced' && worldsUsedSet.size < worldCount ? 3 : 0,
+    );
+    const requiredMarginOf = (e: RootActionEvaluation): number =>
+      baseMargin + (protectedKeys.size > 0 && !protectedKeys.has(actionKey(e.action)) ? protectMargin : 0);
+    const pairedZ = o.pairedZ ?? 1.645;
+
+    /** 配对差统计：仅使用双方共同键（同一 world/replica ⇒ 同一对手/翻牌流）。 */
+    const pairedDiffOf = (challenger: RootActionEvaluation): {
+      n: number; mean: number | null; se: number | null; lcb: number | null;
+    } => {
+      const championAgg = championKey ? aggregateOf(championKey) : undefined;
+      const challengerAgg = aggregateOf(actionKey(challenger.action));
+      if (!championAgg || !challengerAgg) return { n: 0, mean: null, se: null, lcb: null };
+      const diffs: number[] = [];
+      for (const [pair, value] of challengerAgg.pairs) {
+        const base = championAgg.pairs.get(pair);
+        if (base !== undefined) diffs.push(value - base);
+      }
+      const n = diffs.length;
+      if (!n) return { n, mean: null, se: null, lcb: null };
+      const mean = diffs.reduce((s, x) => s + x, 0) / n;
+      if (n < 2) return { n, mean, se: null, lcb: null };
+      const variance = diffs.reduce((s, x) => s + (x - mean) * (x - mean), 0) / (n - 1);
+      const se = Math.sqrt(variance / n);
+      return { n, mean, se, lcb: mean - pairedZ * se };
+    };
+
     let bestEval = evaluations[0];
     if (championEval && championEval.trials > 0) {
-      // 保守覆盖：仅当挑战者稳健分超过冠军候选 margin 时换行动。
-      const championScore = robustScoreOf(championEval);
-      // 缩减批次（墙钟窗口不足 W 个世界）下至少 3 试验才允许覆盖：
-      // 2 试验的均值会在 C12 类局面把正确认领翻成噪声候选。完整批次保持
-      // 冻结的 trials≥2 语义（固定工作量模式不受影响）。
-      const minChallengerTrials = admission === 'balanced' && worldsUsedSet.size < worldCount ? 3 : 2;
       let challenger = championEval;
-      for (const e of evaluations) {
-        if (actionKey(e.action) === championKey) continue;
-        if (e.trials < minChallengerTrials) continue;
-        if (robustScoreOf(e) > robustScoreOf(challenger)) challenger = e;
+      if (arbitrationMode === 'paired') {
+        let bestLcb = -Infinity;
+        for (const e of evaluations) {
+          if (actionKey(e.action) === championKey) continue;
+          const stats = pairedDiffOf(e);
+          if (stats.n < minChallengerTrials || stats.lcb === null) continue;
+          if (stats.mean === null || stats.mean <= 0) continue;
+          if (stats.lcb > requiredMarginOf(e) && stats.lcb > bestLcb) {
+            bestLcb = stats.lcb;
+            challenger = e;
+          }
+        }
+        bestEval = challenger === championEval ? championEval : challenger;
+      } else {
+        // 冻结口径（legacy）：独立稳健分比较 + 保守 margin。
+        const championScore = robustScoreOf(championEval);
+        for (const e of evaluations) {
+          if (actionKey(e.action) === championKey) continue;
+          if (e.trials < minChallengerTrials) continue;
+          if (robustScoreOf(e) > robustScoreOf(challenger)) challenger = e;
+        }
+        bestEval = robustScoreOf(challenger) > championScore + requiredMarginOf(challenger)
+          ? challenger
+          : championEval;
       }
-      bestEval = robustScoreOf(challenger) > championScore + (o.overrideMargin ?? 0.02) ? challenger : championEval;
     } else if (championEval) {
       // 冠军行动未获试验（预算极端）：回退冠军行动（冻结冠军语义保底）。
       bestEval = championEval;
@@ -501,7 +683,7 @@ class ChampionGuidedPlanner {
         action: e.action,
         mean: e.mean,
         why: e === championEval
-          ? `冠军行动（稳健分 ${robustScoreOf(e).toFixed(3)}）未被超越（边际 ${(o.overrideMargin ?? 0.02).toFixed(3)}）`
+          ? `冠军行动（稳健分 ${robustScoreOf(e).toFixed(3)}）未被超越（边际 ${requiredMarginOf(e).toFixed(3)}）`
           : `联合模拟评价值（未校准）${e.mean.toFixed(3)} 低于选定行动（样本 ${e.trials}）`,
       }));
 
@@ -516,9 +698,42 @@ class ChampionGuidedPlanner {
     const injectionTag = injected
       ? `；临近终局候选注入 ${actionKey(injected.action)}（当步正式净分 +${injected.delta}，${injectionMode}${replacedAction ? '，替换先验候选' : ''}）`
       : '';
+    const arbitrationStats = (arbitrationMode !== 'legacy' || o.claimProtection === true || o.ensureBestClaimCandidate === true)
+      ? {
+          mode: arbitrationMode,
+          minTrials: minChallengerTrials,
+          pairedZ: arbitrationMode === 'paired' ? pairedZ : null,
+          championProtected,
+          protectedClaims,
+          candidates: evaluations.map(e => {
+            const p = pairedDiffOf(e);
+            return {
+              action: e.action,
+              trials: e.trials,
+              pairedTrials: p.n,
+              meanDiff: p.mean,
+              seDiff: p.se,
+              lowerConfidenceBound: p.lcb,
+              requiredMargin: requiredMarginOf(e),
+            };
+          }),
+        }
+      : undefined;
+    const claimGuardStats = (o.claimProtection === true || o.ensureBestClaimCandidate === true)
+      ? {
+          enabled: o.claimProtection === true,
+          bestClaim: bestClaim
+            ? { action: bestClaim.action, delta: bestClaim.delta, gross: bestClaim.gross, inCandidates: seen.has(actionKey(bestClaim.action)) }
+            : null,
+          championProtected,
+        }
+      : undefined;
+    const guardTag = claimGuardStats?.bestClaim
+      ? `；认领保护 ${claimGuardStats.championProtected ? '冠军受保护' : '候选含受保护认领'}（最佳认领 ${claimGuardStats.bestClaim.delta} 分）`
+      : '';
     return {
       action: bestEval.action,
-      reason: `js5 ${gated ? '联合仲裁' : '冠军直通'}：${bestEval === championEval ? '保持冠军行动' : '覆盖为联合最优'}（联合模拟评价值 ${bestEval.mean.toFixed(3)}，未校准胜率近似，${bestEval.trials} 轨迹，实际世界 ${worldsUsedSet.size}/${worldCount}，争议目标 ${risk.contestedGoals.join(',') || '无'}）${golemTag(bestEval.action)}${injectionTag}`,
+      reason: `js5 ${gated ? '联合仲裁' : '冠军直通'}：${bestEval === championEval ? '保持冠军行动' : '覆盖为联合最优'}（联合模拟评价值 ${bestEval.mean.toFixed(3)}，未校准胜率近似，${bestEval.trials} 轨迹，实际世界 ${worldsUsedSet.size}/${worldCount}，争议目标 ${risk.contestedGoals.join(',') || '无'}）${golemTag(bestEval.action)}${injectionTag}${guardTag}`,
       evaluations,
       chosen: { action: bestEval.action, prior: 0, trials: bestEval.trials, mean: bestEval.mean, se: bestEval.se },
       trace,
@@ -532,7 +747,7 @@ class ChampionGuidedPlanner {
         rolloutStartMs: rolloutStartOffsetMs, zeroTrialReason,
         overBudget: wallClockMode && budgetMs !== undefined && elapsedMs > budgetMs,
         stoppedByDeadline,
-        overrideMinTrials: admission === 'balanced' && worldsUsedSet.size < worldCount ? 3 : 2,
+        overrideMinTrials: minChallengerTrials,
         screenGoalScope: o.screenGoalScope ?? 'all', batchAdmission: admission,
         accountingMs: phase.planMs + phase.rootSimMs + phase.legalGenMs + phase.gateMs + phase.screenMs + phase.rolloutMs + phase.aggregateMs,
         unaccountedMs: Math.max(0, elapsedMs - (phase.planMs + phase.rootSimMs + phase.legalGenMs + phase.gateMs + phase.screenMs + phase.rolloutMs + phase.aggregateMs)),
@@ -548,6 +763,8 @@ class ChampionGuidedPlanner {
             replacedAction, mode: injectionMode, candidateSources,
           },
         } : {}),
+        ...(arbitrationStats ? { arbitration: arbitrationStats } : {}),
+        ...(claimGuardStats ? { claimGuard: claimGuardStats } : {}),
       } satisfies JointDecisionStats,
       ...(trialsLog ? { trials: trialsLog } : {}),
       championAction,
@@ -560,7 +777,9 @@ class ChampionGuidedPlanner {
 /** 选项解析：显式缺省集中在一处（JS5 全部参数显式可审计）。 */
 function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required<Pick<ChampionGuidedSearchOptions,
   'championStructure' | 'gateMode' | 'overrideMargin' | 'candidateCap' | 'contestThreshold' | 'claimRanking' |
-  'nearTerminalCandidate' | 'screenGoalScope' | 'batchAdmission'>> & ChampionGuidedSearchOptions {
+  'nearTerminalCandidate' | 'screenGoalScope' | 'batchAdmission' | 'endgameSolver' | 'endgameDiscard' |
+  'arbitration' | 'minPairedTrials' | 'pairedZ' | 'claimProtection' | 'claimProtectDelta' |
+  'claimProtectMargin' | 'ensureBestClaimCandidate'>> & ChampionGuidedSearchOptions {
   const base = o ?? {};
   const nearTerminalCandidate = base.nearTerminalCandidate ?? 'off';
   if (!['off', 'replace', 'add'].includes(nearTerminalCandidate)) fail(`未知 nearTerminalCandidate：${String(nearTerminalCandidate)}`);
@@ -568,6 +787,18 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   if (!['all', 'preferred'].includes(screenGoalScope)) fail(`未知 screenGoalScope：${String(screenGoalScope)}`);
   const batchAdmission = base.batchAdmission ?? 'legacy';
   if (!['legacy', 'balanced'].includes(batchAdmission)) fail(`未知 batchAdmission：${String(batchAdmission)}`);
+  const endgameSolver = base.endgameSolver ?? 'off';
+  if (!['off', 'exact'].includes(endgameSolver)) fail(`未知 endgameSolver：${String(endgameSolver)}`);
+  const arbitration = base.arbitration ?? 'legacy';
+  if (!['legacy', 'paired'].includes(arbitration)) fail(`未知 arbitration：${String(arbitration)}`);
+  const minPairedTrials = base.minPairedTrials ?? 4;
+  if (!Number.isSafeInteger(minPairedTrials) || minPairedTrials < 2) fail(`minPairedTrials 必须为 ≥2 的整数：${String(minPairedTrials)}`);
+  const pairedZ = base.pairedZ ?? 1.645;
+  if (!Number.isFinite(pairedZ) || pairedZ < 0) fail(`pairedZ 必须为非负有限数：${String(pairedZ)}`);
+  const claimProtectDelta = base.claimProtectDelta ?? 10;
+  if (!Number.isFinite(claimProtectDelta) || claimProtectDelta < 0) fail(`claimProtectDelta 必须为非负有限数：${String(claimProtectDelta)}`);
+  const claimProtectMargin = base.claimProtectMargin ?? 0.10;
+  if (!Number.isFinite(claimProtectMargin) || claimProtectMargin < 0) fail(`claimProtectMargin 必须为非负有限数：${String(claimProtectMargin)}`);
   return {
     ...base,
     championStructure: base.championStructure ?? 'beam-rollout',
@@ -579,6 +810,15 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
     nearTerminalCandidate,
     screenGoalScope,
     batchAdmission,
+    endgameSolver,
+    endgameDiscard: base.endgameDiscard === true,
+    arbitration,
+    minPairedTrials,
+    pairedZ,
+    claimProtection: base.claimProtection === true,
+    claimProtectDelta,
+    claimProtectMargin,
+    ensureBestClaimCandidate: base.ensureBestClaimCandidate === true,
   };
 }
 

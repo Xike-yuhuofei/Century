@@ -19,16 +19,18 @@
  */
 
 import type { Action } from '../engine.js';
-import { ranking } from '../engine.js';
+import { ranking, count } from '../engine.js';
 import type { PublicSimulation } from '../sim/session.js';
 import type { PublicSimState } from '../sim/state.js';
 import { GOLEM_BY_ID } from '../data.js';
 import { mulberry32 } from '../sim/rng.js';
 import { heuristicContext, myRankedActions, discardDecision } from './rollout-policy.js';
+import { endgameDiscardColors } from './endgame.js';
 import { createOpponentContext, sampleOpponentAction, describe, familyOf } from './opponents.js';
 import { evaluateLeaf } from './evaluators.js';
 import { PressureCache, profileByName } from './simview.js';
 import { CHAMPION_PARAMETERS } from '../ai/parameters.js';
+import type { AIParameters } from '../ai/parameters.js';
 import type {
   JointOpponentMode, JointSearchOptions, LeafEvaluatorLevel,
 } from './types.js';
@@ -41,6 +43,11 @@ export type RolloutContext = {
   horizon: number;
   om: import('../om/index.js').OpponentModel | null;
   profileName?: string;
+  /** 己方轨迹策略使用的参数集（缺省 = 冻结冠军参数）。候选版本显式注入，
+   * 使轨迹内求值与根决策使用同一引擎模型；js5 缺省逐位不变。 */
+  params?: AIParameters;
+  /** 终局圈强制弃置使用官方得分口径（非黄留存）；缺省 false = 冻结 trimStock。 */
+  endgameDiscard?: boolean;
   /** 墙钟硬上限（预算模式；逐转移检查，超调 ≤ 1 步。固定工作量模式缺省 = 无）。 */
   deadline?: number;
   /** 市场事件采集（轨迹解释；仅选定行动的首条轨迹挂载）。 */
@@ -107,9 +114,12 @@ export function playJointTrajectory(
     let action: Action | null = null;
     if (actor === ctx.mySeat) {
       if (state.phase === 'overflow') {
-        action = { type: 'discard', colors: discardDecision(state.players[actor].stock, state.golemMarket, CHAMPION_PARAMETERS) };
+        const stock = state.players[actor].stock;
+        action = ctx.endgameDiscard && state.triggerPlayer !== null
+          ? { type: 'discard', colors: endgameDiscardColors(stock, count(stock) - 10) }
+          : { type: 'discard', colors: discardDecision(stock, state.golemMarket, CHAMPION_PARAMETERS) };
       } else {
-        const ctxH = heuristicContext(state, CHAMPION_PARAMETERS, profileByName(ctx.profileName), pressureCache);
+        const ctxH = heuristicContext(state, ctx.params ?? CHAMPION_PARAMETERS, profileByName(ctx.profileName), pressureCache);
         const ranked = myRankedActions(state, actor, ctxH).ranked;
         action = ranked[0]?.action ?? { type: 'rest' };
       }

@@ -209,8 +209,58 @@ export function resolveAlgorithmVersion(id, { archiveDir = CHAMPION_ARCHIVE_DIR 
         lineage: { derivedFrom: 'champion.json 活动别名', note: '仅供「对当前冠军」语义；历史对照/消融基线/等价审计禁止使用' },
       });
     }
+    // === AI7 候选（注册身份 ≠ 晋级：全部默认不参与生产决策） ===
+    case 'ai7-endgame':
+    case 'ai7-arb':
+    case 'ai7-engine':
+    case 'ai7-engine-seat': {
+      const spec = {
+        'ai7-endgame': {
+          parametersId: 'ai7-endgame-exact', jointVersion: 'joint-js6-endgame',
+          label: 'AI7-C1 终局精确求解（官方得分/保证名次/终局弃置）',
+          note: 'C1：终局圈枚举合法行动，按官方最终得分与公开名次界决策',
+        },
+        'ai7-arb': {
+          parametersId: 'ai7-arb-paired', jointVersion: 'joint-js7-arb',
+          label: 'AI7-C3 JS5 配对仲裁稳健性（置信下界+认领保护）',
+          note: 'C3：配对差单侧置信下界 + 高价值认领保护 + 最佳认领候选补全',
+        },
+        'ai7-engine': {
+          parametersId: 'ai7-engine-v2', jointVersion: 'joint-js8-engine',
+          label: 'AI7-C2 引擎价值 V2（剩余回合/重复产出/循环成本）',
+          note: 'C2：创造卡重复产出、升级长期作用、休息循环摊销、支付机会成本',
+        },
+        'ai7-engine-seat': {
+          parametersId: 'ai7-engine-v2-seat', jointVersion: 'joint-js8-engine-seat',
+          label: 'AI7-C4 引擎价值 V2 + 人数条件竞争折扣',
+          note: 'C4：5 人局竞争折扣；必须按人数分层单独消融，禁止用 5 人收益推断 2 人',
+        },
+      }[id];
+      const parameters = validateAIParameters({
+        ...CHAMPION_PARAMETERS,
+        id: spec.parametersId,
+        adapter: 'champion-guided',
+        jointVersion: spec.jointVersion,
+        budgetMs: 100,
+        ...(id.startsWith('ai7-engine') ? {
+          engineModel: 'v2',
+          seatPolicy: id === 'ai7-engine-seat' ? 'stratified' : 'flat',
+        } : {}),
+      });
+      return make({
+        id,
+        label: spec.label,
+        core: 'champion-guided',
+        structure: null,
+        jointVersion: spec.jointVersion,
+        budgetMs: 100,
+        parameters,
+        source: `web-v1 JOINT_VERSIONS['${spec.jointVersion}']（候选预设）`,
+        lineage: { derivedFrom: 'joint-js5-frozen + AI7 候选选项', note: spec.note },
+      });
+    }
     default:
-      throw new Error(`未注册的算法版本：${id}（已注册：legacy-js0, legacy-js1, joint-js5-frozen, live-champion）`);
+      throw new Error(`未注册的算法版本：${id}（已注册：legacy-js0, legacy-js1, joint-js5-frozen, live-champion, ai7-endgame, ai7-arb, ai7-engine, ai7-engine-seat）`);
   }
 }
 
@@ -241,7 +291,10 @@ export function decisionOptions(descriptor) {
 /** 注册表快照（实验报告披露用）：全部注册版本的身份指纹 + 归档来源。
  * 引擎产物指纹 / commit 属运行指纹，由运行器另列，不入本快照。 */
 export function describeVersionRegistry({ archiveDir = CHAMPION_ARCHIVE_DIR } = {}) {
-  const ids = ['legacy-js0', 'legacy-js1', 'joint-js5-frozen', 'live-champion'];
+  const ids = [
+    'legacy-js0', 'legacy-js1', 'joint-js5-frozen', 'live-champion',
+    'ai7-endgame', 'ai7-arb', 'ai7-engine', 'ai7-engine-seat',
+  ];
   const versions = ids.map(id => {
     const d = resolveAlgorithmVersion(id, { archiveDir });
     return {

@@ -39,6 +39,14 @@ export type AIParameters = {
    * 100 新种子深度验证后按 AI 4.0 挑战流程参赛（挑战证据见
    * training/reports/challenge-ai5-goal-remaining/）。 */
   acquisitionVariant?: 'baseline' | 'goal-remaining' | 'readiness-efficiency';
+  /** 引擎价值模型（AI7 任务 C2；缺省/`v1` = 冻结冠军静态口径，行为逐位不变）。
+   * `v2`：创造卡重复产出、升级卡长期作用、休息循环摊销、读取剩余回合与
+   * 人数竞争折扣（ai/engine-model.ts）。只影响搜索/估值，不改变规则。 */
+  engineModel?: 'v1' | 'v2';
+  /** 人数条件策略（AI7 任务 C4；缺省/`flat` = 与人数无关的冻结口径）。
+   * `stratified`：按人数折减引擎重复收益（必须在报告与评测中按人数分层
+   * 单独消融，禁止用 5 人收益推断 2 人）。 */
+  seatPolicy?: 'flat' | 'stratified';
   /** 显式适配器冠军（AI6 第五阶段）：结构候选（非参数变体）晋级后，决策入口
    * 按此分派到对应决策核心。携带 adapter 时 8 个权重乘子不参与决策（决策核心
    * 在适配器内，可缺省——validateAIParameters 会补默认值 1.0 保持类型完备）。
@@ -128,10 +136,23 @@ export function validateAIParameters(input: unknown): AIParameters {
     }
     result.acquisitionVariant = source.acquisitionVariant;
   }
+  // 引擎模型/人数策略（AI7 候选）：枚举校验；缺省不写入字段（= v1/flat）。
+  if (source.engineModel !== undefined) {
+    if (source.engineModel !== 'v1' && source.engineModel !== 'v2') {
+      throw new Error(`未知引擎价值模型：${String(source.engineModel)}`);
+    }
+    result.engineModel = source.engineModel;
+  }
+  if (source.seatPolicy !== undefined) {
+    if (source.seatPolicy !== 'flat' && source.seatPolicy !== 'stratified') {
+      throw new Error(`未知人数条件策略：${String(source.seatPolicy)}`);
+    }
+    result.seatPolicy = source.seatPolicy;
+  }
   // 适配器冠军的版本与预算透传：jointVersion 交由决策入口对照联合规划版本
   // 注册表校验（此处只做形状校验，避免 parameters → js/adapter 循环依赖）。
   if (source.jointVersion !== undefined) {
-    if (typeof source.jointVersion !== 'string' || !/^joint-js\d+$/.test(source.jointVersion)) {
+    if (typeof source.jointVersion !== 'string' || !/^joint-js[0-9a-z-]+$/.test(source.jointVersion)) {
       throw new Error(`适配器冠军的 jointVersion 非法：${String(source.jointVersion)}`);
     }
     result.jointVersion = source.jointVersion;

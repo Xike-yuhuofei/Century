@@ -849,9 +849,9 @@
       if (action2.type !== "discard") throw new Error("必须先弃置超出上限的水晶");
       const excess = count(p.stock) - 10;
       requireThat(Array.isArray(action2.colors) && action2.colors.length === excess, `必须弃置恰好 ${excess} 颗`);
-      for (const color of action2.colors) {
-        requireThat(isColor(color) && p.stock[color] > 0, "弃置的水晶不存在");
-        p.stock[color]--;
+      for (const color2 of action2.colors) {
+        requireThat(isColor(color2) && p.stock[color2] > 0, "弃置的水晶不存在");
+        p.stock[color2]--;
       }
       record(g, `${p.name} 弃置 ${excess} 颗水晶`);
       g.phase = "turn";
@@ -1160,8 +1160,20 @@
       }
       result.acquisitionVariant = source.acquisitionVariant;
     }
+    if (source.engineModel !== void 0) {
+      if (source.engineModel !== "v1" && source.engineModel !== "v2") {
+        throw new Error(`未知引擎价值模型：${String(source.engineModel)}`);
+      }
+      result.engineModel = source.engineModel;
+    }
+    if (source.seatPolicy !== void 0) {
+      if (source.seatPolicy !== "flat" && source.seatPolicy !== "stratified") {
+        throw new Error(`未知人数条件策略：${String(source.seatPolicy)}`);
+      }
+      result.seatPolicy = source.seatPolicy;
+    }
     if (source.jointVersion !== void 0) {
-      if (typeof source.jointVersion !== "string" || !/^joint-js\d+$/.test(source.jointVersion)) {
+      if (typeof source.jointVersion !== "string" || !/^joint-js[0-9a-z-]+$/.test(source.jointVersion)) {
         throw new Error(`适配器冠军的 jointVersion 非法：${String(source.jointVersion)}`);
       }
       result.jointVersion = source.jointVersion;
@@ -1191,7 +1203,7 @@
 
   // src/ai/knowledge.ts
   var VALUES = [1, 1.7, 2.5, 3.4];
-  var weighted = (stock) => stock.reduce((sum, n, color) => sum + n * VALUES[color], 0);
+  var weighted = (stock) => stock.reduce((sum, n, color2) => sum + n * VALUES[color2], 0);
   var stockCount = (stock) => stock[0] + stock[1] + stock[2] + stock[3];
   var cloneStock = (stock) => [...stock];
   function cardEngineValue(card, stock, goal) {
@@ -1235,10 +1247,85 @@
     return sum / unseenMerchants.length;
   }
 
+  // src/ai/engine-model.ts
+  var clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x));
+  function engineModelContext(view, params) {
+    const me = view.players[view.playerId];
+    const threshold = view.players.length >= 4 ? 5 : 6;
+    const remainingClaims = Math.max(0, threshold - (me?.claimed.length ?? 0));
+    const totalTurns = view.players.reduce((sum, p) => sum + p.turns, 0);
+    const totalClaims = view.players.reduce((sum, p) => sum + p.claimed.length, 0);
+    const turnsPerClaim = totalClaims > 0 ? clamp(totalTurns / totalClaims, 2, 14) : 5;
+    const seatPolicy = params.seatPolicy ?? "flat";
+    const competition = seatPolicy === "stratified" ? 1 + 0.1 * Math.max(0, view.players.length - 2) : 1;
+    return {
+      remainingTurns: clamp(remainingClaims * turnsPerClaim, 0, 30),
+      playerCount: view.players.length,
+      turnsPerClaim,
+      competition,
+      seatPolicy
+    };
+  }
+  function createRepeatBonus(card, stock, ctx, engineSize) {
+    const output = card.output;
+    const growth = count(output);
+    const room = Math.max(0, 10 - count(stock));
+    const playsByRoom = growth > 0 ? Math.floor(room / growth) : 0;
+    const cycle = 1 / (1 + 1 / Math.max(1, engineSize));
+    const plays = Math.min(3, ctx.remainingTurns, playsByRoom);
+    if (plays < 2) return 0;
+    const perPlay = output.slice(1).reduce((s, x) => s + x, 0) + output[0] * 0.35;
+    return perPlay * plays * cycle * 0.35 / ctx.competition;
+  }
+  function upgradeLongevityBonus(card, stock, ctx) {
+    const yellow = stock[0];
+    if (yellow <= 0) return 0;
+    const usableSteps = Math.min(card.steps, yellow);
+    const horizon = clamp(ctx.remainingTurns / 10, 0, 1);
+    return usableSteps * horizon * 0.2 / ctx.competition;
+  }
+  function tradeRepeatBonus(card, stock, ctx, engineSize) {
+    const input = card.input;
+    const output = card.output;
+    const netNonYellow = output.slice(1).reduce((s, x) => s + x, 0) - input.slice(1).reduce((s, x) => s + x, 0);
+    if (netNonYellow <= 0) return 0;
+    const yellowInputCost = input[0] * 0.5;
+    const cycle = 1 / (1 + 1 / Math.max(1, engineSize));
+    const repeats = Math.min(2, ctx.remainingTurns / 4);
+    const payable = input.every((n, c) => stock[c] >= n);
+    const reachFactor = payable ? 1 : 0.35;
+    return Math.max(0, netNonYellow - yellowInputCost) * repeats * cycle * reachFactor * 0.2 / ctx.competition;
+  }
+  function cardEngineValueV2(card, stock, goal, ctx, engineSize) {
+    const base = cardEngineValue(card, stock, goal);
+    if (card.kind === "create") return base + createRepeatBonus(card, stock, ctx, engineSize);
+    if (card.kind === "upgrade") return base + upgradeLongevityBonus(card, stock, ctx);
+    return base + tradeRepeatBonus(card, stock, ctx, engineSize);
+  }
+  function engineValueV2(state, preferred, ctx) {
+    const goal = preferred ? GOLEM_BY_ID[preferred] ?? null : null;
+    const engineSize = state.hand.length + state.played.length;
+    return [...state.hand, ...state.played].reduce((sum, id) => {
+      const card = MERCHANT_BY_ID[id];
+      return sum + (card ? cardEngineValueV2(card, state.stock, goal, ctx, engineSize) : 0);
+    }, 0);
+  }
+  function engineValueFor(state, preferred, params, model) {
+    if (params.engineModel === "v2" && model) return engineValueV2(state, preferred, model);
+    return engineValue(state, preferred);
+  }
+  function acquisitionRepeatDelta(cardId, state, preferred, ctx) {
+    const card = MERCHANT_BY_ID[cardId];
+    if (!card) return 0;
+    const goal = preferred ? GOLEM_BY_ID[preferred] ?? null : null;
+    const engineSize = state.hand.length + state.played.length + 1;
+    return cardEngineValueV2(card, state.stock, goal, ctx, engineSize) - cardEngineValue(card, state.stock, goal);
+  }
+
   // src/ai/evaluator.ts
   function goalGap(stock, goal) {
     if (!goal) return 0;
-    return goal.cost.reduce((sum, needed, color) => sum + Math.max(0, needed - stock[color]) * VALUES[color], 0);
+    return goal.cost.reduce((sum, needed, color2) => sum + Math.max(0, needed - stock[color2]) * VALUES[color2], 0);
   }
   function stockPotential(stock, goals) {
     if (!goals.length) return weighted(stock) * 0.13;
@@ -1257,7 +1344,7 @@
     const stock = cloneStock(source);
     const discarded = [];
     while (stockCount(stock) > 10) {
-      let color = -1, best = -Infinity;
+      let color2 = -1, best = -Infinity;
       for (let c = 0; c < 4; c++) {
         if (stock[c] === 0) continue;
         stock[c]--;
@@ -1265,12 +1352,12 @@
         stock[c]++;
         if (rating > best) {
           best = rating;
-          color = c;
+          color2 = c;
         }
       }
-      if (color < 0) throw new Error("超额水晶弃置失败");
-      stock[color]--;
-      discarded.push(color);
+      if (color2 < 0) throw new Error("超额水晶弃置失败");
+      stock[color2]--;
+      discarded.push(color2);
     }
     return { stock, discarded };
   }
@@ -1331,12 +1418,13 @@
     const depth = state.hand.length + state.played.length;
     return profile.engine * (raw * 0.7 * params.engineWeight + synergy * readiness * 1.6 * params.synergyWeight + goalFit * 0.65 * params.goalWeight + efficiency * readiness * 0.45 * params.tempoWeight + capacity * 0.3 * params.capacityWeight + (goalFit + efficiency) / (depth + 2) * params.endgameWeight - Math.max(0, depth - 7) * 0.045 * params.restWeight) + profile.contest * params.contestWeight * (demand * 0.3 + risk * 0.7) * (1 + readiness * 0.12 + goalFit * 0.2);
   }
-  function acquisitionValue(state, cardId, preferred, profile, pressure, params) {
+  function acquisitionValue(state, cardId, preferred, profile, pressure, params, model = null) {
+    const withV2 = (value) => params.engineModel === "v2" && model ? value + acquisitionRepeatDelta(cardId, state, preferred, model) : value;
     if (params.acquisitionVariant === "goal-remaining") {
-      return acquisitionValueGoalRemaining(state, cardId, preferred, profile, pressure, params);
+      return withV2(acquisitionValueGoalRemaining(state, cardId, preferred, profile, pressure, params));
     }
     if (params.acquisitionVariant === "readiness-efficiency") {
-      return acquisitionValueReadinessEfficiency(state, cardId, preferred, profile, pressure, params);
+      return withV2(acquisitionValueReadinessEfficiency(state, cardId, preferred, profile, pressure, params));
     }
     const card = MERCHANT_BY_ID[cardId];
     if (!card) return 0;
@@ -1356,7 +1444,7 @@
     const demand = pressure.mean[cardId] ?? 0;
     const risk = pressure.peak[cardId] ?? 0;
     const urgency = 1 + (risk > 0 && goalFit > 0 ? goalFit : 0);
-    return profile.engine * (raw * 0.6 * params.engineWeight + synergy * 2 * params.synergyWeight + goalFit * 2 * params.goalWeight) + profile.contest * params.contestWeight * (demand * 0.45 + risk * urgency * 0.55) * 0.9;
+    return withV2(profile.engine * (raw * 0.6 * params.engineWeight + synergy * 2 * params.synergyWeight + goalFit * 2 * params.goalWeight) + profile.contest * params.contestWeight * (demand * 0.45 + risk * urgency * 0.55) * 0.9);
   }
 
   // src/ai/profiles.ts
@@ -1433,13 +1521,13 @@
       }
     }
     while (stockCount(stock) > 10) {
-      let color = -1;
+      let color2 = -1;
       for (let c = 0; c < 4; c++) {
         if (stock[c] === 0) continue;
-        if (color < 0 || VALUES[c] < VALUES[color]) color = c;
+        if (color2 < 0 || VALUES[c] < VALUES[color2]) color2 = c;
       }
-      if (color < 0) break;
-      stock[color]--;
+      if (color2 < 0) break;
+      stock[color2]--;
     }
     return stock;
   }
@@ -1571,15 +1659,15 @@
     if (index === 0) return [[]];
     if (stockCount(stock) < index) return [];
     const result = [];
-    function walk(color, left, selected, rest) {
-      if (color === 4) {
+    function walk(color2, left, selected, rest) {
+      if (color2 === 4) {
         if (left === 0) result.push({ payment: selected, value: keepValue(rest, goals, preferred, params) });
         return;
       }
-      for (let n = 0; n <= Math.min(stock[color], left); n++) {
+      for (let n = 0; n <= Math.min(stock[color2], left); n++) {
         const next = cloneStock(rest);
-        next[color] -= n;
-        walk(color + 1, left - n, [...selected, ...Array(n).fill(color)], next);
+        next[color2] -= n;
+        walk(color2 + 1, left - n, [...selected, ...Array(n).fill(color2)], next);
       }
     }
     walk(0, index, [], cloneStock(stock));
@@ -1661,9 +1749,9 @@
     } else if (action2.type === "acquire") {
       const offer = state.merchantMarket[action2.index];
       if (!offer) return null;
-      for (const color of action2.payment) {
-        if (!next.stock[color]) return null;
-        next.stock[color]--;
+      for (const color2 of action2.payment) {
+        if (!next.stock[color2]) return null;
+        next.stock[color2]--;
       }
       offer.bonus.forEach((n, c) => {
         next.stock[c] += n;
@@ -1711,24 +1799,27 @@
       state.acquired
     ].join("|");
   }
-  function searchGrade(state, preferred, stage, profile, pressure, params, futureSupport) {
+  function searchGrade(state, preferred, stage, profile, pressure, params, futureSupport, model) {
     const goal = GOLEM_BY_ID[preferred];
     const gap = goalGap(state.stock, goal);
     const restFactor = state.path.at(-1)?.type === "rest" ? params.restWeight : 1;
-    return -gap * 2.6 + weighted(state.stock) * 0.13 * params.capacityWeight + engineValue(state, preferred) * stage * 0.22 * profile.engine * params.engineWeight + futureSupport * stage * 0.45 * profile.engine * params.engineWeight + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params), 0) * stage * 0.35 - state.steps * 0.35 * profile.tempo * params.tempoWeight * restFactor - state.acquired * 0.15;
+    const lastAction = state.path.at(-1);
+    const paymentCost = params.engineModel === "v2" && lastAction?.type === "acquire" ? lastAction.payment.reduce((sum, c) => sum + (c === 0 ? 0.5 : 1), 0) : 0;
+    return -gap * 2.6 + weighted(state.stock) * 0.13 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.22 * profile.engine * params.engineWeight + futureSupport * stage * 0.45 * profile.engine * params.engineWeight + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params, model), 0) * stage * 0.35 - state.steps * 0.35 * profile.tempo * params.tempoWeight * restFactor - state.acquired * 0.15 - paymentCost * 0.55;
   }
-  function routeGrade(state, preferred, stage, profile, params) {
-    return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + 0.65, 0.9) + weighted(state.stock) * 0.055 * params.capacityWeight + engineValue(state, preferred) * stage * 0.085 * profile.engine * params.engineWeight;
+  function routeGrade(state, preferred, stage, profile, params, model) {
+    return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + 0.65, 0.9) + weighted(state.stock) * 0.055 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.085 * profile.engine * params.engineWeight;
   }
   function completedFirstGoal(state, preferred) {
     return !state.golemMarket.includes(preferred);
   }
-  function prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport) {
-    return GOLEM_BY_ID[preferred].points / (depth + 0.65 + goalGap(state.stock, GOLEM_BY_ID[preferred]) / 3) + engineValue(state, preferred) * stage * 0.12 * profile.engine * params.engineWeight + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params), 0) * stage * 0.32 + futureSupport * stage * 0.25 * profile.engine * params.engineWeight - state.steps * 0.09 * profile.tempo * params.tempoWeight;
+  function prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model) {
+    return GOLEM_BY_ID[preferred].points / (depth + 0.65 + goalGap(state.stock, GOLEM_BY_ID[preferred]) / 3) + engineValueFor(state, preferred, params, model) * stage * 0.12 * profile.engine * params.engineWeight + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params, model), 0) * stage * 0.32 + futureSupport * stage * 0.25 * profile.engine * params.engineWeight - state.steps * 0.09 * profile.tempo * params.tempoWeight;
   }
-  function choosePlan(view, params, profileOverride, structureInput) {
+  function choosePlan(view, params, profileOverride, structureInput, modelInput) {
     const structure = structureInput ?? "beam-lineage";
     const profile = profileOverride ?? profileFor(view);
+    const model = params.engineModel === "v2" ? modelInput ?? engineModelContext(view, params) : null;
     const knowledge = publicKnowledge(view);
     const pressure = pressureModel(view);
     const initial = initialState(view);
@@ -1763,11 +1854,11 @@
             if (!next) continue;
             if (next.terminal && !completedFirstGoal(next, preferred)) continue;
             if (completedFirstGoal(next, preferred)) {
-              const quality2 = routeGrade(next, preferred, stage, profile, params) * survivalOf(preferred);
+              const quality2 = routeGrade(next, preferred, stage, profile, params, model) * survivalOf(preferred);
               if (!solved || quality2 > solved.quality) solved = { ...next, preferred, quality: quality2 };
               continue;
             }
-            const quality = searchGrade(next, preferred, stage, profile, pressure, params, futureSupport);
+            const quality = searchGrade(next, preferred, stage, profile, pressure, params, futureSupport, model);
             const scored = { ...next, quality };
             const key = stateKey(next);
             if (!successors.has(key) || successors.get(key).quality < quality) successors.set(key, scored);
@@ -1791,7 +1882,7 @@
         rescue(lineagePlay ?? lineageRest ?? lineageOther);
         rescue(restFallback);
         for (const candidate of beam) {
-          const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport) * survivalOf(preferred);
+          const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred);
           if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
         }
       }
@@ -1801,7 +1892,7 @@
       const ranked = finalBeams.flatMap(({ preferred, futureSupport, beam }) => beam.map((state) => ({
         preferred,
         state,
-        formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport) * survivalOf(preferred)
+        formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred)
       }))).sort((a, b) => b.formula - a.formula).slice(0, ROLLOUT_DEFAULTS.topK);
       let rolloutBest = null;
       for (const { preferred, state, formula } of ranked) {
@@ -2053,7 +2144,7 @@
       requireThat2(hand.added.length === 1, "获取事件的公开手牌差分与行动不一致");
       const cardId = hand.added[0];
       requireThat2(before.merchantMarket[action2.index]?.id === cardId, "获取事件的市场位置与公开差分不一致");
-      const bonusPaid = action2.payment.map((color, slot) => ({ slot, color }));
+      const bonusPaid = action2.payment.map((color2, slot) => ({ slot, color: color2 }));
       const marketAdded = multisetAdded(after.merchantMarket.map((m) => m.id), before.merchantMarket.map((m) => m.id));
       requireThat2(marketAdded.length <= 1, "获取事件的补牌差分异常");
       return {
@@ -2395,9 +2486,9 @@
       if (action2.type !== "discard") throw new Error("必须先弃置超出上限的水晶");
       const excess = count(p.stock) - 10;
       requireThat4(Array.isArray(action2.colors) && action2.colors.length === excess, `必须弃置恰好 ${excess} 颗`);
-      for (const color of action2.colors) {
-        requireThat4(isColor2(color) && p.stock[color] > 0, "弃置的水晶不存在");
-        p.stock[color]--;
+      for (const color2 of action2.colors) {
+        requireThat4(isColor2(color2) && p.stock[color2] > 0, "弃置的水晶不存在");
+        p.stock[color2]--;
       }
       s.phase = "turn";
       finishAction2(core);
@@ -2624,15 +2715,15 @@
     }
     out.push({ type: "play", cardId, steps: [...prefix] });
     if (depth >= maxSteps) return;
-    for (let color = 0; color < 3; color++) {
-      if (running[color] <= 0) continue;
-      running[color]--;
-      running[color + 1]++;
-      prefix.push(color);
+    for (let color2 = 0; color2 < 3; color2++) {
+      if (running[color2] <= 0) continue;
+      running[color2]--;
+      running[color2 + 1]++;
+      prefix.push(color2);
       collectUpgradeSteps(running, maxSteps, depth + 1, prefix, cardId, out, seenStocks);
       prefix.pop();
-      running[color]++;
-      running[color + 1]--;
+      running[color2]++;
+      running[color2 + 1]--;
     }
   }
   function collectPayments(available, index, depth, prefix, out) {
@@ -2640,13 +2731,13 @@
       out.push({ type: "acquire", index, payment: [...prefix] });
       return;
     }
-    for (let color = 0; color < 4; color++) {
-      if (available[color] <= 0) continue;
-      available[color]--;
-      prefix.push(color);
+    for (let color2 = 0; color2 < 4; color2++) {
+      if (available[color2] <= 0) continue;
+      available[color2]--;
+      prefix.push(color2);
       collectPayments(available, index, depth + 1, prefix, out);
       prefix.pop();
-      available[color]++;
+      available[color2]++;
     }
   }
   function collectDiscards(available, excess, depth, prefix, out) {
@@ -2655,13 +2746,13 @@
       return;
     }
     const firstColor = prefix.length ? prefix[prefix.length - 1] : 0;
-    for (let color = firstColor; color < 4; color++) {
-      if (available[color] <= 0) continue;
-      available[color]--;
-      prefix.push(color);
+    for (let color2 = firstColor; color2 < 4; color2++) {
+      if (available[color2] <= 0) continue;
+      available[color2]--;
+      prefix.push(color2);
       collectDiscards(available, excess, depth + 1, prefix, out);
       prefix.pop();
-      available[color]++;
+      available[color2]++;
     }
   }
 
@@ -2717,13 +2808,13 @@
       for (let c = 0; c < 4; c++) stock[c] += engineOutput[c];
     }
     while (stockCount(stock) > 10) {
-      let color = -1;
+      let color2 = -1;
       for (let c = 0; c < 4; c++) {
         if (stock[c] === 0) continue;
-        if (color < 0 || VALUES[c] < VALUES[color]) color = c;
+        if (color2 < 0 || VALUES[c] < VALUES[color2]) color2 = c;
       }
-      if (color < 0) break;
-      stock[color]--;
+      if (color2 < 0) break;
+      stock[color2]--;
     }
     return stock;
   }
@@ -3738,16 +3829,17 @@
       profile,
       pressure: pressureCache ? pressureCache.get(state, state.current) : pressureModel(view),
       stage: Math.pow(rawStage, params.endgameWeight),
-      allowAcquire: state.triggerPlayer === null
+      allowAcquire: state.triggerPlayer === null,
+      model: params.engineModel === "v2" ? engineModelContext(view, params) : null
     };
   }
   function searchGradeLite(next, preferred, ctx) {
     const goal = preferred ? GOLEM_BY_ID[preferred] : null;
     const gap = goal ? goalGap(next.stock, goal) : 0;
-    return -gap * 2.6 + weighted(next.stock) * 0.13 * ctx.params.capacityWeight + engineValue(next, preferred) * ctx.stage * 0.22 * ctx.profile.engine * ctx.params.engineWeight + next.newCards.reduce((sum, id) => sum + acquisitionValue(next, id, preferred, ctx.profile, ctx.pressure, ctx.params), 0) * ctx.stage * 0.35 - next.steps * 0.35 * ctx.profile.tempo * ctx.params.tempoWeight - next.acquired * 0.15;
+    return -gap * 2.6 + weighted(next.stock) * 0.13 * ctx.params.capacityWeight + engineValueFor(next, preferred, ctx.params, ctx.model ?? null) * ctx.stage * 0.22 * ctx.profile.engine * ctx.params.engineWeight + next.newCards.reduce((sum, id) => sum + acquisitionValue(next, id, preferred, ctx.profile, ctx.pressure, ctx.params, ctx.model ?? null), 0) * ctx.stage * 0.35 - next.steps * 0.35 * ctx.profile.tempo * ctx.params.tempoWeight - next.acquired * 0.15;
   }
   function routeGradeLite(next, preferred, ctx) {
-    return next.gained * ctx.profile.tempo * ctx.params.tempoWeight / Math.pow(next.steps + 0.65, 0.9) + weighted(next.stock) * 0.055 * ctx.params.capacityWeight + engineValue(next, preferred) * ctx.stage * 0.085 * ctx.profile.engine * ctx.params.engineWeight;
+    return next.gained * ctx.profile.tempo * ctx.params.tempoWeight / Math.pow(next.steps + 0.65, 0.9) + weighted(next.stock) * 0.055 * ctx.params.capacityWeight + engineValueFor(next, preferred, ctx.params, ctx.model ?? null) * ctx.stage * 0.085 * ctx.profile.engine * ctx.params.engineWeight;
   }
   function localStep(state, action2, preferred, params) {
     if (state.terminal) return null;
@@ -3795,9 +3887,9 @@
     } else if (action2.type === "acquire") {
       const offer = state.merchantMarket[action2.index];
       if (!offer) return null;
-      for (const color of action2.payment) {
-        if (!next.stock[color]) return null;
-        next.stock[color]--;
+      for (const color2 of action2.payment) {
+        if (!next.stock[color2]) return null;
+        next.stock[color2]--;
       }
       offer.bonus.forEach((n, c) => {
         next.stock[c] += n;
@@ -3843,6 +3935,16 @@
     if (action2.type === "claim") return routeGradeLite(next, preferred, ctx);
     const base = next.terminal ? routeGradeLite(next, preferred, ctx) : searchGradeLite(next, preferred, ctx);
     if (action2.type === "rest" && state.played.length > 0) {
+      if (ctx.params.engineModel === "v2" && ctx.model) {
+        const recovered = engineValueFor(
+          { stock: state.stock, hand: [], played: state.played },
+          preferred,
+          ctx.params,
+          ctx.model
+        );
+        const relief2 = 0.35 * recovered + (state.hand.length === 0 ? 1.2 : 0);
+        return base + relief2 * ctx.params.restWeight;
+      }
       const relief = 0.55 * state.played.length + (state.hand.length === 0 ? 1.2 : 0);
       return base + relief * ctx.params.restWeight;
     }
@@ -3900,6 +4002,243 @@
   function payableClaim(stock, golemId) {
     const goal = GOLEM_BY_ID[golemId];
     return !!goal && has([...stock], goal.cost);
+  }
+
+  // src/js/endgame.ts
+  var color = (c) => Number.isInteger(c) && c >= 0 && c <= 3;
+  function isFinalOwnAction(view) {
+    return view.phase === "turn" && view.triggerPlayer !== null;
+  }
+  function endgameDiscardColors(stock, excess) {
+    if (!Number.isSafeInteger(excess) || excess < 0) throw new Error(`非法弃置数量：${String(excess)}`);
+    const remaining = [...stock];
+    if (count(remaining) < excess) throw new Error(`库存不足以弃置 ${excess} 颗`);
+    const colors = [];
+    for (let c = 0; c < 4 && colors.length < excess; c++) {
+      while (remaining[c] > 0 && colors.length < excess) {
+        remaining[c] -= 1;
+        colors.push(c);
+      }
+    }
+    return colors;
+  }
+  function officialScoreOf(player, stock) {
+    const golemPoints = player.claimed.reduce((sum, id) => sum + (GOLEM_BY_ID[id]?.points ?? 0), 0);
+    return golemPoints + player.copper * 3 + player.silver + stock.slice(1).reduce((sum, x) => sum + x, 0);
+  }
+  function claimCoin(index, copperPool, silverPool) {
+    if (index === 0 && copperPool > 0) return { coin: 3, copper: 1, silver: 0 };
+    if (index === 0 && copperPool === 0 && silverPool > 0) return { coin: 1, copper: 0, silver: 1 };
+    if (index === 1 && copperPool > 0 && silverPool > 0) return { coin: 1, copper: 0, silver: 1 };
+    return { coin: 0, copper: 0, silver: 0 };
+  }
+  function finalScoreOfAction(view, action2) {
+    if (!isFinalOwnAction(view)) return null;
+    const me = view.players[view.playerId];
+    if (!me || view.current !== view.playerId) return null;
+    let stock = [...me.stock];
+    const claimed = [...me.claimed];
+    let copper = me.copper;
+    let silver = me.silver;
+    if (action2.type === "claim") {
+      const id = view.golemMarket[action2.index];
+      const golem = id ? GOLEM_BY_ID[id] : null;
+      if (!golem || !has(stock, golem.cost)) return null;
+      for (let c = 0; c < 4; c++) stock[c] -= golem.cost[c];
+      const reward = claimCoin(action2.index, view.copper, view.silver);
+      copper += reward.copper;
+      silver += reward.silver;
+      claimed.push(id);
+    } else if (action2.type === "play") {
+      const card = MERCHANT_BY_ID[action2.cardId];
+      if (!card || !me.hand.includes(action2.cardId)) return null;
+      if (card.kind === "create") {
+        if (action2.steps?.length || action2.repeats !== void 0) return null;
+        const out = card.output;
+        for (let c = 0; c < 4; c++) stock[c] += out[c];
+      } else if (card.kind === "upgrade") {
+        const steps = action2.steps ?? [];
+        if (action2.repeats !== void 0 || steps.length > card.steps) return null;
+        for (const source of steps) {
+          if (!color(source) || source >= 3 || stock[source] <= 0) return null;
+          stock[source] -= 1;
+          stock[source + 1] += 1;
+        }
+      } else {
+        const repeats = action2.repeats ?? 1;
+        const limit = tradeLimit(stock, action2.cardId);
+        if (!Number.isSafeInteger(repeats) || repeats < 1 || repeats > limit) return null;
+        for (let i = 0; i < repeats; i++) {
+          if (!has(stock, card.input)) return null;
+          for (let c = 0; c < 4; c++) stock[c] -= card.input[c];
+          for (let c = 0; c < 4; c++) stock[c] += card.output[c];
+        }
+      }
+    } else if (action2.type === "acquire") {
+      const offer = view.merchantMarket[action2.index];
+      if (!offer) return null;
+      if (!Array.isArray(action2.payment) || action2.payment.length !== action2.index) return null;
+      for (const c of action2.payment) {
+        if (!color(c) || stock[c] <= 0) return null;
+        stock[c] -= 1;
+      }
+      for (let c = 0; c < 4; c++) stock[c] += offer.bonus[c];
+    } else if (action2.type === "rest") {
+    } else {
+      return null;
+    }
+    let discarded = [];
+    if (count(stock) > 10) {
+      discarded = endgameDiscardColors(stock, count(stock) - 10);
+      for (const c of discarded) stock[c] -= 1;
+    }
+    return {
+      action: action2,
+      ownFinalScore: officialScoreOf({ claimed, copper, silver }, stock),
+      stockAfter: stock,
+      discarded
+    };
+  }
+  function opponentOneActionUpperBound(opponent, view, golemMarket, copperPool, silverPool) {
+    const stock = [...opponent.stock];
+    const room = Math.max(0, 10 - count(stock));
+    let best = 0;
+    for (let index = 0; index < golemMarket.length; index++) {
+      const golem = GOLEM_BY_ID[golemMarket[index]];
+      if (!golem || !has(stock, golem.cost)) continue;
+      const reward = claimCoin(index, copperPool, silverPool);
+      const gain = golem.points + reward.coin - golem.cost.slice(1).reduce((sum, x) => sum + x, 0);
+      if (gain > best) best = gain;
+    }
+    const yellow = stock[0];
+    for (const id of opponent.hand) {
+      const card = MERCHANT_BY_ID[id];
+      if (!card) continue;
+      if (card.kind === "create") {
+        const gain = Math.min(room, card.output.slice(1).reduce((sum, x) => sum + x, 0));
+        if (gain > best) best = gain;
+      } else if (card.kind === "upgrade") {
+        const gain = Math.min(room, Math.min(card.steps, yellow));
+        if (gain > best) best = gain;
+      } else {
+        const limit = tradeLimit(stock, id);
+        const net = card.output.slice(1).reduce((sum, x) => sum + x, 0) - card.input.slice(1).reduce((sum, x) => sum + x, 0);
+        if (net > 0) {
+          const gain = Math.min(room, limit * net);
+          if (gain > best) best = gain;
+        }
+      }
+    }
+    for (let index = 0; index < view.merchantMarket.length; index++) {
+      if (count(stock) < index) continue;
+      const bonus = view.merchantMarket[index].bonus;
+      const nonYellowPayment = Math.max(0, index - yellow);
+      const gain = Math.min(room, bonus.slice(1).reduce((sum, x) => sum + x, 0) - nonYellowPayment);
+      if (gain > best) best = gain;
+    }
+    return Math.max(0, best);
+  }
+  function beatsUs(opponentSeat, opponentScore, mySeat, myScore) {
+    if (opponentScore !== myScore) return opponentScore > myScore;
+    return opponentSeat > mySeat;
+  }
+  function denialOf(beforeMarket, afterMarket, opponents, myScore, view) {
+    const threats = opponents.filter((o) => o.actsAfter && o.upper > myScore);
+    let denied = 0;
+    for (const id of beforeMarket) {
+      if (afterMarket.includes(id)) continue;
+      if (!GOLEM_BY_ID[id]) continue;
+      for (const o of threats) {
+        const p = view.players[o.seat];
+        if (p && has(p.stock, GOLEM_BY_ID[id].cost)) {
+          denied = Math.max(denied, GOLEM_BY_ID[id].points);
+          break;
+        }
+      }
+    }
+    return denied;
+  }
+  function solveFinalAction(view, legalActions) {
+    if (!isFinalOwnAction(view)) return null;
+    const candidates = [];
+    for (const action2 of legalActions) {
+      const scored = finalScoreOfAction(view, action2);
+      if (!scored) continue;
+      const afterMarket = action2.type === "claim" ? view.golemMarket.filter((_, i) => i !== action2.index) : view.golemMarket;
+      let copperPool = view.copper;
+      let silverPool = view.silver;
+      if (action2.type === "claim") {
+        const reward = claimCoin(action2.index, view.copper, view.silver);
+        copperPool -= reward.copper;
+        silverPool -= reward.silver;
+      }
+      const opponents = view.players.map((p) => {
+        if (p.id === view.playerId) {
+          return { seat: p.id, current: scored.ownFinalScore, upper: scored.ownFinalScore, actsAfter: false, maxGain: 0 };
+        }
+        const current = officialScoreOf(p, p.stock);
+        const actsAfter = p.id > view.playerId;
+        const maxGain = actsAfter ? opponentOneActionUpperBound(p, view, afterMarket, copperPool, silverPool) : 0;
+        return { seat: p.id, current, upper: current + maxGain, actsAfter, maxGain };
+      });
+      let guaranteedRank = 1;
+      let optimisticRank = 1;
+      for (const o of opponents) {
+        if (o.seat === view.playerId) continue;
+        if (beatsUs(o.seat, o.upper, view.playerId, scored.ownFinalScore)) guaranteedRank += 1;
+        if (beatsUs(o.seat, o.current, view.playerId, scored.ownFinalScore)) optimisticRank += 1;
+      }
+      candidates.push({
+        ...scored,
+        guaranteedRank,
+        optimisticRank,
+        denial: denialOf(view.golemMarket, afterMarket, opponents, scored.ownFinalScore, view)
+      });
+    }
+    if (!candidates.length) return null;
+    const rankKey = (a) => JSON.stringify(a.action);
+    candidates.sort(
+      (a, b) => a.guaranteedRank - b.guaranteedRank || b.ownFinalScore - a.ownFinalScore || a.optimisticRank - b.optimisticRank || b.denial - a.denial || rankKey(a).localeCompare(rankKey(b))
+    );
+    const best = candidates[0];
+    const alternatives = candidates.slice(0, 5).map((c) => ({
+      action: c.action,
+      ownFinalScore: c.ownFinalScore,
+      guaranteedRank: c.guaranteedRank,
+      optimisticRank: c.optimisticRank
+    }));
+    const bestAction = best.action;
+    const bestClaimIndex = bestAction.type === "claim" ? bestAction.index : null;
+    const afterBestMarket = bestClaimIndex !== null ? view.golemMarket.filter((_, i) => i !== bestClaimIndex) : view.golemMarket;
+    const finalOpponents = view.players.map((p) => {
+      if (p.id === view.playerId) {
+        return { seat: p.id, current: best.ownFinalScore, upper: best.ownFinalScore, actsAfter: false, maxGain: 0 };
+      }
+      const current = officialScoreOf(p, p.stock);
+      const actsAfter = p.id > view.playerId;
+      let copperPool = view.copper;
+      let silverPool = view.silver;
+      if (bestClaimIndex !== null) {
+        const reward = claimCoin(bestClaimIndex, view.copper, view.silver);
+        copperPool -= reward.copper;
+        silverPool -= reward.silver;
+      }
+      const maxGain = actsAfter ? opponentOneActionUpperBound(p, view, afterBestMarket, copperPool, silverPool) : 0;
+      return { seat: p.id, current, upper: current + maxGain, actsAfter, maxGain };
+    });
+    return {
+      action: best.action,
+      ownFinalScore: best.ownFinalScore,
+      guaranteedRank: best.guaranteedRank,
+      optimisticRank: best.optimisticRank,
+      discarded: best.discarded,
+      stockAfter: best.stockAfter,
+      opponents: finalOpponents,
+      denial: best.denial,
+      alternatives,
+      rankModel: "public-market-one-action-bound",
+      evaluatedActions: candidates.length
+    };
   }
 
   // src/js/opponents.ts
@@ -4137,9 +4476,10 @@
       let action2 = null;
       if (actor === ctx.mySeat) {
         if (state.phase === "overflow") {
-          action2 = { type: "discard", colors: discardDecision(state.players[actor].stock, state.golemMarket, CHAMPION_PARAMETERS) };
+          const stock = state.players[actor].stock;
+          action2 = ctx.endgameDiscard && state.triggerPlayer !== null ? { type: "discard", colors: endgameDiscardColors(stock, count(stock) - 10) } : { type: "discard", colors: discardDecision(stock, state.golemMarket, CHAMPION_PARAMETERS) };
         } else {
-          const ctxH = heuristicContext(state, CHAMPION_PARAMETERS, profileByName(ctx.profileName), pressureCache);
+          const ctxH = heuristicContext(state, ctx.params ?? CHAMPION_PARAMETERS, profileByName(ctx.profileName), pressureCache);
           const ranked = myRankedActions(state, actor, ctxH).ranked;
           action2 = ranked[0]?.action ?? { type: "rest" };
         }
@@ -4382,7 +4722,47 @@
       id: "joint-js5-opt",
       label: "JS5-opt 第五阶段优化配置（champion-guided + tune2 选项覆盖）",
       kind: "champion-guided",
-      defaults: { variant: "joint-rollout", opponentMode: "rule", evaluator: "L2" }
+      defaults: { variant: "joint-rollout", opponentMode: "rule", evaluator: "L2" },
+      // 第五阶段 tune2 冻结：唯一独有选项 claimRanking='prior'
+      // （AI6-PHASE5-REPORT.md §4.3；确认集 inconclusive，未晋级）。
+      optionPreset: { claimRanking: "prior" }
+    },
+    // === AI7 候选（独立注册；缺省不参与生产决策，需显式版本注入） ===
+    "joint-js6-endgame": {
+      id: "joint-js6-endgame",
+      label: "AI7-C1 终局精确求解（官方得分/保证名次/终局弃置）",
+      kind: "champion-guided",
+      defaults: { variant: "joint-rollout", opponentMode: "rule", evaluator: "L2" },
+      optionPreset: { endgameSolver: "exact", endgameDiscard: true }
+    },
+    "joint-js7-arb": {
+      id: "joint-js7-arb",
+      label: "AI7-C3 JS5 配对仲裁稳健性（置信下界+认领保护）",
+      kind: "champion-guided",
+      defaults: { variant: "joint-rollout", opponentMode: "rule", evaluator: "L2" },
+      optionPreset: {
+        arbitration: "paired",
+        minPairedTrials: 4,
+        pairedZ: 1.645,
+        claimProtection: true,
+        claimProtectDelta: 10,
+        claimProtectMargin: 0.1,
+        ensureBestClaimCandidate: true
+      }
+    },
+    "joint-js8-engine": {
+      id: "joint-js8-engine",
+      label: "AI7-C2 引擎价值 V2（剩余回合/重复产出/循环成本；人数无关）",
+      kind: "champion-guided",
+      defaults: { variant: "joint-rollout", opponentMode: "rule", evaluator: "L2" },
+      parameterVariant: "engine-v2"
+    },
+    "joint-js8-engine-seat": {
+      id: "joint-js8-engine-seat",
+      label: "AI7-C4 引擎价值 V2 + 人数条件竞争折扣（独立消融）",
+      kind: "champion-guided",
+      defaults: { variant: "joint-rollout", opponentMode: "rule", evaluator: "L2" },
+      parameterVariant: "engine-v2-seat"
     }
   };
 
@@ -4663,6 +5043,158 @@
     return new JointPlannerV1(versionId);
   }
 
+  // src/js/near-terminal.ts
+  function claimThreshold(playerCount) {
+    return playerCount >= 4 ? 5 : 6;
+  }
+  function officialScoreOf2(player, stock) {
+    const golemPoints = player.claimed.reduce((sum, id) => sum + (GOLEM_BY_ID[id]?.points ?? 0), 0);
+    return golemPoints + player.copper * 3 + player.silver + stock.slice(1).reduce((sum, x) => sum + x, 0);
+  }
+  function nearTerminalRisk(view) {
+    const threshold = claimThreshold(view.players.length);
+    if (view.triggerPlayer !== null) {
+      return {
+        risky: true,
+        reason: "already-triggered",
+        threshold,
+        threatenedSeats: view.players.map((p) => p.id),
+        selfThreatened: true
+      };
+    }
+    const threatenedSeats = [];
+    for (const p of view.players) {
+      if (p.claimed.length < threshold - 1) continue;
+      const canPay = view.golemMarket.some((id) => {
+        const goal = GOLEM_BY_ID[id];
+        return !!goal && has(p.stock, goal.cost);
+      });
+      if (canPay) threatenedSeats.push(p.id);
+    }
+    return {
+      risky: threatenedSeats.length > 0,
+      reason: threatenedSeats.length > 0 ? "player-can-trigger" : null,
+      threshold,
+      threatenedSeats,
+      selfThreatened: threatenedSeats.includes(view.playerId)
+    };
+  }
+  function immediateOfficialScoreDelta(view, action2) {
+    if (view.playerId !== view.current) return null;
+    const me = view.players[view.playerId];
+    if (!me) return null;
+    let stock = [...me.stock];
+    let copper = me.copper;
+    let silver = me.silver;
+    let delta = 0;
+    let golemMarket = null;
+    if (action2.type === "claim") {
+      const id = view.golemMarket[action2.index];
+      const goal = id ? GOLEM_BY_ID[id] : null;
+      if (!goal || !has(stock, goal.cost)) return null;
+      let copperPool = view.copper;
+      let silverPool = view.silver;
+      let coin = 0;
+      if (action2.index === 0 && copperPool > 0) {
+        copperPool -= 1;
+        copper += 1;
+        coin = 3;
+      } else if (action2.index === 0 && copperPool === 0 && silverPool > 0) {
+        silverPool -= 1;
+        silver += 1;
+        coin = 1;
+      } else if (action2.index === 1 && copperPool > 0 && silverPool > 0) {
+        silverPool -= 1;
+        silver += 1;
+        coin = 1;
+      }
+      delta += goal.points + coin;
+      delta -= goal.cost.slice(1).reduce((sum, x) => sum + x, 0);
+      for (let c = 0; c < 4; c++) stock[c] -= goal.cost[c];
+      golemMarket = view.golemMarket.filter((_, i) => i !== action2.index);
+    } else if (action2.type === "play") {
+      const card = MERCHANT_BY_ID[action2.cardId];
+      if (!card || !me.hand.includes(action2.cardId)) return null;
+      if (card.kind === "create") {
+        if (action2.steps?.length || action2.repeats !== void 0) return null;
+        const out = card.output;
+        for (let c = 0; c < 4; c++) stock[c] += out[c];
+        delta += out.slice(1).reduce((sum, x) => sum + x, 0);
+      } else if (card.kind === "upgrade") {
+        const steps = action2.steps ?? [];
+        if (action2.repeats !== void 0 || steps.length > card.steps) return null;
+        for (const source of steps) {
+          if (!Number.isInteger(source) || source < 0 || source >= 3) return null;
+          if (stock[source] <= 0) return null;
+          stock[source] -= 1;
+          stock[source + 1] += 1;
+          if (source === 0) delta += 1;
+        }
+      } else {
+        const repeats = action2.repeats ?? 1;
+        const limit = tradeLimit(stock, action2.cardId);
+        if (!Number.isSafeInteger(repeats) || repeats < 1 || repeats > limit) return null;
+        for (let i = 0; i < repeats; i++) {
+          if (!has(stock, card.input)) return null;
+          for (let c = 0; c < 4; c++) stock[c] -= card.input[c];
+          for (let c = 0; c < 4; c++) stock[c] += card.output[c];
+        }
+        delta += repeats * (card.output.slice(1).reduce((sum, x) => sum + x, 0) - card.input.slice(1).reduce((sum, x) => sum + x, 0));
+      }
+    } else if (action2.type === "acquire") {
+      const offer = view.merchantMarket[action2.index];
+      if (!offer) return null;
+      if (!Array.isArray(action2.payment) || action2.payment.length !== action2.index) return null;
+      for (const color2 of action2.payment) {
+        if (!Number.isInteger(color2) || color2 < 0 || color2 >= 4 || stock[color2] <= 0) return null;
+        stock[color2] -= 1;
+        if (color2 > 0) delta -= 1;
+      }
+      for (let c = 0; c < 4; c++) stock[c] += offer.bonus[c];
+      delta += offer.bonus.slice(1).reduce((sum, x) => sum + x, 0);
+    } else if (action2.type === "rest") {
+    } else {
+      return null;
+    }
+    let discarded = 0;
+    if (count(stock) > 10) {
+      const trimmed = trimStock(stock, golemMarket ?? view.golemMarket, null, CHAMPION_PARAMETERS);
+      discarded = trimmed.discarded.length;
+      delta -= trimmed.discarded.filter((c) => c > 0).length;
+      stock = trimmed.stock;
+    }
+    return { action: action2, delta, scoreAfter: officialScoreOf2({ ...me, copper, silver }, stock), discarded };
+  }
+  function maxImmediateScoreAction(view, actions2) {
+    let best = null;
+    for (const action2 of actions2) {
+      const candidate = immediateOfficialScoreDelta(view, action2);
+      if (!candidate || candidate.delta <= 0) continue;
+      if (!best || candidate.delta > best.delta) best = candidate;
+    }
+    return best;
+  }
+
+  // src/js/budget.ts
+  var LEGACY_TRIAL_FLOOR_MS = 5;
+  var BALANCED_TRIAL_FLOOR_MS = 2.5;
+  function trialFloorMs(admission) {
+    return admission === "balanced" ? BALANCED_TRIAL_FLOOR_MS : LEGACY_TRIAL_FLOOR_MS;
+  }
+  function batchFloors(admission, worlds, candidates) {
+    const floor = trialFloorMs(admission);
+    return {
+      trialFloorMs: floor,
+      fullBatchFloorMs: worlds * candidates * floor,
+      minBatchFloorMs: candidates * floor
+    };
+  }
+  function fitWorlds(remainingMs, worlds, candidates) {
+    const minBatchFloorMs = candidates * BALANCED_TRIAL_FLOOR_MS;
+    if (!(remainingMs >= minBatchFloorMs)) return 0;
+    return Math.min(worlds, Math.max(1, Math.floor(remainingMs / (candidates * BALANCED_TRIAL_FLOOR_MS))));
+  }
+
   // src/js/champion-guided.ts
   var fail6 = (message) => {
     throw new Error(message);
@@ -4710,16 +5242,84 @@
       const worldCount = Math.max(1, Math.min(8, Math.floor(o.worlds ?? 4)));
       const rootSimStart = performance.now();
       const root2 = createSimulation(observation, { simSeed: worldSeed(o.simSeed ?? 0, 0), historySummary: o.historySummary });
+      phase.rootSimMs = performance.now() - rootSimStart;
       let rootsCreated = 1;
       const roots = [root2];
       const legalStart = performance.now();
       const legalRootActions = enumerateLegalActions(root2.view, { dedupe: true });
       phase.legalGenMs = performance.now() - legalStart;
-      phase.rootSimMs = performance.now() - rootSimStart;
       if (!legalRootActions.length) fail6("根状态无合法行动（规则引擎不一致）");
       const immediateClaimGoals = new Set(
         legalRootActions.filter((a) => a.type === "claim").map((a) => observation.golemMarket[a.index])
       );
+      if (o.endgameSolver === "exact" && isFinalOwnAction(observation)) {
+        const solveStart = performance.now();
+        const solved = solveFinalAction(observation, legalRootActions);
+        phase.screenMs += performance.now() - solveStart;
+        if (solved) {
+          const elapsedMs2 = performance.now() - t0;
+          const scoreTag = solved.action.type === "claim" ? `认领 ${observation.golemMarket[solved.action.index]}` : JSON.stringify(solved.action);
+          const rejected2 = solved.alternatives.filter((a) => JSON.stringify(a.action) !== JSON.stringify(solved.action)).slice(0, 4).map((a) => ({
+            action: a.action,
+            mean: a.ownFinalScore,
+            why: `终局精确结算：最终 ${a.ownFinalScore} 分，保证名次 ${a.guaranteedRank}（乐观 ${a.optimisticRank}）`
+          }));
+          return {
+            action: solved.action,
+            reason: `js6 终局精确求解（${scoreTag}）：最终 ${solved.ownFinalScore} 分，保证名次 ${solved.guaranteedRank}（乐观 ${solved.optimisticRank}），枚举 ${solved.evaluatedActions} 个合法行动；对手单动作上界 ${solved.opponents.map((x) => `座${x.seat}:${x.upper}`).join("/")}`,
+            evaluations: [],
+            chosen: { action: solved.action, prior: 0, trials: 0, mean: solved.ownFinalScore, se: null },
+            trace: {
+              root: { turnNumber: observation.turnNumber, current: observation.current, golemMarket: [...observation.golemMarket], phase: observation.phase },
+              evaluations: [],
+              rejected: rejected2
+            },
+            stats: {
+              rollouts: 0,
+              transitions: 0,
+              elapsedMs: elapsedMs2,
+              budgetExhausted: false,
+              omTimeMs: 0,
+              cloneMs: 0,
+              cloneMsMeasured: false,
+              legalGenMs: phase.legalGenMs,
+              rootActions: legalRootActions.length,
+              candidateCount: solved.evaluatedActions,
+              worldsUsed: 0,
+              worldsConfigured: worldCount,
+              batchesStarted: 0,
+              trialWindowMs: 0,
+              zeroTrialReason: "not-gated",
+              overBudget: false,
+              planMs: phase.planMs,
+              rootSimMs: phase.rootSimMs,
+              gateMs: phase.gateMs,
+              screenMs: phase.screenMs,
+              rolloutMs: 0,
+              aggregateMs: 0,
+              rootSimulationsCreated: rootsCreated,
+              screenGoalScope: o.screenGoalScope ?? "all",
+              batchAdmission: o.batchAdmission ?? "legacy",
+              endgame: {
+                solver: "exact",
+                ownFinalScore: solved.ownFinalScore,
+                guaranteedRank: solved.guaranteedRank,
+                optimisticRank: solved.optimisticRank,
+                discarded: [...solved.discarded],
+                denial: solved.denial,
+                rankModel: solved.rankModel,
+                evaluatedActions: solved.evaluatedActions,
+                opponents: solved.opponents,
+                alternatives: solved.alternatives,
+                championAction: championAction ? championAction : null
+              }
+            },
+            championAction,
+            gated: false,
+            contestedGoals: [...observation.golemMarket]
+          };
+        }
+      }
       const gateStart = performance.now();
       const survival = golemSurvivalModel(observation, 6);
       const risk = competitionRisk(observation, {
@@ -4745,17 +5345,25 @@
             budgetExhausted: false,
             omTimeMs: 0,
             cloneMs: 0,
+            cloneMsMeasured: false,
             legalGenMs: phase.legalGenMs,
             rootActions: legalRootActions.length,
             candidateCount: 0,
-            worldsUsed: worldCount,
+            worldsUsed: 0,
+            worldsConfigured: worldCount,
             planMs: phase.planMs,
             rootSimMs: phase.rootSimMs,
             gateMs: phase.gateMs,
             screenMs: 0,
             rolloutMs: 0,
             aggregateMs: 0,
-            rootSimulationsCreated: rootsCreated
+            rootSimulationsCreated: rootsCreated,
+            batchesStarted: 0,
+            trialWindowMs: 0,
+            zeroTrialReason: "not-gated",
+            overBudget: false,
+            screenGoalScope: o.screenGoalScope ?? "all",
+            batchAdmission: o.batchAdmission ?? "legacy"
           },
           championAction,
           gated: false,
@@ -4764,30 +5372,82 @@
       }
       const screenStart = performance.now();
       const ctxRoot = heuristicContext(root2.view, CHAMPION_PARAMETERS, NEUTRAL_PROFILE);
-      const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival);
+      const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
+        goalScope: o.screenGoalScope ?? "all",
+        preferredGoal: plan?.preferred ?? null
+      });
       phase.screenMs = performance.now() - screenStart;
       const candidates = [];
+      const candidateSources = [];
       const priorOf = /* @__PURE__ */ new Map();
       const seen = /* @__PURE__ */ new Set();
-      const push = (a) => {
-        if (!a) return;
+      const push = (a, source) => {
+        if (!a) return false;
         const k = actionKey(a);
-        if (seen.has(k)) return;
+        if (seen.has(k)) return false;
         seen.add(k);
         candidates.push(a);
+        candidateSources.push(source);
+        return true;
       };
-      push(championAction);
+      push(championAction, "champion");
       const claimActions = legalRootActions.filter((x) => x.type === "claim");
+      const claimDeltas = /* @__PURE__ */ new Map();
+      const claimGross = /* @__PURE__ */ new Map();
+      for (const a of claimActions) {
+        const scored = immediateOfficialScoreDelta(observation, a);
+        if (!scored) continue;
+        claimDeltas.set(actionKey(a), scored.delta);
+        const goal = a.type === "claim" ? GOLEM_BY_ID[observation.golemMarket[a.index]] : null;
+        const nonYellowCost = goal ? goal.cost.slice(1).reduce((s, x) => s + x, 0) : 0;
+        claimGross.set(actionKey(a), scored.delta + nonYellowCost);
+      }
+      let bestClaim = null;
+      for (const a of claimActions) {
+        const delta = claimDeltas.get(actionKey(a));
+        if (delta === void 0) continue;
+        if (!bestClaim || delta > bestClaim.delta) {
+          bestClaim = { action: a, delta, gross: claimGross.get(actionKey(a)) ?? delta };
+        }
+      }
+      if (o.ensureBestClaimCandidate && bestClaim) push(bestClaim.action, "claim");
       if (o.claimRanking === "prior") {
         const priorOfAction = new Map(claimActions.map((a) => [actionKey(a), screened.find((s) => actionKey(s.action) === actionKey(a))?.prior ?? -Infinity]));
         claimActions.sort((x, y) => (priorOfAction.get(actionKey(y)) ?? -Infinity) - (priorOfAction.get(actionKey(x)) ?? -Infinity));
       }
-      for (const a of claimActions.slice(0, 2)) push(a);
-      for (const { action: action2, prior } of screened) {
+      for (const a of claimActions.slice(0, 2)) push(a, "claim");
+      for (const { action: action2 } of screened) {
         if (candidates.length >= (o.candidateCap ?? 4)) break;
-        push(action2);
+        push(action2, "prior");
       }
       if (!candidates.length) fail6("候选构造为空（规则层缺陷）");
+      const nearTerminalPolicy = o.nearTerminalCandidate ?? "off";
+      const terminalRisk = nearTerminalPolicy === "off" ? null : nearTerminalRisk(observation);
+      let injected = null;
+      let replacedAction = null;
+      let injectionMode = nearTerminalPolicy;
+      if (terminalRisk?.risky && injectionMode !== "off") {
+        const best = maxImmediateScoreAction(observation, legalRootActions);
+        if (best && !seen.has(actionKey(best.action))) {
+          injected = best;
+          if (injectionMode === "add") {
+            push(best.action, "near-terminal");
+          } else {
+            let idx = candidateSources.lastIndexOf("prior");
+            if (idx < 0) idx = candidateSources.lastIndexOf("claim");
+            if (idx >= 0) {
+              replacedAction = candidates[idx];
+              seen.delete(actionKey(candidates[idx]));
+              candidates[idx] = best.action;
+              candidateSources[idx] = "near-terminal";
+              seen.add(actionKey(best.action));
+            } else {
+              push(best.action, "near-terminal");
+              injectionMode = "add";
+            }
+          }
+        }
+      }
       for (const { action: action2, prior } of screened) priorOf.set(actionKey(action2), prior);
       const championKey = championAction ? actionKey(championAction) : null;
       if (worldCount > 1) {
@@ -4823,17 +5483,38 @@
             budgetExhausted: false,
             omTimeMs: 0,
             cloneMs: 0,
+            cloneMsMeasured: false,
             legalGenMs: phase.legalGenMs,
             rootActions: legalRootActions.length,
             candidateCount: candidates.length,
-            worldsUsed: worldCount,
+            worldsUsed: 0,
+            worldsConfigured: worldCount,
+            batchesStarted: 0,
+            trialWindowMs: 0,
+            zeroTrialReason: "rerank-no-rollout",
+            overBudget: false,
+            screenGoalScope: o.screenGoalScope ?? "all",
+            batchAdmission: o.batchAdmission ?? "legacy",
             planMs: phase.planMs,
             rootSimMs: phase.rootSimMs,
             gateMs: phase.gateMs,
             screenMs: phase.screenMs,
             rolloutMs: 0,
             aggregateMs: 0,
-            rootSimulationsCreated: rootsCreated
+            rootSimulationsCreated: rootsCreated,
+            ...terminalRisk && injectionMode !== "off" ? {
+              nearTerminal: {
+                policy: nearTerminalPolicy,
+                risky: terminalRisk.risky,
+                reason: terminalRisk.reason,
+                threshold: terminalRisk.threshold,
+                threatenedSeats: terminalRisk.threatenedSeats,
+                injected: injected ? { action: injected.action, delta: injected.delta, scoreAfter: injected.scoreAfter, discarded: injected.discarded } : null,
+                replacedAction,
+                mode: injectionMode,
+                candidateSources
+              }
+            } : {}
           },
           championAction,
           gated: true,
@@ -4849,9 +5530,18 @@
         evaluator,
         horizon: o.horizon ?? 48,
         om,
-        profileName: o.profileName
+        profileName: o.profileName,
+        params: o.championParameters ?? CHAMPION_PARAMETERS,
+        endgameDiscard: o.endgameDiscard === true
       };
-      const aggregates = candidates.map((action2) => ({ action: action2, trials: 0, sum: 0, sqSum: 0 }));
+      const aggregates = candidates.map((action2) => ({
+        action: action2,
+        trials: 0,
+        sum: 0,
+        sqSum: 0,
+        // AI7 C3：按 (world, replica) 记录逐试验值，供配对差统计（CRN）。
+        pairs: /* @__PURE__ */ new Map()
+      }));
       const trialsLog = o.collectTrials === true ? [] : void 0;
       const omTimeMs = { value: 0 };
       let transitions = 0;
@@ -4859,9 +5549,17 @@
       const workUnits = o.workUnits;
       const budgetMs = o.budgetMs ?? (workUnits !== void 0 ? void 0 : 100);
       const trialDeadline = workUnits || budgetMs === void 0 ? void 0 : t0 + budgetMs * 0.95;
-      const PER_TRIAL_FLOOR_MS = 5;
+      const admission = o.batchAdmission ?? "legacy";
       const M = candidates.length;
+      const floors = batchFloors(admission, worldCount, M);
+      const PER_TRIAL_FLOOR_MS = floors.trialFloorMs;
+      const fullBatchFloorMs = floors.fullBatchFloorMs;
+      const minBatchFloorMs = floors.minBatchFloorMs;
       const rolloutStart = performance.now();
+      const rolloutStartOffsetMs = rolloutStart - t0;
+      const trialWindowMs = trialDeadline === void 0 ? null : Math.max(0, trialDeadline - rolloutStart);
+      const worldsUsedSet = /* @__PURE__ */ new Set();
+      let batchesStarted = 0;
       const runTrial = (index, world, replica) => {
         const entry = aggregates[index];
         const forkStart = performance.now();
@@ -4873,26 +5571,47 @@
         entry.trials += 1;
         entry.sum += outcome.value;
         entry.sqSum += outcome.value * outcome.value;
+        entry.pairs.set(`${world}:${replica}`, outcome.value);
         trialsLog?.push({ actionIndex: index, world, replica, value: outcome.value });
         return outcome.value;
       };
-      const runBatch = (replica) => {
-        for (let w = 0; w < worldCount; w++) {
+      const runBatch = (replica, worldsInBatch) => {
+        for (let w = 0; w < worldsInBatch; w++) {
+          worldsUsedSet.add(w);
           for (let i = 0; i < M; i++) runTrial(i, w, replica);
         }
+        batchesStarted += 1;
       };
       if (workUnits !== void 0) {
         const passes = Math.max(1, Math.floor(workUnits / (worldCount * M)));
-        for (let r = 0; r < passes; r++) runBatch(r);
-      } else {
-        const batchFloorMs = M * PER_TRIAL_FLOOR_MS;
+        for (let r = 0; r < passes; r++) runBatch(r, worldCount);
+      } else if (admission === "legacy") {
+        const legacyBatchFloorMs = M * PER_TRIAL_FLOOR_MS;
         let pass = 0;
-        while (pass < 1e5 && trialDeadline !== void 0 && performance.now() + batchFloorMs <= trialDeadline) {
-          runBatch(pass);
+        while (pass < 1e5 && trialDeadline !== void 0 && performance.now() + legacyBatchFloorMs <= trialDeadline) {
+          runBatch(pass, worldCount);
+          pass += 1;
+        }
+      } else {
+        let pass = 0;
+        while (pass < 1e5 && trialDeadline !== void 0) {
+          const worldsFit = fitWorlds(trialDeadline - performance.now(), worldCount, M);
+          if (worldsFit === 0) break;
+          runBatch(pass, worldsFit);
           pass += 1;
         }
       }
       phase.rolloutMs = performance.now() - rolloutStart;
+      const wallClockMode = workUnits === void 0 && budgetMs !== void 0;
+      const stoppedByDeadline = wallClockMode && trialDeadline !== void 0 && (batchesStarted === 0 ? rolloutStart >= trialDeadline : performance.now() + minBatchFloorMs > trialDeadline);
+      let zeroTrialReason = null;
+      if (rollouts === 0) {
+        if (trialDeadline === void 0) zeroTrialReason = "no-window";
+        else if (rolloutStart >= trialDeadline) zeroTrialReason = "plan-and-screen-exhausted";
+        else if (trialWindowMs !== null && trialWindowMs < minBatchFloorMs) zeroTrialReason = "batch-floor-not-met";
+        else zeroTrialReason = "no-batch-started";
+      }
+      const budgetExhausted = wallClockMode && (rollouts === 0 ? zeroTrialReason === "plan-and-screen-exhausted" || zeroTrialReason === "batch-floor-not-met" : true);
       const aggregateStart = performance.now();
       const evaluations = aggregates.map((a) => {
         const mean = a.trials > 0 ? a.sum / a.trials : 0;
@@ -4902,16 +5621,64 @@
       }).sort((x, y) => y.mean - x.mean);
       const robustScoreOf = (e) => e.trials > 0 ? e.mean - ROBUST_LAMBDA2 * (e.se ?? 0) : -Infinity;
       const championEval = championKey ? evaluations.find((e) => actionKey(e.action) === championKey) : void 0;
+      const aggregateOf = (key) => aggregates.find((a) => actionKey(a.action) === key);
+      const arbitrationMode = o.arbitration ?? "legacy";
+      const baseMargin = o.overrideMargin ?? 0.02;
+      const protectMargin = o.claimProtectMargin ?? 0.1;
+      const protectDelta = o.claimProtectDelta ?? 10;
+      const protectedKeys = new Set(
+        o.claimProtection === true ? [...claimGross.entries()].filter(([, gross]) => gross >= protectDelta).map(([key]) => key) : []
+      );
+      const protectedClaims = [...protectedKeys];
+      const championProtected = championKey !== null && protectedKeys.has(championKey);
+      const minChallengerTrials = Math.max(
+        arbitrationMode === "paired" ? o.minPairedTrials ?? 4 : 2,
+        admission === "balanced" && worldsUsedSet.size < worldCount ? 3 : 0
+      );
+      const requiredMarginOf = (e) => baseMargin + (protectedKeys.size > 0 && !protectedKeys.has(actionKey(e.action)) ? protectMargin : 0);
+      const pairedZ = o.pairedZ ?? 1.645;
+      const pairedDiffOf = (challenger) => {
+        const championAgg = championKey ? aggregateOf(championKey) : void 0;
+        const challengerAgg = aggregateOf(actionKey(challenger.action));
+        if (!championAgg || !challengerAgg) return { n: 0, mean: null, se: null, lcb: null };
+        const diffs = [];
+        for (const [pair, value] of challengerAgg.pairs) {
+          const base = championAgg.pairs.get(pair);
+          if (base !== void 0) diffs.push(value - base);
+        }
+        const n = diffs.length;
+        if (!n) return { n, mean: null, se: null, lcb: null };
+        const mean = diffs.reduce((s, x) => s + x, 0) / n;
+        if (n < 2) return { n, mean, se: null, lcb: null };
+        const variance = diffs.reduce((s, x) => s + (x - mean) * (x - mean), 0) / (n - 1);
+        const se = Math.sqrt(variance / n);
+        return { n, mean, se, lcb: mean - pairedZ * se };
+      };
       let bestEval = evaluations[0];
       if (championEval && championEval.trials > 0) {
-        const championScore = robustScoreOf(championEval);
         let challenger = championEval;
-        for (const e of evaluations) {
-          if (actionKey(e.action) === championKey) continue;
-          if (e.trials < 2) continue;
-          if (robustScoreOf(e) > robustScoreOf(challenger)) challenger = e;
+        if (arbitrationMode === "paired") {
+          let bestLcb = -Infinity;
+          for (const e of evaluations) {
+            if (actionKey(e.action) === championKey) continue;
+            const stats = pairedDiffOf(e);
+            if (stats.n < minChallengerTrials || stats.lcb === null) continue;
+            if (stats.mean === null || stats.mean <= 0) continue;
+            if (stats.lcb > requiredMarginOf(e) && stats.lcb > bestLcb) {
+              bestLcb = stats.lcb;
+              challenger = e;
+            }
+          }
+          bestEval = challenger === championEval ? championEval : challenger;
+        } else {
+          const championScore = robustScoreOf(championEval);
+          for (const e of evaluations) {
+            if (actionKey(e.action) === championKey) continue;
+            if (e.trials < minChallengerTrials) continue;
+            if (robustScoreOf(e) > robustScoreOf(challenger)) challenger = e;
+          }
+          bestEval = robustScoreOf(challenger) > championScore + requiredMarginOf(challenger) ? challenger : championEval;
         }
-        bestEval = robustScoreOf(challenger) > championScore + (o.overrideMargin ?? 0.02) ? challenger : championEval;
       } else if (championEval) {
         bestEval = championEval;
       }
@@ -4919,7 +5686,7 @@
       const rejected = evaluations.filter((e) => e !== bestEval && e.trials > 0).slice(0, 3).map((e) => ({
         action: e.action,
         mean: e.mean,
-        why: e === championEval ? `冠军行动（稳健分 ${robustScoreOf(e).toFixed(3)}）未被超越（边际 ${(o.overrideMargin ?? 0.02).toFixed(3)}）` : `联合模拟评价值（未校准）${e.mean.toFixed(3)} 低于选定行动（样本 ${e.trials}）`
+        why: e === championEval ? `冠军行动（稳健分 ${robustScoreOf(e).toFixed(3)}）未被超越（边际 ${requiredMarginOf(e).toFixed(3)}）` : `联合模拟评价值（未校准）${e.mean.toFixed(3)} 低于选定行动（样本 ${e.trials}）`
       }));
       const elapsedMs = performance.now() - t0;
       const trace = {
@@ -4929,9 +5696,35 @@
         opponentSamples: []
       };
       const golemTag = (a) => a.type === "claim" && GOLEM_BY_ID[observation.golemMarket[a.index]] ? `（${observation.golemMarket[a.index]}，${GOLEM_BY_ID[observation.golemMarket[a.index]].points} 分）` : "";
+      const injectionTag = injected ? `；临近终局候选注入 ${actionKey(injected.action)}（当步正式净分 +${injected.delta}，${injectionMode}${replacedAction ? "，替换先验候选" : ""}）` : "";
+      const arbitrationStats = arbitrationMode !== "legacy" || o.claimProtection === true || o.ensureBestClaimCandidate === true ? {
+        mode: arbitrationMode,
+        minTrials: minChallengerTrials,
+        pairedZ: arbitrationMode === "paired" ? pairedZ : null,
+        championProtected,
+        protectedClaims,
+        candidates: evaluations.map((e) => {
+          const p = pairedDiffOf(e);
+          return {
+            action: e.action,
+            trials: e.trials,
+            pairedTrials: p.n,
+            meanDiff: p.mean,
+            seDiff: p.se,
+            lowerConfidenceBound: p.lcb,
+            requiredMargin: requiredMarginOf(e)
+          };
+        })
+      } : void 0;
+      const claimGuardStats = o.claimProtection === true || o.ensureBestClaimCandidate === true ? {
+        enabled: o.claimProtection === true,
+        bestClaim: bestClaim ? { action: bestClaim.action, delta: bestClaim.delta, gross: bestClaim.gross, inCandidates: seen.has(actionKey(bestClaim.action)) } : null,
+        championProtected
+      } : void 0;
+      const guardTag = claimGuardStats?.bestClaim ? `；认领保护 ${claimGuardStats.championProtected ? "冠军受保护" : "候选含受保护认领"}（最佳认领 ${claimGuardStats.bestClaim.delta} 分）` : "";
       return {
         action: bestEval.action,
-        reason: `js5 ${gated ? "联合仲裁" : "冠军直通"}：${bestEval === championEval ? "保持冠军行动" : "覆盖为联合最优"}（联合模拟评价值 ${bestEval.mean.toFixed(3)}，未校准胜率近似，${bestEval.trials} 轨迹 × ${worldCount} 世界，争议目标 ${risk.contestedGoals.join(",") || "无"}）${golemTag(bestEval.action)}`,
+        reason: `js5 ${gated ? "联合仲裁" : "冠军直通"}：${bestEval === championEval ? "保持冠军行动" : "覆盖为联合最优"}（联合模拟评价值 ${bestEval.mean.toFixed(3)}，未校准胜率近似，${bestEval.trials} 轨迹，实际世界 ${worldsUsedSet.size}/${worldCount}，争议目标 ${risk.contestedGoals.join(",") || "无"}）${golemTag(bestEval.action)}${injectionTag}${guardTag}`,
         evaluations,
         chosen: { action: bestEval.action, prior: 0, trials: bestEval.trials, mean: bestEval.mean, se: bestEval.se },
         trace,
@@ -4939,20 +5732,50 @@
           rollouts,
           transitions,
           elapsedMs,
-          budgetExhausted: !workUnits && budgetMs !== void 0 && elapsedMs >= budgetMs * 0.98,
+          budgetExhausted,
           omTimeMs: omTimeMs.value,
           cloneMs: 0,
+          cloneMsMeasured: false,
           legalGenMs: phase.legalGenMs,
           rootActions: legalRootActions.length,
           candidateCount: M,
-          worldsUsed: worldCount,
+          worldsUsed: worldsUsedSet.size,
+          worldsConfigured: worldCount,
+          batchesStarted,
+          trialWindowMs,
+          fullBatchFloorMs,
+          minBatchFloorMs,
+          rolloutStartMs: rolloutStartOffsetMs,
+          zeroTrialReason,
+          overBudget: wallClockMode && budgetMs !== void 0 && elapsedMs > budgetMs,
+          stoppedByDeadline,
+          overrideMinTrials: minChallengerTrials,
+          screenGoalScope: o.screenGoalScope ?? "all",
+          batchAdmission: admission,
+          accountingMs: phase.planMs + phase.rootSimMs + phase.legalGenMs + phase.gateMs + phase.screenMs + phase.rolloutMs + phase.aggregateMs,
+          unaccountedMs: Math.max(0, elapsedMs - (phase.planMs + phase.rootSimMs + phase.legalGenMs + phase.gateMs + phase.screenMs + phase.rolloutMs + phase.aggregateMs)),
           planMs: phase.planMs,
           rootSimMs: phase.rootSimMs,
           gateMs: phase.gateMs,
           screenMs: phase.screenMs,
           rolloutMs: phase.rolloutMs,
           aggregateMs: phase.aggregateMs,
-          rootSimulationsCreated: rootsCreated
+          rootSimulationsCreated: rootsCreated,
+          ...terminalRisk && injectionMode !== "off" ? {
+            nearTerminal: {
+              policy: nearTerminalPolicy,
+              risky: terminalRisk.risky,
+              reason: terminalRisk.reason,
+              threshold: terminalRisk.threshold,
+              threatenedSeats: terminalRisk.threatenedSeats,
+              injected: injected ? { action: injected.action, delta: injected.delta, scoreAfter: injected.scoreAfter, discarded: injected.discarded } : null,
+              replacedAction,
+              mode: injectionMode,
+              candidateSources
+            }
+          } : {},
+          ...arbitrationStats ? { arbitration: arbitrationStats } : {},
+          ...claimGuardStats ? { claimGuard: claimGuardStats } : {}
         },
         ...trialsLog ? { trials: trialsLog } : {},
         championAction,
@@ -4963,6 +5786,24 @@
   };
   function resolveChampionGuidedOptions(o) {
     const base = o ?? {};
+    const nearTerminalCandidate = base.nearTerminalCandidate ?? "off";
+    if (!["off", "replace", "add"].includes(nearTerminalCandidate)) fail6(`未知 nearTerminalCandidate：${String(nearTerminalCandidate)}`);
+    const screenGoalScope = base.screenGoalScope ?? "all";
+    if (!["all", "preferred"].includes(screenGoalScope)) fail6(`未知 screenGoalScope：${String(screenGoalScope)}`);
+    const batchAdmission = base.batchAdmission ?? "legacy";
+    if (!["legacy", "balanced"].includes(batchAdmission)) fail6(`未知 batchAdmission：${String(batchAdmission)}`);
+    const endgameSolver = base.endgameSolver ?? "off";
+    if (!["off", "exact"].includes(endgameSolver)) fail6(`未知 endgameSolver：${String(endgameSolver)}`);
+    const arbitration = base.arbitration ?? "legacy";
+    if (!["legacy", "paired"].includes(arbitration)) fail6(`未知 arbitration：${String(arbitration)}`);
+    const minPairedTrials = base.minPairedTrials ?? 4;
+    if (!Number.isSafeInteger(minPairedTrials) || minPairedTrials < 2) fail6(`minPairedTrials 必须为 ≥2 的整数：${String(minPairedTrials)}`);
+    const pairedZ = base.pairedZ ?? 1.645;
+    if (!Number.isFinite(pairedZ) || pairedZ < 0) fail6(`pairedZ 必须为非负有限数：${String(pairedZ)}`);
+    const claimProtectDelta = base.claimProtectDelta ?? 10;
+    if (!Number.isFinite(claimProtectDelta) || claimProtectDelta < 0) fail6(`claimProtectDelta 必须为非负有限数：${String(claimProtectDelta)}`);
+    const claimProtectMargin = base.claimProtectMargin ?? 0.1;
+    if (!Number.isFinite(claimProtectMargin) || claimProtectMargin < 0) fail6(`claimProtectMargin 必须为非负有限数：${String(claimProtectMargin)}`);
     return {
       ...base,
       championStructure: base.championStructure ?? "beam-rollout",
@@ -4970,11 +5811,171 @@
       overrideMargin: base.overrideMargin ?? 0.02,
       candidateCap: base.candidateCap ?? 4,
       contestThreshold: base.contestThreshold ?? 0.85,
-      claimRanking: base.claimRanking ?? "enumeration"
+      claimRanking: base.claimRanking ?? "enumeration",
+      nearTerminalCandidate,
+      screenGoalScope,
+      batchAdmission,
+      endgameSolver,
+      endgameDiscard: base.endgameDiscard === true,
+      arbitration,
+      minPairedTrials,
+      pairedZ,
+      claimProtection: base.claimProtection === true,
+      claimProtectDelta,
+      claimProtectMargin,
+      ensureBestClaimCandidate: base.ensureBestClaimCandidate === true
     };
   }
   function createChampionGuidedPlanner() {
     return new ChampionGuidedPlanner();
+  }
+
+  // src/js/config.ts
+  var JOINT_SEARCH_DEFAULTS = {
+    championStructure: "beam-rollout",
+    gateMode: "auto",
+    contestThreshold: 0.85,
+    candidateCap: 4,
+    overrideMargin: 0.02,
+    claimRanking: "enumeration",
+    nearTerminalCandidate: "off",
+    screenGoalScope: "all",
+    batchAdmission: "legacy",
+    endgameSolver: "off",
+    endgameDiscard: false,
+    arbitration: "legacy",
+    minPairedTrials: 4,
+    pairedZ: 1.645,
+    claimProtection: false,
+    claimProtectDelta: 10,
+    claimProtectMargin: 0.1,
+    ensureBestClaimCandidate: false,
+    variant: "joint-rollout",
+    worlds: 4,
+    horizon: 48,
+    opponentMode: "rule",
+    evaluator: "L2"
+  };
+  var PRESET_FIELDS = [
+    "championStructure",
+    "gateMode",
+    "contestThreshold",
+    "candidateCap",
+    "overrideMargin",
+    "claimRanking",
+    "nearTerminalCandidate",
+    "screenGoalScope",
+    "batchAdmission",
+    "endgameSolver",
+    "endgameDiscard",
+    "arbitration",
+    "minPairedTrials",
+    "pairedZ",
+    "claimProtection",
+    "claimProtectDelta",
+    "claimProtectMargin",
+    "ensureBestClaimCandidate",
+    "variant",
+    "worlds",
+    "horizon",
+    "opponentMode",
+    "evaluator"
+  ];
+  function engineVariantParameters(seatPolicy) {
+    const { adapter: _adapter, jointVersion: _jointVersion, budgetMs: _budgetMs, ...base } = CHAMPION_PARAMETERS;
+    return {
+      ...base,
+      id: seatPolicy === "stratified" ? "ai7-engine-v2-seat" : "ai7-engine-v2",
+      engineModel: "v2",
+      seatPolicy
+    };
+  }
+  var AI7_CANDIDATE_PARAMETERS = Object.freeze({
+    "engine-v2": engineVariantParameters("flat"),
+    "engine-v2-seat": engineVariantParameters("stratified")
+  });
+  function versionOptionPreset(versionId) {
+    const version = JOINT_VERSIONS[versionId];
+    if (!version) throw new Error(`未知联合规划版本：${String(versionId)}`);
+    const preset = { ...version.optionPreset ?? {} };
+    if (version.parameterVariant) {
+      preset.championParameters = AI7_CANDIDATE_PARAMETERS[version.parameterVariant];
+    }
+    return preset;
+  }
+  function mergeJointOptions(versionId, options = {}) {
+    return { ...versionOptionPreset(versionId), ...options };
+  }
+  function resolveJointConfig(versionId, options = {}, profileName) {
+    const version = JOINT_VERSIONS[versionId];
+    if (!version) throw new Error(`未知联合规划版本：${String(versionId)}`);
+    const preset = versionOptionPreset(versionId);
+    const workUnits = typeof options.workUnits === "number" ? options.workUnits : null;
+    const budgetMs = workUnits === null ? typeof options.budgetMs === "number" ? options.budgetMs : version.kind === "champion-guided" ? 100 : null : null;
+    const merged = {
+      ...JOINT_SEARCH_DEFAULTS,
+      ...Object.fromEntries(PRESET_FIELDS.filter((k) => preset[k] !== void 0).map((k) => [k, preset[k]])),
+      ...Object.fromEntries(PRESET_FIELDS.filter((k) => options[k] !== void 0).map((k) => [k, options[k]]))
+    };
+    const championParameters = options.championParameters ?? preset.championParameters ?? CHAMPION_PARAMETERS;
+    return {
+      versionId,
+      kind: version.kind,
+      algorithm: version.kind === "champion-guided" ? "champion-guided" : version.kind === "joint" ? String(merged.variant) === "joint-tree" ? "joint-tree" : "joint-rollout" : "champion-contest",
+      variant: String(merged.variant),
+      championStructure: String(merged.championStructure),
+      championParametersId: championParameters.id,
+      acquisitionVariant: championParameters.acquisitionVariant ?? null,
+      profileName: profileName ?? null,
+      budgetMode: workUnits !== null ? "fixed-work" : budgetMs !== null ? "wall-clock" : "wall-clock",
+      budgetMs,
+      workUnits,
+      simSeed: typeof options.simSeed === "number" ? options.simSeed : 0,
+      horizon: Number(merged.horizon),
+      worlds: Number(merged.worlds),
+      opponentMode: String(merged.opponentMode),
+      evaluator: String(merged.evaluator),
+      gateMode: String(merged.gateMode),
+      contestThreshold: Number(merged.contestThreshold),
+      candidateCap: Number(merged.candidateCap),
+      overrideMargin: Number(merged.overrideMargin),
+      claimRanking: String(merged.claimRanking),
+      nearTerminalCandidate: String(merged.nearTerminalCandidate),
+      screenGoalScope: String(merged.screenGoalScope),
+      batchAdmission: String(merged.batchAdmission),
+      endgameSolver: String(merged.endgameSolver),
+      endgameDiscard: Boolean(merged.endgameDiscard),
+      arbitration: String(merged.arbitration),
+      minPairedTrials: Number(merged.minPairedTrials),
+      pairedZ: merged.pairedZ == null ? null : Number(merged.pairedZ),
+      claimProtection: Boolean(merged.claimProtection),
+      claimProtectDelta: Number(merged.claimProtectDelta),
+      claimProtectMargin: Number(merged.claimProtectMargin),
+      ensureBestClaimCandidate: Boolean(merged.ensureBestClaimCandidate),
+      engineModel: championParameters.engineModel ?? "v1",
+      seatPolicy: championParameters.seatPolicy ?? "flat",
+      preset,
+      overrides: Object.fromEntries(PRESET_FIELDS.filter((k) => options[k] !== void 0).map((k) => [k, options[k]]))
+    };
+  }
+  function fnv1a32(text) {
+    let hash = 2166136261;
+    for (let i = 0; i < text.length; i++) {
+      hash ^= text.charCodeAt(i);
+      hash = Math.imul(hash, 16777619) >>> 0;
+    }
+    return hash.toString(16).padStart(8, "0");
+  }
+  function stableStringify(value) {
+    if (Array.isArray(value)) return `[${value.map(stableStringify).join(",")}]`;
+    if (value && typeof value === "object") {
+      return `{${Object.keys(value).sort().map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(",")}}`;
+    }
+    return JSON.stringify(value);
+  }
+  function jointConfigHash(config) {
+    const { hash: _ignored, ...payload } = config;
+    return fnv1a32(stableStringify(payload));
   }
 
   // src/js/adapter.ts
@@ -4995,6 +5996,9 @@
     const seat = options.playerId ?? game2.current;
     if (game2.phase === "finished") throw new Error("游戏结束，无法决策");
     if (game2.current !== seat) throw new Error("决策席位不是当前行动者");
+    const resolvedOptions = mergeJointOptions(versionId, options);
+    const baseConfig = resolveJointConfig(versionId, resolvedOptions, options.profile?.name);
+    const config = { ...baseConfig, hash: jointConfigHash(baseConfig) };
     if (version.kind === "champion-contest") {
       const beamBase = { ...CHAMPION_PARAMETERS };
       const wasAdapter = beamBase.adapter !== void 0;
@@ -5006,20 +6010,26 @@
         structure: "beam-contest",
         profile: options.profile
       });
-      return { action: response.action, reason: `JS1: ${response.reason}`, joint: null, version: versionId };
+      return { action: response.action, reason: `JS1: ${response.reason}`, joint: null, version: versionId, config };
     }
     if (game2.phase === "overflow") {
       const p = game2.players[seat];
-      const discarded = trimStock(p.stock, game2.golemMarket, null, CHAMPION_PARAMETERS).discarded;
-      return { action: { type: "discard", colors: discarded }, reason: "溢出弃置（冠军 trimStock 口径）", joint: null, version: versionId };
+      const colors = resolvedOptions.endgameDiscard === true && game2.triggerPlayer !== null ? endgameDiscardColors(p.stock, count(p.stock) - 10) : trimStock(p.stock, game2.golemMarket, null, CHAMPION_PARAMETERS).discarded;
+      return {
+        action: { type: "discard", colors },
+        reason: resolvedOptions.endgameDiscard === true && game2.triggerPlayer !== null ? "溢出弃置（终局官方得分口径：先弃黄，保留非黄）" : "溢出弃置（冠军 trimStock 口径）",
+        joint: null,
+        version: versionId,
+        config
+      };
     }
     const observation = buildObservation(game2, seat);
     const planner = plannerFor(versionId);
     const decision = version.kind === "champion-guided" ? planner.decide(observation, {
-      ...options,
+      ...resolvedOptions,
       profileName: options.profile?.name
     }) : planner.decide(observation, {
-      ...options,
+      ...resolvedOptions,
       profileName: options.profile?.name
     });
     const action2 = decision.action;
@@ -5030,9 +6040,9 @@
       const legal = enumerateLegalActions(sim.view, { dedupe: true });
       const fallback = legal[0];
       if (!fallback) throw new Error("联合规划决策非法且无合法回退");
-      return { action: fallback, reason: "联合规划决策非法，回退首个合法行动（缺陷暴露）", joint: decision, version: versionId };
+      return { action: fallback, reason: "联合规划决策非法，回退首个合法行动（缺陷暴露）", joint: decision, version: versionId, config };
     }
-    return { action: action2, reason: decision.reason, joint: decision, version: versionId };
+    return { action: action2, reason: decision.reason, joint: decision, version: versionId, config };
   }
 
   // src/ai/decision.ts
@@ -5683,7 +6693,7 @@
     if (game.phase === "overflow" && !modal) modal = { kind: "discard", colors: [] };
     const p = game.players[game.current];
     const idx = Number(target.dataset.index);
-    const color = Number(target.dataset.color);
+    const color2 = Number(target.dataset.color);
     if (type === "rest") {
       action({ type: "rest" });
       return;
@@ -5724,10 +6734,10 @@
     }
     if (!modal) return;
     if (modal.kind === "upgrade") {
-      if (type === "upgrade-step" && modal.steps.length < MERCHANT_BY_ID[modal.id].steps && color <= 2 && modal.draft[color] > 0) {
-        modal.draft[color]--;
-        modal.draft[color + 1]++;
-        modal.steps.push(color);
+      if (type === "upgrade-step" && modal.steps.length < MERCHANT_BY_ID[modal.id].steps && color2 <= 2 && modal.draft[color2] > 0) {
+        modal.draft[color2]--;
+        modal.draft[color2 + 1]++;
+        modal.steps.push(color2);
         render();
         return;
       }
@@ -5761,9 +6771,9 @@
     }
     if (modal.kind === "acquire") {
       if (type === "payment-pick" && modal.payment.length < modal.index) {
-        const used = modal.payment.filter((c) => c === color).length;
-        if (used < p.stock[color]) {
-          modal.payment.push(color);
+        const used = modal.payment.filter((c) => c === color2).length;
+        if (used < p.stock[color2]) {
+          modal.payment.push(color2);
           render();
         }
         return;
@@ -5780,9 +6790,9 @@
     }
     if (modal.kind === "discard") {
       if (type === "discard-pick" && modal.colors.length < count(p.stock) - 10) {
-        const used = modal.colors.filter((c) => c === color).length;
-        if (used < p.stock[color]) {
-          modal.colors.push(color);
+        const used = modal.colors.filter((c) => c === color2).length;
+        if (used < p.stock[color2]) {
+          modal.colors.push(color2);
           render();
         }
         return;

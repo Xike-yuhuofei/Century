@@ -21,8 +21,9 @@ import { GOLEM_BY_ID, MERCHANT_BY_ID, type Stock } from '../data.js';
 import { has, tradeLimit, type Action, type Color, type MarketMerchant } from '../engine.js';
 import type { AIParameters } from './parameters.js';
 import type { AIObservation } from './observation.js';
-import { weighted, stockCount, cloneStock, engineValue, publicKnowledge, futureDeckSupport } from './knowledge.js';
+import { weighted, stockCount, cloneStock, publicKnowledge, futureDeckSupport } from './knowledge.js';
 import { goalGap, keepValue, trimStock, acquisitionValue } from './evaluator.js';
+import { engineValueFor, engineModelContext, type EngineModelContext } from './engine-model.js';
 import { profileFor, type Profile } from './profiles.js';
 import { pressureModel, golemSurvivalModel, type PressureModel } from './opponent-model.js';
 import { adaptiveWidth, structureRng, ROLLOUT_DEFAULTS, type AIStructure } from './structures.js';
@@ -222,16 +223,24 @@ function searchGrade(
   pressure: PressureModel,
   params: AIParameters,
   futureSupport: number,
+  model: EngineModelContext | null,
 ): number {
   const goal = GOLEM_BY_ID[preferred];
   const gap = goalGap(state.stock, goal);
   const restFactor = state.path.at(-1)?.type === 'rest' ? params.restWeight : 1;
+  // AI7 C2：获取支付机会成本（v2）——付出的非黄水晶终局各值 1 分，
+  // 黄水晶按 0.5 分的转换机会成本计。v1 不启用（逐位不变）。
+  const lastAction = state.path.at(-1);
+  const paymentCost = params.engineModel === 'v2' && lastAction?.type === 'acquire'
+    ? lastAction.payment.reduce<number>((sum, c) => sum + (c === 0 ? 0.5 : 1), 0)
+    : 0;
   return -gap * 2.6 + weighted(state.stock) * .13 * params.capacityWeight
-    + engineValue(state, preferred) * stage * .22 * profile.engine * params.engineWeight
+    + engineValueFor(state, preferred, params, model) * stage * .22 * profile.engine * params.engineWeight
     + futureSupport * stage * .45 * profile.engine * params.engineWeight
-    + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params), 0) * stage * .35
+    + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params, model), 0) * stage * .35
     - state.steps * .35 * profile.tempo * params.tempoWeight * restFactor
-    - state.acquired * .15;
+    - state.acquired * .15
+    - paymentCost * .55;
 }
 
 /** 完成路线评分：单位行动得分效率。 */
@@ -241,11 +250,12 @@ function routeGrade(
   stage: number,
   profile: Profile,
   params: AIParameters,
+  model: EngineModelContext | null,
 ): number {
   // gained 可能包括同一路径上先认领其他公开魔像取得的得分。
   return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + .65, .90)
     + weighted(state.stock) * .055 * params.capacityWeight
-    + engineValue(state, preferred) * stage * .085 * profile.engine * params.engineWeight;
+    + engineValueFor(state, preferred, params, model) * stage * .085 * profile.engine * params.engineWeight;
 }
 
 function completedFirstGoal(state: SearchState, preferred: string): boolean {
@@ -262,10 +272,11 @@ function prospectiveFormula(
   params: AIParameters,
   depth: number,
   futureSupport: number,
+  model: EngineModelContext | null,
 ): number {
   return GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(state.stock, GOLEM_BY_ID[preferred]) / 3)
-    + engineValue(state, preferred) * stage * .12 * profile.engine * params.engineWeight
-    + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params), 0) * stage * .32
+    + engineValueFor(state, preferred, params, model) * stage * .12 * profile.engine * params.engineWeight
+    + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params, model), 0) * stage * .32
     + futureSupport * stage * .25 * profile.engine * params.engineWeight
     - state.steps * .09 * profile.tempo * params.tempoWeight;
 }
@@ -279,9 +290,13 @@ export function choosePlan(
   params: AIParameters,
   profileOverride?: Profile,
   structureInput?: AIStructure,
+  modelInput?: EngineModelContext | null,
 ): (ScoredState & { profile: string; unseenCounts: number[] }) | null {
   const structure = structureInput ?? 'beam-lineage';
   const profile = profileOverride ?? profileFor(view);
+  // AI7 C2/C4：v2 引擎模型上下文（剩余回合/人数竞争）。v1 保持 null，
+  // 全部求值路径调用冻结口径，行为逐位不变。
+  const model = params.engineModel === 'v2' ? (modelInput ?? engineModelContext(view, params)) : null;
   const knowledge = publicKnowledge(view);
   const pressure = pressureModel(view);
   const initial = initialState(view);
@@ -323,11 +338,11 @@ export function choosePlan(
           if (!next) continue;
           if (next.terminal && !completedFirstGoal(next, preferred)) continue;
           if (completedFirstGoal(next, preferred)) {
-            const quality = routeGrade(next, preferred, stage, profile, params) * survivalOf(preferred);
+            const quality = routeGrade(next, preferred, stage, profile, params, model) * survivalOf(preferred);
             if (!solved || quality > solved.quality) solved = { ...next, preferred, quality };
             continue;
           }
-          const quality = searchGrade(next, preferred, stage, profile, pressure, params, futureSupport);
+          const quality = searchGrade(next, preferred, stage, profile, pressure, params, futureSupport, model);
           const scored: ScoredState = { ...next, quality };
           const key = stateKey(next);
           if (!successors.has(key) || successors.get(key)!.quality < quality) successors.set(key, scored);
@@ -355,7 +370,7 @@ export function choosePlan(
       rescue(lineagePlay ?? lineageRest ?? lineageOther);
       rescue(restFallback);
       for (const candidate of beam) {
-        const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport)
+        const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model)
           * survivalOf(preferred);
         if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
       }
@@ -368,7 +383,7 @@ export function choosePlan(
   if ((structure === 'beam-rollout' || structure === 'beam-contest') && !solved && finalBeams.length) {
     const ranked = finalBeams.flatMap(({ preferred, futureSupport, beam }) => beam.map(state => ({
       preferred, state,
-      formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport)
+      formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model)
         * survivalOf(preferred),
     }))).sort((a, b) => b.formula - a.formula).slice(0, ROLLOUT_DEFAULTS.topK);
     let rolloutBest: ScoredState | null = null;

@@ -198,7 +198,10 @@ test('注册表快照：describeVersionRegistry 披露全部身份字段与指�
   const snap = describeVersionRegistry();
   assert.equal(snap.schema, 'century-algorithm-version-registry-v1');
   const ids = snap.versions.map(v => v.registryId);
-  assert.deepEqual(ids, ['legacy-js0', 'legacy-js1', 'joint-js5-frozen', 'live-champion']);
+  assert.deepEqual(ids, [
+    'legacy-js0', 'legacy-js1', 'joint-js5-frozen', 'live-champion',
+    'ai7-endgame', 'ai7-arb', 'ai7-engine', 'ai7-engine-seat',
+  ]);
   for (const v of snap.versions) {
     assert.ok(/^[0-9a-f]{64}$/.test(v.fingerprint), `${v.registryId} 指纹缺失`);
     assert.ok(v.source, `${v.registryId} 缺少来源披露`);

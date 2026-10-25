@@ -134,6 +134,43 @@ export type JointDecisionStats = {
     /** 候选来源（与 evaluations 同序）：champion/claim/prior/near-terminal。 */
     candidateSources: string[];
   };
+  /** AI7 C1：终局精确求解遥测（仅 endgameSolver='exact' 且终局圈填写）。 */
+  endgame?: {
+    solver: 'exact';
+    ownFinalScore: number;
+    guaranteedRank: number;
+    optimisticRank: number;
+    discarded: number[];
+    denial: number;
+    rankModel: string;
+    evaluatedActions: number;
+    opponents: { seat: number; current: number; upper: number; actsAfter: boolean; maxGain: number }[];
+    alternatives: { action: Action; ownFinalScore: number; guaranteedRank: number; optimisticRank: number }[];
+    championAction: Action | null;
+  };
+  /** AI7 C3：仲裁统计（paired 模式披露配对差与置信下界）。 */
+  arbitration?: {
+    mode: 'legacy' | 'paired';
+    minTrials: number;
+    pairedZ: number | null;
+    championProtected: boolean;
+    protectedClaims: string[];
+    candidates: {
+      action: Action;
+      trials: number;
+      pairedTrials: number;
+      meanDiff: number | null;
+      seDiff: number | null;
+      lowerConfidenceBound: number | null;
+      requiredMargin: number;
+    }[];
+  };
+  /** AI7 C3：高价值认领候选保护遥测。 */
+  claimGuard?: {
+    enabled: boolean;
+    bestClaim: { action: Action; delta: number; gross: number; inCandidates: boolean } | null;
+    championProtected: boolean;
+  };
 };
 
 export type JointDecision = {
@@ -193,6 +230,28 @@ export type JointSearchOptions = {
    * 只跑完整 W×M 批次）；balanced=W×M 成本预检 + 全候选缩减批次 +
    * 缩减批次最低 3 试验覆盖门槛。固定工作量模式不受影响。 */
   batchAdmission?: 'legacy' | 'balanced';
+  // === AI7 候选选项（全部缺省关闭 = 冻结 JS5 行为） ===
+  /** 终局圈精确求解（C1）。 */
+  endgameSolver?: 'off' | 'exact';
+  /** 终局圈弃置按官方得分口径（C1）。 */
+  endgameDiscard?: boolean;
+  /** 联合仲裁统计口径（C3）：legacy=冻结独立稳健分；paired=配对差置信下界。 */
+  arbitration?: 'legacy' | 'paired';
+  /** 挑战者覆盖冠军所需最少配对试验数（C3）。 */
+  minPairedTrials?: number;
+  /** 配对差单侧置信倍数（C3）。 */
+  pairedZ?: number;
+  /** 高价值认领保护（C3）。 */
+  claimProtection?: boolean;
+  /** 受保护认领的当步净分门槛（C3）。 */
+  claimProtectDelta?: number;
+  /** 受保护认领的额外覆盖边际（C3）。 */
+  claimProtectMargin?: number;
+  /** 保证当步净分最大的可立即认领行动进入候选集（C3）。 */
+  ensureBestClaimCandidate?: boolean;
+  /** 冠军基座参数集（C2：候选版本注入 engineModel/seatPolicy 变体；
+   * 缺省 = 冻结 CHAMPION_PARAMETERS）。 */
+  championParameters?: import('../ai/parameters.js').AIParameters;
 };
 
 // === 规划器接口（任务 A 推荐接口） ===
@@ -203,11 +262,18 @@ export interface JointPlanner {
 
 // === 版本化算法适配器（任务书 §二：新候选使用明确版本化的算法适配器） ===
 
-/** JS 编号为本阶段消融编号（JS0–JS5），与 PR #22 评测阶段 B0/B1/B2 无关。
+/** JS 编号为本阶段消融编号（JS0–JS8），与 PR #22 评测阶段 B0/B1/B2 无关。
  * JS5 = PR #26 修复后的 Champion-Guided Joint Search（champion-guided 结构）。
  * joint-js5-opt = AI6 第五阶段优化配置（champion-guided 结构 + tune2 块
- * 选出的选项覆盖；配置经评测选项显式注入并记录于报告 jointOptions）。 */
-export type JointVersionId = 'joint-js1' | 'joint-js2' | 'joint-js3' | 'joint-js4' | 'joint-js5' | 'joint-js5-opt';
+ * 选出的选项覆盖；配置经评测选项显式注入并记录于报告 jointOptions）。
+ * AI7 候选（全部缺省不参与生产决策）：
+ * - joint-js6-endgame：终局圈精确求解 + 官方得分弃置；
+ * - joint-js7-arb：JS5 配对仲裁 + 置信下界 + 高价值认领保护；
+ * - joint-js8-engine：引擎价值 V2（剩余回合/重复产出/循环成本）；
+ * - joint-js8-engine-seat：引擎价值 V2 + 人数条件竞争折扣（独立消融）。 */
+export type JointVersionId =
+  | 'joint-js1' | 'joint-js2' | 'joint-js3' | 'joint-js4' | 'joint-js5' | 'joint-js5-opt'
+  | 'joint-js6-endgame' | 'joint-js7-arb' | 'joint-js8-engine' | 'joint-js8-engine-seat';
 
 export type JointVersionSpec = {
   id: JointVersionId;
@@ -220,7 +286,9 @@ export type JointVersionSpec = {
   /** 版本独有选项预设（显式注入；空/缺省 = 与冻结缺省相同）。预设必须来自
    * 已有评测记载，禁止把标签当成配置。 */
   optionPreset?: Partial<Pick<JointSearchOptions,
-    'opponentMode' | 'evaluator' | 'horizon' | 'worlds' | 'nearTerminalCandidate'>> & {
+    'opponentMode' | 'evaluator' | 'horizon' | 'worlds' | 'nearTerminalCandidate' |
+    'endgameSolver' | 'endgameDiscard' | 'arbitration' | 'minPairedTrials' | 'pairedZ' |
+    'claimProtection' | 'claimProtectDelta' | 'claimProtectMargin' | 'ensureBestClaimCandidate'>> & {
       championStructure?: string;
       gateMode?: 'auto' | 'always' | 'never' | 'rerank';
       contestThreshold?: number;
@@ -228,6 +296,8 @@ export type JointVersionSpec = {
       overrideMargin?: number;
       claimRanking?: 'enumeration' | 'prior';
     };
+  /** AI7 候选基座参数变体（缺省 = 冻结 CHAMPION_PARAMETERS）。 */
+  parameterVariant?: 'engine-v2' | 'engine-v2-seat';
 };
 
 export const JOINT_VERSIONS: Record<JointVersionId, JointVersionSpec> = {
@@ -257,5 +327,34 @@ export const JOINT_VERSIONS: Record<JointVersionId, JointVersionSpec> = {
     // 第五阶段 tune2 冻结：唯一独有选项 claimRanking='prior'
     // （AI6-PHASE5-REPORT.md §4.3；确认集 inconclusive，未晋级）。
     optionPreset: { claimRanking: 'prior' },
+  },
+  // === AI7 候选（独立注册；缺省不参与生产决策，需显式版本注入） ===
+  'joint-js6-endgame': {
+    id: 'joint-js6-endgame', label: 'AI7-C1 终局精确求解（官方得分/保证名次/终局弃置）', kind: 'champion-guided',
+    defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
+    optionPreset: { endgameSolver: 'exact', endgameDiscard: true },
+  },
+  'joint-js7-arb': {
+    id: 'joint-js7-arb', label: 'AI7-C3 JS5 配对仲裁稳健性（置信下界+认领保护）', kind: 'champion-guided',
+    defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
+    optionPreset: {
+      arbitration: 'paired',
+      minPairedTrials: 4,
+      pairedZ: 1.645,
+      claimProtection: true,
+      claimProtectDelta: 10,
+      claimProtectMargin: 0.10,
+      ensureBestClaimCandidate: true,
+    },
+  },
+  'joint-js8-engine': {
+    id: 'joint-js8-engine', label: 'AI7-C2 引擎价值 V2（剩余回合/重复产出/循环成本；人数无关）', kind: 'champion-guided',
+    defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
+    parameterVariant: 'engine-v2',
+  },
+  'joint-js8-engine-seat': {
+    id: 'joint-js8-engine-seat', label: 'AI7-C4 引擎价值 V2 + 人数条件竞争折扣（独立消融）', kind: 'champion-guided',
+    defaults: { variant: 'joint-rollout', opponentMode: 'rule', evaluator: 'L2' },
+    parameterVariant: 'engine-v2-seat',
   },
 };

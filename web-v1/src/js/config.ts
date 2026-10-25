@@ -43,6 +43,18 @@ export type JointSearchResolved = {
   nearTerminalCandidate: string;
   screenGoalScope: string;
   batchAdmission: string;
+  endgameSolver: string;
+  endgameDiscard: boolean;
+  arbitration: string;
+  minPairedTrials: number;
+  pairedZ: number | null;
+  claimProtection: boolean;
+  claimProtectDelta: number;
+  claimProtectMargin: number;
+  ensureBestClaimCandidate: boolean;
+  /** 基座引擎模型/人数策略（来自冠军参数集；v1/flat = 冻结口径）。 */
+  engineModel: string;
+  seatPolicy: string;
   /** 版本预设覆盖（显式披露；opt 不再是"只有名字不同"）。 */
   preset: Record<string, unknown>;
   /** 调用方覆盖（显式披露）。 */
@@ -59,6 +71,15 @@ export const JOINT_SEARCH_DEFAULTS = {
   nearTerminalCandidate: 'off',
   screenGoalScope: 'all',
   batchAdmission: 'legacy',
+  endgameSolver: 'off',
+  endgameDiscard: false,
+  arbitration: 'legacy',
+  minPairedTrials: 4,
+  pairedZ: 1.645,
+  claimProtection: false,
+  claimProtectDelta: 10,
+  claimProtectMargin: 0.10,
+  ensureBestClaimCandidate: false,
   variant: 'joint-rollout',
   worlds: 4,
   horizon: 48,
@@ -69,14 +90,38 @@ export const JOINT_SEARCH_DEFAULTS = {
 const PRESET_FIELDS = [
   'championStructure', 'gateMode', 'contestThreshold', 'candidateCap', 'overrideMargin',
   'claimRanking', 'nearTerminalCandidate', 'screenGoalScope', 'batchAdmission',
+  'endgameSolver', 'endgameDiscard', 'arbitration', 'minPairedTrials', 'pairedZ',
+  'claimProtection', 'claimProtectDelta', 'claimProtectMargin', 'ensureBestClaimCandidate',
   'variant', 'worlds', 'horizon', 'opponentMode', 'evaluator',
 ] as const;
+
+/** AI7 候选基座参数集（只改引擎模型/人数策略，其余逐字继承冻结冠军）。
+ * 去掉 adapter/jointVersion/budgetMs：这些字段只用于 decision.ts 适配器分派，
+ * 与 choosePlan 的估值无关，保留会造成"版本标签 = 执行核心"的歧义。 */
+function engineVariantParameters(seatPolicy: 'flat' | 'stratified'): Record<string, unknown> {
+  const { adapter: _adapter, jointVersion: _jointVersion, budgetMs: _budgetMs, ...base } = CHAMPION_PARAMETERS;
+  return {
+    ...base,
+    id: seatPolicy === 'stratified' ? 'ai7-engine-v2-seat' : 'ai7-engine-v2',
+    engineModel: 'v2',
+    seatPolicy,
+  };
+}
+
+export const AI7_CANDIDATE_PARAMETERS = Object.freeze({
+  'engine-v2': engineVariantParameters('flat'),
+  'engine-v2-seat': engineVariantParameters('stratified'),
+});
 
 /** 版本预设（仅已记载配置；preset 为空 = 与冻结缺省逐项相同）。 */
 export function versionOptionPreset(versionId: string): Record<string, unknown> {
   const version = JOINT_VERSIONS[versionId as keyof typeof JOINT_VERSIONS];
   if (!version) throw new Error(`未知联合规划版本：${String(versionId)}`);
-  return { ...(version.optionPreset ?? {}) };
+  const preset: Record<string, unknown> = { ...(version.optionPreset ?? {}) };
+  if (version.parameterVariant) {
+    preset.championParameters = AI7_CANDIDATE_PARAMETERS[version.parameterVariant];
+  }
+  return preset;
 }
 
 /** 合并版本预设与调用方覆盖；返回新对象（不修改入参）。 */
@@ -102,6 +147,7 @@ export function resolveJointConfig(
     ...Object.fromEntries(PRESET_FIELDS.filter(k => preset[k] !== undefined).map(k => [k, preset[k]])),
     ...Object.fromEntries(PRESET_FIELDS.filter(k => (options as Record<string, unknown>)[k] !== undefined).map(k => [k, (options as Record<string, unknown>)[k]])),
   };
+  const championParameters = (options.championParameters ?? preset.championParameters ?? CHAMPION_PARAMETERS) as typeof CHAMPION_PARAMETERS;
   return {
     versionId,
     kind: version.kind,
@@ -110,8 +156,8 @@ export function resolveJointConfig(
       : 'champion-contest',
     variant: String(merged.variant),
     championStructure: String(merged.championStructure),
-    championParametersId: CHAMPION_PARAMETERS.id,
-    acquisitionVariant: CHAMPION_PARAMETERS.acquisitionVariant ?? null,
+    championParametersId: championParameters.id,
+    acquisitionVariant: championParameters.acquisitionVariant ?? null,
     profileName: profileName ?? null,
     budgetMode: workUnits !== null ? 'fixed-work' : budgetMs !== null ? 'wall-clock' : 'wall-clock',
     budgetMs,
@@ -129,6 +175,17 @@ export function resolveJointConfig(
     nearTerminalCandidate: String(merged.nearTerminalCandidate),
     screenGoalScope: String(merged.screenGoalScope),
     batchAdmission: String(merged.batchAdmission),
+    endgameSolver: String(merged.endgameSolver),
+    endgameDiscard: Boolean(merged.endgameDiscard),
+    arbitration: String(merged.arbitration),
+    minPairedTrials: Number(merged.minPairedTrials),
+    pairedZ: merged.pairedZ == null ? null : Number(merged.pairedZ),
+    claimProtection: Boolean(merged.claimProtection),
+    claimProtectDelta: Number(merged.claimProtectDelta),
+    claimProtectMargin: Number(merged.claimProtectMargin),
+    ensureBestClaimCandidate: Boolean(merged.ensureBestClaimCandidate),
+    engineModel: championParameters.engineModel ?? 'v1',
+    seatPolicy: championParameters.seatPolicy ?? 'flat',
     preset,
     overrides: Object.fromEntries(PRESET_FIELDS.filter(k => (options as Record<string, unknown>)[k] !== undefined).map(k => [k, (options as Record<string, unknown>)[k]])),
   };

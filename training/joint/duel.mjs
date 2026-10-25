@@ -27,7 +27,7 @@ import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
 import { CHAMPION_PARAMETERS, BASELINE_PARAMETERS } from '../../web-v1/dist/js/ai/parameters.js';
 import {
   assertInBlock, AI6_JS5_CONFIRM_SUBBLOCK, AI6_JS5_TUNE2_SUBBLOCK,
-  AI6_JS5_GOAL_DEV_SUBBLOCK, AI6_JS5_GOAL_CONFIRM_SUBBLOCK,
+  AI6_JS5_GOAL_DEV_SUBBLOCK, AI6_JS5_GOAL_CONFIRM_SUBBLOCK, AI7_CANDIDATE_DEV_SUBBLOCK,
 } from '../../ai5/lib/seed_policy.mjs';
 import { firstPlaceClusterCI, pairedDiffSummary, latencySummary } from '../baseline/stats.mjs';
 import { wilsonCI, meanCI } from '../evaluator/stats.mjs';
@@ -294,7 +294,8 @@ export function runAblationCell({ candidateId, seatCount, seeds, seedBase, joint
     : seedBase < AI6_JS5_TUNE2_SUBBLOCK[1] ? AI6_JS5_TUNE2_SUBBLOCK
     : seedBase < AI6_JS5_CONFIRM_SUBBLOCK[1] ? AI6_JS5_CONFIRM_SUBBLOCK
     : seedBase < AI6_JS5_GOAL_DEV_SUBBLOCK[1] ? AI6_JS5_GOAL_DEV_SUBBLOCK
-    : AI6_JS5_GOAL_CONFIRM_SUBBLOCK, 'seedBase');
+    : seedBase < AI6_JS5_GOAL_CONFIRM_SUBBLOCK[1] ? AI6_JS5_GOAL_CONFIRM_SUBBLOCK
+    : AI7_CANDIDATE_DEV_SUBBLOCK, 'seedBase');
   const candidate = candidateVersion(candidateId);
   const opponents = pool === 'diverse' ? diversePool() : classicPool();
   const games = [];
@@ -470,12 +471,13 @@ async function main() {
     ? null // 按 (人数, 池) 逐 cell 决定
     : args.block === 'goal-confirm' ? AI6_JS5_GOAL_CONFIRM_SUBBLOCK[0]
     : args.block === 'goal-dev' ? AI6_JS5_GOAL_DEV_SUBBLOCK[0]
+    : args.block === 'ai7-dev' ? AI7_CANDIDATE_DEV_SUBBLOCK[0]
     : args.block === 'tune2' ? 1_351_000_000
     : args.block === 'tune' ? 1_310_000_000
     : args.block === 'test' ? 1_320_000_000
     : args.block === 'audit' ? 1_300_000_000
     : args.block === 'verify' ? 1_330_000_000
-    : (() => { throw new Error(`--block 必须是 tune|tune2|test|audit|verify|confirm|goal-dev|goal-confirm，实际：${args.block}`); })();
+    : (() => { throw new Error(`--block 必须是 tune|tune2|test|audit|verify|confirm|goal-dev|goal-confirm|ai7-dev，实际：${args.block}`); })();
   const jointOptions = {
     ...(args.budgetMs !== undefined ? { budgetMs: args.budgetMs } : {}),
     ...(args.workUnits !== undefined ? { workUnits: args.workUnits } : {}),
