@@ -599,3 +599,158 @@
 .result-table > div { flex-wrap: wrap; row-gap: 5px; }
 .result-table .result-main { flex: 1 1 100%; display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .result-table > div > span { flex: 1 1 100%; font-size: 11px; color: #93a7ab; }
+
+/* ==================== AI7：桌面 Focus 与 Worker 运行时 ==================== */
+
+/* 运行时状态：正常 Worker / 主线程降级，两者都常驻可见。 */
+.focus-board .runtime-chip {font-size:10px;line-height:1;padding:5px 8px;border-radius:6px;border:1px solid #3c6358;background:#14342f;color:#a9dcc5;white-space:nowrap;letter-spacing:.02em;}
+.focus-board .runtime-chip-degraded {border-color:#9a7548;background:#3d2f22;color:#f3cf9a;}
+
+/* 1 真人 + 1–4 AI：默认桌面 Focus。
+   ≥2400px 三列（真人 | 市场 | AI 公开引擎）；1100–2399px 两列（真人 | 市场 + AI 轨道）；
+   更窄时纵向堆叠，保证不横向溢出。 */
+@media (min-width:2400px) {
+  .focus-board.solo-focus-layout .solo-focus-table {
+    display:grid; grid-template-columns:minmax(660px,1fr) minmax(880px,1.32fr) minmax(600px,1fr);
+    grid-template-rows:minmax(0,1fr); gap:8px;
+    height:calc(100dvh - 55px); min-height:0; overflow:hidden;
+  }
+}
+@media (min-width:1100px) and (max-width:2399px) {
+  .focus-board.solo-focus-layout .solo-focus-table {
+    display:grid; grid-template-columns:minmax(430px,.82fr) minmax(0,1.55fr);
+    grid-template-rows:auto minmax(0,1fr);
+    grid-template-areas:'human center' 'human rail';
+    gap:8px; height:calc(100dvh - 55px); min-height:0; overflow:hidden;
+  }
+  .focus-board.solo-focus-layout .solo-focus-table > .duel-player {grid-area:human;}
+  .focus-board.solo-focus-layout .solo-focus-table > .solo-center {grid-area:center;}
+  .focus-board.solo-focus-layout .solo-focus-table > .ai-focus-rail {grid-area:rail;}
+}
+@media (max-width:1099px) {
+  .focus-board.solo-focus-layout .solo-focus-table {display:flex;flex-direction:column;height:auto;min-height:0;gap:10px;}
+  .focus-board.solo-focus-layout .solo-focus-table > .solo-center {order:0;}
+  .focus-board.solo-focus-layout .solo-focus-table > .duel-player {order:1;min-height:540px;}
+  .focus-board.solo-focus-layout .solo-focus-table > .ai-focus-rail {order:2;min-height:420px;}
+}
+
+.focus-board.solo-focus-layout .solo-center {display:flex;flex-direction:column;gap:12px;padding:12px;min-height:0;overflow:hidden;}
+.focus-board.solo-focus-layout .solo-center .duel-market {flex:0 0 auto;min-height:0;}
+.focus-board.solo-focus-layout .solo-center .golem-card {height:clamp(170px,23vh,300px);min-height:0;}
+.focus-board.solo-focus-layout .solo-center .merchant-card {height:clamp(148px,19vh,250px);min-height:0;}
+@media (max-width:2399px) {
+  .focus-board.solo-focus-layout .solo-center .golem-card {height:clamp(150px,19vh,205px);}
+  .focus-board.solo-focus-layout .solo-center .merchant-card {height:clamp(132px,16vh,180px);}
+  /* 双列布局右栏足够宽：商人市场保持 6 列，避免折成两行挤压 AI 轨道。 */
+  .focus-board.solo-focus-layout .solo-center .merchant-grid {grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;}
+}
+/* 1100–1550：主容器仍是 10/16px 内边距，比 Focus 超宽档多 13px。 */
+@media (min-width:1100px) and (max-width:1550px) {
+  .focus-board.solo-focus-layout .solo-focus-table {height:calc(100dvh - 68px);}
+}
+.focus-board.solo-focus-layout .solo-lower {flex:0 1 auto;display:grid;grid-template-columns:1.35fr 1fr;gap:10px;min-height:0;height:360px;max-height:360px;}
+.focus-board.solo-focus-layout .solo-log {
+  min-height:0;overflow:auto;
+  border:1px solid #35515b;border-radius:8px;padding:7px 10px;background:#0f292ac9;
+  display:flex;flex-direction:column;gap:4px;
+}
+.focus-board .solo-log-head {display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-width:0;}
+.focus-board .solo-log-head b {font-size:11px;color:#a7c6c4;white-space:nowrap;}
+.focus-board .solo-log-head span {font-size:10px;color:#8fa7b0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.focus-board .solo-log-head .replay-controls {margin:0;flex:0 1 auto;min-width:0;}
+.focus-board .solo-log-head .replay-controls small {font-size:10px;color:#8fa7b0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.focus-board .solo-log-lines {display:flex;flex-direction:column;gap:3px;min-height:0;overflow:auto;}
+.focus-board .solo-log-lines span {font-size:11px;line-height:1.45;color:#b7c9c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* 玩家态势：所有人公开分数/魔像/商队，和行动记录一起填充中央信息区。 */
+.focus-board .solo-overview {min-height:0;overflow:auto;border:1px solid #35515b;border-radius:8px;padding:7px 10px;background:#0f292ac9;display:flex;flex-direction:column;gap:6px;}
+.focus-board .solo-overview-head {display:flex;justify-content:space-between;align-items:baseline;gap:8px;min-width:0;}
+.focus-board .solo-overview-head b {font-size:11px;color:#a7c6c4;white-space:nowrap;}
+.focus-board .solo-overview-head span {font-size:10px;color:#8fa7b0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.focus-board .solo-overview-rows {display:flex;flex-direction:column;gap:3px;min-height:0;overflow:auto;}
+.focus-board .solo-overview-row {display:grid;grid-template-columns:minmax(0,1.4fr) auto auto auto;gap:9px;align-items:center;padding:4px 6px;border-radius:5px;background:#152e37;font-size:11px;color:#b7cac8;}
+.focus-board .solo-overview-row.is-active {background:#2b4038;box-shadow:inset 0 0 0 1px #b08d5573;color:#e8dbc0;}
+.focus-board .solo-overview-name {min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:650;color:#dde9e2;}
+.focus-board .solo-overview-name small {font-size:9px;color:#d6b57d;}
+.focus-board .solo-overview-row b {color:#edcf9b;font-size:13px;text-align:right;}
+@media (max-width:2399px) {
+  .focus-board.solo-focus-layout .solo-lower {display:none;}
+}
+
+/* AI 公开引擎轨道：已打出常驻，手牌在超宽屏附加一行；详情点击左标签展开。 */
+.focus-board .ai-lane-body {display:flex;flex-direction:column;gap:4px;min-width:0;min-height:0;flex:1;}
+.focus-board .ai-lane-row {display:flex;flex-direction:column;gap:2px;min-height:0;flex:1 1 0;}
+.focus-board .ai-lane-row-folded {flex:0 0 auto;}
+.focus-board .ai-lane-row-head {display:flex;justify-content:space-between;align-items:center;gap:6px;min-height:14px;font-size:10px;color:#9cb5b8;}
+.focus-board .ai-lane-row-head > span {white-space:nowrap;}
+.focus-board .ai-lane-row-head .fold-btn {padding:0 4px;font-size:10px;line-height:1.5;border-color:#3a5a52;background:#183a34;color:#c9ded4;}
+.focus-board .ai-lane-cards {display:flex;gap:4px;min-width:0;min-height:0;flex:1;overflow-x:auto;overflow-y:hidden;align-items:stretch;padding:0 0 2px;scrollbar-width:thin;}
+.focus-board .ai-lane-cards .merchant-card {flex:0 0 clamp(96px,8vw,132px);height:100%!important;max-height:200px;min-height:0!important;align-self:flex-start;padding:4px 5px!important;border-radius:6px;box-shadow:none;}
+.focus-board .ai-lane-cards .card-head {font-size:10px;padding-bottom:2px;}
+.focus-board .ai-lane-cards .card-head small {font-size:8px;}
+.focus-board .ai-lane-cards .merchant-effect {min-height:0;gap:2px;}
+.focus-board .ai-lane-cards .effect-label,
+.focus-board .ai-lane-cards .card-foot {display:none;}
+.focus-board .ai-lane-cards .effect-large {font-size:18px;}
+.focus-board .ai-lane-cards .trade-arrow {font-size:11px;line-height:1;}
+.focus-board .ai-lane-cards .gem {width:10px;height:10px;margin:0;}
+.focus-board .ai-lane-cards .stone-gems {gap:2px;}
+.focus-board .ai-lane-more {color:#d6b57d;font-size:9px;}
+.focus-board .ai-lane-row-empty .ai-lane-cards {align-items:center;}
+.focus-board .ai-lane-hand-row {display:none;}
+/* 只有 1–2 名 AI 时轨道足够高，才同时展示手牌与已打出；3–4 名 AI 保持单行引擎视图。 */
+@media (min-width:2400px) {
+  .focus-board.solo-focus-layout.ai-count-1 .ai-lane-hand-row,
+  .focus-board.solo-focus-layout.ai-count-2 .ai-lane-hand-row {display:flex;}
+}
+
+/* 1–4 AI 轨道始终占满所在列；不使用旧中心列的高度上限。 */
+.focus-board.solo-focus-layout .ai-focus-rail {
+  height:100%;min-height:0;display:grid;
+  grid-template-rows:repeat(var(--bot-count),minmax(0,1fr));
+  gap:6px;align-content:stretch;overflow:hidden;padding:0;
+}
+@media (min-width:1100px) and (max-width:2399px) {
+  /* 3–4 名 AI 时右栏改成 2×2：每格更高更宽，公开引擎不至于退化成小卡片。 */
+  .focus-board.solo-focus-layout.ai-count-3 .ai-focus-rail,
+  .focus-board.solo-focus-layout.ai-count-4 .ai-focus-rail {
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    grid-template-rows:repeat(2,minmax(0,1fr));
+  }
+  .focus-board.solo-focus-layout.ai-count-3 .ai-lane-label,
+  .focus-board.solo-focus-layout.ai-count-4 .ai-lane-label {width:104px;min-width:104px;padding:7px;}
+}
+@media (max-width:1099px) {
+  .focus-board.solo-focus-layout .ai-focus-rail {grid-template-rows:repeat(var(--bot-count),minmax(130px,auto));}
+}
+
+/* 详情浮层：不挤压棋盘，打开即覆盖右半屏。 */
+.focus-board.solo-focus-layout .ai-focus-rail .ai-inspector {
+  position:fixed;top:46px;right:10px;bottom:10px;left:auto;width:min(860px,48vw);
+  max-height:none;z-index:95;
+}
+@media (max-width:1099px) {
+  .focus-board.solo-focus-layout .ai-focus-rail .ai-inspector {width:min(720px,94vw);left:3vw;right:auto;}
+}
+
+/* 手牌很少时居中放大（保持接近方形的卡面比例，不横向拉伸）。 */
+.focus-board .duel-card-grid.player-hand-grid.hand-few,
+.focus-board.compact-cards .duel-card-grid.player-hand-grid.hand-few {
+  grid-template-columns:repeat(auto-fit,minmax(150px,180px));
+  grid-auto-rows:180px;
+  justify-content:center;align-content:start;
+}
+
+/* 手牌字号不低于 11px（2 真人成熟布局同步提升）；3440 档进一步提升。 */
+.focus-board .hand-tile .card-head {font-size:11px;}
+.focus-board.compact-cards .hand-tile .card-head {font-size:11px;}
+.focus-board .hand-tile .card-head small {font-size:9px;}
+.focus-board.compact-cards .hand-tile .card-head small {font-size:9px;}
+@media (min-width:2400px) {
+  .focus-board.solo-focus-layout.compact-cards .duel-card-grid.player-hand-grid.hand-many {grid-template-columns:repeat(auto-fill,minmax(118px,1fr));grid-auto-rows:136px;}
+  .focus-board.solo-focus-layout.compact-cards .duel-card-grid.player-hand-grid.hand-packed {grid-template-columns:repeat(auto-fill,minmax(104px,1fr));grid-auto-rows:124px;}
+  .focus-board .hand-tile .card-head,
+  .focus-board.compact-cards .hand-tile .card-head {font-size:12px;}
+  .focus-board.compact-cards .hand-tile .card-head small {font-size:9px;}
+  .focus-board.compact-cards .hand-tile .effect-large {font-size:22px;}
+}

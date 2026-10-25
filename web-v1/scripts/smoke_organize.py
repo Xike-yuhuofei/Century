@@ -70,11 +70,11 @@ with sync_playwright() as p:
     solo.locator('#botCount').select_option('4')
     solo.locator('[data-action="start"]').click()
     assert solo.locator('.duel-player .hand-tile').count()==2
-    assert solo.locator('.ai-seat [data-action="toggle-played"]').count()==4
-    solo.locator('.ai-seat [data-action="toggle-played"]').first.click()
-    assert solo.locator('.ai-seat .zone-folded').count()==3
+    assert solo.locator('.ai-lane [data-action="toggle-played"]').count()==4
+    solo.locator('.ai-lane [data-action="toggle-played"]').first.click()
+    assert solo.locator('.ai-lane-row-folded').count()==1
     assert solo.evaluate('document.documentElement.scrollHeight <= innerHeight')
-    print('1 人 + 4 AI 全席位回收区折叠，通过')
+    print('1 人 + 4 AI 公开引擎逐席位折叠，通过')
 
     multi=browser.new_page(viewport={'width':1440,'height':1000})
     multi.on('pageerror',lambda e:errors.append(str(e)))

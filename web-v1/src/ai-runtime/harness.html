@@ -107,8 +107,10 @@ try {
     observation, ai: { jointVersion: 'joint-js5' },
     budget: { mode: 'fixed-work', workUnits: 8 }, simSeed: 911, horizon: 40,
   });
+  // 状态版本必须单调递增（worker-core 的过期版本水位会拒绝更低版本）。
+  let stateVersion = game.turnNumber * 10 + game.current;
   const workerOutcome = await client.requestDecision({
-    gameStateVersion: game.turnNumber * 10 + game.current, observation,
+    gameStateVersion: stateVersion, observation,
     ai: { jointVersion: 'joint-js5' }, budget: { mode: 'fixed-work', workUnits: 8 },
     simSeed: 911, horizon: 40, expectedMs: 5000,
   });
@@ -122,8 +124,9 @@ try {
   check('合法性：正式引擎 applyAction 接受', legal, JSON.stringify(workerOutcome.action));
 
   // 3) 协议防火墙：越权载荷（携带 merchantDeck）被拒且回退合法。
+  stateVersion += 1;
   const poisoned = await client.requestDecision({
-    gameStateVersion: 1, observation: { ...observation, merchantDeck: ['M01'] },
+    gameStateVersion: stateVersion, observation: { ...observation, merchantDeck: ['M01'] },
     ai: { jointVersion: 'joint-js5' }, budget: { mode: 'fixed-work', workUnits: 2 },
     simSeed: 1, expectedMs: 3000,
   });
@@ -133,8 +136,9 @@ try {
   // 4) 500ms / 1000ms 思考预算的主线程响应性。
   const responsiveness = {};
   for (const budgetMs of [500, 1000]) {
+    stateVersion += 1;
     const probe = await responsivenessProbe(() => client.requestDecision({
-      gameStateVersion: game.turnNumber * 10 + game.current, observation,
+      gameStateVersion: stateVersion, observation,
       ai: { jointVersion: 'joint-js5' }, budget: { mode: 'wall-clock', budgetMs },
       simSeed: 950 + budgetMs, expectedMs: budgetMs + 3000,
     }));

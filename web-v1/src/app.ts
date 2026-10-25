@@ -3,11 +3,13 @@ import { applyAction, count, createGame, has, ranking, readable, score, tradeLim
 import { replayCoverage, replayMarkdown, validateReplay } from './replay.js';
 import { ARCHIVE_LIMIT, loadArchive, makeEntry, pushArchive, saveArchive, type ArchiveEntry } from './archive.js';
 import { autoExportEnabled, disableAutoExport, enableAutoExport, maybeAutoExport } from './auto-export.js';
-import { chooseAIAction } from './ai.js';
+import { buildObservation } from './ai.js';
+import { championDecisionConfig, createDesktopAIRuntime, type DesktopAIRuntime, type DesktopDecision } from './ai-runtime/desktop-runtime.js';
+import { chooseVerifiedFallback } from './ai-runtime/fallback.js';
 import { visibleOrder, moveInOrder, stepInOrder, groupOrder } from './organize.js';
 
 const KEY = 'crystal-corridor-game-v2-canonical';
-const VIEW_KEY = 'crystal-corridor-view-v1.3';
+const VIEW_KEY = 'crystal-corridor-view-v1.4';
 const COLOR = ['黄','绿','蓝','粉'];
 const classColor = ['yellow','green','blue','pink'];
 const root = document.getElementById('app')!;
@@ -25,6 +27,13 @@ let showHistory = false;
 let historyViewId: string | null = null;
 const humanNames:string[] = [];
 let botTimer: ReturnType<typeof setTimeout> | null = null;
+/** AI 决策在 Worker 中执行；botPending 避免同一回合重复提交。 */
+let aiRuntime: DesktopAIRuntime | null = null;
+let botPending = false;
+let botRun = 0;
+/** 游戏状态版本（每次正式行动/换局单调递增，用于废弃过期 Worker 结果）。 */
+let stateVersion = 1;
+let runtimeNoticeShown = false;
 type PlayerView = { order:string[]; folded:boolean };
 type ViewState = { compact:boolean; players:Record<string,PlayerView> };
 let viewState:ViewState = {compact:true,players:{}};
@@ -37,7 +46,8 @@ let suppressPlayUntil = 0;
 function pref(id:number): PlayerView {
   const key=String(id);
   const saved=viewState.players[key];
-  if (!saved || !Array.isArray(saved.order) || typeof saved.folded!=='boolean') viewState.players[key]={order:[],folded:!!game?.players[id]?.isAI};
+  // AI 的已打出卡牌是核心公开信息，默认展开（E2）；用户仍可逐席位折叠。
+  if (!saved || !Array.isArray(saved.order) || typeof saved.folded!=='boolean') viewState.players[key]={order:[],folded:false};
   return viewState.players[key];
 }
 function saveView() { try { localStorage.setItem(VIEW_KEY,JSON.stringify(viewState)); } catch {} }
@@ -75,6 +85,43 @@ function foldedPlayed(p:Game['players'][number], isAI=false):string {
 }
 function cardSizeControl():string {
   return `<button class="subtle-btn size-switch" data-action="card-size" title="切换个人卡牌尺寸">${viewState.compact?'▣ 标准卡':'▦ 紧凑卡'}</button>`;
+}
+function runtime():DesktopAIRuntime {
+  if (!aiRuntime) aiRuntime = createDesktopAIRuntime();
+  return aiRuntime;
+}
+function aiRuntimeDegraded():boolean { return aiRuntime?.mode()==='main-thread-degraded'; }
+/** 顶栏运行时状态：Worker 正常 / 主线程降级（明确可见，绝不静默换版本）。 */
+function aiRuntimeChip():string {
+  if (!game?.players.some(p=>p.isAI)) return '';
+  const degraded=aiRuntimeDegraded();
+  const title=degraded
+    ? 'Worker 不可用：已显式降级为主线程冠军决策（同一冠军算法，界面可能短暂停顿）'
+    : 'AI 决策在独立 Worker 中执行（公开观察 + 冠军 JS5 配置，不阻塞界面）';
+  return `<span class="runtime-chip${degraded?' runtime-chip-degraded':''}" data-ai-runtime="${degraded?'main-thread':'worker'}" title="${esc(title)}">${degraded?'AI 主线程降级':'AI Worker'}</span>`;
+}
+/** 取消未决 AI 任务（UI 阻塞层/暂停/换局）。结果会被 runId 守卫丢弃。 */
+function cancelBot(reason:string) {
+  if (botTimer !== null) { clearTimeout(botTimer); botTimer=null; }
+  botRun++;
+  botPending=false;
+  try { aiRuntime?.cancel(reason); } catch { /* 运行时已销毁 */ }
+}
+function degradationNotice(decision:DesktopDecision):string {
+  if (decision.source==='main-thread') return 'AI 运行时降级：Worker 不可用，已切换主线程冠军决策（界面可能短暂停顿）';
+  return `AI 运行时降级：本次使用已验证合法回退（${decision.error ?? decision.reason}）`;
+}
+/** 只读运行时诊断（浏览器实测读取；不含任何游戏隐藏信息）。 */
+function exposeRuntimeDiagnostics() {
+  const target = window as unknown as { __CENTURY_AI_RUNTIME_STATS__?: () => unknown };
+  target.__CENTURY_AI_RUNTIME_STATS__ = () => ({
+    mode: aiRuntime?.mode() ?? 'uninitialized',
+    stats: aiRuntime?.stats() ?? null,
+    stateVersion,
+    playerCount: game?.players.length ?? 0,
+    aiCount: game?.players.filter(p=>p.isAI).length ?? 0,
+    config: championDecisionConfig(),
+  });
 }
 
 type Modal =
@@ -161,7 +208,7 @@ function syncSetup() {
   if(submit) submit.disabled = !valid;
 }
 function playerCard(p: Game['players'][number], active: boolean): string {
-  return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${p.isAI ? (aiThinking && active ? 'AI…' : 'AI') : p.id + 1}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
+  return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${p.isAI ? (botPending && active ? 'AI…' : 'AI') : p.id + 1}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
 }
 function golemCard(id: string, index: number, g: Game, stock = g.players[g.current].stock): string {
   const golem = GOLEM_BY_ID[id];
@@ -193,17 +240,28 @@ function renderDuelPlayer(g: Game, index: number): string {
       <button type="button" class="rest-btn" data-action="rest" ${active && !p.isAI && g.phase === 'turn' ? '' : 'disabled'} title="休息占用一个回合，收回全部已打出商人卡">↶ 休息收回</button></footer>
   </section>`;
 }
-/** AI 默认只留战略信息；详细卡牌可点击展开，不占真人卡区。 */
+/** AI 公开信息轨道：已打出的商人卡（引擎）常驻展示，手牌数量与完整详情一键展开。
+ * 已打出卡牌是本游戏最重要的公开对手信息；不再需要逐个 AI 打开面板比对。 */
 function renderAICompactLane(g:Game,p:Game['players'][number]):string {
   const n=g.players.filter(x=>x.isAI).findIndex(x=>x.id===p.id)+1;
   const active=g.current===p.id&&g.phase!=='finished';
-  return `<div class="ai-lane ${active?'ai-lane-active':''}" aria-label="AI ${n} 手牌与水晶">
-    <button class="ai-lane-label" type="button" data-action="inspect-ai" data-player="${p.id}" title="查看 AI ${n} 的回收牌与完整信息" aria-label="查看 AI ${n} 详情，${score(p)} 分">
+  const folded=pref(p.id).folded;
+  return `<div class="ai-lane ${active?'ai-lane-active':''}" aria-label="AI ${n} 的公开信息">
+    <button class="ai-lane-label" type="button" data-action="inspect-ai" data-player="${p.id}" title="展开 AI ${n} 的手牌与回收区详情" aria-label="查看 AI ${n} 详情，${score(p)} 分，手牌 ${p.hand.length} 张，回收区 ${p.played.length} 张">
       <span class="ai-lane-name">AI ${n} <b>${score(p)}<small>分</small></b></span>
       <span class="ai-lane-resources">${stones(p.stock,true)}</span>
-      <span class="ai-lane-count">${p.hand.length} 手牌 · ${p.played.length} 已打出</span>
+      <span class="ai-lane-count">手牌 ${p.hand.length} · 回收 ${p.played.length} <span class="ai-lane-more">详情 ↗</span></span>
     </button>
-    <div class="ai-lane-hand" data-scroll-zone="ai-lane-${p.id}">${p.hand.map(id=>merchantCard(id,undefined,undefined,'inactive')).join('')||'<span class="ai-lane-empty">无可用手牌</span>'}</div>
+    <div class="ai-lane-body">
+      <div class="ai-lane-row ai-lane-played-row${p.played.length===0?' ai-lane-row-empty':''}${folded?' ai-lane-row-folded':''}">
+        <div class="ai-lane-row-head"><span>已打出 · ${p.played.length}</span>${foldedPlayed(p,true)}</div>
+        ${folded?'':`<div class="ai-lane-cards" data-scroll-zone="ai-played-lane-${p.id}">${p.played.length?p.played.map(id=>merchantCard(id,undefined,undefined,'played')).join(''):'<span class="ai-lane-empty">本轮尚未打出</span>'}</div>`}
+      </div>
+      <div class="ai-lane-row ai-lane-hand-row">
+        <div class="ai-lane-row-head"><span>手牌 · ${p.hand.length}</span></div>
+        <div class="ai-lane-cards" data-scroll-zone="ai-hand-lane-${p.id}">${p.hand.length?p.hand.map(id=>merchantCard(id,undefined,undefined,'inactive')).join(''):'<span class="ai-lane-empty">无可用手牌</span>'}</div>
+      </div>
+    </div>
   </div>`;
 }
 function renderAIInspector(g:Game):string {
@@ -213,14 +271,14 @@ function renderAIInspector(g:Game):string {
   const n=g.players.filter(x=>x.isAI).findIndex(x=>x.id===p.id)+1;
   return `<div class="ai-inspector" role="region" aria-label="AI ${n} 完整卡牌详情">
     <div class="ai-inspector-head"><strong>AI ${n} · ${score(p)} 分</strong><div>${stones(p.stock,true)}</div><button type="button" data-action="inspect-ai" data-player="${p.id}" aria-label="收起 AI 详情">✕</button></div>
-    <div class="ai-inspector-sections"><section><h3>手牌 · ${p.hand.length}</h3><div class="ai-inspector-cards" data-scroll-zone="ai-hand-${p.id}">${p.hand.map(id=>merchantCard(id,undefined,undefined,'inactive')).join('')||'<span class="duel-empty">无手牌</span>'}</div></section>
-    <section><h3>已打出 · ${p.played.length}</h3><div class="ai-inspector-cards" data-scroll-zone="ai-played-${p.id}">${p.played.map(id=>merchantCard(id,undefined,undefined,'played')).join('')||'<span class="duel-empty">无卡牌</span>'}</div></section></div>
+    <div class="ai-inspector-sections"><section><h3>已打出 · ${p.played.length}</h3><div class="ai-inspector-cards" data-scroll-zone="ai-played-${p.id}">${p.played.map(id=>merchantCard(id,undefined,undefined,'played')).join('')||'<span class="duel-empty">无卡牌</span>'}</div></section>
+    <section><h3>手牌 · ${p.hand.length}</h3><div class="ai-inspector-cards" data-scroll-zone="ai-hand-${p.id}">${p.hand.map(id=>merchantCard(id,undefined,undefined,'inactive')).join('')||'<span class="duel-empty">无手牌</span>'}</div></section></div>
     <div class="ai-inspector-foot">魔像 ${p.claimed.length} · 铜币 ${p.copper} · 银币 ${p.silver}</div>
   </div>`;
 }
 function minimalTopbar(g:Game):string {
   const finished = g.phase==='finished';
-  return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact?'▦':'▣'}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="history" aria-label="对局历史" title="对局历史">⧉</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
+  return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${aiRuntimeChip()}${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact?'▦':'▣'}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="history" aria-label="对局历史" title="对局历史">⧉</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
 }
 function replayControls(g: Game): string {
   return `<div class="replay-controls"><small>${esc(replayCoverage(g))}</small></div>`;
@@ -283,39 +341,42 @@ function aiPauseControl(g:Game):string {
   if (!g.players.some(p=>p.isAI) || g.phase==='finished') return '';
   return `<button class="subtle-btn ai-pause" data-action="ai-pause">${botPaused?'▶ 继续 AI':'Ⅱ 暂停 AI'}</button>`;
 }
-function renderAISeat(g:Game, p:Game['players'][number]):string {
-  const current = g.current === p.id && g.phase !== 'finished';
-  return `<section class="ai-seat ${current?'ai-seat-active':''}" data-bot-seat="${p.id}" aria-label="${esc(p.name)}席位">
-    <div class="ai-seat-top"><div><span class="ai-seat-tag">AI ${g.players.filter(x=>x.isAI).findIndex(x=>x.id===p.id)+1}</span><b>${esc(p.name)}</b><small>${current ? botPaused ? '已暂停' : '正在计算行动' : '等待回合'}</small></div><div class="ai-seat-score">${score(p)}<small>分</small></div></div>
-    <div class="ai-seat-stock"><span>商队 ${count(p.stock)}/10</span><div>${stones(p.stock, true)}</div></div>
-    <div class="ai-seat-zone"><span>手牌 · ${p.hand.length}</span><div class="ai-face-row">${p.hand.length ? p.hand.map(id=>merchantCard(id,undefined,undefined,'inactive')).join('') : '<span class="ai-empty">无手牌</span>'}</div></div>
-    <div class="ai-seat-zone ai-played-zone ${p.played.length===0?'zone-empty':''} ${pref(p.id).folded?'zone-folded':''}"><div class="ai-zone-heading"><span>回收区 · ${p.played.length}</span>${foldedPlayed(p,true)}</div>${pref(p.id).folded?'':`<div class="ai-face-row" data-scroll-zone="played-${p.id}">${p.played.length ? p.played.map(id=>merchantCard(id,undefined,undefined,'played')).join('') : '<span class="ai-empty">暂未打出</span>'}</div>`}</div>
-    <div class="ai-seat-foot">魔像 ${p.claimed.length} 张 · 铜币 ${p.copper} · 银币 ${p.silver}</div>
-  </section>`;
+/** 所有人公开态势：分数、魔像、商队容量。只含公开信息。 */
+function renderSoloOverview(g:Game,target:number):string {
+  const rows=g.players.map(p=>`<div class="solo-overview-row${g.current===p.id&&g.phase!=='finished'?' is-active':''}">
+    <span class="solo-overview-name">${esc(p.name)}${p.isAI?' <small>AI</small>':''}</span>
+    <span>魔像 ${p.claimed.length}</span><span>商队 ${count(p.stock)}/10</span><b>${score(p)}</b>
+  </div>`).join('');
+  return `<section class="solo-overview" aria-label="玩家态势"><div class="solo-overview-head"><b>玩家态势</b><span>牌库 ${g.golemDeck.length} 魔像 · ${g.merchantDeck.length} 商人 · 每人 ${target} 张触发终局</span></div><div class="solo-overview-rows">${rows}</div></section>`;
 }
-/** 1 名人类 + 2–4 AI：人类操作区 / 公共市场 / AI 席位。 */
-function renderSoloAIBoard(g:Game):string {
+/** 1 名真人 + 1–4 AI 的默认桌面 Focus 布局。
+ * 三块信息：真人操作区（左）/ 公共市场与公开态势（中）/ 所有 AI 的公开引擎（右）。
+ * 超宽屏三列；1920/1440 下右侧市场+AI 轨道上下分区，真人区始终完整可见。 */
+function renderSoloFocusBoard(g:Game):string {
   const human = g.players.find(p=>!p.isAI)!;
   const bots = g.players.filter(p=>p.isAI);
   const finished = g.phase==='finished';
   const target = g.players.length>=4 ? 5 : 6;
-  return `<main class="layout duel-layout ai-board-layout ${viewState.compact?'compact-cards':'normal-cards'}"><header class="topbar duel-topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR · AI ARENA</span></div><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 · ${esc(g.players[g.current].name)} 行动中`}</div><div class="top-actions">${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
-    ${g.triggerPlayer!==null&&!finished?'<div class="final-alert">终局已触发，本轮结束后结算</div>':''}
-    <div class="ai-arena">
+  return `<main class="layout duel-layout solo-focus-layout focus-board ai-count-${bots.length} ${viewState.compact?'compact-cards':'normal-cards'}">${minimalTopbar(g)}
+    ${g.triggerPlayer!==null&&!finished?'<div class="final-alert">终局已触发 · 本轮结束后计分</div>':''}
+    <div class="duel-table solo-focus-table">
       ${renderDuelPlayer(g,human.id)}
-      <div class="duel-center"><div class="duel-center-heading"><span>共享市场 · CENTER TABLE</span><strong>1 名人类 VS ${bots.length} 名 AI</strong></div>
-        <section class="duel-market"><div class="duel-market-title"><h2>魔像市场</h2><span>剩余 ${g.golemDeck.length} 张 · 第 ${target} 张触发终局</span></div><div class="golem-grid">${g.golemMarket.map((id,i)=>golemCard(id,i,g)).join('')}</div></section>
-        <section class="duel-market"><div class="duel-market-title"><h2>商人市场</h2><span>剩余 ${g.merchantDeck.length} 张</span></div><div class="merchant-grid">${g.merchantMarket.map((m,i)=>merchantCard(m.id,i,m.bonus)).join('')}</div></section>
-        <section class="duel-log"><div class="duel-minor-head"><b>对局记录</b><span>AI 自动选择行动</span></div>${replayControls(g)}<div class="duel-log-lines">${g.log.slice(0,6).map(line=>`<span>${esc(line)}</span>`).join('')}</div></section>
+      <div class="duel-center solo-center">
+        <section class="duel-market"><div class="duel-market-title"><h2>魔像</h2><span>剩余 ${g.golemDeck.length} · 每人 ${target} 张触发终局</span></div><div class="golem-grid">${g.golemMarket.map((id,i)=>golemCard(id,i,g)).join('')}</div></section>
+        <section class="duel-market"><div class="duel-market-title"><h2>商人</h2><span>剩余 ${g.merchantDeck.length} 张</span></div><div class="merchant-grid">${g.merchantMarket.map((m,i)=>merchantCard(m.id,i,m.bonus)).join('')}</div></section>
+        <div class="solo-lower">
+          ${renderSoloOverview(g,target)}
+          <section class="solo-log" aria-label="行动记录"><div class="solo-log-head"><b>行动记录</b><span>${esc(replayCoverage(g))}</span></div><div class="solo-log-lines">${g.log.slice(0,12).map(line=>`<span>${esc(line)}</span>`).join('')||'<span class="ai-lane-empty">暂无记录</span>'}</div></section>
+        </div>
       </div>
-      <aside class="ai-seat-grid ${bots.length===2?'ai-seat-grid-two':''}">${bots.map(p=>renderAISeat(g,p)).join('')}</aside>
-    </div>${finished?renderResult(g):''}</main>`;
+      <aside class="ai-focus-rail ai-monitor ai-lanes ai-count-${bots.length}" aria-label="AI 对手公开卡牌" style="--bot-count:${bots.length}">${bots.map(p=>renderAICompactLane(g,p)).join('')}${renderAIInspector(g)}</aside>
+    </div>${logPopover(g)}${finished?renderResult(g):''}</main>`;
 }
 
 function renderBoard(g: Game): string {
   if (g.players.filter(p=>!p.isAI).length === 2 && g.players.length > 2 && g.players.some(p=>p.isAI)) return renderHumanAIBoard(g);
   if (g.players.length === 2) return renderDuelBoard(g);
-  if (g.players.filter(p=>!p.isAI).length === 1 && g.players.some(p=>p.isAI)) return renderSoloAIBoard(g);
+  if (g.players.filter(p=>!p.isAI).length === 1 && g.players.some(p=>p.isAI)) return renderSoloFocusBoard(g);
   const p = g.players[g.current];
   const target = g.players.length >= 4 ? 5 : 6;
   const finished = g.phase === 'finished';
@@ -394,6 +455,9 @@ function action(a: Action) {
   try {
     const previous = game.current;
     game = applyAction(game, a);
+    // 状态版本推进：任何仍基于旧局面的 Worker 结果立即失效（结果永不提交）。
+    stateVersion++;
+    try { aiRuntime?.invalidate(stateVersion); } catch { /* 运行时已销毁 */ }
     modal = game.phase === 'overflow' && !game.players[game.current].isAI ? { kind:'discard', colors:[] } : null;
     handoff = game.players.length > 2 && game.current !== previous && game.phase !== 'finished' && !game.players[game.current].isAI && game.players.filter(p=>!p.isAI).length > 2;
     toast = '';
@@ -411,6 +475,10 @@ function start() {
     const bots = Number((root.querySelector('#botCount') as HTMLSelectElement)?.value ?? 0);
     const names = [...inputs.map(x=>x.value),...Array.from({length:bots},(_,i)=>`AI 工匠 ${i+1}`)];
     if(humans!==inputs.length) throw new Error('人类玩家人数无效');
+    cancelBot('开始新对局');
+    try { aiRuntime?.reset(); } catch { /* 运行时已销毁 */ }
+    aiRuntime = null;
+    stateVersion = 1; runtimeNoticeShown = false;
     game = createGame(names, undefined, Array.from({length:bots},(_,i)=>humans+i));
     modal = null; handoff = false; botPaused = false; showHelp = false; showLog=false; inspectedAI=null; resultHidden = false; toast = ''; viewState.players={}; saveView(); save(); render();
   }
@@ -420,7 +488,7 @@ function control(target: HTMLElement) {
   const type = target.dataset.action || '';
   if (type === 'start') { start(); return; }
   if (type === 'inspect-ai') { const id=Number(target.dataset.player); inspectedAI = inspectedAI===id ? null : id; render(); return; }
-  if (type === 'history') { showHistory = true; historyViewId = null; render(); return; }
+  if (type === 'history') { cancelBot('打开对局历史'); showHistory = true; historyViewId = null; render(); return; }
   if (type === 'close-history') { showHistory = false; historyViewId = null; render(); return; }
   if (type === 'history-back') { historyViewId = null; render(); return; }
   if (type === 'history-view') { historyViewId = target.dataset.id || null; render(); return; }
@@ -438,14 +506,17 @@ function control(target: HTMLElement) {
   if (type === 'reset') {
     if (game?.phase !== 'finished' && !confirm('确定结束当前对局并重新开始吗？当前对局将自动存入对局历史。')) return;
     archiveGame();
+    cancelBot('结束当前对局');
+    try { aiRuntime?.reset(); } catch { /* 运行时已销毁 */ }
+    aiRuntime = null; stateVersion = 1; runtimeNoticeShown = false;
     game = null; handoff = false; showHelp = false; showLog=false; inspectedAI=null; modal = null; botPaused = false; resultHidden = false; toast = ''; viewState.players={}; saveView(); save(); render(); return;
   }
-  if (type === 'help') { showHelp = true; render(); return; }
+  if (type === 'help') { cancelBot('打开规则'); showHelp = true; render(); return; }
   if (type === 'close-help') { showHelp = false; render(); return; }
   if (type === 'close-result') { resultHidden = true; render(); return; }
   if (type === 'show-result') { resultHidden = false; render(); return; }
   if (type === 'ready') { handoff = false; render(); return; }
-  if (type === 'ai-pause') { botPaused = !botPaused; render(); return; }
+  if (type === 'ai-pause') { cancelBot(botPaused?'恢复 AI':'暂停 AI'); botPaused = !botPaused; render(); return; }
   if (type === 'card-size') { viewState.compact=!viewState.compact; saveView(); render(); return; }
   if (type === 'toggle-played') { const id=Number(target.dataset.player); if(game?.players[id]){pref(id).folded=!pref(id).folded;saveView();render();} return; }
   if (type === 'move-card') { if(!modal && !handoff){reorderHand(Number(target.dataset.player), target.dataset.id!,Number(target.dataset.direction) as -1|1);} return; }
@@ -505,67 +576,73 @@ function control(target: HTMLElement) {
     if (type === 'confirm-discard') {action({type:'discard',colors:modal.colors});return;}
   }
 }
-/** AI 决策 Worker（AI6 第六阶段·任务 G2）：搜索预算 ≥500ms 时主线程同步
- * 决策会冻结 UI——AI 思考移入 Worker（移动端既有模式），主线程保持响应。
- * 纪律：一次决策只提交一次合法行动（Worker 回调一次性作废）；游戏状态
- * 更新后不提交过期决策（game 引用 + 回合数 + 行动者三重过期守卫）；
- * Worker 不可用（file:// 无 module Worker、构造失败）时回退同步决策。 */
-let botWorker: Worker | null = null;
-let botWorkerURL: string | null = null;
-let aiThinking = false;
-function stopBotWorker() {
-  if (botTimer !== null) { clearTimeout(botTimer); botTimer = null; }
-  botWorker?.terminate();
-  botWorker = null;
-  if (botWorkerURL) URL.revokeObjectURL(botWorkerURL);
-  botWorkerURL = null;
-  aiThinking = false;
+function aiTurnStillValid(expectedTurn:number, expectedPlayer:number):boolean {
+  return !!game && game.phase!=='finished' && !handoff && !showHelp && !showHistory && !modal && !botPaused
+    && game.turnNumber===expectedTurn && game.current===expectedPlayer && !!game.players[game.current]?.isAI;
 }
-function syncBotDecision(expectedTurn: number, expectedPlayer: number) {
-  stopBotWorker();
-  if (!game || game.turnNumber!==expectedTurn || game.current!==expectedPlayer || game.phase==='finished' || handoff || showHelp || showHistory || botPaused || !game.players[game.current]?.isAI) return;
-  try {
-    const choice = chooseAIAction(game);
-    action(choice.action);
-  } catch(e) { botPaused=true; notify(`AI 行动异常，已暂停：${e instanceof Error ? e.message : String(e)}`); }
-}
+/** AI 回合：480ms 展示间隔后把决策交给 Worker；等待期间不阻塞主线程。
+ * 结果必须同时满足 runId、状态版本、回合/席位守卫才允许提交。 */
 function scheduleBot() {
   if (botTimer !== null) { clearTimeout(botTimer); botTimer=null; }
+  if (botPending) return;
   if (!game || game.phase==='finished' || handoff || showHelp || showHistory || modal || botPaused || !game.players[game.current]?.isAI) return;
   const expectedTurn = game.turnNumber;
   const expectedPlayer = game.current;
+  const run = ++botRun;
   botTimer = setTimeout(() => {
     botTimer=null;
-    if (!game || game.turnNumber!==expectedTurn || game.current!==expectedPlayer || game.phase==='finished' || handoff || showHelp || showHistory || botPaused || !game.players[game.current]?.isAI) return;
-    const decisionGame = game;
-    try {
-      const embedded = document.getElementById('offline-ai-worker');
-      const url = embedded && embedded.textContent
-        ? URL.createObjectURL(new Blob([embedded.textContent], {type:'text/javascript'}))
-        : new URL('./js/ai-worker.js', import.meta.url).href;
-      if (embedded && embedded.textContent) botWorkerURL = url;
-      aiThinking = true;
-      render();
-      botWorker = new Worker(url, { type: embedded && embedded.textContent ? 'classic' : 'module' });
-      botWorker.onmessage = (event: MessageEvent) => {
-        stopBotWorker();
-        render();
-        // 过期决策守卫：对局对象已换代 / 回合已推进 / 行动者已变 → 丢弃。
-        if (!game || game !== decisionGame || game.turnNumber!==expectedTurn || game.current!==expectedPlayer || game.phase==='finished' || handoff || showHelp || showHistory || botPaused) return;
-        if (event.data?.error) { botPaused=true; notify(`AI 行动异常，已暂停：${event.data.error}`); render(); return; }
-        if (!event.data?.action) throw new Error('AI Worker 返回空行动');
-        action(event.data.action);
-      };
-      botWorker.onerror = (event: ErrorEvent) => {
-        event.preventDefault();
-        // Worker 不可用 → 回退主线程同步决策（保持正确性，牺牲响应性）。
-        syncBotDecision(expectedTurn, expectedPlayer);
-      };
-      botWorker.postMessage(decisionGame);
-    } catch {
-      syncBotDecision(expectedTurn, expectedPlayer);
-    }
+    if (run!==botRun || !aiTurnStillValid(expectedTurn,expectedPlayer)) return;
+    void runAITurn(run, expectedTurn, expectedPlayer);
   }, 480);
+}
+async function runAITurn(run:number, expectedTurn:number, expectedPlayer:number) {
+  botPending = true;
+  const snapshot = game!;
+  const version = stateVersion;
+  try {
+    const decision = await runtime().decide(snapshot, version);
+    if (!decision) return; // superseded / cancelled：绝不提交
+    if (run!==botRun || version!==stateVersion || !aiTurnStillValid(expectedTurn,expectedPlayer)) return;
+    applyAIDecision(decision);
+  } catch(e) {
+    if (run===botRun) {
+      botPaused = true;
+      notify(`AI 运行时异常，已暂停：${e instanceof Error ? e.message : String(e)}`);
+    }
+  } finally {
+    if (run===botRun) { botPending=false; scheduleBot(); }
+  }
+}
+/** 页面侧最后一道合法性闸：Worker 行动必须能被当前正式引擎接受。
+ * 降级来源显式提示一次；非法行动使用已验证回退，绝不提交未知行动。 */
+function applyAIDecision(decision:DesktopDecision) {
+  if (!game) return;
+  const notice = decision.source==='worker' || runtimeNoticeShown ? '' : degradationNotice(decision);
+  try {
+    applyAction(game, decision.action);
+  } catch(e) {
+    let fallback: { action: Action };
+    try {
+      fallback = chooseVerifiedFallback(buildObservation(game, game.current));
+    } catch(fallbackError) {
+      botPaused = true;
+      notify(`AI 行动未通过正式引擎校验，且无合法回退，已暂停：${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`);
+      return;
+    }
+    action(fallback.action);
+    if (!runtimeNoticeShown) {
+      runtimeNoticeShown = true;
+      toast = `AI 行动未通过正式引擎校验，已使用合法回退（${e instanceof Error ? e.message : String(e)}）`;
+      render();
+    }
+    return;
+  }
+  action(decision.action);
+  if (notice) {
+    runtimeNoticeShown = true;
+    toast = notice;
+    render();
+  }
 }
 root.addEventListener('click', event => {
   const element = event.target as HTMLElement;
@@ -611,4 +688,6 @@ root.addEventListener('change', e => {
   if (element.id !== 'humanCount' && element.id !== 'botCount') return;
   syncSetup();
 });
+window.addEventListener('pagehide', () => { try { aiRuntime?.dispose(); } catch { /* 已销毁 */ } });
+exposeRuntimeDiagnostics();
 render();
