@@ -222,11 +222,12 @@ measured({
     source: 'training/evolution/autonomous-run.mjs + training/scripts/run-12h-stress.sh',
     testCommand: 'screen -dmS century12h /bin/zsh -f -c "cd <repo> && caffeinate -is training/scripts/run-12h-stress.sh"',
     evidence: artifact
-      ? `12h 产物=${artifact.path}；elapsedHours=${artifact.elapsedHours}`
+      ? `12h 产物=${artifact.path}；elapsedHours=${artifact.elapsedHours}；status=${artifact.status}；` +
+        `rounds=${artifact.rounds}；games=${artifact.games}；budgetWallMs=${artifact.wallMs}`
       : (inProgress
           ? `真实 12h 运行进行中：status=${inProgress.status} phase=${inProgress.phase} rounds=${inProgress.rounds?.length ?? 0} ` +
             `games=${inProgress.budgetUsed?.games ?? 0} wallMs=${inProgress.budgetUsed?.wallMs ?? 0} 已运行约 ${elapsedHours}h；` +
-            '达到 12h 且 status=completed 后才可 PASS'
+            '达到 12h 且 completed/budget-exhausted（非失败/人工停止）后才可 PASS'
           : '未发现已完成的 12 小时连续运行产物'),
     unmetReason: artifact ? null : (inProgress
       ? `运行中（约 ${elapsedHours}h）；未满 12 小时，不能提前 PASS`
@@ -241,8 +242,24 @@ function findLatest12hArtifact() {
   ];
   for (const path of candidates) {
     const doc = readJSON(path);
-    if (doc && Number(doc.elapsedMs) >= 12 * 3600_000 && doc.status === 'completed') {
-      return { path, elapsedHours: Number((doc.elapsedMs / 3600_000).toFixed(2)) };
+    if (!doc) continue;
+    const elapsedMs = Number(doc.elapsedMs);
+    // 12h 压力测试的自然结束方式有两种：
+    // - 跑满预注册轮次 → completed；
+    // - 达到 12h 墙钟预算 → budget-exhausted（这正是压力测试的目标）。
+    // 两者都要求真实运行 ≥12h、有真实对局、且不是 failed/stopped-by-operator。
+    const cleanStop = doc.status === 'completed'
+      || (doc.status === 'budget-exhausted' && doc.phase === 'stopped-by-budget');
+    const realWork = Number(doc.budgetUsed?.games ?? 0) > 0;
+    if (elapsedMs >= 12 * 3600_000 && cleanStop && realWork) {
+      return {
+        path,
+        elapsedHours: Number((elapsedMs / 3600_000).toFixed(2)),
+        status: doc.status,
+        rounds: doc.rounds,
+        games: doc.budgetUsed.games,
+        wallMs: doc.budgetUsed.wallMs,
+      };
     }
   }
   return null;
