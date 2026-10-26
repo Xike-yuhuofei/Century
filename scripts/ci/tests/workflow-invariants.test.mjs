@@ -29,6 +29,14 @@ test('ai-training 必须校验训练有效性并持久化状态（工作流成�
   assert.match(training, /run-ai9-openevolve\.mjs/);
 });
 
+test('AI9 coevolve 必须在 macOS 上运行并按 campaign id 显式上传证据', () => {
+  const training = readFileSync(resolve(ROOT, '.github/workflows/ai-training.yml'), 'utf8');
+  const block = training.slice(training.indexOf('  coevolve:'), training.indexOf('  ai9-openevolve:'));
+  assert.match(block, /runs-on:\s*macos-14/, 'Seatbelt 只存在于 macOS；ubuntu 上候选会被全部拒绝');
+  assert.match(block, /coevolution\/\$\{\{ steps\.campaign\.outputs\.id \}\}\//);
+  assert.doesNotMatch(block, /coevolution\/ai9-cloud-\*\//, '禁止再次使用通配目录上传 campaign 证据');
+});
+
 test('champion-continuation 只在线上部核验成功且非回滚时启动下一代', () => {
   const continuation = readFileSync(resolve(ROOT, '.github/workflows/champion-continuation.yml'), 'utf8');
   assert.match(continuation, /workflow_run:/);
