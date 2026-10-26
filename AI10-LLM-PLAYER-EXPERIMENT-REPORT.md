@@ -3,6 +3,8 @@
 - 日期：2026-10-27（Asia/Shanghai）
 - 分支：`feat/ai10-llm-player`
 - PR：https://github.com/Xike-yuhuofei/Century/pull/70
+- 合并：squash commit `830b9aea6f0aa870df6964382c0159d5c262acb6`（2026-10-26T18:43:58Z）
+- 部署：https://xike-yuhuofei.github.io/Century/（Pages deploy + deploy-verify PASS，artifact `b105a2e56d246bb6`，冠军 `joint-js5`）
 - 正式冠军：`joint-js5`（未修改）
 - 真实 Provider：Codex CLI 0.149.1（ChatGPT 登录，`gpt-5.6-sol` / `gpt-5.6-luna`）
 - 状态：P1/P2/P3-A/P4/P5/P6 完成；P3-B 完成但为**探索性/统计功效不足**；P3-C **BLOCKED（Codex 配额与墙钟预算不足，未运行）**
@@ -274,7 +276,12 @@ Codex 使用本机 ChatGPT 订阅登录，无逐 Token API 账单；真实约束
 - Mock 代理 UI：桌面 1440、移动 390×844 无横向溢出；思考状态、折叠详情、导出、不可达代理回退均 PASS；
 - 现有 Focus / 五人对局 / 复盘 UI 冒烟 PASS。
 
-GitHub Pages 为静态站点，必须在本机启动 Codex 代理；HTTPS Pages → loopback 的实际浏览器限制将在合并部署后再次验证（CORS/PNA 已按 Chromium 规则实现）。
+GitHub Pages 为静态站点，必须在本机启动 Codex 代理。合并部署后已用 Playwright Chromium 从 `https://xike-yuhuofei.github.io/Century/` 实测：
+
+- Pages 源跨域 `fetch` 本地代理 `/health` 返回 200，CORS/Private Network Access 预检通过；
+- 1 真人 + 1 LLM 席位真实对局：`gpt-5.6-luna` 决策 11.1s、20,360 Token、回退 0，面板正常显示；
+- console error 0、pageerror 0；
+- 证据：`docs/ai10/pages-llm-browser-verification.json`、`docs/ai10/pages-llm-decision.png`、`docs/ai10/deployment-identity.json`、`docs/ai10/deploy-verification.json`。
 
 ## 9. GitHub Actions 与验收
 
@@ -290,9 +297,12 @@ CI 改动：
 
 CI 结果：
 
-- 首轮 PR CI：14m13s，全绿（`ui-smoke` 首次通过）；
-- 第二轮首跑在 Playwright 安装步骤 12 分钟网络超时；第 1 次重跑安装成功，但 WebKit 3440×1440 单帧 623ms>400ms 触发已知时序抖动（LLM UI Mock 冒烟本身 PASS）；本地 `smoke_desktop_runtime.py` 的 WebKit 3440 帧隙 21ms 全部通过；第 2 次重跑后 `ui-smoke` 与 `ci-summary` 通过。
-- 未通过项：无代码/测试失败；两次失败均为共享 Runner 安装网络与 WebKit 单帧时序抖动，已保留重跑记录。
+- 首轮 PR CI：https://github.com/Xike-yuhuofei/Century/actions/runs/40364123477（14m13s，全绿，`ui-smoke` 首次通过）；
+- 第二轮首跑在 Playwright 安装步骤 12 分钟网络超时；第 1 次重跑安装成功，但 WebKit 3440×1440 单帧 623ms>400ms 触发已知时序抖动（LLM UI Mock 冒烟本身 PASS）；本地 `smoke_desktop_runtime.py` 的 WebKit 3440 帧隙 21ms 全部通过；第 2 次重跑后通过（https://github.com/Xike-yuhuofei/Century/actions/runs/40366453562）；
+- 合并前最终 PR CI：https://github.com/Xike-yuhuofei/Century/actions/runs/40377148554（18m43s，全绿，`ci-summary` PASS；training-unit 4/4、web-unit 4/4、ui-smoke、simulation、research 全部 PASS）；
+- 合并后 main CI：https://github.com/Xike-yuhuofei/Century/actions/runs/40380347597（success；`pages-deploy` success、`deploy-verify` success、`ci-summary` success）；
+- 部署身份：verdict PASS，artifact `b105a2e56d246bb6`，冠军 `joint-js5`，页面 `https://xike-yuhuofei.github.io/Century/`。
+- 未通过项：无代码/测试失败；早期两次失败均为共享 Runner 安装网络与 WebKit 单帧时序抖动，已保留重跑记录。
 
 ## 10. 阶段 C 预注册与 BLOCKED
 
@@ -360,6 +370,9 @@ cd web-v1 && npm run build && node scripts/serve.mjs
 - 预注册：`training/llm/preregistrations/ai10-llm-confirm-v1.json`、`ai10-llm-exploratory-v1-luna.json`
 - 训练候选：`training/reports/llm-player/analysis-stage-a/training-candidates.jsonl`（全量 155 条）；`training/reports/llm-player/ai10-explore-luna-r1/analysis/training-candidates.sample.jsonl`（4 人数 × 10 条；全量 649 条由分析命令重新生成）
 - OpenEvolve 诊断：`training/reports/llm-player/*/analysis/openevolve-diagnosis.jsonl`、`module-signal-matrix.json`
-- PR：https://github.com/Xike-yuhuofei/Century/pull/70
-- CI：https://github.com/Xike-yuhuofei/Century/actions/runs/40366453562
-- 合并/部署链接：合并后补充（见 PR 时间线）。
+- PR：https://github.com/Xike-yuhuofei/Century/pull/70（MERGED，squash commit `830b9aea6f0aa870df6964382c0159d5c262acb6`）
+- 合并前最终 CI：https://github.com/Xike-yuhuofei/Century/actions/runs/40377148554
+- 合并后 main CI / Pages：https://github.com/Xike-yuhuofei/Century/actions/runs/40380347597
+- 线上页面：https://xike-yuhuofei.github.io/Century/（deploy-verify PASS，artifact `b105a2e56d246bb6`，冠军 `joint-js5`）
+- 部署证据：`docs/ai10/deployment-identity.json`、`docs/ai10/deploy-verification.json`
+- 线上 LLM 浏览器证据：`docs/ai10/pages-llm-browser-verification.json`、`docs/ai10/pages-llm-decision.png`
