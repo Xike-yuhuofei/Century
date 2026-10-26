@@ -159,7 +159,10 @@ export function createOpenEvolveCampaignGenerator({
                 experiment,
                 round,
                 index: 0,
-                parentId: parentArtifact?.candidateId ?? null,
+                // OpenEvolve 每轮从官方 acquisitionValue 起点重新进化；它的
+                // 代际继承发生在内部（best_program_info.parent_id），不是把 Campaign
+                // 的参数候选当源码父代。parentId 明确置空，避免伪造源码血缘。
+                parentId: null,
               });
               sourceItem = {
                 artifact: created.artifact,
@@ -170,6 +173,8 @@ export function createOpenEvolveCampaignGenerator({
                   bestProgramPath: created.provenance?.bestProgramPath ?? null,
                   functionSha256: created.provenance?.functionSha256 ?? null,
                   identicalToOfficial: evidence.evidence?.identicalToOfficial ?? null,
+                  sourceParentId: evidence.evidence?.parentId ?? null,
+                  seedProgram: 'program/acquisition_value.ts（官方冠军实现）',
                   realGameEvidence: evidence.evidence,
                   note: 'OpenEvolve stage2/3 真实对局与第一名率统计；Campaign 仍会独立执行安全检查与开发池评估',
                 },
