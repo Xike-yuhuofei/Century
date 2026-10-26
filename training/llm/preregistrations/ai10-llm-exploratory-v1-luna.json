@@ -1,0 +1,118 @@
+{
+  "schema": "century-llm-run-plan-v1",
+  "stage": "exploratory",
+  "experimentId": "ai10-llm-v1",
+  "runId": "ai10-llm-v1-exploratory-20261026T171014-vyqxi",
+  "modes": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "seedsPerMode": 4,
+  "offset": 0,
+  "plannedPairs": 16,
+  "concurrency": 2,
+  "provider": {
+    "id": "codex-exec",
+    "kind": "codex-cli",
+    "model": "gpt-5.6-luna",
+    "mode": "real",
+    "endpointHost": null,
+    "parameters": {
+      "transport": "codex exec --json",
+      "reasoningEffort": "low",
+      "sandbox": "read-only",
+      "ephemeral": true,
+      "ignoreUserConfig": true,
+      "outputSchema": "century-llm-decision-v1",
+      "cliVersion": "codex-cli 0.149.1",
+      "maxConcurrency": 2
+    }
+  },
+  "champion": {
+    "id": "joint-js5",
+    "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3"
+  },
+  "llmConfig": {
+    "timeoutMs": 120000,
+    "maxRetries": 1,
+    "maxTokens": 700,
+    "temperature": 0,
+    "maxCalls": 120,
+    "tokenBudget": 2500000,
+    "candidateLimit": 64,
+    "shadowChampion": true
+  },
+  "budgets": {
+    "runTokenBudget": 25000000,
+    "runCallBudget": 1500,
+    "maxWallMinutes": 240
+  },
+  "preregistration": null,
+  "strata": {
+    "2": {
+      "seeds": [
+        1700010000,
+        1700010001,
+        1700010002,
+        1700010003
+      ],
+      "focusSeats": [
+        0,
+        1,
+        0,
+        1
+      ]
+    },
+    "3": {
+      "seeds": [
+        1700110000,
+        1700110001,
+        1700110002,
+        1700110003
+      ],
+      "focusSeats": [
+        0,
+        1,
+        2,
+        0
+      ]
+    },
+    "4": {
+      "seeds": [
+        1700210000,
+        1700210001,
+        1700210002,
+        1700210003
+      ],
+      "focusSeats": [
+        0,
+        1,
+        2,
+        3
+      ]
+    },
+    "5": {
+      "seeds": [
+        1700310000,
+        1700310001,
+        1700310002,
+        1700310003
+      ],
+      "focusSeats": [
+        0,
+        1,
+        2,
+        3
+      ]
+    }
+  },
+  "providerSwitch": {
+    "from": "gpt-5.6-sol",
+    "to": "gpt-5.6-luna",
+    "reason": "gpt-5.6-sol 触发 ChatGPT/Codex 用量上限；同账户 luna 仍可用",
+    "invalidPredecessorRun": "training/reports/llm-player/ai10-explore-r1",
+    "note": "同一预定义种子与配对设计；无效 sol 运行不计入 LLM 成绩，仅作接口异常证据"
+  }
+}

@@ -1,0 +1,151 @@
+{
+  "schema": "century-llm-quality-v1",
+  "runs": [
+    {
+      "runId": "ai10-explore-r1",
+      "runPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-r1",
+      "stage": "exploratory",
+      "provider": {
+        "id": "codex-exec",
+        "kind": "codex-cli",
+        "model": "gpt-5.6-sol",
+        "mode": "real",
+        "endpointHost": null,
+        "parameters": {
+          "transport": "codex exec --json",
+          "reasoningEffort": "low",
+          "sandbox": "read-only",
+          "ephemeral": true,
+          "ignoreUserConfig": true,
+          "outputSchema": "century-llm-decision-v1",
+          "cliVersion": "codex-cli 0.149.1",
+          "maxConcurrency": 2
+        }
+      },
+      "config": {
+        "schema": "century-llm-experiment-config-v1",
+        "experimentId": "ai10-llm-v1",
+        "stage": "exploratory",
+        "modes": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "seedsPerMode": 4,
+        "offset": 0,
+        "focusSeatRotation": "pairIndex % seatCount（同一阶段/人数内均衡轮换）",
+        "opponentPool": "frozen-champion-all-non-focus-seats",
+        "champion": {
+          "id": "joint-js5",
+          "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3",
+          "sourceSha256": "0dd409e57afd62546e5ce8cd2b599306a14defdfa34628ea7753d13e39cd3321"
+        },
+        "provider": {
+          "id": "codex-exec",
+          "kind": "codex-cli",
+          "model": "gpt-5.6-sol",
+          "mode": "real",
+          "endpointHost": null,
+          "parameters": {
+            "transport": "codex exec --json",
+            "reasoningEffort": "low",
+            "sandbox": "read-only",
+            "ephemeral": true,
+            "ignoreUserConfig": true,
+            "outputSchema": "century-llm-decision-v1",
+            "cliVersion": "codex-cli 0.149.1",
+            "maxConcurrency": 2
+          }
+        },
+        "llmConfig": {
+          "timeoutMs": 120000,
+          "maxRetries": 1,
+          "maxTokens": 700,
+          "temperature": 0,
+          "maxCalls": 120,
+          "tokenBudget": 2500000,
+          "candidateLimit": 64,
+          "shadowChampion": true
+        },
+        "budgets": {
+          "runTokenBudget": 25000000,
+          "runCallBudget": 1500,
+          "maxWallMinutes": 240,
+          "concurrency": 2
+        },
+        "preregistration": null,
+        "codeVersion": {
+          "commit": "32d1803a073c4268356837ac915becaa9f1708d0",
+          "dirty": false,
+          "dirtyFiles": []
+        },
+        "evidenceClass": "real-llm"
+      },
+      "codeVersion": {
+        "commit": "32d1803a073c4268356837ac915becaa9f1708d0",
+        "dirty": false,
+        "dirtyFiles": []
+      },
+      "games": 8,
+      "finishedGames": 6,
+      "plannedPairs": null,
+      "summaryStatus": null
+    }
+  ],
+  "totals": {
+    "decisions": 153,
+    "llmDecisions": 25,
+    "fallbackDecisions": 128,
+    "games": 8,
+    "finishedGames": 6,
+    "replayConsistentGames": 6
+  },
+  "rates": {
+    "parseSuccessRate": 0.16339869281045752,
+    "illegalSuggestedRate": 0,
+    "missingReasonRate": 0.8366013071895425,
+    "missingAlternativesRate": 0.8366013071895425,
+    "fallbackRate": 0.8366013071895425,
+    "apiFailureRate": 0.8366013071895425,
+    "retryRecoveredRate": 0,
+    "duplicateRecordRate": 0,
+    "completeGameRate": 0.75,
+    "replayConsistencyRate": 0.75,
+    "hiddenLeakFree": true
+  },
+  "sampleClasses": {
+    "teacher-candidate": 25,
+    "interface-error": 128
+  },
+  "fallbackCauses": {
+    "api-error": 128
+  },
+  "providerModels": {
+    "codex-exec/gpt-5.6-sol": 153
+  },
+  "hiddenLeakFindings": [],
+  "duplicateRecords": [],
+  "candidateGeneration": {
+    "prunedDecisions": 25,
+    "meanFullLegalCount": 37.56209150326797,
+    "meanKeptCount": 24.013071895424837,
+    "versions": [
+      "llm-candidates-v1"
+    ],
+    "actionEncoding": "ai5-action-v1",
+    "stateEncoding": "ai5-state-v1"
+  },
+  "latencyMs": {
+    "mean": 9234.37908496732,
+    "median": 6589,
+    "p95": 19882,
+    "max": 28961
+  },
+  "usage": {
+    "tokens": 479653,
+    "calls": 281,
+    "promptTokens": 459802,
+    "completionTokens": 19851
+  }
+}
