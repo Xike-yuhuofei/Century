@@ -12,6 +12,7 @@
  *   node training/scripts/publish-promotion-pr.mjs [--dry-run]
  *     [--evidence-dir training/reports/first-place-promotion/latest]
  *     [--base main] [--repo-root <path>] [--alpha-ledger <path>] [--governance-central <path>]
+ *     [--base-commit <sha>]   # 仅测试/演练：从指定本地 commit 派生，生产不得使用
  *
  * 退出码：0=已创建 PR（或 dry-run 成功）；1=任一前置/发布步骤失败（fail-closed）。
  */
@@ -120,6 +121,26 @@ try {
   mkdirSync(targetEvidence, { recursive: true });
   for (const name of REQUIRED_EVIDENCE) {
     copyFileSync(join(evidenceDir, name), join(targetEvidence, name));
+  }
+  // 并发治理保护：若 origin/main 在挑战开始后新增/改写了 alpha 历史，禁止
+  // 用本地账本整文件覆盖（last-write-wins 会静默回退别人的挑战）。
+  if (!baseCommit) {
+    const baseLedger = parseJSONWithWarnings(sh('git', [
+      'show', `origin/${base}:training/governance/alpha-ledger.json`,
+    ], { cwd: repoRoot }));
+    const localLedger = JSON.parse(readFileSync(alphaLedgerSource, 'utf8'));
+    for (const entry of baseLedger.reservations ?? []) {
+      const mine = (localLedger.reservations ?? []).find(r => r.challengeIndex === entry.challengeIndex);
+      if (!mine || mine.planId !== entry.planId || Math.abs(mine.alpha - entry.alpha) > 1e-15) {
+        throw new Error(`origin/${base} 的 alpha 历史与本地不一致（challengeIndex=${entry.challengeIndex}）——请先 rebase，禁止覆盖并发挑战`);
+      }
+    }
+    for (const entry of baseLedger.outcomes ?? []) {
+      const mine = (localLedger.outcomes ?? []).find(o => o.challengeIndex === entry.challengeIndex);
+      if (!mine || mine.evidenceHash !== entry.evidenceHash || mine.decision !== entry.decision) {
+        throw new Error(`origin/${base} 的 alpha 结果与本地不一致（challengeIndex=${entry.challengeIndex}）——请先 rebase`);
+      }
+    }
   }
   copyFileSync(alphaLedgerSource, join(tree, 'training/governance/alpha-ledger.json'));
   copyFileSync(registrySource, join(tree, 'training/governance/seed-consumption-registry.json'));
