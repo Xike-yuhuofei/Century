@@ -336,6 +336,10 @@ function findLatest12hArtifact() {
   const promotionDrillPass = promotionDrill?.verdict === 'PASS';
   const pilot = readJSON('training/reports/first-place-promotion/pilot-candidatecap-r1c7.json');
   const pilotNoChallenge = pilot?.verdict === 'NO-FORMAL-CHALLENGE';
+  const ruleset = readJSON('training/reports/github-governance-verification.json');
+  const machineMerge = ruleset?.ruleset?.requiredApprovingReviewCount === 0
+    && Array.isArray(ruleset?.ruleset?.requiredStatusChecks)
+    && ruleset.ruleset.requiredStatusChecks.includes('ci-summary');
   const complete = deployedPass && promotedFirstPlace && rollbackDrill;
   record({
     id: 'R12', title: '无人工审批的自动晋级、发布、线上核验与回滚',
@@ -343,6 +347,7 @@ function findLatest12hArtifact() {
     source: '.github/workflows/ci.yml + ai-training.yml + scripts/ci/verify-deploy.mjs + rollback-champion.mjs + training/scripts/promotion-e2e-drill.mjs',
     testCommand: 'node scripts/ci/verify-workflows.mjs && node scripts/ci/rollback-champion.mjs --dry-run && node training/scripts/promotion-e2e-drill.mjs',
     evidence: `工作流机器门禁=${verifyWorkflows.ok}；回滚 dry-run=${rollbackDry.ok}；` +
+      `GitHub ruleset 机器合并（0 人工批准 + 必需检查）=${machineMerge}；` +
       `真实机器合并+Pages 部署+线上核验=${deployedPass}（run 40221527752, site=PASS）；` +
       `隔离环境晋级→落地→构建→发布核验→回滚全链路=${promotionDrillPass}（${promotionDrill?.checks?.length ?? 0} 项，合成夹具）；` +
       `dev 信号同预算配对复现筛查=${pilotNoChallenge ? 'NO-FORMAL-CHALLENGE（4 层均无正增量）' : '未执行'}；` +
