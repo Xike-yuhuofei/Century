@@ -162,7 +162,11 @@ add('governance-guardrails',
 
 const failed = checks.filter(check => check.status === 'FAIL');
 const pending = checks.filter(check => check.status === 'IN_PROGRESS');
-const verdict = failed.length > 0 ? 'FAIL' : (pending.length > 0 ? 'IN_PROGRESS' : 'PASS');
+const legacy = checks.some(check => check.status === 'LEGACY');
+// LEGACY 绝不等于 PASS：旧 campaign 可在本地恢复，但不能作为最终 R09 验收证据。
+const verdict = failed.length > 0
+  ? 'FAIL'
+  : (legacy ? 'LEGACY' : (pending.length > 0 ? 'IN_PROGRESS' : 'PASS'));
 
 const report = {
   schema: 'century-ai9-endurance-audit-v1',
@@ -199,6 +203,7 @@ const report = {
 };
 
 writeJSON(outPath, report);
-console.log(JSON.stringify({ outPath, verdict, failed: failed.map(check => check.id), pending: pending.map(check => check.id) }, null, 2));
+console.log(JSON.stringify({ outPath, verdict, failed: failed.map(check => check.id), pending: pending.map(check => check.id), legacy }, null, 2));
 if (verdict === 'FAIL') process.exit(1);
 if (verdict === 'IN_PROGRESS') process.exit(2);
+if (verdict === 'LEGACY') process.exit(3);
