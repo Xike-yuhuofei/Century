@@ -349,7 +349,7 @@ function findLatest12hArtifact() {
     evidence: `工作流机器门禁=${verifyWorkflows.ok}；回滚 dry-run=${rollbackDry.ok}；` +
       `GitHub ruleset 机器合并（0 人工批准 + 必需检查）=${machineMerge}；` +
       `真实机器合并+Pages 部署+线上核验=${deployedPass}（run 40221527752, site=PASS）；` +
-      `隔离环境晋级→落地→构建→发布核验→回滚全链路=${promotionDrillPass}（${promotionDrill?.checks?.length ?? 0} 项，合成夹具）；` +
+      `隔离环境晋级→落盘→post-apply 门禁→发布器建 PR dry-run→构建→发布核验→回滚全链路=${promotionDrillPass}（${promotionDrill?.checks?.length ?? 0} 项，合成夹具）；` +
       `dev 信号同预算配对复现筛查=${pilotNoChallenge ? 'NO-FORMAL-CHALLENGE（4 层均无正增量）' : '未执行'}；` +
       `第一名率冠军晋级=${promotedFirstPlace}；回滚演练=${rollbackDrill}`,
     unmetReason: complete ? null
