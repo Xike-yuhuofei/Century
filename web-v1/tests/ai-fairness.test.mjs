@@ -8,8 +8,9 @@ import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createGame, applyAction } from '../dist/js/engine.js';
+import { createGame, applyAction, score } from '../dist/js/engine.js';
 import { chooseAIAction, buildObservation, CHAMPION_PARAMETERS } from '../dist/js/ai.js';
+import { initialState } from '../dist/js/ai/planner.js';
 // 晋级后默认冠军是 JS5 适配器：本文件断言 AI4/AI5 束搜索冠军的公平性/金标准
 // 回归，显式钉定前任冠军参数（fixtures/legacy-champion.json）。
 const LEGACY_CHAMPION = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), 'fixtures/legacy-champion.json'), 'utf8'));
@@ -89,6 +90,26 @@ test('AIObservation 纯度：不含隐藏牌库字段且深度冻结', () => {
   // 席位越权观察：非当前席位也可以构造观察（训练诊断用），但同样不含隐藏字段。
   const other = buildObservation(g, 2);
   assert.equal(JSON.stringify(other).includes('merchantDeck'), false);
+});
+
+test('M06 公开名次快照：baseScore/standings 与正式 score 同口径且只含公开信息', () => {
+  for (const [seatCount, seed] of [[2, 71], [4, 72], [5, 73]]) {
+    let g = createGame(Array.from({ length: seatCount }, (_, i) => `P${i}`), seed, Array.from({ length: seatCount - 1 }, (_, i) => i + 1));
+    g.players[0].isAI = true;
+    for (let move = 0; move < 30 && g.phase === 'turn'; move++) {
+      const { action } = chooseAIAction(g, { parameters: LEGACY_CHAMPION, workUnits: 8 });
+      g = applyAction(g, action);
+    }
+    const view = buildObservation(g);
+    const state = initialState(view);
+    assert.equal(state.baseScore, score(g.players[view.current]));
+    assert.equal(state.baseScore, state.standings.find(s => s.seat === view.current).score);
+    assert.deepEqual(state.standings.map(s => [s.seat, s.score]), g.players.map(p => [p.id, score(p)]));
+    assert.deepEqual(state.standings.map(s => s.claimed), g.players.map(p => p.claimed.length));
+    assert.equal(state.claimThreshold, seatCount >= 4 ? 5 : 6);
+    // 快照不得携带任何隐藏牌库字段。
+    assert.equal(JSON.stringify(state.standings).includes('Deck'), false);
+  }
 });
 
 test('静态扫描：AI 决策源码对隐藏牌库字段的引用必须为零', () => {
