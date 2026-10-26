@@ -435,7 +435,7 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 
 | ID | 项目 | 状态 | 原因/解除条件 |
 |---|---|---|---|
-| R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | `ai9-12h-endurance-3`（screen `ai9-12h3` → 恢复后 `ai9-12h3r`）于 13:34 CST 启动（500 轮 / 12h 墙钟 / 3000 候选 / 400000 局；每轮 2 次深验、全局上限 200）。14:28 CST 实测中途强制停止（seq 176，steps=96，checkpointSeq 98）与同配置恢复（seq 177，fingerprint 一致），随后进入 round 6。截至 14:32 CST：36 候选、672 局、10 次深验、4 次机器门禁结果（均 BLOCKED/insufficient-statistical-power）。前两次启动：`endurance` 被宿主回收；`endurance-2` 在 288 局/4 次深验后人工停止。完成条件：12h 预算结束后检查状态/预算/恢复证据 |
+| R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | `ai9-12h-endurance-3`（screen `ai9-12h3` → 恢复后 `ai9-12h3r`）于 13:34 CST 启动（500 轮 / 12h 墙钟 / 3000 候选 / 400000 局；每轮 2 次深验、全局上限 200）。14:28 CST 实测中途强制停止（seq 176，steps=96，checkpointSeq 98）与同配置恢复（seq 177，fingerprint 一致），随后进入 round 6。截至 14:32 CST：36 候选、672 局、10 次深验、4 次机器门禁结果（均 BLOCKED/insufficient-statistical-power）。前两次启动：`endurance` 被宿主回收；`endurance-2` 在 288 局/4 次深验后人工停止。完成条件：`npm run ai9:endurance -- --campaign ai9-12h-endurance-3` 在 12h 预算结束后返回 PASS |
 | R12 | 真实冠军晋级 + 自动发布 + 回滚 | BLOCKED | 门禁路径已真实执行 2 次（`ai9-live-coevolve-2`），均 `BLOCKED/insufficient-statistical-power`（α=1.22e-5，需 ~10,249 种子/人数）；没有统计合格候选，不能伪造挑战/晋级。机器的晋级/拒绝/回滚分支已由单元/演练测试覆盖（模拟证据），但**未改变正式冠军**。解除条件：补充独立验证预算与 alpha，且候选达到预注册阈值 |
 | — | 统计显著的第一名率提升 | 未证明 | 所有研究候选的区间下界均 ≤0；冠军保持 `joint-js5` |
 | — | 全模块逐一真实对局强度证明 | 部分 | 12 模块共同控制真实对局；逐模块“强度贡献”只做了探针与交互方向性实验 |
@@ -510,6 +510,9 @@ screen -dmS ai9-12h3r /bin/zsh -c 'cd training && npm run coevolve:resume -- --c
   --max-candidates 3000 --max-games 400000 --continue-from-selected \
   --max-wall-ms 43200000 --max-concurrent 1 > /tmp/ai9-12h-3-resume.log 2>&1'
 npm run coevolve:status -- --campaign ai9-12h-endurance-3
+
+# 4d) R09 12h 验收审计（PASS / IN_PROGRESS / FAIL；只读真实 state/events）
+npm run ai9:endurance -- --campaign ai9-12h-endurance-3
 
 # 5) 正式挑战（仅在候选达到发起条件时；会消费验证池/alpha）
 node training/tournament/run-first-place-challenge.mjs \
