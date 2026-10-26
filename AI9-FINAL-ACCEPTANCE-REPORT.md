@@ -401,6 +401,7 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
   - 预注册、种子窗口、alpha 账本、独立重算逻辑不变；
   - `promote-first-place-champion.mjs` 对编译候选记录模块身份，并在真实晋级时把模块函数写入正式源码（`apply-modules.mjs`，带备份/复核/回滚）。
 - **本会话没有执行正式挑战**：没有候选达到发起条件；未消费验证池、未消耗新 alpha、冠军未变。
+- **确定性复现（2–5 人）**：固定源码/参数/种子/焦点席位/对手池/`workUnits=32`，每个世界完整执行两轮并逐局比对状态、排名、分数、步数与行动轨迹哈希；2/3/4/5 人各 3 世界 ×2 轮，共 24 局，**0 mismatch，verdict=PASS**。证据：`training/reports/ai9/determinism-report.json`。这是可复现性自检，不构成竞技强度证据。
 
 ---
 
@@ -482,6 +483,10 @@ npm run ai9:structural  # M10/M11 结构级搜索候选（编译+探针+真实 2
 npm run ai9:resource
 npm run ai9:wiring         # 逐模块决策分歧审计
 npm run ai9:execution      # 逐模块真实对局调用计数审计
+
+# 2a) 确定性复现（2–5 人，固定 workUnits；每世界双轮逐局比对；在 training/ 目录内执行）
+node scripts/verify-determinism.mjs --worlds 3 --seat-counts 2,3,4,5 \
+  --seed-base 1600000000 --out reports/ai9/determinism-report.json
 
 # 2b) 本地部署身份核验（不依赖线上）
 python3 -m http.server 8123 --directory web-v1/dist &
