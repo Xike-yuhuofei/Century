@@ -881,8 +881,13 @@ export class CampaignController {
         assertCondition(state.runFingerprint === this.runFingerprint,
           'state runFingerprint 与当前配置不一致——拒绝恢复（防止重复/错配置运行）');
         const currentCodeVersion = computeCodeVersion();
-        assertCondition(sameCodeDigest(state.codeVersion, currentCodeVersion),
-          'state codeDigest 与当前代码不一致或缺失——拒绝恢复（R09 要求单一可复现代码版本）');
+        // 兼容 codeVersion 引入前启动的长跑 campaign：缺失时允许恢复，但事件显式标记
+        // legacy，不把当前代码冒充为历史运行起点；新 campaign 仍然强制摘要一致。
+        const legacyCodeVersion = !state.codeVersion;
+        if (!legacyCodeVersion) {
+          assertCondition(sameCodeDigest(state.codeVersion, currentCodeVersion),
+            'state codeDigest 与当前代码不一致——拒绝恢复（R09 要求单一可复现代码版本）');
+        }
         if (state.status === 'completed') {
           throw new Error('campaign 已完成——重复运行保护（不会再次消费预算/种子）');
         }
@@ -901,6 +906,7 @@ export class CampaignController {
           codeDigest: state.codeVersion?.codeDigest ?? null,
           headCommit: state.codeVersion?.headCommit ?? null,
           webBuildCommit: state.codeVersion?.webBuild?.gitCommit ?? null,
+          legacy: Boolean(resume && !state.codeVersion),
         },
         maxSteps,
       });

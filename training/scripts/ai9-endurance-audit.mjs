@@ -65,34 +65,35 @@ const requiredWallMs = Math.round(maxWallMs * minWallRatio);
 add('state-schema', state.schema === 'century-evolution-campaign-v1' ? 'PASS' : 'FAIL', state.schema);
 
 const codeVersion = state.codeVersion ?? null;
-add('code-version-declared',
-  codeVersion?.schema === CODE_VERSION_SCHEMA
-    && /^[0-9a-f]{40}$/.test(String(codeVersion?.headCommit ?? ''))
-    && /^[0-9a-f]{64}$/.test(String(codeVersion?.codeDigest ?? ''))
-    ? 'PASS' : 'FAIL',
-  codeVersion
-    ? `schema=${codeVersion.schema}，head=${String(codeVersion.headCommit).slice(0, 12)}，digest=${String(codeVersion.codeDigest).slice(0, 12)}`
-    : 'state.codeVersion 缺失');
-add('code-version-clean',
-  codeVersion?.headDirty === false
-    && codeVersion?.webBuild?.gitDirty === false
-    && Boolean(codeVersion?.webBuild?.sourceSha256)
-    && Boolean(codeVersion?.webBuild?.artifactSha256)
-    ? 'PASS' : 'FAIL',
-  codeVersion
-    ? `headDirty=${codeVersion.headDirty}，webBuildDirty=${codeVersion.webBuild?.gitDirty}，dirtyFiles=${(codeVersion.dirtyFiles ?? []).length}`
-    : 'state.codeVersion 缺失');
-let recomputedCodeVersion = null;
-try {
-  recomputedCodeVersion = computeCodeVersion();
-} catch (error) {
-  recomputedCodeVersion = { error: error.message };
+if (!codeVersion) {
+  add('code-version-legacy', 'LEGACY',
+    'campaign 启动早于 codeVersion 捕获；不追认当前代码为历史起点，也不伪造 state。该 campaign 的代码身份改由 runFingerprint、候选 artifact 哈希与构建日志佐证');
+} else {
+  add('code-version-declared',
+    codeVersion.schema === CODE_VERSION_SCHEMA
+      && /^[0-9a-f]{40}$/.test(String(codeVersion.headCommit ?? ''))
+      && /^[0-9a-f]{64}$/.test(String(codeVersion.codeDigest ?? ''))
+      ? 'PASS' : 'FAIL',
+    `schema=${codeVersion.schema}，head=${String(codeVersion.headCommit).slice(0, 12)}，digest=${String(codeVersion.codeDigest).slice(0, 12)}`);
+  add('code-version-clean',
+    codeVersion.headDirty === false
+      && codeVersion.webBuild?.gitDirty === false
+      && Boolean(codeVersion.webBuild?.sourceSha256)
+      && Boolean(codeVersion.webBuild?.artifactSha256)
+      ? 'PASS' : 'FAIL',
+    `headDirty=${codeVersion.headDirty}，webBuildDirty=${codeVersion.webBuild?.gitDirty}，dirtyFiles=${(codeVersion.dirtyFiles ?? []).length}`);
+  let recomputedCodeVersion = null;
+  try {
+    recomputedCodeVersion = computeCodeVersion();
+  } catch (error) {
+    recomputedCodeVersion = { error: error.message };
+  }
+  add('code-version-recomputed',
+    sameCodeDigest(codeVersion, recomputedCodeVersion) ? 'PASS' : 'FAIL',
+    recomputedCodeVersion?.error
+      ? recomputedCodeVersion.error
+      : `state=${String(codeVersion.codeDigest).slice(0, 12)} ≠ current=${String(recomputedCodeVersion.codeDigest).slice(0, 12)}`);
 }
-add('code-version-recomputed',
-  sameCodeDigest(codeVersion, recomputedCodeVersion) ? 'PASS' : 'FAIL',
-  recomputedCodeVersion?.error
-    ? recomputedCodeVersion.error
-    : `state=${String(codeVersion?.codeDigest ?? '').slice(0, 12)} ≠ current=${String(recomputedCodeVersion.codeDigest).slice(0, 12)}`);
 
 add('wall-budget-declared',
   maxWallMs >= 43_200_000 ? 'PASS' : 'FAIL',
@@ -193,6 +194,7 @@ const report = {
   notes: [
     'PASS 只表示 R09 的长时运行/恢复验收满足；不表示候选强度或冠军晋级。',
     '正式冠军晋级仍须预注册统计门禁；BLOCKED/insufficient-statistical-power 是合法结果。',
+    'LEGACY 表示该 campaign 启动早于 codeVersion 捕获；不把当前代码冒充为历史起点，也不事后改写 state。',
   ],
 };
 
