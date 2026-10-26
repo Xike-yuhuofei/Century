@@ -308,6 +308,9 @@ async function main() {
     execFileSync(process.execPath, [join(worktree, 'training/scripts/refresh-champion-provenance.mjs')], {
       encoding: 'utf8', cwd: worktree,
     });
+    execFileSync(process.execPath, [
+      join(worktree, 'training/scripts/version-lock.mjs'), '--write', '--note', 'promotion-e2e-drill 合成冠军',
+    ], { encoding: 'utf8', cwd: worktree });
     let auditOk = false;
     let auditDetail = '';
     try {

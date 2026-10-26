@@ -213,6 +213,7 @@ jobs:
           (cd web-v1 && npm ci --no-audit --no-fund && npm run build)
           node training/scripts/apply-champion.mjs --check
           node training/scripts/refresh-champion-provenance.mjs
+          node training/scripts/version-lock.mjs --write --note "第一名率冠军晋级 ${CANDIDATE_ID}（机器门禁）"
           node training/redteam/audit-gate.mjs --tier promotion --json training/reports/audit-gate-promote.json
           git checkout -b "$branch"
           git add training/champions/ web-v1/src/ai/parameters.ts web-v1/dist training/reports/

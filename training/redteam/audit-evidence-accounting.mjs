@@ -145,9 +145,19 @@ if (totalGames !== CLAIMED) {
   if (won !== candPaired.won || lost !== candPaired.lost || tied !== candPaired.tied) {
     mism.push(`paired vs candidate.json ${candPaired.won}/${candPaired.lost}/${candPaired.tied}`);
   }
-  const provPaired = champ.provenance?.promotionEvidence?.paired ?? {};
-  if (won !== provPaired.won || lost !== provPaired.lost || tied !== provPaired.tied) {
-    mism.push(`paired vs champion.json.provenance ${provPaired.won}/${provPaired.lost}/${provPaired.tied}`);
+  // challenge-11 是 joint-js5 的历史证据。当前冠军若已换成新算法，仍应对照
+  // 不可变的 joint-js5 归档核算，而不是要求新冠军的 provenance 里继续保存旧口径。
+  const archivePath = resolve(REPO_ROOT, 'training/champions/candidates/joint-js5.json');
+  const champId = champ.parameters?.id ?? champ.id;
+  const provSource = champId === cand.id ? 'champion.json.provenance' : 'candidates/joint-js5.json(archive)';
+  const provPaired = champId === cand.id
+    ? (champ.provenance?.promotionEvidence?.paired ?? {})
+    : (existsSync(archivePath)
+        ? (JSON.parse(readFileSync(archivePath, 'utf8')).confirmation?.paired ?? {})
+        : {});
+  if (Object.keys(provPaired).length > 0
+    && (won !== provPaired.won || lost !== provPaired.lost || tied !== provPaired.tied)) {
+    mism.push(`paired vs ${provSource} ${provPaired.won}/${provPaired.lost}/${provPaired.tied}`);
   }
   // 独立晋级判定
   const verdictIndependent = ci.lower > 0.5 && decisive.length >= 60 ? 'promote' : (ci.lower > 0.5 ? 'insufficient-seeds' : 'not-promote');

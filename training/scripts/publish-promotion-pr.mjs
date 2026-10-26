@@ -149,6 +149,11 @@ try {
   // “晋级证据身份 ≠ 当前产物”，真实冠军 PR 无法通过 promotion 门禁。
   sh('npm', ['run', 'build'], { cwd: join(tree, 'web-v1'), timeout: 1_800_000 });
   sh(process.execPath, [join(tree, 'training/scripts/refresh-champion-provenance.mjs')], { cwd: tree });
+  // 冠军参数区变化属于经审计的有意变更：显式刷新版本锁并留 note。
+  sh(process.execPath, [
+    join(tree, 'training/scripts/version-lock.mjs'), '--write',
+    '--note', `第一名率冠军晋级 ${candidateId}（机器门禁 + 预注册证据）`,
+  ], { cwd: tree });
 
   sh('git', ['add',
     'training/champions/',
