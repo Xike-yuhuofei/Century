@@ -114,8 +114,12 @@ export function simulateGame(options) {
       // （deriveSimStreamSeed，单向 + 域分离），不再把真实对局种子（=牌库洗牌
       // 种子）原样暴露给 AI——候选无法从 simSeed 反推牌库序；同盐同种子 ⇒ 同流
       // （配对 CRN 保持）；version.simSeed 显式覆盖仅供专项实验（留痕）。
+      // AI9：编译型多模块候选按席位注入独立模块实例（候选/冠军代码互不共享）。
+      // 未提供时逐字节走原官方入口（全部既有实验行为不变）。
+      const aiChoose = version?.aiModule?.chooseAIAction ?? chooseAIAction;
+      const jointChoose = version?.jointModule?.chooseJointAction ?? chooseJointAction;
       const response = version?.adapter === 'champion-guided'
-        ? chooseJointAction(game, {
+        ? jointChoose(game, {
             version: version.jointVersion ?? 'joint-js5',
             ...(version.gateMode !== undefined ? { gateMode: version.gateMode } : {}),
             ...(version.budgetMs !== undefined ? { budgetMs: version.budgetMs } : {}),
@@ -128,7 +132,7 @@ export function simulateGame(options) {
             simSeed: version.simSeed ?? deriveSimStreamSeed(seed, version.simSalt ?? DEFAULT_SIM_SALT),
             profile: seatProfile(seat),
           })
-        : chooseAIAction(game, {
+        : aiChoose(game, {
             ...(version?.parameters ? { parameters: version.parameters } : {}),
             ...(version?.structure ? { structure: version.structure } : {}),
             profile: seatProfile(seat),

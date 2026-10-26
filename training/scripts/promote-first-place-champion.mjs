@@ -29,6 +29,8 @@ import {
   loadSeedGovernance, assertPromotionEvidenceRegistered, formalChallengeCount,
 } from '../lib/seed-governance.mjs';
 import { sha256Canonical, canonicalJSON } from '../evolution/core.mjs';
+import { validateArtifact } from '../evolution/candidate-artifact.mjs';
+import { applyArtifactModules } from './apply-modules.mjs';
 import { validateAIParameters } from '../../web-v1/dist/js/ai/parameters.js';
 import { championParametersSha256 } from '../../web-v1/scripts/build-hash.mjs';
 
@@ -93,7 +95,12 @@ if (recomputedEvidenceHash !== evidence.evidenceHash) {
   throw new Error(`证据 evidenceHash 与内容不一致（记录 ${evidence.evidenceHash} ≠ 复算 ${recomputedEvidenceHash}）——证据被篡改`);
 }
 
-const candidateParameters = candidateDoc.parameters ?? candidateDoc;
+const compiledModuleCandidate = candidateDoc.buildArtifact?.compiled === true
+  && Array.isArray(candidateDoc.source?.modules) && candidateDoc.source.modules.length > 0;
+if (compiledModuleCandidate) validateArtifact(candidateDoc);
+const candidateParameters = compiledModuleCandidate
+  ? candidateDoc.parameters?.values
+  : (candidateDoc.parameters ?? candidateDoc);
 const validated = validateAIParameters(candidateParameters);
 const candidate = {
   id: validated.id,
@@ -239,6 +246,18 @@ const record = {
   name: `Century AI 冠军 ${candidate.id}`,
   description: `由 2–5 人第一名率正式挑战晋级（基于 ${championDoc.parameters?.id ?? '上一冠军'}）；证据见 provenance.promotionEvidence。`,
   parameters: validated,
+  ...(compiledModuleCandidate ? {
+    modules: {
+      artifactHash: candidateDoc.artifactHash,
+      sourceHash: candidateDoc.sourceHash,
+      interfaceVersion: candidateDoc.source.modules[0]?.interfaceVersion ?? null,
+      moduleIds: candidateDoc.source.modules.map(m => m.id).sort(),
+      builtArtifactHash: candidateDoc.buildArtifact.sha256,
+      modules: candidateDoc.source.modules.map(m => ({
+        id: m.id, functionName: m.functionName, file: m.file, functionSha256: m.functionSha256,
+      })),
+    },
+  } : {}),
   provenance: {
     basedOn: championDoc.parameters?.id ?? null,
     promotedAt: new Date().toISOString().slice(0, 10),
@@ -311,6 +330,12 @@ if (dryRun) {
 
 ensureDir(archiveDir);
 if (!existsSync(archiveFile)) writeFileSync(archiveFile, JSON.stringify(candidateDoc, null, 2) + '\n');
+if (compiledModuleCandidate) {
+  // 冠军行为由模块源码决定：必须把候选模块函数写入正式源码，否则晋级只是
+  // 标签变化、网页实际加载的仍是旧算法。apply 内部逐函数复核并保留可回滚备份。
+  const applied = applyArtifactModules(candidateDoc);
+  console.log(JSON.stringify({ modulesApplied: applied.applied, backupDir: applied.backupDir }, null, 2));
+}
 writeFileSync(championPath, JSON.stringify(record, null, 2) + '\n');
 console.log(JSON.stringify(verdict, null, 2));
 console.log(`冠军记录：${championPath}`);

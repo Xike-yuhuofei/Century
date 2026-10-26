@@ -1,0 +1,47 @@
+{
+  "schema": "century-ai9-module-deploy-drill-v1",
+  "generatedAt": "2026-10-26T02:50:22.601Z",
+  "artifact": {
+    "candidateId": "cand-ai9-drill-module-deploy",
+    "artifactHash": "ad85826e76e521db4307884e05b079b06cd40fc4865e7530dc4f7a13a51f38c5",
+    "sourceHash": "12c2d0bb45f72af2232651b12de712ca039b50213caeda7e2bdd2a54c639aaaf",
+    "modules": [
+      "M01",
+      "M02"
+    ]
+  },
+  "sandbox": "macos-seatbelt",
+  "status": "PASS",
+  "checks": [
+    {
+      "id": "compile-and-probe",
+      "status": "PASS",
+      "detail": "modules=M01,M02"
+    },
+    {
+      "id": "apply",
+      "status": "PASS",
+      "detail": "/var/folders/mq/_2m0mslx2pl08p1gg_n65g040000gn/T/ai9-deploy-drill-uONTH7/backups/ad85826e76e521db4307884e05b079b06cd40fc4865e7530dc4f7a13a51f38c5"
+    },
+    {
+      "id": "check-after-apply",
+      "status": "PASS",
+      "detail": "official source matches artifact module hashes"
+    },
+    {
+      "id": "tampered-artifact-rejected",
+      "status": "PASS",
+      "detail": "artifact 哈希校验拒绝篡改"
+    },
+    {
+      "id": "tampered-source-detected",
+      "status": "PASS",
+      "detail": "mismatches=1"
+    },
+    {
+      "id": "revert-restores-bytes",
+      "status": "PASS",
+      "detail": "two source files restored byte-identically"
+    }
+  ]
+}

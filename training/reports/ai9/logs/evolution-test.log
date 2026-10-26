@@ -1,0 +1,603 @@
+
+> century-ai-training@4.0.0 evolution:test
+> node --test evolution/tests/*.test.mjs
+
+TAP version 13
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: artifact v1 包含任务书要求的全部字段
+ok 1 - artifact v1 包含任务书要求的全部字段
+  ---
+  duration_ms: 91.472625
+  type: 'test'
+  ...
+# Subtest: descriptor 与声明模块候选的身份/构建哈希可复现
+ok 2 - descriptor 与声明模块候选的身份/构建哈希可复现
+  ---
+  duration_ms: 1.399334
+  type: 'test'
+  ...
+# Subtest: 篡改源码/构建哈希立即被 validateArtifact 拒绝
+ok 3 - 篡改源码/构建哈希立即被 validateArtifact 拒绝
+  ---
+  duration_ms: 0.467083
+  type: 'test'
+  ...
+# Subtest: 更新证据/安全状态不改变算法身份，但改变全文封印
+ok 4 - 更新证据/安全状态不改变算法身份，但改变全文封印
+  ---
+  duration_ms: 2.514375
+  type: 'test'
+  ...
+# Subtest: 内容寻址仓库：put/get/list/verify 与重复身份保护
+ok 5 - 内容寻址仓库：put/get/list/verify 与重复身份保护
+  ---
+  duration_ms: 6.244208
+  type: 'test'
+  ...
+# Subtest: artifact 持久化文件可被独立加载并复现（模拟人工搬运替代）
+ok 6 - artifact 持久化文件可被独立加载并复现（模拟人工搬运替代）
+  ---
+  duration_ms: 1.835417
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: MAP-Elites：行为分桶只依赖公开动作分布，缺失签名返回 null
+ok 7 - MAP-Elites：行为分桶只依赖公开动作分布，缺失签名返回 null
+  ---
+  duration_ms: 0.723791
+  type: 'test'
+  ...
+# Subtest: 精英记录：同类模块只保留更高分，深验优先于快筛；MAP-Elites 每桶保留最优
+ok 8 - 精英记录：同类模块只保留更高分，深验优先于快筛；MAP-Elites 每桶保留最优
+  ---
+  duration_ms: 1.152625
+  type: 'test'
+  ...
+# Subtest: 依赖感知：M02 组合时优先固定同一捐赠者的 M03/M04；缺失依赖保持官方实现
+ok 9 - 依赖感知：M02 组合时优先固定同一捐赠者的 M03/M04；缺失依赖保持官方实现
+  ---
+  duration_ms: 1.708625
+  type: 'test'
+  ...
+# Subtest: 生成器：依赖不足时 crossover/ablation 被拒绝而不是伪造组合
+ok 10 - 生成器：依赖不足时 crossover/ablation 被拒绝而不是伪造组合
+  ---
+  duration_ms: 1.09075
+  type: 'test'
+  ...
+# Subtest: 生成器：单模块确定性候选真实编译，策略/模块身份/探针证据完整
+ok 11 - 生成器：单模块确定性候选真实编译，策略/模块身份/探针证据完整
+  ---
+  duration_ms: 2087.286375
+  type: 'test'
+  ...
+# Subtest: 生成器：pair 候选支持代码 + 参数联合变异
+ok 12 - 生成器：pair 候选支持代码 + 参数联合变异
+  ---
+  duration_ms: 1575.801125
+  type: 'test'
+  ...
+# Subtest: 生成器：control 候选必须是官方模块且策略显式标记
+ok 13 - 生成器：control 候选必须是官方模块且策略显式标记
+  ---
+  duration_ms: 1286.925541
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 真实编译候选：静态检查→tsc→编译产物哈希→artifact 注册/加载/复现
+ok 14 - 真实编译候选：静态检查→tsc→编译产物哈希→artifact 注册/加载/复现
+  ---
+  duration_ms: 1951.38525
+  type: 'test'
+  ...
+# Subtest: 编译产物内容被篡改立即被哈希校验拒绝
+ok 15 - 编译产物内容被篡改立即被哈希校验拒绝
+  ---
+  duration_ms: 1524.372792
+  type: 'test'
+  ...
+# Subtest: 安全门禁：编译型候选通过；源码走私 process 被拒绝
+ok 16 - 安全门禁：编译型候选通过；源码走私 process 被拒绝
+  ---
+  duration_ms: 1352.716875
+  type: 'test'
+  ...
+# Subtest: 编译型候选经 Seatbelt 探针产生离线代理证据（不冒充对局强度）
+ok 17 - 编译型候选经 Seatbelt 探针产生离线代理证据（不冒充对局强度）
+  ---
+  duration_ms: 1040.339
+  type: 'test'
+  ...
+# Subtest: 脚本化候选在 macOS 上包含一个真实编译候选
+ok 18 - 脚本化候选在 macOS 上包含一个真实编译候选
+  ---
+  duration_ms: 925.414
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 深验配额耗尽只跳过深验，不把整个 campaign 判为 budget-exhausted
+ok 19 - 深验配额耗尽只跳过深验，不把整个 campaign 判为 budget-exhausted
+  ---
+  duration_ms: 169.662625
+  type: 'test'
+  ...
+# Subtest: 检查点/停止/恢复/完成：同一次 campaign 可跨进程继续
+ok 20 - 检查点/停止/恢复/完成：同一次 campaign 可跨进程继续
+  ---
+  duration_ms: 32.406083
+  type: 'test'
+  ...
+# Subtest: 失败隔离：安全检查失败与评估异常不会阻断其他候选
+ok 21 - 失败隔离：安全检查失败与评估异常不会阻断其他候选
+  ---
+  duration_ms: 21.994708
+  type: 'test'
+  ...
+# Subtest: 快筛优秀但深验不稳定：判 deep-unstable，不生成正式挑战待审批请求
+ok 22 - 快筛优秀但深验不稳定：判 deep-unstable，不生成正式挑战待审批请求
+  ---
+  duration_ms: 26.720584
+  type: 'test'
+  ...
+# Subtest: 预算上限：game 预算耗尽时安全停止，不越界消费
+ok 23 - 预算上限：game 预算耗尽时安全停止，不越界消费
+  ---
+  duration_ms: 14.263709
+  type: 'test'
+  ...
+# Subtest: 两轮 campaign：轮换窗口、消费上一轮提示，并从上一轮保留候选继续
+ok 24 - 两轮 campaign：轮换窗口、消费上一轮提示，并从上一轮保留候选继续
+  ---
+  duration_ms: 51.048166
+  type: 'test'
+  ...
+# Subtest: 安全停止（外部 requestStop）后可恢复
+ok 25 - 安全停止（外部 requestStop）后可恢复
+  ---
+  duration_ms: 38.355417
+  type: 'test'
+  ...
+# Subtest: 重复运行保护：活动锁存在时拒绝第二个进程
+ok 26 - 重复运行保护：活动锁存在时拒绝第二个进程
+  ---
+  duration_ms: 0.754375
+  type: 'test'
+  ...
+# Subtest: 配置边界：并发上限必须在 1..4，超界拒绝构造
+ok 27 - 配置边界：并发上限必须在 1..4，超界拒绝构造
+  ---
+  duration_ms: 0.720875
+  type: 'test'
+  ...
+# Subtest: 正式挑战请求文件包含待审核语义与证据引用，且不含晋级动作
+ok 28 - 正式挑战请求文件包含待审核语义与证据引用，且不含晋级动作
+  ---
+  duration_ms: 29.261666
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 演示闭环：多候选/安全检查/失败隔离/停止恢复/待审批/诊断回流/冠军不变
+ok 29 - 演示闭环：多候选/安全检查/失败隔离/停止恢复/待审批/诊断回流/冠军不变
+  ---
+  duration_ms: 2108.379834
+  type: 'test'
+  ...
+# Subtest: 六类标签齐全且顺序稳定
+ok 30 - 六类标签齐全且顺序稳定
+  ---
+  duration_ms: 1.159875
+  type: 'test'
+  ...
+# Subtest: 读取现有 diagnostics/analyze 输出：确定性、证据可追溯、不把推测当证据
+ok 31 - 读取现有 diagnostics/analyze 输出：确定性、证据可追溯、不把推测当证据
+  ---
+  duration_ms: 2.959
+  type: 'test'
+  ...
+# Subtest: human-analytics failures 类型映射正确（finding 优先于 inconclusive）
+ok 32 - human-analytics failures 类型映射正确（finding 优先于 inconclusive）
+  ---
+  duration_ms: 0.164667
+  type: 'test'
+  ...
+# Subtest: 单局事实阈值：引擎不足/竞争/休息/容量/终局
+ok 33 - 单局事实阈值：引擎不足/竞争/休息/容量/终局
+  ---
+  duration_ms: 0.204125
+  type: 'test'
+  ...
+# Subtest: 合并 + 研究提示：suggestedTargets 来自标签，advisoryOnly/notRewardTruth
+ok 34 - 合并 + 研究提示：suggestedTargets 来自标签，advisoryOnly/notRewardTruth
+  ---
+  duration_ms: 1.761417
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 确定性生成：同 seed/round/parent/experiment ⇒ 同 artifact 身份
+ok 35 - 确定性生成：同 seed/round/parent/experiment ⇒ 同 artifact 身份
+  ---
+  duration_ms: 96.256292
+  type: 'test'
+  ...
+# Subtest: 从父候选继续：搜索控制值与模块系数被继承
+ok 36 - 从父候选继续：搜索控制值与模块系数被继承
+  ---
+  duration_ms: 1.632416
+  type: 'test'
+  ...
+# Subtest: 失败标签研究提示只影响目标选择，不修改候选评分字段
+ok 37 - 失败标签研究提示只影响目标选择，不修改候选评分字段
+  ---
+  duration_ms: 3.279334
+  type: 'test'
+  ...
+# Subtest: 脚本化候选：非法参数生成即拒绝；不安全模块由安全检查隔离
+ok 38 - 脚本化候选：非法参数生成即拒绝；不安全模块由安全检查隔离
+  ---
+  duration_ms: 3.590791
+  type: 'test'
+  ...
+# Subtest: 显式父候选不可用时 controller 应失败而非静默回退（单元层面校验函数契约）
+ok 39 - 显式父候选不可用时 controller 应失败而非静默回退（单元层面校验函数契约）
+  ---
+  duration_ms: 0.074375
+  type: 'test'
+  ...
+# Subtest: 真实 Provider：开发窗口原子登记到中央账本，且不触碰验证池
+ok 40 - 真实 Provider：开发窗口原子登记到中央账本，且不触碰验证池
+  ---
+  duration_ms: 19.305292
+  type: 'test'
+  ...
+# Subtest: 真实 Provider：同一 campaign 第二轮分配不同窗口（窗口不复用）
+ok 41 - 真实 Provider：同一 campaign 第二轮分配不同窗口（窗口不复用）
+  ---
+  duration_ms: 5.780041
+  type: 'test'
+  ...
+# Subtest: 机器门禁队列：不再要求人工批准，但必须声明机器门禁且不直接晋级
+ok 42 - 机器门禁队列：不再要求人工批准，但必须声明机器门禁且不直接晋级
+  ---
+  duration_ms: 0.592583
+  type: 'test'
+  ...
+# Subtest: 机器门禁适配器拒绝直接晋级/人工状态伪装
+ok 43 - 机器门禁适配器拒绝直接晋级/人工状态伪装
+  ---
+  duration_ms: 1.053917
+  type: 'test'
+  ...
+# Subtest: 测试替身只分配 AI7 开发块窗口，screen/deep 互不重叠
+ok 44 - 测试替身只分配 AI7 开发块窗口，screen/deep 互不重叠
+  ---
+  duration_ms: 0.633333
+  type: 'test'
+  ...
+# Subtest: 窗口轮换：不同 round 使用不同窗口，已用窗口被排除
+ok 45 - 窗口轮换：不同 round 使用不同窗口，已用窗口被排除
+  ---
+  duration_ms: 0.17225
+  type: 'test'
+  ...
+# Subtest: provider 返回验证池/非 dev 池 → 适配器立即拒绝
+ok 46 - provider 返回验证池/非 dev 池 → 适配器立即拒绝
+  ---
+  duration_ms: 2.213708
+  type: 'test'
+  ...
+# Subtest: provider 返回越界窗口 → 拒绝
+ok 47 - provider 返回越界窗口 → 拒绝
+  ---
+  duration_ms: 0.291334
+  type: 'test'
+  ...
+# Subtest: 正式挑战请求：必须 pending-human-approval、approvalRequired、promotionTriggered=false
+ok 48 - 正式挑战请求：必须 pending-human-approval、approvalRequired、promotionTriggered=false
+  ---
+  duration_ms: 2.467292
+  type: 'test'
+  ...
+# Subtest: provider 试图自动批准/晋级 → 适配器拒绝
+ok 49 - provider 试图自动批准/晋级 → 适配器拒绝
+  ---
+  duration_ms: 0.294084
+  type: 'test'
+  ...
+# Subtest: 窗口大小/区块参数校验
+ok 50 - 窗口大小/区块参数校验
+  ---
+  duration_ms: 0.330917
+  type: 'test'
+  ...
+# Subtest: 注册表：恰好 12 个模块，M01–M12 唯一且接口版本统一
+ok 51 - 注册表：恰好 12 个模块，M01–M12 唯一且接口版本统一
+  ---
+  duration_ms: 2.246333
+  type: 'test'
+  ...
+# Subtest: 注册表：官方函数文本可提取且参数签名逐参一致
+ok 52 - 注册表：官方函数文本可提取且参数签名逐参一致
+  ---
+  duration_ms: 8.168333
+  type: 'test'
+  ...
+# Subtest: 注册表：全部模块依赖存在且目标文件位于 web-v1/src
+ok 53 - 注册表：全部模块依赖存在且目标文件位于 web-v1/src
+  ---
+  duration_ms: 0.480083
+  type: 'test'
+  ...
+# Subtest: 多模块程序：composeProgram 每个 EVOLVE-BLOCK 映射唯一模块且可解析
+ok 54 - 多模块程序：composeProgram 每个 EVOLVE-BLOCK 映射唯一模块且可解析
+  ---
+  duration_ms: 0.919791
+  type: 'test'
+  ...
+# Subtest: 确定性变异：每个模块至少一个单点变异且都能改变函数哈希
+ok 55 - 确定性变异：每个模块至少一个单点变异且都能改变函数哈希
+  ---
+  duration_ms: 5.526542
+  type: 'test'
+  ...
+# Subtest: 确定性变异：官方函数结构变化时必须显式抛错（唯一命中保护）
+ok 56 - 确定性变异：官方函数结构变化时必须显式抛错（唯一命中保护）
+  ---
+  duration_ms: 0.801125
+  type: 'test'
+  ...
+# Subtest: 种子区块：AI9 研究/开发/确认块与 AI7、验证池、全部既有块零交集
+ok 57 - 种子区块：AI9 研究/开发/确认块与 AI7、验证池、全部既有块零交集
+  ---
+  duration_ms: 0.461833
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 决策接线：官方模块候选 ≈ 冻结冠军（探针逐值一致），变异候选全部模块可观测
+ok 58 - 决策接线：官方模块候选 ≈ 冻结冠军（探针逐值一致），变异候选全部模块可观测
+  ---
+  duration_ms: 3568.21775
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 正式挑战执行器：编译候选注入 A 臂后与免费冠军臂逐局一致（中性模块）
+ok 59 - 正式挑战执行器：编译候选注入 A 臂后与免费冠军臂逐局一致（中性模块）
+  ---
+  duration_ms: 8296.437417
+  type: 'test'
+  ...
+# Subtest: 决策接线：同一公开对局中变异候选与官方第一次分歧可复现
+ok 60 - 决策接线：同一公开对局中变异候选与官方第一次分歧可复现
+  ---
+  duration_ms: 1071.12375
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 静态检查：签名改动/额外代码/禁止构造/未注册函数/重复模块全部拒绝
+ok 61 - 静态检查：签名改动/额外代码/禁止构造/未注册函数/重复模块全部拒绝
+  ---
+  duration_ms: 255.430833
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 编译候选：12 模块联合编译、artifact 身份覆盖全部模块、安全门禁通过
+ok 62 - 编译候选：12 模块联合编译、artifact 身份覆盖全部模块、安全门禁通过
+  ---
+  duration_ms: 2072.467125
+  type: 'test'
+  ...
+# Subtest: 部署/回滚：临时源码树应用 12 模块函数后可复核并完整恢复
+ok 63 - 部署/回滚：临时源码树应用 12 模块函数后可复核并完整恢复
+  ---
+  duration_ms: 1597.806542
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 解析合法 JSON 提案数组 + 非法提案隔离
+ok 64 - 解析合法 JSON 提案数组 + 非法提案隔离
+  ---
+  duration_ms: 0.866458
+  type: 'test'
+  ...
+# Subtest: 解析 JSONL 提案 + 上限保护
+ok 65 - 解析 JSONL 提案 + 上限保护
+  ---
+  duration_ms: 0.532875
+  type: 'test'
+  ...
+# Subtest: 非法 schema/未知 target/未知 fields 被拒绝
+ok 66 - 非法 schema/未知 target/未知 fields 被拒绝
+  ---
+  duration_ms: 0.33625
+  type: 'test'
+  ...
+# Subtest: 提案生成器物化为 Candidate Artifact，且不执行任何 LLM 代码
+ok 67 - 提案生成器物化为 Candidate Artifact，且不执行任何 LLM 代码
+  ---
+  duration_ms: 96.332417
+  type: 'test'
+  ...
+# Subtest: 契约正文只包含有界目标描述，不含密钥/路径/代码模板
+ok 68 - 契约正文只包含有界目标描述，不含密钥/路径/代码模板
+  ---
+  duration_ms: 0.768958
+  type: 'test'
+  ...
+# Subtest: 真实账本预算耗尽/功效不足：明确 BLOCKED，不调用挑战运行器
+ok 69 - 真实账本预算耗尽/功效不足：明确 BLOCKED，不调用挑战运行器
+  ---
+  duration_ms: 2.128208
+  type: 'test'
+  ...
+# Subtest: proxy-only 候选没有真实对局行为：拒绝进入正式挑战
+ok 70 - proxy-only 候选没有真实对局行为：拒绝进入正式挑战
+  ---
+  duration_ms: 0.188334
+  type: 'test'
+  ...
+# Subtest: 新 alpha 家族功效达标：自动发起挑战；不晋级时记录 NOT_PROMOTED
+ok 71 - 新 alpha 家族功效达标：自动发起挑战；不晋级时记录 NOT_PROMOTED
+  ---
+  duration_ms: 3.144959
+  type: 'test'
+  ...
+# Subtest: 统计合格证据就绪：不自行合并，交由 CI 机器门禁复核
+ok 72 - 统计合格证据就绪：不自行合并，交由 CI 机器门禁复核
+  ---
+  duration_ms: 1.815208
+  type: 'test'
+  ...
+# Subtest: 挑战运行器失败：记录 CHALLENGE_ERROR，不中断 campaign
+ok 73 - 挑战运行器失败：记录 CHALLENGE_ERROR，不中断 campaign
+  ---
+  duration_ms: 1.011333
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 合法候选（含 playerCountScope）全部通过安全检查
+ok 74 - 合法候选（含 playerCountScope）全部通过安全检查
+  ---
+  duration_ms: 96.494375
+  type: 'test'
+  ...
+# Subtest: 分人数联合选项越界（candidateCap/工作预算）被安全门禁拒绝
+ok 75 - 分人数联合选项越界（candidateCap/工作预算）被安全门禁拒绝
+  ---
+  duration_ms: 231.747959
+  type: 'test'
+  ...
+# Subtest: 模块系数/未声明字段越界被安全门禁拒绝
+ok 76 - 模块系数/未声明字段越界被安全门禁拒绝
+  ---
+  duration_ms: 178.980292
+  type: 'test'
+  ...
+# Subtest: 非法冠军权重被正式参数校验器拒绝
+ok 77 - 非法冠军权重被正式参数校验器拒绝
+  ---
+  duration_ms: 88.054333
+  type: 'test'
+  ...
+# Subtest: 行为距离：相同=0，不同动作/目标产生正距离，跨类型=1
+ok 78 - 行为距离：相同=0，不同动作/目标产生正距离，跨类型=1
+  ---
+  duration_ms: 1.662125
+  type: 'test'
+  ...
+# Subtest: 多候选保留：game 与 proxy 各保留最高分，不把 proxy 当对局强度
+ok 79 - 多候选保留：game 与 proxy 各保留最高分，不把 proxy 当对局强度
+  ---
+  duration_ms: 1.041916
+  type: 'test'
+  ...
+# Subtest: 去重：同身份与同行为哈希只保留一个
+ok 80 - 去重：同身份与同行为哈希只保留一个
+  ---
+  duration_ms: 0.504292
+  type: 'test'
+  ...
+# Subtest: 安全检查失败的候选被拒绝（失败隔离不进入保留池）
+ok 81 - 安全检查失败的候选被拒绝（失败隔离不进入保留池）
+  ---
+  duration_ms: 0.202083
+  type: 'test'
+  ...
+# Subtest: 快筛/深验种子分区必须互斥且落在各自开发块
+ok 82 - 快筛/深验种子分区必须互斥且落在各自开发块
+  ---
+  duration_ms: 0.2665
+  type: 'test'
+  ...
+# Subtest: 对手轮换：screen 不固定单一对手，deep 保留冻结冠军锚点
+ok 83 - 对手轮换：screen 不固定单一对手，deep 保留冻结冠军锚点
+  ---
+  duration_ms: 0.083792
+  type: 'test'
+  ...
+# Subtest: scoreCandidate 输出多维分数且 game/proxy 分组
+ok 84 - scoreCandidate 输出多维分数且 game/proxy 分组
+  ---
+  duration_ms: 0.115958
+  type: 'test'
+  ...
+# Subtest: 两组目标全部注册且 evaluationMode 正确
+ok 85 - 两组目标全部注册且 evaluationMode 正确
+  ---
+  duration_ms: 0.587042
+  type: 'test'
+  ...
+# Subtest: 每个资源/策略目标有独立回归 fixture，默认/扰动结果有限且可复现
+ok 86 - 每个资源/策略目标有独立回归 fixture，默认/扰动结果有限且可复现
+  ---
+  duration_ms: 4.807084
+  type: 'test'
+  ...
+# Subtest: 模块参数类型/边界/未知字段检查
+ok 87 - 模块参数类型/边界/未知字段检查
+  ---
+  duration_ms: 0.191791
+  type: 'test'
+  ...
+# Subtest: 隐藏信息与随机源被输入白名单/递归扫描拒绝
+ok 88 - 隐藏信息与随机源被输入白名单/递归扫描拒绝
+  ---
+  duration_ms: 0.308875
+  type: 'test'
+  ...
+# Subtest: 资源预算：超大输入触发回退而非抛出到控制面
+ok 89 - 资源预算：超大输入触发回退而非抛出到控制面
+  ---
+  duration_ms: 2.840584
+  type: 'test'
+  ...
+# Subtest: 搜索控制参数边界与整数约束
+ok 90 - 搜索控制参数边界与整数约束
+  ---
+  duration_ms: 0.982209
+  type: 'test'
+  ...
+# Subtest: 搜索控制 → 分人数适配器选项（不改冠军代码/参数）
+ok 91 - 搜索控制 → 分人数适配器选项（不改冠军代码/参数）
+  ---
+  duration_ms: 1.05175
+  type: 'test'
+  ...
+# Subtest: 搜索控制回退：非法值 fail-safe 回默认，合法值不回退
+ok 92 - 搜索控制回退：非法值 fail-safe 回默认，合法值不回退
+  ---
+  duration_ms: 0.183916
+  type: 'test'
+  ...
+# Subtest: 声明模块候选结构：plugin-only、非生产接线、适用人数可限定
+ok 93 - 声明模块候选结构：plugin-only、非生产接线、适用人数可限定
+  ---
+  duration_ms: 0.276667
+  type: 'test'
+  ...
+1..93
+# tests 93
+# suites 0
+# pass 93
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 13083.244084

@@ -1,0 +1,415 @@
+{
+  "schema": "century-evolvable-module-registry-v1",
+  "version": 1,
+  "interfaceVersion": "ai9-module-interface-v1",
+  "artifactProtocol": "century-multi-module-candidate-v1",
+  "notes": "权威模块身份表：AI9 多模块候选的静态检查、组装、编译、评估与协同进化均以本文件为准。file 为 web-v1/src 相对路径；signature 为导出函数参数名（必须逐参一致）。",
+  "modules": [
+    {
+      "id": "M01",
+      "name": "golem-goal-selection",
+      "label": "魔像目标选择",
+      "functionName": "goalPriority",
+      "file": "ai/evolve/modules.ts",
+      "signature": [
+        "view",
+        "goalId",
+        "params"
+      ],
+      "kind": "value",
+      "phase": 1,
+      "dependsOn": [],
+      "maxSourceBytes": 8000,
+      "fallback": "neutral-1",
+      "wiring": "planner.choosePlan：每个目标路线期望乘以 goalPriority（缺省 1）",
+      "evidenceTests": [
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "chooseAIAction -> chooseJointAction(joint-js5) -> choosePlan -> goalPriority",
+      "scope": [
+        "GOLEM_BY_ID",
+        "MERCHANT_BY_ID",
+        "has",
+        "tradeLimit",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "types: AIObservation/Action/AIParameters/EvolveStateView"
+      ]
+    },
+    {
+      "id": "M02",
+      "name": "merchant-acquisition",
+      "label": "商人卡获取",
+      "functionName": "acquisitionValue",
+      "file": "ai/evaluator.ts",
+      "signature": [
+        "state",
+        "cardId",
+        "preferred",
+        "profile",
+        "pressure",
+        "params",
+        "model"
+      ],
+      "kind": "value",
+      "phase": 1,
+      "dependsOn": [
+        "M03",
+        "M04"
+      ],
+      "maxSourceBytes": 12000,
+      "fallback": "official-function",
+      "wiring": "planner: searchGrade/prospectiveFormula 的新卡价值 + champion-guided 冠军基座",
+      "evidenceTests": [
+        "ai5/openevolve/tests/static-check.malicious.test.mjs",
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "chooseAIAction/chooseJointAction -> choosePlan -> acquisitionValue",
+      "scope": [
+        "MERCHANT_BY_ID",
+        "GOLEM_BY_ID",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "cloneStock",
+        "engineValue",
+        "goalGap",
+        "stockPotential",
+        "keepValue",
+        "trimStock",
+        "acquisitionRepeatDelta",
+        "types: Golem/Stock/PressureModel/AIParameters/EngineModelContext"
+      ]
+    },
+    {
+      "id": "M03",
+      "name": "engine-card-value",
+      "label": "生产引擎评估",
+      "functionName": "cardEngineValue",
+      "file": "ai/knowledge.ts",
+      "signature": [
+        "card",
+        "stock",
+        "goal"
+      ],
+      "kind": "value",
+      "phase": 1,
+      "dependsOn": [],
+      "maxSourceBytes": 8000,
+      "fallback": "official-function",
+      "wiring": "knowledge.engineValue -> planner/engine-model/acquisitionValue",
+      "evidenceTests": [
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "choosePlan -> engineValueFor -> engineValue -> cardEngineValue",
+      "scope": [
+        "MERCHANT_BY_ID",
+        "GOLEM_BY_ID",
+        "GOLEM_DECK",
+        "MERCHANT_DECK",
+        "has",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "cloneStock",
+        "types: Merchant/Golem/Stock"
+      ]
+    },
+    {
+      "id": "M04",
+      "name": "crystal-retention",
+      "label": "水晶资源管理/保留价值",
+      "functionName": "keepValue",
+      "file": "ai/evaluator.ts",
+      "signature": [
+        "stock",
+        "goals",
+        "preferred",
+        "params"
+      ],
+      "kind": "value",
+      "phase": 1,
+      "dependsOn": [],
+      "maxSourceBytes": 8000,
+      "fallback": "official-function",
+      "wiring": "evaluator.trimStock（支付方案/溢出弃置）+ planner.payments",
+      "evidenceTests": [
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "choosePlan -> payments/step -> keepValue；overflow -> trimStock -> keepValue",
+      "scope": [
+        "MERCHANT_BY_ID",
+        "GOLEM_BY_ID",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "cloneStock",
+        "engineValue",
+        "goalGap",
+        "stockPotential",
+        "keepValue",
+        "trimStock",
+        "acquisitionRepeatDelta",
+        "types: Golem/Stock/PressureModel/AIParameters/EngineModelContext"
+      ]
+    },
+    {
+      "id": "M05",
+      "name": "rest-scheduling",
+      "label": "打出与休息调度",
+      "functionName": "restMultiplier",
+      "file": "ai/evolve/modules.ts",
+      "signature": [
+        "state",
+        "preferred",
+        "params"
+      ],
+      "kind": "value",
+      "phase": 1,
+      "dependsOn": [],
+      "maxSourceBytes": 8000,
+      "fallback": "neutral-1",
+      "wiring": "planner.searchGrade：休息路线惩罚乘子（缺省 1）",
+      "evidenceTests": [
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "choosePlan -> searchGrade -> restMultiplier",
+      "scope": [
+        "GOLEM_BY_ID",
+        "MERCHANT_BY_ID",
+        "has",
+        "tradeLimit",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "types: AIObservation/Action/AIParameters/EvolveStateView"
+      ]
+    },
+    {
+      "id": "M06",
+      "name": "endgame-winrate",
+      "label": "终局与胜率决策",
+      "functionName": "endgameBonus",
+      "file": "ai/evolve/modules.ts",
+      "signature": [
+        "state",
+        "params"
+      ],
+      "kind": "value",
+      "phase": 2,
+      "dependsOn": [],
+      "maxSourceBytes": 8000,
+      "fallback": "neutral-0",
+      "wiring": "planner.routeGrade：终局路线价值增量（缺省 0）",
+      "evidenceTests": [
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "choosePlan -> routeGrade(terminal) -> endgameBonus",
+      "scope": [
+        "GOLEM_BY_ID",
+        "MERCHANT_BY_ID",
+        "has",
+        "tradeLimit",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "types: AIObservation/Action/AIParameters/EvolveStateView"
+      ]
+    },
+    {
+      "id": "M07",
+      "name": "opponent-behavior",
+      "label": "对手行为预测",
+      "functionName": "opponentPressureDelta",
+      "file": "ai/evolve/modules.ts",
+      "signature": [
+        "view",
+        "cardId",
+        "dimension",
+        "params"
+      ],
+      "kind": "value",
+      "phase": 2,
+      "dependsOn": [],
+      "maxSourceBytes": 8000,
+      "fallback": "neutral-0",
+      "wiring": "planner.evolvePressure：市场卡 mean/peak 压力增量（缺省 0）",
+      "evidenceTests": [
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "choosePlan -> evolvePressure -> opponentPressureDelta -> acquisitionValue/contest",
+      "scope": [
+        "GOLEM_BY_ID",
+        "MERCHANT_BY_ID",
+        "has",
+        "tradeLimit",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "types: AIObservation/Action/AIParameters/EvolveStateView"
+      ]
+    },
+    {
+      "id": "M08",
+      "name": "multiplayer-contest",
+      "label": "多人竞争与时序",
+      "functionName": "seatContestFactor",
+      "file": "ai/evolve/modules.ts",
+      "signature": [
+        "view",
+        "goalId",
+        "params"
+      ],
+      "kind": "value",
+      "phase": 2,
+      "dependsOn": [],
+      "maxSourceBytes": 8000,
+      "fallback": "neutral-1",
+      "wiring": "planner.survivalOf + champion-guided.competitionRisk（缺省 1）",
+      "evidenceTests": [
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "chooseJointAction -> competitionRisk / choosePlan -> seatContestFactor",
+      "scope": [
+        "GOLEM_BY_ID",
+        "MERCHANT_BY_ID",
+        "has",
+        "tradeLimit",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "types: AIObservation/Action/AIParameters/EvolveStateView"
+      ]
+    },
+    {
+      "id": "M09",
+      "name": "unseen-card-belief",
+      "label": "未知牌概率模型",
+      "functionName": "unknownSupportFactor",
+      "file": "ai/evolve/modules.ts",
+      "signature": [
+        "view",
+        "preferred",
+        "unseenMerchants",
+        "params"
+      ],
+      "kind": "value",
+      "phase": 2,
+      "dependsOn": [],
+      "maxSourceBytes": 8000,
+      "fallback": "neutral-1",
+      "wiring": "planner: futureDeckSupport 乘子（缺省 1，只使用公开未翻开卡全集）",
+      "evidenceTests": [
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "choosePlan -> futureDeckSupport -> unknownSupportFactor",
+      "scope": [
+        "GOLEM_BY_ID",
+        "MERCHANT_BY_ID",
+        "has",
+        "tradeLimit",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "types: AIObservation/Action/AIParameters/EvolveStateView"
+      ]
+    },
+    {
+      "id": "M10",
+      "name": "action-candidate-generation",
+      "label": "行动候选生成/排序",
+      "functionName": "rankRootActions",
+      "file": "ai/evolve/modules.ts",
+      "signature": [
+        "view",
+        "actions",
+        "params"
+      ],
+      "kind": "policy",
+      "phase": 2,
+      "dependsOn": [],
+      "maxSourceBytes": 8000,
+      "fallback": "identity-order",
+      "wiring": "champion-guided: 根筛选与认领候选重排/剪枝（只允许合法行动子集）",
+      "evidenceTests": [
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "chooseJointAction -> ChampionGuidedPlanner.decide -> rankRootActions",
+      "scope": [
+        "GOLEM_BY_ID",
+        "MERCHANT_BY_ID",
+        "has",
+        "tradeLimit",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "types: AIObservation/Action/AIParameters/EvolveStateView"
+      ]
+    },
+    {
+      "id": "M11",
+      "name": "joint-search-policy",
+      "label": "多人联合搜索结构",
+      "functionName": "searchPolicyOverrides",
+      "file": "ai/evolve/modules.ts",
+      "signature": [
+        "view",
+        "baseOptions",
+        "params"
+      ],
+      "kind": "policy",
+      "phase": 2,
+      "dependsOn": [],
+      "maxSourceBytes": 8000,
+      "fallback": "empty-overrides",
+      "wiring": "adapter.chooseJointAction：白名单/边界内的联合搜索选项覆盖（缺省空）",
+      "evidenceTests": [
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "chooseJointAction -> searchPolicyOverrides -> ChampionGuidedPlanner.decide",
+      "scope": [
+        "GOLEM_BY_ID",
+        "MERCHANT_BY_ID",
+        "has",
+        "tradeLimit",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "types: AIObservation/Action/AIParameters/EvolveStateView"
+      ]
+    },
+    {
+      "id": "M12",
+      "name": "adaptive-compute-budget",
+      "label": "自适应计算预算",
+      "functionName": "budgetForDecision",
+      "file": "ai/evolve/modules.ts",
+      "signature": [
+        "view",
+        "baseMs",
+        "params"
+      ],
+      "kind": "policy",
+      "phase": 2,
+      "dependsOn": [],
+      "maxSourceBytes": 8000,
+      "fallback": "base-budget",
+      "wiring": "adapter.chooseJointAction：决策预算（0–1000ms 硬裁剪，缺省原值；固定 workUnits 时不生效）",
+      "evidenceTests": [
+        "training/evolution/tests/module-wiring.test.mjs"
+      ],
+      "realDecisionPath": "chooseJointAction -> budgetForDecision -> ChampionGuidedPlanner.decide",
+      "scope": [
+        "GOLEM_BY_ID",
+        "MERCHANT_BY_ID",
+        "has",
+        "tradeLimit",
+        "VALUES",
+        "weighted",
+        "stockCount",
+        "types: AIObservation/Action/AIParameters/EvolveStateView"
+      ]
+    }
+  ]
+}

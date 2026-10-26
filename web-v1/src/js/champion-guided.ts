@@ -60,6 +60,7 @@ import {
 } from './near-terminal.js';
 import { isFinalOwnAction, solveFinalAction, type EndgameSolution } from './endgame.js';
 import { batchFloors, fitWorlds, type BatchAdmission } from './budget.js';
+import { seatContestFactor, rankRootActions } from '../ai/evolve/modules.js';
 import type {
   JointDecision, JointDecisionStats, JointOpponentMode, JointSearchOptions,
   LeafEvaluatorLevel, RootActionEvaluation, DecisionTrace,
@@ -149,15 +150,27 @@ export type ChampionGuidedDecision = JointDecision & {
  * survival 允许调用方传入预计算表（每决策只算一次；缺省时内部计算）。 */
 export function competitionRisk(
   view: AIObservation,
-  options: { contestThreshold: number; immediateClaims: ReadonlySet<string>; survival?: Record<string, number> },
+  options: {
+    contestThreshold: number;
+    immediateClaims: ReadonlySet<string>;
+    survival?: Record<string, number>;
+    /** M08 座位竞争乘子所需的参数集（缺省冻结冠军参数）。 */
+    params?: AIParameters;
+  },
 ): { gated: boolean; contestedGoals: string[] } {
   if (view.triggerPlayer !== null) {
     // 终局已触发：每个对手都可能在整轮结算内认领达标，目标价值随时重排。
     return { gated: true, contestedGoals: [...view.golemMarket] };
   }
   const survival = options.survival ?? golemSurvivalModel(view, 6);
-  const contestedGoals = view.golemMarket.filter(id =>
-    !options.immediateClaims.has(id) && (survival[id] ?? 1) < options.contestThreshold);
+  const params = options.params ?? CHAMPION_PARAMETERS;
+  const contestedGoals = view.golemMarket.filter(id => {
+    if (options.immediateClaims.has(id)) return false;
+    // M08：多人竞争/时序乘子（缺省 1 = 冻结 survival 阈值判定）。
+    const factor = seatContestFactor(view, id, params);
+    const adjusted = (survival[id] ?? 1) * (Number.isFinite(factor) ? Math.min(2, Math.max(0, factor)) : 1);
+    return adjusted < options.contestThreshold;
+  });
   return { gated: contestedGoals.length > 0, contestedGoals };
 }
 
@@ -303,6 +316,7 @@ class ChampionGuidedPlanner {
       contestThreshold: o.contestThreshold ?? 0.85,
       immediateClaims: immediateClaimGoals,
       survival,
+      params: championParameters,
     });
     const gated = o.gateMode === 'always' ? true : o.gateMode === 'never' ? false : risk.gated;
     phase.gateMs = performance.now() - gateStart;
@@ -341,10 +355,32 @@ class ChampionGuidedPlanner {
     const ctxRoot = heuristicContext(root.view, championParameters, NEUTRAL_PROFILE);
     // 根筛选目标范围：缺省 all（冻结语义）；preferred 是文件注释记载的 JS5
     // 10ms 口径，现在真正接线（此前注释说用 preferred、实现却落 all）。
-    const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
+    let screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
       goalScope: o.screenGoalScope ?? 'all',
       preferredGoal: plan?.preferred ?? null,
     });
+    // M10：行动候选生成/排序（缺省原序 = 冻结根筛选）。候选只能重排/剪枝规则
+    // 引擎给出的合法行动；未知行动、空结果一律回退原序（不得制造非法行动）。
+    const rankActions = (list: readonly Action[]): Action[] => {
+      if (!list.length) return [];
+      const ranked = rankRootActions(observation, list, championParameters);
+      if (!Array.isArray(ranked) || ranked.length === 0) return [...list];
+      const allowed = new Set(list.map(actionKey));
+      const seenRank = new Set<string>();
+      const result: Action[] = [];
+      for (const action of ranked) {
+        const key = actionKey(action);
+        if (!allowed.has(key) || seenRank.has(key)) continue;
+        seenRank.add(key);
+        result.push(action);
+      }
+      return result.length ? result : [...list];
+    };
+    const rankedRoot = rankActions(screened.map(s => s.action));
+    const rootOrder = new Map(rankedRoot.map((action, i) => [actionKey(action), i]));
+    screened = screened
+      .filter(s => rootOrder.has(actionKey(s.action)))
+      .sort((a, b) => rootOrder.get(actionKey(a.action))! - rootOrder.get(actionKey(b.action))!);
     phase.screenMs = performance.now() - screenStart;
     const candidates: Action[] = [];
     const candidateSources: Array<'champion' | 'claim' | 'prior' | 'near-terminal'> = [];
@@ -364,7 +400,13 @@ class ChampionGuidedPlanner {
     // prior 模式按根筛选先验降序取前 2，避免枚举顺序偶然排除高分认领）。
     // C4 claimFocus：终局已触发时候选 = 冠军行动 ∪ 全部合法认领（认领顺序
     // 是终局的核心决策；不再限 2 个）∪ 先验 top 填满 cap。
-    const claimActions = legalRootActions.filter(x => x.type === 'claim');
+    let claimActions = legalRootActions.filter(x => x.type === 'claim');
+    // M10：认领候选顺序同样经可进化排序（缺省原序 = 冻结枚举顺序）。
+    const rankedClaims = rankActions(claimActions);
+    const claimOrder = new Map(rankedClaims.map((action, i) => [actionKey(action), i]));
+    claimActions = claimActions
+      .filter(a => claimOrder.has(actionKey(a)))
+      .sort((a, b) => claimOrder.get(actionKey(a))! - claimOrder.get(actionKey(b))!);
     // AI7 C3：认领候选的当步正式净分/毛分（与 near-terminal 同一口径）。
     // 毛分 = 魔像分值 + 硬币（支付水晶是认领的必要成本，保护门槛按毛分判断
     // "这是不是一个明确的高分机会"）；净分仍用于候选补全的优先序。

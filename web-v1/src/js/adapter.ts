@@ -31,6 +31,59 @@ import { endgameDiscardColors } from './endgame.js';
 import { count } from '../engine.js';
 import { JOINT_VERSIONS, type JointDecision, JointSearchOptions, JointVersionId } from './types.js';
 import { mergeJointOptions, resolveJointConfig, jointConfigHash, type JointSearchResolved } from './config.js';
+import { searchPolicyOverrides, budgetForDecision } from '../ai/evolve/modules.js';
+
+/** M11 允许候选改写的联合搜索选项（白名单 + 边界；其余一律丢弃）。
+ * 缺省模块返回 {}，因此冠军路径的 resolved options 逐字段不变。 */
+const SEARCH_POLICY_RULES: Record<string, { kind: 'number' | 'int' | 'bool' | 'enum'; min?: number; max?: number; values?: readonly string[] }> = {
+  gateMode: { kind: 'enum', values: ['auto', 'always', 'never', 'rerank'] },
+  overrideMargin: { kind: 'number', min: 0, max: 0.2 },
+  candidateCap: { kind: 'int', min: 2, max: 8 },
+  contestThreshold: { kind: 'number', min: 0.5, max: 0.99 },
+  claimRanking: { kind: 'enum', values: ['enumeration', 'prior'] },
+  nearTerminalCandidate: { kind: 'enum', values: ['off', 'replace', 'add'] },
+  screenGoalScope: { kind: 'enum', values: ['all', 'preferred'] },
+  batchAdmission: { kind: 'enum', values: ['legacy', 'balanced'] },
+  endgameSolver: { kind: 'enum', values: ['off', 'exact'] },
+  endgameDiscard: { kind: 'bool' },
+  arbitration: { kind: 'enum', values: ['legacy', 'paired'] },
+  minPairedTrials: { kind: 'int', min: 2, max: 12 },
+  pairedZ: { kind: 'number', min: 1, max: 3 },
+  claimProtection: { kind: 'bool' },
+  claimProtectDelta: { kind: 'number', min: 5, max: 30 },
+  claimProtectMargin: { kind: 'number', min: 0, max: 0.5 },
+  ensureBestClaimCandidate: { kind: 'bool' },
+  allocation: { kind: 'enum', values: ['balanced', 'racing'] },
+  racingDelta: { kind: 'number', min: 0.005, max: 0.2 },
+  endgameMode: { kind: 'enum', values: ['default', 'claimFocus'] },
+  worlds: { kind: 'int', min: 1, max: 8 },
+  horizon: { kind: 'int', min: 8, max: 96 },
+  championStructure: { kind: 'enum', values: ['beam-lineage', 'beam-adaptive', 'beam-rollout', 'beam-contest'] },
+  evaluator: { kind: 'enum', values: ['L0', 'L1', 'L2', 'L3'] },
+  workUnits: { kind: 'int', min: 8, max: 512 },
+};
+
+function sanitizeSearchPolicy(raw: unknown): Record<string, unknown> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const source = raw as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+  for (const [key, rule] of Object.entries(SEARCH_POLICY_RULES)) {
+    const value = source[key];
+    if (value === undefined) continue;
+    if (rule.kind === 'bool') {
+      if (typeof value === 'boolean') result[key] = value;
+      continue;
+    }
+    if (rule.kind === 'enum') {
+      if (typeof value === 'string' && rule.values!.includes(value)) result[key] = value;
+      continue;
+    }
+    if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+    const clamped = Math.min(rule.max!, Math.max(rule.min!, value));
+    result[key] = rule.kind === 'int' ? Math.round(clamped) : clamped;
+  }
+  return result;
+}
 
 export type JointAdapterOptions = JointSearchOptions & {
   /** 版本 id（必填；未注册版本抛错——禁止静默回退到任何未声明行为）。 */
@@ -83,10 +136,32 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
   // AI7-A2：冠军基座参数显式解析并注入配置身份（冻结描述符不得回退活动状态）。
   // AI7 候选：版本预设的 parameterVariant（engine-v2 / engine-v2-seat）经
   // mergeJointOptions 注入 championParameters；调用方显式传入时优先。
-  const resolvedOptions = mergeJointOptions(versionId, options) as JointAdapterOptions;
+  const presetOptions = mergeJointOptions(versionId, options) as JointAdapterOptions;
+  const presetParameters = presetOptions.championParameters
+    ? validateAIParameters(presetOptions.championParameters)
+    : CHAMPION_PARAMETERS;
+  // M11/M12：可进化搜索结构策略与自适应预算。候选只能覆盖调用方未显式
+  // 指定的选项；白名单与边界由 sanitizeSearchPolicy 强制。缺省模块返回 {}
+  // 与原预算，冠军路径逐字段不变。
+  const observation = buildObservation(game, seat);
+  const policyOverrides = sanitizeSearchPolicy(searchPolicyOverrides(observation, options, presetParameters));
+  const explicitPolicy = Object.fromEntries(
+    Object.entries(policyOverrides).filter(([key]) => (options as Record<string, unknown>)[key] === undefined),
+  );
+  const resolvedOptions = mergeJointOptions(versionId, { ...explicitPolicy, ...options }) as JointAdapterOptions;
   const championParameters = resolvedOptions.championParameters
     ? validateAIParameters(resolvedOptions.championParameters)
     : CHAMPION_PARAMETERS;
+  const requestedBudget = typeof resolvedOptions.budgetMs === 'number'
+    ? resolvedOptions.budgetMs
+    : (version.kind === 'champion-guided' ? 100 : null);
+  if (resolvedOptions.workUnits === undefined && requestedBudget !== null) {
+    const rawBudget = budgetForDecision(observation, requestedBudget, championParameters);
+    // 生产设备推理预算硬上限 1000ms：允许自适应，但不允许无限扩大算力。
+    // 下界保留 0——显式 0 预算代表"筛选即耗尽→冠军回退"，是既有语义。
+    const budgetMs = Number.isFinite(rawBudget) ? Math.min(1_000, Math.max(0, rawBudget)) : requestedBudget;
+    resolvedOptions.budgetMs = budgetMs;
+  }
   const baseConfig = resolveJointConfig(versionId, resolvedOptions, options.profile?.name);
   const config = { ...baseConfig, hash: jointConfigHash(baseConfig) };
 
@@ -127,7 +202,6 @@ export function chooseJointAction(game: Game, options: JointAdapterOptions): Joi
     };
   }
 
-  const observation = buildObservation(game, seat);
   const planner = plannerFor(versionId);
   // profile → profileName 映射对全部 joint 版本一致（champion-guided 的冠军基座
   // 与轨迹内策略都必须消费同一人格注入，否则评测席位人格失配——回归审计

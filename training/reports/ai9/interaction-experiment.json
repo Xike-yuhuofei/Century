@@ -1,0 +1,1582 @@
+{
+  "schema": "century-ai9-interaction-experiment-v1",
+  "generatedAt": "2026-10-26T03:56:42.965Z",
+  "campaignId": "ai9-interaction-mvopnz8f",
+  "seedWindow": {
+    "windowId": "ai9-screen-w009",
+    "purpose": "screen",
+    "pool": "dev",
+    "base": 1660009000,
+    "count": 1000,
+    "blockStart": 1660000000,
+    "blockEnd": 1670000000,
+    "index": 9
+  },
+  "seeds": {
+    "byPlayerCount": {
+      "2": [
+        1660009000,
+        1660009001,
+        1660009002,
+        1660009003
+      ],
+      "3": [
+        1660009004,
+        1660009005,
+        1660009006,
+        1660009007
+      ],
+      "4": [
+        1660009008,
+        1660009009,
+        1660009010,
+        1660009011
+      ],
+      "5": [
+        1660009012,
+        1660009013,
+        1660009014,
+        1660009015
+      ]
+    }
+  },
+  "playerCounts": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "workUnits": 32,
+  "control": "js5-frozen-champion (immutable archive)",
+  "metric": "pairedFirstPlaceRateDelta",
+  "note": "开发池小样本方向性实验；不得作为冠军晋级证据。正式晋级必须使用预注册 2–5 人验证池正式挑战。",
+  "candidates": [
+    {
+      "key": "control",
+      "label": "官方模块（行为基线）",
+      "strategy": "control",
+      "moduleIds": [
+        "M02"
+      ],
+      "candidateId": "cand-ai9-interaction-control",
+      "artifactHash": "3b20b1d4cc791509e2a8b64b5f34ea10453274314b759eadab65a7917e1f0fca",
+      "probe": {
+        "changedModules": [],
+        "mismatches": 0
+      },
+      "metrics": {
+        "totalGames": 32,
+        "finishedGames": 32,
+        "anomalies": 0,
+        "candidateFirstRate": 0.5625,
+        "championFirstRate": 0.5625,
+        "firstPlaceDelta": 0,
+        "firstPlaceDeltaCi": null,
+        "firstPlaceDeltaPooledCi": {
+          "mean": 0,
+          "variance": 0,
+          "se": 0,
+          "df": 15,
+          "tCritical": 1.75305035567726,
+          "alpha": 0.05,
+          "lower": 0,
+          "upper": 0,
+          "oneSidedLower": 0,
+          "n": 16,
+          "candidateFirstRate": 0.5625,
+          "championFirstRate": 0.5625
+        },
+        "byPlayerCount": {
+          "2": {
+            "seatCount": 2,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 2,
+            "championFirst": 2,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            }
+          },
+          "3": {
+            "seatCount": 3,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 4,
+            "championFirst": 4,
+            "candidateFirstRate": 1,
+            "championFirstRate": 1,
+            "delta": 0,
+            "wilson": {
+              "point": 1,
+              "lower": 0.5101091635454027,
+              "upper": 1
+            }
+          },
+          "4": {
+            "seatCount": 4,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 2,
+            "championFirst": 2,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            }
+          },
+          "5": {
+            "seatCount": 5,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.25,
+            "championFirstRate": 0.25,
+            "delta": 0,
+            "wilson": {
+              "point": 0.25,
+              "lower": 0.04558726080970055,
+              "upper": 0.6993581574175981
+            }
+          }
+        },
+        "meanDecisionMs": 31.933
+      },
+      "pairs": [
+        {
+          "seed": 1660009000,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009001,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009002,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009003,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009004,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009005,
+          "focusSeat": 2,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009006,
+          "focusSeat": 0,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009007,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009008,
+          "focusSeat": 0,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009009,
+          "focusSeat": 1,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009010,
+          "focusSeat": 2,
+          "seatCount": 4,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009011,
+          "focusSeat": 3,
+          "seatCount": 4,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009012,
+          "focusSeat": 2,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009013,
+          "focusSeat": 3,
+          "seatCount": 5,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009014,
+          "focusSeat": 4,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009015,
+          "focusSeat": 0,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        }
+      ]
+    },
+    {
+      "key": "single-M02",
+      "label": "单模块：获取估值",
+      "strategy": "single",
+      "moduleIds": [
+        "M02"
+      ],
+      "candidateId": "cand-ai9-interaction-single-M02",
+      "artifactHash": "bf0dc35096384732370d6d609384cabab13ae33483b84df0f6874123e7124b44",
+      "probe": {
+        "changedModules": [
+          "M02"
+        ],
+        "mismatches": 84
+      },
+      "metrics": {
+        "totalGames": 32,
+        "finishedGames": 32,
+        "anomalies": 0,
+        "candidateFirstRate": 0.375,
+        "championFirstRate": 0.5625,
+        "firstPlaceDelta": -0.1875,
+        "firstPlaceDeltaCi": null,
+        "firstPlaceDeltaPooledCi": {
+          "mean": -0.1875,
+          "variance": 0.1625,
+          "se": 0.10077822185373188,
+          "df": 15,
+          "tCritical": 1.75305035567726,
+          "alpha": 0.05,
+          "lower": -0.3641692976652065,
+          "upper": -0.010830702334793496,
+          "oneSidedLower": -0.3641692976652065,
+          "n": 16,
+          "candidateFirstRate": 0.375,
+          "championFirstRate": 0.5625
+        },
+        "byPlayerCount": {
+          "2": {
+            "seatCount": 2,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 2,
+            "championFirst": 2,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            }
+          },
+          "3": {
+            "seatCount": 3,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 3,
+            "championFirst": 4,
+            "candidateFirstRate": 0.75,
+            "championFirstRate": 1,
+            "delta": -0.25,
+            "wilson": {
+              "point": 0.75,
+              "lower": 0.30064184258240184,
+              "upper": 0.9544127391902995
+            }
+          },
+          "4": {
+            "seatCount": 4,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 1,
+            "championFirst": 2,
+            "candidateFirstRate": 0.25,
+            "championFirstRate": 0.5,
+            "delta": -0.25,
+            "wilson": {
+              "point": 0.25,
+              "lower": 0.04558726080970055,
+              "upper": 0.6993581574175981
+            }
+          },
+          "5": {
+            "seatCount": 5,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 0,
+            "championFirst": 1,
+            "candidateFirstRate": 0,
+            "championFirstRate": 0.25,
+            "delta": -0.25,
+            "wilson": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.4898908364545973
+            }
+          }
+        },
+        "meanDecisionMs": 31.227
+      },
+      "pairs": [
+        {
+          "seed": 1660009000,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009001,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009002,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009003,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009004,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009005,
+          "focusSeat": 2,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009006,
+          "focusSeat": 0,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009007,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009008,
+          "focusSeat": 0,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009009,
+          "focusSeat": 1,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009010,
+          "focusSeat": 2,
+          "seatCount": 4,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009011,
+          "focusSeat": 3,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009012,
+          "focusSeat": 2,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009013,
+          "focusSeat": 3,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009014,
+          "focusSeat": 4,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009015,
+          "focusSeat": 0,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        }
+      ]
+    },
+    {
+      "key": "single-M11",
+      "label": "单模块：联合搜索结构",
+      "strategy": "single",
+      "moduleIds": [
+        "M11"
+      ],
+      "candidateId": "cand-ai9-interaction-single-M11",
+      "artifactHash": "a44767b4a8806d0318ddbc6970b25867ca81350365a9960f3f416949f0e364ff",
+      "probe": {
+        "changedModules": [
+          "M11"
+        ],
+        "mismatches": 14
+      },
+      "metrics": {
+        "totalGames": 32,
+        "finishedGames": 32,
+        "anomalies": 0,
+        "candidateFirstRate": 0.5625,
+        "championFirstRate": 0.5625,
+        "firstPlaceDelta": 0,
+        "firstPlaceDeltaCi": null,
+        "firstPlaceDeltaPooledCi": {
+          "mean": 0,
+          "variance": 0.26666666666666666,
+          "se": 0.12909944487358055,
+          "df": 15,
+          "tCritical": 1.75305035567726,
+          "alpha": 0.05,
+          "lower": -0.2263178277533672,
+          "upper": 0.2263178277533672,
+          "oneSidedLower": -0.2263178277533672,
+          "n": 16,
+          "candidateFirstRate": 0.5625,
+          "championFirstRate": 0.5625
+        },
+        "byPlayerCount": {
+          "2": {
+            "seatCount": 2,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 2,
+            "championFirst": 2,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            }
+          },
+          "3": {
+            "seatCount": 3,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 2,
+            "championFirst": 4,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 1,
+            "delta": -0.5,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            }
+          },
+          "4": {
+            "seatCount": 4,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 3,
+            "championFirst": 2,
+            "candidateFirstRate": 0.75,
+            "championFirstRate": 0.5,
+            "delta": 0.25,
+            "wilson": {
+              "point": 0.75,
+              "lower": 0.30064184258240184,
+              "upper": 0.9544127391902995
+            }
+          },
+          "5": {
+            "seatCount": 5,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 2,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.25,
+            "delta": 0.25,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            }
+          }
+        },
+        "meanDecisionMs": 29.186
+      },
+      "pairs": [
+        {
+          "seed": 1660009000,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009001,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009002,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009003,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009004,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009005,
+          "focusSeat": 2,
+          "seatCount": 3,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009006,
+          "focusSeat": 0,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009007,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009008,
+          "focusSeat": 0,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009009,
+          "focusSeat": 1,
+          "seatCount": 4,
+          "candidateFirst": 1,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009010,
+          "focusSeat": 2,
+          "seatCount": 4,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009011,
+          "focusSeat": 3,
+          "seatCount": 4,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009012,
+          "focusSeat": 2,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009013,
+          "focusSeat": 3,
+          "seatCount": 5,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009014,
+          "focusSeat": 4,
+          "seatCount": 5,
+          "candidateFirst": 1,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009015,
+          "focusSeat": 0,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        }
+      ]
+    },
+    {
+      "key": "pair-M02+M11",
+      "label": "双模块联合变异",
+      "strategy": "pair",
+      "moduleIds": [
+        "M02",
+        "M11"
+      ],
+      "candidateId": "cand-ai9-interaction-pair-M02-M11",
+      "artifactHash": "8151108f012702dc2fbd9d4f5f0f2350ac1877a69ab71d335b3cd9040aea86aa",
+      "probe": {
+        "changedModules": [
+          "M02",
+          "M11"
+        ],
+        "mismatches": 98
+      },
+      "metrics": {
+        "totalGames": 32,
+        "finishedGames": 32,
+        "anomalies": 0,
+        "candidateFirstRate": 0.375,
+        "championFirstRate": 0.5625,
+        "firstPlaceDelta": -0.1875,
+        "firstPlaceDeltaCi": null,
+        "firstPlaceDeltaPooledCi": {
+          "mean": -0.1875,
+          "variance": 0.29583333333333334,
+          "se": 0.13597640726733934,
+          "df": 15,
+          "tCritical": 1.75305035567726,
+          "alpha": 0.05,
+          "lower": -0.4258734891237252,
+          "upper": 0.05087348912372519,
+          "oneSidedLower": -0.4258734891237252,
+          "n": 16,
+          "candidateFirstRate": 0.375,
+          "championFirstRate": 0.5625
+        },
+        "byPlayerCount": {
+          "2": {
+            "seatCount": 2,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 1,
+            "championFirst": 2,
+            "candidateFirstRate": 0.25,
+            "championFirstRate": 0.5,
+            "delta": -0.25,
+            "wilson": {
+              "point": 0.25,
+              "lower": 0.04558726080970055,
+              "upper": 0.6993581574175981
+            }
+          },
+          "3": {
+            "seatCount": 3,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 2,
+            "championFirst": 4,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 1,
+            "delta": -0.5,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            }
+          },
+          "4": {
+            "seatCount": 4,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 2,
+            "championFirst": 2,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            }
+          },
+          "5": {
+            "seatCount": 5,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.25,
+            "championFirstRate": 0.25,
+            "delta": 0,
+            "wilson": {
+              "point": 0.25,
+              "lower": 0.04558726080970055,
+              "upper": 0.6993581574175981
+            }
+          }
+        },
+        "meanDecisionMs": 31.493
+      },
+      "pairs": [
+        {
+          "seed": 1660009000,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009001,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009002,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009003,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009004,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009005,
+          "focusSeat": 2,
+          "seatCount": 3,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009006,
+          "focusSeat": 0,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009007,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009008,
+          "focusSeat": 0,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009009,
+          "focusSeat": 1,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009010,
+          "focusSeat": 2,
+          "seatCount": 4,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009011,
+          "focusSeat": 3,
+          "seatCount": 4,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009012,
+          "focusSeat": 2,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009013,
+          "focusSeat": 3,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009014,
+          "focusSeat": 4,
+          "seatCount": 5,
+          "candidateFirst": 1,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009015,
+          "focusSeat": 0,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        }
+      ]
+    },
+    {
+      "key": "multi-M02+M05+M11",
+      "label": "三模块联合变异",
+      "strategy": "multi",
+      "moduleIds": [
+        "M02",
+        "M05",
+        "M11"
+      ],
+      "candidateId": "cand-ai9-interaction-multi-M02-M05-M11",
+      "artifactHash": "3d53e4362ae1f6ebf0fe4d950152bd2f6b71c965a1577855744b363017110fd4",
+      "probe": {
+        "changedModules": [
+          "M02",
+          "M05",
+          "M11"
+        ],
+        "mismatches": 112
+      },
+      "metrics": {
+        "totalGames": 32,
+        "finishedGames": 32,
+        "anomalies": 0,
+        "candidateFirstRate": 0.375,
+        "championFirstRate": 0.5625,
+        "firstPlaceDelta": -0.1875,
+        "firstPlaceDeltaCi": null,
+        "firstPlaceDeltaPooledCi": {
+          "mean": -0.1875,
+          "variance": 0.29583333333333334,
+          "se": 0.13597640726733934,
+          "df": 15,
+          "tCritical": 1.75305035567726,
+          "alpha": 0.05,
+          "lower": -0.4258734891237252,
+          "upper": 0.05087348912372519,
+          "oneSidedLower": -0.4258734891237252,
+          "n": 16,
+          "candidateFirstRate": 0.375,
+          "championFirstRate": 0.5625
+        },
+        "byPlayerCount": {
+          "2": {
+            "seatCount": 2,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 1,
+            "championFirst": 2,
+            "candidateFirstRate": 0.25,
+            "championFirstRate": 0.5,
+            "delta": -0.25,
+            "wilson": {
+              "point": 0.25,
+              "lower": 0.04558726080970055,
+              "upper": 0.6993581574175981
+            }
+          },
+          "3": {
+            "seatCount": 3,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 2,
+            "championFirst": 4,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 1,
+            "delta": -0.5,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            }
+          },
+          "4": {
+            "seatCount": 4,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 2,
+            "championFirst": 2,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            }
+          },
+          "5": {
+            "seatCount": 5,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.25,
+            "championFirstRate": 0.25,
+            "delta": 0,
+            "wilson": {
+              "point": 0.25,
+              "lower": 0.04558726080970055,
+              "upper": 0.6993581574175981
+            }
+          }
+        },
+        "meanDecisionMs": 33.287
+      },
+      "pairs": [
+        {
+          "seed": 1660009000,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009001,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009002,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009003,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009004,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009005,
+          "focusSeat": 2,
+          "seatCount": 3,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009006,
+          "focusSeat": 0,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009007,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009008,
+          "focusSeat": 0,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009009,
+          "focusSeat": 1,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009010,
+          "focusSeat": 2,
+          "seatCount": 4,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009011,
+          "focusSeat": 3,
+          "seatCount": 4,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009012,
+          "focusSeat": 2,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009013,
+          "focusSeat": 3,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009014,
+          "focusSeat": 4,
+          "seatCount": 5,
+          "candidateFirst": 1,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009015,
+          "focusSeat": 0,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        }
+      ]
+    },
+    {
+      "key": "ablation-M02",
+      "label": "消融：pair 移除 M11（仅保留 M02）",
+      "strategy": "ablation",
+      "moduleIds": [
+        "M02"
+      ],
+      "candidateId": "cand-ai9-interaction-ablation-M02",
+      "artifactHash": "d17a3d47574c36542adb49826aa256a9af66ad3165d169933386333aca225fdd",
+      "probe": {
+        "changedModules": [
+          "M02"
+        ],
+        "mismatches": 84
+      },
+      "metrics": {
+        "totalGames": 32,
+        "finishedGames": 32,
+        "anomalies": 0,
+        "candidateFirstRate": 0.375,
+        "championFirstRate": 0.5625,
+        "firstPlaceDelta": -0.1875,
+        "firstPlaceDeltaCi": null,
+        "firstPlaceDeltaPooledCi": {
+          "mean": -0.1875,
+          "variance": 0.1625,
+          "se": 0.10077822185373188,
+          "df": 15,
+          "tCritical": 1.75305035567726,
+          "alpha": 0.05,
+          "lower": -0.3641692976652065,
+          "upper": -0.010830702334793496,
+          "oneSidedLower": -0.3641692976652065,
+          "n": 16,
+          "candidateFirstRate": 0.375,
+          "championFirstRate": 0.5625
+        },
+        "byPlayerCount": {
+          "2": {
+            "seatCount": 2,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 2,
+            "championFirst": 2,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.15003898915214953,
+              "upper": 0.8499610108478505
+            }
+          },
+          "3": {
+            "seatCount": 3,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 3,
+            "championFirst": 4,
+            "candidateFirstRate": 0.75,
+            "championFirstRate": 1,
+            "delta": -0.25,
+            "wilson": {
+              "point": 0.75,
+              "lower": 0.30064184258240184,
+              "upper": 0.9544127391902995
+            }
+          },
+          "4": {
+            "seatCount": 4,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 1,
+            "championFirst": 2,
+            "candidateFirstRate": 0.25,
+            "championFirstRate": 0.5,
+            "delta": -0.25,
+            "wilson": {
+              "point": 0.25,
+              "lower": 0.04558726080970055,
+              "upper": 0.6993581574175981
+            }
+          },
+          "5": {
+            "seatCount": 5,
+            "pairs": 4,
+            "candidateGames": 4,
+            "championGames": 4,
+            "candidateFirst": 0,
+            "championFirst": 1,
+            "candidateFirstRate": 0,
+            "championFirstRate": 0.25,
+            "delta": -0.25,
+            "wilson": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.4898908364545973
+            }
+          }
+        },
+        "meanDecisionMs": 40.037
+      },
+      "pairs": [
+        {
+          "seed": 1660009000,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009001,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009002,
+          "focusSeat": 0,
+          "seatCount": 2,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009003,
+          "focusSeat": 1,
+          "seatCount": 2,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009004,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009005,
+          "focusSeat": 2,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009006,
+          "focusSeat": 0,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009007,
+          "focusSeat": 1,
+          "seatCount": 3,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009008,
+          "focusSeat": 0,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009009,
+          "focusSeat": 1,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009010,
+          "focusSeat": 2,
+          "seatCount": 4,
+          "candidateFirst": 1,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009011,
+          "focusSeat": 3,
+          "seatCount": 4,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009012,
+          "focusSeat": 2,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009013,
+          "focusSeat": 3,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 1,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009014,
+          "focusSeat": 4,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        },
+        {
+          "seed": 1660009015,
+          "focusSeat": 0,
+          "seatCount": 5,
+          "candidateFirst": 0,
+          "championFirst": 0,
+          "anomalies": 0,
+          "status": "finished"
+        }
+      ]
+    }
+  ],
+  "interaction": {
+    "pairDelta": -0.1875,
+    "singleSum": -0.1875,
+    "synergyDelta": 0,
+    "verdict": "additive/inconclusive",
+    "ablation": {
+      "pairWithM11": -0.1875,
+      "pairWithoutM11": -0.1875,
+      "m11Marginal": 0
+    }
+  }
+}

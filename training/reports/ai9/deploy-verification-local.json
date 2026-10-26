@@ -1,0 +1,45 @@
+{
+  "schema": "century-deploy-verification-v1",
+  "verifiedAt": "2026-10-26T04:43:29.754Z",
+  "url": "http://127.0.0.1:8123/",
+  "expectedArtifact": "e4d5ed58d031efdf7083a3610162d57f389bc0da39bb650f5848aa5818fbd0c2",
+  "expectedChampion": "joint-js5",
+  "verdict": "PASS",
+  "checks": [
+    {
+      "id": "site-reachable",
+      "status": "PASS",
+      "evidence": "status=200"
+    },
+    {
+      "id": "index-non-empty",
+      "status": "PASS",
+      "evidence": "index.html 长度=245074"
+    },
+    {
+      "id": "champion-id-present",
+      "status": "PASS",
+      "evidence": "index.html 包含 冠军 id joint-js5"
+    },
+    {
+      "id": "champion-adapter-present",
+      "status": "PASS",
+      "evidence": "index.html 包含 适配器标记 champion-guided"
+    },
+    {
+      "id": "build-manifest-available",
+      "status": "PASS",
+      "evidence": "build-manifest.json 可解析"
+    },
+    {
+      "id": "artifact-identity",
+      "status": "PASS",
+      "evidence": "部署 artifact=e4d5ed58d031efdf 期望=e4d5ed58d031efdf"
+    },
+    {
+      "id": "manifest-schema",
+      "status": "PASS",
+      "evidence": "schema=century-web-build-manifest-v2"
+    }
+  ]
+}

@@ -1,0 +1,207 @@
+{
+  "schema": "century-ai9-module-execution-audit-v1",
+  "generatedAt": "2026-10-26T04:28:42.355Z",
+  "method": "instrumented-copy-of-official-dist (official source/build untouched)",
+  "seedNote": "未分配评测块，仅作执行接线审计",
+  "cases": {
+    "ai": [
+      {
+        "seatCount": 2,
+        "seed": 1640000021
+      },
+      {
+        "seatCount": 3,
+        "seed": 1640000022
+      },
+      {
+        "seatCount": 4,
+        "seed": 1640000023
+      },
+      {
+        "seatCount": 5,
+        "seed": 1640000024
+      }
+    ],
+    "joint": [
+      {
+        "seatCount": 2,
+        "seed": 1640000031
+      },
+      {
+        "seatCount": 3,
+        "seed": 1640000032
+      },
+      {
+        "seatCount": 4,
+        "seed": 1640000033
+      },
+      {
+        "seatCount": 5,
+        "seed": 1640000034
+      }
+    ]
+  },
+  "aiPath": {
+    "games": 4,
+    "decisions": 535,
+    "counts": {
+      "M01": 2645,
+      "M02": 7300501,
+      "M03": 201937833,
+      "M04": 8963201,
+      "M05": 146112,
+      "M06": 404,
+      "M07": 6348,
+      "M08": 263992,
+      "M09": 2645,
+      "M10": 589,
+      "M11": 535,
+      "M12": 535
+    }
+  },
+  "jointPath": {
+    "games": 4,
+    "decisions": 517,
+    "counts": {
+      "M01": 2555,
+      "M02": 6543546,
+      "M03": 195918487,
+      "M04": 7829494,
+      "M05": 134339,
+      "M06": 277,
+      "M07": 6086,
+      "M08": 245993,
+      "M09": 2555,
+      "M10": 558,
+      "M11": 517,
+      "M12": 517
+    }
+  },
+  "modules": [
+    {
+      "id": "M01",
+      "expectedPath": "chooseAIAction",
+      "counts": {
+        "ai": 2645,
+        "joint": 2555
+      },
+      "total": 5200,
+      "status": "EXECUTED"
+    },
+    {
+      "id": "M02",
+      "expectedPath": "chooseAIAction",
+      "counts": {
+        "ai": 7300501,
+        "joint": 6543546
+      },
+      "total": 13844047,
+      "status": "EXECUTED"
+    },
+    {
+      "id": "M03",
+      "expectedPath": "chooseAIAction",
+      "counts": {
+        "ai": 201937833,
+        "joint": 195918487
+      },
+      "total": 397856320,
+      "status": "EXECUTED"
+    },
+    {
+      "id": "M04",
+      "expectedPath": "chooseAIAction",
+      "counts": {
+        "ai": 8963201,
+        "joint": 7829494
+      },
+      "total": 16792695,
+      "status": "EXECUTED"
+    },
+    {
+      "id": "M05",
+      "expectedPath": "chooseAIAction",
+      "counts": {
+        "ai": 146112,
+        "joint": 134339
+      },
+      "total": 280451,
+      "status": "EXECUTED"
+    },
+    {
+      "id": "M06",
+      "expectedPath": "chooseAIAction",
+      "counts": {
+        "ai": 404,
+        "joint": 277
+      },
+      "total": 681,
+      "status": "EXECUTED"
+    },
+    {
+      "id": "M07",
+      "expectedPath": "chooseAIAction",
+      "counts": {
+        "ai": 6348,
+        "joint": 6086
+      },
+      "total": 12434,
+      "status": "EXECUTED"
+    },
+    {
+      "id": "M08",
+      "expectedPath": "chooseAIAction",
+      "counts": {
+        "ai": 263992,
+        "joint": 245993
+      },
+      "total": 509985,
+      "status": "EXECUTED"
+    },
+    {
+      "id": "M09",
+      "expectedPath": "chooseAIAction",
+      "counts": {
+        "ai": 2645,
+        "joint": 2555
+      },
+      "total": 5200,
+      "status": "EXECUTED"
+    },
+    {
+      "id": "M10",
+      "expectedPath": "chooseJointAction",
+      "counts": {
+        "ai": 589,
+        "joint": 558
+      },
+      "total": 1147,
+      "status": "EXECUTED"
+    },
+    {
+      "id": "M11",
+      "expectedPath": "chooseJointAction",
+      "counts": {
+        "ai": 535,
+        "joint": 517
+      },
+      "total": 1052,
+      "status": "EXECUTED"
+    },
+    {
+      "id": "M12",
+      "expectedPath": "chooseJointAction",
+      "counts": {
+        "ai": 535,
+        "joint": 517
+      },
+      "total": 1052,
+      "status": "EXECUTED"
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "executed": 12,
+    "neverCalled": []
+  }
+}

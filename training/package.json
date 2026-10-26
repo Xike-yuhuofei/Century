@@ -22,6 +22,16 @@
     "autonomy:resume": "node evolution/autonomous-run.mjs resume",
     "autonomy:stop": "node evolution/autonomous-run.mjs stop",
     "autonomy:status": "node evolution/autonomous-run.mjs status",
+    "coevolve:start": "node evolution/autonomous-run.mjs start --coevolve",
+    "coevolve:resume": "node evolution/autonomous-run.mjs resume --coevolve",
+    "coevolve:status": "node evolution/autonomous-run.mjs status --coevolve",
+    "ai9:openevolve": "node evolution/run-ai9-openevolve.mjs",
+    "ai9:interaction": "node scripts/ai9-interaction-experiment.mjs",
+    "ai9:all-modules-game": "node scripts/ai9-all-modules-game.mjs",
+    "ai9:module-matrix": "node scripts/ai9-module-matrix.mjs",
+    "ai9:resource": "node scripts/ai9-resource-report.mjs",
+    "ai9:deploy-drill": "node scripts/module-deploy-drill.mjs",
+    "module:apply": "node scripts/apply-modules.mjs",
     "baseline": "node baseline/cli.mjs",
     "baseline:perf": "node baseline/perf.mjs",
     "baseline:freeze": "node baseline/freeze.mjs",
@@ -38,7 +48,10 @@
     "scenarios:split": "node scenarios/scripts/split-dataset.mjs",
     "evolution:test": "node --test evolution/tests/*.test.mjs",
     "evolution:demo": "node evolution/demo.mjs",
-    "evolution:demo:fake": "node evolution/demo.mjs --fake"
+    "evolution:demo:fake": "node evolution/demo.mjs --fake",
+    "ai9:wiring": "node scripts/ai9-module-wiring-audit.mjs",
+    "ai9:execution": "node scripts/ai9-module-execution-audit.mjs",
+    "ai9:crossover": "node scripts/ai9-crossover-game.mjs"
   },
   "engines": {
     "node": ">=20"

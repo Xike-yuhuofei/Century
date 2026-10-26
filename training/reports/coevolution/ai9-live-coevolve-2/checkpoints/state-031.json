@@ -1,0 +1,1135 @@
+{
+  "schema": "century-evolution-campaign-v1",
+  "campaignId": "ai9-live-coevolve-2",
+  "runFingerprint": "861857e4f7cf3f0df57e41fdeb160009b000ea01cacd0603e12cc81cc187a630",
+  "config": {
+    "version": 1,
+    "configRef": "ai9://campaign/coevolution",
+    "rounds": 2,
+    "playerCounts": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "quickSeeds": 8,
+    "deepSeeds": 8,
+    "maxMoves": 400,
+    "deadlineMs": 60000,
+    "retainTopK": 3,
+    "deepConfirmations": 2,
+    "generation": {
+      "count": 4,
+      "seed": 20261025,
+      "targetIds": [
+        "M01",
+        "M02",
+        "M05",
+        "M10",
+        "M11"
+      ],
+      "mode": "multi-module",
+      "strategies": [
+        "multi",
+        "crossover",
+        "ablation",
+        "openevolve"
+      ],
+      "openevolveIterations": 1,
+      "includeControl": true,
+      "allowDeterministicFallback": true
+    },
+    "budget": {
+      "maxCandidates": 24,
+      "maxGames": 800,
+      "maxWallMs": 2400000,
+      "maxConcurrent": 1,
+      "maxDeepConfirmations": 4
+    },
+    "diagnosticsPath": "training/reports/diagnostics-latest/analysis.json",
+    "humanAnalyticsFailuresPath": null,
+    "parentCandidateId": null,
+    "continueFromSelected": false
+  },
+  "status": "running",
+  "phase": "generated",
+  "currentRoundIndex": 1,
+  "rounds": [
+    {
+      "round": 1,
+      "seedWindows": {
+        "screen": {
+          "windowId": "ai9-screen-w012",
+          "purpose": "screen",
+          "pool": "dev",
+          "base": 1660012000,
+          "count": 1000,
+          "blockStart": 1660000000,
+          "blockEnd": 1670000000,
+          "index": 12
+        },
+        "deep": {
+          "windowId": "ai9-deep-w010",
+          "purpose": "deep",
+          "pool": "dev",
+          "base": 1670010000,
+          "count": 1000,
+          "blockStart": 1670000000,
+          "blockEnd": 1680000000,
+          "index": 10
+        }
+      },
+      "screenSeeds": [
+        1660012000,
+        1660012001,
+        1660012002,
+        1660012003,
+        1660012004,
+        1660012005,
+        1660012006,
+        1660012007
+      ],
+      "deepSeeds": [
+        1670010000,
+        1670010001,
+        1670010002,
+        1670010003,
+        1670010004,
+        1670010005,
+        1670010006,
+        1670010007
+      ],
+      "generated": true,
+      "selected": true,
+      "deepDone": true,
+      "approvalDone": true,
+      "diagnosticsDone": true,
+      "candidates": [
+        {
+          "candidateId": "cand-ai9-control-r1-98215d",
+          "parentId": null,
+          "identityDigest": "83f2a142a6d06fe20aa908394b851c3df4343371936b94aeea302bcb63b5fc49",
+          "strategy": "control",
+          "modules": [
+            "M01"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-live-coevolve-2/artifacts/objects/cand-ai9-control-r1-98215d/83f2a142a6d06fe20aa908394b851c3df4343371936b94aeea302bcb63b5fc49/candidate.json",
+          "stage": "selected",
+          "safetyStatus": "passed",
+          "sourceHash": "3fd0a972701bbe39bbf523fbbfb766b9178b72764132a3179cf3ef182e1cae45",
+          "buildArtifactHash": "1eb9df3c301f0d8f3ba80304b61c549fcd20bedd3fafb3f58f6ccab5c119a644",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-control-r1-98215d",
+          "quick": {
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-control-r1-98215d/quick-r001.json",
+            "evidenceType": "dev-game-compiled-modules",
+            "score": {
+              "candidateId": "cand-ai9-control-r1-98215d",
+              "identityDigest": "83f2a142a6d06fe20aa908394b851c3df4343371936b94aeea302bcb63b5fc49",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01"
+              ],
+              "quality": 0.39126,
+              "stability": 1,
+              "cost": 0.850412,
+              "safety": 1,
+              "composite": 0.680671
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": 0.3042,
+              "minWilsonLower": 0,
+              "anomalyRate": 0,
+              "p95WallMs": 5277
+            },
+            "artifactHash": "053fee23f91d90b317f5fe7bb7af248d279ad2a31b3d739d2ee2c99b527c1c65"
+          },
+          "deep": null,
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai9-multi-r1c1-0ceec1",
+          "parentId": null,
+          "identityDigest": "eb0c6388afd501b671745d53e30071f585e54e7bfd6184219e2f02e8065c64fd",
+          "strategy": "openevolve",
+          "modules": [
+            "M01",
+            "M05",
+            "M10",
+            "M11"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01",
+            "M05",
+            "M10",
+            "M11"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-live-coevolve-2/artifacts/objects/cand-ai9-multi-r1c1-0ceec1/eb0c6388afd501b671745d53e30071f585e54e7bfd6184219e2f02e8065c64fd/candidate.json",
+          "stage": "deep-done",
+          "safetyStatus": "passed",
+          "sourceHash": "2f29ced4b2a7c2dda541d35e90e99201c8b2238b15d2a01c789f0ab4cf467a11",
+          "buildArtifactHash": "1eb9df3c301f0d8f3ba80304b61c549fcd20bedd3fafb3f58f6ccab5c119a644",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-multi-r1c1-0ceec1",
+          "quick": {
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-multi-r1c1-0ceec1/quick-r001.json",
+            "evidenceType": "dev-game-compiled-modules",
+            "score": {
+              "candidateId": "cand-ai9-multi-r1c1-0ceec1",
+              "identityDigest": "eb0c6388afd501b671745d53e30071f585e54e7bfd6184219e2f02e8065c64fd",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01",
+                "M05",
+                "M10",
+                "M11"
+              ],
+              "quality": 0.39126,
+              "stability": 1,
+              "cost": 0.859845,
+              "safety": 1,
+              "composite": 0.681615
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": 0.3042,
+              "minWilsonLower": 0,
+              "anomalyRate": 0,
+              "p95WallMs": 4890
+            },
+            "artifactHash": "c8b28109cb1b61a1c8e344f1f7ce1d0fa5df0a279c038bba5d94eddb918e84c3"
+          },
+          "deep": {
+            "status": "done",
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-multi-r1c1-0ceec1/deep-r001.json",
+            "score": {
+              "candidateId": "cand-ai9-multi-r1c1-0ceec1",
+              "identityDigest": "eb0c6388afd501b671745d53e30071f585e54e7bfd6184219e2f02e8065c64fd",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01",
+                "M05",
+                "M10",
+                "M11"
+              ],
+              "quality": 0.27876,
+              "stability": 1,
+              "cost": 0.789432,
+              "safety": 1,
+              "composite": 0.618323
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": -0.0708,
+              "minWilsonLower": 0,
+              "anomalyRate": 0,
+              "finishedGames": 16
+            }
+          },
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai9-pair-fallback-r1c2-5abc65",
+          "parentId": null,
+          "identityDigest": "310900b1bb271d6043f4c69bd35c88af37b6e9232c8dfe46d255d8e751120ee2",
+          "strategy": "pair-fallback",
+          "modules": [
+            "M01",
+            "M11"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01",
+            "M11"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-live-coevolve-2/artifacts/objects/cand-ai9-pair-fallback-r1c2-5abc65/310900b1bb271d6043f4c69bd35c88af37b6e9232c8dfe46d255d8e751120ee2/candidate.json",
+          "stage": "not-selected",
+          "safetyStatus": "passed",
+          "sourceHash": "a3f69d12317033f0d17fe045b72c86eed22b27b15db15b1a004070f665b9e14f",
+          "buildArtifactHash": "407b2b8838ee38a2d78f4fb55014479361d1324e26a8edb6d5e129466e9cfcfe",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c2-5abc65",
+          "quick": {
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c2-5abc65/quick-r001.json",
+            "evidenceType": "dev-game-compiled-modules",
+            "score": {
+              "candidateId": "cand-ai9-pair-fallback-r1c2-5abc65",
+              "identityDigest": "310900b1bb271d6043f4c69bd35c88af37b6e9232c8dfe46d255d8e751120ee2",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01",
+                "M11"
+              ],
+              "quality": 0.35376,
+              "stability": 1,
+              "cost": 0.851598,
+              "safety": 1,
+              "composite": 0.66204
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": 0.1792,
+              "minWilsonLower": 0,
+              "anomalyRate": 0,
+              "p95WallMs": 5227.9
+            },
+            "artifactHash": "9e2e2e8c79d683037f9e3d05bad085439a5d1ab216f6461a1663be225480be22"
+          },
+          "deep": null,
+          "failure": {
+            "stage": "selection",
+            "reason": "below-retention-cutoff"
+          }
+        },
+        {
+          "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+          "parentId": null,
+          "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+          "strategy": "pair-fallback",
+          "modules": [
+            "M01",
+            "M05"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01",
+            "M05"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-live-coevolve-2/artifacts/objects/cand-ai9-pair-fallback-r1c3-66c9b7/4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1/candidate.json",
+          "stage": "promotion-queued",
+          "safetyStatus": "passed",
+          "sourceHash": "dd6f125203cc45dafdc4515c54276bf3b68fa49ae212ac11e2513a03273f611d",
+          "buildArtifactHash": "351fe8b4cdf82e2224a9d4e2d05a83771dbc6cece26eae91a111adba3aff5234",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7",
+          "quick": {
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7/quick-r001.json",
+            "evidenceType": "dev-game-compiled-modules",
+            "score": {
+              "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+              "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01",
+                "M05"
+              ],
+              "quality": 0.42906,
+              "stability": 1,
+              "cost": 0.866536,
+              "safety": 1,
+              "composite": 0.701184
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": 0.3042,
+              "minWilsonLower": 0.0945,
+              "anomalyRate": 0,
+              "p95WallMs": 4620.6
+            },
+            "artifactHash": "d35eccede3ceced15935004a888cc774b135d2559596be390a4ca5927d518ba2"
+          },
+          "deep": {
+            "status": "done",
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7/deep-r001.json",
+            "score": {
+              "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+              "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01",
+                "M05"
+              ],
+              "quality": 0.31626,
+              "stability": 1,
+              "cost": 0.799139,
+              "safety": 1,
+              "composite": 0.638044
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": 0.0542,
+              "minWilsonLower": 0,
+              "anomalyRate": 0,
+              "finishedGames": 16
+            }
+          },
+          "failure": null,
+          "promotionRequest": {
+            "requestId": "mcgre-e668ecc9fbb47c2d",
+            "requestPath": "training/reports/coevolution/ai9-live-coevolve-2/promotion-queue/mcgre-e668ecc9fbb47c2d.json",
+            "status": "queued-machine-gate"
+          }
+        }
+      ],
+      "selectedIds": [
+        "cand-ai9-pair-fallback-r1c3-66c9b7",
+        "cand-ai9-multi-r1c1-0ceec1",
+        "cand-ai9-control-r1-98215d"
+      ],
+      "selectionSummary": {
+        "evaluated": 4,
+        "eligible": 4,
+        "selected": 3,
+        "rejected": 0,
+        "duplicates": 0,
+        "byMode": {
+          "game": 3,
+          "proxy": 0
+        },
+        "maxKeep": 3,
+        "minBehaviorDistance": 0.12,
+        "meanBehaviorDistance": 0.196197,
+        "scoring": "composite = quality/stability/cost/safety 加权；game 与 proxy 分组保留"
+      },
+      "diagnostics": {
+        "schema": "century-failure-labels-v1",
+        "labels": [
+          {
+            "code": "engine-deficiency",
+            "label": "引擎不足",
+            "status": "absent",
+            "evidence": [],
+            "occurrences": 0
+          },
+          {
+            "code": "claim-delay",
+            "label": "认领延迟",
+            "status": "finding",
+            "evidence": [
+              "1: 竞争机会 4 次未转化为获取",
+              "1: 竞争机会 5 次未转化为获取",
+              "1: 竞争机会 3 次未转化为获取",
+              "1: 竞争机会 6 次未转化为获取",
+              "2: 竞争机会 5 次未转化为获取",
+              "2: 竞争机会 4 次未转化为获取",
+              "2: 竞争机会 6 次未转化为获取",
+              "3: 竞争机会 3 次未转化为获取",
+              "3: 竞争机会 5 次未转化为获取",
+              "4: 竞争机会 5 次未转化为获取",
+              "4: 竞争机会 3 次未转化为获取",
+              "5: 竞争机会 6 次未转化为获取"
+            ],
+            "occurrences": 32
+          },
+          {
+            "code": "rest-waste",
+            "label": "休息浪费",
+            "status": "absent",
+            "evidence": [],
+            "occurrences": 0
+          },
+          {
+            "code": "capacity-waste",
+            "label": "资源容量浪费",
+            "status": "absent",
+            "evidence": [],
+            "occurrences": 0
+          },
+          {
+            "code": "endgame-error",
+            "label": "终局错误",
+            "status": "absent",
+            "evidence": [],
+            "occurrences": 0
+          },
+          {
+            "code": "contest-loss",
+            "label": "竞争抢牌失败",
+            "status": "finding",
+            "evidence": [
+              "1: 4 次他人获取时本席账面付得起位置费",
+              "1: 5 次他人获取时本席账面付得起位置费",
+              "1: 3 次他人获取时本席账面付得起位置费",
+              "1: 6 次他人获取时本席账面付得起位置费",
+              "2: 5 次他人获取时本席账面付得起位置费",
+              "2: 4 次他人获取时本席账面付得起位置费",
+              "2: 6 次他人获取时本席账面付得起位置费",
+              "3: 3 次他人获取时本席账面付得起位置费",
+              "3: 5 次他人获取时本席账面付得起位置费",
+              "4: 5 次他人获取时本席账面付得起位置费",
+              "4: 3 次他人获取时本席账面付得起位置费",
+              "5: 6 次他人获取时本席账面付得起位置费"
+            ],
+            "occurrences": 32
+          }
+        ],
+        "ruleVersion": "ai7-failure-labels-v1",
+        "paths": [
+          "training/reports/diagnostics-latest/analysis.json"
+        ],
+        "researchHints": {
+          "schema": "century-evolution-research-hints-v1",
+          "discipline": {
+            "advisoryOnly": true,
+            "notRewardTruth": true,
+            "rewardModified": false,
+            "canPromote": false,
+            "note": "失败标签只用于研究提示与课程配置，不进入任何奖励/评分真值"
+          },
+          "suggestedTargets": [
+            "candidateCap",
+            "overrideMargin",
+            "goalValue",
+            "acquisitionValue"
+          ],
+          "promptHints": [
+            "研究提示（认领延迟）：1: 竞争机会 4 次未转化为获取；优先探索 candidateCap/overrideMargin/goalValue，需独立回归验证。",
+            "研究提示（竞争抢牌失败）：1: 4 次他人获取时本席账面付得起位置费；优先探索 acquisitionValue/overrideMargin/candidateCap，需独立回归验证。"
+          ],
+          "curriculum": {
+            "schema": "century-evolution-curriculum-v1",
+            "focusLabels": [
+              {
+                "code": "claim-delay",
+                "label": "认领延迟",
+                "status": "finding",
+                "occurrences": 32
+              },
+              {
+                "code": "contest-loss",
+                "label": "竞争抢牌失败",
+                "status": "finding",
+                "occurrences": 32
+              }
+            ],
+            "targetPriority": [
+              "candidateCap",
+              "overrideMargin",
+              "goalValue",
+              "acquisitionValue"
+            ],
+            "advisoryOnly": true,
+            "notRewardTruth": true,
+            "rewardModified": false
+          },
+          "hintDigest": "a42cb209dce7d19b68d64749041771d8afd36312f2d0239d5fbd1baaab15a0d9"
+        },
+        "discipline": "失败标签只用于研究提示/课程配置，不修改奖励真值"
+      },
+      "rejectedAtGeneration": [
+        {
+          "strategy": "ablation",
+          "reason": "ablation 需要至少 1 个精英候选"
+        },
+        {
+          "strategy": "crossover",
+          "reason": "crossover 需要至少 2 个精英候选"
+        },
+        {
+          "strategy": "ablation",
+          "reason": "ablation 需要至少 1 个精英候选"
+        },
+        {
+          "strategy": "openevolve",
+          "reason": "本批最多 1 次真实 LLM 运行；剩余名额用确定性 pair 候选补齐（不冒充 LLM 来源）",
+          "fallback": "pair"
+        },
+        {
+          "strategy": "crossover",
+          "reason": "crossover 需要至少 2 个精英候选"
+        },
+        {
+          "strategy": "ablation",
+          "reason": "ablation 需要至少 1 个精英候选"
+        },
+        {
+          "strategy": "openevolve",
+          "reason": "本批最多 1 次真实 LLM 运行；剩余名额用确定性 pair 候选补齐（不冒充 LLM 来源）",
+          "fallback": "pair"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "round": 2,
+      "seedWindows": {
+        "screen": {
+          "windowId": "ai9-screen-w013",
+          "purpose": "screen",
+          "pool": "dev",
+          "base": 1660013000,
+          "count": 1000,
+          "blockStart": 1660000000,
+          "blockEnd": 1670000000,
+          "index": 13
+        },
+        "deep": {
+          "windowId": "ai9-deep-w011",
+          "purpose": "deep",
+          "pool": "dev",
+          "base": 1670011000,
+          "count": 1000,
+          "blockStart": 1670000000,
+          "blockEnd": 1680000000,
+          "index": 11
+        }
+      },
+      "screenSeeds": [
+        1660013000,
+        1660013001,
+        1660013002,
+        1660013003,
+        1660013004,
+        1660013005,
+        1660013006,
+        1660013007
+      ],
+      "deepSeeds": [
+        1670011000,
+        1670011001,
+        1670011002,
+        1670011003,
+        1670011004,
+        1670011005,
+        1670011006,
+        1670011007
+      ],
+      "generated": true,
+      "selected": true,
+      "deepDone": true,
+      "approvalDone": false,
+      "diagnosticsDone": false,
+      "candidates": [
+        {
+          "candidateId": "cand-ai9-control-r2-d4f55f",
+          "parentId": null,
+          "identityDigest": "55c23591a441290ec133303e8584cf28e75d72e3eecb753633742152632b238d",
+          "strategy": "control",
+          "modules": [
+            "M01"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-live-coevolve-2/artifacts/objects/cand-ai9-control-r2-d4f55f/55c23591a441290ec133303e8584cf28e75d72e3eecb753633742152632b238d/candidate.json",
+          "stage": "deep-done",
+          "safetyStatus": "passed",
+          "sourceHash": "3fd0a972701bbe39bbf523fbbfb766b9178b72764132a3179cf3ef182e1cae45",
+          "buildArtifactHash": "1eb9df3c301f0d8f3ba80304b61c549fcd20bedd3fafb3f58f6ccab5c119a644",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-control-r2-d4f55f",
+          "quick": {
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-control-r2-d4f55f/quick-r002.json",
+            "evidenceType": "dev-game-compiled-modules",
+            "score": {
+              "candidateId": "cand-ai9-control-r2-d4f55f",
+              "identityDigest": "55c23591a441290ec133303e8584cf28e75d72e3eecb753633742152632b238d",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01"
+              ],
+              "quality": 0.35376,
+              "stability": 1,
+              "cost": 0.855903,
+              "safety": 1,
+              "composite": 0.66247
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": 0.1792,
+              "minWilsonLower": 0,
+              "anomalyRate": 0,
+              "p95WallMs": 5050.7
+            },
+            "artifactHash": "1c4018e1414634c1267df13420f210a0cbef7f8b52b82a431af16dd5598dcf16"
+          },
+          "deep": {
+            "status": "done",
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-control-r2-d4f55f/deep-r002.json",
+            "score": {
+              "candidateId": "cand-ai9-control-r2-d4f55f",
+              "identityDigest": "55c23591a441290ec133303e8584cf28e75d72e3eecb753633742152632b238d",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01"
+              ],
+              "quality": 0.27876,
+              "stability": 1,
+              "cost": 0.76565,
+              "safety": 1,
+              "composite": 0.615945
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": -0.0708,
+              "minWilsonLower": 0,
+              "anomalyRate": 0,
+              "finishedGames": 16
+            }
+          },
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai9-ablation-r2c1-3e064c",
+          "parentId": null,
+          "identityDigest": "acc64490cf163f38a826847831a7fd5b3ebf141757f5747d9d05cc54523088a5",
+          "strategy": "ablation",
+          "modules": [
+            "M01",
+            "M05",
+            "M10"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01",
+            "M05",
+            "M10"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-live-coevolve-2/artifacts/objects/cand-ai9-ablation-r2c1-3e064c/acc64490cf163f38a826847831a7fd5b3ebf141757f5747d9d05cc54523088a5/candidate.json",
+          "stage": "deep-done",
+          "safetyStatus": "passed",
+          "sourceHash": "ddf4e6adc94e6cdba934ce9e54747890801dd0be7f3cb961110edd8c4ff16d7a",
+          "buildArtifactHash": "1eb9df3c301f0d8f3ba80304b61c549fcd20bedd3fafb3f58f6ccab5c119a644",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-ablation-r2c1-3e064c",
+          "quick": {
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-ablation-r2c1-3e064c/quick-r002.json",
+            "evidenceType": "dev-game-compiled-modules",
+            "score": {
+              "candidateId": "cand-ai9-ablation-r2c1-3e064c",
+              "identityDigest": "acc64490cf163f38a826847831a7fd5b3ebf141757f5747d9d05cc54523088a5",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01",
+                "M05",
+                "M10"
+              ],
+              "quality": 0.35376,
+              "stability": 1,
+              "cost": 0.851552,
+              "safety": 1,
+              "composite": 0.662035
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": 0.1792,
+              "minWilsonLower": 0,
+              "anomalyRate": 0,
+              "p95WallMs": 5229.8
+            },
+            "artifactHash": "1ec8a86f896bcd671abf835f000265ea033d6f738a48994bcc34ceb4a839efee"
+          },
+          "deep": {
+            "status": "done",
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-ablation-r2c1-3e064c/deep-r002.json",
+            "score": {
+              "candidateId": "cand-ai9-ablation-r2c1-3e064c",
+              "identityDigest": "acc64490cf163f38a826847831a7fd5b3ebf141757f5747d9d05cc54523088a5",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01",
+                "M05",
+                "M10"
+              ],
+              "quality": 0.27876,
+              "stability": 1,
+              "cost": 0.765316,
+              "safety": 1,
+              "composite": 0.615912
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": -0.0708,
+              "minWilsonLower": 0,
+              "anomalyRate": 0,
+              "finishedGames": 16
+            }
+          },
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai9-multi-r2c2-a3099e",
+          "parentId": null,
+          "identityDigest": "14775bf4f92b7143753e2c9987f066cbf70279d08fa261be6ef8801157d89582",
+          "strategy": "multi",
+          "modules": [
+            "M01",
+            "M05",
+            "M11"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01",
+            "M05",
+            "M11"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-live-coevolve-2/artifacts/objects/cand-ai9-multi-r2c2-a3099e/14775bf4f92b7143753e2c9987f066cbf70279d08fa261be6ef8801157d89582/candidate.json",
+          "stage": "selected",
+          "safetyStatus": "passed",
+          "sourceHash": "21e858920a2b3cbb03b73c83e7223197e2c285cee9a0f3132b4aa28ca8d5ff9c",
+          "buildArtifactHash": "accc7bf3341f29c2d39faf9a8ef856be9f244914ef03f56f7cdbe8fea64591a6",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-multi-r2c2-a3099e",
+          "quick": {
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-multi-r2c2-a3099e/quick-r002.json",
+            "evidenceType": "dev-game-compiled-modules",
+            "score": {
+              "candidateId": "cand-ai9-multi-r2c2-a3099e",
+              "identityDigest": "14775bf4f92b7143753e2c9987f066cbf70279d08fa261be6ef8801157d89582",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01",
+                "M05",
+                "M11"
+              ],
+              "quality": 0.27876,
+              "stability": 1,
+              "cost": 0.871824,
+              "safety": 1,
+              "composite": 0.626562
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": -0.0708,
+              "minWilsonLower": 0,
+              "anomalyRate": 0,
+              "p95WallMs": 4410.6
+            },
+            "artifactHash": "10c2f6960576209a158a05b299c4ffeecb767ee621406f8738b5ed5b8422744c"
+          },
+          "deep": null,
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai9-ablation-r2c3-3e064c",
+          "parentId": null,
+          "identityDigest": "a3df7338c8209d5407b1f0774c449c5a1f4e16e87a05b4d9a084d67ed80f57b9",
+          "strategy": "ablation",
+          "modules": [
+            "M01",
+            "M05",
+            "M10"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01",
+            "M05",
+            "M10"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-live-coevolve-2/artifacts/objects/cand-ai9-ablation-r2c3-3e064c/a3df7338c8209d5407b1f0774c449c5a1f4e16e87a05b4d9a084d67ed80f57b9/candidate.json",
+          "stage": "not-selected",
+          "safetyStatus": "passed",
+          "sourceHash": "ddf4e6adc94e6cdba934ce9e54747890801dd0be7f3cb961110edd8c4ff16d7a",
+          "buildArtifactHash": "1eb9df3c301f0d8f3ba80304b61c549fcd20bedd3fafb3f58f6ccab5c119a644",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-ablation-r2c3-3e064c",
+          "quick": {
+            "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-ablation-r2c3-3e064c/quick-r002.json",
+            "evidenceType": "dev-game-compiled-modules",
+            "score": {
+              "candidateId": "cand-ai9-ablation-r2c3-3e064c",
+              "identityDigest": "a3df7338c8209d5407b1f0774c449c5a1f4e16e87a05b4d9a084d67ed80f57b9",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01",
+                "M05",
+                "M10"
+              ],
+              "quality": 0.35376,
+              "stability": 1,
+              "cost": 0.852074,
+              "safety": 1,
+              "composite": 0.662087
+            },
+            "games": 16,
+            "metrics": {
+              "chanceAdjustedRate": 0.1792,
+              "minWilsonLower": 0,
+              "anomalyRate": 0,
+              "p95WallMs": 5208.2
+            },
+            "artifactHash": "2c2e6e64addf4132b3049934bc3f8579ec1e51c57311ca02171fb823a1fdf49f"
+          },
+          "deep": null,
+          "failure": {
+            "stage": "selection",
+            "reason": "behavior-hash-duplicate"
+          }
+        }
+      ],
+      "selectedIds": [
+        "cand-ai9-control-r2-d4f55f",
+        "cand-ai9-ablation-r2c1-3e064c",
+        "cand-ai9-multi-r2c2-a3099e"
+      ],
+      "selectionSummary": {
+        "evaluated": 4,
+        "eligible": 3,
+        "selected": 3,
+        "rejected": 0,
+        "duplicates": 1,
+        "byMode": {
+          "game": 3,
+          "proxy": 0
+        },
+        "maxKeep": 3,
+        "minBehaviorDistance": 0.12,
+        "meanBehaviorDistance": 0.183645,
+        "scoring": "composite = quality/stability/cost/safety 加权；game 与 proxy 分组保留"
+      },
+      "diagnostics": null,
+      "rejectedAtGeneration": [],
+      "notes": []
+    }
+  ],
+  "checkpointSeq": 31,
+  "lastEventSeq": 61,
+  "createdAt": "2026-10-26T04:42:28.728Z",
+  "updatedAt": "2026-10-26T05:02:49.343Z",
+  "budgetUsed": {
+    "candidates": 8,
+    "games": 192,
+    "wallMs": 1182694,
+    "deepConfirmations": 4
+  },
+  "pendingApprovals": [],
+  "guardrails": {
+    "validationPoolConsumed": false,
+    "promotionTriggered": false,
+    "championMutation": "none",
+    "formalChallengeApprovalRequired": false,
+    "machineGateRequired": true
+  },
+  "promotionQueue": [
+    {
+      "schema": "century-machine-gate-challenge-request-v1",
+      "requestId": "mcgre-e668ecc9fbb47c2d",
+      "campaignId": "ai9-live-coevolve-2",
+      "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+      "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+      "evidenceDir": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7",
+      "summary": {
+        "artifactHash": "d92a60f1e0b9354d51eb934a6250db231e377287a2f0c830adb9d948781b349b",
+        "sourceHash": "dd6f125203cc45dafdc4515c54276bf3b68fa49ae212ac11e2513a03273f611d",
+        "buildArtifactHash": "351fe8b4cdf82e2224a9d4e2d05a83771dbc6cece26eae91a111adba3aff5234",
+        "quick": {
+          "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7/quick-r001.json",
+          "evidenceType": "dev-game-compiled-modules",
+          "score": {
+            "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+            "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+            "evaluationMode": "game",
+            "targetIds": [
+              "M01",
+              "M05"
+            ],
+            "quality": 0.42906,
+            "stability": 1,
+            "cost": 0.866536,
+            "safety": 1,
+            "composite": 0.701184
+          },
+          "games": 16,
+          "metrics": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "p95WallMs": 4620.6
+          },
+          "artifactHash": "d35eccede3ceced15935004a888cc774b135d2559596be390a4ca5927d518ba2"
+        },
+        "deep": {
+          "status": "done",
+          "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7/deep-r001.json",
+          "score": {
+            "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+            "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+            "evaluationMode": "game",
+            "targetIds": [
+              "M01",
+              "M05"
+            ],
+            "quality": 0.31626,
+            "stability": 1,
+            "cost": 0.799139,
+            "safety": 1,
+            "composite": 0.638044
+          },
+          "games": 16,
+          "metrics": {
+            "chanceAdjustedRate": 0.0542,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          }
+        },
+        "deepAssessment": {
+          "verdict": "promising",
+          "chanceAdjustedRate": 0.0542,
+          "minWilsonLower": 0,
+          "anomalyRate": 0,
+          "note": "小样本深验只用于机器门禁前的排序；正式判定必须使用预注册第一名率挑战"
+        },
+        "recommendation": "queue-formal-challenge (positive signal)",
+        "validationPoolConsumed": false,
+        "promotionTriggered": false
+      },
+      "status": "queued-machine-gate",
+      "approvalRequired": false,
+      "machineGateRequired": true,
+      "promotionTriggered": false,
+      "gates": [
+        "first-place-preregistered-challenge",
+        "seat-count-non-inferiority",
+        "alpha-ledger",
+        "seed-governance",
+        "build-identity",
+        "full-ci",
+        "deploy-verification",
+        "rollback-verification"
+      ],
+      "requestedAt": "2026-10-26T04:54:43.023Z",
+      "validationPoolConsumed": false,
+      "requestPath": "training/reports/coevolution/ai9-live-coevolve-2/promotion-queue/mcgre-e668ecc9fbb47c2d.json"
+    }
+  ],
+  "promotionOutcomes": [
+    {
+      "requestId": "mcgre-e668ecc9fbb47c2d",
+      "at": "2026-10-26T04:54:43.049Z",
+      "outcome": {
+        "verdict": "BLOCKED",
+        "reason": "insufficient-statistical-power",
+        "readiness": {
+          "ready": false,
+          "reason": "insufficient-statistical-power",
+          "alpha": 0.00001220703125,
+          "nextChallengeIndex": 12,
+          "remaining": 0.000024414062499998612,
+          "power": 0.00030230771345557406,
+          "requiredSeeds": 10249,
+          "note": "每人数 250 种子在 α=0.00001220703125 下仅能检测 0.05 效应于 0.0% 功效；达到 80% 需要约 10249 个独立种子/人数"
+        },
+        "campaignId": "ai9-live-coevolve-2",
+        "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+        "requestId": "mcgre-e668ecc9fbb47c2d",
+        "requestPath": "training/reports/coevolution/ai9-live-coevolve-2/promotion-queue/mcgre-e668ecc9fbb47c2d.json",
+        "promotionTriggered": false,
+        "note": "统计预算/功效不足：保留现任冠军，不消费验证种子与 alpha"
+      }
+    }
+  ],
+  "moduleElites": [
+    {
+      "moduleId": "M01",
+      "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+      "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+      "strategy": "pair-fallback",
+      "score": 0.125,
+      "deep": 1,
+      "modules": [
+        "M01",
+        "M05"
+      ],
+      "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7/deep-r001.json",
+      "recordedAt": "2026-10-26T04:53:06.784Z"
+    },
+    {
+      "moduleId": "M05",
+      "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+      "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+      "strategy": "pair-fallback",
+      "score": 0.125,
+      "deep": 1,
+      "modules": [
+        "M01",
+        "M05"
+      ],
+      "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7/deep-r001.json",
+      "recordedAt": "2026-10-26T04:53:06.784Z"
+    },
+    {
+      "moduleId": "M10",
+      "candidateId": "cand-ai9-multi-r1c1-0ceec1",
+      "identityDigest": "eb0c6388afd501b671745d53e30071f585e54e7bfd6184219e2f02e8065c64fd",
+      "strategy": "openevolve",
+      "score": 0,
+      "deep": 1,
+      "modules": [
+        "M01",
+        "M05",
+        "M10",
+        "M11"
+      ],
+      "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-multi-r1c1-0ceec1/deep-r001.json",
+      "recordedAt": "2026-10-26T04:54:43.013Z"
+    },
+    {
+      "moduleId": "M11",
+      "candidateId": "cand-ai9-multi-r1c1-0ceec1",
+      "identityDigest": "eb0c6388afd501b671745d53e30071f585e54e7bfd6184219e2f02e8065c64fd",
+      "strategy": "openevolve",
+      "score": 0,
+      "deep": 1,
+      "modules": [
+        "M01",
+        "M05",
+        "M10",
+        "M11"
+      ],
+      "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-multi-r1c1-0ceec1/deep-r001.json",
+      "recordedAt": "2026-10-26T04:54:43.013Z"
+    }
+  ],
+  "mapElites": {
+    "1-0": {
+      "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+      "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+      "strategy": "pair-fallback",
+      "score": 0.125,
+      "deep": 1,
+      "modules": [
+        "M01",
+        "M05"
+      ],
+      "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7/deep-r001.json",
+      "recordedAt": "2026-10-26T04:53:06.784Z",
+      "cell": "1-0"
+    }
+  },
+  "generationDiagnostics": [
+    {
+      "round": 1,
+      "at": "2026-10-26T04:47:06.825Z",
+      "rejected": [
+        {
+          "strategy": "ablation",
+          "reason": "ablation 需要至少 1 个精英候选"
+        },
+        {
+          "strategy": "crossover",
+          "reason": "crossover 需要至少 2 个精英候选"
+        },
+        {
+          "strategy": "ablation",
+          "reason": "ablation 需要至少 1 个精英候选"
+        },
+        {
+          "strategy": "openevolve",
+          "reason": "本批最多 1 次真实 LLM 运行；剩余名额用确定性 pair 候选补齐（不冒充 LLM 来源）",
+          "fallback": "pair"
+        },
+        {
+          "strategy": "crossover",
+          "reason": "crossover 需要至少 2 个精英候选"
+        },
+        {
+          "strategy": "ablation",
+          "reason": "ablation 需要至少 1 个精英候选"
+        },
+        {
+          "strategy": "openevolve",
+          "reason": "本批最多 1 次真实 LLM 运行；剩余名额用确定性 pair 候选补齐（不冒充 LLM 来源）",
+          "fallback": "pair"
+        }
+      ]
+    }
+  ]
+}

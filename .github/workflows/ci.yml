@@ -491,6 +491,23 @@ jobs:
           path: web-v1/dist
       - name: Seatbelt 沙箱全链路验收（仅 macOS）
         run: python3 ai5/openevolve/tests/test_security_sandbox.py -v
+      - name: AI9 多模块 Seatbelt 全链路测试（注册表/编译/接线/协同）
+        working-directory: training
+        run: |
+          node --test \
+            evolution/tests/module-registry.test.mjs \
+            evolution/tests/multi-module-candidate.test.mjs \
+            evolution/tests/coevolution.test.mjs \
+            evolution/tests/module-wiring.test.mjs
+      - name: AI9 模块部署/回滚隔离演练
+        working-directory: training
+        run: node scripts/module-deploy-drill.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai9-module-deploy-drill
+          path: training/reports/ai9/module-deploy-drill.json
+          if-no-files-found: ignore
 
   promotion-gate:
     name: promotion-gate

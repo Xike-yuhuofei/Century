@@ -70,8 +70,13 @@ function artifactEvaluationMode(artifact) {
     ?? (structure.decisionCore === 'plugin-only' ? 'proxy' : 'game');
 }
 
-/** 把 Candidate Artifact 转成正式挑战 CLI 可消费的候选文档。 */
+/** 把 Candidate Artifact 转成正式挑战 CLI 可消费的候选文档。
+ * 编译型多模块 artifact 必须原样传递（含 source.modules/buildArtifact），否则
+ * 正式挑战 CLI 无法加载候选 ESM 决策包，候选代码将从未执行。 */
 export function candidateDocFromArtifact(artifact) {
+  if (artifact?.buildArtifact?.compiled === true && artifact.source?.modules?.length > 0) {
+    return artifact;
+  }
   const values = artifact?.parameters?.values ?? {};
   return {
     id: artifact.candidateId,

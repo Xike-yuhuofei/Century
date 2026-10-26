@@ -1,0 +1,1513 @@
+{
+  "schema": "century-ai9-module-matrix-v1",
+  "generatedAt": "2026-10-26T05:04:59.331Z",
+  "registry": {
+    "path": "training/evolution/module-registry.json",
+    "version": 1,
+    "interfaceVersion": "ai9-module-interface-v1",
+    "protocol": "century-multi-module-candidate-v1"
+  },
+  "evidenceSources": {
+    "allModulesProbe": "training/reports/ai9/all-modules-probe.json",
+    "allModulesBuild": {
+      "artifactHash": "381a68b9cac276467fcd5acb9bf6b30811b371f57857528711536cd2579fba03",
+      "sourceHash": "eb67aae658a590cc4fa03b7216804b77a3906b0997d83438344901c6da6aa0f4",
+      "identityDigest": "e1af2e37906b1d479153f13e6e096eedee25ca855346873c47a382432cb465f5",
+      "build": {
+        "protocol": "century-multi-module-candidate-v1",
+        "compiler": "tsc 5.9.3",
+        "modules": [
+          "M01",
+          "M02",
+          "M03",
+          "M04",
+          "M05",
+          "M06",
+          "M07",
+          "M08",
+          "M09",
+          "M10",
+          "M11",
+          "M12"
+        ],
+        "moduleHashes": {
+          "M01": "6f94a896146a8e4b32a8b1a7b554f1b8becfb92148f6809d80a817cca4cd6bb7",
+          "M02": "3f78222e85ccc311670ebd6ce482e65db484831ba58972ab109bdb7afd0ba0b6",
+          "M03": "d0b0312fee860e1242b0a7d5842e5870ecab9a65e4f323af4676e6d790ab408d",
+          "M04": "de810200e26d154ae40e88d34c069ec80df15a2002ab7d5e221f873bd776a680",
+          "M05": "34af59c693aa8137ddab72aaefbe16b645d86b710fe163b55bcd5c5c04f0ce37",
+          "M06": "97d24f81b3dff47080f55921c46ca05586139e5dab0ebdaccc6c19d1450a61ef",
+          "M07": "c258ca72a9f1f4709c39f42c594cdf3742480b9719f4119acb811c13268cffed",
+          "M08": "ab7ad37d96da11c925480983c70a4abbe5135e66d973de7cf1d37743babe7fd2",
+          "M09": "69384b06ed41aa9f0359b40d4c40f399228fcef5ece38ff93c8d059876100c63",
+          "M10": "17fa1ed29429da7c5649677479995dc94ee39e2dcd683f9bcc19344d0760af26",
+          "M11": "0bd2c3deebf6cb766638f72de97c7819c12fb31a51a571085936a4d491bdc7ea",
+          "M12": "67498e016df120ab4224adfa31040bc0077ecef602b01a0d81e0b6bcd73c35a3"
+        },
+        "combinedModuleHash": "3e00e8b97686df54e1aa2472efecce8973ddc500f25c76179c06e636a49393b8",
+        "compiledFiles": 49,
+        "compiledBytes": 333332,
+        "sourceOrigin": "deterministic-template",
+        "mutation": "evidence:all-twelve-v2",
+        "sandbox": "macos-seatbelt"
+      }
+    },
+    "campaigns": [
+      "ai9-live-coevolve-1",
+      "ai9-live-coevolve-2",
+      "ai9-smoke-002",
+      "ai9-smoke-003"
+    ],
+    "interaction": "training/reports/ai9/interaction-experiment.json",
+    "openEvolveRuns": [
+      "ai9-r001",
+      "ai9-r002",
+      "ai9-r003"
+    ]
+  },
+  "modules": [
+    {
+      "id": "M01",
+      "label": "魔像目标选择",
+      "functionName": "goalPriority",
+      "file": "ai/evolve/modules.ts",
+      "kind": "value",
+      "dependsOn": [],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "chooseAIAction -> chooseJointAction(joint-js5) -> choosePlan -> goalPriority",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 70,
+      "probeMismatches": 63,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 2645,
+          "joint": 2555
+        },
+        "total": 5200,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "WIRED",
+        "path": "chooseAIAction",
+        "divergence": {
+          "seed": 1640000011,
+          "seatCount": 5,
+          "move": 9,
+          "seat": 4,
+          "official": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          },
+          "candidate": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              1
+            ]
+          }
+        },
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "goal-points-efficiency"
+      ],
+      "openEvolveEvidence": [],
+      "realGameEvidence": [
+        {
+          "campaignId": "ai9-live-coevolve-2",
+          "candidateId": "cand-ai9-multi-r1c1-0ceec1",
+          "strategy": "openevolve",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": -0.0708,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 4890
+          },
+          "modules": [
+            "M01",
+            "M05",
+            "M10",
+            "M11"
+          ]
+        },
+        {
+          "campaignId": "ai9-live-coevolve-2",
+          "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+          "strategy": "pair-fallback",
+          "stage": "promotion-queued",
+          "deep": {
+            "chanceAdjustedRate": 0.0542,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "p95WallMs": 4620.6
+          },
+          "modules": [
+            "M01",
+            "M05"
+          ]
+        },
+        {
+          "campaignId": "ai9-live-coevolve-2",
+          "candidateId": "cand-ai9-control-r2-d4f55f",
+          "strategy": "control",
+          "stage": "promotion-queued",
+          "deep": {
+            "chanceAdjustedRate": -0.0708,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.1792,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 5050.7
+          },
+          "modules": [
+            "M01"
+          ]
+        },
+        {
+          "campaignId": "ai9-live-coevolve-2",
+          "candidateId": "cand-ai9-ablation-r2c1-3e064c",
+          "strategy": "ablation",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": -0.0708,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.1792,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 5229.8
+          },
+          "modules": [
+            "M01",
+            "M05",
+            "M10"
+          ]
+        },
+        {
+          "campaignId": "ai9-smoke-003",
+          "candidateId": "cand-ai9-control-r1-2e560c",
+          "strategy": "control",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": -0.35,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 8
+          },
+          "quick": {
+            "chanceAdjustedRate": -0.1,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 4557.4
+          },
+          "modules": [
+            "M01"
+          ]
+        },
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        },
+        {
+          "experiment": "ai9-crossover-mvosc7ls",
+          "candidateId": "cand-ai9-crossover-r1c0-029764",
+          "kind": "module-crossover",
+          "modules": [
+            "M01",
+            "M05"
+          ],
+          "parents": [
+            "cand-ai9-pair-fallback-r1c2-5abc65",
+            "cand-ai9-multi-r1c1-0ceec1"
+          ],
+          "firstPlaceDelta": 0.125,
+          "ciLower": -0.30427692030972797,
+          "games": 16,
+          "anomalies": 0,
+          "changed": [
+            "M01"
+          ]
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "M02",
+      "label": "商人卡获取",
+      "functionName": "acquisitionValue",
+      "file": "ai/evaluator.ts",
+      "kind": "value",
+      "dependsOn": [
+        "M03",
+        "M04"
+      ],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "chooseAIAction/chooseJointAction -> choosePlan -> acquisitionValue",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 84,
+      "probeMismatches": 84,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 7300501,
+          "joint": 6543546
+        },
+        "total": 13844047,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "WIRED",
+        "path": "chooseAIAction",
+        "divergence": {
+          "seed": 1640000011,
+          "seatCount": 5,
+          "move": 1,
+          "seat": 1,
+          "official": {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
+              0,
+              0
+            ]
+          },
+          "candidate": {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
+          }
+        },
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "readiness-acquisition-gain"
+      ],
+      "openEvolveEvidence": [
+        {
+          "run": "ai9-r001",
+          "status": "completed",
+          "generator": "openevolve-llm",
+          "changedModules": [
+            "M05"
+          ],
+          "identicalToOfficial": false,
+          "modules": [
+            "M02",
+            "M05"
+          ]
+        },
+        {
+          "run": "ai9-r002",
+          "status": "completed",
+          "generator": "openevolve-llm",
+          "changedModules": [],
+          "identicalToOfficial": true,
+          "modules": [
+            "M02",
+            "M11"
+          ]
+        },
+        {
+          "run": "ai9-r003",
+          "status": "completed",
+          "generator": "openevolve-llm",
+          "changedModules": [
+            "M02"
+          ],
+          "identicalToOfficial": false,
+          "modules": [
+            "M02",
+            "M11"
+          ]
+        }
+      ],
+      "realGameEvidence": [
+        {
+          "campaignId": "ai9-smoke-003",
+          "candidateId": "cand-ai9-single-r1c1-66d778",
+          "strategy": "single",
+          "stage": "promotion-queued",
+          "deep": {
+            "chanceAdjustedRate": 0.15,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "finishedGames": 8
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.4,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "p95WallMs": 5912.1
+          },
+          "modules": [
+            "M02"
+          ]
+        },
+        {
+          "experiment": "ai9-interaction-mvopnz8f",
+          "candidateId": "cand-ai9-interaction-control",
+          "label": "官方模块（行为基线）",
+          "moduleIds": [
+            "M02"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": 0,
+          "games": 32
+        },
+        {
+          "experiment": "ai9-interaction-mvopnz8f",
+          "candidateId": "cand-ai9-interaction-single-M02",
+          "label": "单模块：获取估值",
+          "moduleIds": [
+            "M02"
+          ],
+          "firstPlaceDelta": -0.1875,
+          "ciLower": -0.3641692976652065,
+          "games": 32
+        },
+        {
+          "experiment": "ai9-interaction-mvopnz8f",
+          "candidateId": "cand-ai9-interaction-pair-M02-M11",
+          "label": "双模块联合变异",
+          "moduleIds": [
+            "M02",
+            "M11"
+          ],
+          "firstPlaceDelta": -0.1875,
+          "ciLower": -0.4258734891237252,
+          "games": 32
+        },
+        {
+          "experiment": "ai9-interaction-mvopnz8f",
+          "candidateId": "cand-ai9-interaction-multi-M02-M05-M11",
+          "label": "三模块联合变异",
+          "moduleIds": [
+            "M02",
+            "M05",
+            "M11"
+          ],
+          "firstPlaceDelta": -0.1875,
+          "ciLower": -0.4258734891237252,
+          "games": 32
+        },
+        {
+          "experiment": "ai9-interaction-mvopnz8f",
+          "candidateId": "cand-ai9-interaction-ablation-M02",
+          "label": "消融：pair 移除 M11（仅保留 M02）",
+          "moduleIds": [
+            "M02"
+          ],
+          "firstPlaceDelta": -0.1875,
+          "ciLower": -0.3641692976652065,
+          "games": 32
+        },
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        },
+        {
+          "experiment": "ai9-oe-combined-mvopxeeo",
+          "candidateId": "cand-ai9-oe-combined-m02m05",
+          "kind": "openevolve-combined",
+          "modules": [
+            "M02",
+            "M05"
+          ],
+          "firstPlaceDelta": 0.125,
+          "ciLower": -0.11182232563805883,
+          "games": 16,
+          "anomalies": 0,
+          "changed": [
+            "M02",
+            "M05"
+          ]
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "M03",
+      "label": "生产引擎评估",
+      "functionName": "cardEngineValue",
+      "file": "ai/knowledge.ts",
+      "kind": "value",
+      "dependsOn": [],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "choosePlan -> engineValueFor -> engineValue -> cardEngineValue",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 42,
+      "probeMismatches": 14,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 201937833,
+          "joint": 195918487
+        },
+        "total": 397856320,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "WIRED",
+        "path": "chooseAIAction",
+        "divergence": {
+          "seed": 1640000011,
+          "seatCount": 5,
+          "move": 4,
+          "seat": 4,
+          "official": {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          },
+          "candidate": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          }
+        },
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "create-output-weight"
+      ],
+      "openEvolveEvidence": [],
+      "realGameEvidence": [
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "M04",
+      "label": "水晶资源管理/保留价值",
+      "functionName": "keepValue",
+      "file": "ai/evaluator.ts",
+      "kind": "value",
+      "dependsOn": [],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "choosePlan -> payments/step -> keepValue；overflow -> trimStock -> keepValue",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 14,
+      "probeMismatches": 9,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 8963201,
+          "joint": 7829494
+        },
+        "total": 16792695,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "FAIL-UNOBSERVED",
+        "path": "chooseAIAction",
+        "divergence": null,
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "coverage-retention-weight"
+      ],
+      "openEvolveEvidence": [],
+      "realGameEvidence": [
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "M05",
+      "label": "打出与休息调度",
+      "functionName": "restMultiplier",
+      "file": "ai/evolve/modules.ts",
+      "kind": "value",
+      "dependsOn": [],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "choosePlan -> searchGrade -> restMultiplier",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 28,
+      "probeMismatches": 14,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 146112,
+          "joint": 134339
+        },
+        "total": 280451,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "FAIL-UNOBSERVED",
+        "path": "chooseAIAction",
+        "divergence": null,
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "rest-recycle-bias"
+      ],
+      "openEvolveEvidence": [
+        {
+          "run": "ai9-r001",
+          "status": "completed",
+          "generator": "openevolve-llm",
+          "changedModules": [
+            "M05"
+          ],
+          "identicalToOfficial": false,
+          "modules": [
+            "M02",
+            "M05"
+          ]
+        }
+      ],
+      "realGameEvidence": [
+        {
+          "campaignId": "ai9-live-coevolve-2",
+          "candidateId": "cand-ai9-multi-r1c1-0ceec1",
+          "strategy": "openevolve",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": -0.0708,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 4890
+          },
+          "modules": [
+            "M01",
+            "M05",
+            "M10",
+            "M11"
+          ]
+        },
+        {
+          "campaignId": "ai9-live-coevolve-2",
+          "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+          "strategy": "pair-fallback",
+          "stage": "promotion-queued",
+          "deep": {
+            "chanceAdjustedRate": 0.0542,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "p95WallMs": 4620.6
+          },
+          "modules": [
+            "M01",
+            "M05"
+          ]
+        },
+        {
+          "campaignId": "ai9-live-coevolve-2",
+          "candidateId": "cand-ai9-ablation-r2c1-3e064c",
+          "strategy": "ablation",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": -0.0708,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.1792,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 5229.8
+          },
+          "modules": [
+            "M01",
+            "M05",
+            "M10"
+          ]
+        },
+        {
+          "experiment": "ai9-interaction-mvopnz8f",
+          "candidateId": "cand-ai9-interaction-multi-M02-M05-M11",
+          "label": "三模块联合变异",
+          "moduleIds": [
+            "M02",
+            "M05",
+            "M11"
+          ],
+          "firstPlaceDelta": -0.1875,
+          "ciLower": -0.4258734891237252,
+          "games": 32
+        },
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        },
+        {
+          "experiment": "ai9-oe-combined-mvopxeeo",
+          "candidateId": "cand-ai9-oe-combined-m02m05",
+          "kind": "openevolve-combined",
+          "modules": [
+            "M02",
+            "M05"
+          ],
+          "firstPlaceDelta": 0.125,
+          "ciLower": -0.11182232563805883,
+          "games": 16,
+          "anomalies": 0,
+          "changed": [
+            "M02",
+            "M05"
+          ]
+        },
+        {
+          "experiment": "ai9-crossover-mvosc7ls",
+          "candidateId": "cand-ai9-crossover-r1c0-029764",
+          "kind": "module-crossover",
+          "modules": [
+            "M01",
+            "M05"
+          ],
+          "parents": [
+            "cand-ai9-pair-fallback-r1c2-5abc65",
+            "cand-ai9-multi-r1c1-0ceec1"
+          ],
+          "firstPlaceDelta": 0.125,
+          "ciLower": -0.30427692030972797,
+          "games": 16,
+          "anomalies": 0,
+          "changed": [
+            "M01"
+          ]
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "M06",
+      "label": "终局与胜率决策",
+      "functionName": "endgameBonus",
+      "file": "ai/evolve/modules.ts",
+      "kind": "value",
+      "dependsOn": [],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "choosePlan -> routeGrade(terminal) -> endgameBonus",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 28,
+      "probeMismatches": 14,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 404,
+          "joint": 277
+        },
+        "total": 681,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "FAIL-UNOBSERVED",
+        "path": "chooseAIAction",
+        "divergence": null,
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "long-route-terminal-bonus"
+      ],
+      "openEvolveEvidence": [],
+      "realGameEvidence": [
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "M07",
+      "label": "对手行为预测",
+      "functionName": "opponentPressureDelta",
+      "file": "ai/evolve/modules.ts",
+      "kind": "value",
+      "dependsOn": [],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "choosePlan -> evolvePressure -> opponentPressureDelta -> acquisitionValue/contest",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 168,
+      "probeMismatches": 168,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 6348,
+          "joint": 6086
+        },
+        "total": 12434,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "FAIL-UNOBSERVED",
+        "path": "chooseAIAction",
+        "divergence": null,
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "peak-pressure-tilt"
+      ],
+      "openEvolveEvidence": [],
+      "realGameEvidence": [
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "M08",
+      "label": "多人竞争与时序",
+      "functionName": "seatContestFactor",
+      "file": "ai/evolve/modules.ts",
+      "kind": "value",
+      "dependsOn": [],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "chooseJointAction -> competitionRisk / choosePlan -> seatContestFactor",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 70,
+      "probeMismatches": 70,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 263992,
+          "joint": 245993
+        },
+        "total": 509985,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "WIRED",
+        "path": "chooseAIAction",
+        "divergence": {
+          "seed": 1640000011,
+          "seatCount": 5,
+          "move": 43,
+          "seat": 3,
+          "official": {
+            "type": "play",
+            "cardId": "M23",
+            "repeats": 1
+          },
+          "candidate": {
+            "type": "play",
+            "cardId": "S01"
+          }
+        },
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "goal-value-contest-tilt"
+      ],
+      "openEvolveEvidence": [],
+      "realGameEvidence": [
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "M09",
+      "label": "未知牌概率模型",
+      "functionName": "unknownSupportFactor",
+      "file": "ai/evolve/modules.ts",
+      "kind": "value",
+      "dependsOn": [],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "choosePlan -> futureDeckSupport -> unknownSupportFactor",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 14,
+      "probeMismatches": 14,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 2645,
+          "joint": 2555
+        },
+        "total": 5200,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "WIRED",
+        "path": "chooseAIAction",
+        "divergence": {
+          "seed": 1640000012,
+          "seatCount": 4,
+          "move": 134,
+          "seat": 1,
+          "official": {
+            "type": "play",
+            "cardId": "M07",
+            "repeats": 1
+          },
+          "candidate": {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              2
+            ]
+          }
+        },
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "unseen-supply-tilt"
+      ],
+      "openEvolveEvidence": [],
+      "realGameEvidence": [
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "M10",
+      "label": "行动候选生成/排序",
+      "functionName": "rankRootActions",
+      "file": "ai/evolve/modules.ts",
+      "kind": "policy",
+      "dependsOn": [],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "chooseJointAction -> ChampionGuidedPlanner.decide -> rankRootActions",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 14,
+      "probeMismatches": 14,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 589,
+          "joint": 558
+        },
+        "total": 1147,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "FAIL-UNOBSERVED",
+        "path": "chooseJointAction",
+        "divergence": null,
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "claim-first-ranking"
+      ],
+      "openEvolveEvidence": [],
+      "realGameEvidence": [
+        {
+          "campaignId": "ai9-live-coevolve-2",
+          "candidateId": "cand-ai9-multi-r1c1-0ceec1",
+          "strategy": "openevolve",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": -0.0708,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 4890
+          },
+          "modules": [
+            "M01",
+            "M05",
+            "M10",
+            "M11"
+          ]
+        },
+        {
+          "campaignId": "ai9-live-coevolve-2",
+          "candidateId": "cand-ai9-ablation-r2c1-3e064c",
+          "strategy": "ablation",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": -0.0708,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.1792,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 5229.8
+          },
+          "modules": [
+            "M01",
+            "M05",
+            "M10"
+          ]
+        },
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "M11",
+      "label": "多人联合搜索结构",
+      "functionName": "searchPolicyOverrides",
+      "file": "ai/evolve/modules.ts",
+      "kind": "policy",
+      "dependsOn": [],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "chooseJointAction -> searchPolicyOverrides -> ChampionGuidedPlanner.decide",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 14,
+      "probeMismatches": 14,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 535,
+          "joint": 517
+        },
+        "total": 1052,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "WIRED",
+        "path": "chooseJointAction",
+        "divergence": {
+          "seed": 1640000014,
+          "seatCount": 5,
+          "move": 76,
+          "seat": 0,
+          "official": {
+            "type": "play",
+            "cardId": "M21",
+            "repeats": 2
+          },
+          "candidate": {
+            "type": "play",
+            "cardId": "M17",
+            "repeats": 3
+          }
+        },
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "wider-candidates-lower-margin"
+      ],
+      "openEvolveEvidence": [
+        {
+          "run": "ai9-r002",
+          "status": "completed",
+          "generator": "openevolve-llm",
+          "changedModules": [],
+          "identicalToOfficial": true,
+          "modules": [
+            "M02",
+            "M11"
+          ]
+        },
+        {
+          "run": "ai9-r003",
+          "status": "completed",
+          "generator": "openevolve-llm",
+          "changedModules": [
+            "M02"
+          ],
+          "identicalToOfficial": false,
+          "modules": [
+            "M02",
+            "M11"
+          ]
+        }
+      ],
+      "realGameEvidence": [
+        {
+          "campaignId": "ai9-live-coevolve-2",
+          "candidateId": "cand-ai9-multi-r1c1-0ceec1",
+          "strategy": "openevolve",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": -0.0708,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 4890
+          },
+          "modules": [
+            "M01",
+            "M05",
+            "M10",
+            "M11"
+          ]
+        },
+        {
+          "experiment": "ai9-interaction-mvopnz8f",
+          "candidateId": "cand-ai9-interaction-single-M11",
+          "label": "单模块：联合搜索结构",
+          "moduleIds": [
+            "M11"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.2263178277533672,
+          "games": 32
+        },
+        {
+          "experiment": "ai9-interaction-mvopnz8f",
+          "candidateId": "cand-ai9-interaction-pair-M02-M11",
+          "label": "双模块联合变异",
+          "moduleIds": [
+            "M02",
+            "M11"
+          ],
+          "firstPlaceDelta": -0.1875,
+          "ciLower": -0.4258734891237252,
+          "games": 32
+        },
+        {
+          "experiment": "ai9-interaction-mvopnz8f",
+          "candidateId": "cand-ai9-interaction-multi-M02-M05-M11",
+          "label": "三模块联合变异",
+          "moduleIds": [
+            "M02",
+            "M05",
+            "M11"
+          ],
+          "firstPlaceDelta": -0.1875,
+          "ciLower": -0.4258734891237252,
+          "games": 32
+        },
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        }
+      ],
+      "status": "PASS"
+    },
+    {
+      "id": "M12",
+      "label": "自适应计算预算",
+      "functionName": "budgetForDecision",
+      "file": "ai/evolve/modules.ts",
+      "kind": "policy",
+      "dependsOn": [],
+      "interfaceVersion": "ai9-module-interface-v1",
+      "realDecisionPath": "chooseJointAction -> budgetForDecision -> ChampionGuidedPlanner.decide",
+      "immutableBoundaries": [
+        "规则引擎/合法行动枚举",
+        "隐藏牌库/私有信息",
+        "正式冠军归档"
+      ],
+      "compiledInAllModulesCandidate": true,
+      "probeChanged": true,
+      "probeCases": 14,
+      "probeMismatches": 14,
+      "execution": {
+        "status": "EXECUTED",
+        "counts": {
+          "ai": 535,
+          "joint": 517
+        },
+        "total": 1052,
+        "source": "training/reports/ai9/module-execution-audit.json"
+      },
+      "decisionDivergence": {
+        "status": "WIRED",
+        "path": "chooseJointAction",
+        "divergence": {
+          "seed": 1640000014,
+          "seatCount": 5,
+          "move": 45,
+          "seat": 0,
+          "official": {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          },
+          "candidate": {
+            "type": "play",
+            "cardId": "M37"
+          }
+        },
+        "source": "training/reports/ai9/module-wiring-audit.json"
+      },
+      "deterministicMutations": [
+        "budget-scale-1.5"
+      ],
+      "openEvolveEvidence": [],
+      "realGameEvidence": [
+        {
+          "experiment": "ai9-all-modules-e1",
+          "candidateId": "cand-ai9-evidence-all-modules",
+          "kind": "twelve-module-joint",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04",
+            "M05",
+            "M06",
+            "M07",
+            "M08",
+            "M09",
+            "M10",
+            "M11",
+            "M12"
+          ],
+          "firstPlaceDelta": 0,
+          "ciLower": -0.5063474309009295,
+          "games": 16,
+          "anomalies": 0,
+          "note": "该模块随 12 模块联合候选一同注入候选席位；不等同于该模块单独强度贡献。"
+        }
+      ],
+      "status": "PASS"
+    }
+  ],
+  "summary": {
+    "total": 12,
+    "compiledAndProbeChanged": 12,
+    "executedInRealGames": 12,
+    "decisionDivergenceObserved": 7,
+    "withRealGameEvidence": 12,
+    "withOpenEvolveEvidence": 3,
+    "statuses": {
+      "PASS": 12
+    }
+  }
+}

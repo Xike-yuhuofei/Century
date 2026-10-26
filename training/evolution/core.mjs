@@ -42,6 +42,12 @@ export const AI7_DEV_BLOCKS = Object.freeze({
   deep: Object.freeze([1_620_000_000, 1_630_000_000]),
 });
 
+/** AI9 协同进化开发池（与 AI7 及正式验证池物理隔离）。 */
+export const AI9_DEV_BLOCKS = Object.freeze({
+  screen: Object.freeze([1_660_000_000, 1_670_000_000]),
+  deep: Object.freeze([1_670_000_000, 1_680_000_000]),
+});
+
 /** 区块内每个窗口的种子数（窗口 = 一次治理分配的不可变切片）。 */
 export const AI7_WINDOW_SIZE = 1_000;
 export const AI7_SCREEN_WINDOW_COUNT = (AI7_DEV_BLOCKS.screen[1] - AI7_DEV_BLOCKS.screen[0]) / AI7_WINDOW_SIZE;
@@ -141,9 +147,9 @@ export function gameRulesDescriptor() {
 }
 
 /** 确定性窗口 id：只依赖区块名、序号与用途，不含墙钟/随机源。 */
-export function windowId(purpose, index) {
+export function windowId(purpose, index, prefix = 'ai7') {
   assertCondition(purpose === 'screen' || purpose === 'deep', `窗口用途非法：${String(purpose)}`);
-  return `ai7-${purpose}-w${String(index).padStart(3, '0')}`;
+  return `${prefix}-${purpose}-w${String(index).padStart(3, '0')}`;
 }
 
 /** 简单种子化随机源（候选生成只依赖种子与轮次，保证同输入同输出）。 */
