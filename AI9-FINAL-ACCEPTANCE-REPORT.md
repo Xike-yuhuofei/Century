@@ -77,7 +77,8 @@
 - 全 12 模块联合编译候选：`training/reports/ai9/all-modules-candidate.json`；
 - 逐模块探针：`training/reports/ai9/all-modules-probe.json`（`changedModules` = M01–M12，`probeErrors=0`）；
 - 五模块确定性变异候选与真实对局：`training/reports/coevolution/ai9-smoke-003/`；
-- 决策级接线测试：`training/evolution/tests/module-wiring.test.mjs`（中性候选与官方逐局一致；变异候选在 40 步内产生真实 action 分歧）。
+- 决策级接线测试：`training/evolution/tests/module-wiring.test.mjs`（中性候选与官方逐局一致；变异候选在 40 步内产生真实 action 分歧）；
+- M10/M11 结构级候选：`training/reports/ai9/structural-search-candidates.json`（§3.2）。
 
 ### 2.2 多模块候选契约
 
@@ -159,7 +160,14 @@
 - M10 返回重排/剪枝后的**合法行动子集**；调用方对未知动作、空结果、重复键一律回退原序（不允许制造非法行动）。
 - M11 只能返回白名单内的联合搜索选项（gateMode/candidateCap/overrideMargin/contestThreshold/allocation/endgameMode/worlds/…），数值与枚举均被裁剪；调用方显式传入的选项优先于模块。
 - M12 预算被硬裁剪到 **0–1000ms**（0 保留既有“筛选即耗尽→冠军回退”语义，不是新增能力）；固定 workUnits 模式下不生效，防止“靠无限加算力”取得研究优势。
-- 确定性变异样例：M10 “认领优先排序”、M11 “扩大候选上限+降低覆盖边际”、M12 “1.5 倍预算”。
+- 确定性变异样例：M10 “认领优先排序” / “根行动剪枝（保留认领，非认领最多 6 个）”、
+  M11 “扩大候选上限+降低覆盖边际” / “beam-rollout → beam-contest 结构切换”、M12 “1.5 倍预算”。
+- **结构级候选实测**（`ai9-structural-mvowh8du`，`training/reports/ai9/structural-search-candidates.json`）：
+  5 个编译候选（M10 中性/剪枝、M11 中性/contest、M10+M11 联合），真实 2–5 人 80 局、异常 0；
+  M10 剪枝探针 14 处分歧；M11 beam-contest 探针 14 处分歧且真实对局聚合行动分布改变
+  （acquire 17.4%→20.4%、rest 16.7%→13.9%）；双模块探针 28 处分歧。
+  这些是**结构可执行/可改变决策**的证据，不是强度证据：M11 结构候选首个样本
+  `firstPlaceDelta=−0.375`（CI [−0.873,+0.123]），未显示提升，未进入冠军挑战。
 
 ### 3.3 阶段二验收
 
@@ -168,7 +176,7 @@
 | 12 个真正接入决策路径的模块 | PASS | 注册表 `realDecisionPath` + 探针 + 12 模块真实对局 |
 | 每模块算法变异/替换能力 | PASS | `module-mutations.mjs` + 每模块至少 1 个可编译变异 |
 | 单元测试与行为探针 | PASS | 4 个新测试文件 + `all-modules-probe.json` |
-| 结构级搜索候选验证 | PASS | M10/M11 白名单与真实 pair 对局 |
+| 结构级搜索候选验证 | PASS | `ai9-structural-mvowh8du`：M10 剪枝 / M11 beam-contest / 双模块候选编译+探针+2–5 人 80 局；见 §3.2 |
 | 模块禁用/消融 | PASS | interaction `ablation-M02`（pair 移除 M11） |
 | 多人局面回归 | PASS | 2–5 人真实对局（campaign/OpenEvolve/interaction） |
 | 区分“已验证”与“仅接口” | PASS | 矩阵逐项标注证据类型 |
@@ -463,6 +471,7 @@ npm run ai9:interaction
 npm run ai9:all-modules-game
 npm run ai9:crossover     # 从真实 campaign 候选库交叉组合并跑真实对局
 npm run ai9:module-matrix
+npm run ai9:structural  # M10/M11 结构级搜索候选（编译+探针+真实 2–5 人对局）
 npm run ai9:resource
 npm run ai9:wiring         # 逐模块决策分歧审计
 npm run ai9:execution      # 逐模块真实对局调用计数审计
