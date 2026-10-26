@@ -21,6 +21,25 @@
 
 ---
 
+## 0. 交付物映射
+
+| # | 交付物 | 位置/证据 |
+|---|---|---|
+| 1 | 完整源码与 PR | 分支 `feat/ai9-coevolution`，PR #58；顶部给出基线/提交 |
+| 2 | 12 模块实现与进化状态矩阵 | `training/reports/ai9/module-matrix.json`（§3.1） |
+| 3 | 多模块 Candidate Artifact 协议 | `century-multi-module-candidate-v1`；`training/evolution/module-registry.json`（§2.2） |
+| 4 | 协同进化控制器 | `training/evolution/campaign-controller.mjs` + `multi-module-generator.mjs`（§4.1） |
+| 5 | OpenEvolve 真实运行配置 | `ai5/openevolve/config-ai9.yaml` + `century_evaluator_ai9.py`（§4.2/§8） |
+| 6 | 真实对局评估与统计管线 | `compiled-game-evaluator.mjs` + `training/evaluator/first-place.mjs`（§5） |
+| 7 | 自动冠军晋级与回滚实现 | `promotion-handler.mjs`、`promote-first-place-champion.mjs`、`apply-modules.mjs`（§5/§6） |
+| 8 | 测试与故障注入证据 | `training/reports/ai9/logs/`、`fault-injection.json`、`module-deploy-drill.json`（§3.3/§6） |
+| 9 | M4 16GB 性能与资源报告 | `training/reports/ai9/resource-report.json`（§6.1） |
+| 10 | 可复现端到端命令 | §8 |
+| 11 | 最新冠军/版本/部署核对 | `joint-js5`；`deploy-verification-local.json`（§1/§6） |
+| 12 | 本验收报告 | 本文件 |
+
+---
+
 ## 1. 基线审计结论
 
 | 项目 | 事实 |
@@ -28,6 +47,7 @@
 | 基线 main SHA | `19d4b40c2f633c7b8ff8b5484941a0ee125a7bd1` |
 | 当前冠军 | `joint-js5`（`training/champions/champion.json`） |
 | 冠军决策核心 | `champion-guided` / `joint-js5` / `budgetMs=100` / `acquisitionVariant=readiness-efficiency` |
+| 网页构建身份（本地核验） | source `d507667b8acc5167…`（74 文件）；artifact `e4d5ed58d031efdf…`（49 文件，含 `ai/evolve/modules.js`）；本地 `verify-deploy` PASS |
 | AI8 遗留能力 | Campaign Controller、真实种子治理、第一名率评估器、预注册、alpha 账本、机器门禁、回滚演练均已存在并被复用 |
 | 审计发现的真实断点 | ①OpenEvolve 只进化 `acquisitionValue` 单函数；②其余“5 模块”只是声明式代理插件，未接生产决策；③Candidate Artifact 只覆盖单个函数/描述符；④Campaign Controller 只管理单目标候选；⑤12 模块体系不存在 |
 | 修复方式 | 不推倒 AI8；在其上扩展多模块注册表/多文件候选/12 模块接线/协同进化控制器，全部复用既有评估、种子、预注册、alpha 与机器门禁 |
@@ -392,7 +412,7 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 
 | ID | 项目 | 状态 | 原因/解除条件 |
 |---|---|---|---|
-| R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | 已用 `screen` 会话 `ai9-12h` 于 13:12 CST 启动 `ai9-12h-endurance-2`（500 轮上限 / 12h 墙钟 / 2000 候选 / 200000 局上限）；本报告生成时未完成。首次启动 `ai9-12h-endurance` 被宿主回收（无候选）。短周期 stop→resume 已实测 PASS（§4.6.2）。完成条件：12h 后检查状态、预算与恢复证据 |
+| R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | 已用 `screen` 会话 `ai9-12h` 于 13:12 CST 启动 `ai9-12h-endurance-2`（500 轮上限 / 12h 墙钟 / 2000 候选 / 200000 局上限）；截至本报告生成时已完成 round 1 生成/快筛/深验，产出 1 次 `BLOCKED/insufficient-statistical-power` 门禁结果并继续运行。首次启动 `ai9-12h-endurance` 被宿主回收（无候选）。短周期 stop→resume 已实测 PASS（§4.6.2）。完成条件：12h 后检查状态、预算与恢复证据 |
 | R12 | 真实冠军晋级 + 自动发布 + 回滚 | BLOCKED | 门禁路径已真实执行 2 次（`ai9-live-coevolve-2`），均 `BLOCKED/insufficient-statistical-power`（α=1.22e-5，需 ~10,249 种子/人数）；没有统计合格候选，不能伪造挑战/晋级。机器的晋级/拒绝/回滚分支已由单元/演练测试覆盖（模拟证据），但**未改变正式冠军**。解除条件：补充独立验证预算与 alpha，且候选达到预注册阈值 |
 | — | 统计显著的第一名率提升 | 未证明 | 所有研究候选的区间下界均 ≤0；冠军保持 `joint-js5` |
 | — | 全模块逐一真实对局强度证明 | 部分 | 12 模块共同控制真实对局；逐模块“强度贡献”只做了探针与交互方向性实验 |
