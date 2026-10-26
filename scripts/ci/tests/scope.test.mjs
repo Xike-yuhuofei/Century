@@ -147,6 +147,30 @@ test('CI 自身变更触发全代码检查（防门禁自我弱化）', () => {
   }
 });
 
+test('AI10 LLM 玩家变更覆盖共享构建/训练/UI/审计', () => {
+  const core = scope(['web-v1/src/ai/llm/player.ts']);
+  for (const key of ['build', 'web', 'training', 'ui', 'simulation', 'audit']) {
+    assert.equal(core[key], true, `LLM 共享核心必须触发 ${key}`);
+  }
+  const runner = scope(['training/llm/game-runner.mjs']);
+  assert.equal(runner.training, true);
+  assert.equal(runner.audit, true);
+  assert.equal(runner.web, false);
+  assert.equal(runner.simulation, false);
+  const uiSmoke = scope(['web-v1/scripts/smoke_llm_ui.py']);
+  assert.equal(uiSmoke.web, true);
+  assert.equal(uiSmoke.ui, true);
+  assert.equal(uiSmoke.training, false);
+  const trainingTest = scope(['training/tests/llm-player.test.mjs']);
+  assert.equal(trainingTest.training, true);
+  assert.equal(trainingTest.audit, true);
+  assert.equal(trainingTest.web, false);
+  const webTest = scope(['web-v1/tests/llm-player.test.mjs']);
+  assert.equal(webTest.web, true);
+  assert.equal(webTest.ui, false);
+  assert.equal(webTest.training, false);
+});
+
 test('测试文件变更只触发对应测试组', () => {
   const webTest = scope(['web-v1/tests/ai.test.mjs']);
   assert.equal(webTest.web, true);

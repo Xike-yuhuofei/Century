@@ -754,3 +754,42 @@
   .focus-board.compact-cards .hand-tile .card-head small {font-size:9px;}
   .focus-board.compact-cards .hand-tile .effect-large {font-size:22px;}
 }
+
+/* ===== AI 10.0 · LLM 玩家（本地 Codex 代理；默认折叠，不挤压棋盘） ===== */
+.llm-setup {margin:10px 0 2px;padding:10px 12px;border:1px solid rgba(214,181,125,.22);border-radius:10px;background:rgba(20,24,28,.55);}
+.llm-setup-row {display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.llm-setup-row label {margin:0;font-size:12px;}
+.llm-setup-row select {width:auto;min-width:88px;}
+.llm-setup-hint {font-size:11px;color:#9a948a;}
+.llm-config-panel {margin-top:8px;}
+.llm-config-panel summary {cursor:pointer;font-size:12px;color:#d6b57d;list-style:none;}
+.llm-config-panel summary::-webkit-details-marker {display:none;}
+.llm-config-panel summary::before {content:'▸ ';color:#9a948a;}
+.llm-config-panel[open] summary::before {content:'▾ ';}
+.llm-config-panel label {display:block;margin:8px 0 4px;font-size:11px;color:#c9c2b6;}
+.llm-config-panel input {width:100%;box-sizing:border-box;font-size:12px;padding:7px 9px;border-radius:7px;border:1px solid rgba(201,194,182,.22);background:#121518;color:#ece7dc;}
+.llm-config-grid {display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.llm-config-panel code {font-size:11px;color:#d6b57d;}
+@media (max-width:560px){.llm-config-grid{grid-template-columns:1fr;}}
+
+.llm-chip {font-size:10px;line-height:1;padding:5px 8px;border-radius:6px;border:1px solid #4b6f86;background:#172a34;color:#b9d9e6;white-space:nowrap;letter-spacing:.02em;}
+.llm-chip-thinking {border-color:#8a6a3f;background:#332617;color:#f3cf9a;animation:llm-pulse 1.4s ease-in-out infinite;}
+@keyframes llm-pulse {0%,100%{opacity:1}50%{opacity:.55}}
+.llm-lane-status {padding:5px 8px;font-size:10px;color:#9a948a;border-top:1px solid rgba(201,194,182,.12);}
+.llm-lane-thinking {color:#f3cf9a;}
+.ai-lane-llm .ai-lane-label {border-left:2px solid #4b6f86;}
+.llm-decision-log {border-top:1px solid rgba(201,194,182,.14);font-size:11px;color:#c9c2b6;}
+.llm-decision-log summary {cursor:pointer;padding:5px 8px;color:#b9d9e6;list-style:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.llm-decision-log summary::-webkit-details-marker {display:none;}
+.llm-decision-log summary::before {content:'▸ ';color:#9a948a;}
+.llm-decision-log[open] summary::before {content:'▾ ';}
+.llm-decision-list {max-height:34vh;overflow:auto;padding:2px 8px 6px;}
+.llm-decision-entry {padding:6px 0;border-top:1px dashed rgba(201,194,182,.13);}
+.llm-decision-entry p {margin:3px 0;line-height:1.45;}
+.llm-decision-head {display:flex;align-items:flex-start;justify-content:space-between;gap:6px;}
+.llm-decision-head b {font-size:11px;color:#ece7dc;font-weight:600;}
+.llm-source {font-size:9px;padding:2px 5px;border-radius:4px;background:#17342c;border:1px solid #356b57;color:#a9dcc5;white-space:nowrap;}
+.llm-source.is-fallback {background:#3d2f22;border-color:#9a7548;color:#f3cf9a;}
+.llm-fallback {color:#f3cf9a;}
+.llm-meta {color:#8e877b;font-size:10px;}
+.llm-export-btn {border-color:#4b6f86;color:#b9d9e6;}

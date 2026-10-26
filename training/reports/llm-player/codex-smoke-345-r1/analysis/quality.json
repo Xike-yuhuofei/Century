@@ -1,0 +1,164 @@
+{
+  "schema": "century-llm-quality-v1",
+  "runs": [
+    {
+      "runId": "codex-smoke-345-r1",
+      "runPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/codex-smoke-345-r1",
+      "stage": "smoke",
+      "provider": {
+        "id": "codex-exec",
+        "kind": "codex-cli",
+        "model": "gpt-5.6-sol",
+        "mode": "real",
+        "endpointHost": null,
+        "parameters": {
+          "transport": "codex exec --json",
+          "reasoningEffort": "low",
+          "sandbox": "read-only",
+          "ephemeral": true,
+          "ignoreUserConfig": true,
+          "outputSchema": "century-llm-decision-v1",
+          "cliVersion": "codex-cli 0.149.1",
+          "maxConcurrency": 2
+        }
+      },
+      "config": {
+        "schema": "century-llm-experiment-config-v1",
+        "experimentId": "ai10-llm-v1",
+        "stage": "smoke",
+        "modes": [
+          3,
+          4,
+          5
+        ],
+        "seedsPerMode": 1,
+        "offset": 0,
+        "focusSeatRotation": "pairIndex % seatCount（同一阶段/人数内均衡轮换）",
+        "opponentPool": "frozen-champion-all-non-focus-seats",
+        "champion": {
+          "id": "joint-js5",
+          "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3",
+          "sourceSha256": "0dd409e57afd62546e5ce8cd2b599306a14defdfa34628ea7753d13e39cd3321"
+        },
+        "provider": {
+          "id": "codex-exec",
+          "kind": "codex-cli",
+          "model": "gpt-5.6-sol",
+          "mode": "real",
+          "endpointHost": null,
+          "parameters": {
+            "transport": "codex exec --json",
+            "reasoningEffort": "low",
+            "sandbox": "read-only",
+            "ephemeral": true,
+            "ignoreUserConfig": true,
+            "outputSchema": "century-llm-decision-v1",
+            "cliVersion": "codex-cli 0.149.1",
+            "maxConcurrency": 2
+          }
+        },
+        "llmConfig": {
+          "timeoutMs": 120000,
+          "maxRetries": 1,
+          "maxTokens": 700,
+          "temperature": 0,
+          "maxCalls": 120,
+          "tokenBudget": 2500000,
+          "candidateLimit": 64,
+          "shadowChampion": true
+        },
+        "budgets": {
+          "runTokenBudget": 12000000,
+          "runCallBudget": 1500,
+          "maxWallMinutes": 120,
+          "concurrency": 2
+        },
+        "preregistration": null,
+        "codeVersion": {
+          "commit": "925c866c49a4c06824db2b8caf76fb279f61516d",
+          "dirty": true,
+          "dirtyFiles": [
+            "M ai5/lib/seed_policy.mjs",
+            " M web-v1/dist/standalone.html",
+            " M web-v1/src/app.ts",
+            " M web-v1/src/engine.ts",
+            " M web-v1/src/styles.css",
+            "?? training/llm/",
+            "?? training/reports/llm-player/",
+            "?? web-v1/src/ai/llm/"
+          ]
+        },
+        "evidenceClass": "real-llm"
+      },
+      "codeVersion": {
+        "commit": "925c866c49a4c06824db2b8caf76fb279f61516d",
+        "dirty": true,
+        "dirtyFiles": [
+          "M ai5/lib/seed_policy.mjs",
+          " M web-v1/dist/standalone.html",
+          " M web-v1/src/app.ts",
+          " M web-v1/src/engine.ts",
+          " M web-v1/src/styles.css",
+          "?? training/llm/",
+          "?? training/reports/llm-player/",
+          "?? web-v1/src/ai/llm/"
+        ]
+      },
+      "games": 6,
+      "finishedGames": 6,
+      "plannedPairs": 3,
+      "summaryStatus": "completed"
+    }
+  ],
+  "totals": {
+    "decisions": 110,
+    "llmDecisions": 110,
+    "fallbackDecisions": 0,
+    "games": 6,
+    "finishedGames": 6,
+    "replayConsistentGames": 6
+  },
+  "rates": {
+    "parseSuccessRate": 1,
+    "illegalSuggestedRate": 0,
+    "missingReasonRate": 0,
+    "missingAlternativesRate": 0,
+    "fallbackRate": 0,
+    "duplicateRecordRate": 0,
+    "completeGameRate": 1,
+    "replayConsistencyRate": 1,
+    "hiddenLeakFree": true
+  },
+  "sampleClasses": {
+    "teacher-candidate": 109,
+    "interface-error": 1
+  },
+  "fallbackCauses": {},
+  "providerModels": {
+    "codex-exec/gpt-5.6-sol": 110
+  },
+  "hiddenLeakFindings": [],
+  "duplicateRecords": [],
+  "candidateGeneration": {
+    "prunedDecisions": 29,
+    "meanFullLegalCount": 49.35454545454545,
+    "meanKeptCount": 29.318181818181817,
+    "versions": [
+      "llm-candidates-v1"
+    ],
+    "actionEncoding": "ai5-action-v1",
+    "stateEncoding": "ai5-state-v1"
+  },
+  "latencyMs": {
+    "mean": 22396.19090909091,
+    "median": 20261.5,
+    "p95": 39496,
+    "max": 131801
+  },
+  "usage": {
+    "tokens": 2219422,
+    "calls": 111,
+    "promptTokens": 2111062,
+    "completionTokens": 108360
+  }
+}

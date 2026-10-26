@@ -1,0 +1,253 @@
+{
+  "schema": "century-llm-pair-summary-v1",
+  "stage": "exploratory",
+  "status": "completed",
+  "evidenceClass": "real-llm",
+  "provider": {
+    "id": "codex-exec",
+    "kind": "codex-cli",
+    "model": "gpt-5.6-luna",
+    "mode": "real",
+    "endpointHost": null,
+    "parameters": {
+      "transport": "codex exec --json",
+      "reasoningEffort": "low",
+      "sandbox": "read-only",
+      "ephemeral": true,
+      "ignoreUserConfig": true,
+      "outputSchema": "century-llm-decision-v1",
+      "cliVersion": "codex-cli 0.149.1",
+      "maxConcurrency": 2
+    }
+  },
+  "plannedPairs": 16,
+  "completedPairs": 16,
+  "validPairs": 16,
+  "anomalyPairs": 0,
+  "fallbackAffectedPairs": 1,
+  "usage": {
+    "calls": 650,
+    "tokens": 11866647,
+    "decisions": 649,
+    "llmGames": 16
+  },
+  "strata": {
+    "2": {
+      "seatCount": 2,
+      "pairs": 4,
+      "validPairs": 4,
+      "anomalies": 0,
+      "candidateFirst": 2,
+      "championFirst": 1,
+      "candidateFirstRate": 0.5,
+      "championFirstRate": 0.25,
+      "candidateWilsonCI": {
+        "point": 0.5,
+        "lower": 0.15003898915214953,
+        "upper": 0.8499610108478505
+      },
+      "championWilsonCI": {
+        "point": 0.25,
+        "lower": 0.04558726080970055,
+        "upper": 0.6993581574175981
+      },
+      "meanPairedDelta": 0.25,
+      "pairedDeltaCI": {
+        "mean": 0.25,
+        "variance": 0.9166666666666666,
+        "se": 0.47871355387816905,
+        "df": 3,
+        "tCritical": 2.353363434813218,
+        "alpha": 0.05,
+        "lower": -0.8765869734463705,
+        "upper": 1.3765869734463705,
+        "oneSidedLower": -0.8765869734463705,
+        "n": 4,
+        "candidateFirstRate": 0.5,
+        "championFirstRate": 0.25
+      },
+      "deltaCounts": {
+        "plus": 2,
+        "zero": 1,
+        "minus": 1
+      },
+      "fallbackGames": 0,
+      "fallbackRate": 0,
+      "medianDecisionLatencyMs": 10124,
+      "totalTokens": 3302843,
+      "meanTokensPerGame": 825710.75,
+      "meanGameWallMs": 486580.25
+    },
+    "3": {
+      "seatCount": 3,
+      "pairs": 4,
+      "validPairs": 4,
+      "anomalies": 0,
+      "candidateFirst": 1,
+      "championFirst": 1,
+      "candidateFirstRate": 0.25,
+      "championFirstRate": 0.25,
+      "candidateWilsonCI": {
+        "point": 0.25,
+        "lower": 0.04558726080970055,
+        "upper": 0.6993581574175981
+      },
+      "championWilsonCI": {
+        "point": 0.25,
+        "lower": 0.04558726080970055,
+        "upper": 0.6993581574175981
+      },
+      "meanPairedDelta": 0,
+      "pairedDeltaCI": {
+        "mean": 0,
+        "variance": 0.6666666666666666,
+        "se": 0.408248290463863,
+        "df": 3,
+        "tCritical": 2.353363434813218,
+        "alpha": 0.05,
+        "lower": -0.9607565991026611,
+        "upper": 0.9607565991026611,
+        "oneSidedLower": -0.9607565991026611,
+        "n": 4,
+        "candidateFirstRate": 0.25,
+        "championFirstRate": 0.25
+      },
+      "deltaCounts": {
+        "plus": 1,
+        "zero": 2,
+        "minus": 1
+      },
+      "fallbackGames": 1,
+      "fallbackRate": 0.25,
+      "medianDecisionLatencyMs": 10263,
+      "totalTokens": 3119488,
+      "meanTokensPerGame": 779872,
+      "meanGameWallMs": 462917.5
+    },
+    "4": {
+      "seatCount": 4,
+      "pairs": 4,
+      "validPairs": 4,
+      "anomalies": 0,
+      "candidateFirst": 0,
+      "championFirst": 0,
+      "candidateFirstRate": 0,
+      "championFirstRate": 0,
+      "candidateWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.4898908364545973
+      },
+      "championWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.4898908364545973
+      },
+      "meanPairedDelta": 0,
+      "pairedDeltaCI": {
+        "mean": 0,
+        "variance": 0,
+        "se": 0,
+        "df": 3,
+        "tCritical": 2.353363434813218,
+        "alpha": 0.05,
+        "lower": 0,
+        "upper": 0,
+        "oneSidedLower": 0,
+        "n": 4,
+        "candidateFirstRate": 0,
+        "championFirstRate": 0
+      },
+      "deltaCounts": {
+        "plus": 0,
+        "zero": 4,
+        "minus": 0
+      },
+      "fallbackGames": 0,
+      "fallbackRate": 0,
+      "medianDecisionLatencyMs": 10263,
+      "totalTokens": 2817223,
+      "meanTokensPerGame": 704305.75,
+      "meanGameWallMs": 416949.5
+    },
+    "5": {
+      "seatCount": 5,
+      "pairs": 4,
+      "validPairs": 4,
+      "anomalies": 0,
+      "candidateFirst": 1,
+      "championFirst": 0,
+      "candidateFirstRate": 0.25,
+      "championFirstRate": 0,
+      "candidateWilsonCI": {
+        "point": 0.25,
+        "lower": 0.04558726080970055,
+        "upper": 0.6993581574175981
+      },
+      "championWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.4898908364545973
+      },
+      "meanPairedDelta": 0.25,
+      "pairedDeltaCI": {
+        "mean": 0.25,
+        "variance": 0.25,
+        "se": 0.25,
+        "df": 3,
+        "tCritical": 2.353363434813218,
+        "alpha": 0.05,
+        "lower": -0.33834085870330455,
+        "upper": 0.8383408587033045,
+        "oneSidedLower": -0.33834085870330455,
+        "n": 4,
+        "candidateFirstRate": 0.25,
+        "championFirstRate": 0
+      },
+      "deltaCounts": {
+        "plus": 1,
+        "zero": 3,
+        "minus": 0
+      },
+      "fallbackGames": 0,
+      "fallbackRate": 0,
+      "medianDecisionLatencyMs": 10485,
+      "totalTokens": 2627093,
+      "meanTokensPerGame": 656773.25,
+      "meanGameWallMs": 404753
+    }
+  },
+  "limitations": [
+    "LLM Provider 非确定性（Codex/ChatGPT 后端可能在相同输入下产生不同行动），配对仅共享初始随机世界，不保证后续轨迹一致。",
+    "第一名率以焦点席位是否取得唯一第一名定义；异常局不计入有效配对。",
+    "阶段 A/B 为功能验证/探索性结论，不构成统计显著优势；不得据此宣称 LLM 更强或晋级冠军。"
+  ],
+  "runId": "ai10-explore-luna-r1",
+  "runPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-luna-r1",
+  "startedAt": "2026-10-26T17:10:36.756Z",
+  "finishedAt": "2026-10-26T18:13:25.553Z",
+  "codeVersion": {
+    "commit": "ca5f1b024cd2c4f4905a68820371c82edde4411a",
+    "dirty": true,
+    "dirtyFiles": [
+      "M docs/ai7/desktop-runtime-metrics.json",
+      " M training/llm/analyze.mjs",
+      "?? docs/ai7/screenshots/chromium-human_ai-3440x1440.png",
+      "?? docs/ai7/screenshots/chromium-pressure-1440x900.png",
+      "?? docs/ai7/screenshots/chromium-solo-1440x900.png",
+      "?? docs/ai7/screenshots/chromium-solo-1920x1080.png",
+      "?? docs/ai7/screenshots/chromium-solo-3440x1440.png",
+      "?? docs/ai7/screenshots/webkit-human_ai-3440x1440.png",
+      "?? docs/ai7/screenshots/webkit-pressure-1440x900.png",
+      "?? docs/ai7/screenshots/webkit-solo-1440x900.png",
+      "?? docs/ai7/screenshots/webkit-solo-1920x1080.png",
+      "?? docs/ai7/screenshots/webkit-solo-3440x1440.png",
+      "?? training/reports/llm-player/ai10-explore-luna-r1/"
+    ]
+  },
+  "champion": {
+    "id": "joint-js5",
+    "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3"
+  },
+  "preregistration": null
+}
