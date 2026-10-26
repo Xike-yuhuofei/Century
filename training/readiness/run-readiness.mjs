@@ -13,7 +13,7 @@
 
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { resolve, relative } from 'node:path';
 import { writeJSON } from '../lib/io.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
 import { sha256Hex } from '../evolution/core.mjs';
@@ -116,6 +116,9 @@ const ok = r => r.ok;
     ? repoLog
     : (tmpLog && existsSync(tmpLog) ? tmpLog : null);
   const log = logPath ? readFileSync(logPath, 'utf8') : '';
+  const logDisplay = logPath
+    ? (logPath.startsWith(REPO_ROOT) ? relative(REPO_ROOT, logPath) : logPath)
+    : 'none';
   const llmCall = /Total LLM Token Usage[^\n]*/i.exec(log)?.[0] ?? null;
   // 真实生成必须至少有一次「行为不同于官方」的演化程序通过静态/编译/探针并
   // 进入真实对局评估；只有初始程序（identical=1）的 run 不算算法生成。
@@ -135,7 +138,7 @@ const ok = r => r.ok;
     source: 'ai5/openevolve/run_openevolve.py + training/evolution/openevolve-bridge.mjs',
     testCommand: 'caffeinate -is .venv/bin/python run_openevolve.py program/acquisition_value.ts century_evaluator.py --config config.yaml --iterations 3 --output results/ai8-openevolve-r00N',
     evidence: real
-      ? `run=${latest}；log=${logPath}；${llmCall}；行为不同于官方的演化程序=${evolvedBehavior}；bestProgram=yes；bestIdentical=${bestIdentical}；` +
+      ? `run=${latest}；log=${logDisplay}；${llmCall}；行为不同于官方的演化程序=${evolvedBehavior}；bestProgram=yes；bestIdentical=${bestIdentical}；` +
         `evaluatedGames=${evaluatedGames}；best static_ok=${metrics.static_ok} compile_ok=${compiled} probe_ok=${probed} stage_passed=${metrics.stage_passed} failure=${metrics.failure_stage ?? 'none'}`
       : '未找到本次真实 OpenEvolve 运行产物',
     unmetReason: pass ? null : (real
