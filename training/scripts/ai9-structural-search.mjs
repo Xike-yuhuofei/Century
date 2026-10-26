@@ -1,11 +1,14 @@
 #!/usr/bin/env node
-/** AI9 M10/M11 结构级搜索候选验证（开发池；不用于冠军晋级）。
+/** AI9 算法/结构级候选验证（开发池；不用于冠军晋级）。
  *
- * 目的：证明 M10/M11 不只是调整系数，而是能编译并真实运行不同的搜索结构：
+ * 目的：证明以下模块不只是调整系数，而是能编译并真实运行不同的算法/搜索结构：
+ * - M06：公开名次快照上的 logistic 第一名胜率模型；
+ * - M07：从公开库存/市场/手牌推断对手目标与边际需求；
+ * - M09：未翻开商人卡全集上的公开后验期望支持；
  * - M10：根行动剪枝结构（保留认领、限制非认领展开）；
  * - M11：束搜索结构切换（beam-rollout → beam-contest，经 adapter 白名单）；
  * - M10+M11：双模块结构联合候选。
- * 同时编译中性对照，比较行为签名，确认结构确实改变决策而非空操作。
+ * 同时编译各模块中性对照，比较行为签名，确认结构确实改变决策而非空操作。
  */
 
 import { resolve } from 'node:path';
@@ -41,8 +44,65 @@ const experiment = {
 
 const m10Structural = mutateModuleFunction('M10', 1);
 const m11Structural = mutateModuleFunction('M11', 1);
+const m06Algorithmic = mutateModuleFunction('M06', 0);
+const m07Algorithmic = mutateModuleFunction('M07', 0);
+const m09Algorithmic = mutateModuleFunction('M09', 0);
 
 const definitions = [
+  {
+    id: 'cand-ai9-struct-m06-neutral',
+    label: 'neutral M06 control',
+    kind: 'control',
+    moduleIds: ['M06'],
+    modules: null,
+    structural: false,
+    neutralFor: null,
+  },
+  {
+    id: 'cand-ai9-struct-m06-winprob',
+    label: m06Algorithmic.label,
+    kind: 'structural',
+    moduleIds: ['M06'],
+    modules: [m06Algorithmic],
+    structural: true,
+    neutralFor: 'cand-ai9-struct-m06-neutral',
+  },
+  {
+    id: 'cand-ai9-struct-m07-neutral',
+    label: 'neutral M07 control',
+    kind: 'control',
+    moduleIds: ['M07'],
+    modules: null,
+    structural: false,
+    neutralFor: null,
+  },
+  {
+    id: 'cand-ai9-struct-m07-inference',
+    label: m07Algorithmic.label,
+    kind: 'structural',
+    moduleIds: ['M07'],
+    modules: [m07Algorithmic],
+    structural: true,
+    neutralFor: 'cand-ai9-struct-m07-neutral',
+  },
+  {
+    id: 'cand-ai9-struct-m09-neutral',
+    label: 'neutral M09 control',
+    kind: 'control',
+    moduleIds: ['M09'],
+    modules: null,
+    structural: false,
+    neutralFor: null,
+  },
+  {
+    id: 'cand-ai9-struct-m09-posterior',
+    label: m09Algorithmic.label,
+    kind: 'structural',
+    moduleIds: ['M09'],
+    modules: [m09Algorithmic],
+    structural: true,
+    neutralFor: 'cand-ai9-struct-m09-neutral',
+  },
   {
     id: 'cand-ai9-struct-m10-neutral',
     label: 'neutral M10 control',

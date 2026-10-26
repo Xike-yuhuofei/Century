@@ -14,6 +14,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { REPO_ROOT } from '../lib/paths.mjs';
 import { writeJSON } from '../lib/io.mjs';
+import { CODE_VERSION_SCHEMA, computeCodeVersion, sameCodeDigest } from '../lib/code-version.mjs';
 
 const args = process.argv.slice(2);
 function argValue(name, fallback) {
@@ -62,6 +63,37 @@ const maxWallMs = Number(budget.maxWallMs ?? 0);
 const requiredWallMs = Math.round(maxWallMs * minWallRatio);
 
 add('state-schema', state.schema === 'century-evolution-campaign-v1' ? 'PASS' : 'FAIL', state.schema);
+
+const codeVersion = state.codeVersion ?? null;
+add('code-version-declared',
+  codeVersion?.schema === CODE_VERSION_SCHEMA
+    && /^[0-9a-f]{40}$/.test(String(codeVersion?.headCommit ?? ''))
+    && /^[0-9a-f]{64}$/.test(String(codeVersion?.codeDigest ?? ''))
+    ? 'PASS' : 'FAIL',
+  codeVersion
+    ? `schema=${codeVersion.schema}，head=${String(codeVersion.headCommit).slice(0, 12)}，digest=${String(codeVersion.codeDigest).slice(0, 12)}`
+    : 'state.codeVersion 缺失');
+add('code-version-clean',
+  codeVersion?.headDirty === false
+    && codeVersion?.webBuild?.gitDirty === false
+    && Boolean(codeVersion?.webBuild?.sourceSha256)
+    && Boolean(codeVersion?.webBuild?.artifactSha256)
+    ? 'PASS' : 'FAIL',
+  codeVersion
+    ? `headDirty=${codeVersion.headDirty}，webBuildDirty=${codeVersion.webBuild?.gitDirty}，dirtyFiles=${(codeVersion.dirtyFiles ?? []).length}`
+    : 'state.codeVersion 缺失');
+let recomputedCodeVersion = null;
+try {
+  recomputedCodeVersion = computeCodeVersion();
+} catch (error) {
+  recomputedCodeVersion = { error: error.message };
+}
+add('code-version-recomputed',
+  sameCodeDigest(codeVersion, recomputedCodeVersion) ? 'PASS' : 'FAIL',
+  recomputedCodeVersion?.error
+    ? recomputedCodeVersion.error
+    : `state=${String(codeVersion?.codeDigest ?? '').slice(0, 12)} ≠ current=${String(recomputedCodeVersion.codeDigest).slice(0, 12)}`);
+
 add('wall-budget-declared',
   maxWallMs >= 43_200_000 ? 'PASS' : 'FAIL',
   `maxWallMs=${maxWallMs}，要求 >= 43,200,000（12h）`);
@@ -143,6 +175,13 @@ const report = {
     createdAt: state.createdAt,
     updatedAt: state.updatedAt,
     runFingerprint: state.runFingerprint,
+    codeVersion: state.codeVersion
+      ? {
+        headCommit: state.codeVersion.headCommit,
+        codeDigest: state.codeVersion.codeDigest,
+        webBuildCommit: state.codeVersion.webBuild?.gitCommit ?? null,
+      }
+      : null,
   },
   requirements: {
     maxWallMs,
