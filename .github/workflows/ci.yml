@@ -354,10 +354,20 @@ jobs:
         with:
           path: ~/.cache/ms-playwright
           key: ${{ runner.os }}-playwright-1.56.0
-      - name: 安装 Playwright 与浏览器
+      - name: 安装 Playwright 与浏览器（失败重试 2 次；单步超时避免基础镜像下载卡死耗尽作业预算）
+        timeout-minutes: 12
         run: |
-          python -m pip install playwright==1.56.0
-          python -m playwright install --with-deps chromium webkit
+          for attempt in 1 2; do
+            echo "安装尝试 $attempt/2"
+            if python -m pip install playwright==1.56.0 \
+              && python -m playwright install --with-deps chromium webkit; then
+              exit 0
+            fi
+            echo "::warning::Playwright 安装失败，10 秒后重试"
+            sleep 10
+          done
+          echo "::error::Playwright 安装连续失败（基础设施问题，非代码缺陷）"
+          exit 1
       - uses: actions/download-artifact@v4
         with:
           name: web-v1-dist

@@ -57,6 +57,8 @@ export function verifyWorkflows(repoRoot) {
     'rollback-gate', 'verify-rollback.mjs',
     // 回滚门禁的隔离演练必须在 CI 中真实执行（放行/拒绝/循环三类分支）。
     'rollback-gate-drill.mjs',
+    // Playwright 安装必须重试且有单步超时，避免镜像下载卡死吃掉整个作业预算。
+    '安装尝试 $attempt/2', 'timeout-minutes: 12',
   ]) {
     if (!ci.includes(needle)) issues.push(`ci.yml 缺少必需元素：${needle}`);
   }
