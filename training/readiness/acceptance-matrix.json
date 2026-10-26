@@ -1,7 +1,7 @@
 {
   "schema": "century-acceptance-matrix-v1",
-  "generatedAt": "2026-10-25T19:26:04.081Z",
-  "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+  "generatedAt": "2026-10-26T07:54:35.194Z",
+  "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
   "ready": false,
   "status": "CENTURY_AUTONOMOUS_EVOLUTION_READY = false",
   "counts": {
@@ -14,14 +14,15 @@
     {
       "schema": "century-acceptance-requirement-v1",
       "requirementId": "R01",
-      "title": "OpenEvolve 真实算法生成（LLM 离线提案 + 级联评估）",
+      "title": "OpenEvolve 真实算法生成（LLM 离线提案 + 静态/编译/探针级联）",
       "status": "PASS",
       "source": "ai5/openevolve/run_openevolve.py + training/evolution/openevolve-bridge.mjs",
-      "evidence": "run=ai8-openevolve-r002；Total LLM Token Usage (1 calls): total_tokens=149769 (prompt_tokens=148677, completion_tokens=1092)；bestProgram=yes；static_ok=1；compile_ok=true；probe_ok=true；identical_to_official=true；stage_passed=0；failure=none",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+      "testCommand": "caffeinate -is .venv/bin/python run_openevolve.py program/acquisition_value.ts century_evaluator.py --config config.yaml --iterations 3 --output results/ai8-openevolve-r00N",
+      "evidence": "run=ai8-openevolve-r005；log=ai5/openevolve/results/ai8-openevolve-r005/run.log；Total LLM Token Usage (1 calls): total_tokens=26726 (prompt_tokens=25038, completion_tokens=1688)；行为不同于官方的演化程序=1；bestProgram=yes；bestIdentical=true；evaluatedGames=96；best static_ok=1 compile_ok=true probe_ok=true stage_passed=1 failure=none",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
       "unmetReason": null,
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:25:15.842Z"
+      "measuredAt": "2026-10-26T07:53:29.886Z"
     },
     {
       "schema": "century-acceptance-requirement-v1",
@@ -30,11 +31,11 @@
       "status": "PASS",
       "source": "training/evolution/compiled-candidate.mjs + tests/first-place-runner.test.mjs",
       "testCommand": "node --test --test-concurrency=1 training/evolution/tests/compiled.test.mjs training/tests/first-place-runner.test.mjs",
-      "evidence": "编译型候选通过独立 tsc；descriptor 候选在真实引擎中按席位执行（第一名率配对运行器）；exit=0；# pass 8\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 20088.237709",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+      "evidence": "编译型候选通过独立 tsc；descriptor 候选在真实引擎中按席位执行（第一名率配对运行器）；exit=0；# pass 8\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 27286.333875",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
       "unmetReason": null,
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:25:35.953Z"
+      "measuredAt": "2026-10-26T07:53:57.202Z"
     },
     {
       "schema": "century-acceptance-requirement-v1",
@@ -42,23 +43,25 @@
       "title": "多代自主递归进化（真实开发池对局 + 跨代继承）",
       "status": "PASS",
       "source": "training/evolution/autonomous-run.mjs + campaign-controller.mjs",
+      "testCommand": "training/scripts/run-12h-stress.sh（ai8-12h-v3：500 rounds / 2–5p / 真实开发池 / checkpoint/resume）",
       "evidence": "status=completed rounds=2 candidates=4 games=24 wallMs=87741 promotionQueue=2",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
       "unmetReason": null,
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:25:35.954Z"
+      "measuredAt": "2026-10-26T07:53:57.203Z"
     },
     {
       "schema": "century-acceptance-requirement-v1",
       "requirementId": "R04",
-      "title": "固定种子 + 固定 workUnits 双轮完全复现（2–5 人 × 50 世界）",
+      "title": "固定种子 + 固定 workUnits 双轮完全复现（2–5 人 × 50 世界，绑定最终代码）",
       "status": "PASS",
       "source": "training/scripts/verify-determinism.mjs",
-      "evidence": "2–5 人各 50 世界 × 2 轮；mismatches=0",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+      "testCommand": "node training/scripts/verify-determinism.mjs --worlds 50 --seat-counts 2,3,4,5 --out training/reports/determinism/full.json",
+      "evidence": "2–5 人各 50 世界 × 2 轮；mismatches=0；code=d02d7110de90 dirty=false files=6 hashes=match",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
       "unmetReason": null,
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:25:35.955Z"
+      "measuredAt": "2026-10-26T07:53:57.267Z"
     },
     {
       "schema": "century-acceptance-requirement-v1",
@@ -67,11 +70,11 @@
       "status": "PASS",
       "source": "training/lib/seed-governance.mjs + governance-provider-v2.mjs",
       "testCommand": "node --test --test-concurrency=1 training/evolution/tests/governance.test.mjs training/evolution/tests/governance-live.test.mjs",
-      "evidence": "真实 Provider 原子登记 + 冲突拒绝 + screen/deep 隔离 + 验证池硬拒绝；exit=0；# pass 11\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 85.83",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+      "evidence": "真实 Provider 原子登记 + 冲突拒绝 + screen/deep 隔离 + 验证池硬拒绝；exit=0；# pass 11\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 112.048084",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
       "unmetReason": null,
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:25:36.063Z"
+      "measuredAt": "2026-10-26T07:53:57.407Z"
     },
     {
       "schema": "century-acceptance-requirement-v1",
@@ -80,11 +83,11 @@
       "status": "PASS",
       "source": "training/evaluator/first-place.mjs + tournament/first-place-challenge.mjs",
       "testCommand": "node --test --test-concurrency=1 training/tests/first-place.test.mjs training/tests/first-place-runner.test.mjs",
-      "evidence": "焦点席位 A/B 配对、种子簇级 CI、非劣效、跨人数独立种子；exit=0；# pass 23\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 15684.168",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+      "evidence": "焦点席位 A/B 配对、种子簇级 CI、非劣效、跨人数独立种子；exit=0；# pass 23\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 24330.352125",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
       "unmetReason": null,
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:25:51.769Z"
+      "measuredAt": "2026-10-26T07:54:21.766Z"
     },
     {
       "schema": "century-acceptance-requirement-v1",
@@ -92,11 +95,12 @@
       "title": "预注册 + 多重检验 + 长期 alpha 预算（不可重置）",
       "status": "PASS",
       "source": "training/evaluator/preregistration.mjs + lib/alpha-ledger.mjs",
-      "evidence": "alpha-ledger 11 次历史消耗=true；预注册/反例测试 exit=0；# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 57.86075",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+      "testCommand": "node --test training/tests/first-place.test.mjs",
+      "evidence": "alpha-ledger 11 次历史消耗=true；预注册/反例测试 exit=0；# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 96.80425",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
       "unmetReason": null,
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:25:51.850Z"
+      "measuredAt": "2026-10-26T07:54:21.898Z"
     },
     {
       "schema": "century-acceptance-requirement-v1",
@@ -106,10 +110,10 @@
       "source": "ai5/openevolve sandbox + training/evolution/safety-check.mjs",
       "testCommand": "python3 ai5/openevolve/tests/test_security_sandbox.py -v",
       "evidence": "沙箱禁网/禁读 HOME/禁隐藏牌库；静态禁止构造检测；exit=0；",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
       "unmetReason": null,
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:26:03.684Z"
+      "measuredAt": "2026-10-26T07:54:34.760Z"
     },
     {
       "schema": "century-acceptance-requirement-v1",
@@ -117,11 +121,12 @@
       "title": "连续 12 小时真实自主训练压力测试",
       "status": "NOT_RUN",
       "source": "training/evolution/autonomous-run.mjs + training/scripts/run-12h-stress.sh",
-      "evidence": "真实 12h 运行进行中：status=running phase=generated rounds=1 games=64 wallMs=165615 已运行约 0.07h；达到 12h 且 status=completed 后才可 PASS",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
-      "unmetReason": "运行中（约 0.07h）；未满 12 小时，不能提前 PASS",
+      "testCommand": "screen -dmS century12h-v3 /bin/zsh -f -c \"cd <repo> && caffeinate -is training/scripts/run-12h-stress.sh\"",
+      "evidence": "未发现已完成的 12 小时连续运行产物",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
+      "unmetReason": "本次会话无法连续运行 12 小时真实训练；必须在目标 M4 上实际执行并保留日志后才能 PASS",
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:26:03.728Z"
+      "measuredAt": "2026-10-26T07:54:34.761Z"
     },
     {
       "schema": "century-acceptance-requirement-v1",
@@ -129,11 +134,12 @@
       "title": "M4 资源控制 + 9 类故障注入恢复",
       "status": "PASS",
       "source": "training/lib/resource-scheduler.mjs + scripts/fault-injection.mjs",
+      "testCommand": "node training/scripts/fault-injection.mjs",
       "evidence": "checks=9 verdict=PASS；kill-recovery:PASS candidate-timeout:PASS illegal-source:PASS compile-failure:PASS duplicate-campaign:PASS seed-conflict:PASS corrupt-state:PASS resource-exhaustion:PASS llm-unavailable:PASS",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
       "unmetReason": null,
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:26:03.922Z"
+      "measuredAt": "2026-10-26T07:54:34.988Z"
     },
     {
       "schema": "century-acceptance-requirement-v1",
@@ -141,23 +147,25 @@
       "title": "正式冠军挑战：预注册第一名率自动统计判定",
       "status": "PASS",
       "source": "promote-first-place-champion.mjs + scripts/ci/lib/summary.mjs",
+      "testCommand": "node training/scripts/promote-first-place-champion.mjs --evidence ... --plan ... --candidate ... --dry-run",
       "evidence": "机器门禁脚本在场=true；人工批准作业已移除=true；统计反例测试 exit=0",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
       "unmetReason": null,
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:26:04.003Z"
+      "measuredAt": "2026-10-26T07:54:35.089Z"
     },
     {
       "schema": "century-acceptance-requirement-v1",
       "requirementId": "R12",
       "title": "无人工审批的自动晋级、发布、线上核验与回滚",
       "status": "BLOCKED",
-      "source": ".github/workflows/ci.yml + ai-training.yml + scripts/ci/verify-deploy.mjs + rollback-champion.mjs",
-      "evidence": "工作流机器门禁=true；回滚 dry-run=true；真实机器合并+Pages 部署+线上核验=true（run 40221527752, site=PASS）；第一名率冠军晋级=false；回滚演练=true",
-      "commit": "36b757dfbd529c74c70cfa757291725d8a264663",
-      "unmetReason": "部署、线上身份核验与回滚演练均已 PASS，但没有统计合格候选完成冠军晋级；不能把“部署现有冠军”当作 R12 完成",
+      "source": ".github/workflows/ci.yml + ai-training.yml + scripts/ci/verify-deploy.mjs + rollback-champion.mjs + training/scripts/promotion-e2e-drill.mjs",
+      "testCommand": "node scripts/ci/verify-workflows.mjs && node scripts/ci/rollback-champion.mjs --dry-run && node training/scripts/promotion-e2e-drill.mjs",
+      "evidence": "工作流机器门禁=true；回滚 dry-run=true；GitHub ruleset 机器合并（0 人工批准 + 必需检查）=true；真实机器合并+Pages 部署+线上核验=true（run 40221527752, site=PASS）；隔离环境晋级→落盘→post-apply 门禁→发布器建 PR dry-run→构建→provenance/版本锁→promotion 审计→发布核验→回滚全链路=true（11 项，合成夹具）；dev 信号同预算配对复现筛查=NO-FORMAL-CHALLENGE（4 层均无正增量）；第一名率冠军晋级=false；回滚演练=true",
+      "commit": "bd9e266d4e172c64c1d0f9aaba09cf1a8be9331a",
+      "unmetReason": "部署、线上身份核验、隔离全链路演练与回滚演练均已 PASS，但没有统计合格候选完成真实冠军晋级；且几何 alpha 预算已消耗 0.0499756（剩余 2.44e-5），新 alpha 家族必须显式治理授权，不能把“部署现有冠军/合成夹具演练”当作 R12 完成",
       "checkVersion": "ai8-readiness-v1",
-      "measuredAt": "2026-10-25T19:26:04.081Z"
+      "measuredAt": "2026-10-26T07:54:35.194Z"
     }
   ]
 }

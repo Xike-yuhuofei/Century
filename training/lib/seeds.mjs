@@ -26,6 +26,8 @@ export const VALIDATION_POOL_MAX = VALIDATION_POOL_BASE + 80_000 * VALIDATION_ST
 
 /** 训练池上限（不含）：验证池从该值起步，训练种子绝不允许到达或越过。 */
 export const TRAINING_POOL_MAX = VALIDATION_POOL_BASE;
+/** AI5/OpenEvolve 研究子块：研究复现与算法筛查专用，不是正式验证池。 */
+export const AI5_RESEARCH_BLOCK = [300_000_000, 400_000_000];
 /** 每个候选固定预留的训练种子块大小（与 --games-per-candidate 上限 1000 对齐，
  * 块大小固定与游标持久化解耦：跨运行调整局数不会造成块重叠）。 */
 export const TRAINING_SEED_BLOCK = 1_000;

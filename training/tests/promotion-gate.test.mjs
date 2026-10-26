@@ -6,7 +6,7 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync, copyFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync, copyFileSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -168,16 +168,18 @@ function makeFixture(dir) {
   return { dir, planPath: locked.path, evidencePath, candidatePath, ledgerPath, registryPath, evidence, plan };
 }
 
-function runGate(fixture, extraArgs = []) {
+function runGate(fixture, extraArgs = [], overrides = {}) {
   return execFileSync(process.execPath, [
     SCRIPT,
-    '--evidence', fixture.evidencePath,
-    '--plan', fixture.planPath,
+    '--evidence', overrides.evidencePath ?? fixture.evidencePath,
+    '--plan', overrides.planPath ?? fixture.planPath,
     '--candidate', fixture.candidatePath,
-    '--champion', resolve(REPO_ROOT, 'training/champions/champion.json'),
+    '--champion', overrides.championPath ?? resolve(REPO_ROOT, 'training/champions/champion.json'),
     '--alpha-ledger', fixture.ledgerPath,
     '--governance-central', fixture.registryPath,
-    '--dry-run',
+    ...(overrides.mode === 'post-apply'
+      ? ['--post-apply', '--base-champion', overrides.baseChampionPath ?? resolve(REPO_ROOT, 'training/champions/champion.json')]
+      : ['--dry-run']),
     ...extraArgs,
   ], { encoding: 'utf8', cwd: REPO_ROOT });
 }
@@ -232,4 +234,138 @@ test('机器门禁反向：相关统计不达标 → 拒绝晋级', () => {
     })();
     assert.equal(r.ok, false, '统计不达标时门禁必须拒绝');
   });
+});
+
+test('机器门禁 post-apply：冠军 PR 已落地候选时仍能独立复核', () => {
+  withFixture(fixture => {
+    const candidate = JSON.parse(readFileSync(fixture.candidatePath, 'utf8'));
+    const baseChampion = JSON.parse(readFileSync(resolve(REPO_ROOT, 'training/champions/champion.json'), 'utf8'));
+    const applied = {
+      ...candidate,
+      provenance: {
+        basedOn: baseChampion.parameters.id,
+        promotionEvidence: {
+          planId: fixture.plan.planId,
+          planHash: fixture.plan.planHash,
+          challengeIndex: CHALLENGE_INDEX,
+          evidenceHash: fixture.evidence.evidenceHash,
+        },
+      },
+    };
+    const appliedPath = join(fixture.dir, 'applied-champion.json');
+    writeFileSync(appliedPath, JSON.stringify(applied, null, 2));
+    mkdirSync(join(fixture.dir, 'candidates'), { recursive: true });
+    writeFileSync(join(fixture.dir, 'candidates', `${candidate.id}.json`), JSON.stringify(candidate, null, 2));
+
+    const out = runGate(fixture, [], { championPath: appliedPath, mode: 'post-apply' });
+    assert.match(out, /"verdict":\s*"VERIFY_APPLIED"/);
+    assert.match(out, /"appliedChampion":\s*"fp-gate-test-candidate"/);
+    assert.match(out, /"basedOn":\s*"joint-js5"/);
+  });
+});
+
+test('机器门禁 post-apply：落地参数被篡改 → 拒绝', () => {
+  withFixture(fixture => {
+    const candidate = JSON.parse(readFileSync(fixture.candidatePath, 'utf8'));
+    const baseChampion = JSON.parse(readFileSync(resolve(REPO_ROOT, 'training/champions/champion.json'), 'utf8'));
+    const applied = {
+      ...candidate,
+      parameters: { ...candidate.parameters, tempoWeight: 1.42 },
+      provenance: {
+        basedOn: baseChampion.parameters.id,
+        promotionEvidence: {
+          planId: fixture.plan.planId,
+          planHash: fixture.plan.planHash,
+          challengeIndex: CHALLENGE_INDEX,
+          evidenceHash: fixture.evidence.evidenceHash,
+        },
+      },
+    };
+    const appliedPath = join(fixture.dir, 'applied-champion.json');
+    writeFileSync(appliedPath, JSON.stringify(applied, null, 2));
+    mkdirSync(join(fixture.dir, 'candidates'), { recursive: true });
+    writeFileSync(join(fixture.dir, 'candidates', `${candidate.id}.json`), JSON.stringify(candidate, null, 2));
+    assert.throws(
+      () => runGate(fixture, [], { championPath: appliedPath, mode: 'post-apply' }),
+      /参数哈希|不一致/,
+    );
+  });
+});
+
+test('机器门禁 post-apply：provenance/基线被伪造 → 拒绝', () => {
+  withFixture(fixture => {
+    const candidate = JSON.parse(readFileSync(fixture.candidatePath, 'utf8'));
+    const baseChampion = JSON.parse(readFileSync(resolve(REPO_ROOT, 'training/champions/champion.json'), 'utf8'));
+    const applied = {
+      ...candidate,
+      provenance: {
+        basedOn: baseChampion.parameters.id,
+        promotionEvidence: {
+          planId: fixture.plan.planId,
+          planHash: '0'.repeat(64),
+          challengeIndex: CHALLENGE_INDEX,
+          evidenceHash: fixture.evidence.evidenceHash,
+        },
+      },
+    };
+    const appliedPath = join(fixture.dir, 'applied-champion.json');
+    writeFileSync(appliedPath, JSON.stringify(applied, null, 2));
+    mkdirSync(join(fixture.dir, 'candidates'), { recursive: true });
+    writeFileSync(join(fixture.dir, 'candidates', `${candidate.id}.json`), JSON.stringify(candidate, null, 2));
+    assert.throws(
+      () => runGate(fixture, [], { championPath: appliedPath, mode: 'post-apply' }),
+      /provenance|planHash|不一致/,
+    );
+    assert.throws(
+      () => runGate(fixture, [], {
+        championPath: appliedPath, mode: 'post-apply', baseChampionPath: join(fixture.dir, 'missing-base.json'),
+      }),
+      /基线冠军文件不存在/,
+    );
+  });
+});
+
+test('机器门禁反向：预注册样本低于 60/人数 → 拒绝（全胜也不放行）', () => {
+  withFixture(fixture => {
+    const tinyDir = mkdtempSync(join(tmpdir(), 'century-small-plan-'));
+    try {
+      const windows = Object.fromEntries([2, 3, 4, 5].map((n, i) => [
+        String(n), { base: SEED_BASE + i * 8, count: 8 },
+      ]));
+      const smallPlan = createPreregistration({
+        planId: 'fp-small-sample-plan',
+        candidate: fixture.plan.candidate,
+        champion: fixture.plan.champion,
+        opponents: fixture.plan.opponents,
+        seatWindows: windows,
+        challengeIndex: CHALLENGE_INDEX,
+        minSeedsPerSeatCount: 2,
+        engine: {
+          engineBundleSha256: PROVENANCE.engineBundleSha256,
+          sourceClosureSha256: PROVENANCE.sourceClosureSha256,
+          decisionSourceSha256: PROVENANCE.decisionSourceSha256,
+          decisionArtifactSha256: PROVENANCE.decisionArtifactSha256,
+          codeCommit: PROVENANCE.buildGitCommit,
+        },
+      });
+      const locked = lockPreregistration({
+        plan: smallPlan, dir: tinyDir,
+        writeJSON: (path, value) => writeFileSync(path, JSON.stringify(value, null, 2)),
+      });
+      assert.throws(
+        () => runGate(fixture, [], { planPath: locked.path }),
+        /硬下限|低于/,
+      );
+    } finally {
+      rmSync(tinyDir, { recursive: true, force: true });
+    }
+  });
+});
+
+test('正式挑战 CLI：--seeds-per-seat 低于 60 直接拒绝', () => {
+  const cli = resolve(REPO_ROOT, 'training/tournament/run-first-place-challenge.mjs');
+  assert.throws(
+    () => execFileSync(process.execPath, [cli, '--candidate', 'dummy.json', '--seeds-per-seat', '8', '--dry-run'], { encoding: 'utf8' }),
+    error => /60–2000|必须为 60/.test(`${error.stderr ?? ''}${error.stdout ?? ''}${error.message ?? ''}`),
+  );
 });

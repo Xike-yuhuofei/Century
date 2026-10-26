@@ -15,6 +15,7 @@
  * - 晋级落地/发布仍由 CI 的 promotion-machine-gate 独立复核并 auto-merge。
  */
 
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ensureDir, writeJSON } from '../lib/io.mjs';
@@ -26,6 +27,8 @@ import {
   createLiveGovernanceProviderAI9, createAutonomousGovernanceAdapterAI9,
 } from './governance-provider-v2.mjs';
 import { createPromotionHandler } from './promotion-handler.mjs';
+import { createOpenEvolveCampaignGenerator, writeOpenEvolveEvidence } from './openevolve-campaign.mjs';
+import { sha256Hex } from './core.mjs';
 
 function parseArgs(argv) {
   const values = { _: [] };
@@ -52,11 +55,74 @@ const rootDir = resolve(REPO_ROOT, coevolve ? 'training/reports/coevolution' : '
 const governance = coevolve
   ? createAutonomousGovernanceAdapterAI9({ provider: createLiveGovernanceProviderAI9() })
   : createAutonomousGovernanceAdapter({ provider: createLiveGovernanceProvider() });
+const CODE_VERSION_PATH = resolve(rootDir, 'code-version.json');
+/** 12h/R09 证据必须能绑定到具体代码版本：commit + 干净工作区 + 训练核心模块哈希。 */
+const CODE_MODULES = [
+  'training/evolution/autonomous-run.mjs',
+  'training/evolution/campaign-controller.mjs',
+  'training/evolution/dev-evaluator.mjs',
+  'training/evolution/candidate-generator.mjs',
+  'training/evolution/selection.mjs',
+  'training/evolution/safety-check.mjs',
+  'training/lib/seed-governance.mjs',
+  'web-v1/dist/js/engine.js',
+  'web-v1/dist/js/ai.js',
+  'web-v1/dist/js/js/adapter.js',
+  'web-v1/dist/js/ai/decision.js',
+  'web-v1/dist/js/js/champion-guided.js',
+  'web-v1/dist/js/js/joint-rollout.js',
+  'web-v1/dist/js/js/planner.js',
+  'web-v1/dist/js/js/config.js',
+  'web-v1/dist/js/ai-runtime/decision-core.js',
+];
+
+function computeCodeVersion() {
+  const commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO_ROOT, encoding: 'utf8' }).trim();
+  const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], {
+    cwd: REPO_ROOT, encoding: 'utf8',
+  }).trim().length > 0;
+  const modules = {};
+  for (const path of CODE_MODULES) {
+    modules[path] = sha256Hex(readFileSync(resolve(REPO_ROOT, path), 'utf8'));
+  }
+  return {
+    schema: 'century-code-version-v1',
+    commit,
+    dirty,
+    modules,
+    recordedAt: new Date().toISOString(),
+    note: 'campaign 启动时冻结；resume 必须完全一致；R09 验收要求 dirty=false 且模块哈希与当前代码一致',
+  };
+}
+
+function assertResumeCodeVersion() {
+  if (!existsSync(CODE_VERSION_PATH)) {
+    throw new Error(`resume 缺少 code-version.json（${CODE_VERSION_PATH}）——无法证明与启动时同一代码版本，拒绝恢复`);
+  }
+  const recorded = JSON.parse(readFileSync(CODE_VERSION_PATH, 'utf8'));
+  const current = computeCodeVersion();
+  if (recorded.dirty !== false) {
+    throw new Error('启动时工作区不干净（dirty=true），该 campaign 不能作为可复现证据');
+  }
+  // 运行过程中会写入种子登记、证据与检查点，工作区 dirty 必然从 false 变为 true；
+  // 恢复时只要求 commit 与训练核心/构建产物哈希一致，不要求当前工作区干净。
+  if (recorded.commit !== current.commit) {
+    throw new Error(`resume 代码版本不一致：启动=${recorded.commit}，当前=${current.commit}`);
+  }
+  for (const [path, hash] of Object.entries(recorded.modules ?? {})) {
+    if (current.modules[path] !== hash) {
+      throw new Error(`resume 训练模块已变化：${path}（启动 ${String(hash).slice(0, 12)} ≠ 当前 ${String(current.modules[path]).slice(0, 12)}）`);
+    }
+  }
+  return recorded;
+}
 
 function configFromArgs() {
   const playerCounts = args['player-counts']
     ? String(args['player-counts']).split(',').map(Number)
     : [2, 3, 4, 5];
+  const generatorMode = args.generator ? String(args.generator) : 'bounded';
+  const sourceEvolution = generatorMode === 'openevolve-hybrid' || generatorMode === 'openevolve-only';
   return {
     rounds: args.rounds !== undefined ? Number(args.rounds) : 1,
     ...(coevolve ? { configRef: 'ai9://campaign/coevolution' } : {}),
@@ -75,8 +141,16 @@ function configFromArgs() {
         : (args.modules ? String(args.modules).split(',') : null),
       mode: coevolve ? 'multi-module' : 'descriptor',
       strategies: args.strategies ? String(args.strategies).split(',') : null,
+      generator: generatorMode,
       openevolveIterations: args['openevolve-iterations'] !== undefined
         ? Number(args['openevolve-iterations']) : 2,
+      openevolve: sourceEvolution ? {
+        iterations: args['openevolve-iterations'] !== undefined ? Number(args['openevolve-iterations']) : 1,
+        timeoutMs: args['openevolve-timeout-ms'] !== undefined
+          ? Number(args['openevolve-timeout-ms']) : 3_600_000,
+        outputDir: args['openevolve-output'] ? resolve(REPO_ROOT, String(args['openevolve-output'])) : null,
+        onLlmUnavailable: args['on-llm-unavailable'] ? String(args['on-llm-unavailable']) : 'fallback',
+      } : null,
       includeControl: args['no-control'] !== true,
       allowDeterministicFallback: args['no-deterministic-fallback'] !== true,
     },
@@ -91,6 +165,19 @@ function configFromArgs() {
   };
 }
 
+/** 依据配置构建生成器；bounded 走控制器默认的确定性变异。 */
+function generatorFromConfig(config) {
+  if (config.generation.generator === 'bounded') return null;
+  const source = config.generation.openevolve;
+  return createOpenEvolveCampaignGenerator({
+    mode: config.generation.generator,
+    iterations: source.iterations,
+    timeoutMs: source.timeoutMs,
+    outputDir: source.outputDir,
+    onLlmUnavailable: source.onLlmUnavailable,
+  });
+}
+
 async function main() {
   if (command === 'status') {
     const statePath = resolve(rootDir, 'state.json');
@@ -99,6 +186,9 @@ async function main() {
       return;
     }
     const state = JSON.parse(readFileSync(statePath, 'utf8'));
+    const codeVersion = existsSync(CODE_VERSION_PATH)
+      ? JSON.parse(readFileSync(CODE_VERSION_PATH, 'utf8'))
+      : null;
     console.log(JSON.stringify({
       campaignId,
       status: state.status,
@@ -110,6 +200,7 @@ async function main() {
       promotionOutcomes: state.promotionOutcomes ?? [],
       checkpointSeq: state.checkpointSeq,
       updatedAt: state.updatedAt,
+      codeVersion,
       resource: resourceSnapshot(),
     }, null, 2));
     return;
@@ -125,20 +216,32 @@ async function main() {
     process.exit(2);
   }
 
+  const config = configFromArgs();
   const capacity = command === 'start'
-    ? assertResourceBudget({ requestedConcurrency: configFromArgs().budget.maxConcurrent })
-    : evaluateCapacity({ requestedConcurrency: configFromArgs().budget.maxConcurrent });
+    ? assertResourceBudget({ requestedConcurrency: config.budget.maxConcurrent })
+    : evaluateCapacity({ requestedConcurrency: config.budget.maxConcurrent });
   if (!capacity.ok) {
     console.log(JSON.stringify({ campaignId, status: 'blocked-by-resource', reasons: capacity.reasons, snapshot: capacity.snapshot }, null, 2));
     process.exit(3);
   }
 
   const autoChallenge = args['no-auto-challenge'] !== true;
+  ensureDir(rootDir);
+  if (command === 'start') {
+    if (existsSync(CODE_VERSION_PATH)) {
+      throw new Error(`code-version.json 已存在（${CODE_VERSION_PATH}）——同一 campaign 重复 start 被拒绝；恢复请用 resume`);
+    }
+    writeJSON(CODE_VERSION_PATH, computeCodeVersion());
+  } else {
+    assertResumeCodeVersion();
+  }
+  const codeVersion = JSON.parse(readFileSync(CODE_VERSION_PATH, 'utf8'));
   const controller = new CampaignController({
     campaignId,
     rootDir,
     governance,
-    config: configFromArgs(),
+    config,
+    generator: generatorFromConfig(config),
     ...(autoChallenge ? { promotionHandler: createPromotionHandler() } : {}),
   });
   const started = Date.now();
@@ -147,6 +250,17 @@ async function main() {
   // 压力测试可通过重启伪造时长）。
   const stateDoc = JSON.parse(readFileSync(resolve(rootDir, 'state.json'), 'utf8'));
   const campaignStartedAt = stateDoc.createdAt ?? new Date(started).toISOString();
+  const sourceEvolution = config.generation.generator !== 'bounded';
+  const openEvolveEvidence = [];
+  if (sourceEvolution) {
+    for (const round of results.rounds) {
+      if (!round.generatorMeta) continue;
+      const written = writeOpenEvolveEvidence({
+        dir: resolve(rootDir, 'openevolve'), round: round.round, generatorMeta: round.generatorMeta,
+      });
+      if (written) openEvolveEvidence.push(written);
+    }
+  }
   const summary = {
     schema: 'century-autonomous-run-summary-v1',
     campaignId,
@@ -159,9 +273,20 @@ async function main() {
     budgetUsed: results.budgetUsed,
     promotionQueue: results.promotionQueue,
     promotionOutcomes: results.promotionOutcomes,
+    codeVersion,
+    generator: {
+      mode: config.generation.generator,
+      sourceEvolution,
+      openevolve: config.generation.openevolve,
+      sourceCandidates: results.rounds.flatMap(r => r.candidates)
+        .filter(c => c.generator === 'openevolve-llm')
+        .map(c => ({ candidateId: c.candidateId, stage: c.stage, buildKind: c.buildKind, sourceHash: c.sourceHash })),
+      evidenceFiles: openEvolveEvidence,
+    },
     candidates: results.rounds.flatMap(r => r.candidates).map(c => ({
       candidateId: c.candidateId,
       stage: c.stage,
+      generator: c.generator ?? null,
       quick: c.quick?.metrics ?? null,
       deep: c.deep?.metrics ?? null,
     })),

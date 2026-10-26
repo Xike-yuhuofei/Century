@@ -1,0 +1,88 @@
+{
+  "schema": "century-github-governance-verification-v1",
+  "fetchedAt": "2026-10-25T23:59:37.110Z",
+  "repository": "Xike-yuhuofei/Century",
+  "basis": "gh api（真实远端状态快照，不是本地推断）",
+  "ruleset": {
+    "id": 25827908,
+    "name": "main-protection",
+    "enforcement": "active",
+    "target": "branch",
+    "requiredApprovingReviewCount": 0,
+    "requireCodeOwnerReview": false,
+    "requiredReviewThreadResolution": true,
+    "requiredStatusChecks": [
+      "ci-summary",
+      "rules-cards",
+      "governance-tests"
+    ],
+    "strictRequiredStatusChecksPolicy": true,
+    "allowedMergeMethods": [
+      "squash",
+      "merge"
+    ]
+  },
+  "mergedPullRequests": [
+    {
+      "number": 51,
+      "state": "MERGED",
+      "mergedAt": "2026-10-25T18:29:59Z",
+      "mergedBy": "Xike-yuhuofei",
+      "reviewDecision": "",
+      "headRefName": "feat/ai8-autonomous-evolution",
+      "title": "AI8：第一名率唯一判据 + 无人值守进化 + 机器门禁晋级",
+      "mergeCommit": "968ad71eb2d11d1d0d5143819154e3c32adb7532"
+    },
+    {
+      "number": 52,
+      "state": "MERGED",
+      "mergedAt": "2026-10-25T19:11:31Z",
+      "mergedBy": "Xike-yuhuofei",
+      "reviewDecision": "",
+      "headRefName": "docs/ai8-final-evidence",
+      "title": "AI8：最终线上核验证据与验收矩阵校正",
+      "mergeCommit": "36b757dfbd529c74c70cfa757291725d8a264663"
+    },
+    {
+      "number": 53,
+      "state": "MERGED",
+      "mergedAt": "2026-10-25T19:54:30Z",
+      "mergedBy": "Xike-yuhuofei",
+      "reviewDecision": "",
+      "headRefName": "feat/ai8-stress-and-power",
+      "title": "AI8：统计功效冻结、回滚演练与 12h 压力测试",
+      "mergeCommit": "06e7bca341f6005c0b7e3bc36814d361a8c48865"
+    },
+    {
+      "number": 54,
+      "state": "MERGED",
+      "mergedAt": "2026-10-25T20:13:49Z",
+      "mergedBy": "Xike-yuhuofei",
+      "reviewDecision": "",
+      "headRefName": "fix/r09-budget-stop",
+      "title": "AI8：R09 接受 12h 墙钟预算正常结束",
+      "mergeCommit": "d73c104eb0da8be4fb07f975dda8054753c0e3e4"
+    },
+    {
+      "number": 55,
+      "state": "MERGED",
+      "mergedAt": "2026-10-25T21:20:41Z",
+      "mergedBy": "Xike-yuhuofei",
+      "reviewDecision": "",
+      "headRefName": "feat/ai8-first-place-fitness",
+      "title": "AI8：OpenEvolve 研究 fitness 迁移为第一名率增量",
+      "mergeCommit": "052904e00ce848a4897fc99382c22cebca2c4544"
+    },
+    {
+      "number": 56,
+      "state": "MERGED",
+      "mergedAt": "2026-10-25T21:54:35Z",
+      "mergedBy": "Xike-yuhuofei",
+      "reviewDecision": "",
+      "headRefName": "feat/ai8-promotion-drill-readiness",
+      "title": "AI8：隔离全链路晋级演练与 R01/R12 证据收紧",
+      "mergeCommit": "19d4b40c2f633c7b8ff8b5484941a0ee125a7bd1"
+    }
+  ],
+  "conclusion": "main 保护规则要求 0 个人工批准；合并只依赖 ci-summary/rules-cards/governance-tests 等机器检查与严格 up-to-date；PR #51–#56 均无 reviewDecision 且已合并"
+}

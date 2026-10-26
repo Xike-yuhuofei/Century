@@ -264,17 +264,62 @@ const isAdapter = r => r.reason.includes('联合');
     `versionsIds 样本：${[...ids].slice(0, 8).join('，')}；engineBundleSha256=${j.engineBundleSha256.slice(0, 12)}（晋级前产物）`);
 }
 
-// ---- V7：晋级指纹（V7a 证据内部一致性=P0；V7b 证据 vs 当前重建=治理） ----
+// ---- V7：晋级指纹（新格式：冠军自身 provenance vs 当前构建；旧格式按历史 js5 证据） ----
 {
-  const cand = JSON.parse(readFileSync(resolve(REPO_ROOT, 'training/reports/js5-promotion-challenge/candidate.json'), 'utf8'));
   const prov = championDoc.provenance ?? {};
+  const championId = championDoc.parameters?.id ?? championDoc.id ?? null;
+  const legacyChampion = championId === 'joint-js5';
+  const normalized = Boolean(prov.decisionSourceSha256 && prov.decisionArtifactSha256 && prov.championParametersSha256);
+  const pe = prov.promotionEvidence;
+  const peOk = Boolean(pe && typeof pe.planId === 'string'
+    && /^[0-9a-f]{64}$/.test(String(pe.planHash ?? ''))
+    && /^[0-9a-f]{64}$/.test(String(pe.evidenceHash ?? '')));
+  if (!normalized && !legacyChampion) {
+    // 非 legacy 冠军必须携带规范化身份；删除字段不能把审计降级到旧锚点。
+    note('P0', 'V7a', '新冠军缺少规范化 provenance（疑似删字段降级审计）',
+      `冠军=${String(championId)}；decisionSource/decisionArtifact/championParameters 至少缺一`,
+      '恢复 refresh-champion-provenance 写入的完整身份；禁止手工裁剪 provenance');
+  } else if (normalized) {
+    if (!peOk) {
+      note('P0', 'V7a', '冠军缺少可审计的 promotionEvidence',
+        `冠军=${String(championId)}；planId=${String(pe?.planId)}；planHash/evidenceHash 必须为 64 hex`,
+        '由 promote-first-place-champion 写入完整 provenance.promotionEvidence');
+    } else {
+    // 新格式由 refresh-champion-provenance 在 apply+build 后回写。
+    // 不再把任何一次历史挑战（js5）当作所有未来冠军的锚点。
+    let currentProv = null;
+    try { currentProv = buildProvenance(); } catch { /* dist 未构建 */ }
+    const detail = currentProv
+      ? `decisionSource=${prov.decisionSourceSha256.slice(0, 12)}/${currentProv.decisionSourceSha256.slice(0, 12)}；` +
+        `decisionArtifact=${prov.decisionArtifactSha256.slice(0, 12)}/${currentProv.decisionArtifactSha256.slice(0, 12)}；` +
+        `championParameters=${prov.championParametersSha256.slice(0, 12)}/${currentProv.championParametersSha256.slice(0, 12)}`
+      : `冠军=${championDoc.parameters?.id}；dist 未构建`;
+    if (!currentProv) {
+      note('BLOCKED', 'V7', '无法核验晋级身份：dist 未构建', detail, 'cd web-v1 && npm run build');
+    } else {
+      const sourceDrift = prov.decisionSourceSha256 !== currentProv.decisionSourceSha256;
+      const paramsDrift = prov.championParametersSha256 !== currentProv.championParametersSha256;
+      const artifactDrift = prov.decisionArtifactSha256 !== currentProv.decisionArtifactSha256;
+      if (sourceDrift || paramsDrift) {
+        note('P0', 'V7a', '冠军 provenance 与当前源码/参数不一致', detail,
+          '重新执行正式挑战或恢复正确 parameters.ts；禁止手工改 provenance');
+      } else if (artifactDrift) {
+        note('GOVERNANCE', 'V7b', '冠军 provenance 构建产物 ≠ 当前产物', detail,
+          '执行 apply-champion + npm run build + refresh-champion-provenance 后重新提交');
+      } else {
+        note('PASS', 'V7', '晋级身份一致（冠军 provenance = 当前构建）', detail);
+      }
+    }
+    }
+  } else {
+  const cand = JSON.parse(readFileSync(resolve(REPO_ROOT, 'training/reports/js5-promotion-challenge/candidate.json'), 'utf8'));
   const recorded = prov.engineBundleSha256;
   const evidence = cand.engineBundleSha256;
   let currentProv = null;
   try { currentProv = buildProvenance(); } catch { /* dist 未构建时跳过 */ }
   // AI7-A4 规范化身份：决策核心（参数块占位）+ 冠军参数块分离核验。
   // 晋级会按预期改变 CHAMPION_PARAMETERS；全量 bundle 指纹变化不再自动视为漂移。
-  const normalized = prov.decisionSourceSha256 && prov.decisionArtifactSha256 && prov.championParametersSha256
+  const normalizedLegacy = prov.decisionSourceSha256 && prov.decisionArtifactSha256 && prov.championParametersSha256
     ? {
         decisionSource: prov.decisionSourceSha256,
         decisionArtifact: prov.decisionArtifactSha256,
@@ -288,16 +333,16 @@ const isAdapter = r => r.reason.includes('联合');
         championParameters: cand.championParametersSha256,
       }
     : null;
-  const detail = normalized
-    ? `规范化身份：decisionSource=${normalized.decisionSource.slice(0, 12)}；decisionArtifact=${normalized.decisionArtifact.slice(0, 12)}；` +
-      `championParameters=${normalized.championParameters.slice(0, 12)}；当前=${currentProv ? `${currentProv.decisionSourceSha256.slice(0, 12)}/${currentProv.decisionArtifactSha256.slice(0, 12)}/${currentProv.championParametersSha256.slice(0, 12)}` : '未构建'}`
+  const detail = normalizedLegacy
+    ? `规范化身份：decisionSource=${normalizedLegacy.decisionSource.slice(0, 12)}；decisionArtifact=${normalizedLegacy.decisionArtifact.slice(0, 12)}；` +
+      `championParameters=${normalizedLegacy.championParameters.slice(0, 12)}；当前=${currentProv ? `${currentProv.decisionSourceSha256.slice(0, 12)}/${currentProv.decisionArtifactSha256.slice(0, 12)}/${currentProv.championParametersSha256.slice(0, 12)}` : '未构建'}`
     : `champion.json.provenance=${recorded?.slice(0, 12)}；candidate.json=${evidence?.slice(0, 12)}；当前重建=${currentProv?.engineBundleSha256.slice(0, 12) ?? '未构建'}`;
-  const internalMismatch = normalized && evidenceNormalized
-    ? ['decisionSource', 'decisionArtifact', 'championParameters'].some(k => normalized[k] !== evidenceNormalized[k])
+  const internalMismatch = normalizedLegacy && evidenceNormalized
+    ? ['decisionSource', 'decisionArtifact', 'championParameters'].some(k => normalizedLegacy[k] !== evidenceNormalized[k])
     : Boolean(recorded && evidence && recorded !== evidence);
-  const drift = normalized && currentProv
+  const drift = normalizedLegacy && currentProv
     ? ['decisionSource', 'decisionArtifact', 'championParameters'].some(k =>
-        normalized[k] !== (k === 'decisionSource' ? currentProv.decisionSourceSha256
+        normalizedLegacy[k] !== (k === 'decisionSource' ? currentProv.decisionSourceSha256
           : k === 'decisionArtifact' ? currentProv.decisionArtifactSha256
             : currentProv.championParametersSha256))
     : Boolean(recorded && currentProv && recorded !== currentProv.engineBundleSha256);
@@ -306,11 +351,12 @@ const isAdapter = r => r.reason.includes('联合');
   } else if (drift) {
     // 治理问题（REQUIRES_APPROVAL）：证据链本身诚实，但当前产物与受试身份不同。
     // 修复需要人工授权的新正式挑战，不得在本类整改中自动消费验证池。
-    note('GOVERNANCE', 'V7b', '晋级证据身份 ≠ 当前产物（正式晋级证据待人工授权重验）',
+    note('GOVERNANCE', 'V7b', '晋级证据身份 ≠ 当前产物（正式晋级证据待重新验证）',
       detail + '；本项阻断正式晋级门禁（需独立重挑战），不阻断开发/研究门禁',
-      '人工授权后对当前冻结产物执行新一轮正式冠军挑战（消费验证池新块）');
+      '对当前冻结产物执行新一轮正式冠军挑战（消费验证池新块）');
   } else {
     note('PASS', 'V7', '晋级身份一致', detail);
+  }
   }
 }
 

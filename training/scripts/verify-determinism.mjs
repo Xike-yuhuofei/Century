@@ -14,6 +14,7 @@
  */
 
 import { writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { ensureDir, writeJSON } from '../lib/io.mjs';
@@ -106,9 +107,32 @@ function runWorld({ seed, seatCount, worldIndex }) {
   };
 }
 
+/** 确定性证据必须绑定到实际执行代码：commit、工作区状态与决策/模拟器文本身份。 */
+function codeIdentity() {
+  const files = [
+    'training/scripts/verify-determinism.mjs',
+    'training/simulator/simulate.mjs',
+    'training/evolution/core.mjs',
+    'training/adversarial/registry.mjs',
+    'training/champions/champion.json',
+    'web-v1/dist/build-manifest.json',
+  ];
+  const hashes = {};
+  for (const path of files) {
+    hashes[path] = createHash('sha256').update(readFileSync(resolve(REPO_ROOT, path))).digest('hex');
+  }
+  const commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO_ROOT, encoding: 'utf8' }).trim();
+  const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], {
+    cwd: REPO_ROOT, encoding: 'utf8',
+  }).trim().length > 0;
+  return { commit, dirty, files: hashes };
+}
+
+const code = codeIdentity();
 const report = {
   schema: 'century-determinism-report-v1',
   generatedAt: new Date().toISOString(),
+  code,
   engine: {
     commit: requireBuiltEngine().manifest.gitCommit,
     artifact: requireBuiltEngine().manifest.artifact.sha256,

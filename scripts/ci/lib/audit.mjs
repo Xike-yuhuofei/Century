@@ -35,8 +35,8 @@ export function renderAuditSummary(report, classification) {
     lines.push('');
   }
   if (classification.verdict === 'REQUIRES_APPROVAL') {
-    lines.push('> ⏳ **REQUIRES_APPROVAL 原样保留**：证据审计已完成，但治理事项需要人工授权。'
-      + '本检查不会被改写为 PASS；只有 promotion-approval 人工批准作业成功，ci-summary 才可能放行。', '');
+    lines.push('> ⏳ **REQUIRES_APPROVAL 原样保留**：人工审批已移除，必须完成第一名率正式挑战并由'
+      + 'promotion-machine-gate 机器复核；本检查不会被改写为 PASS。', '');
   }
   return lines.join('\n');
 }

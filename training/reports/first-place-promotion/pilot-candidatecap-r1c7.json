@@ -1,0 +1,67 @@
+{
+  "schema": "century-first-place-research-pilot-v1",
+  "generatedAt": "2026-10-26T05:55:00.000Z",
+  "purpose": "在消耗最后一个正式 alpha 之前，用研究池独立种子检查 dev-pool 信号是否在正式配对设计（A/B 同焦点席位、同 seed、同对手、同固定 workUnits）下复现",
+  "formalEvidence": false,
+  "candidateId": "cand-ai7-candidatecap-r1c7-e2d7e8",
+  "candidateArtifactHash": "3a058fb1521e680a04f728137e6e2eabc40e2c57c85952c27ac23dda40f4e883",
+  "candidateSourceHash": "9a8d2d814ff30f041034db0bea3ddf67155839076928400a5f911de2e51f782f",
+  "championId": "joint-js5",
+  "design": {
+    "primaryMetric": "pairedFirstPlaceRateDelta",
+    "focusSeat": "per-seed rotation (seedIndex % seatCount)",
+    "arms": "A=candidate at focus seat; B=frozen champion at same focus seat; same seed and opponents",
+    "seatCounts": [2, 3, 4, 5],
+    "seedsPerSeatCount": 30,
+    "seedBase": 300010000,
+    "seedBlocks": {
+      "2": [300010000, 300010029],
+      "3": [300010030, 300010059],
+      "4": [300010060, 300010089],
+      "5": [300010090, 300010119]
+    },
+    "seedPool": "AI5 research block [300M, 400M)；非正式验证池",
+    "workUnits": 64,
+    "note": "候选 dev 证据使用 workUnits=32；正式挑战归一化为 64，双方同预算"
+  },
+  "results": [
+    {
+      "seatCount": 2,
+      "games": 60,
+      "anomalies": 0,
+      "deltaMean": 0,
+      "ciLower": -0.11521160246945206
+    },
+    {
+      "seatCount": 3,
+      "games": 60,
+      "anomalies": 0,
+      "deltaMean": -0.06666666666666667,
+      "ciLower": -0.22823699059932911
+    },
+    {
+      "seatCount": 4,
+      "games": 60,
+      "anomalies": 0,
+      "deltaMean": 0,
+      "ciLower": -0.21554117171094409
+    },
+    {
+      "seatCount": 5,
+      "games": 60,
+      "anomalies": 0,
+      "deltaMean": -0.03333333333333333,
+      "ciLower": -0.2241004620976444
+    }
+  ],
+  "totalGames": 240,
+  "pooled": {
+    "status": "insufficient",
+    "reason": "没有可用人数层",
+    "note": "2–5 人都没有正向下界；等权简单均值约 -0.025"
+  },
+  "elapsedMs": 1327442,
+  "verdict": "NO-FORMAL-CHALLENGE",
+  "reason": "dev-pool（48 局、workUnits=32）的 +11.7pp 信号在正式配对设计、同预算（workUnits=64）下未复现（4 个人数层均无正增量）；用剩余 1.22e-5 alpha 发起 900–1500 种子正式挑战缺乏功效与先验支持，保留统计预算并记录负面结果",
+  "decisionBoundary": "本文件不是正式挑战证据，不参与冠军晋级；正式冠军未改变"
+}

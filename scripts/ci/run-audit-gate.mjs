@@ -7,7 +7,8 @@
  *     --md training/reports/audit-gate-promotion.md
  *
  * 退出码：PASS=0；REQUIRES_APPROVAL/BLOCKED=2；契约/执行错误=1。
- * REQUIRES_APPROVAL 不转换为成功——作业保持红色，由 promotion-approval 独立人工批准。
+ * REQUIRES_APPROVAL 不转换为成功——作业保持红色；人工审批已移除，必须完成
+ * 第一名率正式挑战后由 promotion-machine-gate 机器复核。
  */
 import { execFileSync } from 'node:child_process';
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from 'node:fs';

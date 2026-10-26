@@ -14,12 +14,15 @@
  *     --evidence <dir>/challenge-evidence.json \
  *     --plan <dir>/preregistration.json \
  *     --candidate <dir>/candidate.json [--dry-run]
+ *     # 已落地冠军 PR 的复核模式（champion.json 已是候选本身）：
+ *     --post-apply
  *
- * 退出码：0=晋级记录已写入；3=不晋级（保留冠军）；1=证据/治理错误（fail-closed）。
+ * 退出码：0=晋级记录已写入 / post-apply 复核通过；3=不晋级（保留冠军）；1=证据/治理错误（fail-closed）。
  */
 
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { ensureDir, readJSON } from '../lib/io.mjs';
 import { REPO_ROOT, buildProvenance, requireBuiltEngine } from '../lib/paths.mjs';
 import { loadPreregistration, assertValidationSeeds } from '../evaluator/preregistration.mjs';
@@ -55,6 +58,13 @@ for (const required of ['evidence', 'plan', 'candidate']) {
   }
 }
 const dryRun = args['dry-run'] === true;
+const postApply = args['post-apply'] === true;
+const baseChampionPath = args['base-champion'] !== undefined
+  ? resolve(process.cwd(), args['base-champion'])
+  : null;
+const baseChampionRef = args['base-champion-ref'] !== undefined
+  ? String(args['base-champion-ref'])
+  : null;
 const evidencePath = resolve(process.cwd(), args.evidence);
 const planPath = resolve(process.cwd(), args.plan);
 const candidatePath = resolve(process.cwd(), args.candidate);
@@ -70,6 +80,17 @@ requireBuiltEngine();
 const currentProvenance = buildProvenance();
 const evidence = readJSON(evidencePath);
 const plan = loadPreregistration(planPath);
+// 统计计划冻结的最小样本下限：任何预注册计划都不能低于 60 独立种子/人数。
+// 否则 8 局全胜即可得到下界 1，但真实假阳性率 1/256 远高于 alpha 预算。
+const MIN_FORMAL_SEEDS_PER_SEAT = 60;
+if (!(Number(plan.minSeedsPerSeatCount) >= MIN_FORMAL_SEEDS_PER_SEAT)) {
+  throw new Error(`预注册 minSeedsPerSeatCount=${String(plan.minSeedsPerSeatCount)} 低于硬下限 ${MIN_FORMAL_SEEDS_PER_SEAT}——拒绝晋级`);
+}
+for (const [seatCount, window] of Object.entries(plan.seatWindows ?? {})) {
+  if (!(Number(window?.count) >= MIN_FORMAL_SEEDS_PER_SEAT)) {
+    throw new Error(`${seatCount} 人层预注册种子数 ${String(window?.count)} 低于硬下限 ${MIN_FORMAL_SEEDS_PER_SEAT}——拒绝晋级`);
+  }
+}
 const candidateDoc = readJSON(candidatePath);
 const championDoc = readJSON(championPath);
 
@@ -115,20 +136,78 @@ if (candidate.parametersSha256 !== plan.candidate.parametersSha256) {
 if (candidate.sourceHash !== plan.candidate.sourceHash) throw new Error('候选源码哈希与预注册不一致（候选在验证后被修改）');
 if (candidate.artifactHash !== plan.candidate.artifactHash) throw new Error('候选产物哈希与预注册不一致');
 
+// post-apply 必须能读取 origin/main 的基线冠军，防止 PR 伪造 plan/evidence/ledger
+// 后把任意参数“晋级”。在 CI 中传 --base-champion-ref origin/main；测试可传文件。
+function loadBaseChampion() {
+  if (baseChampionPath) {
+    if (!existsSync(baseChampionPath)) throw new Error(`基线冠军文件不存在：${baseChampionPath}`);
+    return readJSON(baseChampionPath);
+  }
+  if (baseChampionRef) {
+    try {
+      const text = execFileSync('git', ['show', `${baseChampionRef}:training/champions/champion.json`], {
+        encoding: 'utf8', cwd: REPO_ROOT,
+      });
+      return JSON.parse(text);
+    } catch (error) {
+      throw new Error(`无法读取基线冠军 ${baseChampionRef}:training/champions/champion.json：${String(error.stderr ?? error.message).slice(0, 300)}`);
+    }
+  }
+  return null;
+}
+
 const championParameters = championDoc.parameters ?? championDoc;
-const currentChampion = {
-  id: championParameters.id,
-  parametersSha256: championParametersSha256(validateAIParameters(championParameters)),
-  artifactHash: currentProvenance.decisionArtifactSha256,
-};
-if (currentChampion.id !== plan.champion.id) {
-  throw new Error(`当前冠军 ${currentChampion.id} ≠ 预注册冻结冠军 ${plan.champion.id}（冠军在挑战期间被替换）`);
-}
-if (currentChampion.parametersSha256 !== plan.champion.parametersSha256) {
-  throw new Error('当前冠军参数与预注册不一致');
-}
-if (currentChampion.artifactHash !== plan.champion.artifactHash) {
-  throw new Error('当前冠军决策产物与预注册不一致（构建已变化，需重新挑战）');
+if (postApply) {
+  // 已落地冠军 PR 复核模式：champion.json 已经是候选本身，不能再要求
+  // 当前冠军 == 预注册冻结冠军（那是挑战前状态的检查，放在 else 分支）。
+  // 这里改为验证「落地内容 == 预注册候选」以及「基线冠军 == origin/main」。
+  if (championParameters.id !== candidate.id) {
+    throw new Error(`落地冠军 ${String(championParameters.id)} ≠ 预注册候选 ${candidate.id}`);
+  }
+  const appliedSha = championParametersSha256(validateAIParameters(championParameters));
+  if (appliedSha !== plan.candidate.parametersSha256) {
+    throw new Error('落地冠军参数哈希与预注册候选不一致（PR 落地了错误的参数）');
+  }
+  if (candidate.id === plan.champion.id) {
+    throw new Error('候选与基线冠军相同——禁止空晋级');
+  }
+  const baseDoc = loadBaseChampion();
+  if (!baseDoc) {
+    throw new Error('post-apply 必须提供 --base-champion 或 --base-champion-ref（禁止无基线复核）');
+  }
+  const baseParameters = baseDoc.parameters ?? baseDoc;
+  if (baseParameters.id !== plan.champion.id) {
+    throw new Error(`基线冠军 ${String(baseParameters.id)} ≠ 预注册冻结冠军 ${plan.champion.id}（main 已被替换）`);
+  }
+  const baseSha = championParametersSha256(validateAIParameters(baseParameters));
+  if (baseSha !== plan.champion.parametersSha256) {
+    throw new Error('基线冠军参数哈希与预注册不一致（plan 被伪造或 main 已变化）');
+  }
+  const provenance = championDoc?.provenance ?? {};
+  if (provenance.basedOn !== plan.champion.id) {
+    throw new Error(`落地冠军 basedOn=${String(provenance.basedOn)} ≠ 预注册基线冠军 ${plan.champion.id}`);
+  }
+  const pe = provenance.promotionEvidence;
+  if (!pe) throw new Error('落地冠军缺少 provenance.promotionEvidence——不能证明由本证据晋级');
+  if (pe.planId !== plan.planId || pe.planHash !== plan.planHash
+    || pe.challengeIndex !== plan.challengeIndex || pe.evidenceHash !== evidence.evidenceHash) {
+    throw new Error('落地冠军 provenance 与预注册计划/证据不一致');
+  }
+} else {
+  const currentChampion = {
+    id: championParameters.id,
+    parametersSha256: championParametersSha256(validateAIParameters(championParameters)),
+    artifactHash: currentProvenance.decisionArtifactSha256,
+  };
+  if (currentChampion.id !== plan.champion.id) {
+    throw new Error(`当前冠军 ${currentChampion.id} ≠ 预注册冻结冠军 ${plan.champion.id}（冠军在挑战期间被替换）`);
+  }
+  if (currentChampion.parametersSha256 !== plan.champion.parametersSha256) {
+    throw new Error('当前冠军参数与预注册不一致');
+  }
+  if (currentChampion.artifactHash !== plan.champion.artifactHash) {
+    throw new Error('当前冠军决策产物与预注册不一致（构建已变化，需重新挑战）');
+  }
 }
 if (plan.engine) {
   // 决策核心身份（不含冠军参数生成区）是晋级前后必须一致的部分；
@@ -138,7 +217,7 @@ if (plan.engine) {
       throw new Error('决策核心源码在挑战后发生变化（decisionSourceSha256 不符）——旧证据不适用');
     }
   }
-  if (plan.engine.decisionArtifactSha256) {
+  if (!postApply && plan.engine.decisionArtifactSha256) {
     if (plan.engine.decisionArtifactSha256 !== currentProvenance.decisionArtifactSha256) {
       throw new Error('决策核心产物在挑战后发生变化（decisionArtifactSha256 不符）——旧证据不适用');
     }
@@ -236,8 +315,10 @@ if (existsSync(archiveFile)) {
   if (canonicalJSON(existing) !== canonicalJSON(candidateDoc)) {
     throw new Error(`同名晋级归档已存在且内容不同：${archiveFile}——历史算法版本不可变`);
   }
+} else if (postApply) {
+  throw new Error(`落地冠军 PR 缺少候选归档：${archiveFile}`);
 }
-if (championDoc?.parameters?.id === candidate.id || championDoc?.id === candidate.id) {
+if (!postApply && (championDoc?.parameters?.id === candidate.id || championDoc?.id === candidate.id)) {
   throw new Error(`冠军 ${candidate.id} 已是当前活动冠军：禁止重新晋级覆盖 provenance`);
 }
 
@@ -323,6 +404,19 @@ const record = {
 };
 
 const verdict = { verdict: 'PROMOTE', candidateId: candidate.id, planHash: plan.planHash, challengeIndex: plan.challengeIndex };
+if (postApply) {
+  console.log(JSON.stringify({
+    verdict: 'VERIFY_APPLIED',
+    mode: 'post-apply',
+    candidateId: candidate.id,
+    appliedChampion: championParameters.id,
+    basedOn: plan.champion.id,
+    planHash: plan.planHash,
+    evidenceHash: evidence.evidenceHash,
+    challengeIndex: plan.challengeIndex,
+  }, null, 2));
+  process.exit(0);
+}
 if (dryRun) {
   console.log(JSON.stringify({ ...verdict, dryRun: true, record }, null, 2));
   process.exit(0);

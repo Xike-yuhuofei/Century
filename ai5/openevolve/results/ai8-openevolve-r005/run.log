@@ -1,0 +1,52 @@
+2026-10-26 09:16:57,123 - INFO - Logging to results/ai8-openevolve-r005/logs/openevolve_20261026_091657.log
+2026-10-26 09:16:57,145 - INFO - Set random seed to 42 for reproducibility
+2026-10-26 09:16:57,146 - INFO - Initialized LLM ensemble with models: gpt-5.6-sol (weight: 1.00)
+2026-10-26 09:16:57,149 - INFO - Initialized prompt sampler
+2026-10-26 09:16:57,149 - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-10-26 09:16:57,149 - INFO - Initialized program database with 0 programs
+2026-10-26 09:16:57,152 - INFO - Successfully loaded evaluation function from century_evaluator.py
+2026-10-26 09:16:57,152 - INFO - Initialized evaluator with century_evaluator.py
+2026-10-26 09:16:57,152 - INFO - Initialized OpenEvolve with program/acquisition_value.ts
+2026-10-26 09:16:57,153 - INFO - Adding initial program to database
+2026-10-26 09:51:04,659 - INFO - Evaluated program 8dffb3ab-fb53-4085-ba76-33c2401e64f9 in 2047.51s: combined_score=0.4792, stage_passed=1.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=1.0000, function_sha256_head=0.1631, code_complexity=2453.0000, first_place_delta=-0.0417, first_place_ci_lower=-0.1411, candidate_first_rate=0.1667, champion_first_rate=0.2083, games=96.0000, anomaly_rate=0.0000, paired_win_rate=0.5581, mean_score_diff_per_seed=0.9380, p95_decision_ms=102.0130, mean_decision_ms=92.5800, seed_block=300.0000
+2026-10-26 09:51:04,661 - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 5, 'diversity': 0}
+2026-10-26 09:51:04,685 - INFO - Initialized process parallel controller with 1 workers
+2026-10-26 09:51:04,686 - INFO - Set max None tasks per child
+2026-10-26 09:51:04,686 - INFO - Started process pool with 1 processes
+2026-10-26 09:51:04,687 - INFO - Using island-based evolution with 2 islands
+2026-10-26 09:51:04,687 - INFO - Island Status:
+2026-10-26 09:51:04,687 - INFO -  * Island 0: 1 programs, best=0.4792, avg=0.4792, diversity=0.00, gen=0 (best: 8dffb3ab-fb53-4085-ba76-33c2401e64f9)
+2026-10-26 09:51:04,687 - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-10-26 09:51:04,687 - INFO - Starting process-based evolution from iteration 1 for 1 iterations (total: 2)
+2026-10-26 09:51:04,691 - INFO - Early stopping disabled
+2026-10-26 10:00:42,579 - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 9, 'diversity': 5}
+2026-10-26 10:00:42,590 - INFO - Iteration 1: Program 29962cce-f227-433c-b9d8-78b0d51c6b6f (parent: 8dffb3ab-fb53-4085-ba76-33c2401e64f9) completed in 577.29s | tokens: 26726 (prompt: 25038, completion: 1688)
+2026-10-26 10:00:42,590 - INFO - Metrics: combined_score=0.0000, stage_passed=0.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=0.0000, function_sha256_head=0.1407, code_complexity=2670.0000, first_place_delta=-0.0625, first_place_ci_lower=-0.3139, candidate_first_rate=0.2500, champion_first_rate=0.3125, games=32.0000, anomaly_rate=0.0000, paired_win_rate=0.3750, mean_score_diff_per_seed=-5.6880, p95_decision_ms=99.1570, mean_decision_ms=91.3700, seed_block=300.0000
+2026-10-26 10:00:42,590 - INFO - ✅ Evolution completed - Maximum iterations reached
+2026-10-26 10:00:42,590 - INFO - 📊 Total LLM Token Usage (1 calls): total_tokens=26726 (prompt_tokens=25038, completion_tokens=1688)
+2026-10-26 10:00:42,594 - INFO - Stopped process pool
+2026-10-26 10:00:42,595 - INFO - Using tracked best program: 8dffb3ab-fb53-4085-ba76-33c2401e64f9
+2026-10-26 10:00:42,595 - INFO - Evolution complete. Best program has metrics: combined_score=0.4792, stage_passed=1.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=1.0000, function_sha256_head=0.1631, code_complexity=2453.0000, first_place_delta=-0.0417, first_place_ci_lower=-0.1411, candidate_first_rate=0.1667, champion_first_rate=0.2083, games=96.0000, anomaly_rate=0.0000, paired_win_rate=0.5581, mean_score_diff_per_seed=0.9380, p95_decision_ms=102.0130, mean_decision_ms=92.5800, seed_block=300.0000
+2026-10-26 10:00:42,595 - INFO - Saved best program to results/ai8-openevolve-r005/best/best_program.ts with program info to results/ai8-openevolve-r005/best/best_program_info.json
+
+Evolution complete!
+Best program metrics:
+  combined_score: 0.4792
+  stage_passed: 1.0000
+  static_ok: 1.0000
+  compile_ok: 1.0000
+  probe_ok: 1.0000
+  identical_to_official: 1.0000
+  function_sha256_head: 0.1631
+  code_complexity: 2453.0000
+  first_place_delta: -0.0417
+  first_place_ci_lower: -0.1411
+  candidate_first_rate: 0.1667
+  champion_first_rate: 0.2083
+  games: 96.0000
+  anomaly_rate: 0.0000
+  paired_win_rate: 0.5581
+  mean_score_diff_per_seed: 0.9380
+  p95_decision_ms: 102.0130
+  mean_decision_ms: 92.5800
+  seed_block: 300.0000
