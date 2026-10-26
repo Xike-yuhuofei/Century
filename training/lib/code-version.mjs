@@ -22,7 +22,9 @@ export const CODE_VERSION_EVOLUTION_FILES = Object.freeze([
   'training/evolution/autonomous-run.mjs',
   'training/evolution/campaign-controller.mjs',
   'training/evolution/candidate-artifact.mjs',
+  'training/evolution/candidate-generator.mjs',
   'training/evolution/compiled-game-evaluator.mjs',
+  'training/evolution/dev-evaluator.mjs',
   'training/evolution/governance-provider-v2.mjs',
   'training/evolution/module-mutations.mjs',
   'training/evolution/multi-module-candidate.mjs',
@@ -31,7 +33,10 @@ export const CODE_VERSION_EVOLUTION_FILES = Object.freeze([
   'training/evolution/promotion-handler.mjs',
   'training/evolution/safety-check.mjs',
   'training/evolution/selection.mjs',
+  'training/lib/code-version.mjs',
+  'training/lib/seed-governance.mjs',
   'training/lib/seeds.mjs',
+  'training/lib/version-lock.mjs',
 ]);
 
 function sha256Buffer(buffer) {
