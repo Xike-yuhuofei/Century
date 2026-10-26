@@ -24,6 +24,7 @@ const baseNeeds = (extra = {}) => ({
 const fullNeeds = (overrides = {}) => baseNeeds({
   build: job(),
   'web-unit': job(),
+  'web-long-tests': job(),
   'training-unit': job(),
   simulation: job(),
   'ui-smoke': job(),
@@ -33,6 +34,7 @@ const fullNeeds = (overrides = {}) => baseNeeds({
 const docsNeeds = () => baseNeeds({
   build: job('skipped'),
   'web-unit': job('skipped'),
+  'web-long-tests': job('skipped'),
   'training-unit': job('skipped'),
   simulation: job('skipped'),
   'ui-smoke': job('skipped'),
@@ -244,4 +246,81 @@ test('研究 worker / 端到端门禁失败 → 汇总失败（不得静默跳�
   assert.equal(result.ok, false);
   assert.ok(result.failures.some(f => f.startsWith('research-worker: failure')));
   assert.ok(result.failures.some(f => f.startsWith('research-e2e: failure')));
+});
+
+test('AI9 变更：ai9-research 必须真实执行，跳过即失败', () => {
+  const scope = { ...fullScope, ai9: true };
+  const needs = fullNeeds({ 'ai9-research': job('success') });
+  const ok = evaluateSummary({ needs, scope, eventName: 'pull_request' });
+  assert.equal(ok.ok, true, ok.failures.join('; '));
+  assert.equal(requiredJobs(scope, { eventName: 'pull_request' }).has('ai9-research'), true);
+
+  const skipped = evaluateSummary({ needs: fullNeeds({ 'ai9-research': job('skipped') }), scope, eventName: 'pull_request' });
+  assert.equal(skipped.ok, false);
+  assert.match(skipped.failures.join(';'), /ai9-research: skipped/);
+});
+
+test('web 长测试专用作业必须真实执行（覆盖不变地拆分 4×16 局）', () => {
+  const scope = { ...fullScope };
+  const skipped = evaluateSummary({ needs: fullNeeds({ 'web-long-tests': job('skipped') }), scope, eventName: 'pull_request' });
+  assert.equal(skipped.ok, false);
+  assert.match(skipped.failures.join(';'), /web-long-tests: skipped/);
+  assert.equal(requiredJobs(scope, { eventName: 'pull_request' }).has('web-long-tests'), true);
+});
+
+test('GITHUB_TOKEN 创建 PR 后用 workflow_dispatch 触发：机器门禁必须真实运行并与 PR 事件同权', () => {
+  const scope = { ...fullScope, promotion: true, pages: false };
+  const needs = fullNeeds({
+    'audit-gate': job('skipped'),
+    'promotion-gate': job('success', { verdict: 'PASS', requires_approval: 'false' }),
+    'promotion-machine-gate': job('success'),
+  });
+  const dispatch = evaluateSummary({
+    needs, scope, eventName: 'workflow_dispatch', ref: 'refs/heads/ai-champion/cand-x',
+    promotionVerdict: 'PASS',
+  });
+  assert.equal(dispatch.ok, true, dispatch.failures.join('; '));
+  assert.equal(requiredJobs(scope, { eventName: 'workflow_dispatch' }).has('promotion-machine-gate'), true);
+});
+
+test('workflow_dispatch 下机器门禁被跳过 → 汇总失败（不得出现触发断层）', () => {
+  const scope = { ...fullScope, promotion: true, pages: false };
+  const needs = fullNeeds({
+    'audit-gate': job('skipped'),
+    'promotion-gate': job('success', { verdict: 'PASS', requires_approval: 'false' }),
+    'promotion-machine-gate': job('skipped'),
+  });
+  const result = evaluateSummary({
+    needs, scope, eventName: 'workflow_dispatch', ref: 'refs/heads/ai-champion/cand-x',
+    promotionVerdict: 'PASS',
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.failures.join(';'), /promotion-machine-gate: skipped/);
+});
+
+test('main push 晋级合并后：只要求 promotion-gate 审计，不要求合并前机器门禁', () => {
+  const scope = { ...fullScope, promotion: true, pages: true };
+  const needs = fullNeeds({
+    'audit-gate': job('skipped'),
+    'promotion-gate': job('success', { verdict: 'PASS', requires_approval: 'false' }),
+    'promotion-machine-gate': job('skipped'),
+    'pages-deploy': job('success'),
+    'deploy-verify': job('success'),
+    'rollback-on-deploy-failure': job('skipped'),
+  });
+  const result = evaluateSummary({ needs, scope, eventName: 'push', ref: 'refs/heads/main', promotionVerdict: 'PASS' });
+  assert.equal(result.ok, true, result.failures.join('; '));
+});
+
+test('回滚 PR：rollback-gate 必须真实执行，跳过即失败（不得用回滚绕过晋级）', () => {
+  const scope = { ...fullScope, promotion: false, rollback: true, pages: false };
+  const okNeeds = fullNeeds({ 'rollback-gate': job('success') });
+  const ok = evaluateSummary({ needs: okNeeds, scope, eventName: 'pull_request' });
+  assert.equal(ok.ok, true, ok.failures.join('; '));
+  assert.equal(requiredJobs(scope, { eventName: 'pull_request' }).has('rollback-gate'), true);
+  assert.equal(requiredJobs(scope, { eventName: 'pull_request' }).has('promotion-gate'), false);
+
+  const skipped = evaluateSummary({ needs: fullNeeds({ 'rollback-gate': job('skipped') }), scope, eventName: 'pull_request' });
+  assert.equal(skipped.ok, false);
+  assert.match(skipped.failures.join(';'), /rollback-gate: skipped/);
 });

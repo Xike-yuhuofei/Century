@@ -27,6 +27,7 @@ import {
   createLiveGovernanceProviderAI9, createAutonomousGovernanceAdapterAI9,
 } from './governance-provider-v2.mjs';
 import { createPromotionHandler } from './promotion-handler.mjs';
+import { isRuntimeStatePath, statusPath } from '../lib/code-version.mjs';
 import { createOpenEvolveCampaignGenerator, writeOpenEvolveEvidence } from './openevolve-campaign.mjs';
 import { sha256Hex } from './core.mjs';
 
@@ -78,9 +79,15 @@ const CODE_MODULES = [
 
 function computeCodeVersion() {
   const commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO_ROOT, encoding: 'utf8' }).trim();
-  const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], {
+  const status = execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], {
     cwd: REPO_ROOT, encoding: 'utf8',
-  }).trim().length > 0;
+  }).trim();
+  // 训练会合法改写种子登记/检查点/报告；这些是运行时状态，不是代码变更。
+  // 若把它们计入 dirty，云端恢复状态分支后 resume 将永远被拒绝。
+  const dirtyFiles = status
+    ? status.split('\n').filter(Boolean).filter(line => !isRuntimeStatePath(statusPath(line)))
+    : [];
+  const dirty = dirtyFiles.length > 0;
   const modules = {};
   for (const path of CODE_MODULES) {
     modules[path] = sha256Hex(readFileSync(resolve(REPO_ROOT, path), 'utf8'));
@@ -89,6 +96,7 @@ function computeCodeVersion() {
     schema: 'century-code-version-v1',
     commit,
     dirty,
+    dirtyFiles,
     modules,
     recordedAt: new Date().toISOString(),
     note: 'campaign 启动时冻结；resume 必须完全一致；R09 验收要求 dirty=false 且模块哈希与当前代码一致',

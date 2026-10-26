@@ -416,6 +416,8 @@ function findLatest12hArtifact() {
   const promotedFirstPlace = championEvidence?.metric === 'pairedFirstPlaceRateDelta'
     && championEvidence?.decision?.promote === true;
   const rollbackDrill = existsSync(resolve(REPO_ROOT, 'training/reports/rollback-drill.json'));
+  const rollbackGateDrill = readJSON('training/reports/rollback-gate-drill.json');
+  const rollbackGateDrillPass = rollbackGateDrill?.verdict === 'PASS';
   const promotionDrill = readJSON('training/reports/promotion-e2e-drill.json');
   const promotionDrillPass = promotionDrill?.verdict === 'PASS';
   const pilot = readJSON('training/reports/first-place-promotion/pilot-candidatecap-r1c7.json');
@@ -424,23 +426,24 @@ function findLatest12hArtifact() {
   const machineMerge = ruleset?.ruleset?.requiredApprovingReviewCount === 0
     && Array.isArray(ruleset?.ruleset?.requiredStatusChecks)
     && ruleset.ruleset.requiredStatusChecks.includes('ci-summary');
-  const complete = deployedPass && promotedFirstPlace && rollbackDrill;
+  const complete = deployedPass && promotedFirstPlace && rollbackDrill && rollbackGateDrillPass;
   record({
     id: 'R12', title: '无人工审批的自动晋级、发布、线上核验与回滚',
     status: complete ? 'PASS' : 'BLOCKED',
-    source: '.github/workflows/ci.yml + ai-training.yml + scripts/ci/verify-deploy.mjs + rollback-champion.mjs + training/scripts/promotion-e2e-drill.mjs',
-    testCommand: 'node scripts/ci/verify-workflows.mjs && node scripts/ci/rollback-champion.mjs --dry-run && node training/scripts/promotion-e2e-drill.mjs',
+    source: '.github/workflows/ci.yml + ai-training.yml + scripts/ci/verify-deploy.mjs + rollback-champion.mjs + scripts/ci/verify-rollback.mjs + training/scripts/promotion-e2e-drill.mjs + training/scripts/rollback-gate-drill.mjs',
+    testCommand: 'node scripts/ci/verify-workflows.mjs && node scripts/ci/rollback-champion.mjs --dry-run && node training/scripts/promotion-e2e-drill.mjs && node training/scripts/rollback-gate-drill.mjs',
     evidence: `工作流机器门禁=${verifyWorkflows.ok}；回滚 dry-run=${rollbackDry.ok}；` +
       `GitHub ruleset 机器合并（0 人工批准 + 必需检查）=${machineMerge}；` +
       `真实机器合并+Pages 部署+线上核验=${deployedPass}（run 40221527752, site=PASS）；` +
       `隔离环境晋级→落盘→post-apply 门禁→发布器建 PR dry-run→构建→provenance/版本锁→promotion 审计→发布核验→回滚全链路=${promotionDrillPass}（${promotionDrill?.checks?.length ?? 0} 项，合成夹具）；` +
+      `回滚门禁隔离演练（合法回滚放行/手工改写拒绝/夹带拒绝/回滚循环拒绝）=${rollbackGateDrillPass}（${rollbackGateDrill?.checks?.length ?? 0} 项）；` +
       `dev 信号同预算配对复现筛查=${pilotNoChallenge ? 'NO-FORMAL-CHALLENGE（4 层均无正增量）' : '未执行'}；` +
       `第一名率冠军晋级=${promotedFirstPlace}；回滚演练=${rollbackDrill}`,
     unmetReason: complete ? null
-      : (deployedPass && rollbackDrill
-          ? '部署、线上身份核验、隔离全链路演练与回滚演练均已 PASS，但没有统计合格候选完成真实冠军晋级；且几何 alpha 预算已消耗 0.0499756（剩余 2.44e-5），新 alpha 家族必须显式治理授权，不能把“部署现有冠军/合成夹具演练”当作 R12 完成'
+      : (deployedPass && rollbackDrill && rollbackGateDrillPass
+          ? '部署、线上身份核验、隔离全链路演练、回滚门禁演练与回滚演练均已 PASS，但没有统计合格候选完成真实冠军晋级；且几何 alpha 预算已消耗 0.0499756（剩余 2.44e-5），新 alpha 家族必须显式治理授权，不能把“部署现有冠军/合成夹具演练”当作 R12 完成'
           : (deployedPass
-              ? '真实部署与线上身份核验已 PASS，但没有统计合格候选完成冠军晋级，也未执行回滚演练；不能把“部署现有冠军”当作 R12 完成'
+              ? '真实部署与线上身份核验已 PASS，但没有统计合格候选完成冠军晋级，回滚演练/回滚门禁演练也未全部通过；不能把“部署现有冠军”当作 R12 完成'
               : '当前没有通过第一名率正式挑战的候选，因此未执行真实冠军发布；不能以模拟发布冒充 PASS')),
   });
 }

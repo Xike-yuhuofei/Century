@@ -5,10 +5,12 @@
  *   EVENT_NAME        pull_request | push | workflow_dispatch
  *   BASE_SHA          比较基线（push 的 before / PR 的 base.sha）
  *   HEAD_SHA          目标提交（PR 的 head.sha / push 的 sha）
+ *   HEAD_REF          源分支名（PR 的 head.ref / dispatch 的 ref_name）
  *   PR_LABELS         JSON 数组（PR 标签名）
  *   FORCE_SCOPE       auto | full（workflow_dispatch）
  *   FORCE_PROMOTION   true | false（workflow_dispatch）
  *   CI_SCOPE_JSON     可选，完整范围 JSON 输出路径
+ *   CI_REPO_ROOT      可选，覆盖仓库根（隔离演练/本地复算用；CI 中不设置）
  *
  * 失败关闭：无法取得可信 diff 时按全量代码检查处理。
  */
@@ -18,7 +20,9 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { classifyChanges, scopeToOutputs } from './lib/scope.mjs';
 
-const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
+const REPO_ROOT = process.env.CI_REPO_ROOT
+  ? resolve(process.env.CI_REPO_ROOT)
+  : resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const SHA_RE = /^[0-9a-f]{40}$/i;
 
 function parseLabels(raw) {
@@ -60,6 +64,7 @@ function main() {
   const labels = parseLabels(process.env.PR_LABELS);
   const baseSha = process.env.BASE_SHA ?? '';
   const headSha = process.env.HEAD_SHA ?? '';
+  const headRef = process.env.HEAD_REF ?? '';
 
   let files = [];
   let forceFull = forceAll || eventName === 'workflow_dispatch';
@@ -74,7 +79,7 @@ function main() {
     }
   }
 
-  const scope = classifyChanges(files, { labels, forceFull, forceAll, forcePromotion });
+  const scope = classifyChanges(files, { labels, forceFull, forceAll, forcePromotion, headRef });
   if (diffError) scope.reasons.push(`diff-unavailable:${diffError.slice(0, 120)}`);
 
   const outputs = scopeToOutputs(scope);

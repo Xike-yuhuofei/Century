@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CODE_VERSION_SCHEMA, computeCodeVersion, sameCodeDigest, CODE_VERSION_EVOLUTION_FILES,
+  isRuntimeStatePath, statusPath,
 } from '../../lib/code-version.mjs';
 import { resolve } from 'node:path';
 import { REPO_ROOT } from '../../lib/paths.mjs';
@@ -29,4 +30,17 @@ test('代码身份：同一代码重复计算完全相同，不含时间戳', ()
   assert.equal(sameCodeDigest(a, b), true);
   assert.equal(sameCodeDigest(a, { codeDigest: 'f'.repeat(64) }), false);
   assert.equal(sameCodeDigest(null, b), false);
+});
+
+test('运行时状态（种子登记/检查点/报告）不计入代码 dirty', () => {
+  assert.equal(isRuntimeStatePath('training/governance/seed-consumption-registry.json'), true);
+  assert.equal(isRuntimeStatePath('training/reports/coevolution/x/state.json'), true);
+  assert.equal(isRuntimeStatePath('training/state/validation-ledger.json'), true);
+  assert.equal(isRuntimeStatePath('training/evolution/campaign-controller.mjs'), false);
+  assert.equal(statusPath(' M training/governance/alpha-ledger.json'), 'training/governance/alpha-ledger.json');
+  assert.equal(statusPath('R  old/path.mjs -> new/path.mjs'), 'new/path.mjs');
+  assert.equal(statusPath('?? weird'), 'weird');
+  const version = computeCodeVersion();
+  assert.equal(version.dirtyFiles.some(isRuntimeStatePath), false,
+    `代码身份仍包含运行时状态：${version.dirtyFiles.filter(isRuntimeStatePath).join(', ')}`);
 });

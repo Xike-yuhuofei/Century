@@ -18,6 +18,7 @@
     "stats:plan": "node scripts/statistical-plan.mjs --check",
     "stats:plan:write": "node scripts/statistical-plan.mjs --write",
     "rollback:drill": "node scripts/rollback-drill.mjs",
+    "rollback:gate-drill": "node scripts/rollback-gate-drill.mjs",
     "autonomy:start": "node evolution/autonomous-run.mjs start",
     "autonomy:resume": "node evolution/autonomous-run.mjs resume",
     "autonomy:stop": "node evolution/autonomous-run.mjs stop",
@@ -53,7 +54,10 @@
     "ai9:execution": "node scripts/ai9-module-execution-audit.mjs",
     "ai9:crossover": "node scripts/ai9-crossover-game.mjs",
     "ai9:endurance": "node scripts/ai9-endurance-audit.mjs",
-    "ai9:structural": "node scripts/ai9-structural-search.mjs"
+    "ai9:structural": "node scripts/ai9-structural-search.mjs",
+    "automation:report": "node scripts/automation-report.mjs",
+    "automation:state:pull": "node scripts/automation-state.mjs pull",
+    "automation:state:push": "node scripts/automation-state.mjs push"
   },
   "engines": {
     "node": ">=20"

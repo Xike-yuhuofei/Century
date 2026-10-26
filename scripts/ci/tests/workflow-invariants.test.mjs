@@ -17,7 +17,24 @@ test('CI 工作流结构不变量：单一 PR 入口、无重复工作流、无 
 test('ai-training 不再在 PR 上触发，且晋级后 dispatch CI', () => {
   const training = readFileSync(resolve(ROOT, '.github/workflows/ai-training.yml'), 'utf8');
   assert.doesNotMatch(training, /^\s{2}pull_request:/m);
-  assert.match(training, /gh workflow run ci\.yml/);
+  assert.match(training, /CENTURY_PR_TRIGGER[\s\S]*?publish-promotion-pr\.mjs|gh workflow run ci\.yml/);
+});
+
+test('ai-training 必须校验训练有效性并持久化状态（工作流成功 ≠ 训练有效）', () => {
+  const training = readFileSync(resolve(ROOT, '.github/workflows/ai-training.yml'), 'utf8');
+  assert.match(training, /automation-report\.mjs/);
+  assert.match(training, /automation-state\.mjs pull/);
+  assert.match(training, /automation-state\.mjs push/);
+  assert.match(training, /--mode ai9-coevolve/);
+  assert.match(training, /run-ai9-openevolve\.mjs/);
+});
+
+test('champion-continuation 只在线上部核验成功且非回滚时启动下一代', () => {
+  const continuation = readFileSync(resolve(ROOT, '.github/workflows/champion-continuation.yml'), 'utf8');
+  assert.match(continuation, /workflow_run:/);
+  assert.match(continuation, /deploy-verify/);
+  assert.match(continuation, /自动回滚/);
+  assert.doesNotMatch(continuation, /^\s{2}push:/m);
 });
 
 test('ci.yml 门禁是唯一必需检查聚合并使用 always()', () => {

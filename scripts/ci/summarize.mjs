@@ -20,6 +20,69 @@ function parseLabels(raw) {
   }
 }
 
+/** 回滚门禁判定（失败关闭）：以 verify-rollback 的产物为准（该产物由 git 事实
+ * 独立复算），并交叉检查回滚计划字段；无法建立 revert 计划一律拒绝。 */
+function rollbackGate(scope) {
+  if (!scope.rollback) return { applied: false };
+  const env = process.env;
+  const planPath = env.ROLLBACK_PLAN_FILE;
+  if (!planPath || !existsSync(planPath)) {
+    return { applied: true, ok: false, reason: '回滚计划产物缺失（失败关闭）' };
+  }
+  let plan;
+  try {
+    plan = JSON.parse(readFileSync(planPath, 'utf8'));
+  } catch (error) {
+    return { applied: true, ok: false, reason: `回滚计划产物损坏：${error.message}` };
+  }
+  if (plan.verdict !== 'ROLLBACK_PR_OPENED') {
+    return { applied: true, ok: false, reason: `回滚计划 verdict=${String(plan.verdict)}` };
+  }
+  if (plan.isChampionPromotion !== true) {
+    return {
+      applied: true, ok: false,
+      reason: `被回滚提交 ${String(plan.target).slice(0, 12)} 不是一次冠军晋级落地（缺少 promotionEvidence）——禁止以“回滚”名义绕过晋进门禁`,
+    };
+  }
+  if (plan.restoresPreviousChampion !== true) {
+    return {
+      applied: true, ok: false,
+      reason: '回滚未恢复到该提交之前的冠军内容——回滚可能被用于非法改写',
+    };
+  }
+  const allowed = ['training/champions/champion.json', 'web-v1/src/ai/parameters.ts'];
+  const unexpected = (plan.changedFiles ?? []).filter(path =>
+    !path.startsWith('web-v1/dist/') && !allowed.includes(path));
+  if (unexpected.length) {
+    return {
+      applied: true, ok: false,
+      reason: `回滚 PR 改动超出冠军恢复范围：${unexpected.join(', ')}`,
+    };
+  }
+  // 独立产物：回滚门禁作业从 git 事实复算同一提交，必须给出 PASS。
+  const verificationFile = env.ROLLBACK_VERIFICATION_FILE;
+  if (!verificationFile || !existsSync(verificationFile)) {
+    return { applied: true, ok: false, reason: '回滚验证产物缺失（失败关闭，不得凭计划自报放行）' };
+  }
+  let verification;
+  try {
+    verification = JSON.parse(readFileSync(verificationFile, 'utf8'));
+  } catch (error) {
+    return { applied: true, ok: false, reason: `回滚验证产物损坏：${error.message}` };
+  }
+  if (verification.verdict !== 'PASS') {
+    const failed = (verification.checks ?? []).filter(c => c.status === 'FAIL').map(c => c.id);
+    return { applied: true, ok: false, reason: `回滚独立验证未通过：${failed.join(', ') || 'verdict=' + String(verification.verdict)}` };
+  }
+  if (verification.target !== plan.target) {
+    return { applied: true, ok: false, reason: '回滚验证目标提交与回滚计划不一致' };
+  }
+  return {
+    applied: true, ok: true,
+    reason: `回滚验证通过：被回滚提交 ${String(plan.target).slice(0, 12)}，恢复 ${String(plan.previousChampionId ?? '?')}`,
+  };
+}
+
 function main() {
   const env = process.env;
   const needs = JSON.parse(env.NEEDS_JSON ?? '{}');
@@ -47,6 +110,14 @@ function main() {
     }
     if (!promotionVerdict) scopeError = scopeError ?? '晋级门禁 verdict 缺失（失败关闭）';
   }
+
+  // 回滚 PR：必须证明“被回滚的确实是一次冠军晋级落地，且恢复内容等于该提交
+  // 之前的冠军”，否则任何人都能以“回滚”名义把任意参数写进 main。
+  const rollback = rollbackGate(scope);
+  if (rollback.applied && !rollback.ok) {
+    scopeError = scopeError ?? `回滚门禁拒绝：${rollback.reason}`;
+  }
+
   try {
     const forceAll = (env.FORCE_SCOPE ?? 'auto') === 'full';
     const forceFull = forceAll || eventName === 'workflow_dispatch';
@@ -58,6 +129,7 @@ function main() {
     });
     const recomputed = classifyChanges(files, {
       labels: parseLabels(env.PR_LABELS),
+      headRef: env.HEAD_REF ?? '',
       forceFull,
       forceAll,
       forcePromotion,
@@ -81,6 +153,16 @@ function main() {
   if (scopeError) {
     result.ok = false;
     result.failures.push(scopeError);
+  }
+  if (rollback.applied) {
+    result.rollback = { ok: rollback.ok, reason: rollback.reason };
+    result.rows.push({
+      job: 'rollback-verification',
+      result: rollback.ok ? 'success' : 'failure',
+      required: true,
+      note: rollback.reason,
+      ok: rollback.ok,
+    });
   }
 
   const markdown = renderMarkdown(result, scope);
