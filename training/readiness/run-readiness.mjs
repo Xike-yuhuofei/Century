@@ -16,6 +16,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { writeJSON } from '../lib/io.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
+import { sha256Hex } from '../evolution/core.mjs';
 
 function parseArgs(argv) {
   const values = {};
@@ -237,32 +238,85 @@ measured({
 // ---- R09 12 小时无人值守训练 ----
 {
   const artifact = findLatest12hArtifact();
-  const inProgress = readJSON('training/reports/autonomous/ai8-12h-v2/state.json')
+  const inProgress = readJSON('training/reports/autonomous/ai8-12h-v3/state.json')
+    ?? readJSON('training/reports/autonomous/ai8-12h-v2/state.json')
     ?? readJSON('training/reports/autonomous/ai8-12h/state.json');
   const elapsedHours = inProgress?.createdAt
     ? Number(((Date.now() - Date.parse(inProgress.createdAt)) / 3600_000).toFixed(2))
     : 0;
+  const rejectedSummary = findLatest12hSummary();
+  const codeCheck = rejectedSummary ? codeVersionAcceptable(rejectedSummary) : null;
   record({
     id: 'R09', title: '连续 12 小时真实自主训练压力测试',
     status: artifact ? 'PASS' : 'NOT_RUN',
     source: 'training/evolution/autonomous-run.mjs + training/scripts/run-12h-stress.sh',
-    testCommand: 'screen -dmS century12h-v2 /bin/zsh -f -c "cd <repo> && caffeinate -is training/scripts/run-12h-stress.sh"',
+    testCommand: 'screen -dmS century12h-v3 /bin/zsh -f -c "cd <repo> && caffeinate -is training/scripts/run-12h-stress.sh"',
     evidence: artifact
       ? `12h 产物=${artifact.path}；elapsedHours=${artifact.elapsedHours}；status=${artifact.status}；` +
-        `rounds=${artifact.rounds}；games=${artifact.games}；budgetWallMs=${artifact.wallMs}`
+        `rounds=${artifact.rounds}；games=${artifact.games}；budgetWallMs=${artifact.wallMs}；` +
+        `codeVersion=${artifact.codeVersion.commit.slice(0, 12)} dirty=${artifact.codeVersion.dirty} ` +
+        `modules=${Object.keys(artifact.codeVersion.modules).length}`
+      : (rejectedSummary
+          ? `存在 12h run-summary 但未通过：${codeCheck?.ok === false ? codeCheck.reason : '未满 12h/非正常结束'}；` +
+            `elapsedHours=${((Number(rejectedSummary.elapsedMs) || 0) / 3600_000).toFixed(2)} status=${rejectedSummary.status}`
+          : (inProgress
+              ? `真实 12h 运行进行中：status=${inProgress.status} phase=${inProgress.phase} rounds=${inProgress.rounds?.length ?? 0} ` +
+                `games=${inProgress.budgetUsed?.games ?? 0} wallMs=${inProgress.budgetUsed?.wallMs ?? 0} 已运行约 ${elapsedHours}h；` +
+                '达到 12h 且 completed/budget-exhausted（非失败/人工停止）后才可 PASS'
+              : '未发现已完成的 12 小时连续运行产物')),
+    unmetReason: artifact ? null : (rejectedSummary
+      ? (codeCheck?.ok === false
+          ? `12h 证据代码版本不合格：${codeCheck.reason}。旧分支/旧构建上的 12h 成功不能当作最终代码的 R09 证据`
+          : `12h 运行未满 12 小时或非正常结束（status=${rejectedSummary.status}，phase=${rejectedSummary.phase}）`)
       : (inProgress
-          ? `真实 12h 运行进行中：status=${inProgress.status} phase=${inProgress.phase} rounds=${inProgress.rounds?.length ?? 0} ` +
-            `games=${inProgress.budgetUsed?.games ?? 0} wallMs=${inProgress.budgetUsed?.wallMs ?? 0} 已运行约 ${elapsedHours}h；` +
-            '达到 12h 且 completed/budget-exhausted（非失败/人工停止）后才可 PASS'
-          : '未发现已完成的 12 小时连续运行产物'),
-    unmetReason: artifact ? null : (inProgress
-      ? `运行中（约 ${elapsedHours}h）；未满 12 小时，不能提前 PASS`
-      : '本次会话无法连续运行 12 小时真实训练；必须在目标 M4 上实际执行并保留日志后才能 PASS'),
+          ? `运行中（约 ${elapsedHours}h）；未满 12 小时，不能提前 PASS`
+          : '本次会话无法连续运行 12 小时真实训练；必须在目标 M4 上实际执行并保留日志后才能 PASS')),
   });
+}
+
+/** 12h 证据必须绑定代码版本：启动时干净、commit 是当前 HEAD 祖先、训练核心模块未变。 */
+function codeVersionAcceptable(doc) {
+  const cv = doc?.codeVersion;
+  if (!cv || typeof cv.commit !== 'string' || !/^[0-9a-f]{40}$/.test(cv.commit)) {
+    return { ok: false, reason: '缺少 codeVersion.commit（旧运行无法证明确切代码版本）' };
+  }
+  if (cv.dirty !== false) {
+    return { ok: false, reason: '启动时工作区不干净（dirty=true）' };
+  }
+  try {
+    execFileSync('git', ['merge-base', '--is-ancestor', cv.commit, 'HEAD'], { cwd: REPO_ROOT, stdio: 'ignore' });
+  } catch {
+    return { ok: false, reason: `commit ${cv.commit.slice(0, 12)} 不是当前 HEAD 的祖先（旧分支运行）` };
+  }
+  for (const [path, hash] of Object.entries(cv.modules ?? {})) {
+    let current = null;
+    try {
+      current = sha256Hex(readFileSync(resolve(REPO_ROOT, path), 'utf8'));
+    } catch {
+      return { ok: false, reason: `训练模块缺失：${path}` };
+    }
+    if (current !== hash) return { ok: false, reason: `训练模块已变化：${path}` };
+  }
+  return { ok: true, reason: `commit=${cv.commit.slice(0, 12)} dirty=false` };
+}
+
+function findLatest12hSummary() {
+  const candidates = [
+    'training/reports/autonomous/ai8-12h-v3/run-summary.json',
+    'training/reports/autonomous/ai8-12h-v2/run-summary.json',
+    'training/reports/autonomous/ai8-12h/run-summary.json',
+    'training/reports/autonomous-12h/run-summary.json',
+  ];
+  for (const path of candidates) {
+    const doc = readJSON(path);
+    if (doc) return doc;
+  }
+  return null;
 }
 
 function findLatest12hArtifact() {
   const candidates = [
+    'training/reports/autonomous/ai8-12h-v3/run-summary.json',
     'training/reports/autonomous/ai8-12h-v2/run-summary.json',
     'training/reports/autonomous/ai8-12h/run-summary.json',
     'training/reports/autonomous-12h/run-summary.json',
@@ -274,11 +328,13 @@ function findLatest12hArtifact() {
     // 12h 压力测试的自然结束方式有两种：
     // - 跑满预注册轮次 → completed；
     // - 达到 12h 墙钟预算 → budget-exhausted（这正是压力测试的目标）。
-    // 两者都要求真实运行 ≥12h、有真实对局、且不是 failed/stopped-by-operator。
+    // 两者都要求真实运行 ≥12h、有真实对局、不是 failed/stopped-by-operator，
+    // 且证据绑定到当前最终代码（干净工作区/commit 祖先/核心模块哈希一致）。
     const cleanStop = doc.status === 'completed'
       || (doc.status === 'budget-exhausted' && doc.phase === 'stopped-by-budget');
     const realWork = Number(doc.budgetUsed?.games ?? 0) > 0;
-    if (elapsedMs >= 12 * 3600_000 && cleanStop && realWork) {
+    const code = codeVersionAcceptable(doc);
+    if (elapsedMs >= 12 * 3600_000 && cleanStop && realWork && code.ok) {
       return {
         path,
         elapsedHours: Number((elapsedMs / 3600_000).toFixed(2)),
@@ -286,6 +342,7 @@ function findLatest12hArtifact() {
         rounds: doc.rounds,
         games: doc.budgetUsed.games,
         wallMs: doc.budgetUsed.wallMs,
+        codeVersion: doc.codeVersion,
       };
     }
   }

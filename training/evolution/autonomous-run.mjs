@@ -15,6 +15,7 @@
  * - 晋级落地/发布仍由 CI 的 promotion-machine-gate 独立复核并 auto-merge。
  */
 
+import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { ensureDir, writeJSON } from '../lib/io.mjs';
@@ -24,6 +25,7 @@ import { CampaignController } from './campaign-controller.mjs';
 import { createLiveGovernanceProvider, createAutonomousGovernanceAdapter } from './governance-provider-v2.mjs';
 import { createPromotionHandler } from './promotion-handler.mjs';
 import { createOpenEvolveCampaignGenerator, writeOpenEvolveEvidence } from './openevolve-campaign.mjs';
+import { sha256Hex } from './core.mjs';
 
 function parseArgs(argv) {
   const values = { _: [] };
@@ -47,6 +49,56 @@ if (!campaignId) {
 }
 const rootDir = resolve(REPO_ROOT, 'training/reports/autonomous', campaignId);
 const governance = createAutonomousGovernanceAdapter({ provider: createLiveGovernanceProvider() });
+const CODE_VERSION_PATH = resolve(rootDir, 'code-version.json');
+/** 12h/R09 证据必须能绑定到具体代码版本：commit + 干净工作区 + 训练核心模块哈希。 */
+const CODE_MODULES = [
+  'training/evolution/autonomous-run.mjs',
+  'training/evolution/campaign-controller.mjs',
+  'training/evolution/dev-evaluator.mjs',
+  'training/evolution/candidate-generator.mjs',
+  'training/evolution/selection.mjs',
+  'training/evolution/safety-check.mjs',
+  'training/lib/seed-governance.mjs',
+  'web-v1/dist/js/engine.js',
+  'web-v1/dist/js/ai.js',
+  'web-v1/dist/js/js/adapter.js',
+];
+
+function computeCodeVersion() {
+  const commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO_ROOT, encoding: 'utf8' }).trim();
+  const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], {
+    cwd: REPO_ROOT, encoding: 'utf8',
+  }).trim().length > 0;
+  const modules = {};
+  for (const path of CODE_MODULES) {
+    modules[path] = sha256Hex(readFileSync(resolve(REPO_ROOT, path), 'utf8'));
+  }
+  return {
+    schema: 'century-code-version-v1',
+    commit,
+    dirty,
+    modules,
+    recordedAt: new Date().toISOString(),
+    note: 'campaign 启动时冻结；resume 必须完全一致；R09 验收要求 dirty=false 且模块哈希与当前代码一致',
+  };
+}
+
+function assertResumeCodeVersion() {
+  if (!existsSync(CODE_VERSION_PATH)) {
+    throw new Error(`resume 缺少 code-version.json（${CODE_VERSION_PATH}）——无法证明与启动时同一代码版本，拒绝恢复`);
+  }
+  const recorded = JSON.parse(readFileSync(CODE_VERSION_PATH, 'utf8'));
+  const current = computeCodeVersion();
+  if (recorded.commit !== current.commit || recorded.dirty !== current.dirty) {
+    throw new Error(`resume 代码版本不一致：启动=${recorded.commit} dirty=${recorded.dirty}，当前=${current.commit} dirty=${current.dirty}`);
+  }
+  for (const [path, hash] of Object.entries(recorded.modules ?? {})) {
+    if (current.modules[path] !== hash) {
+      throw new Error(`resume 训练模块已变化：${path}（启动 ${String(hash).slice(0, 12)} ≠ 当前 ${String(current.modules[path]).slice(0, 12)}）`);
+    }
+  }
+  return recorded;
+}
 
 function configFromArgs() {
   const playerCounts = args['player-counts']
@@ -108,6 +160,9 @@ async function main() {
       return;
     }
     const state = JSON.parse(readFileSync(statePath, 'utf8'));
+    const codeVersion = existsSync(CODE_VERSION_PATH)
+      ? JSON.parse(readFileSync(CODE_VERSION_PATH, 'utf8'))
+      : null;
     console.log(JSON.stringify({
       campaignId,
       status: state.status,
@@ -119,6 +174,7 @@ async function main() {
       promotionOutcomes: state.promotionOutcomes ?? [],
       checkpointSeq: state.checkpointSeq,
       updatedAt: state.updatedAt,
+      codeVersion,
       resource: resourceSnapshot(),
     }, null, 2));
     return;
@@ -144,6 +200,16 @@ async function main() {
   }
 
   const autoChallenge = args['no-auto-challenge'] !== true;
+  ensureDir(rootDir);
+  if (command === 'start') {
+    if (existsSync(CODE_VERSION_PATH)) {
+      throw new Error(`code-version.json 已存在（${CODE_VERSION_PATH}）——同一 campaign 重复 start 被拒绝；恢复请用 resume`);
+    }
+    writeJSON(CODE_VERSION_PATH, computeCodeVersion());
+  } else {
+    assertResumeCodeVersion();
+  }
+  const codeVersion = JSON.parse(readFileSync(CODE_VERSION_PATH, 'utf8'));
   const controller = new CampaignController({
     campaignId,
     rootDir,
@@ -181,6 +247,7 @@ async function main() {
     budgetUsed: results.budgetUsed,
     promotionQueue: results.promotionQueue,
     promotionOutcomes: results.promotionOutcomes,
+    codeVersion,
     generator: {
       mode: config.generation.generator,
       sourceEvolution,
