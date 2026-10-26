@@ -1,13 +1,17 @@
 name: champion-continuation
 
-# P4：冠军落地后自动触发下一代进化（无人值守闭环）。
-# 仅在 main 的 champion.json 变化（即机器门禁晋级合并）时触发；
-# 不参与 PR 验证（PR 入口仍然是唯一 ci.yml）。
+# P4：冠军落地且线上部署核验成功后，自动触发下一代 AI9 协同进化。
+#
+# 为什么用 workflow_run 而不是 push(paths: champion.json)：
+# - push 触发发生在合并瞬间，此时 Pages 还没有部署，更没通过线上身份核验；
+#   只有 CI 运行成功（含 deploy-verify）才代表冠军真正可用；
+# - 回滚提交同样会改 champion.json，必须在触发前显式跳过，否则部署持续
+#   失败时会用旧冠军反复重启训练，形成回滚循环。
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
     branches: [main]
-    paths:
-      - training/champions/champion.json
 
 permissions:
   actions: write
@@ -20,12 +24,57 @@ concurrency:
 jobs:
   dispatch-next-evolution:
     name: dispatch-next-evolution
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: 触发下一代进化（ai-training evolve）
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 2
+          persist-credentials: false
+      - name: 检查本次 CI 是否因冠军变更触发（否则不重复启动训练）
+        id: gate
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          changed=$(git diff --name-only HEAD^ HEAD -- training/champions/champion.json || true)
+          if [ -z "$changed" ]; then
+            echo "本轮 CI 未改动冠军，不触发下一代训练"
+            echo "dispatch=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          subject=$(git log -1 --format=%s HEAD)
+          echo "冠军变更提交：$HEAD_SHA $subject"
+          if printf '%s' "$subject" | grep -Eq '^revert\(ai8\): 自动回滚|自动回滚冠军提交'; then
+            echo "::warning::本次冠军变更是自动回滚：跳过下一代训练，等待下一次正式晋级或定时运行"
+            echo "dispatch=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "dispatch=true" >> "$GITHUB_OUTPUT"
+      - name: 确认线上部署核验已通过（冠军真正可用）
+        if: steps.gate.outputs.dispatch == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          conclusion=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" \
+            --jq '.jobs[] | select(.name == "deploy-verify") | .conclusion' | head -1)
+          if [ "$conclusion" != "success" ]; then
+            echo "::error::CI 运行成功但 deploy-verify=${conclusion:-missing}：冠军未通过线上身份核验，不启动下一代训练"
+            exit 1
+          fi
+          echo "deploy-verify=PASS，冠军已上线且身份核验通过"
+      - name: 触发下一代 AI9 协同进化
+        if: steps.gate.outputs.dispatch == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run ai-training.yml --ref main -f mode=evolve
-          echo "已触发 ai-training.yml（mode=evolve）；冠军晋级后无需人工启动下一轮。"
+          gh workflow run ai-training.yml --ref main -f mode=coevolve
+          {
+            echo "## 冠军闭环"
+            echo
+            echo "- 冠军提交：\`${{ github.event.workflow_run.head_sha }}\`"
+            echo "- CI run：${{ github.event.workflow_run.html_url }}（含 deploy-verify=PASS）"
+            echo "- 已触发 \`ai-training.yml mode=coevolve\`，无需人工启动下一轮。"
+          } >> "$GITHUB_STEP_SUMMARY"

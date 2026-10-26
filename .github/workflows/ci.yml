@@ -39,6 +39,7 @@ jobs:
       web: ${{ steps.scope.outputs.web }}
       training: ${{ steps.scope.outputs.training }}
       ai5: ${{ steps.scope.outputs.ai5 }}
+      ai9: ${{ steps.scope.outputs.ai9 }}
       ui: ${{ steps.scope.outputs.ui }}
       simulation: ${{ steps.scope.outputs.simulation }}
       audit: ${{ steps.scope.outputs.audit }}
@@ -51,6 +52,8 @@ jobs:
       audit_tier: ${{ steps.scope.outputs.audit_tier }}
       changed_count: ${{ steps.scope.outputs.changed_count }}
       reasons: ${{ steps.scope.outputs.reasons }}
+      rollback: ${{ steps.scope.outputs.rollback }}
+      training_shards: ${{ steps.shards.outputs.shards }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,11 +65,23 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
           PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
           FORCE_SCOPE: ${{ inputs.scope || 'auto' }}
           FORCE_PROMOTION: ${{ inputs.promotion || 'false' }}
           CI_SCOPE_JSON: ${{ runner.temp }}/ci-scope.json
         run: node scripts/ci/change-scope.mjs
+      - name: 计算 training 单测分片计划（按文件数自适应，覆盖不变）
+        id: shards
+        run: |
+          files=$(ls training/tests/*.test.mjs | wc -l | tr -d ' ')
+          # 每片至少 4 个测试文件，最多 4 片：既缩短墙钟，也不把 job 数推得过高。
+          count=$(( (files + 3) / 4 ))
+          if [ "$count" -gt 4 ]; then count=4; fi
+          if [ "$count" -lt 1 ]; then count=1; fi
+          list=$(seq -s, 0 $((count - 1)))
+          echo "shards=[$list]" >> "$GITHUB_OUTPUT"
+          echo "training 单测文件 $files 个 → 分片 $count 片（$list）"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -78,16 +93,26 @@ jobs:
   governance-tests:
     name: governance-tests
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: CI 元测试（变更矩阵 / 汇总门禁 / 审计适配 / 产物校验 / 工作流结构）
         run: node --test --test-concurrency=2 scripts/ci/tests/*.test.mjs
+      - name: 回滚门禁隔离演练（合法回滚放行 / 手工改写拒绝 / 夹带拒绝 / 回滚循环拒绝）
+        run: node training/scripts/rollback-gate-drill.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rollback-gate-drill
+          path: training/reports/rollback-gate-drill.json
+          if-no-files-found: warn
+          retention-days: 30
 
   rules-cards:
     name: rules-cards
@@ -144,7 +169,11 @@ jobs:
     needs: [changes, build]
     if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -159,26 +188,30 @@ jobs:
       - name: 卡表漂移检查
         working-directory: web-v1
         run: node scripts/sync-cards.mjs --check
-      - name: web-v1 规则与 AI 单测（复用共享构建，不重复编译）
+      - name: web-v1 规则与 AI 单测（分片 ${{ matrix.shard }}/4，覆盖不变）
         working-directory: web-v1
         run: |
           mkdir -p test-results
+          files=$(node ../scripts/ci/plan-test-shards.mjs --dir tests --shards 4 --index ${{ matrix.shard }})
+          echo "分片文件：$files"
           node --test --test-concurrency=2 \
             --test-reporter=spec --test-reporter-destination=stdout \
-            --test-reporter=junit --test-reporter-destination=test-results/junit.xml \
-            tests/*.test.mjs
-      - name: 离线 standalone 完整性（规划器必须内联）
+            --test-reporter=junit --test-reporter-destination=test-results/junit-${{ matrix.shard }}.xml \
+            $files
+      - name: 离线 standalone 完整性（仅分片 0）
+        if: matrix.shard == 0
         working-directory: web-v1
         run: |
           node -e "const fs=require('fs');const html=fs.readFileSync('dist/standalone.html','utf8');if(!html.includes('function choosePlan(')){console.error('standalone 缺少规划器');process.exit(1)}"
-      - name: 小型 V1/V2 基准诊断
+      - name: 小型 V1/V2 基准诊断（仅分片 0）
+        if: matrix.shard == 0
         working-directory: web-v1
         run: node scripts/benchmark-ai.mjs 2
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: web-unit-junit
-          path: web-v1/test-results/junit.xml
+          name: web-unit-junit-${{ matrix.shard }}
+          path: web-v1/test-results/junit-${{ matrix.shard }}.xml
           if-no-files-found: ignore
           retention-days: 14
 
@@ -187,7 +220,11 @@ jobs:
     needs: [changes, build]
     if: needs.changes.outputs.training == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 22
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.changes.outputs.training_shards) }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -200,19 +237,28 @@ jobs:
           name: web-v1-dist
           path: web-v1/dist
       # training 无 npm 依赖；npm test 的 pretest 只做卡表漂移检查。禁止重复 npm install。
-      - name: training 系统测试（模拟器 / 统计 / 进化 / 晋级 / CLI 端到端）
+      - name: 卡表漂移检查
         working-directory: training
+        run: node ../web-v1/scripts/sync-cards.mjs --check
+      - name: training 系统测试（分片 ${{ matrix.shard }}，覆盖不变）
+        working-directory: training
+        env:
+          SHARDS: ${{ needs.changes.outputs.training_shards }}
         run: |
           set -o pipefail
-          npm test 2>&1 | tee training-test.log
-      - name: AI7 进化控制面安全/可复现测试（Artifact / 目标边界 / 治理 / Controller）
+          count=$(node -e "console.log(JSON.parse(process.env.SHARDS).length)")
+          files=$(node ../scripts/ci/plan-test-shards.mjs --dir tests --shards "$count" --index ${{ matrix.shard }})
+          echo "分片文件：$files"
+          node --test --test-concurrency=2 $files 2>&1 | tee "training-test-${{ matrix.shard }}.log"
+      - name: AI7 进化控制面安全/可复现测试（仅分片 0）
+        if: matrix.shard == 0
         working-directory: training
         run: npm run evolution:test
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: training-test-log
-          path: training/training-test.log
+          name: training-test-log-${{ matrix.shard }}
+          path: training/training-test-${{ matrix.shard }}.log
           if-no-files-found: ignore
           retention-days: 14
 
@@ -233,8 +279,8 @@ jobs:
         with:
           name: web-v1-dist
           path: web-v1/dist
-      - name: PR 模拟评估（100 局，4 分片并行，种子连续且不重叠）
-        run: node scripts/ci/run-sim-shards.mjs --games 100 --seed-base 1 --shards 4 --out training/reports/pr-eval --max-anomaly-rate 0.02
+      - name: PR 模拟评估（100 局覆盖不变，8 分片并行，种子连续且不重叠）
+        run: node scripts/ci/run-sim-shards.mjs --games 100 --seed-base 1 --shards 8 --out training/reports/pr-eval --max-anomaly-rate 0.02
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -352,6 +398,60 @@ jobs:
         run: node --test ai5/openevolve/tests/seed-policy.test.mjs ai5/openevolve/tests/static-check.malicious.test.mjs
       - name: 研究 fitness 第一名率模式（焦点席位配对）
         run: node --test ai5/openevolve/tests/duel-first-place.test.mjs
+
+  ai9-research:
+    name: ai9-research
+    needs: [changes, build]
+    if: needs.changes.outputs.ai9 == 'true'
+    # 编译型多模块候选依赖 macOS Seatbelt 隔离；接线审计必须在真实沙箱中执行，
+    # 不能用 ubuntu 的“无沙箱编译”冒充 AI9 安全边界。
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web-v1/package-lock.json
+      - name: 安装 web-v1 依赖（编译型候选需要 tsc）
+        working-directory: web-v1
+        run: npm ci --no-audit --no-fund
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: AI9 12 模块接线审计（真实引擎锁步对比，Seatbelt 编译）
+        run: node training/scripts/ai9-module-wiring-audit.mjs
+      - name: AI9 12 模块执行审计（真实 2–5 人对局调用计数）
+        run: node training/scripts/ai9-module-execution-audit.mjs
+      - name: 校验 AI9 证据完整性（12/12 接线与执行，缺一即失败）
+        run: |
+          node -e '
+            const fs = require("fs");
+            const wiring = JSON.parse(fs.readFileSync("training/reports/ai9/module-wiring-audit.json", "utf8"));
+            const exec = JSON.parse(fs.readFileSync("training/reports/ai9/module-execution-audit.json", "utf8"));
+            if (wiring.summary?.total !== 12) { console.error("接线审计模块数不足：", wiring.summary?.total); process.exit(1); }
+            if (!(wiring.summary?.wired >= 1)) { console.error("没有任何模块产生可观测行为分歧"); process.exit(1); }
+            if (exec.summary?.total !== 12 || exec.summary?.executed !== 12) {
+              console.error("执行审计未覆盖 12/12：", JSON.stringify(exec.summary)); process.exit(1);
+            }
+            if ((exec.summary?.neverCalled ?? []).length) {
+              console.error("存在注册但真实对局从未调用的模块：", exec.summary.neverCalled); process.exit(1);
+            }
+            console.log("AI9 证据完整性 OK：接线", wiring.summary.wired + "/12，执行", exec.summary.executed + "/12");
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai9-research-evidence
+          path: |
+            training/reports/ai9/module-wiring-audit.json
+            training/reports/ai9/module-execution-audit.json
+          if-no-files-found: ignore
+          retention-days: 30
 
   research-worker:
     name: research-worker
@@ -509,6 +609,34 @@ jobs:
           path: training/reports/ai9/module-deploy-drill.json
           if-no-files-found: ignore
 
+  rollback-gate:
+    name: rollback-gate
+    needs: [changes, build]
+    if: needs.changes.outputs.rollback == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: 回滚独立验证（revert 目标必须是已落地晋级，恢复内容逐字节一致，无回滚循环）
+        run: node scripts/ci/verify-rollback.mjs --plan training/reports/rollback-plan.json --out training/reports/rollback-verification.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rollback-verification
+          path: training/reports/rollback-verification.json
+          if-no-files-found: ignore
+          retention-days: 90
+
   promotion-gate:
     name: promotion-gate
     needs: [changes, build]
@@ -549,8 +677,8 @@ jobs:
 
   promotion-machine-gate:
     name: promotion-machine-gate
-    needs: [changes, build, promotion-gate, web-unit, training-unit, simulation, rules-cards, governance-tests, ui-smoke]
-    if: ${{ always() && github.event_name == 'pull_request' && needs.changes.outputs.promotion == 'true' && needs.promotion-gate.outputs.verdict == 'PASS' }}
+    needs: [changes, build, promotion-gate, web-unit, training-unit, simulation, rules-cards, governance-tests, ui-smoke, ai9-research]
+    if: ${{ always() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && needs.changes.outputs.promotion == 'true' && needs.promotion-gate.outputs.verdict == 'PASS' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -568,13 +696,40 @@ jobs:
         with:
           name: web-v1-dist
           path: web-v1/dist
+      - name: 定位晋级 PR（dispatch 运行必须绑定同 head SHA 的开放 PR）
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_NAME: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.sha }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            test -n "$PR_NUMBER" || { echo "::error::缺少 PR 编号"; exit 1; }
+            echo "number=$PR_NUMBER" >> "$GITHUB_OUTPUT"
+            echo "已验证 PR #$PR_NUMBER（pull_request 事件）"
+            exit 0
+          fi
+          # GITHUB_TOKEN 创建的 PR 不会触发 pull_request；发布器会 dispatch 本工作流。
+          # 必须绑定该分支真实开放 PR 并核对 head SHA，防止在任意分支伪造“门禁通过”。
+          row=$(gh pr list --head "$REF_NAME" --base main --state open --json number,headRefOid --jq '.[0] // empty')
+          test -n "$row" || { echo "::error::分支 $REF_NAME 没有开放到 main 的 PR"; exit 1; }
+          number=$(printf '%s' "$row" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).number))')
+          head=$(printf '%s' "$row" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).headRefOid))')
+          if [ "$head" != "$HEAD_SHA" ]; then
+            echo "::error::PR head $head ≠ 本次 dispatch SHA $HEAD_SHA"
+            exit 1
+          fi
+          echo "number=$number" >> "$GITHUB_OUTPUT"
+          echo "已验证 dispatch 运行绑定 PR #$number（head=$head）"
       - name: 复核全部前置机器检查（任何一项非 success 即拒绝）
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
         run: |
           node -e '
             const needs = JSON.parse(process.env.NEEDS_JSON);
-            const required = ["build","web-unit","training-unit","simulation","rules-cards","governance-tests","ui-smoke","promotion-gate"];
+            const required = ["build","web-unit","training-unit","simulation","rules-cards","governance-tests","ui-smoke","ai9-research","promotion-gate"];
             for (const job of required) {
               const r = needs[job]?.result;
               if (r !== "success") { console.error(`前置机器检查未成功：${job}=${r}`); process.exit(1); }
@@ -600,11 +755,15 @@ jobs:
           node training/scripts/apply-champion.mjs --check
       - name: 自动启用 squash auto-merge（不绕过任何检查）
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.pr.outputs.number }}
+          HAS_AUTOMATION_TOKEN: ${{ secrets.AUTOMATION_TOKEN != '' }}
         run: |
           test -n "$PR_NUMBER" || { echo "::error::缺少 PR 编号"; exit 1; }
           gh pr merge "$PR_NUMBER" --squash --auto
+          if [ "$HAS_AUTOMATION_TOKEN" != "true" ]; then
+            echo "::warning::未配置 AUTOMATION_TOKEN：PR 由 GITHUB_TOKEN 创建，ruleset 的 unattributed-changes 规则可能仍要求额外批准。请配置 App/PAT（见 docs/ai9/AUTOMATION.md）。"
+          fi
           echo "已启用自动合并：在所有必需检查通过后自动 squash merge，无需人工批准。"
 
   pages-deploy:
@@ -664,20 +823,48 @@ jobs:
         with:
           name: web-v1-dist
           path: web-v1/dist
-      - name: 线上身份核验（产物指纹 + 实际冠军 id + 适配器标记）
+      - name: 线上身份核验（3 次重试；只有连续失败才触发回滚，避免网络抖动误回滚）
         run: |
           EXPECTED_ARTIFACT=$(node -p "require('./web-v1/dist/build-manifest.json').artifact.sha256")
           EXPECTED_CHAMPION=$(node -p "require('./training/champions/champion.json').parameters.id")
-          node scripts/ci/verify-deploy.mjs \
-            --url "https://xike-yuhuofei.github.io/Century/" \
-            --expected-artifact "$EXPECTED_ARTIFACT" \
-            --expected-champion "$EXPECTED_CHAMPION" \
-            --json training/reports/deploy-verification.json
+          ok=0
+          for attempt in 1 2 3; do
+            echo "线上核验尝试 $attempt/3"
+            if node scripts/ci/verify-deploy.mjs \
+              --url "https://xike-yuhuofei.github.io/Century/" \
+              --expected-artifact "$EXPECTED_ARTIFACT" \
+              --expected-champion "$EXPECTED_CHAMPION" \
+              --json training/reports/deploy-verification.json; then
+              ok=1
+              break
+            fi
+            sleep $((attempt * 10))
+          done
+          test "$ok" = "1" || { echo "::error::线上身份核验连续 3 次失败"; exit 1; }
+          node -e "
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('training/reports/deploy-verification.json','utf8'));
+            const identity = {
+              schema: 'century-deployment-identity-v1',
+              recordedAt: new Date().toISOString(),
+              workflowRunId: process.env.GITHUB_RUN_ID,
+              commit: process.env.GITHUB_SHA,
+              artifact: process.env.EXPECTED_ARTIFACT,
+              champion: process.env.EXPECTED_CHAMPION,
+              url: 'https://xike-yuhuofei.github.io/Century/',
+              verdict: report.verdict ?? (report.failed ? 'FAIL' : 'PASS'),
+              report: 'training/reports/deploy-verification.json',
+            };
+            fs.writeFileSync('training/reports/deployment-identity.json', JSON.stringify(identity, null, 2));
+            console.log(JSON.stringify(identity, null, 2));
+          "
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: deploy-verification
-          path: training/reports/deploy-verification.json
+          path: |
+            training/reports/deploy-verification.json
+            training/reports/deployment-identity.json
           if-no-files-found: ignore
           retention-days: 90
 
@@ -691,16 +878,25 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
+      actions: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: 自动回滚（revert PR + auto-merge；不绕过任何检查）
+      - name: 自动回滚（revert PR + dispatch CI + auto-merge；不绕过任何检查）
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           node scripts/ci/rollback-champion.mjs \
-            --reason "deploy-verify failed (run ${GITHUB_RUN_ID}: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})"
+            --reason "deploy-verify failed (run ${GITHUB_RUN_ID}: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID})" \
+            --json training/reports/rollback-plan.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: rollback-plan
+          path: training/reports/rollback-plan.json
+          if-no-files-found: ignore
+          retention-days: 90
 
   ci-summary:
     name: ci-summary
@@ -719,6 +915,7 @@ jobs:
       - research-e2e
       - research-python
       - research-seatbelt
+      - rollback-gate
       - promotion-gate
       - promotion-machine-gate
       - pages-deploy
@@ -741,6 +938,12 @@ jobs:
         with:
           name: promotion-audit
           path: ${{ runner.temp }}/promotion-audit
+      - name: 下载回滚验证产物（summary 必须独立复算，不能只看 job 结论）
+        if: needs.changes.outputs.rollback == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: rollback-verification
+          path: training/reports
       - name: 汇总门禁判定（独立复算变更范围 + 检查静默跳过）
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
@@ -748,6 +951,7 @@ jobs:
           REF: ${{ github.ref }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
           PR_LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
           FORCE_SCOPE: ${{ inputs.scope || 'auto' }}
           FORCE_PROMOTION: ${{ inputs.promotion || 'false' }}
@@ -759,7 +963,9 @@ jobs:
           SCOPE_SIMULATION: ${{ needs.changes.outputs.simulation }}
           SCOPE_AUDIT: ${{ needs.changes.outputs.audit }}
           SCOPE_RESEARCH: ${{ needs.changes.outputs.research }}
+          SCOPE_AI9: ${{ needs.changes.outputs.ai9 }}
           SCOPE_PROMOTION: ${{ needs.changes.outputs.promotion }}
+          SCOPE_ROLLBACK: ${{ needs.changes.outputs.rollback }}
           SCOPE_PAGES: ${{ needs.changes.outputs.pages }}
           SCOPE_RULES: ${{ needs.changes.outputs.rules }}
           SCOPE_GOVERNANCE: ${{ needs.changes.outputs.governance }}
@@ -770,6 +976,8 @@ jobs:
           PROMOTION_VERDICT: ${{ needs.promotion-gate.outputs.verdict }}
           PROMOTION_REQUIRES_APPROVAL: ${{ needs.promotion-gate.outputs.requires_approval }}
           PROMOTION_VERDICT_FILE: ${{ runner.temp }}/promotion-audit/audit-gate-promotion.json
+          ROLLBACK_PLAN_FILE: training/reports/rollback-plan.json
+          ROLLBACK_VERIFICATION_FILE: training/reports/rollback-verification.json
           CI_SUMMARY_JSON: ${{ runner.temp }}/ci-summary.json
         run: node scripts/ci/summarize.mjs
       - uses: actions/upload-artifact@v4

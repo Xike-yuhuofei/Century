@@ -43,6 +43,30 @@ function sha256Buffer(buffer) {
   return createHash('sha256').update(buffer).digest('hex');
 }
 
+/** 运行时状态/证据路径：它们会在训练中合法变化（种子登记、检查点、报告），
+ * 但不改变代码语义。代码身份必须排除它们，否则云端训练在恢复治理账本后
+ * 永远 headDirty=true，导致 resume/R09 被误判为代码不干净。 */
+export const RUNTIME_STATE_PREFIXES = Object.freeze([
+  'training/governance/',
+  'training/state/',
+  'training/state-prev/',
+  'training/reports/',
+  'web-v1/test-results/',
+]);
+
+export function isRuntimeStatePath(path) {
+  return RUNTIME_STATE_PREFIXES.some(prefix => path.startsWith(prefix));
+}
+
+/** 解析 `git status --porcelain` 行，返回仓库相对路径（处理重命名）。 */
+export function statusPath(line) {
+  const text = String(line ?? '');
+  if (!text.trim()) return '';
+  const arrow = text.indexOf(' -> ');
+  const raw = arrow >= 0 ? text.slice(arrow + 4) : text.slice(3);
+  return raw.trim().replace(/^"|"$/g, '');
+}
+
 function sha256File(path) {
   return sha256Buffer(readFileSync(path));
 }
@@ -63,7 +87,8 @@ function git(args, root) {
 export function computeCodeVersion({ root = REPO_ROOT } = {}) {
   const headCommit = git(['rev-parse', 'HEAD'], root);
   const status = git(['status', '--porcelain', '--untracked-files=no'], root) ?? '';
-  const dirtyFiles = status ? status.split('\n').filter(Boolean) : [];
+  const allDirtyFiles = status ? status.split('\n').filter(Boolean) : [];
+  const dirtyFiles = allDirtyFiles.filter(line => !isRuntimeStatePath(statusPath(line)));
 
   const manifestPath = resolve(root, 'web-v1/dist/build-manifest.json');
   let webBuild = null;

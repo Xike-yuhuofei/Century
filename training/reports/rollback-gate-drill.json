@@ -1,0 +1,49 @@
+{
+  "schema": "century-rollback-gate-drill-v1",
+  "generatedAt": "2026-10-26T12:22:45.351Z",
+  "verdict": "PASS",
+  "checks": [
+    {
+      "id": "legal-promotion-allows-rollback",
+      "status": "PASS",
+      "evidence": "{\"ok\":true,\"plan\":{\"verdict\":\"ROLLBACK_DRY_RUN\",\"prev\":\"champ-a\",\"restores\":true}}"
+    },
+    {
+      "id": "legal-rollback-verification-passes",
+      "status": "PASS",
+      "evidence": "{\"exit\":true,\"verdict\":\"PASS\",\"failed\":[]}"
+    },
+    {
+      "id": "legal-rollback-summary-passes",
+      "status": "PASS",
+      "evidence": "exit=0 cess | 是 | 回滚验证通过：被回滚提交 435dcadaa600，恢复 champ-a |\n\n所有必需的检查均已真实执行并通过；未发生关键检查静默跳过。\n\n\n汇总报告：/var/folders/mq/_2m0mslx2pl08p1gg_n65g040000gn/T/century-rollback-drill-pdGE9L/training/reports/ci-summary.json\n"
+    },
+    {
+      "id": "rollback-loop-refused",
+      "status": "PASS",
+      "evidence": "{\"verdict\":\"ROLLBACK_REFUSED\",\"reason\":\"最近一次冠军变更本身就是回滚提交——已经回滚过，禁止再次回滚（防止回滚循环）\",\"target\":\"e9b083b758466ad11e81eceea83e5ba0f68ef5c5\",\"targetMessage\":\"revert(ai8): 自动回滚冠军提交 435dcadaa600（原因：drill）\"}"
+    },
+    {
+      "id": "tampered-champion-refused",
+      "status": "PASS",
+      "evidence": "{\"verdict\":\"ROLLBACK_REFUSED\",\"reason\":\"被回滚提交没有切换冠军（id 与父提交相同）——只允许回滚一次真实冠军晋级\",\"target\":\"a37533b30405d85166cfdee7a3658217bb4888eb\",\"targetMessage\":\"chore: 手工调整冠军权重（非晋级）\",\"targetChampionId\":\"champ-a\",\"parentChampionIdAtTarget\":\"champ-a\"}"
+    },
+    {
+      "id": "sneaky-rollback-refused-by-verifier",
+      "status": "PASS",
+      "evidence": "{\"exit\":false,\"verdict\":\"FAIL\",\"failed\":[\"no-unrelated-changes\"]}"
+    },
+    {
+      "id": "sneaky-rollback-blocked-by-summary",
+      "status": "PASS",
+      "evidence": "exit≠0 success | 是 |  |\n| rollback-verification | failure | 是 | 回滚独立验证未通过：no-unrelated-changes |\n\n### 失败原因\n\n- 回滚门禁拒绝：回滚独立验证未通过：no-unrelated-changes\n\n\n汇总报告：/var/folders/mq/_2m0mslx2pl08p1gg_n65g040000gn/T/century-rollback-drill-LsMq54/training/reports/ci-summary.json\n"
+    },
+    {
+      "id": "missing-rollback-plan-fails-closed",
+      "status": "PASS",
+      "evidence": "exit≠0  关键检查被静默跳过 |\n| rollback-verification | failure | 是 | 回滚计划产物缺失（失败关闭） |\n\n### 失败原因\n\n- rollback-gate: skipped（关键检查被静默跳过）\n- 回滚门禁拒绝：回滚计划产物缺失（失败关闭）\n\n\n汇总报告：/var/folders/mq/_2m0mslx2pl08p1gg_n65g040000gn/T/century-rollback-drill-YEAYTC/training/reports/ci-summary.json\n"
+    }
+  ],
+  "isolation": "全部场景在 /tmp 临时 git 仓库执行；正式仓库的 champion.json、git 历史与线上部署零改动",
+  "note": "本演练证明回滚门禁既允许合法回滚，也拒绝手工改写/夹带/回滚循环；真实回滚 PR 仍需 CI 全量检查后自动合并"
+}
