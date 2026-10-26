@@ -1,0 +1,1640 @@
+
+> century-crystal-web-v1@1.5.0 test
+> node scripts/sync-cards.mjs --check && npm run build && node --test --test-concurrency=2 tests/*.test.mjs
+
+Canonical card table: OK
+
+> century-crystal-web-v1@1.5.0 build
+> tsc && node scripts/build.mjs && node scripts/build-ai-runtime.mjs && node scripts/build-manifest.mjs
+
+已生成 dist/index.html（服务器运行）和 dist/standalone.html（直接双击运行；esbuild IIFE + 内联经典 AI Worker）
+已生成 dist/ai-runtime/harness.html（opt-in Worker 验收页）
+已生成构建清单：dist/build-manifest.json
+  source=d507667b8acc5167（74 文件）
+  artifact=e4d5ed58d031efdf（49 文件）
+  git=19d4b40c2f63 dirty=true
+TAP version 13
+# Subtest: validateAIParameters：适配器描述符权重缺省补 1.0，jointVersion/budgetMs 校验
+ok 1 - validateAIParameters：适配器描述符权重缺省补 1.0，jointVersion/budgetMs 校验
+  ---
+  duration_ms: 0.69025
+  type: 'test'
+  ...
+# Subtest: chooseAIAction：adapter 参数分派到联合适配器（与 chooseJointAction 同源合法）
+ok 2 - chooseAIAction：adapter 参数分派到联合适配器（与 chooseJointAction 同源合法）
+  ---
+  duration_ms: 65.767333
+  type: 'test'
+  ...
+# Subtest: chooseAIAction：无 adapter 字段的冠军路径行为不变（分派零干扰）
+ok 3 - chooseAIAction：无 adapter 字段的冠军路径行为不变（分派零干扰）
+  ---
+  duration_ms: 23.658584
+  type: 'test'
+  ...
+# Subtest: apply-champion.mjs：适配器冠军生成区 --check 往返一致（隔离 target，不改仓库源文件）
+ok 4 - apply-champion.mjs：适配器冠军生成区 --check 往返一致（隔离 target，不改仓库源文件）
+  ---
+  duration_ms: 234.935542
+  type: 'test'
+  ...
+# Subtest: 随机化隐藏牌库顺序不改变 AI 决策（多位置 × 多种打乱方式）
+ok 5 - 随机化隐藏牌库顺序不改变 AI 决策（多位置 × 多种打乱方式）
+  ---
+  duration_ms: 7428.329292
+  type: 'test'
+  ...
+# Subtest: AIObservation 纯度：不含隐藏牌库字段且深度冻结
+ok 6 - AIObservation 纯度：不含隐藏牌库字段且深度冻结
+  ---
+  duration_ms: 0.185666
+  type: 'test'
+  ...
+# Subtest: 静态扫描：AI 决策源码对隐藏牌库字段的引用必须为零
+ok 7 - 静态扫描：AI 决策源码对隐藏牌库字段的引用必须为零
+  ---
+  duration_ms: 0.984708
+  type: 'test'
+  ...
+# Subtest: 决策不修改输入局面且默认冠军与显式冠军参数同路（JS5 适配器）
+ok 8 - 决策不修改输入局面且默认冠军与显式冠军参数同路（JS5 适配器）
+  ---
+  duration_ms: 3966.848625
+  type: 'test'
+  ...
+# Subtest: 冠军参数与训练系统冠军记录一致（审计整改：防止真正晋级后测试误报）
+ok 9 - 冠军参数与训练系统冠军记录一致（审计整改：防止真正晋级后测试误报）
+  ---
+  duration_ms: 0.499292
+  type: 'test'
+  ...
+# Subtest: 冠军基线参数与 BASELINE 一致且全部为合法数值
+ok 10 - 冠军基线参数与 BASELINE 一致且全部为合法数值
+  ---
+  duration_ms: 0.435
+  type: 'test'
+  ...
+# Subtest: 参数校验拒绝越界、非有限值与缺失字段
+ok 11 - 参数校验拒绝越界、非有限值与缺失字段
+  ---
+  duration_ms: 0.288042
+  type: 'test'
+  ...
+# Subtest: 激活参数设置与复位
+ok 12 - 激活参数设置与复位
+  ---
+  duration_ms: 0.13
+  type: 'test'
+  ...
+# Subtest: 版本注册与解析
+ok 13 - 版本注册与解析
+  ---
+  duration_ms: 0.334125
+  type: 'test'
+  ...
+# Subtest: 全部 8 个参数真实影响决策（灵敏度测试，禁止虚假参数）
+ok 14 - 全部 8 个参数真实影响决策（灵敏度测试，禁止虚假参数）
+  ---
+  duration_ms: 28577.29775
+  type: 'test'
+  ...
+# Subtest: 初始化握手：init → ready；就绪后请求直达
+ok 15 - 初始化握手：init → ready；就绪后请求直达
+  ---
+  duration_ms: 7.14875
+  type: 'test'
+  ...
+# Subtest: 握手超时：重生一次仍失败 → 显式失败而非悬挂
+ok 16 - 握手超时：重生一次仍失败 → 显式失败而非悬挂
+  ---
+  duration_ms: 61.959959
+  type: 'test'
+  ...
+# Subtest: 取消未完成任务：结果永不包含行动
+ok 17 - 取消未完成任务：结果永不包含行动
+  ---
+  duration_ms: 0.704292
+  type: 'test'
+  ...
+# Subtest: 状态更新废弃旧任务：invalidate 后迟到响应不暴露行动
+ok 18 - 状态更新废弃旧任务：invalidate 后迟到响应不暴露行动
+  ---
+  duration_ms: 0.604292
+  type: 'test'
+  ...
+# Subtest: 新请求替代旧请求：旧请求 superseded，新请求正常完成
+ok 19 - 新请求替代旧请求：旧请求 superseded，新请求正常完成
+  ---
+  duration_ms: 0.941167
+  type: 'test'
+  ...
+# Subtest: 看门狗：预算超时强制终止并回退（AI 异常不卡页面）
+ok 20 - 看门狗：预算超时强制终止并回退（AI 异常不卡页面）
+  ---
+  duration_ms: 72.754959
+  type: 'test'
+  ...
+# Subtest: 崩溃恢复：首次崩溃重生重试成功
+ok 21 - 崩溃恢复：首次崩溃重生重试成功
+  ---
+  duration_ms: 0.955583
+  type: 'test'
+  ...
+# Subtest: 连续故障：二次崩溃后回退合法行动，客户端不悬挂
+ok 22 - 连续故障：二次崩溃后回退合法行动，客户端不悬挂
+  ---
+  duration_ms: 0.916583
+  type: 'test'
+  ...
+# Subtest: 决策类异常：重试一次后回退（fallback action 合法）
+ok 23 - 决策类异常：重试一次后回退（fallback action 合法）
+  ---
+  duration_ms: 2.5115
+  type: 'test'
+  ...
+# Subtest: 协议防火墙（真实 worker）：越权载荷被拒，客户端继续可用
+ok 24 - 协议防火墙（真实 worker）：越权载荷被拒，客户端继续可用
+  ---
+  duration_ms: 73.53975
+  type: 'test'
+  ...
+# Subtest: E3 运行时身份：Worker 与主线程降级共用同一冠军配置，随机流不来自游戏牌库
+ok 25 - E3 运行时身份：Worker 与主线程降级共用同一冠军配置，随机流不来自游戏牌库
+  ---
+  duration_ms: 0.367917
+  type: 'test'
+  ...
+# Subtest: E4 2–5 人：Worker 与主线程固定工作量决策逐位一致
+ok 26 - E4 2–5 人：Worker 与主线程固定工作量决策逐位一致
+  ---
+  duration_ms: 1432.7715
+  type: 'test'
+  ...
+# Subtest: E4 6 人扩展（2 真人 + 4 AI）：协议与 Worker 路径仍可承载
+ok 27 - E4 6 人扩展（2 真人 + 4 AI）：协议与 Worker 路径仍可承载
+  ---
+  duration_ms: 265.7155
+  type: 'test'
+  ...
+#   [墙钟诊断] [{"sameAction":true,"workerRollouts":16,"mainRollouts":48,"workerElapsed":117,"mainElapsed":120},{"sameAction":true,"workerRollouts":32,"mainRollouts":48,"workerElapsed":112,"mainElapsed":121},{"sameAction":true,"workerRollouts":32,"mainRollouts":48,"workerElapsed":112,"mainElapsed":117}]
+# Subtest: E4 墙钟模式：只记录分布，不把计时噪声误判为逻辑差异
+ok 28 - E4 墙钟模式：只记录分布，不把计时噪声误判为逻辑差异
+  ---
+  duration_ms: 749.83725
+  type: 'test'
+  ...
+# Subtest: E3 Worker 无法启动：显式切换主线程冠军，不静默执行不明版本
+ok 29 - E3 Worker 无法启动：显式切换主线程冠军，不静默执行不明版本
+  ---
+  duration_ms: 100.749833
+  type: 'test'
+  ...
+# Subtest: 协议常量与防火墙：白名单外字段、禁止字段被拒绝
+ok 30 - 协议常量与防火墙：白名单外字段、禁止字段被拒绝
+  ---
+  duration_ms: 35.015167
+  type: 'test'
+  ...
+# Subtest: 静态扫描：ai-runtime worker 侧源码对隐藏牌库引用为零
+ok 31 - 静态扫描：ai-runtime worker 侧源码对隐藏牌库引用为零
+  ---
+  duration_ms: 0.652666
+  type: 'test'
+  ...
+# Subtest: 静态扫描：ai-runtime 无任何网络 API 与远程地址
+ok 32 - 静态扫描：ai-runtime 无任何网络 API 与远程地址
+  ---
+  duration_ms: 1.966875
+  type: 'test'
+  ...
+# Subtest: 固定工作量决策核心：逐位确定性（同观察 + 同种子 + 同工作量）
+ok 33 - 固定工作量决策核心：逐位确定性（同观察 + 同种子 + 同工作量）
+  ---
+  duration_ms: 185.092708
+  type: 'test'
+  ...
+# Subtest: Worker 与直接调用一致（worker_threads 同核轮转 × 多位置）
+    # Subtest: 决策核心直调 == chooseJointAction（全量 Game 入口）
+    ok 1 - 决策核心直调 == chooseJointAction（全量 Game 入口）
+      ---
+      duration_ms: 303.282459
+      type: 'test'
+      ...
+    # Subtest: 经 client + worker_threads 往返 == 决策核心直调
+    ok 2 - 经 client + worker_threads 往返 == 决策核心直调
+      ---
+      duration_ms: 419.288708
+      type: 'test'
+      ...
+    1..2
+ok 34 - Worker 与直接调用一致（worker_threads 同核轮转 × 多位置）
+  ---
+  duration_ms: 763.594292
+  type: 'test'
+  ...
+# Subtest: 隐藏牌库随机化不改变 worker 决策（信息公平性 × worker 路径）
+ok 35 - 隐藏牌库随机化不改变 worker 决策（信息公平性 × worker 路径）
+  ---
+  duration_ms: 183.155416
+  type: 'test'
+  ...
+# Subtest: 非法行动防线：worker 决策与回退路径均被正式引擎接受
+ok 36 - 非法行动防线：worker 决策与回退路径均被正式引擎接受
+  ---
+  duration_ms: 758.597167
+  type: 'test'
+  ...
+# Subtest: 换局隔离：旧局请求被废弃，不污染新局决策
+ok 37 - 换局隔离：旧局请求被废弃，不污染新局决策
+  ---
+  duration_ms: 471.5275
+  type: 'test'
+  ...
+#   [延迟分布] [{"budgetMs":200,"latency":223,"workerElapsed":221,"rollouts":48},{"budgetMs":300,"latency":279,"workerElapsed":278,"rollouts":96},{"budgetMs":400,"latency":383,"workerElapsed":382,"rollouts":160}]
+# Subtest: 墙钟预算：worker 延迟分布（报告口径，不要求跨机器逐位一致）
+ok 38 - 墙钟预算：worker 延迟分布（报告口径，不要求跨机器逐位一致）
+  ---
+  duration_ms: 930.1335
+  type: 'test'
+  ...
+# Subtest: 版本纪律：未知版本与 champion-contest 在 worker 路径被明确拒绝
+ok 39 - 版本纪律：未知版本与 champion-contest 在 worker 路径被明确拒绝
+  ---
+  duration_ms: 53.127209
+  type: 'test'
+  ...
+# Subtest: P1-1 递归防火墙：嵌套隐藏牌库字段在任意层级被拒绝
+ok 40 - P1-1 递归防火墙：嵌套隐藏牌库字段在任意层级被拒绝
+  ---
+  duration_ms: 9.894375
+  type: 'test'
+  ...
+# Subtest: P1-1 载荷校验：合法手牌不被误判 + 非法版本/预算/种子拒绝
+ok 41 - P1-1 载荷校验：合法手牌不被误判 + 非法版本/预算/种子拒绝
+  ---
+  duration_ms: 13.437916
+  type: 'test'
+  ...
+# Subtest: P1-1 状态管理：无效自比较检查已删除，过期版本请求被拒绝
+ok 42 - P1-1 状态管理：无效自比较检查已删除，过期版本请求被拒绝
+  ---
+  duration_ms: 33.216417
+  type: 'test'
+  ...
+#     seed=20261023 rollout=[-,-,-,-] contest=[G01,G01,G01,G01]
+#     seed=11 rollout=[-,-,-,-] contest=[G20,G20,G30,G20]
+#     seed=22 rollout=[-,-,-,-] contest=[G31,G07,G07,G28]
+#     seed=33 rollout=[-,-,-,-] contest=[G11,G11,G11,G12]
+#     seed=44 rollout=[-,-,-,-] contest=[G01,G01,G01,G01]
+#     seed=55 rollout=[-,-,-,-] contest=[G03,G23,G09,G28]
+#     seed=66 rollout=[-,-,-,-] contest=[G08,G08,G08,G23]
+#     seed=77 rollout=[-,-,-,-] contest=[G01,G05,G05,G01]
+# Subtest: 结构轴注册:beam-contest 合法,未知结构仍报错
+ok 43 - 结构轴注册:beam-contest 合法,未知结构仍报错
+  ---
+  duration_ms: 0.433041
+  type: 'test'
+  ...
+# Subtest: 存活模型:对手可达费用越高,目标存活系数越低
+ok 44 - 存活模型:对手可达费用越高,目标存活系数越低
+  ---
+  duration_ms: 0.228
+  type: 'test'
+  ...
+# Subtest: 存活模型:同一威胁对手排在我前面时存活系数更低(座位感知)
+ok 45 - 存活模型:同一威胁对手排在我前面时存活系数更低(座位感知)
+  ---
+  duration_ms: 0.207916
+  type: 'test'
+  ...
+# Subtest: 存活模型:终局当步不做折扣(triggerPlayer 非 null 时全为 1)
+ok 46 - 存活模型:终局当步不做折扣(triggerPlayer 非 null 时全为 1)
+  ---
+  duration_ms: 0.801584
+  type: 'test'
+  ...
+# Subtest: 金标准:冠军结构(beam-rollout)决策序列逐位不变(seed=20261023,24 步)
+ok 47 - 金标准:冠军结构(beam-rollout)决策序列逐位不变(seed=20261023,24 步)
+  ---
+  duration_ms: 385.5115
+  type: 'test'
+  ...
+# Subtest: 行为生效:beam-contest 的开局目标选择与 beam-rollout 存在座位感知差异
+ok 48 - 行为生效:beam-contest 的开局目标选择与 beam-rollout 存在座位感知差异
+  ---
+  duration_ms: 2739.019041
+  type: 'test'
+  ...
+# Subtest: beam-contest:决策全程合法且同 seed 确定性可复现
+ok 49 - beam-contest:决策全程合法且同 seed 确定性可复现
+  ---
+  duration_ms: 1847.628459
+  type: 'test'
+  ...
+# Subtest: 结构标识归一化：缺省为冠军结构，非法值报错
+ok 50 - 结构标识归一化：缺省为冠军结构，非法值报错
+  ---
+  duration_ms: 0.738875
+  type: 'test'
+  ...
+# Subtest: 自适应束宽：确定性、单调递减（前置宽后置窄）、有下界
+ok 51 - 自适应束宽：确定性、单调递减（前置宽后置窄）、有下界
+  ---
+  duration_ms: 0.149458
+  type: 'test'
+  ...
+# Subtest: 全部结构的决策在正式引擎下合法（多位置 × 三结构）
+ok 52 - 全部结构的决策在正式引擎下合法（多位置 × 三结构）
+  ---
+  duration_ms: 812.57225
+  type: 'test'
+  ...
+# Subtest: 结构变体确定性：同结构同局面决策逐位一致（含 rollout 随机源）
+ok 53 - 结构变体确定性：同结构同局面决策逐位一致（含 rollout 随机源）
+  ---
+  duration_ms: 604.555334
+  type: 'test'
+  ...
+# Subtest: 结构变体真实生效：至少一个位置上规划与冠军结构不同（非退化）
+ok 54 - 结构变体真实生效：至少一个位置上规划与冠军结构不同（非退化）
+  ---
+  duration_ms: 3052.914042
+  type: 'test'
+  ...
+# Subtest: 结构可内嵌于参数集并通过验证透传
+ok 55 - 结构可内嵌于参数集并通过验证透传
+  ---
+  duration_ms: 0.340167
+  type: 'test'
+  ...
+# Subtest: rollout 结构决策耗时保持在交互预算内
+ok 56 - rollout 结构决策耗时保持在交互预算内
+  ---
+  duration_ms: 475.190125
+  type: 'test'
+  ...
+# Subtest: 观察对象在结构变体路径下仍为唯一信息入口
+ok 57 - 观察对象在结构变体路径下仍为唯一信息入口
+  ---
+  duration_ms: 39.43775
+  type: 'test'
+  ...
+# Subtest: V2.0 发现两张真实交易卡的三步认领路线
+ok 58 - V2.0 发现两张真实交易卡的三步认领路线
+  ---
+  duration_ms: 41.53675
+  type: 'test'
+  ...
+# Subtest: V2.0 将休息回合计入认领路线
+ok 59 - V2.0 将休息回合计入认领路线
+  ---
+  duration_ms: 11.003667
+  type: 'test'
+  ...
+# Subtest: 更换隐藏牌库顺序不改变离线 AI 首步
+ok 60 - 更换隐藏牌库顺序不改变离线 AI 首步
+  ---
+  duration_ms: 50.233083
+  type: 'test'
+  ...
+# Subtest: 终局轮次不规划不存在的后续回合
+ok 61 - 终局轮次不规划不存在的后续回合
+  ---
+  duration_ms: 0.349041
+  type: 'test'
+  ...
+# Subtest: 1 名人类可以选择 1–4 名 AI；0 AI 保持传统双人模式
+ok 62 - 1 名人类可以选择 1–4 名 AI；0 AI 保持传统双人模式
+  ---
+  duration_ms: 0.941209
+  type: 'test'
+  ...
+# Subtest: AI 必须是当前行动玩家，决策不得修改原局面
+ok 63 - AI 必须是当前行动玩家，决策不得修改原局面
+  ---
+  duration_ms: 33.679166
+  type: 'test'
+  ...
+# Subtest: AI 超额弃置能精确满足 10 颗限制
+ok 64 - AI 超额弃置能精确满足 10 颗限制
+  ---
+  duration_ms: 0.3615
+  type: 'test'
+  ...
+# Subtest: AI 能在可认领时优先认领魔像
+ok 65 - AI 能在可认领时优先认领魔像
+  ---
+  duration_ms: 40.925459
+  type: 'test'
+  ...
+# Subtest: 所有 1–4 AI 人数组合能持续合法行动并完成整局
+ok 66 - 所有 1–4 AI 人数组合能持续合法行动并完成整局
+  ---
+  duration_ms: 721255.1325
+  type: 'test'
+  ...
+# ai5-variant.test.mjs：全部断言通过
+# Subtest: tests/ai5-variant.test.mjs
+ok 11 - tests/ai5-variant.test.mjs
+  ---
+  duration_ms: 610.404917
+  type: 'test'
+  ...
+# Subtest: 冻结 js5 行为与语料一致，且不输出 AI7 仲裁字段
+ok 68 - 冻结 js5 行为与语料一致，且不输出 AI7 仲裁字段
+  ---
+  duration_ms: 1078.297542
+  type: 'test'
+  ...
+# Subtest: js7 候选：四个审计局面都保持冠军/受保护认领，不再被低置信度覆盖
+ok 69 - js7 候选：四个审计局面都保持冠军/受保护认领，不再被低置信度覆盖
+  ---
+  duration_ms: 905.525625
+  type: 'test'
+  ...
+# Subtest: 配对置信下界是保护机制而非偶然：关闭保护后覆盖重新出现
+ok 70 - 配对置信下界是保护机制而非偶然：关闭保护后覆盖重新出现
+  ---
+  duration_ms: 250.65975
+  type: 'test'
+  ...
+# Subtest: 已知反例边界：3P-AVS 冠军认领毛分 15 / 净分 11，属于受保护认领
+ok 71 - 已知反例边界：3P-AVS 冠军认领毛分 15 / 净分 11，属于受保护认领
+  ---
+  duration_ms: 266.177042
+  type: 'test'
+  ...
+# Subtest: TS-3P-FIN-003：精确求解选 M20×2（66 分 / 名次 2），M18×1 为 62 分 / 名次 3
+ok 72 - TS-3P-FIN-003：精确求解选 M20×2（66 分 / 名次 2），M18×1 为 62 分 / 名次 3
+  ---
+  duration_ms: 12.761375
+  type: 'test'
+  ...
+# Subtest: 冻结 js5 仍选 M18（生产行为不变）；js6 候选选 M20×2
+ok 73 - 冻结 js5 仍选 M18（生产行为不变）；js6 候选选 M20×2
+  ---
+  duration_ms: 32.339542
+  type: 'test'
+  ...
+# Subtest: 终局弃置口径：先弃黄，保留非黄（构造的 12 颗溢出局面）
+ok 74 - 终局弃置口径：先弃黄，保留非黄（构造的 12 颗溢出局面）
+  ---
+  duration_ms: 0.159958
+  type: 'test'
+  ...
+# Subtest: 审计 §5.7：冠军 trim 保留黄（残值 9），终局口径弃黄（残值 10）
+ok 75 - 审计 §5.7：冠军 trim 保留黄（残值 9），终局口径弃黄（残值 10）
+  ---
+  duration_ms: 0.143667
+  type: 'test'
+  ...
+# Subtest: 适配器溢出路径：js6 使用官方得分弃置；js5 保持冻结 trimStock
+ok 76 - 适配器溢出路径：js6 使用官方得分弃置；js5 保持冻结 trimStock
+  ---
+  duration_ms: 0.5295
+  type: 'test'
+  ...
+# Subtest: 2/3/4 人真实终局局面：求解行动经正式引擎复核合法
+ok 77 - 2/3/4 人真实终局局面：求解行动经正式引擎复核合法
+  ---
+  duration_ms: 3.769875
+  type: 'test'
+  ...
+# Subtest: 5 人真实终局局面：存在且求解合法（由正式引擎对局推进产生）
+ok 78 - 5 人真实终局局面：存在且求解合法（由正式引擎对局推进产生）
+  ---
+  duration_ms: 4510.95075
+  type: 'test'
+  ...
+# Subtest: 非终局状态不触发精确求解（避免中局贪心化）
+ok 79 - 非终局状态不触发精确求解（避免中局贪心化）
+  ---
+  duration_ms: 0.307458
+  type: 'test'
+  ...
+# Subtest: 官方平分规则：同分时座位号大者优先（求解名次与引擎 ranking 一致）
+ok 80 - 官方平分规则：同分时座位号大者优先（求解名次与引擎 ranking 一致）
+  ---
+  duration_ms: 0.711291
+  type: 'test'
+  ...
+# Subtest: 剩余回合估计：早期高、临终局低；只使用公开回合/认领数
+ok 81 - 剩余回合估计：早期高、临终局低；只使用公开回合/认领数
+  ---
+  duration_ms: 0.526375
+  type: 'test'
+  ...
+# Subtest: 创造卡重复产出：受剩余回合约束，不是无条件加成
+ok 82 - 创造卡重复产出：受剩余回合约束，不是无条件加成
+  ---
+  duration_ms: 0.140875
+  type: 'test'
+  ...
+# Subtest: 容量约束：商队已满或只能产出一次时不得加成（反"所有创造卡"偏向）
+ok 83 - 容量约束：商队已满或只能产出一次时不得加成（反"所有创造卡"偏向）
+  ---
+  duration_ms: 0.109209
+  type: 'test'
+  ...
+# Subtest: 升级卡长期作用：有黄水晶且剩余回合充足才加成
+ok 84 - 升级卡长期作用：有黄水晶且剩余回合充足才加成
+  ---
+  duration_ms: 0.120334
+  type: 'test'
+  ...
+# Subtest: 交易卡重复使用：可支付时高于不可支付（真实可用性）
+ok 85 - 交易卡重复使用：可支付时高于不可支付（真实可用性）
+  ---
+  duration_ms: 0.139458
+  type: 'test'
+  ...
+# Subtest: 获取支付机会成本：非黄支付计 1 分、黄支付计 0.5 分
+ok 86 - 获取支付机会成本：非黄支付计 1 分、黄支付计 0.5 分
+  ---
+  duration_ms: 0.043875
+  type: 'test'
+  ...
+# Subtest: 获取重复增量：容量已满时为 0；缺省 v1 下不产生任何增量
+ok 87 - 获取重复增量：容量已满时为 0；缺省 v1 下不产生任何增量
+  ---
+  duration_ms: 0.105041
+  type: 'test'
+  ...
+# Subtest: 缺省 v1 与冻结 knowledge.engineValue 逐位一致
+ok 88 - 缺省 v1 与冻结 knowledge.engineValue 逐位一致
+  ---
+  duration_ms: 0.06975
+  type: 'test'
+  ...
+# Subtest: 人数条件策略：stratified 只在 5 人局提高竞争折扣，且与 flat 可独立消融
+ok 89 - 人数条件策略：stratified 只在 5 人局提高竞争折扣，且与 flat 可独立消融
+  ---
+  duration_ms: 0.724166
+  type: 'test'
+  ...
+# Subtest: 候选版本注册：js8/js8-seat 的配置身份显式区分，js5 保持 v1/flat
+ok 90 - 候选版本注册：js8/js8-seat 的配置身份显式区分，js5 保持 v1/flat
+  ---
+  duration_ms: 369.587958
+  type: 'test'
+  ...
+# Subtest: 引擎 V2 是同值域增强：整套引擎价值不低于 V1（只加显式重复项）
+ok 91 - 引擎 V2 是同值域增强：整套引擎价值不低于 V1（只加显式重复项）
+  ---
+  duration_ms: 0.218542
+  type: 'test'
+  ...
+# Subtest: 生产冠军参数未被候选篡改：仍是 joint-js5 / champion-guided / 100ms
+ok 92 - 生产冠军参数未被候选篡改：仍是 joint-js5 / champion-guided / 100ms
+  ---
+  duration_ms: 0.314417
+  type: 'test'
+  ...
+# Subtest: 冻结 js5 决策与语料 js5-w128 逐位一致（含四个审计局面）
+ok 93 - 冻结 js5 决策与语料 js5-w128 逐位一致（含四个审计局面）
+  ---
+  duration_ms: 1107.454292
+  type: 'test'
+  ...
+# Subtest: 候选版本在全部战术语料上决策合法（2–5 人分层）
+ok 94 - 候选版本在全部战术语料上决策合法（2–5 人分层）
+  ---
+  duration_ms: 7620.745458
+  type: 'test'
+  ...
+# Subtest: 固定工作量决策逐位可复现（候选版本）
+ok 95 - 固定工作量决策逐位可复现（候选版本）
+  ---
+  duration_ms: 667.442208
+  type: 'test'
+  ...
+# Subtest: 归档指纹跨刷新稳定；不同对局指纹不同
+ok 96 - 归档指纹跨刷新稳定；不同对局指纹不同
+  ---
+  duration_ms: 0.760208
+  type: 'test'
+  ...
+# Subtest: makeEntry：结束局标题含获胜者与分数，未完成局标记未完成
+ok 97 - makeEntry：结束局标题含获胜者与分数，未完成局标记未完成
+  ---
+  duration_ms: 0.220208
+  type: 'test'
+  ...
+# Subtest: pushArchive：新条目置顶、同指纹去重、超过上限丢弃最旧
+ok 98 - pushArchive：新条目置顶、同指纹去重、超过上限丢弃最旧
+  ---
+  duration_ms: 1.588042
+  type: 'test'
+  ...
+# Subtest: saveArchive/loadArchive：完整往返保留复盘记录，坏条目被剔除
+ok 99 - saveArchive/loadArchive：完整往返保留复盘记录，坏条目被剔除
+  ---
+  duration_ms: 1.103375
+  type: 'test'
+  ...
+# Subtest: saveArchive：存储配额不足时降级重试且不抛错
+ok 100 - saveArchive：存储配额不足时降级重试且不抛错
+  ---
+  duration_ms: 1.056209
+  type: 'test'
+  ...
+# Subtest: 存储拒绝访问（隐私模式 / 嵌入式 about:blank）：属性访问本身抛错时绝不阻断页面
+ok 101 - 存储拒绝访问（隐私模式 / 嵌入式 about:blank）：属性访问本身抛错时绝不阻断页面
+  ---
+  duration_ms: 0.181791
+  type: 'test'
+  ...
+# Subtest: AUTO_EXPORT_KEY 与其他存储键不冲突
+ok 102 - AUTO_EXPORT_KEY 与其他存储键不冲突
+  ---
+  duration_ms: 0.318
+  type: 'test'
+  ...
+# Subtest: 只导出结束的对局：进行中跳过
+ok 103 - 只导出结束的对局：进行中跳过
+  ---
+  duration_ms: 0.6935
+  type: 'test'
+  ...
+# Subtest: 开关关闭时跳过（优先于指纹去重判断）
+ok 104 - 开关关闭时跳过（优先于指纹去重判断）
+  ---
+  duration_ms: 0.104792
+  type: 'test'
+  ...
+# Subtest: 同指纹会话内只导出一次：已登记的指纹跳过，未登记的下载
+ok 105 - 同指纹会话内只导出一次：已登记的指纹跳过，未登记的下载
+  ---
+  duration_ms: 0.121833
+  type: 'test'
+  ...
+# Subtest: 无 localStorage 环境（Node/隐私模式）下开关函数不抛错且默认关闭
+ok 106 - 无 localStorage 环境（Node/隐私模式）下开关函数不抛错且默认关闭
+  ---
+  duration_ms: 0.609833
+  type: 'test'
+  ...
+# Subtest: V1 all 89 cards match root data/cards.json by ID and effect
+ok 107 - V1 all 89 cards match root data/cards.json by ID and effect
+  ---
+  duration_ms: 1.939917
+  type: 'test'
+  ...
+# Subtest: 89 张牌结构正确，魔像分值由水晶费用核算
+ok 108 - 89 张牌结构正确，魔像分值由水晶费用核算
+  ---
+  duration_ms: 0.847375
+  type: 'test'
+  ...
+# Subtest: 开局 2–5 人，第一轮商队和市场配置正确
+ok 109 - 开局 2–5 人，第一轮商队和市场配置正确
+  ---
+  duration_ms: 1.303292
+  type: 'test'
+  ...
+# Subtest: 玩家每回合打出一次创造卡，卡牌进入已打出区且推进到下一玩家
+ok 110 - 玩家每回合打出一次创造卡，卡牌进入已打出区且推进到下一玩家
+  ---
+  duration_ms: 0.71475
+  type: 'test'
+  ...
+# Subtest: 升级卡可以同一颗黄→绿→蓝、可以不使用满额
+ok 111 - 升级卡可以同一颗黄→绿→蓝、可以不使用满额
+  ---
+  duration_ms: 0.314583
+  type: 'test'
+  ...
+# Subtest: 交易卡可以重复交易，必须每次都支付足够水晶
+ok 112 - 交易卡可以重复交易，必须每次都支付足够水晶
+  ---
+  duration_ms: 0.2155
+  type: 'test'
+  ...
+# Subtest: 获取卡需向左侧逐张压入水晶，并取走目标卡累计奖励
+ok 113 - 获取卡需向左侧逐张压入水晶，并取走目标卡累计奖励
+  ---
+  duration_ms: 0.218208
+  type: 'test'
+  ...
+# Subtest: 上限只在回合结束检查，需精确弃置后才能推进
+ok 114 - 上限只在回合结束检查，需精确弃置后才能推进
+  ---
+  duration_ms: 0.185541
+  type: 'test'
+  ...
+# Subtest: 认领精准支付，铜银币位置及铜币耗尽后前移正确
+ok 115 - 认领精准支付，铜银币位置及铜币耗尽后前移正确
+  ---
+  duration_ms: 0.353459
+  type: 'test'
+  ...
+# Subtest: 休息收回全部已打出卡并消费一回合
+ok 116 - 休息收回全部已打出卡并消费一回合
+  ---
+  duration_ms: 0.245875
+  type: 'test'
+  ...
+# Subtest: 终局在当前整轮结束后结算，确保各玩家行动回合数相同
+ok 117 - 终局在当前整轮结束后结算，确保各玩家行动回合数相同
+  ---
+  duration_ms: 0.714583
+  type: 'test'
+  ...
+# Subtest: 最终计分包含魔像、铜币、银币、非黄水晶；同分后手胜出
+ok 118 - 最终计分包含魔像、铜币、银币、非黄水晶；同分后手胜出
+  ---
+  duration_ms: 0.134417
+  type: 'test'
+  ...
+# Subtest: 牌库存量守恒：获取/打出/休息仍保证所有可用卡牌唯一
+ok 119 - 牌库存量守恒：获取/打出/休息仍保证所有可用卡牌唯一
+  ---
+  duration_ms: 0.299041
+  type: 'test'
+  ...
+# Subtest: M29 与核校卡表一致：黄×4 → 蓝×2
+ok 120 - M29 与核校卡表一致：黄×4 → 蓝×2
+  ---
+  duration_ms: 0.158917
+  type: 'test'
+  ...
+# Subtest: 2 位真人 + 1–4 AI：真人索引固定在左右座次（0、1）
+ok 121 - 2 位真人 + 1–4 AI：真人索引固定在左右座次（0、1）
+  ---
+  duration_ms: 1.868167
+  type: 'test'
+  ...
+# Subtest: 6 人为非官方 2 真人 + 4 AI 扩展，其它 6 人混搭被拒绝
+ok 122 - 6 人为非官方 2 真人 + 4 AI 扩展，其它 6 人混搭被拒绝
+  ---
+  duration_ms: 0.290625
+  type: 'test'
+  ...
+# Subtest: 六人循环保持回合顺序、先后手一致与终局整轮公平
+ok 123 - 六人循环保持回合顺序、先后手一致与终局整轮公平
+  ---
+  duration_ms: 1.246708
+  type: 'test'
+  ...
+# Subtest: 2 人类 + 4 AI：60 组全自动合法行动可正常触发终局
+ok 124 - 2 人类 + 4 AI：60 组全自动合法行动可正常触发终局
+  ---
+  duration_ms: 222799.915917
+  type: 'test'
+  ...
+# Subtest: 静态扫描：src/js 对隐藏牌库顺序的引用为零
+ok 125 - 静态扫描：src/js 对隐藏牌库顺序的引用为零
+  ---
+  duration_ms: 1.528833
+  type: 'test'
+  ...
+# Subtest: 随机化隐藏牌库顺序不改变联合规划决策（多位置 × 多种打乱）
+ok 126 - 随机化隐藏牌库顺序不改变联合规划决策（多位置 × 多种打乱）
+  ---
+  duration_ms: 953.54075
+  type: 'test'
+  ...
+# Subtest: 预算纪律：25/50/100/200ms 预算下决策延迟 p95 ≤ 预算 + 5ms
+ok 127 - 预算纪律：25/50/100/200ms 预算下决策延迟 p95 ≤ 预算 + 5ms
+  ---
+  duration_ms: 10119.333125
+  type: 'test'
+  ...
+# Subtest: 预算耗尽回退：极端预算下决策仍合法
+ok 128 - 预算耗尽回退：极端预算下决策仍合法
+  ---
+  duration_ms: 206.22175
+  type: 'test'
+  ...
+# Subtest: 版本隔离：未注册版本抛错；注册版本可完整决策
+ok 129 - 版本隔离：未注册版本抛错；注册版本可完整决策
+  ---
+  duration_ms: 169.968208
+  type: 'test'
+  ...
+# Subtest: S1 [机制敏感性] 抢夺威胁显著移动认领相对价值（Issue \#20 核心时序信号）
+ok 130 - S1 [机制敏感性] 抢夺威胁显著移动认领相对价值（Issue \#20 核心时序信号）
+  ---
+  duration_ms: 768.928792
+  type: 'test'
+  ...
+# Subtest: S4 [决策合理性+机制] 无竞争时不系统性屏蔽认领（过度避让的结构性检查）
+ok 131 - S4 [决策合理性+机制] 无竞争时不系统性屏蔽认领（过度避让的结构性检查）
+  ---
+  duration_ms: 903.538166
+  type: 'test'
+  ...
+# Subtest: S2 [规则正确性] 市场变化改目标：首选目标被认领后决策基于新市场重算
+ok 132 - S2 [规则正确性] 市场变化改目标：首选目标被认领后决策基于新市场重算
+  ---
+  duration_ms: 117.204833
+  type: 'test'
+  ...
+# Subtest: S3 [决策合理性+规则正确性] 提前触发终局：领先者认领第 5 张魔像 → 认领结算
+ok 133 - S3 [决策合理性+规则正确性] 提前触发终局：领先者认领第 5 张魔像 → 认领结算
+  ---
+  duration_ms: 44.540916
+  type: 'test'
+  ...
+# Subtest: S5a [机制敏感性] 座位感知先验：同一盘面下后手席位的目标存活折扣低于先手席位
+ok 134 - S5a [机制敏感性] 座位感知先验：同一盘面下后手席位的目标存活折扣低于先手席位
+  ---
+  duration_ms: 0.6555
+  type: 'test'
+  ...
+# Subtest: S5b [机制敏感性] 五人局截胡压力提升认领相对价值（多点竞争时序）
+ok 135 - S5b [机制敏感性] 五人局截胡压力提升认领相对价值（多点竞争时序）
+  ---
+  duration_ms: 676.289042
+  type: 'test'
+  ...
+# Subtest: S6 [规则正确性] 休息节奏：市场无商人卡且无负担目标时 rest 为唯一/正确行动
+ok 136 - S6 [规则正确性] 休息节奏：市场无商人卡且无负担目标时 rest 为唯一/正确行动
+  ---
+  duration_ms: 4.738708
+  type: 'test'
+  ...
+# Subtest: S7 [规则正确性] 全场景决策合法性回归：构造局面 × 全版本零非法行动
+ok 137 - S7 [规则正确性] 全场景决策合法性回归：构造局面 × 全版本零非法行动
+  ---
+  duration_ms: 262.501708
+  type: 'test'
+  ...
+# Subtest: P0-1a 树搜索：放弃轮次不能"免费"（v1 缺陷：max 节点替对手做利我选择）
+ok 138 - P0-1a 树搜索：放弃轮次不能"免费"（v1 缺陷：max 节点替对手做利我选择）
+  ---
+  duration_ms: 207.001333
+  type: 'test'
+  ...
+# Subtest: P0-1b 树搜索：2 人局座位时序严格交替（我→下家→我→…）
+ok 139 - P0-1b 树搜索：2 人局座位时序严格交替（我→下家→我→…）
+  ---
+  duration_ms: 6.093209
+  type: 'test'
+  ...
+# Subtest: P0-1c 树搜索终局：finalRank 必须来自正式规则 ranking
+ok 140 - P0-1c 树搜索终局：finalRank 必须来自正式规则 ranking
+  ---
+  duration_ms: 0.623833
+  type: 'test'
+  ...
+# Subtest: P0-2 立即认领不被未来存活概率惩罚（screenRootActions 修复）
+ok 141 - P0-2 立即认领不被未来存活概率惩罚（screenRootActions 修复）
+  ---
+  duration_ms: 0.704625
+  type: 'test'
+  ...
+# Subtest: P1-1a CRN：同一 (world, replica) 跨根行动派生同一随机流
+ok 142 - P1-1a CRN：同一 (world, replica) 跨根行动派生同一随机流
+  ---
+  duration_ms: 0.065
+  type: 'test'
+  ...
+# Subtest: P1-1b 多世界 + CRN：全部候选共享同一 (world, replica) 网格且逐位可复现
+ok 143 - P1-1b 多世界 + CRN：全部候选共享同一 (world, replica) 网格且逐位可复现
+  ---
+  duration_ms: 212.442541
+  type: 'test'
+  ...
+# Subtest: P1-1c 单世界回退：worlds=1 时恢复单一信念世界语义
+ok 144 - P1-1c 单世界回退：worlds=1 时恢复单一信念世界语义
+  ---
+  duration_ms: 30.045667
+  type: 'test'
+  ...
+# Subtest: P0-1d 兄弟分支预算独立：两个分支都必须获得完整视野（v1 缺陷：共享预算饥饿）
+ok 145 - P0-1d 兄弟分支预算独立：两个分支都必须获得完整视野（v1 缺陷：共享预算饥饿）
+  ---
+  duration_ms: 15.657625
+  type: 'test'
+  ...
+# Subtest: P0-1e 对手行动必须来自对手当回合的完整合法策略（random 模式覆盖检验）
+ok 146 - P0-1e 对手行动必须来自对手当回合的完整合法策略（random 模式覆盖检验）
+  ---
+  duration_ms: 18.865458
+  type: 'test'
+  ...
+# Subtest: P1-1d 修复后 js4 端到端：决策合法且时序正确（座位交替抽查）
+ok 147 - P1-1d 修复后 js4 端到端：决策合法且时序正确（座位交替抽查）
+  ---
+  duration_ms: 100.434833
+  type: 'test'
+  ...
+# Subtest: 联合规划决策在全部版本与人数下均为正式引擎合法行动
+ok 148 - 联合规划决策在全部版本与人数下均为正式引擎合法行动
+  ---
+  duration_ms: 8945.245292
+  type: 'test'
+  ...
+# Subtest: 局部镜像 localStep 与模拟器转移逐字段一致（随机状态 differential）
+ok 149 - 局部镜像 localStep 与模拟器转移逐字段一致（随机状态 differential）
+  ---
+  duration_ms: 9059.505708
+  type: 'test'
+  ...
+# Subtest: 溢出阶段：决策为合法弃置组合且颗数精确
+ok 150 - 溢出阶段：决策为合法弃置组合且颗数精确
+  ---
+  duration_ms: 397.925584
+  type: 'test'
+  ...
+# Subtest: 联合轨迹内：对手认领后目标从市场消失、目标竞争相互依赖
+ok 151 - 联合轨迹内：对手认领后目标从市场消失、目标竞争相互依赖
+  ---
+  duration_ms: 753.825375
+  type: 'test'
+  ...
+# Subtest: 固定工作量模式决定性：同观察同选项决策逐位一致
+ok 152 - 固定工作量模式决定性：同观察同选项决策逐位一致
+  ---
+  duration_ms: 433.002875
+  type: 'test'
+  ...
+# Subtest: 批次准入纯函数：W×M 成本与缩减世界数
+ok 153 - 批次准入纯函数：W×M 成本与缩减世界数
+  ---
+  duration_ms: 0.388291
+  type: 'test'
+  ...
+# Subtest: 固定工作量：确定性 + 遥测语义（不假装墙钟耗尽）
+ok 154 - 固定工作量：确定性 + 遥测语义（不假装墙钟耗尽）
+  ---
+  duration_ms: 578.406875
+  type: 'test'
+  ...
+# Subtest: 极小墙钟预算：零试验原因准确、budgetExhausted=true、回退冠军
+ok 155 - 极小墙钟预算：零试验原因准确、budgetExhausted=true、回退冠军
+  ---
+  duration_ms: 162.634875
+  type: 'test'
+  ...
+# Subtest: 墙钟 balanced：缩减批次仍保持全候选共同键集（若发生试验）
+ok 156 - 墙钟 balanced：缩减批次仍保持全候选共同键集（若发生试验）
+  ---
+  duration_ms: 1202.238375
+  type: 'test'
+  ...
+# Subtest: 非法准入/筛选/候选策略在规划器层显式拒绝
+ok 157 - 非法准入/筛选/候选策略在规划器层显式拒绝
+  ---
+  duration_ms: 0.628584
+  type: 'test'
+  ...
+# Subtest: 阶段计时互斥：rootSim 不含 legalGen，accounting 与 elapsed 不重复相加
+ok 158 - 阶段计时互斥：rootSim 不含 legalGen，accounting 与 elapsed 不重复相加
+  ---
+  duration_ms: 152.916625
+  type: 'test'
+  ...
+# Subtest: joint-js5-opt 预设：claimRanking=prior；js5 仍是 enumeration
+ok 159 - joint-js5-opt 预设：claimRanking=prior；js5 仍是 enumeration
+  ---
+  duration_ms: 1.781792
+  type: 'test'
+  ...
+# Subtest: 调用方覆盖优先于版本预设；resolved 配置可审计
+ok 160 - 调用方覆盖优先于版本预设；resolved 配置可审计
+  ---
+  duration_ms: 0.126583
+  type: 'test'
+  ...
+# Subtest: 适配器返回有效配置身份（js5 vs js5-opt）
+ok 161 - 适配器返回有效配置身份（js5 vs js5-opt）
+  ---
+  duration_ms: 107.20675
+  type: 'test'
+  ...
+# Subtest: 活动冠军参数确实分派到 JS5；显式 legacy 参数走束搜索；structure 不能覆盖 adapter
+ok 162 - 活动冠军参数确实分派到 JS5；显式 legacy 参数走束搜索；structure 不能覆盖 adapter
+  ---
+  duration_ms: 188.492083
+  type: 'test'
+  ...
+# Subtest: 当步正式净分差分与正式引擎逐动作一致（含强制弃置）
+ok 163 - 当步正式净分差分与正式引擎逐动作一致（含强制弃置）
+  ---
+  duration_ms: 12.390792
+  type: 'test'
+  ...
+# Subtest: C10：冻结基线候选遗漏 + replace/add 注入后可见且可选中
+ok 164 - C10：冻结基线候选遗漏 + replace/add 注入后可见且可选中
+  ---
+  duration_ms: 142.916708
+  type: 'test'
+  ...
+# Subtest: 结构泛化：不同席位/牌面/库存下，注入机制仍覆盖当步净分最大行动
+ok 165 - 结构泛化：不同席位/牌面/库存下，注入机制仍覆盖当步净分最大行动
+  ---
+  duration_ms: 173.537666
+  type: 'test'
+  ...
+# Subtest: C1 平衡批次：预算截断时各候选试验数与 (world,replica) 键集严格一致
+ok 166 - C1 平衡批次：预算截断时各候选试验数与 (world,replica) 键集严格一致
+  ---
+  duration_ms: 3445.597666
+  type: 'test'
+  ...
+# Subtest: C1 固定工作量逐位可复现 + collectTrials 披露（js5）
+ok 167 - C1 固定工作量逐位可复现 + collectTrials 披露（js5）
+  ---
+  duration_ms: 1723.322958
+  type: 'test'
+  ...
+# Subtest: 零预算严格回退：门控触发但零试验必须返回冠军行动
+ok 168 - 零预算严格回退：门控触发但零试验必须返回冠军行动
+  ---
+  duration_ms: 2812.891458
+  type: 'test'
+  ...
+# Subtest: A3 语义：gated 决策 reason 不得宣称"预期第一名率"
+ok 169 - A3 语义：gated 决策 reason 不得宣称"预期第一名率"
+  ---
+  duration_ms: 2660.283208
+  type: 'test'
+  ...
+# Subtest: B root 延迟创建 + gate=never ≡ js0（单元级快查）
+ok 170 - B root 延迟创建 + gate=never ≡ js0（单元级快查）
+  ---
+  duration_ms: 4392.344083
+  type: 'test'
+  ...
+# Subtest: B 分相计时披露（plan/rootSim/gate/screen/rollout/aggregate）
+ok 171 - B 分相计时披露（plan/rootSim/gate/screen/rollout/aggregate）
+  ---
+  duration_ms: 113.43875
+  type: 'test'
+  ...
+# Subtest: C2 冠军行动始终参与竞争 + claimRanking 选项合法
+ok 172 - C2 冠军行动始终参与竞争 + claimRanking 选项合法
+  ---
+  duration_ms: 3635.22825
+  type: 'test'
+  ...
+# Subtest: Worker search 选项透传 + resolved config/hash 一致
+ok 173 - Worker search 选项透传 + resolved config/hash 一致
+  ---
+  duration_ms: 66.669125
+  type: 'test'
+  ...
+# Subtest: Worker 与主线程适配器固定工作量行动一致（同配置/同种子）
+ok 174 - Worker 与主线程适配器固定工作量行动一致（同配置/同种子）
+  ---
+  duration_ms: 101.98675
+  type: 'test'
+  ...
+# Subtest: joint-js5-opt 在 Worker 中也真正注入 prior 预设
+ok 175 - joint-js5-opt 在 Worker 中也真正注入 prior 预设
+  ---
+  duration_ms: 44.682916
+  type: 'test'
+  ...
+# Subtest: 未知搜索选项 / 非法值被协议层拒绝
+ok 176 - 未知搜索选项 / 非法值被协议层拒绝
+  ---
+  duration_ms: 0.375334
+  type: 'test'
+  ...
+# Subtest: 桌面 standalone：嵌入 Worker 含完整冠军闭包并能执行协议决策
+ok 177 - 桌面 standalone：嵌入 Worker 含完整冠军闭包并能执行协议决策
+  ---
+  duration_ms: 171.075917
+  type: 'test'
+  ...
+# Subtest: 桌面 standalone 主内联脚本含适配器冠军路径（chooseJointAction 可用）
+ok 178 - 桌面 standalone 主内联脚本含适配器冠军路径（chooseJointAction 可用）
+  ---
+  duration_ms: 1.23175
+  type: 'test'
+  ...
+# Subtest: 任务A：真实对局全程事件推导与聚合计数正确
+ok 179 - 任务A：真实对局全程事件推导与聚合计数正确
+  ---
+  duration_ms: 33243.330458
+  type: 'test'
+  ...
+# Subtest: 任务A：窗口滑动与增量更新 O(1)（小容量窗口保持正确聚合）
+ok 180 - 任务A：窗口滑动与增量更新 O(1)（小容量窗口保持正确聚合）
+  ---
+  duration_ms: 5615.520125
+  type: 'test'
+  ...
+# Subtest: 任务A：中途接入降级（origin=empty）可被模型正常消费
+ok 181 - 任务A：中途接入降级（origin=empty）可被模型正常消费
+  ---
+  duration_ms: 644.729959
+  type: 'test'
+  ...
+# Subtest: 任务A：正式对局历史与模拟分支历史严格隔离
+ok 182 - 任务A：正式对局历史与模拟分支历史严格隔离
+  ---
+  duration_ms: 934.504125
+  type: 'test'
+  ...
+# Subtest: 任务A：隐藏牌序扰动不变性——公开历史特征与模型输出不变
+ok 183 - 任务A：隐藏牌序扰动不变性——公开历史特征与模型输出不变
+  ---
+  duration_ms: 1752.274958
+  type: 'test'
+  ...
+# Subtest: 任务A：零隐藏信息泄漏——事件与摘要不含未公开卡牌或牌库字段
+ok 184 - 任务A：零隐藏信息泄漏——事件与摘要不含未公开卡牌或牌库字段
+  ---
+  duration_ms: 7034.714583
+  type: 'test'
+  ...
+# Subtest: 任务A：模拟路径事件与真实路径事件逐步一致（同公开状态同行动）
+ok 185 - 任务A：模拟路径事件与真实路径事件逐步一致（同公开状态同行动）
+  ---
+  duration_ms: 511.278792
+  type: 'test'
+  ...
+# Subtest: H1：两名玩家追逐同一魔像——双方意图指向一致且认领概率可观测
+ok 186 - H1：两名玩家追逐同一魔像——双方意图指向一致且认领概率可观测
+  ---
+  duration_ms: 4.117584
+  type: 'test'
+  ...
+# Subtest: H2：后手玩家的目标将在其行动前被认领——存活概率反映座位时序
+ok 187 - H2：后手玩家的目标将在其行动前被认领——存活概率反映座位时序
+  ---
+  duration_ms: 22.693
+  type: 'test'
+  ...
+# Subtest: H3：三名及以上玩家目标冲突——存活概率随竞争者数量下降
+ok 188 - H3：三名及以上玩家目标冲突——存活概率随竞争者数量下降
+  ---
+  duration_ms: 36.860625
+  type: 'test'
+  ...
+# Subtest: H4：玩家通过交易突然提前完成目标——ETA 显著缩短
+ok 189 - H4：玩家通过交易突然提前完成目标——ETA 显著缩短
+  ---
+  duration_ms: 126.280459
+  type: 'test'
+  ...
+# Subtest: H5：玩家休息导致认领时间延后——需要先休息再激活引擎
+ok 190 - H5：玩家休息导致认领时间延后——需要先休息再激活引擎
+  ---
+  duration_ms: 12.093125
+  type: 'test'
+  ...
+# Subtest: H6：获取商人卡使目标路径变化——补足缺口卡显著缩短 ETA
+ok 191 - H6：获取商人卡使目标路径变化——补足缺口卡显著缩短 ETA
+  ---
+  duration_ms: 54.474334
+  type: 'test'
+  ...
+# Subtest: H7：魔像被抢后其他玩家转向新目标——意图随公开事件重定向
+ok 192 - H7：魔像被抢后其他玩家转向新目标——意图随公开事件重定向
+  ---
+  duration_ms: 2725.089833
+  type: 'test'
+  ...
+# Subtest: H8：终局只剩当前整轮——终局触发者之后的决策点消失
+ok 193 - H8：终局只剩当前整轮——终局触发者之后的决策点消失
+  ---
+  duration_ms: 1.900541
+  type: 'test'
+  ...
+# Subtest: H9：不同座位但相似库存导致不同抢牌风险——座位感知时序成立
+ok 194 - H9：不同座位但相似库存导致不同抢牌风险——座位感知时序成立
+  ---
+  duration_ms: 7.021375
+  type: 'test'
+  ...
+# Subtest: H10：同一策略的多个 AI 产生高度一致行为——同构状态预测一致
+ok 195 - H10：同一策略的多个 AI 产生高度一致行为——同构状态预测一致
+  ---
+  duration_ms: 2024.948916
+  type: 'test'
+  ...
+# Subtest: H 卫生：全场景概率约束复核（负数 / NaN / 超 1 扫描）
+ok 196 - H 卫生：全场景概率约束复核（负数 / NaN / 超 1 扫描）
+  ---
+  duration_ms: 438.681166
+  type: 'test'
+  ...
+# Subtest: 任务B：全部输出行动合法（多座位 × 多局面 × M0–M4 配置）
+ok 197 - 任务B：全部输出行动合法（多座位 × 多局面 × M0–M4 配置）
+  ---
+  duration_ms: 13343.441833
+  type: 'test'
+  ...
+# Subtest: 任务B：概率数学约束（Σp=1、p∈(0,1]、无 NaN）
+ok 198 - 任务B：概率数学约束（Σp=1、p∈(0,1]、无 NaN）
+  ---
+  duration_ms: 4801.600792
+  type: 'test'
+  ...
+# Subtest: 任务B：非法行动概率严格为零（不在分布中）
+ok 199 - 任务B：非法行动概率严格为零（不在分布中）
+  ---
+  duration_ms: 2651.560709
+  type: 'test'
+  ...
+# Subtest: 任务B：相同状态可复现（同种子逐位一致；跨实例一致）
+ok 200 - 任务B：相同状态可复现（同种子逐位一致；跨实例一致）
+  ---
+  duration_ms: 2352.059833
+  type: 'test'
+  ...
+# Subtest: 任务F：predictAction 支持任意席位（假设分支合法）且当前席位语义正确
+ok 201 - 任务F：predictAction 支持任意席位（假设分支合法）且当前席位语义正确
+  ---
+  duration_ms: 2133.723292
+  type: 'test'
+  ...
+# Subtest: 任务B：overflow 弃置分布合法且概率约束成立
+ok 202 - 任务B：overflow 弃置分布合法且概率约束成立
+  ---
+  duration_ms: 0.475209
+  type: 'test'
+  ...
+# Subtest: 任务F：输出可序列化（Node/浏览器通用数据形态）
+ok 203 - 任务F：输出可序列化（Node/浏览器通用数据形态）
+  ---
+  duration_ms: 2012.391292
+  type: 'test'
+  ...
+# Subtest: 任务B：竞争紧迫度进入打分——对手可立即认领的目标，先手认领概率显著更高
+ok 204 - 任务B：竞争紧迫度进入打分——对手可立即认领的目标，先手认领概率显著更高
+  ---
+  duration_ms: 0.905417
+  type: 'test'
+  ...
+# Subtest: 任务C：意图为软概率——高覆盖度不产生确定性追逐判定
+ok 205 - 任务C：意图为软概率——高覆盖度不产生确定性追逐判定
+  ---
+  duration_ms: 2.061625
+  type: 'test'
+  ...
+# Subtest: 任务C：风格先验归一；rush 证据经公开历史提升 rush 权重
+ok 206 - 任务C：风格先验归一；rush 证据经公开历史提升 rush 权重
+  ---
+  duration_ms: 2149.982667
+  type: 'test'
+  ...
+# Subtest: 任务C：目标 ETA/意图随公开事件更新（历史特征产生可验证差异）
+ok 207 - 任务C：目标 ETA/意图随公开事件更新（历史特征产生可验证差异）
+  ---
+  duration_ms: 1064.730667
+  type: 'test'
+  ...
+# Subtest: 任务D：ETA 分布与最早规则可达时间分离；概率约束与删失处理正确
+ok 208 - 任务D：ETA 分布与最早规则可达时间分离；概率约束与删失处理正确
+  ---
+  duration_ms: 121.176541
+  type: 'test'
+  ...
+# Subtest: 任务E：目标存活——按座位顺序竞争（座位劣势降低存活）
+ok 209 - 任务E：目标存活——按座位顺序竞争（座位劣势降低存活）
+  ---
+  duration_ms: 11.399458
+  type: 'test'
+  ...
+# Subtest: 任务E：终局只剩当前整轮时未来决策点消失（reachRate 如实披露）
+ok 210 - 任务E：终局只剩当前整轮时未来决策点消失（reachRate 如实披露）
+  ---
+  duration_ms: 1.51575
+  type: 'test'
+  ...
+# Subtest: 全接口概率卫生：无负数 / NaN / 超 1（多座位 × 多目标 × 多配置扫描）
+ok 211 - 全接口概率卫生：无负数 / NaN / 超 1（多座位 × 多目标 × 多配置扫描）
+  ---
+  duration_ms: 10298.760208
+  type: 'test'
+  ...
+# Subtest: 整理不丢卡，获取新牌自动追加
+ok 212 - 整理不丢卡，获取新牌自动追加
+  ---
+  duration_ms: 0.578584
+  type: 'test'
+  ...
+# Subtest: 拖动插入不重置其他卡顺序
+ok 213 - 拖动插入不重置其他卡顺序
+  ---
+  duration_ms: 0.101417
+  type: 'test'
+  ...
+# Subtest: 左移右移遵守边界
+ok 214 - 左移右移遵守边界
+  ---
+  duration_ms: 0.609042
+  type: 'test'
+  ...
+# Subtest: 分类排序保持同类别原有顺序
+ok 215 - 分类排序保持同类别原有顺序
+  ---
+  duration_ms: 0.207084
+  type: 'test'
+  ...
+# Subtest: GitHub Pages 桌面入口自包含，存档键与视图独立
+ok 216 - GitHub Pages 桌面入口自包含，存档键与视图独立
+  ---
+  duration_ms: 1.2145
+  type: 'test'
+  ...
+# Subtest: 桌面入口嵌入冠军决策链（JS5）与完整模拟/对手模型依赖，脚本可解析
+ok 217 - 桌面入口嵌入冠军决策链（JS5）与完整模拟/对手模型依赖，脚本可解析
+  ---
+  duration_ms: 6.587458
+  type: 'test'
+  ...
+# Subtest: AI7：桌面单文件/服务器入口都内联 Worker 源码（无需外部 worker.js 请求）
+ok 218 - AI7：桌面单文件/服务器入口都内联 Worker 源码（无需外部 worker.js 请求）
+  ---
+  duration_ms: 7.33225
+  type: 'test'
+  ...
+# [public-sim-differential] 合法转移对照 21187 次 | 合法性奇偶校验 9488 次 | 局面 615 | 对局 18
+# Subtest: 任务E：2–5人 playout differential（随机 + 贪心认领，模式 A+B）
+ok 219 - 任务E：2–5人 playout differential（随机 + 贪心认领，模式 A+B）
+  ---
+  duration_ms: 364.887917
+  type: 'test'
+  ...
+# Subtest: 任务E：冻结冠军 AI 驱动终局 differential（真实对局路径）
+ok 220 - 任务E：冻结冠军 AI 驱动终局 differential（真实对局路径）
+  ---
+  duration_ms: 22107.988333
+  type: 'test'
+  ...
+# Subtest: 任务E：合法行动集合一致性 + 逐动作后继对照（引擎为 oracle）
+ok 221 - 任务E：合法行动集合一致性 + 逐动作后继对照（引擎为 oracle）
+  ---
+  duration_ms: 7560.9815
+  type: 'test'
+  ...
+# Subtest: 任务E：容量溢出与弃置 differential（构造极端库存）
+ok 222 - 任务E：容量溢出与弃置 differential（构造极端库存）
+  ---
+  duration_ms: 0.712583
+  type: 'test'
+  ...
+# Subtest: 任务E：牌库耗尽 differential（商人 + 魔像）
+ok 223 - 任务E：牌库耗尽 differential（商人 + 魔像）
+  ---
+  duration_ms: 8.170833
+  type: 'test'
+  ...
+# Subtest: 任务E：终局触发与整轮完成 differential
+ok 224 - 任务E：终局触发与整轮完成 differential
+  ---
+  duration_ms: 1.278667
+  type: 'test'
+  ...
+# Subtest: 任务E：平分决胜名次（同分后手席位优先）
+ok 225 - 任务E：平分决胜名次（同分后手席位优先）
+  ---
+  duration_ms: 0.34925
+  type: 'test'
+  ...
+# Subtest: 任务E：对照总量达到验收门槛（≥ 20,000 次合法状态转移对照）
+ok 226 - 任务E：对照总量达到验收门槛（≥ 20,000 次合法状态转移对照）
+  ---
+  duration_ms: 0.65975
+  type: 'test'
+  ...
+# Subtest: 隐藏牌序扰动不变性：公开状态、候选动作与信念采样分布不变
+ok 227 - 隐藏牌序扰动不变性：公开状态、候选动作与信念采样分布不变
+  ---
+  duration_ms: 16783.078459
+  type: 'test'
+  ...
+# Subtest: 模拟随机流与真实牌库随机数隔离：相同种子流下模拟轨迹与真实牌序无关
+ok 228 - 模拟随机流与真实牌库随机数隔离：相同种子流下模拟轨迹与真实牌序无关
+  ---
+  duration_ms: 631.574833
+  type: 'test'
+  ...
+# Subtest: 信念采样可重复性与多样性：相同输入+种子可复现，不同种子产生不同未来牌序
+ok 229 - 信念采样可重复性与多样性：相同输入+种子可复现，不同种子产生不同未来牌序
+  ---
+  duration_ms: 0.386875
+  type: 'test'
+  ...
+# Subtest: Common Random Numbers：同一 root 的 fork 分支共享同一随机世界
+ok 230 - Common Random Numbers：同一 root 的 fork 分支共享同一随机世界
+  ---
+  duration_ms: 0.305334
+  type: 'test'
+  ...
+# Subtest: 已采样未翻开的牌序物理不可见（决策函数无法触达）
+ok 231 - 已采样未翻开的牌序物理不可见（决策函数无法触达）
+  ---
+  duration_ms: 0.241375
+  type: 'test'
+  ...
+# Subtest: 静态扫描：src/sim 不引用隐藏字段、不依赖正式引擎随机数、不运行时依赖 src/ai
+ok 232 - 静态扫描：src/sim 不引用隐藏字段、不依赖正式引擎随机数、不运行时依赖 src/ai
+  ---
+  duration_ms: 5.725125
+  type: 'test'
+  ...
+# Subtest: 静态扫描：src/ai 与正式入口不导入 sim 模块（正式 AI 行为保持不变）
+ok 233 - 静态扫描：src/ai 与正式入口不导入 sim 模块（正式 AI 行为保持不变）
+  ---
+  duration_ms: 5.570125
+  type: 'test'
+  ...
+# Subtest: 任务A：buildPublicSimState 从合法观察构造紧凑公共状态
+ok 234 - 任务A：buildPublicSimState 从合法观察构造紧凑公共状态
+  ---
+  duration_ms: 2.033834
+  type: 'test'
+  ...
+# Subtest: 任务A：拒绝非法公开观察
+ok 235 - 任务A：拒绝非法公开观察
+  ---
+  duration_ms: 0.364667
+  type: 'test'
+  ...
+# Subtest: 任务A：builder 保真——中局观察与真实游戏公开字段逐位一致
+ok 236 - 任务A：builder 保真——中局观察与真实游戏公开字段逐位一致
+  ---
+  duration_ms: 4.727917
+  type: 'test'
+  ...
+# Subtest: 任务B：BeliefDeckSampler 契约（多重集一致、可复现、队首即下一次翻牌）
+ok 237 - 任务B：BeliefDeckSampler 契约（多重集一致、可复现、队首即下一次翻牌）
+  ---
+  duration_ms: 0.739708
+  type: 'test'
+  ...
+# Subtest: 任务C：score/ranking 直接复用正式引擎（规则权威唯一）
+ok 238 - 任务C：score/ranking 直接复用正式引擎（规则权威唯一）
+  ---
+  duration_ms: 1.342709
+  type: 'test'
+  ...
+# Subtest: 任务C：simulatePublicAction 功能式接口不修改原会话
+ok 239 - 任务C：simulatePublicAction 功能式接口不修改原会话
+  ---
+  duration_ms: 0.193334
+  type: 'test'
+  ...
+# Subtest: 任务C：终局后 step 拒绝一切行动
+ok 240 - 任务C：终局后 step 拒绝一切行动
+  ---
+  duration_ms: 0.137125
+  type: 'test'
+  ...
+# Subtest: 任务D：合法行动枚举口径
+ok 241 - 任务D：合法行动枚举口径
+  ---
+  duration_ms: 0.137625
+  type: 'test'
+  ...
+# Subtest: 任务D：升级枚举含空序列与满次数序列，交易按 tradeLimit 枚举
+ok 242 - 任务D：升级枚举含空序列与满次数序列，交易按 tradeLimit 枚举
+  ---
+  duration_ms: 0.392583
+  type: 'test'
+  ...
+# Subtest: 任务D：dedupe 去重只做后继等价收缩
+ok 243 - 任务D：dedupe 去重只做后继等价收缩
+  ---
+  duration_ms: 0.482375
+  type: 'test'
+  ...
+# Subtest: 任务G：PublicStateHasher 确定性（同状态同哈希，槽位序变化哈希变化）
+ok 244 - 任务G：PublicStateHasher 确定性（同状态同哈希，槽位序变化哈希变化）
+  ---
+  duration_ms: 0.424417
+  type: 'test'
+  ...
+# Subtest: 任务G：SimulationMetrics 计数与 fork 复制
+ok 245 - 任务G：SimulationMetrics 计数与 fork 复制
+  ---
+  duration_ms: 0.189416
+  type: 'test'
+  ...
+# Subtest: 任务G：固定行动策略多轮冒烟（2–5 人 × 多种子，全部推进至终局或上限）
+ok 246 - 任务G：固定行动策略多轮冒烟（2–5 人 × 多种子，全部推进至终局或上限）
+  ---
+  duration_ms: 58.379292
+  type: 'test'
+  ...
+# Subtest: 任务G：轨迹记录与复放——相同行动序列 + 相同种子 ⇒ 相同最终状态
+ok 247 - 任务G：轨迹记录与复放——相同行动序列 + 相同种子 ⇒ 相同最终状态
+  ---
+  duration_ms: 1.468208
+  type: 'test'
+  ...
+# Subtest: 完整保存超过 45 条的玩家回合，轮次正确且不修改先前状态
+ok 248 - 完整保存超过 45 条的玩家回合，轮次正确且不修改先前状态
+  ---
+  duration_ms: 3.215459
+  type: 'test'
+  ...
+# Subtest: 超额弃置并入同一回合，支持中途存档和导出，错误行动不污染历史
+ok 249 - 超额弃置并入同一回合，支持中途存档和导出，错误行动不污染历史
+  ---
+  duration_ms: 0.722458
+  type: 'test'
+  ...
+# Subtest: 记录获取的具体卡号与付款顺序、升级路径、重复交易及认领硬币
+ok 250 - 记录获取的具体卡号与付款顺序、升级路径、重复交易及认领硬币
+  ---
+  duration_ms: 0.392167
+  type: 'test'
+  ...
+# Subtest: 旧版存档从接续点记录，旧的待弃置回合和已结束对局均可导出
+ok 251 - 旧版存档从接续点记录，旧的待弃置回合和已结束对局均可导出
+  ---
+  duration_ms: 0.30775
+  type: 'test'
+  ...
+# Subtest: 完整对局可从 JSON 起点和全部行动重放到相同结局，覆盖真人和 AI 席位
+ok 252 - 完整对局可从 JSON 起点和全部行动重放到相同结局，覆盖真人和 AI 席位
+  ---
+  duration_ms: 12517.829292
+  type: 'test'
+  ...
+# Subtest: 成绩行披露非黄水晶残值，终局统计分项完整（回归：非黄水晶分缺失）
+ok 253 - 成绩行披露非黄水晶残值，终局统计分项完整（回归：非黄水晶分缺失）
+  ---
+  duration_ms: 0.166584
+  type: 'test'
+  ...
+# Subtest: 导入拒绝损坏的历史字段和起点；姓名不会注入 Markdown 结构
+ok 254 - 导入拒绝损坏的历史字段和起点；姓名不会注入 Markdown 结构
+  ---
+  duration_ms: 0.617
+  type: 'test'
+  ...
+# Subtest: 冻结版本身份钉定：legacy-js0 参数 = 前任冠军 fixture（逐字）
+ok 255 - 冻结版本身份钉定：legacy-js0 参数 = 前任冠军 fixture（逐字）
+  ---
+  duration_ms: 0.6555
+  type: 'test'
+  ...
+# Subtest: 冻结版本身份钉定：joint-js5-frozen 参数 = champion.json（逐字）
+ok 256 - 冻结版本身份钉定：joint-js5-frozen 参数 = champion.json（逐字）
+  ---
+  duration_ms: 0.053542
+  type: 'test'
+  ...
+# Subtest: 冻结版本指纹钉定：任何快照改动都会被捕获
+ok 257 - 冻结版本指纹钉定：任何快照改动都会被捕获
+  ---
+  duration_ms: 0.21075
+  type: 'test'
+  ...
+# Subtest: legacy-js1 = legacy-js0 参数 + beam-contest 结构（其余逐字相同）
+ok 258 - legacy-js1 = legacy-js0 参数 + beam-contest 结构（其余逐字相同）
+  ---
+  duration_ms: 0.115667
+  type: 'test'
+  ...
+# Subtest: 注册表与当前冠军解耦：冻结快照 ≠ CHAMPION_PARAMETERS 引用
+ok 259 - 注册表与当前冠军解耦：冻结快照 ≠ CHAMPION_PARAMETERS 引用
+  ---
+  duration_ms: 0.053625
+  type: 'test'
+  ...
+# Subtest: 分派身份：legacy-js0 走束搜索路径，joint-js5-frozen 走适配器路径
+ok 260 - 分派身份：legacy-js0 走束搜索路径，joint-js5-frozen 走适配器路径
+  ---
+  duration_ms: 56.140916
+  type: 'test'
+  ...
+# Subtest: 分派身份：js0 与 js5 在金丝雀状态上存在决策差异（不是同一实现）
+ok 261 - 分派身份：js0 与 js5 在金丝雀状态上存在决策差异（不是同一实现）
+  ---
+  duration_ms: 25767.300458
+  type: 'test'
+  ...
+# Subtest: js1 经适配器分派 = legacy-js0 + beam-contest（不再是 JS5）
+ok 262 - js1 经适配器分派 = legacy-js0 + beam-contest（不再是 JS5）
+  ---
+  duration_ms: 16334.056167
+  type: 'test'
+  ...
+# Subtest: 风格变体（classic/diverse 池）具有决策级真实行为差异
+ok 263 - 风格变体（classic/diverse 池）具有决策级真实行为差异
+  ---
+  duration_ms: 12754.482958
+  type: 'test'
+  ...
+# Subtest: championParameters 透传：权重修改真实影响 JS5 冠军基座（修复适配器忽略缺陷）
+ok 264 - championParameters 透传：权重修改真实影响 JS5 冠军基座（修复适配器忽略缺陷）
+  ---
+  duration_ms: 42859.4905
+  type: 'test'
+  ...
+# Subtest: 未知 id 抛错；实验版本身份可解析（算法实现已注册）
+ok 265 - 未知 id 抛错；实验版本身份可解析（算法实现已注册）
+  ---
+  duration_ms: 0.669917
+  type: 'test'
+  ...
+1..265
+# tests 267
+# suites 0
+# pass 267
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 749639.895583

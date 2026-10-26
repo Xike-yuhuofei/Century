@@ -125,9 +125,9 @@ test('安全门禁：编译型候选通过；源码走私 process 被拒绝', { 
   assert.equal(tamperedSafety.checks.find(c => c.id === 'compiled-module').status, 'fail');
 });
 
-test('编译型候选经 Seatbelt 探针产生离线代理证据（不冒充对局强度）', { skip }, () => {
+test('编译型候选经 Seatbelt 探针产生离线代理证据（不冒充对局强度）', { skip }, async () => {
   const built = createCompiledAcquisitionCandidate({ experiment: experiment(), round: 1, index: 4 });
-  const evidence = evaluateCandidate({ artifact: built.artifact, round: 1 });
+  const evidence = await evaluateCandidate({ artifact: built.artifact, round: 1 });
   assert.equal(evidence.evaluationMode, 'proxy');
   assert.equal(evidence.metrics.evidenceType, 'offline-proxy');
   assert.equal(evidence.metrics.moduleForm, 'compiled-esm');

@@ -37,12 +37,47 @@ function identityFields(artifact) {
     candidateId: artifact.candidateId,
     parentId: artifact.parentId,
     sourceHash: artifact.sourceHash,
+    sourceModules: artifact.source?.modules ?? null,
     algorithmStructure: artifact.algorithmStructure,
     parameters: artifact.parameters,
     buildArtifact: artifact.buildArtifact,
     gameRules: artifact.gameRules,
     applicablePlayerCounts: artifact.applicablePlayerCounts,
   };
+}
+
+/** 多模块候选的模块身份元数据：模块 id/函数/目标文件/接口版本/函数文本哈希。
+ * 源码哈希必须覆盖全部模块，绝不能只为一个函数生成哈希而漏掉其他模块。 */
+function normalizeModules(modules, files) {
+  if (modules === undefined || modules === null) return null;
+  assertCondition(Array.isArray(modules) && modules.length > 0, 'source.modules 必须为非空数组');
+  const fileMap = new Map(files.map(file => [file.path, file]));
+  const ids = new Set();
+  const normalized = modules.map(module => {
+    assertCondition(typeof module?.id === 'string' && /^M[0-9]{2}$/.test(module.id), `模块 id 非法：${String(module?.id)}`);
+    assertCondition(!ids.has(module.id), `重复模块 id：${module.id}`);
+    ids.add(module.id);
+    assertCondition(typeof module.functionName === 'string' && module.functionName.length > 0, `${module.id} 缺少 functionName`);
+    assertCondition(typeof module.file === 'string' && module.file.startsWith('src/'), `${module.id} file 必须以 src/ 开头`);
+    assertCondition(typeof module.interfaceVersion === 'string' && module.interfaceVersion.length > 0, `${module.id} 缺接口版本`);
+    assertCondition(typeof module.path === 'string' && fileMap.has(module.path), `${module.id} 源码文件不在 source.files：${String(module.path)}`);
+    const content = fileMap.get(module.path).content;
+    const hash = sha256Hex(content);
+    assertCondition(module.functionSha256 === undefined || module.functionSha256 === hash,
+      `${module.id} functionSha256 与源码内容不符`);
+    assertCondition(module.functionSha256 === undefined || module.textLength === undefined
+      || module.textLength === content.length, `${module.id} textLength 与源码不符`);
+    return {
+      id: module.id,
+      functionName: module.functionName,
+      file: module.file,
+      interfaceVersion: module.interfaceVersion,
+      path: module.path,
+      functionSha256: hash,
+      textLength: content.length,
+    };
+  }).sort((a, b) => a.id.localeCompare(b.id));
+  return normalized;
 }
 
 function normalizeFiles(files) {
@@ -59,10 +94,18 @@ function normalizeFiles(files) {
   }).sort((a, b) => a.path.localeCompare(b.path));
 }
 
-/** 源码哈希：对 (path, content) 有序列表做 canonical 哈希。 */
+/** 源码哈希：对 (path, content) 有序列表做 canonical 哈希。
+ * 多模块候选额外覆盖模块身份（id/函数/目标文件/接口版本/函数哈希），
+ * 防止只哈希一个函数而把其他模块变化排除在候选身份之外。 */
 export function computeSourceHash(source) {
   const files = source?.files ?? [];
-  return sha256Canonical(files.map(f => [f.path, f.sha256]));
+  const filePairs = files.map(f => [f.path, f.sha256]);
+  const modules = source?.modules ?? [];
+  if (!modules.length) return sha256Canonical(filePairs);
+  return sha256Canonical({
+    files: filePairs,
+    modules: modules.map(m => [m.id, m.functionName, m.file, m.interfaceVersion, m.functionSha256]),
+  });
 }
 
 /** 构建产物哈希：对构建输入做 canonical 哈希；若提供真实编译产物文件，
@@ -199,7 +242,14 @@ export function createCandidateArtifact(input) {
   const files = source.files?.length ? normalizeFiles(source.files) : null;
   let normalizedSource;
   if (files) {
-    normalizedSource = { kind: source.kind, entry: source.entry ?? files[0].path, hashKind: 'file-content', files };
+    const modules = normalizeModules(source.modules, files);
+    normalizedSource = {
+      kind: source.kind,
+      entry: source.entry ?? files[0].path,
+      hashKind: modules ? 'module-file-content' : 'file-content',
+      files,
+      ...(modules ? { modules } : {}),
+    };
   } else {
     // descriptor 候选：没有代码增量，用「描述符身份」作为源码哈希并显式标注。
     const content = canonicalJSON({ algorithmStructure, parameters });
@@ -272,6 +322,14 @@ export function validateArtifact(artifact) {
   for (const file of artifact.source.files) {
     assertCondition(typeof file.content === 'string', `artifact source 文件 ${file.path} 缺少 content（不可复现）`);
     assertCondition(sha256Hex(file.content) === file.sha256, `artifact source 文件 ${file.path} 哈希不符（内容被篡改）`);
+  }
+  let modules = null;
+  if (artifact.source.modules !== undefined && artifact.source.modules !== null) {
+    modules = normalizeModules(artifact.source.modules, artifact.source.files);
+    const ids = modules.map(m => m.id).sort();
+    const targets = [...(artifact.algorithmStructure?.targetIds ?? [])].sort();
+    assertCondition(JSON.stringify(ids) === JSON.stringify(targets),
+      `artifact 模块集合与 algorithmStructure.targetIds 不一致：modules=${ids.join(',')} targets=${targets.join(',')}`);
   }
   const sourceHash = computeSourceHash(artifact.source);
   assertCondition(sourceHash === artifact.sourceHash, `artifact sourceHash 不符：期望 ${sourceHash}，实际 ${artifact.sourceHash}`);

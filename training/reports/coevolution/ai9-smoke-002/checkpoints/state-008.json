@@ -1,0 +1,199 @@
+{
+  "schema": "century-evolution-campaign-v1",
+  "campaignId": "ai9-smoke-002",
+  "runFingerprint": "b0776e0ee38cfbbb1f73e73b830620fc8df08d1804b0054b462656754c659d3a",
+  "config": {
+    "version": 1,
+    "configRef": "ai9://campaign/coevolution",
+    "rounds": 1,
+    "playerCounts": [
+      2,
+      5
+    ],
+    "quickSeeds": 2,
+    "deepSeeds": 2,
+    "maxMoves": 300,
+    "deadlineMs": 30000,
+    "retainTopK": 3,
+    "deepConfirmations": 2,
+    "generation": {
+      "count": 3,
+      "seed": 20261025,
+      "targetIds": [
+        "M01",
+        "M02",
+        "M05"
+      ],
+      "mode": "multi-module",
+      "strategies": [
+        "single",
+        "pair"
+      ],
+      "openevolveIterations": 2,
+      "includeControl": true,
+      "allowDeterministicFallback": true
+    },
+    "budget": {
+      "maxCandidates": 3,
+      "maxGames": 100,
+      "maxWallMs": 1800000,
+      "maxConcurrent": 2,
+      "maxDeepConfirmations": 4
+    },
+    "diagnosticsPath": "training/reports/diagnostics-latest/analysis.json",
+    "humanAnalyticsFailuresPath": null,
+    "parentCandidateId": null,
+    "continueFromSelected": false
+  },
+  "status": "running",
+  "phase": "generated",
+  "currentRoundIndex": 0,
+  "rounds": [
+    {
+      "round": 1,
+      "seedWindows": {
+        "screen": {
+          "windowId": "ai9-screen-w002",
+          "purpose": "screen",
+          "pool": "dev",
+          "base": 1660002000,
+          "count": 1000,
+          "blockStart": 1660000000,
+          "blockEnd": 1670000000,
+          "index": 2
+        },
+        "deep": {
+          "windowId": "ai9-deep-w001",
+          "purpose": "deep",
+          "pool": "dev",
+          "base": 1670001000,
+          "count": 1000,
+          "blockStart": 1670000000,
+          "blockEnd": 1680000000,
+          "index": 1
+        }
+      },
+      "screenSeeds": [
+        1660002000,
+        1660002001
+      ],
+      "deepSeeds": [
+        1670001000,
+        1670001001
+      ],
+      "generated": true,
+      "selected": false,
+      "deepDone": false,
+      "approvalDone": false,
+      "diagnosticsDone": false,
+      "candidates": [
+        {
+          "candidateId": "cand-ai9-control-r1-2e560c",
+          "parentId": null,
+          "identityDigest": "2154bcc111ce8e67c653bb78e5f6d8690b1aa8ff1e324f620439fefef167f083",
+          "strategy": "control",
+          "modules": [
+            "M01"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-smoke-002/artifacts/objects/cand-ai9-control-r1-2e560c/2154bcc111ce8e67c653bb78e5f6d8690b1aa8ff1e324f620439fefef167f083/candidate.json",
+          "stage": "quick-failed",
+          "safetyStatus": "passed",
+          "sourceHash": "3fd0a972701bbe39bbf523fbbfb766b9178b72764132a3179cf3ef182e1cae45",
+          "buildArtifactHash": "94b3ee2cb2fcb4f169f7345cb811f99e11f202a403ba859f1704e5864266bbcc",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": {
+            "stage": "quick-eval",
+            "reason": "screen seed 1660002000 越界：必须在 1610000000..1619999999"
+          }
+        },
+        {
+          "candidateId": "cand-ai9-single-r1c1-66d778",
+          "parentId": null,
+          "identityDigest": "f120cef72a71d2f27ab4a4b2f4d11736343d89a4fcba644a8a095c9dadc6e937",
+          "strategy": "single",
+          "modules": [
+            "M02"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M02"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-smoke-002/artifacts/objects/cand-ai9-single-r1c1-66d778/f120cef72a71d2f27ab4a4b2f4d11736343d89a4fcba644a8a095c9dadc6e937/candidate.json",
+          "stage": "quick-failed",
+          "safetyStatus": "passed",
+          "sourceHash": "904e21ea9f582d9ce78f750569ad443172c4bccf934a7b637b6a83f36cef69c9",
+          "buildArtifactHash": "7ec4346ce0a1665043217c2908332a68ec977d165144bbd9d1b273620c46d766",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": {
+            "stage": "quick-eval",
+            "reason": "screen seed 1660002000 越界：必须在 1610000000..1619999999"
+          }
+        },
+        {
+          "candidateId": "cand-ai9-single-r1c2-cbc280",
+          "parentId": null,
+          "identityDigest": "2b4251e181cd31c97eef72d5f45ddb08d6192ea96e6e1c00d95bdc43f515b3a5",
+          "strategy": "single",
+          "modules": [
+            "M05"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M05"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-smoke-002/artifacts/objects/cand-ai9-single-r1c2-cbc280/2b4251e181cd31c97eef72d5f45ddb08d6192ea96e6e1c00d95bdc43f515b3a5/candidate.json",
+          "stage": "quick-failed",
+          "safetyStatus": "passed",
+          "sourceHash": "2bc0395dcddfc05b7b99d0d681e9626c8fe996156854ab3ffb93d8ca88d7d8a2",
+          "buildArtifactHash": "6750968a2793bc63955974f7d20067d894d852ff794dcec9cb1562dc0f0c166f",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": {
+            "stage": "quick-eval",
+            "reason": "screen seed 1660002000 越界：必须在 1610000000..1619999999"
+          }
+        }
+      ],
+      "selectedIds": [],
+      "selectionSummary": null,
+      "diagnostics": null,
+      "rejectedAtGeneration": [],
+      "notes": []
+    }
+  ],
+  "checkpointSeq": 8,
+  "lastEventSeq": 15,
+  "createdAt": "2026-10-26T02:34:26.003Z",
+  "updatedAt": "2026-10-26T02:34:28.841Z",
+  "budgetUsed": {
+    "candidates": 3,
+    "games": 0,
+    "wallMs": 2822,
+    "deepConfirmations": 0
+  },
+  "pendingApprovals": [],
+  "guardrails": {
+    "validationPoolConsumed": false,
+    "promotionTriggered": false,
+    "championMutation": "none",
+    "formalChallengeApprovalRequired": false,
+    "machineGateRequired": true
+  },
+  "promotionQueue": [],
+  "promotionOutcomes": [],
+  "moduleElites": [],
+  "mapElites": {},
+  "generationDiagnostics": []
+}

@@ -1,0 +1,310 @@
+{
+  "schema": "century-evolution-campaign-v1",
+  "campaignId": "ai9-12h-endurance-2",
+  "runFingerprint": "fbbbdd1595dab1fbf9e195749e9e61702a70649c45f1c0c14d0c48cf35e09f42",
+  "config": {
+    "version": 1,
+    "configRef": "ai9://campaign/coevolution",
+    "rounds": 500,
+    "playerCounts": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "quickSeeds": 8,
+    "deepSeeds": 8,
+    "maxMoves": 400,
+    "deadlineMs": 60000,
+    "retainTopK": 3,
+    "deepConfirmations": 4,
+    "generation": {
+      "count": 6,
+      "seed": 20261025,
+      "targetIds": [
+        "M01",
+        "M02",
+        "M05",
+        "M10",
+        "M11"
+      ],
+      "mode": "multi-module",
+      "strategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "ablation"
+      ],
+      "openevolveIterations": 2,
+      "includeControl": true,
+      "allowDeterministicFallback": true
+    },
+    "budget": {
+      "maxCandidates": 2000,
+      "maxGames": 200000,
+      "maxWallMs": 43200000,
+      "maxConcurrent": 1,
+      "maxDeepConfirmations": 4
+    },
+    "diagnosticsPath": "training/reports/diagnostics-latest/analysis.json",
+    "humanAnalyticsFailuresPath": null,
+    "parentCandidateId": null,
+    "continueFromSelected": true
+  },
+  "status": "running",
+  "phase": "generated",
+  "currentRoundIndex": 0,
+  "rounds": [
+    {
+      "round": 1,
+      "seedWindows": {
+        "screen": {
+          "windowId": "ai9-screen-w016",
+          "purpose": "screen",
+          "pool": "dev",
+          "base": 1660016000,
+          "count": 1000,
+          "blockStart": 1660000000,
+          "blockEnd": 1670000000,
+          "index": 16
+        },
+        "deep": {
+          "windowId": "ai9-deep-w014",
+          "purpose": "deep",
+          "pool": "dev",
+          "base": 1670014000,
+          "count": 1000,
+          "blockStart": 1670000000,
+          "blockEnd": 1680000000,
+          "index": 14
+        }
+      },
+      "screenSeeds": [
+        1660016000,
+        1660016001,
+        1660016002,
+        1660016003,
+        1660016004,
+        1660016005,
+        1660016006,
+        1660016007
+      ],
+      "deepSeeds": [
+        1670014000,
+        1670014001,
+        1670014002,
+        1670014003,
+        1670014004,
+        1670014005,
+        1670014006,
+        1670014007
+      ],
+      "generated": true,
+      "selected": false,
+      "deepDone": false,
+      "approvalDone": false,
+      "diagnosticsDone": false,
+      "candidates": [
+        {
+          "candidateId": "cand-ai9-control-r1-98215d",
+          "parentId": null,
+          "identityDigest": "83f2a142a6d06fe20aa908394b851c3df4343371936b94aeea302bcb63b5fc49",
+          "strategy": "control",
+          "modules": [
+            "M01"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-12h-endurance-2/artifacts/objects/cand-ai9-control-r1-98215d/83f2a142a6d06fe20aa908394b851c3df4343371936b94aeea302bcb63b5fc49/candidate.json",
+          "stage": "checked",
+          "safetyStatus": "passed",
+          "sourceHash": "3fd0a972701bbe39bbf523fbbfb766b9178b72764132a3179cf3ef182e1cae45",
+          "buildArtifactHash": "1eb9df3c301f0d8f3ba80304b61c549fcd20bedd3fafb3f58f6ccab5c119a644",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai9-single-r1c1-cbc280",
+          "parentId": null,
+          "identityDigest": "7bd9d73502703bbd25aae3251858751d0af80ce789f6d641bfc5c26991df071c",
+          "strategy": "single",
+          "modules": [
+            "M05"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M05"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-12h-endurance-2/artifacts/objects/cand-ai9-single-r1c1-cbc280/7bd9d73502703bbd25aae3251858751d0af80ce789f6d641bfc5c26991df071c/candidate.json",
+          "stage": "checked",
+          "safetyStatus": "passed",
+          "sourceHash": "2bc0395dcddfc05b7b99d0d681e9626c8fe996156854ab3ffb93d8ca88d7d8a2",
+          "buildArtifactHash": "a399b9d15329b498f7b8a8553ec1d9a7616c5852c6983d445699ed503e7d9b64",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai9-pair-r1c2-93ce86",
+          "parentId": null,
+          "identityDigest": "1dc46016534acb43226468f661058e7e29874302aeba51dfefbafe9e3758b900",
+          "strategy": "pair",
+          "modules": [
+            "M10",
+            "M11"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M10",
+            "M11"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-12h-endurance-2/artifacts/objects/cand-ai9-pair-r1c2-93ce86/1dc46016534acb43226468f661058e7e29874302aeba51dfefbafe9e3758b900/candidate.json",
+          "stage": "checked",
+          "safetyStatus": "passed",
+          "sourceHash": "65719d350e4b6661a8b8b15bf0b51bc165b1324b45ead8c294220e2752d43ffb",
+          "buildArtifactHash": "be07a17e30c5795c99dab8e57ed5519167a2434bc26ed93e9a19244cea611a92",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai9-multi-r1c3-37c1ba",
+          "parentId": null,
+          "identityDigest": "69f1daf91e2ed8394a12cf5387844029ea407635075588cddef02da412e240d7",
+          "strategy": "multi",
+          "modules": [
+            "M01",
+            "M02",
+            "M05"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01",
+            "M02",
+            "M05"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-12h-endurance-2/artifacts/objects/cand-ai9-multi-r1c3-37c1ba/69f1daf91e2ed8394a12cf5387844029ea407635075588cddef02da412e240d7/candidate.json",
+          "stage": "created",
+          "safetyStatus": "pending",
+          "sourceHash": "48e9ccfc7c07dea0d5bccf84048dd664ebcc424629ea931c6fb9e159ea659a37",
+          "buildArtifactHash": "77230789de7dcc5de59bb1c32272f799822806b5681266f34293120791072447",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai9-single-r1c4-345820",
+          "parentId": null,
+          "identityDigest": "107d9a04c8672dfe3702ed97951e3a681a336c4d2a808912596adca2b5fedae2",
+          "strategy": "single",
+          "modules": [
+            "M01"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-12h-endurance-2/artifacts/objects/cand-ai9-single-r1c4-345820/107d9a04c8672dfe3702ed97951e3a681a336c4d2a808912596adca2b5fedae2/candidate.json",
+          "stage": "created",
+          "safetyStatus": "pending",
+          "sourceHash": "64b52b01c181b440095d1a28e39870ab4221c10a2095d86c30f760f0e97e676b",
+          "buildArtifactHash": "961a51e8b4a7f7fa112be0badf57734b498092cf912d52321bddd6853c29aef2",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai9-pair-r1c5-93ce86",
+          "parentId": null,
+          "identityDigest": "0c421777bd08263e81c88594eafe482636595fe8acccf77a1789108ffb6fa2a5",
+          "strategy": "pair",
+          "modules": [
+            "M10",
+            "M11"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M10",
+            "M11"
+          ],
+          "artifactPath": "training/reports/coevolution/ai9-12h-endurance-2/artifacts/objects/cand-ai9-pair-r1c5-93ce86/0c421777bd08263e81c88594eafe482636595fe8acccf77a1789108ffb6fa2a5/candidate.json",
+          "stage": "created",
+          "safetyStatus": "pending",
+          "sourceHash": "65719d350e4b6661a8b8b15bf0b51bc165b1324b45ead8c294220e2752d43ffb",
+          "buildArtifactHash": "be07a17e30c5795c99dab8e57ed5519167a2434bc26ed93e9a19244cea611a92",
+          "buildKind": "esm-module-bundle-v1",
+          "evidenceDir": null,
+          "quick": null,
+          "deep": null,
+          "failure": null
+        }
+      ],
+      "selectedIds": [],
+      "selectionSummary": null,
+      "diagnostics": null,
+      "rejectedAtGeneration": [
+        {
+          "strategy": "crossover",
+          "reason": "crossover 需要至少 2 个精英候选"
+        },
+        {
+          "strategy": "ablation",
+          "reason": "ablation 需要至少 1 个精英候选"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "checkpointSeq": 5,
+  "lastEventSeq": 17,
+  "createdAt": "2026-10-26T05:12:03.095Z",
+  "updatedAt": "2026-10-26T05:12:08.836Z",
+  "budgetUsed": {
+    "candidates": 6,
+    "games": 0,
+    "wallMs": 5693,
+    "deepConfirmations": 0
+  },
+  "pendingApprovals": [],
+  "guardrails": {
+    "validationPoolConsumed": false,
+    "promotionTriggered": false,
+    "championMutation": "none",
+    "formalChallengeApprovalRequired": false,
+    "machineGateRequired": true
+  },
+  "promotionQueue": [],
+  "promotionOutcomes": [],
+  "moduleElites": [],
+  "mapElites": {},
+  "generationDiagnostics": [
+    {
+      "round": 1,
+      "at": "2026-10-26T05:12:08.700Z",
+      "rejected": [
+        {
+          "strategy": "crossover",
+          "reason": "crossover 需要至少 2 个精英候选"
+        },
+        {
+          "strategy": "ablation",
+          "reason": "ablation 需要至少 1 个精英候选"
+        }
+      ]
+    }
+  ]
+}

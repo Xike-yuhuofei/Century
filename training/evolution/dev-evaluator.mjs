@@ -24,8 +24,9 @@ import { wilsonCI } from '../evaluator/stats.mjs';
 import { seatVersionFor } from './candidate-artifact.mjs';
 import { getTarget, evaluateModule, targetRegression } from './evolution-targets.mjs';
 import { evaluateCompiledProxy } from './compiled-candidate.mjs';
+import { evaluateCompiledCandidateGames } from './compiled-game-evaluator.mjs';
 import {
-  AI7_DEV_BLOCKS, SCHEMAS, assertCondition, assertDevSeedInBlock, canonicalJSON,
+  AI7_DEV_BLOCKS, AI9_DEV_BLOCKS, SCHEMAS, assertCondition, assertDevSeedInBlock, canonicalJSON,
   clamp, deepFreeze, sha256Canonical, shortHash,
 } from './core.mjs';
 
@@ -151,12 +152,12 @@ function summarizeByPlayerCount(rows) {
   return result;
 }
 
-/** 校验 screen/deep 两个窗口互不重叠且都在 AI7 开发块。 */
-export function assertIndependentWindows({ screenSeeds, deepSeeds }) {
+/** 校验 screen/deep 两个窗口互不重叠且都在指定开发块（AI7 或 AI9）。 */
+export function assertIndependentWindows({ screenSeeds, deepSeeds, blocks = AI7_DEV_BLOCKS }) {
   assertCondition(Array.isArray(screenSeeds) && screenSeeds.length > 0, 'screenSeeds 不能为空');
   assertCondition(Array.isArray(deepSeeds) && deepSeeds.length > 0, 'deepSeeds 不能为空');
-  for (const seed of screenSeeds) assertDevSeedInBlock(seed, AI7_DEV_BLOCKS.screen, 'screen seed');
-  for (const seed of deepSeeds) assertDevSeedInBlock(seed, AI7_DEV_BLOCKS.deep, 'deep seed');
+  for (const seed of screenSeeds) assertDevSeedInBlock(seed, blocks.screen, 'screen seed');
+  for (const seed of deepSeeds) assertDevSeedInBlock(seed, blocks.deep, 'deep seed');
   const overlap = new Set(screenSeeds.filter(s => deepSeeds.includes(s)));
   assertCondition(overlap.size === 0, `快筛与深验种子重叠：${[...overlap].join(',')}`);
   return true;
@@ -340,9 +341,39 @@ export function evaluateProxyCandidate({ artifact, round = 1 }) {
   });
 }
 
-/** 统一入口：按 artifact 的 evaluationMode 分派。 */
-export function evaluateCandidate(options) {
-  return options.artifact.algorithmStructure.evaluationMode === 'game'
+/** 统一入口：按 artifact 的 evaluationMode 分派。
+ * 编译型多模块候选必须走独立的候选决策包注入（候选/冠军模块实例隔离），
+ * 绝不使用 seatVersionFor 的官方决策路径（否则候选代码从未执行）。 */
+export async function evaluateCandidate(options) {
+  const artifact = options.artifact;
+  if (artifact.buildArtifact?.compiled === true && artifact.source?.modules?.length > 0) {
+    assertCondition(artifact.algorithmStructure.evaluationMode === 'game',
+      '编译型多模块候选必须为 game 模式');
+    const counts = options.playerCounts ?? artifact.applicablePlayerCounts;
+    assertCondition(Array.isArray(options.seeds) && options.seeds.length >= counts.length,
+      `编译候选评估需要至少 ${counts.length} 个种子（每人一层），实际 ${options.seeds?.length ?? 0}`);
+    // 分人数独立种子：同一种子不得跨人数复用（统计独立性）。
+    const base = Math.floor(options.seeds.length / counts.length);
+    const extra = options.seeds.length % counts.length;
+    let cursor = 0;
+    const seedsByPlayerCount = {};
+    for (const [index, count] of counts.entries()) {
+      const size = base + (index < extra ? 1 : 0);
+      seedsByPlayerCount[count] = options.seeds.slice(cursor, cursor + size);
+      cursor += size;
+    }
+    return evaluateCompiledCandidateGames({
+      artifact,
+      seedsByPlayerCount,
+      purpose: options.purpose ?? 'screen',
+      round: options.round ?? 1,
+      playerCounts: counts,
+      maxMoves: options.maxMoves ?? 500,
+      deadlineMs: options.deadlineMs ?? 60_000,
+      workUnits: options.workUnits ?? 32,
+    });
+  }
+  return artifact.algorithmStructure.evaluationMode === 'game'
     ? evaluateGameCandidate(options)
     : evaluateProxyCandidate(options);
 }

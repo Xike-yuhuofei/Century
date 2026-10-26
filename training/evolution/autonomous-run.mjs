@@ -21,7 +21,10 @@ import { ensureDir, writeJSON } from '../lib/io.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
 import { assertResourceBudget, evaluateCapacity, resourceSnapshot } from '../lib/resource-scheduler.mjs';
 import { CampaignController } from './campaign-controller.mjs';
-import { createLiveGovernanceProvider, createAutonomousGovernanceAdapter } from './governance-provider-v2.mjs';
+import {
+  createLiveGovernanceProvider, createAutonomousGovernanceAdapter,
+  createLiveGovernanceProviderAI9, createAutonomousGovernanceAdapterAI9,
+} from './governance-provider-v2.mjs';
 import { createPromotionHandler } from './promotion-handler.mjs';
 
 function parseArgs(argv) {
@@ -44,8 +47,11 @@ if (!campaignId) {
   console.error('必须提供 --campaign <id>');
   process.exit(2);
 }
-const rootDir = resolve(REPO_ROOT, 'training/reports/autonomous', campaignId);
-const governance = createAutonomousGovernanceAdapter({ provider: createLiveGovernanceProvider() });
+const coevolve = args.coevolve === true;
+const rootDir = resolve(REPO_ROOT, coevolve ? 'training/reports/coevolution' : 'training/reports/autonomous', campaignId);
+const governance = coevolve
+  ? createAutonomousGovernanceAdapterAI9({ provider: createLiveGovernanceProviderAI9() })
+  : createAutonomousGovernanceAdapter({ provider: createLiveGovernanceProvider() });
 
 function configFromArgs() {
   const playerCounts = args['player-counts']
@@ -53,6 +59,7 @@ function configFromArgs() {
     : [2, 3, 4, 5];
   return {
     rounds: args.rounds !== undefined ? Number(args.rounds) : 1,
+    ...(coevolve ? { configRef: 'ai9://campaign/coevolution' } : {}),
     playerCounts,
     quickSeeds: args['quick-seeds'] !== undefined ? Number(args['quick-seeds']) : 4,
     deepSeeds: args['deep-seeds'] !== undefined ? Number(args['deep-seeds']) : 6,
@@ -63,7 +70,15 @@ function configFromArgs() {
     generation: {
       count: args['candidates'] !== undefined ? Number(args['candidates']) : 6,
       seed: args['generation-seed'] !== undefined ? Number(args['generation-seed']) : 20_261_025,
-      targetIds: args.targets ? String(args.targets).split(',') : null,
+      targetIds: args.targets
+        ? String(args.targets).split(',')
+        : (args.modules ? String(args.modules).split(',') : null),
+      mode: coevolve ? 'multi-module' : 'descriptor',
+      strategies: args.strategies ? String(args.strategies).split(',') : null,
+      openevolveIterations: args['openevolve-iterations'] !== undefined
+        ? Number(args['openevolve-iterations']) : 2,
+      includeControl: args['no-control'] !== true,
+      allowDeterministicFallback: args['no-deterministic-fallback'] !== true,
     },
     budget: {
       maxCandidates: args['max-candidates'] !== undefined ? Number(args['max-candidates']) : 24,

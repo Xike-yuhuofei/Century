@@ -1,0 +1,379 @@
+{
+  "schema": "century-autonomous-run-summary-v1",
+  "campaignId": "ai9-live-coevolve-2",
+  "command": "resume",
+  "startedAt": "2026-10-26T04:42:28.728Z",
+  "elapsedMs": 1220646,
+  "status": "completed",
+  "phase": "completed",
+  "rounds": 2,
+  "budgetUsed": {
+    "candidates": 8,
+    "games": 192,
+    "wallMs": 1182721,
+    "deepConfirmations": 4
+  },
+  "promotionQueue": [
+    {
+      "schema": "century-machine-gate-challenge-request-v1",
+      "requestId": "mcgre-e668ecc9fbb47c2d",
+      "campaignId": "ai9-live-coevolve-2",
+      "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+      "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+      "evidenceDir": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7",
+      "summary": {
+        "artifactHash": "d92a60f1e0b9354d51eb934a6250db231e377287a2f0c830adb9d948781b349b",
+        "sourceHash": "dd6f125203cc45dafdc4515c54276bf3b68fa49ae212ac11e2513a03273f611d",
+        "buildArtifactHash": "351fe8b4cdf82e2224a9d4e2d05a83771dbc6cece26eae91a111adba3aff5234",
+        "quick": {
+          "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7/quick-r001.json",
+          "evidenceType": "dev-game-compiled-modules",
+          "score": {
+            "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+            "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+            "evaluationMode": "game",
+            "targetIds": [
+              "M01",
+              "M05"
+            ],
+            "quality": 0.42906,
+            "stability": 1,
+            "cost": 0.866536,
+            "safety": 1,
+            "composite": 0.701184
+          },
+          "games": 16,
+          "metrics": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "p95WallMs": 4620.6
+          },
+          "artifactHash": "d35eccede3ceced15935004a888cc774b135d2559596be390a4ca5927d518ba2"
+        },
+        "deep": {
+          "status": "done",
+          "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-pair-fallback-r1c3-66c9b7/deep-r001.json",
+          "score": {
+            "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+            "identityDigest": "4b792db88b2a030605672f51e5eb8e23d7300c4931d45d114f8a3380853be5b1",
+            "evaluationMode": "game",
+            "targetIds": [
+              "M01",
+              "M05"
+            ],
+            "quality": 0.31626,
+            "stability": 1,
+            "cost": 0.799139,
+            "safety": 1,
+            "composite": 0.638044
+          },
+          "games": 16,
+          "metrics": {
+            "chanceAdjustedRate": 0.0542,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          }
+        },
+        "deepAssessment": {
+          "verdict": "promising",
+          "chanceAdjustedRate": 0.0542,
+          "minWilsonLower": 0,
+          "anomalyRate": 0,
+          "note": "小样本深验只用于机器门禁前的排序；正式判定必须使用预注册第一名率挑战"
+        },
+        "recommendation": "queue-formal-challenge (positive signal)",
+        "validationPoolConsumed": false,
+        "promotionTriggered": false
+      },
+      "status": "queued-machine-gate",
+      "approvalRequired": false,
+      "machineGateRequired": true,
+      "promotionTriggered": false,
+      "gates": [
+        "first-place-preregistered-challenge",
+        "seat-count-non-inferiority",
+        "alpha-ledger",
+        "seed-governance",
+        "build-identity",
+        "full-ci",
+        "deploy-verification",
+        "rollback-verification"
+      ],
+      "requestedAt": "2026-10-26T04:54:43.023Z",
+      "validationPoolConsumed": false,
+      "requestPath": "training/reports/coevolution/ai9-live-coevolve-2/promotion-queue/mcgre-e668ecc9fbb47c2d.json"
+    },
+    {
+      "schema": "century-machine-gate-challenge-request-v1",
+      "requestId": "mcgre-619d53373d68219e",
+      "campaignId": "ai9-live-coevolve-2",
+      "candidateId": "cand-ai9-control-r2-d4f55f",
+      "identityDigest": "55c23591a441290ec133303e8584cf28e75d72e3eecb753633742152632b238d",
+      "evidenceDir": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-control-r2-d4f55f",
+      "summary": {
+        "artifactHash": "bb063c3a68f5a22d32ea7926b22760bee507aab1b05d00bb510ab89a9323f2ea",
+        "sourceHash": "3fd0a972701bbe39bbf523fbbfb766b9178b72764132a3179cf3ef182e1cae45",
+        "buildArtifactHash": "1eb9df3c301f0d8f3ba80304b61c549fcd20bedd3fafb3f58f6ccab5c119a644",
+        "quick": {
+          "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-control-r2-d4f55f/quick-r002.json",
+          "evidenceType": "dev-game-compiled-modules",
+          "score": {
+            "candidateId": "cand-ai9-control-r2-d4f55f",
+            "identityDigest": "55c23591a441290ec133303e8584cf28e75d72e3eecb753633742152632b238d",
+            "evaluationMode": "game",
+            "targetIds": [
+              "M01"
+            ],
+            "quality": 0.35376,
+            "stability": 1,
+            "cost": 0.855903,
+            "safety": 1,
+            "composite": 0.66247
+          },
+          "games": 16,
+          "metrics": {
+            "chanceAdjustedRate": 0.1792,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 5050.7
+          },
+          "artifactHash": "1c4018e1414634c1267df13420f210a0cbef7f8b52b82a431af16dd5598dcf16"
+        },
+        "deep": {
+          "status": "done",
+          "evidencePath": "training/reports/coevolution/ai9-live-coevolve-2/evidence/cand-ai9-control-r2-d4f55f/deep-r002.json",
+          "score": {
+            "candidateId": "cand-ai9-control-r2-d4f55f",
+            "identityDigest": "55c23591a441290ec133303e8584cf28e75d72e3eecb753633742152632b238d",
+            "evaluationMode": "game",
+            "targetIds": [
+              "M01"
+            ],
+            "quality": 0.27876,
+            "stability": 1,
+            "cost": 0.76565,
+            "safety": 1,
+            "composite": 0.615945
+          },
+          "games": 16,
+          "metrics": {
+            "chanceAdjustedRate": -0.0708,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          }
+        },
+        "deepAssessment": {
+          "verdict": "no-advantage",
+          "chanceAdjustedRate": -0.0708,
+          "minWilsonLower": 0,
+          "anomalyRate": 0,
+          "note": "小样本深验只用于机器门禁前的排序；正式判定必须使用预注册第一名率挑战"
+        },
+        "recommendation": "queue-formal-challenge (weak/inconclusive signal)",
+        "validationPoolConsumed": false,
+        "promotionTriggered": false
+      },
+      "status": "queued-machine-gate",
+      "approvalRequired": false,
+      "machineGateRequired": true,
+      "promotionTriggered": false,
+      "gates": [
+        "first-place-preregistered-challenge",
+        "seat-count-non-inferiority",
+        "alpha-ledger",
+        "seed-governance",
+        "build-identity",
+        "full-ci",
+        "deploy-verification",
+        "rollback-verification"
+      ],
+      "requestedAt": "2026-10-26T05:02:49.348Z",
+      "validationPoolConsumed": false,
+      "requestPath": "training/reports/coevolution/ai9-live-coevolve-2/promotion-queue/mcgre-619d53373d68219e.json"
+    }
+  ],
+  "promotionOutcomes": [
+    {
+      "requestId": "mcgre-e668ecc9fbb47c2d",
+      "at": "2026-10-26T04:54:43.049Z",
+      "outcome": {
+        "verdict": "BLOCKED",
+        "reason": "insufficient-statistical-power",
+        "readiness": {
+          "ready": false,
+          "reason": "insufficient-statistical-power",
+          "alpha": 0.00001220703125,
+          "nextChallengeIndex": 12,
+          "remaining": 0.000024414062499998612,
+          "power": 0.00030230771345557406,
+          "requiredSeeds": 10249,
+          "note": "每人数 250 种子在 α=0.00001220703125 下仅能检测 0.05 效应于 0.0% 功效；达到 80% 需要约 10249 个独立种子/人数"
+        },
+        "campaignId": "ai9-live-coevolve-2",
+        "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+        "requestId": "mcgre-e668ecc9fbb47c2d",
+        "requestPath": "training/reports/coevolution/ai9-live-coevolve-2/promotion-queue/mcgre-e668ecc9fbb47c2d.json",
+        "promotionTriggered": false,
+        "note": "统计预算/功效不足：保留现任冠军，不消费验证种子与 alpha"
+      }
+    },
+    {
+      "requestId": "mcgre-619d53373d68219e",
+      "at": "2026-10-26T05:02:49.369Z",
+      "outcome": {
+        "verdict": "BLOCKED",
+        "reason": "insufficient-statistical-power",
+        "readiness": {
+          "ready": false,
+          "reason": "insufficient-statistical-power",
+          "alpha": 0.00001220703125,
+          "nextChallengeIndex": 12,
+          "remaining": 0.000024414062499998612,
+          "power": 0.00030230771345557406,
+          "requiredSeeds": 10249,
+          "note": "每人数 250 种子在 α=0.00001220703125 下仅能检测 0.05 效应于 0.0% 功效；达到 80% 需要约 10249 个独立种子/人数"
+        },
+        "campaignId": "ai9-live-coevolve-2",
+        "candidateId": "cand-ai9-control-r2-d4f55f",
+        "requestId": "mcgre-619d53373d68219e",
+        "requestPath": "training/reports/coevolution/ai9-live-coevolve-2/promotion-queue/mcgre-619d53373d68219e.json",
+        "promotionTriggered": false,
+        "note": "统计预算/功效不足：保留现任冠军，不消费验证种子与 alpha"
+      }
+    }
+  ],
+  "candidates": [
+    {
+      "candidateId": "cand-ai9-control-r1-98215d",
+      "stage": "selected",
+      "quick": {
+        "chanceAdjustedRate": 0.3042,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "p95WallMs": 5277
+      },
+      "deep": null
+    },
+    {
+      "candidateId": "cand-ai9-multi-r1c1-0ceec1",
+      "stage": "deep-done",
+      "quick": {
+        "chanceAdjustedRate": 0.3042,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "p95WallMs": 4890
+      },
+      "deep": {
+        "chanceAdjustedRate": -0.0708,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "finishedGames": 16
+      }
+    },
+    {
+      "candidateId": "cand-ai9-pair-fallback-r1c2-5abc65",
+      "stage": "not-selected",
+      "quick": {
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "p95WallMs": 5227.9
+      },
+      "deep": null
+    },
+    {
+      "candidateId": "cand-ai9-pair-fallback-r1c3-66c9b7",
+      "stage": "promotion-queued",
+      "quick": {
+        "chanceAdjustedRate": 0.3042,
+        "minWilsonLower": 0.0945,
+        "anomalyRate": 0,
+        "p95WallMs": 4620.6
+      },
+      "deep": {
+        "chanceAdjustedRate": 0.0542,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "finishedGames": 16
+      }
+    },
+    {
+      "candidateId": "cand-ai9-control-r2-d4f55f",
+      "stage": "promotion-queued",
+      "quick": {
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "p95WallMs": 5050.7
+      },
+      "deep": {
+        "chanceAdjustedRate": -0.0708,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "finishedGames": 16
+      }
+    },
+    {
+      "candidateId": "cand-ai9-ablation-r2c1-3e064c",
+      "stage": "deep-done",
+      "quick": {
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "p95WallMs": 5229.8
+      },
+      "deep": {
+        "chanceAdjustedRate": -0.0708,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "finishedGames": 16
+      }
+    },
+    {
+      "candidateId": "cand-ai9-multi-r2c2-a3099e",
+      "stage": "selected",
+      "quick": {
+        "chanceAdjustedRate": -0.0708,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "p95WallMs": 4410.6
+      },
+      "deep": null
+    },
+    {
+      "candidateId": "cand-ai9-ablation-r2c3-3e064c",
+      "stage": "not-selected",
+      "quick": {
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "p95WallMs": 5208.2
+      },
+      "deep": null
+    }
+  ],
+  "resourceAfter": {
+    "at": "2026-10-26T05:02:49.378Z",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuCount": 10,
+    "loadAverage": [
+      4.38525390625,
+      4.6123046875,
+      5.517578125
+    ],
+    "totalMem": 17179869184,
+    "freeMem": 330317824,
+    "availableMem": 5622054912,
+    "freeMemRatio": 0.0192,
+    "availableMemRatio": 0.3272,
+    "usedMem": 11557814272,
+    "freeDisk": 965195907072,
+    "processRss": 306167808
+  },
+  "autoChallenge": true,
+  "note": "候选进入机器门禁队列后自动评估正式挑战资格；冠军落地/发布由 CI 机器门禁完成，本 CLI 不直接改冠军"
+}
