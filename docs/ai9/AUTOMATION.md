@@ -40,7 +40,7 @@
 
 ### 本地 / 云端分工
 
-- 云端标准 Runner：有界 AI9 协同进化、AI4 回归、PPO 冒烟、全部 CI。
+- 云端标准 Runner：有界 AI9 协同进化（**macOS Runner**：编译型候选依赖 Seatbelt）、AI4 回归（ubuntu）、PPO 冒烟（ubuntu）、全部 CI。
 - 本地 Mac M4：真实 OpenEvolve LLM 提案（需要 `ai5/openevolve/.venv` 与 `codex` 登录）、
   12 小时长周期压力测试、需要 GPU/大内存的实验。
 - 云端 `ai9-openevolve` 作业只做**可用性探测**：缺少本地 LLM/venv 时写 `status=blocked`

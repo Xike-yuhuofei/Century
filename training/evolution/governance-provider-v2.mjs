@@ -69,7 +69,10 @@ export function createLiveGovernanceProvider({
         const { base, count: size } = intervalFor(purpose, offset, blocks);
         if (queryInterval(registry, base, size).length > 0) continue;
         // 原子登记：在动用种子之前占用窗口（中止不退还，绝不复用）。
-        const experimentId = `${experimentPrefix}-dev-${campaignId}-r${round}-${purpose}`;
+        // experimentId 必须包含窗口身份：同一 campaign/round 重试时若沿用旧 id，
+        // reserveConsumption 会把每个候选窗口都判为“已登记”，导致整个开发池
+        // 被误报耗尽（真实事故：ai9-cloud 同日重跑 0 候选）。
+        const experimentId = `${experimentPrefix}-dev-${campaignId}-r${round}-${purpose}-${id}`;
         try {
           reserveConsumption({
             purposeClass: PURPOSE_CLASS[purpose],

@@ -131,6 +131,13 @@ export function verifyWorkflows(repoRoot) {
   if (!/autonomous-run\.mjs start[\s\S]*?--coevolve/.test(training)) {
     issues.push('ai-training.yml 必须包含 AI9 协同进化作业（autonomous-run.mjs start --coevolve）');
   }
+  const coevolveBlock = training.slice(training.indexOf('  coevolve:'), training.indexOf('  ai9-openevolve:'));
+  if (!/runs-on:\s*macos-14/.test(coevolveBlock)) {
+    issues.push('ai9-coevolve 必须在 macOS Runner 上运行（编译型候选依赖 Seatbelt；ubuntu 上实测 0 候选/0 局）');
+  }
+  if (!/coevolution\/\$\{\{ steps\.campaign\.outputs\.id \}\}\//.test(coevolveBlock)) {
+    issues.push('ai9-coevolve 必须按 campaign id 显式上传 artifact（通配目录曾导致 campaign 证据未上传）');
+  }
 
   const continuation = text['champion-continuation.yml'] ?? '';
   if (!continuation) {
