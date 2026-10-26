@@ -176,19 +176,32 @@ measured({
 // ---- R04 固定种子与工作量完全复现 ----
 {
   const report = readJSON('training/reports/determinism/full.json');
+  const code = report?.code;
+  const codeBound = Boolean(code && /^[0-9a-f]{40}$/.test(code.commit) && code.dirty === false
+    && code.files && Object.keys(code.files).length >= 6);
+  let ancestor = false;
+  if (codeBound) {
+    try {
+      execFileSync('git', ['merge-base', '--is-ancestor', code.commit, 'HEAD'], { cwd: REPO_ROOT, stdio: 'ignore' });
+      ancestor = true;
+    } catch { ancestor = false; }
+  }
   const pass = Boolean(report && report.verdict === 'PASS'
     && report.worldsPerSeatCount === 50
-    && [2, 3, 4, 5].every(n => report.seatCounts.includes(n)));
+    && [2, 3, 4, 5].every(n => report.seatCounts.includes(n))
+    && codeBound && ancestor);
   const partial = readJSON('training/reports/determinism/smoke.json');
   record({
-    id: 'R04', title: '固定种子 + 固定 workUnits 双轮完全复现（2–5 人 × 50 世界）',
+    id: 'R04', title: '固定种子 + 固定 workUnits 双轮完全复现（2–5 人 × 50 世界，绑定最终代码）',
     status: pass ? 'PASS' : (partial?.verdict === 'PASS' ? 'NOT_RUN' : 'FAIL'),
     source: 'training/scripts/verify-determinism.mjs',
     testCommand: 'node training/scripts/verify-determinism.mjs --worlds 50 --seat-counts 2,3,4,5 --out training/reports/determinism/full.json',
     evidence: pass
-      ? `2–5 人各 50 世界 × 2 轮；mismatches=${report.mismatches.length}`
-      : (partial ? `仅完成小样本自检（worlds=${partial.worldsPerSeatCount}，seats=${partial.seatCounts.join(',')}，verdict=${partial.verdict}）；50 世界全量尚未完成` : '无确定性报告'),
-    unmetReason: pass ? null : '50 世界 × 2–5 人全量确定性验收尚未完成',
+      ? `2–5 人各 50 世界 × 2 轮；mismatches=${report.mismatches.length}；code=${code.commit.slice(0, 12)} dirty=false files=${Object.keys(code.files).length}`
+      : (report
+          ? `确定性报告存在但代码绑定不合格：code=${code?.commit?.slice(0, 12) ?? 'missing'} dirty=${code?.dirty} ancestor=${ancestor}；50 世界/2–5 人=${report.worldsPerSeatCount}/${report.seatCounts?.join(',')}`
+          : (partial ? `仅完成小样本自检（worlds=${partial.worldsPerSeatCount}，seats=${partial.seatCounts.join(',')}，verdict=${partial.verdict}）；50 世界全量尚未完成` : '无确定性报告')),
+    unmetReason: pass ? null : '50 世界 × 2–5 人全量确定性验收尚未完成或未绑定最终代码',
   });
 }
 
