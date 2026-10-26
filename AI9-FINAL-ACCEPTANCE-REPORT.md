@@ -1,7 +1,7 @@
 # Century AI 9.0｜OpenEvolve 全决策系统自主协同进化工程 · 最终验收报告
 
 生成时间：2026-10-26（Asia/Shanghai）
-开发分支：`feat/ai9-coevolution`（PR #58 已 squash 合并到 main `1db83e94111017c01ab5a35871a7bca96a91fa56`）
+开发分支：`feat/ai9-coevolution`；PR #58–#62 已全部合并到 main `7fd51dfe05f7ab1dbae3a9ed0387b45bfea3326c`
 基线 main：`19d4b40c2f633c7b8ff8b5484941a0ee125a7bd1`
 基线冠军：`joint-js5`（未变更）
 开发 worktree：`/Volumes/Extreme SSD/Projects/Century-ai9`
@@ -16,7 +16,8 @@
 > - `R09`（12 小时连续运行）已启动 **IN_PROGRESS**（`ai9-12h-endurance-3`，13:34 CST 开始，12h 预算）；
 >   前两次启动分别因宿主回收（无候选）和深验全局配额过低（`endurance-2` 跑完 288 局/4 次深验后停止）被替换；
 >   本次 12h 运行已实测中途强制停止→同配置恢复（14:28 CST，seq 176 停止 / seq 177 恢复，fingerprint 一致）；
->   但 12h 预算尚未跑完，不能记为 PASS。
+>   截至 15:48 CST：12 轮、72 候选、1,408 局、22 次深验、11 次机器门禁结果（全部 BLOCKED/insufficient-statistical-power）；
+>   12h 预算尚未跑完，不能记为 PASS。
 > - `R12`（真实冠军晋级/自动发布）为 **BLOCKED**，
 >   原因是统计预算/功效不足且没有合格候选，不是 PASS。
 > - 本报告把“接口存在”“单元测试通过”“模拟实验成功”与“真实多模块进化已完成”严格区分。
@@ -48,7 +49,7 @@
 | 项目 | 事实 |
 |---|---|
 | 基线 main SHA | `19d4b40c2f633c7b8ff8b5484941a0ee125a7bd1` |
-| AI9 交付合并 | PR #58 → main `1db83e94111017c01ab5a35871a7bca96a91fa56`（2026-10-26T05:56:24Z squash merge；合并前 PR 检查全绿，ui-smoke 一次 1ms flake 后重跑通过） |
+| AI9 交付合并 | PR #58–#62 → main `7fd51dfe05f7ab1dbae3a9ed0387b45bfea3326c`；#58 主体、#59 部署核验、#60 停止/恢复证据、#61 R09 审计器、#62 M10/M11 结构级候选；main CI 均全绿 |
 | 当前冠军 | `joint-js5`（`training/champions/champion.json`） |
 | 冠军决策核心 | `champion-guided` / `joint-js5` / `budgetMs=100` / `acquisitionVariant=readiness-efficiency` |
 | 网页构建身份（本地核验） | source `d507667b8acc5167…`（74 文件）；artifact `e4d5ed58d031efdf…`（49 文件，含 `ai/evolve/modules.js`）；本地 `verify-deploy` PASS |
@@ -77,7 +78,8 @@
 - 全 12 模块联合编译候选：`training/reports/ai9/all-modules-candidate.json`；
 - 逐模块探针：`training/reports/ai9/all-modules-probe.json`（`changedModules` = M01–M12，`probeErrors=0`）；
 - 五模块确定性变异候选与真实对局：`training/reports/coevolution/ai9-smoke-003/`；
-- 决策级接线测试：`training/evolution/tests/module-wiring.test.mjs`（中性候选与官方逐局一致；变异候选在 40 步内产生真实 action 分歧）。
+- 决策级接线测试：`training/evolution/tests/module-wiring.test.mjs`（中性候选与官方逐局一致；变异候选在 40 步内产生真实 action 分歧）；
+- M10/M11 结构级候选：`training/reports/ai9/structural-search-candidates.json`（§3.2）。
 
 ### 2.2 多模块候选契约
 
@@ -159,7 +161,14 @@
 - M10 返回重排/剪枝后的**合法行动子集**；调用方对未知动作、空结果、重复键一律回退原序（不允许制造非法行动）。
 - M11 只能返回白名单内的联合搜索选项（gateMode/candidateCap/overrideMargin/contestThreshold/allocation/endgameMode/worlds/…），数值与枚举均被裁剪；调用方显式传入的选项优先于模块。
 - M12 预算被硬裁剪到 **0–1000ms**（0 保留既有“筛选即耗尽→冠军回退”语义，不是新增能力）；固定 workUnits 模式下不生效，防止“靠无限加算力”取得研究优势。
-- 确定性变异样例：M10 “认领优先排序”、M11 “扩大候选上限+降低覆盖边际”、M12 “1.5 倍预算”。
+- 确定性变异样例：M10 “认领优先排序” / “根行动剪枝（保留认领，非认领最多 6 个）”、
+  M11 “扩大候选上限+降低覆盖边际” / “beam-rollout → beam-contest 结构切换”、M12 “1.5 倍预算”。
+- **结构级候选实测**（`ai9-structural-mvowh8du`，`training/reports/ai9/structural-search-candidates.json`）：
+  5 个编译候选（M10 中性/剪枝、M11 中性/contest、M10+M11 联合），真实 2–5 人 80 局、异常 0；
+  M10 剪枝探针 14 处分歧；M11 beam-contest 探针 14 处分歧且真实对局聚合行动分布改变
+  （acquire 17.4%→20.4%、rest 16.7%→13.9%）；双模块探针 28 处分歧。
+  这些是**结构可执行/可改变决策**的证据，不是强度证据：M11 结构候选首个样本
+  `firstPlaceDelta=−0.375`（CI [−0.873,+0.123]），未显示提升，未进入冠军挑战。
 
 ### 3.3 阶段二验收
 
@@ -168,7 +177,7 @@
 | 12 个真正接入决策路径的模块 | PASS | 注册表 `realDecisionPath` + 探针 + 12 模块真实对局 |
 | 每模块算法变异/替换能力 | PASS | `module-mutations.mjs` + 每模块至少 1 个可编译变异 |
 | 单元测试与行为探针 | PASS | 4 个新测试文件 + `all-modules-probe.json` |
-| 结构级搜索候选验证 | PASS | M10/M11 白名单与真实 pair 对局 |
+| 结构级搜索候选验证 | PASS | `ai9-structural-mvowh8du`：M10 剪枝 / M11 beam-contest / 双模块候选编译+探针+2–5 人 80 局；见 §3.2 |
 | 模块禁用/消融 | PASS | interaction `ablation-M02`（pair 移除 M11） |
 | 多人局面回归 | PASS | 2–5 人真实对局（campaign/OpenEvolve/interaction） |
 | 区分“已验证”与“仅接口” | PASS | 矩阵逐项标注证据类型 |
@@ -344,12 +353,18 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 | operator stop 写入 | 06:27:00Z / 14:27 CST | `state.json` 停止前 seq 173 |
 | 优雅停止（round 边界，steps=96） | 06:28:14Z / 14:28 CST | `campaign-stopped` seq 176；`status=stopped`，`phase=stopped-by-operator`，checkpointSeq=98 |
 | 同配置恢复（`coevolve:resume`，screen `ai9-12h3r`） | 06:28:44Z / 14:28 CST | `campaign-resumed` seq 177；runFingerprint `20f5b5e1…` 与停止前一致 |
-| 恢复后继续生成/评估 | 06:30Z+ / 14:30 CST+ | 进入 round 6；36 候选、672 局、10 次深验（随运行继续增长） |
+| 恢复后继续生成/评估 | 06:30Z+ / 14:30 CST+ | 截至 15:48 CST：12 轮、72 候选、1,408 局、22 次深验、11 次门禁结果（随运行继续增长） |
 
 停止时预算：30 候选 / 640 局 / 10 次深验，停止未清零预算或种子，恢复后从
 `currentRoundIndex` 与 checkpoint 继续。证据：
 `training/reports/coevolution/ai9-12h-endurance-3/logs/events.jsonl`、`checkpoints/`、`state.json`。
 12h 总预算尚未结束，因此 R09 整体仍为 **IN_PROGRESS**（不是 PASS）。
+
+**并行补充运行（阶段三 12 模块真实协同）**：`ai9-real-coevolve-20261026`
+于 15:11 CST 启动（12 轮 / 6h 墙钟 / 100 候选 / 12,000 局 / 全 12 模块 /
+策略含 `openevolve`、`single`、`pair`、`multi`、`crossover`、`ablation`）。
+截至 15:48 CST：round 1 完成，6 候选、96 局、0 异常，已进入快筛。
+该运行与 `endurance-3` 独立，不共享验证池；完成前不得计入 PASS。
 
 ### 4.7 阶段三验收
 
@@ -435,7 +450,7 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 
 | ID | 项目 | 状态 | 原因/解除条件 |
 |---|---|---|---|
-| R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | `ai9-12h-endurance-3`（screen `ai9-12h3` → 恢复后 `ai9-12h3r`）于 13:34 CST 启动（500 轮 / 12h 墙钟 / 3000 候选 / 400000 局；每轮 2 次深验、全局上限 200）。14:28 CST 实测中途强制停止（seq 176，steps=96，checkpointSeq 98）与同配置恢复（seq 177，fingerprint 一致），随后进入 round 6。截至 14:32 CST：36 候选、672 局、10 次深验、4 次机器门禁结果（均 BLOCKED/insufficient-statistical-power）。前两次启动：`endurance` 被宿主回收；`endurance-2` 在 288 局/4 次深验后人工停止。完成条件：`npm run ai9:endurance -- --campaign ai9-12h-endurance-3` 在 12h 预算结束后返回 PASS |
+| R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | `ai9-12h-endurance-3`（screen `ai9-12h3` → 恢复后 `ai9-12h3r`）于 13:34 CST 启动（500 轮 / 12h 墙钟 / 3000 候选 / 400000 局；每轮 2 次深验、全局上限 200）。14:28 CST 实测中途强制停止（seq 176，steps=96，checkpointSeq 98）与同配置恢复（seq 177，fingerprint 一致）。截至 15:48 CST：12 轮、72 候选、1,408 局、22 次深验、11 次机器门禁结果（均 BLOCKED/insufficient-statistical-power）。前两次启动：`endurance` 被宿主回收；`endurance-2` 在 288 局/4 次深验后人工停止。完成条件：`npm run ai9:endurance -- --campaign ai9-12h-endurance-3` 在 12h 预算结束后返回 PASS |
 | R12 | 真实冠军晋级 + 自动发布 + 回滚 | BLOCKED | 门禁路径已真实执行 2 次（`ai9-live-coevolve-2`），均 `BLOCKED/insufficient-statistical-power`（α=1.22e-5，需 ~10,249 种子/人数）；没有统计合格候选，不能伪造挑战/晋级。机器的晋级/拒绝/回滚分支已由单元/演练测试覆盖（模拟证据），但**未改变正式冠军**。解除条件：补充独立验证预算与 alpha，且候选达到预注册阈值 |
 | — | 统计显著的第一名率提升 | 未证明 | 所有研究候选的区间下界均 ≤0；冠军保持 `joint-js5` |
 | — | 全模块逐一真实对局强度证明 | 部分 | 12 模块共同控制真实对局；逐模块“强度贡献”只做了探针与交互方向性实验 |
@@ -463,6 +478,7 @@ npm run ai9:interaction
 npm run ai9:all-modules-game
 npm run ai9:crossover     # 从真实 campaign 候选库交叉组合并跑真实对局
 npm run ai9:module-matrix
+npm run ai9:structural  # M10/M11 结构级搜索候选（编译+探针+真实 2–5 人对局）
 npm run ai9:resource
 npm run ai9:wiring         # 逐模块决策分歧审计
 npm run ai9:execution      # 逐模块真实对局调用计数审计

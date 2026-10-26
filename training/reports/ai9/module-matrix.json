@@ -1,6 +1,6 @@
 {
   "schema": "century-ai9-module-matrix-v1",
-  "generatedAt": "2026-10-26T05:18:21.799Z",
+  "generatedAt": "2026-10-26T07:05:47.189Z",
   "registry": {
     "path": "training/evolution/module-registry.json",
     "version": 1,
@@ -53,14 +53,13 @@
       }
     },
     "campaigns": [
-      "ai9-12h-endurance",
       "ai9-12h-endurance-2",
-      "ai9-live-coevolve-1",
       "ai9-live-coevolve-2",
       "ai9-smoke-002",
       "ai9-smoke-003"
     ],
     "interaction": "training/reports/ai9/interaction-experiment.json",
+    "structuralSearch": "training/reports/ai9/structural-search-candidates.json",
     "openEvolveRuns": [
       "ai9-r001",
       "ai9-r002",
@@ -125,8 +124,75 @@
       "deterministicMutations": [
         "goal-points-efficiency"
       ],
+      "structuralSearch": null,
       "openEvolveEvidence": [],
       "realGameEvidence": [
+        {
+          "campaignId": "ai9-12h-endurance-2",
+          "candidateId": "cand-ai9-control-r1-98215d",
+          "strategy": "control",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.1792,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 5212.2
+          },
+          "modules": [
+            "M01"
+          ]
+        },
+        {
+          "campaignId": "ai9-12h-endurance-2",
+          "candidateId": "cand-ai9-multi-r1c3-37c1ba",
+          "strategy": "multi",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": 0.1792,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 4414.7
+          },
+          "modules": [
+            "M01",
+            "M02",
+            "M05"
+          ]
+        },
+        {
+          "campaignId": "ai9-12h-endurance-2",
+          "candidateId": "cand-ai9-ablation-r2c5-80629e",
+          "strategy": "ablation",
+          "stage": "promotion-queued",
+          "deep": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.4292,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "p95WallMs": 5186.6
+          },
+          "modules": [
+            "M01",
+            "M02"
+          ]
+        },
         {
           "campaignId": "ai9-live-coevolve-2",
           "candidateId": "cand-ai9-multi-r1c1-0ceec1",
@@ -344,6 +410,7 @@
       "deterministicMutations": [
         "readiness-acquisition-gain"
       ],
+      "structuralSearch": null,
       "openEvolveEvidence": [
         {
           "run": "ai9-r001",
@@ -384,6 +451,51 @@
         }
       ],
       "realGameEvidence": [
+        {
+          "campaignId": "ai9-12h-endurance-2",
+          "candidateId": "cand-ai9-multi-r1c3-37c1ba",
+          "strategy": "multi",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": 0.1792,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 4414.7
+          },
+          "modules": [
+            "M01",
+            "M02",
+            "M05"
+          ]
+        },
+        {
+          "campaignId": "ai9-12h-endurance-2",
+          "candidateId": "cand-ai9-ablation-r2c5-80629e",
+          "strategy": "ablation",
+          "stage": "promotion-queued",
+          "deep": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.4292,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "p95WallMs": 5186.6
+          },
+          "modules": [
+            "M01",
+            "M02"
+          ]
+        },
         {
           "campaignId": "ai9-smoke-003",
           "candidateId": "cand-ai9-single-r1c1-66d778",
@@ -561,6 +673,7 @@
       "deterministicMutations": [
         "create-output-weight"
       ],
+      "structuralSearch": null,
       "openEvolveEvidence": [],
       "realGameEvidence": [
         {
@@ -626,6 +739,7 @@
       "deterministicMutations": [
         "coverage-retention-weight"
       ],
+      "structuralSearch": null,
       "openEvolveEvidence": [],
       "realGameEvidence": [
         {
@@ -691,6 +805,7 @@
       "deterministicMutations": [
         "rest-recycle-bias"
       ],
+      "structuralSearch": null,
       "openEvolveEvidence": [
         {
           "run": "ai9-r001",
@@ -707,6 +822,50 @@
         }
       ],
       "realGameEvidence": [
+        {
+          "campaignId": "ai9-12h-endurance-2",
+          "candidateId": "cand-ai9-single-r1c1-cbc280",
+          "strategy": "single",
+          "stage": "promotion-queued",
+          "deep": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0.0945,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.1792,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 5234
+          },
+          "modules": [
+            "M05"
+          ]
+        },
+        {
+          "campaignId": "ai9-12h-endurance-2",
+          "candidateId": "cand-ai9-multi-r1c3-37c1ba",
+          "strategy": "multi",
+          "stage": "deep-done",
+          "deep": {
+            "chanceAdjustedRate": 0.1792,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "finishedGames": 16
+          },
+          "quick": {
+            "chanceAdjustedRate": 0.3042,
+            "minWilsonLower": 0,
+            "anomalyRate": 0,
+            "p95WallMs": 4414.7
+          },
+          "modules": [
+            "M01",
+            "M02",
+            "M05"
+          ]
+        },
         {
           "campaignId": "ai9-live-coevolve-2",
           "candidateId": "cand-ai9-multi-r1c1-0ceec1",
@@ -889,6 +1048,7 @@
       "deterministicMutations": [
         "long-route-terminal-bonus"
       ],
+      "structuralSearch": null,
       "openEvolveEvidence": [],
       "realGameEvidence": [
         {
@@ -954,6 +1114,7 @@
       "deterministicMutations": [
         "peak-pressure-tilt"
       ],
+      "structuralSearch": null,
       "openEvolveEvidence": [],
       "realGameEvidence": [
         {
@@ -1033,6 +1194,7 @@
       "deterministicMutations": [
         "goal-value-contest-tilt"
       ],
+      "structuralSearch": null,
       "openEvolveEvidence": [],
       "realGameEvidence": [
         {
@@ -1115,6 +1277,7 @@
       "deterministicMutations": [
         "unseen-supply-tilt"
       ],
+      "structuralSearch": null,
       "openEvolveEvidence": [],
       "realGameEvidence": [
         {
@@ -1178,8 +1341,41 @@
         "source": "training/reports/ai9/module-wiring-audit.json"
       },
       "deterministicMutations": [
-        "claim-first-ranking"
+        "claim-first-ranking",
+        "root-prune-preserve-claims"
       ],
+      "structuralSearch": {
+        "status": "PASS",
+        "experiment": "ai9-structural-mvowh8du",
+        "source": "training/reports/ai9/structural-search-candidates.json",
+        "candidates": [
+          {
+            "id": "cand-ai9-struct-m10-prune",
+            "modules": [
+              "M10"
+            ],
+            "label": "root-prune-preserve-claims",
+            "probeMismatches": 14,
+            "behaviorChanged": false,
+            "games": 16,
+            "anomalies": 0,
+            "firstPlaceDelta": 0
+          },
+          {
+            "id": "cand-ai9-struct-m10m11",
+            "modules": [
+              "M10",
+              "M11"
+            ],
+            "label": "dual-module structural candidate",
+            "probeMismatches": 28,
+            "behaviorChanged": false,
+            "games": 16,
+            "anomalies": 0,
+            "firstPlaceDelta": -0.375
+          }
+        ]
+      },
       "openEvolveEvidence": [],
       "realGameEvidence": [
         {
@@ -1305,8 +1501,41 @@
         "source": "training/reports/ai9/module-wiring-audit.json"
       },
       "deterministicMutations": [
-        "wider-candidates-lower-margin"
+        "wider-candidates-lower-margin",
+        "contest-structure-switch"
       ],
+      "structuralSearch": {
+        "status": "PASS",
+        "experiment": "ai9-structural-mvowh8du",
+        "source": "training/reports/ai9/structural-search-candidates.json",
+        "candidates": [
+          {
+            "id": "cand-ai9-struct-m11-contest",
+            "modules": [
+              "M11"
+            ],
+            "label": "contest-structure-switch",
+            "probeMismatches": 14,
+            "behaviorChanged": true,
+            "games": 16,
+            "anomalies": 0,
+            "firstPlaceDelta": -0.375
+          },
+          {
+            "id": "cand-ai9-struct-m10m11",
+            "modules": [
+              "M10",
+              "M11"
+            ],
+            "label": "dual-module structural candidate",
+            "probeMismatches": 28,
+            "behaviorChanged": false,
+            "games": 16,
+            "anomalies": 0,
+            "firstPlaceDelta": -0.375
+          }
+        ]
+      },
       "openEvolveEvidence": [
         {
           "run": "ai9-r002",
@@ -1471,6 +1700,7 @@
       "deterministicMutations": [
         "budget-scale-1.5"
       ],
+      "structuralSearch": null,
       "openEvolveEvidence": [],
       "realGameEvidence": [
         {
@@ -1508,6 +1738,7 @@
     "decisionDivergenceObserved": 7,
     "withRealGameEvidence": 12,
     "withOpenEvolveEvidence": 3,
+    "withStructuralSearchEvidence": 2,
     "statuses": {
       "PASS": 12
     }

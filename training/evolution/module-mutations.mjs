@@ -108,6 +108,13 @@ export const MODULE_MUTATIONS = Object.freeze({
         '  // 变异：合法认领行动优先排序（规则引擎仍最终复核）。\n  return [...actions].sort((a, b) => (a.type === \'claim\' ? 0 : 1) - (b.type === \'claim\' ? 0 : 1));',
         'M10'),
     },
+    {
+      label: 'root-prune-preserve-claims',
+      apply: text => replaceOnce(text,
+        '  // 缺省：根行动顺序由规则枚举与既有根筛选先验决定。\n  return actions;',
+        '  // 变异：保留全部认领，非认领根行动最多展开 6 个（搜索剪枝结构；最终行动仍由规则复核）。\n  const claims = actions.filter(a => a.type === \'claim\');\n  const others = actions.filter(a => a.type !== \'claim\');\n  return [...claims, ...others.slice(0, 6)];',
+        'M10'),
+    },
   ]),
   M11: Object.freeze([
     {
@@ -115,6 +122,13 @@ export const MODULE_MUTATIONS = Object.freeze({
       apply: text => replaceOnce(text,
         '  // 缺省：联合搜索结构完全由版本注册表与调用方选项决定。\n  return {};',
         '  // 变异：扩大联合评估候选上限并降低保守覆盖边际（受 adapter 白名单裁剪）。\n  return { candidateCap: 5, overrideMargin: 0.01 };',
+        'M11'),
+    },
+    {
+      label: 'contest-structure-switch',
+      apply: text => replaceOnce(text,
+        '  // 缺省：联合搜索结构完全由版本注册表与调用方选项决定。\n  return {};',
+        '  // 变异：把束搜索结构切换为座位感知的 beam-contest（受 adapter 白名单裁剪）。\n  return { championStructure: \'beam-contest\' };',
         'M11'),
     },
   ]),
