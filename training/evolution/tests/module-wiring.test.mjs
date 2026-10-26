@@ -14,7 +14,7 @@ import { pathToFileURL } from 'node:url';
 import {
   createCompiledModuleCandidate, loadCompiledCandidateModules, MULTI_MODULE_INFO,
 } from '../multi-module-candidate.mjs';
-import { mutateModules } from '../module-mutations.mjs';
+import { mutateModules, mutateModuleFunction } from '../module-mutations.mjs';
 
 const REPO_ROOT = resolve(import.meta.dirname, '../../..');
 const experiment = {
@@ -55,6 +55,23 @@ test('决策接线：官方模块候选 ≈ 冻结冠军（探针逐值一致）
   });
   assert.deepEqual(mutated.probe.changedModules.sort(), [...WIRING_MODULES].sort());
   assert.equal(mutated.probe.probeErrors, 0);
+});
+
+test('M06/M07/M09 算法级变异：公开名次/对手推断/后验支持候选可编译并通过探针', { timeout: 240_000, skip: !MULTI_MODULE_INFO.seatbeltAvailable }, () => {
+  assert.equal(MULTI_MODULE_INFO.seatbeltAvailable, true);
+  const ids = ['M06', 'M07', 'M09'];
+  const created = createCompiledModuleCandidate({
+    modules: ids.map(id => mutateModuleFunction(id, 0)),
+    moduleIds: ids,
+    experiment,
+    round: 1,
+    index: 7,
+    sourceOrigin: 'test-algorithmic-variants',
+    candidateId: 'cand-ai9-test-algorithmic',
+  });
+  assert.equal(created.probe.probeErrors, 0);
+  assert.equal(created.probe.identicalToOfficial, false);
+  assert.deepEqual(created.probe.changedModules.sort(), [...ids].sort());
 });
 
 test('正式挑战执行器：编译候选注入 A 臂后与免费冠军臂逐局一致（中性模块）', { timeout: 240_000, skip: !MULTI_MODULE_INFO.seatbeltAvailable }, async () => {

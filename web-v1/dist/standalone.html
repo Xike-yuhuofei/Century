@@ -3482,6 +3482,10 @@
     }
     return pressure;
   }
+  var stockPoints = (stock) => stock.slice(1).reduce((sum, n) => sum + n, 0);
+  function publicScore(player) {
+    return player.claimed.reduce((sum, id) => sum + GOLEM_BY_ID[id].points, 0) + player.copper * 3 + player.silver + stockPoints(player.stock);
+  }
   function initialState(view) {
     const player = view.players[view.current];
     const threshold = view.players.length >= 4 ? 5 : 6;
@@ -3501,7 +3505,17 @@
       first: null,
       path: [],
       remainingClaims: threshold - player.claimed.length,
-      terminal: false
+      terminal: false,
+      seat: view.current,
+      baseScore: publicScore(player),
+      baseStockPoints: stockPoints(player.stock),
+      claimThreshold: threshold,
+      standings: view.players.map((p) => ({
+        seat: p.id,
+        score: publicScore(p),
+        claimed: p.claimed.length,
+        turns: p.turns
+      }))
     };
   }
   function upgradeVariants(stock, max) {
@@ -7427,6 +7441,10 @@
     }
     return pressure;
   }
+  var stockPoints = (stock) => stock.slice(1).reduce((sum, n) => sum + n, 0);
+  function publicScore(player) {
+    return player.claimed.reduce((sum, id) => sum + GOLEM_BY_ID[id].points, 0) + player.copper * 3 + player.silver + stockPoints(player.stock);
+  }
   function initialState(view) {
     const player = view.players[view.current];
     const threshold = view.players.length >= 4 ? 5 : 6;
@@ -7446,7 +7464,17 @@
       first: null,
       path: [],
       remainingClaims: threshold - player.claimed.length,
-      terminal: false
+      terminal: false,
+      seat: view.current,
+      baseScore: publicScore(player),
+      baseStockPoints: stockPoints(player.stock),
+      claimThreshold: threshold,
+      standings: view.players.map((p) => ({
+        seat: p.id,
+        score: publicScore(p),
+        claimed: p.claimed.length,
+        turns: p.turns
+      }))
     };
   }
   function upgradeVariants(stock, max) {

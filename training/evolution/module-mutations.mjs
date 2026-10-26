@@ -66,6 +66,26 @@ export const MODULE_MUTATIONS = Object.freeze({
   ]),
   M06: Object.freeze([
     {
+      label: 'public-standings-win-probability',
+      apply: text => replaceOnce(text,
+        '  // 缺省：终局路线只按正式得分与既有效率公式评价。\n  return 0;',
+        `  // 变异：公开名次胜率模型——用公开分数与本路线预计得分估计第一名概率。
+  const selfFinal = state.baseScore - state.baseStockPoints + state.gained
+    + state.stock.slice(1).reduce((sum, n) => sum + n, 0);
+  const rivals = state.standings.filter(s => s.seat !== state.seat);
+  if (!rivals.length) return 0;
+  let bestProjected = -Infinity;
+  for (const rival of rivals) {
+    const remaining = Math.max(0, state.claimThreshold - rival.claimed);
+    const pace = rival.claimed > 0 ? rival.score / rival.claimed : 6;
+    bestProjected = Math.max(bestProjected, rival.score + remaining * pace);
+  }
+  const margin = selfFinal - bestProjected;
+  const winProbability = 1 / (1 + Math.exp(-margin / 8));
+  return Math.max(-8, Math.min(8, (winProbability - 0.5) * 16));`,
+        'M06'),
+    },
+    {
       label: 'long-route-terminal-bonus',
       apply: text => replaceOnce(text,
         '  // 缺省：终局路线只按正式得分与既有效率公式评价。\n  return 0;',
@@ -74,6 +94,50 @@ export const MODULE_MUTATIONS = Object.freeze({
     },
   ]),
   M07: Object.freeze([
+    {
+      label: 'public-goal-inference',
+      apply: text => replaceOnce(text,
+        '  // 缺省：对手压力完全由公开库存/引擎推导的 contestPressure / peakPressure 决定。\n  return 0;',
+        `  // 变异：从公开库存/市场/手牌推断对手最可能目标，再估计该卡的边际需求。
+  const opponents = view.players.filter(p => p.id !== view.playerId);
+  const card = MERCHANT_BY_ID[cardId];
+  if (!opponents.length || !card || !card.output) return 0;
+  const deltas = [];
+  for (const opponent of opponents) {
+    let bestGap = Infinity;
+    let bestNeed = [0, 0, 0, 0];
+    let urgency = 1;
+    for (const goalId of view.golemMarket) {
+      const goal = GOLEM_BY_ID[goalId];
+      if (!goal) continue;
+      let gap = 0;
+      const need = [0, 0, 0, 0];
+      for (let c = 0; c < 4; c++) {
+        need[c] = Math.max(0, goal.cost[c] - opponent.stock[c]);
+        gap += need[c];
+      }
+      if (gap < bestGap) {
+        bestGap = gap;
+        bestNeed = need;
+        urgency = has(opponent.stock, goal.cost) ? 1.5 : 1;
+      }
+    }
+    if (!Number.isFinite(bestGap)) continue;
+    let help = 0;
+    let overlap = 0;
+    for (let c = 0; c < 4; c++) help += Math.min(card.output[c], bestNeed[c]);
+    for (const id of [...opponent.hand, ...opponent.played]) {
+      const other = MERCHANT_BY_ID[id];
+      if (!other || !other.output) continue;
+      for (let c = 0; c < 4; c++) overlap += Math.min(other.output[c], bestNeed[c]);
+    }
+    deltas.push(Math.max(0, help - overlap * 0.5) / 4 * urgency);
+  }
+  if (!deltas.length) return 0;
+  const mean = deltas.reduce((sum, x) => sum + x, 0) / deltas.length;
+  return dimension === 'peak' ? Math.max(...deltas) * 0.6 : mean * 0.4;`,
+        'M07'),
+    },
     {
       label: 'peak-pressure-tilt',
       apply: text => replaceOnce(text,
@@ -92,6 +156,41 @@ export const MODULE_MUTATIONS = Object.freeze({
     },
   ]),
   M09: Object.freeze([
+    {
+      label: 'posterior-expected-support',
+      apply: text => replaceOnce(text,
+        '  // 缺省：未知牌只按卡牌全集均值为目标提供期望支持。\n  return 1;',
+        `  // 变异：在未翻开商人卡全集上做公开后验期望——按目标缺口颜色计算边际支持，
+  // 交易卡额外按净转换效率加权；不知道任何未翻开卡的具体位置。
+  const me = view.players[view.playerId];
+  const goal = preferred ? GOLEM_BY_ID[preferred] : null;
+  if (!goal || !unseenMerchants.length) return 1;
+  const need = [0, 0, 0, 0];
+  let totalNeed = 0;
+  for (let c = 0; c < 4; c++) {
+    need[c] = Math.max(0, goal.cost[c] - me.stock[c]);
+    totalNeed += need[c];
+  }
+  if (totalNeed === 0) return 1;
+  let expected = 0;
+  for (const id of unseenMerchants) {
+    const card = MERCHANT_BY_ID[id];
+    if (!card || !card.output) continue;
+    let direct = 0;
+    for (let c = 0; c < 4; c++) direct += Math.min(card.output[c], need[c]);
+    let efficiency = 1;
+    if (card.kind === 'trade' && card.input) {
+      let cost = 0;
+      for (let c = 0; c < 4; c++) cost += card.input[c];
+      efficiency = Math.max(0.5, Math.min(2, 1 + (card.output.reduce((sum, n) => sum + n, 0) - cost) / 4));
+    }
+    expected += direct * efficiency;
+  }
+  const meanSupport = expected / unseenMerchants.length;
+  const baseline = Math.max(1, totalNeed * 1.5);
+  return Math.max(0, Math.min(3, (meanSupport / baseline) * 1.5 + 0.5));`,
+        'M09'),
+    },
     {
       label: 'unseen-supply-tilt',
       apply: text => replaceOnce(text,
