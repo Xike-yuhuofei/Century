@@ -189,10 +189,18 @@ measured({
       ancestor = true;
     } catch { ancestor = false; }
   }
+  let filesMatch = codeBound;
+  if (codeBound) {
+    for (const [path, hash] of Object.entries(code.files)) {
+      let current = null;
+      try { current = sha256Hex(readFileSync(resolve(REPO_ROOT, path), 'utf8')); } catch { current = null; }
+      if (current !== hash) { filesMatch = false; break; }
+    }
+  }
   const pass = Boolean(report && report.verdict === 'PASS'
     && report.worldsPerSeatCount === 50
     && [2, 3, 4, 5].every(n => report.seatCounts.includes(n))
-    && codeBound && ancestor);
+    && codeBound && ancestor && filesMatch);
   const partial = readJSON('training/reports/determinism/smoke.json');
   record({
     id: 'R04', title: '固定种子 + 固定 workUnits 双轮完全复现（2–5 人 × 50 世界，绑定最终代码）',
@@ -200,9 +208,9 @@ measured({
     source: 'training/scripts/verify-determinism.mjs',
     testCommand: 'node training/scripts/verify-determinism.mjs --worlds 50 --seat-counts 2,3,4,5 --out training/reports/determinism/full.json',
     evidence: pass
-      ? `2–5 人各 50 世界 × 2 轮；mismatches=${report.mismatches.length}；code=${code.commit.slice(0, 12)} dirty=false files=${Object.keys(code.files).length}`
+      ? `2–5 人各 50 世界 × 2 轮；mismatches=${report.mismatches.length}；code=${code.commit.slice(0, 12)} dirty=false files=${Object.keys(code.files).length} hashes=match`
       : (report
-          ? `确定性报告存在但代码绑定不合格：code=${code?.commit?.slice(0, 12) ?? 'missing'} dirty=${code?.dirty} ancestor=${ancestor}；50 世界/2–5 人=${report.worldsPerSeatCount}/${report.seatCounts?.join(',')}`
+          ? `确定性报告存在但代码绑定不合格：code=${code?.commit?.slice(0, 12) ?? 'missing'} dirty=${code?.dirty} ancestor=${ancestor} hashesMatch=${filesMatch}；50 世界/2–5 人=${report.worldsPerSeatCount}/${report.seatCounts?.join(',')}`
           : (partial ? `仅完成小样本自检（worlds=${partial.worldsPerSeatCount}，seats=${partial.seatCounts.join(',')}，verdict=${partial.verdict}）；50 世界全量尚未完成` : '无确定性报告')),
     unmetReason: pass ? null : '50 世界 × 2–5 人全量确定性验收尚未完成或未绑定最终代码',
   });
