@@ -126,15 +126,16 @@ const ok = r => r.ok;
   const compiled = Number(metrics.compile_ok ?? 0) >= 1;
   const probed = Number(metrics.probe_ok ?? 0) >= 1;
   const bestIdentical = Number(metrics.identical_to_official ?? 0) >= 1;
+  const stage2Games = Number(metrics.games ?? 0);
   const pass = real && evolvedBehavior >= 1;
   record({
-    id: 'R01', title: 'OpenEvolve 真实算法生成（LLM 离线提案 + 级联评估）',
+    id: 'R01', title: 'OpenEvolve 真实算法生成（LLM 离线提案 + 静态/编译/探针级联）',
     status: pass ? 'PASS' : (real ? 'FAIL' : 'NOT_RUN'),
     source: 'ai5/openevolve/run_openevolve.py + training/evolution/openevolve-bridge.mjs',
     testCommand: 'caffeinate -is .venv/bin/python run_openevolve.py program/acquisition_value.ts century_evaluator.py --config config.yaml --iterations 3 --output results/ai8-openevolve-r00N',
     evidence: real
       ? `run=${latest}；log=${logPath}；${llmCall}；行为不同于官方的演化程序=${evolvedBehavior}；bestProgram=yes；bestIdentical=${bestIdentical}；` +
-        `best static_ok=${metrics.static_ok} compile_ok=${compiled} probe_ok=${probed} stage_passed=${metrics.stage_passed} failure=${metrics.failure_stage ?? 'none'}`
+        `stage2Games=${stage2Games}；best static_ok=${metrics.static_ok} compile_ok=${compiled} probe_ok=${probed} stage_passed=${metrics.stage_passed} failure=${metrics.failure_stage ?? 'none'}`
       : '未找到本次真实 OpenEvolve 运行产物',
     unmetReason: pass ? null : (real
       ? 'OpenEvolve 只评估了初始程序，没有产生行为不同于官方的演化程序（LLM 提案失败/被级联淘汰前无可审计行为差异）'

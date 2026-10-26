@@ -52,7 +52,7 @@ SANDBOX_ENV = {
     "LANG": "en_US.UTF-8",
 }
 
-_STAGE_TIMEOUT = {1: 180, 2: 420, 3: 1200}
+_STAGE_TIMEOUT = {1: 180, 2: 1200, 3: 3600}
 
 
 def _ensure_dirs():

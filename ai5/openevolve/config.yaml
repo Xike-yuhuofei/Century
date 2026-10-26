@@ -53,7 +53,8 @@ prompt:
 # 评估级联：stage1 静态+编译+探针（阈值 0.5，未过即淘汰）；
 # stage2 快筛对战 32 局（阈值 0.45）；stage3 深评对战 96 局。
 evaluator:
-  timeout: 1200
+  # stage2 32 局在 M4 上约 7 分钟，原 420s 会在完成前被杀；stage3 96 局需要更长。
+  timeout: 3600
   cascade_evaluation: true
   cascade_thresholds: [0.5, 0.45]
   max_retries: 1
