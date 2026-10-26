@@ -1,0 +1,720 @@
+{
+  "schema": "century-ai9-structural-search-v1",
+  "generatedAt": "2026-10-26T07:01:04.327Z",
+  "campaignId": "ai9-structural-mvowh8du",
+  "seedWindow": {
+    "screen": {
+      "windowId": "ai9-screen-w027",
+      "purpose": "screen",
+      "pool": "dev",
+      "base": 1660027000,
+      "count": 1000,
+      "blockStart": 1660000000,
+      "blockEnd": 1670000000,
+      "index": 27
+    },
+    "seeds": [
+      1660027000,
+      1660027001,
+      1660027002,
+      1660027003,
+      1660027004,
+      1660027005,
+      1660027006,
+      1660027007
+    ],
+    "seedsByPlayerCount": {
+      "2": [
+        1660027000,
+        1660027001
+      ],
+      "3": [
+        1660027002,
+        1660027003
+      ],
+      "4": [
+        1660027004,
+        1660027005
+      ],
+      "5": [
+        1660027006,
+        1660027007
+      ]
+    }
+  },
+  "playerCounts": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "workUnits": 32,
+  "control": "js5-frozen-champion (immutable archive)",
+  "candidates": [
+    {
+      "id": "cand-ai9-struct-m10-neutral",
+      "label": "neutral M10 control",
+      "kind": "control",
+      "modules": [
+        "M10"
+      ],
+      "structural": false,
+      "neutralFor": null,
+      "artifactHash": "5d2ad2614b0fed5f59f7e50c96eeea5c524dc205b93e39299e85eada323666b5",
+      "identityDigest": "909e54594d9151da5eeac765a58a14f4714f0df9844fea0709c8e1c03f8daccd",
+      "buildArtifactHash": "1eb9df3c301f0d8f3ba80304b61c549fcd20bedd3fafb3f58f6ccab5c119a644",
+      "probe": {
+        "changedModules": [],
+        "mismatches": 0,
+        "errors": 0
+      },
+      "behavior": {
+        "hash": "20ac55cc3318062374dfed064e08a85f27650406a0400615fd4b97d5bc709584",
+        "actions": {
+          "acquire": 0.1741,
+          "claim": 0.126,
+          "rest": 0.1667,
+          "play": 0.5333
+        }
+      },
+      "metrics": {
+        "evidenceType": "dev-game-compiled-modules",
+        "totalGames": 16,
+        "finishedGames": 16,
+        "anomalies": 0,
+        "anomalyRate": 0,
+        "pairs": 8,
+        "finishedPairs": 8,
+        "candidateFirstRate": 0.5,
+        "championFirstRate": 0.5,
+        "firstPlaceDelta": 0,
+        "firstPlaceDeltaCi": null,
+        "firstPlaceDeltaPooledCi": {
+          "mean": 0,
+          "variance": 0,
+          "se": 0,
+          "df": 7,
+          "tCritical": 1.8945786051044706,
+          "alpha": 0.05,
+          "lower": 0,
+          "upper": 0,
+          "oneSidedLower": 0,
+          "n": 8,
+          "candidateFirstRate": 0.5,
+          "championFirstRate": 0.5
+        },
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0.0945,
+        "byPlayerCount": {
+          "2": {
+            "seatCount": 2,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          },
+          "3": {
+            "seatCount": 3,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          },
+          "4": {
+            "seatCount": 4,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          },
+          "5": {
+            "seatCount": 5,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          }
+        },
+        "meanDecisionMs": 41.751,
+        "p95WallMs": 6789.6
+      }
+    },
+    {
+      "id": "cand-ai9-struct-m10-prune",
+      "label": "root-prune-preserve-claims",
+      "kind": "structural",
+      "modules": [
+        "M10"
+      ],
+      "structural": true,
+      "neutralFor": "cand-ai9-struct-m10-neutral",
+      "artifactHash": "e5be1361a53e96185a3366f398b5e69e479599aafe8f7fba1ee377fa235bb432",
+      "identityDigest": "771dc9ed127d8a919aa64559c8987080f71148686623ff6399b893571a4dbf19",
+      "buildArtifactHash": "a1479b1afb236290379bd481f65c0ad94ca697892cfdbe573a1c3c1cbc5bf6de",
+      "probe": {
+        "changedModules": [
+          "M10"
+        ],
+        "mismatches": 14,
+        "errors": 0
+      },
+      "behavior": {
+        "hash": "20ac55cc3318062374dfed064e08a85f27650406a0400615fd4b97d5bc709584",
+        "actions": {
+          "acquire": 0.1741,
+          "claim": 0.126,
+          "rest": 0.1667,
+          "play": 0.5333
+        }
+      },
+      "metrics": {
+        "evidenceType": "dev-game-compiled-modules",
+        "totalGames": 16,
+        "finishedGames": 16,
+        "anomalies": 0,
+        "anomalyRate": 0,
+        "pairs": 8,
+        "finishedPairs": 8,
+        "candidateFirstRate": 0.5,
+        "championFirstRate": 0.5,
+        "firstPlaceDelta": 0,
+        "firstPlaceDeltaCi": null,
+        "firstPlaceDeltaPooledCi": {
+          "mean": 0,
+          "variance": 0,
+          "se": 0,
+          "df": 7,
+          "tCritical": 1.8945786051044706,
+          "alpha": 0.05,
+          "lower": 0,
+          "upper": 0,
+          "oneSidedLower": 0,
+          "n": 8,
+          "candidateFirstRate": 0.5,
+          "championFirstRate": 0.5
+        },
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0.0945,
+        "byPlayerCount": {
+          "2": {
+            "seatCount": 2,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          },
+          "3": {
+            "seatCount": 3,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          },
+          "4": {
+            "seatCount": 4,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          },
+          "5": {
+            "seatCount": 5,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          }
+        },
+        "meanDecisionMs": 38.864,
+        "p95WallMs": 6703.6
+      }
+    },
+    {
+      "id": "cand-ai9-struct-m11-neutral",
+      "label": "neutral M11 control",
+      "kind": "control",
+      "modules": [
+        "M11"
+      ],
+      "structural": false,
+      "neutralFor": null,
+      "artifactHash": "81538a36a138f8e83c7f774852eb199f4d7dbe0c762947dba51581309040510c",
+      "identityDigest": "e81f6a7d7c1c8a46b6950b1956e0ce04a6b1adaa1d56ceb49392726e9c8bd665",
+      "buildArtifactHash": "1eb9df3c301f0d8f3ba80304b61c549fcd20bedd3fafb3f58f6ccab5c119a644",
+      "probe": {
+        "changedModules": [],
+        "mismatches": 0,
+        "errors": 0
+      },
+      "behavior": {
+        "hash": "0dab3d821c0f12970cf77af372c328c7cbfb68965b8246e943c725010b20b260",
+        "actions": {
+          "acquire": 0.1741,
+          "claim": 0.126,
+          "rest": 0.1667,
+          "play": 0.5333
+        }
+      },
+      "metrics": {
+        "evidenceType": "dev-game-compiled-modules",
+        "totalGames": 16,
+        "finishedGames": 16,
+        "anomalies": 0,
+        "anomalyRate": 0,
+        "pairs": 8,
+        "finishedPairs": 8,
+        "candidateFirstRate": 0.5,
+        "championFirstRate": 0.5,
+        "firstPlaceDelta": 0,
+        "firstPlaceDeltaCi": null,
+        "firstPlaceDeltaPooledCi": {
+          "mean": 0,
+          "variance": 0,
+          "se": 0,
+          "df": 7,
+          "tCritical": 1.8945786051044706,
+          "alpha": 0.05,
+          "lower": 0,
+          "upper": 0,
+          "oneSidedLower": 0,
+          "n": 8,
+          "candidateFirstRate": 0.5,
+          "championFirstRate": 0.5
+        },
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0.0945,
+        "byPlayerCount": {
+          "2": {
+            "seatCount": 2,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          },
+          "3": {
+            "seatCount": 3,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          },
+          "4": {
+            "seatCount": 4,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          },
+          "5": {
+            "seatCount": 5,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          }
+        },
+        "meanDecisionMs": 45.253,
+        "p95WallMs": 7795.2
+      }
+    },
+    {
+      "id": "cand-ai9-struct-m11-contest",
+      "label": "contest-structure-switch",
+      "kind": "structural",
+      "modules": [
+        "M11"
+      ],
+      "structural": true,
+      "neutralFor": "cand-ai9-struct-m11-neutral",
+      "artifactHash": "a566a3c5b577f79c2030d49408386556d26432a54f1d3a903243dbd277d89dd3",
+      "identityDigest": "ac5342cfb19547cb6d48e9c431880a26d689da074c770553d508031922cb87b1",
+      "buildArtifactHash": "7b1e2a99cf4d42c9053373fc7eda7a1821ec7c6730af64d0765c8b41cc1fd915",
+      "probe": {
+        "changedModules": [
+          "M11"
+        ],
+        "mismatches": 14,
+        "errors": 0
+      },
+      "behavior": {
+        "hash": "db37f9a538f445bb29addea6d0f2dbc1326e8e0e6ff7d2a63222b718910e1966",
+        "actions": {
+          "acquire": 0.2044,
+          "claim": 0.1104,
+          "rest": 0.1393,
+          "play": 0.5459
+        }
+      },
+      "metrics": {
+        "evidenceType": "dev-game-compiled-modules",
+        "totalGames": 16,
+        "finishedGames": 16,
+        "anomalies": 0,
+        "anomalyRate": 0,
+        "pairs": 8,
+        "finishedPairs": 8,
+        "candidateFirstRate": 0.125,
+        "championFirstRate": 0.5,
+        "firstPlaceDelta": -0.375,
+        "firstPlaceDeltaCi": null,
+        "firstPlaceDeltaPooledCi": {
+          "mean": -0.375,
+          "variance": 0.5535714285714286,
+          "se": 0.26305214040457564,
+          "df": 7,
+          "tCritical": 1.8945786051044706,
+          "alpha": 0.05,
+          "lower": -0.8733729572374462,
+          "upper": 0.12337295723744629,
+          "oneSidedLower": -0.8733729572374462,
+          "n": 8,
+          "candidateFirstRate": 0.125,
+          "championFirstRate": 0.5
+        },
+        "chanceAdjustedRate": -0.1958,
+        "minWilsonLower": 0,
+        "byPlayerCount": {
+          "2": {
+            "seatCount": 2,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 0,
+            "championFirst": 1,
+            "candidateFirstRate": 0,
+            "championFirstRate": 0.5,
+            "delta": -0.5,
+            "wilson": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.6576197724933469
+            }
+          },
+          "3": {
+            "seatCount": 3,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 0,
+            "championFirst": 1,
+            "candidateFirstRate": 0,
+            "championFirstRate": 0.5,
+            "delta": -0.5,
+            "wilson": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.6576197724933469
+            }
+          },
+          "4": {
+            "seatCount": 4,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 0,
+            "championFirst": 1,
+            "candidateFirstRate": 0,
+            "championFirstRate": 0.5,
+            "delta": -0.5,
+            "wilson": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.6576197724933469
+            }
+          },
+          "5": {
+            "seatCount": 5,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          }
+        },
+        "meanDecisionMs": 44.751,
+        "p95WallMs": 7662.2
+      }
+    },
+    {
+      "id": "cand-ai9-struct-m10m11",
+      "label": "dual-module structural candidate",
+      "kind": "structural",
+      "modules": [
+        "M10",
+        "M11"
+      ],
+      "structural": true,
+      "neutralFor": null,
+      "artifactHash": "f6c1774a0b3c32c6e6e4d2594f082064e166041a61ee413155aa3db7ac7b9f5e",
+      "identityDigest": "cf24435541a681a869535bdbbe49d6b0d467b26b4395fb1c58e341815f38fc73",
+      "buildArtifactHash": "17bd50d35869cd3f6e04bba6da7bde169d032cb31ebcda491ad99118efdddcf0",
+      "probe": {
+        "changedModules": [
+          "M10",
+          "M11"
+        ],
+        "mismatches": 28,
+        "errors": 0
+      },
+      "behavior": {
+        "hash": "5e9d31b9d8e7f26690170907e0a2b304d24bbd4e8b65fcb8599197b2621dd92c",
+        "actions": {
+          "acquire": 0.2044,
+          "claim": 0.1104,
+          "rest": 0.1393,
+          "play": 0.5459
+        }
+      },
+      "metrics": {
+        "evidenceType": "dev-game-compiled-modules",
+        "totalGames": 16,
+        "finishedGames": 16,
+        "anomalies": 0,
+        "anomalyRate": 0,
+        "pairs": 8,
+        "finishedPairs": 8,
+        "candidateFirstRate": 0.125,
+        "championFirstRate": 0.5,
+        "firstPlaceDelta": -0.375,
+        "firstPlaceDeltaCi": null,
+        "firstPlaceDeltaPooledCi": {
+          "mean": -0.375,
+          "variance": 0.5535714285714286,
+          "se": 0.26305214040457564,
+          "df": 7,
+          "tCritical": 1.8945786051044706,
+          "alpha": 0.05,
+          "lower": -0.8733729572374462,
+          "upper": 0.12337295723744629,
+          "oneSidedLower": -0.8733729572374462,
+          "n": 8,
+          "candidateFirstRate": 0.125,
+          "championFirstRate": 0.5
+        },
+        "chanceAdjustedRate": -0.1958,
+        "minWilsonLower": 0,
+        "byPlayerCount": {
+          "2": {
+            "seatCount": 2,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 0,
+            "championFirst": 1,
+            "candidateFirstRate": 0,
+            "championFirstRate": 0.5,
+            "delta": -0.5,
+            "wilson": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.6576197724933469
+            }
+          },
+          "3": {
+            "seatCount": 3,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 0,
+            "championFirst": 1,
+            "candidateFirstRate": 0,
+            "championFirstRate": 0.5,
+            "delta": -0.5,
+            "wilson": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.6576197724933469
+            }
+          },
+          "4": {
+            "seatCount": 4,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 0,
+            "championFirst": 1,
+            "candidateFirstRate": 0,
+            "championFirstRate": 0.5,
+            "delta": -0.5,
+            "wilson": {
+              "point": 0,
+              "lower": 0,
+              "upper": 0.6576197724933469
+            }
+          },
+          "5": {
+            "seatCount": 5,
+            "pairs": 2,
+            "candidateGames": 2,
+            "championGames": 2,
+            "candidateFirst": 1,
+            "championFirst": 1,
+            "candidateFirstRate": 0.5,
+            "championFirstRate": 0.5,
+            "delta": 0,
+            "wilson": {
+              "point": 0.5,
+              "lower": 0.09453120573423074,
+              "upper": 0.9054687942657693
+            }
+          }
+        },
+        "meanDecisionMs": 39.374,
+        "p95WallMs": 7396.9
+      }
+    }
+  ],
+  "structuralChecks": [
+    {
+      "id": "cand-ai9-struct-m10-prune",
+      "neutral": "cand-ai9-struct-m10-neutral",
+      "probeMismatches": 14,
+      "behaviorChanged": false,
+      "status": "PASS",
+      "note": "受控探针已改变决策；本样本聚合行动分布未观察到差异"
+    },
+    {
+      "id": "cand-ai9-struct-m11-contest",
+      "neutral": "cand-ai9-struct-m11-neutral",
+      "probeMismatches": 14,
+      "behaviorChanged": true,
+      "status": "PASS",
+      "note": "真实对局聚合行动分布与对照不同"
+    },
+    {
+      "id": "cand-ai9-struct-m10m11",
+      "neutral": null,
+      "probeMismatches": 28,
+      "behaviorChanged": false,
+      "status": "PASS",
+      "note": "探针证明两层都改变决策；聚合分布与 M11 单层相同，不宣称额外增益"
+    }
+  ],
+  "summary": {
+    "totalCandidates": 5,
+    "compiled": 5,
+    "realGames": 80,
+    "anomalies": 0,
+    "gamesOk": true,
+    "compileOk": true,
+    "structuralOk": true,
+    "verdict": "PASS"
+  },
+  "note": "开发池结构级搜索候选验证；只证明结构可编译、可执行、真实改变决策，不作为冠军晋级证据。"
+}

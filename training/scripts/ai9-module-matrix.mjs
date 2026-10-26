@@ -33,13 +33,15 @@ const combinedGame = readJsonIf(resolve(reports, 'ai9/openevolve-combined-game.j
 const crossoverGame = readJsonIf(resolve(reports, 'ai9/crossover-experiment.json'));
 const executionAudit = readJsonIf(resolve(reports, 'ai9/module-execution-audit.json'));
 const wiringAudit = readJsonIf(resolve(reports, 'ai9/module-wiring-audit.json'));
+const structuralSearch = readJsonIf(resolve(reports, 'ai9/structural-search-candidates.json'));
 
 const campaignStates = [];
 const coevolveRoot = resolve(reports, 'coevolution');
 if (existsSync(coevolveRoot)) {
   for (const name of readdirSync(coevolveRoot)) {
     const state = readJsonIf(join(coevolveRoot, name, 'state.json'));
-    if (state) campaignStates.push({ campaignId: name, state });
+    // 运行中的 campaign 目录通常尚未归档；矩阵只引用已完成/已停止且可复核的证据。
+    if (state && state.status !== 'running') campaignStates.push({ campaignId: name, state });
   }
 }
 
@@ -150,6 +152,31 @@ function llmEvidenceFor(moduleId) {
     }));
 }
 
+function structuralEvidenceFor(moduleId) {
+  if (!structuralSearch) return null;
+  const candidates = (structuralSearch.candidates ?? []).filter(item =>
+    (item.modules ?? []).includes(moduleId) && item.structural);
+  if (!candidates.length) return null;
+  const checks = (structuralSearch.structuralChecks ?? []).filter(item =>
+    candidates.some(candidate => candidate.id === item.id));
+  return {
+    status: structuralSearch.summary?.verdict === 'PASS' && checks.every(item => item.status === 'PASS')
+      ? 'PASS' : 'FAIL',
+    experiment: structuralSearch.campaignId,
+    source: 'training/reports/ai9/structural-search-candidates.json',
+    candidates: candidates.map(item => ({
+      id: item.id,
+      modules: item.modules,
+      label: item.label,
+      probeMismatches: item.probe?.mismatches ?? null,
+      behaviorChanged: checks.find(check => check.id === item.id)?.behaviorChanged ?? null,
+      games: item.metrics?.totalGames ?? null,
+      anomalies: item.metrics?.anomalies ?? null,
+      firstPlaceDelta: item.metrics?.firstPlaceDelta ?? null,
+    })),
+  };
+}
+
 const modules = registry.modules.map(module => {
   const probeSummary = probe?.modules?.[module.id] ?? null;
   const built = build ? true : false;
@@ -198,6 +225,7 @@ const modules = registry.modules.map(module => {
       source: 'training/reports/ai9/module-wiring-audit.json',
     } : null,
     deterministicMutations,
+    structuralSearch: structuralEvidenceFor(module.id),
     openEvolveEvidence: llm,
     realGameEvidence,
     status,
@@ -218,6 +246,7 @@ const report = {
     allModulesBuild: build,
     campaigns: campaignStates.map(c => c.campaignId),
     interaction: interaction ? 'training/reports/ai9/interaction-experiment.json' : null,
+    structuralSearch: structuralSearch ? 'training/reports/ai9/structural-search-candidates.json' : null,
     openEvolveRuns: openEvolveRuns.map(r => r.run),
   },
   modules,
@@ -228,6 +257,7 @@ const report = {
     decisionDivergenceObserved: modules.filter(m => m.decisionDivergence?.status === 'WIRED').length,
     withRealGameEvidence: modules.filter(m => m.realGameEvidence.length > 0).length,
     withOpenEvolveEvidence: modules.filter(m => m.openEvolveEvidence.length > 0).length,
+    withStructuralSearchEvidence: modules.filter(m => m.structuralSearch?.status === 'PASS').length,
     statuses: modules.reduce((acc, m) => { acc[m.status] = (acc[m.status] ?? 0) + 1; return acc; }, {}),
   },
 };
