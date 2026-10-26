@@ -78,7 +78,8 @@ export function classifyChanges(files, options = {}) {
   // version-lock / revalidation-required / candidates 等治理与候选资料不等同于
   // 一次正式晋级，避免信任基础类变更新增 REQUIRES_APPROVAL 阻断普通 PR。
   const promotionByPath = hasExact(list, ['web-v1/src/ai/parameters.ts', 'training/champions/champion.json']) ||
-    hasPrefix(list, ['training/champions/archive/', 'training/reports/first-place-promotion/']);
+    // 只有 CI 实际消费的 latest/ 是晋级产物；研究 pilot、候选档案等不是一次晋级。
+    hasPrefix(list, ['training/champions/archive/', 'training/reports/first-place-promotion/latest/']);
   const promotion = Boolean(options.forcePromotion || promotionByLabel || promotionByPath);
 
   // 共享核心：任何一项变化都足以影响 web 单测、训练单测、模拟与审计。

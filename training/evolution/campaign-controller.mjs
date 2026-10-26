@@ -375,6 +375,7 @@ export class CampaignController {
     return {
       candidates: result?.candidates ?? [],
       rejectedAtGeneration: result?.rejectedAtGeneration ?? [],
+      generatorMeta: result?.generatorMeta ?? null,
     };
   }
 
@@ -405,6 +406,7 @@ export class CampaignController {
       count, round: roundData.round, seed: this.config.generation.seed + roundData.round,
       experiment, parentArtifact, targetIds: this.config.generation.targetIds, hints,
     }));
+    if (batch.generatorMeta) roundData.generatorMeta = batch.generatorMeta;
     if (batch.rejectedAtGeneration?.length) {
       state.generationDiagnostics.push({
         round: roundData.round,
@@ -435,6 +437,8 @@ export class CampaignController {
         sourceHash: artifact.sourceHash,
         buildArtifactHash: artifact.buildArtifact.sha256,
         buildKind: artifact.buildArtifact.kind,
+        generator: item.generator ?? null,
+        generatorMeta: item.generatorMeta ?? null,
         evidenceDir: null,
         quick: null,
         deep: null,
@@ -445,6 +449,7 @@ export class CampaignController {
         evaluationMode: artifact.algorithmStructure.evaluationMode,
         targetIds: artifact.algorithmStructure.targetIds,
         buildKind: artifact.buildArtifact.kind,
+        generator: item.generator ?? null,
       }, artifact.candidateId);
     }
     roundData.generated = true;
@@ -989,6 +994,7 @@ export class CampaignController {
         seedWindows: round.seedWindows,
         seeds: { screen: round.screenSeeds, deep: round.deepSeeds },
         generated: round.generated,
+        generatorMeta: round.generatorMeta ?? null,
         selection: round.selectionSummary,
         rejectedAtGeneration: round.rejectedAtGeneration,
         diagnostics: round.diagnostics ? {
@@ -1009,6 +1015,8 @@ export class CampaignController {
           buildKind: c.buildKind,
           buildArtifactHash: c.buildArtifactHash,
           sourceHash: c.sourceHash,
+          generator: c.generator ?? null,
+          generatorMeta: c.generatorMeta ?? null,
           evidenceDir: c.evidenceDir,
           quick: c.quick,
           deep: c.deep,

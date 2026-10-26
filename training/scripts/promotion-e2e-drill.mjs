@@ -35,6 +35,7 @@ import { championParametersSha256 } from '../../web-v1/scripts/build-hash.mjs';
 
 const PROMOTE = resolve(REPO_ROOT, 'training/scripts/promote-first-place-champion.mjs');
 const APPLY = resolve(REPO_ROOT, 'training/scripts/apply-champion.mjs');
+const PUBLISH = resolve(REPO_ROOT, 'training/scripts/publish-promotion-pr.mjs');
 const VERIFY = resolve(REPO_ROOT, 'scripts/ci/verify-deploy.mjs');
 const SEEDS_PER_SEAT = 250;
 
@@ -220,6 +221,8 @@ async function main() {
     const locked = lockPreregistration({
       plan, dir: fixtures, writeJSON: (path, value) => writeFileSync(path, JSON.stringify(value, null, 2)),
     });
+    // 与真实挑战 runner 一致：门禁/发布器读取固定名 preregistration.json。
+    writeFileSync(join(fixtures, 'preregistration.json'), readFileSync(locked.path, 'utf8'));
     const seedsBySeatCount = Object.fromEntries(REQUIRED_SEAT_COUNTS.map(seatCount => [
       seatCount,
       Array.from({ length: SEEDS_PER_SEAT }, (_, i) => seatWindows[String(seatCount)].base + i),
@@ -258,12 +261,15 @@ async function main() {
     writeFileSync(registryCopy, JSON.stringify(registry, null, 2));
 
     const championTarget = join(worktree, 'training/champions/champion.json');
+    const baseChampionSnapshot = join(base, 'base-champion.json');
+    copyFileSync(championTarget, baseChampionSnapshot);
     const promoteArgs = [
       PROMOTE,
       '--evidence', evidencePath,
       '--plan', locked.path,
       '--candidate', candidatePath,
       '--champion', championTarget,
+      '--base-champion', baseChampionSnapshot,
       '--alpha-ledger', ledgerCopy,
       '--governance-central', registryCopy,
     ];
@@ -275,6 +281,25 @@ async function main() {
       && JSON.parse(readFileSync(championTarget, 'utf8')).parameters.id === candidate.id,
       promoted.slice(0, 300));
 
+    // 冠军 PR 复核模式：PR 里 champion.json 已是候选本身，CI 必须能用
+    // --post-apply 复核并通过（否则真实晋级 PR 永远无法自动合并）。
+    const post = execFileSync(process.execPath, [...promoteArgs, '--post-apply'], { encoding: 'utf8', cwd: REPO_ROOT });
+    check('promotion-gate-post-apply', /"verdict":\s*"VERIFY_APPLIED"/.test(post), post.slice(0, 300));
+
+    // 自动发布器 dry-run：在干净的 origin/main worktree 内完成 promote→apply→commit，
+    // 不 push、不建 PR；证明 campaign→冠军 PR 的交接代码可执行且不改正式仓库。
+    const publishOut = execFileSync(process.execPath, [
+      PUBLISH, '--dry-run', '--evidence-dir', fixtures,
+      '--alpha-ledger', ledgerCopy, '--governance-central', registryCopy,
+      '--base-commit', mustRun('git', ['rev-parse', 'HEAD']).trim(),
+    ], { encoding: 'utf8', cwd: REPO_ROOT, maxBuffer: 32 * 1024 * 1024 });
+    const publishDry = JSON.parse(publishOut);
+    check('publish-pr-dry-run', publishDry.verdict === 'DRY_RUN'
+      && publishDry.candidateId === candidate.id
+      && publishDry.files.some(f => f.endsWith('champion.json'))
+      && publishDry.files.some(f => f.endsWith('parameters.ts')),
+      `commit=${publishDry.commit?.slice(0, 12)} files=${publishDry.files?.length}`);
+
     execFileSync(process.execPath, [
       APPLY, '--champion', championTarget, '--target', join(worktree, 'web-v1/src/ai/parameters.ts'),
     ], { encoding: 'utf8', cwd: REPO_ROOT });
@@ -282,6 +307,29 @@ async function main() {
     check('apply-champion', appliedSource.includes(candidate.id), `parameters.ts 含 ${candidate.id}`);
 
     buildWorktree(worktree);
+    // 构建后回写冠军构建身份，并跑 promotion 层审计（CI 的真实门禁）。
+    execFileSync(process.execPath, [join(worktree, 'training/scripts/refresh-champion-provenance.mjs')], {
+      encoding: 'utf8', cwd: worktree,
+    });
+    execFileSync(process.execPath, [
+      join(worktree, 'training/scripts/version-lock.mjs'), '--write', '--note', 'promotion-e2e-drill 合成冠军',
+    ], { encoding: 'utf8', cwd: worktree });
+    let auditOk = false;
+    let auditDetail = '';
+    try {
+      const auditJsonPath = join(worktree, 'training/reports/audit-gate-promote-drill.json');
+      execFileSync(process.execPath, [
+        join(worktree, 'training/redteam/audit-gate.mjs'), '--tier', 'promotion',
+        '--json', auditJsonPath,
+      ], { encoding: 'utf8', cwd: worktree, maxBuffer: 32 * 1024 * 1024 });
+      const audit = JSON.parse(readFileSync(auditJsonPath, 'utf8'));
+      auditOk = audit.verdict === 'PASS';
+      auditDetail = `${audit.verdict}；${audit.checks.filter(c => c.status !== 'PASS').map(c => `${c.id}:${c.status}`).join(' ')}`.slice(0, 600);
+    } catch (error) {
+      auditDetail = String(error.stdout ?? error.message).slice(0, 600);
+    }
+    check('audit-gate-promotion', auditOk, auditDetail);
+
     const built = makeSite(worktree, siteNew);
     check('build-embeds-champion', built.index.includes(candidate.id) && built.index.includes('champion-guided'),
       `index.html 含新冠军 id/adapter；artifact=${String(built.artifact).slice(0, 12)}`);

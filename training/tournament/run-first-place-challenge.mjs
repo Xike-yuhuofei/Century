@@ -62,9 +62,13 @@ if (!args.candidate) {
   process.exit(2);
 }
 const dryRun = args['dry-run'] === true;
+// 正式挑战的最小样本硬下限：冻结统计计划要求每人 ≥60 独立种子。
+// 允许 CLI 调用方把 --seeds-per-seat 降到 2 会制造“8 局全胜 = 下界 1”的
+// 假阳性通道，因此在此 fail-closed，而不是依赖调用方自觉。
+const MIN_FORMAL_SEEDS_PER_SEAT = 60;
 const seedsPerSeat = args['seeds-per-seat'] !== undefined ? Number(args['seeds-per-seat']) : 250;
-if (!Number.isSafeInteger(seedsPerSeat) || seedsPerSeat < 2 || seedsPerSeat > 2000) {
-  throw new Error(`--seeds-per-seat 必须为 2–2000 的整数，实际：${seedsPerSeat}`);
+if (!Number.isSafeInteger(seedsPerSeat) || seedsPerSeat < MIN_FORMAL_SEEDS_PER_SEAT || seedsPerSeat > 2000) {
+  throw new Error(`--seeds-per-seat 必须为 ${MIN_FORMAL_SEEDS_PER_SEAT}–2000 的整数，实际：${seedsPerSeat}`);
 }
 const seatOffset = args['seat-offset'] !== undefined ? Number(args['seat-offset']) : 0;
 if (!Number.isSafeInteger(seatOffset) || seatOffset < 0 || seatOffset > 4) throw new Error('--seat-offset 必须在 0..4');
@@ -150,7 +154,7 @@ const plan = createPreregistration({
   opponents: opponents.map(o => ({ id: o.id, fingerprint: sha256Canonical(o) })),
   seatWindows,
   challengeIndex,
-  minSeedsPerSeatCount: Math.min(seedsPerSeat, 60),
+  minSeedsPerSeatCount: MIN_FORMAL_SEEDS_PER_SEAT,
   maxSeedsPerSeatCount: seedsPerSeat,
   searchWorkUnits: workUnits,
   engine: {
@@ -186,6 +190,9 @@ if (dryRun) {
 mkdirSync(outDir, { recursive: true });
 const planPath = resolve(outDir, 'preregistration.json');
 const locked = lockPreregistration({ plan, dir: outDir, writeJSON });
+// 机器门禁/CI/handler 固定读取 preregistration.json；锁文件本身按 planId 命名，
+// 必须复制为固定名，否则自动晋级链路会因“缺少 preregistration.json”而断裂。
+writeJSON(planPath, JSON.parse(readFileSync(locked.path, 'utf8')));
 console.log(`预注册计划已锁定：${planPath}（alreadyLocked=${locked.alreadyLocked}）`);
 
 // alpha 预留必须在读取正式验证结果之前；种子也必须在动用前登记。

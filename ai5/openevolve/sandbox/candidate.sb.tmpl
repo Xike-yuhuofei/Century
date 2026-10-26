@@ -15,7 +15,7 @@
 (allow process-exec*)
 (allow process-fork)
 (allow file-read*)
-(allow file-write* (subpath "@WORKROOT@") (subpath "/private/var/folders/") (subpath "/private/tmp/") (subpath "/private/etc/"))
+(allow file-write* (subpath "@WORKROOT@") (subpath "/private/var/folders/") (subpath "/private/etc/"))
 (deny file-read-data (subpath "@HOME@"))
 (allow file-read-data (subpath "@REPOROOT@"))
 (deny network*)

@@ -396,6 +396,9 @@ for (const tool of [
   'training/tests/first-place.test.mjs',
   'training/tournament/first-place-challenge.mjs', 'training/tournament/run-first-place-challenge.mjs',
   'training/scripts/promote-first-place-champion.mjs',
+  'training/scripts/publish-promotion-pr.mjs', 'training/scripts/refresh-champion-provenance.mjs',
+  'training/scripts/apply-champion.mjs', 'training/scripts/promotion-e2e-drill.mjs',
+  'training/evolution/promotion-handler.mjs',
   'web-v1/scripts/build-hash.mjs', 'web-v1/scripts/build-manifest.mjs',
 ]) {
   if (!existsSync(resolve(REPO_ROOT, tool))) {

@@ -7,7 +7,7 @@
  * - proxy-only 候选没有真实对局行为，不得进入第一名率正式挑战。
  */
 
-import { execFile } from 'node:child_process';
+import { execFile, execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -16,9 +16,17 @@ import { readAlphaLedger, alphaForChallenge, ALPHA_LEDGER_PATH } from '../lib/al
 import { powerAt, requiredSeeds } from '../evaluator/power.mjs';
 import { readJSON } from '../lib/io.mjs';
 
+/**
+ * 默认挑战资格政策（读取任何正式结果之前固定）：
+ * - 500 种子/人数是 M4 上约 5–6 小时可完成的现实样本；
+ * - 目标效应 20pp、方差上界 1（最保守）、功效 80%：在可持续固定期限家族
+ *   α=5e-4 下功效约 0.88；在当前几何 α=1.22e-5 下仅 0.60，因此当前预算
+ *   会明确 BLOCKED，不会把最后一个 alpha 花在无法检测小效应的挑战上；
+ * - 该政策只决定「是否值得发起挑战」，不改变正式挑战的预注册与判定。
+ */
 const DEFAULT_POLICY = Object.freeze({
-  seedsPerSeat: 250,
-  targetEffect: 0.05,
+  seedsPerSeat: 500,
+  targetEffect: 0.2,
   variance: 1,
   minPower: 0.8,
 });
@@ -65,9 +73,9 @@ export function assessChallengeReadiness({
 }
 
 function artifactEvaluationMode(artifact) {
-  const structure = artifact?.algorithmStructure ?? {};
-  return structure.evaluationMode
-    ?? (structure.decisionCore === 'plugin-only' ? 'proxy' : 'game');
+  const structure = artifact?.algorithmStructure;
+  // 必须显式声明 game：缺失/未知一律 fail-closed，不能默认放行进正式挑战。
+  return typeof structure?.evaluationMode === 'string' ? structure.evaluationMode : null;
 }
 
 /** 把 Candidate Artifact 转成正式挑战 CLI 可消费的候选文档。
@@ -125,6 +133,15 @@ function publishEvidenceToLatest(evidenceDir) {
   return latest;
 }
 
+/** 生产发布器：创建冠军 PR 并启用 auto-merge（合并仍由 CI 机器门禁决定）。 */
+function defaultPublisher({ latest }) {
+  const stdout = execFileSync(process.execPath, [
+    resolve(REPO_ROOT, 'training/scripts/publish-promotion-pr.mjs'),
+    '--evidence-dir', latest,
+  ], { encoding: 'utf8', cwd: REPO_ROOT, maxBuffer: 32 * 1024 * 1024, timeout: 2 * 3600_000 });
+  return JSON.parse(stdout);
+}
+
 /**
  * 创建 CampaignController 的 promotionHandler。
  *
@@ -132,12 +149,16 @@ function publishEvidenceToLatest(evidenceDir) {
  * @param {string} [options.ledgerPath]
  * @param {object} [options.policy] {seedsPerSeat,targetEffect,variance,minPower,workUnits}
  * @param {Function} [options.challengeRunner] 测试注入点；生产默认调用正式挑战 CLI
+ * @param {boolean} [options.autoPublish] 统计通过后是否自动创建冠军 PR（默认 true）
+ * @param {Function} [options.publisher] 测试注入点；签名 ({latest}) => JSON
  */
 export function createPromotionHandler({
   ledgerPath = ALPHA_LEDGER_PATH,
   policy = {},
   challengeRunner = defaultChallengeRunner,
   publish = publishEvidenceToLatest,
+  autoPublish = true,
+  publisher = defaultPublisher,
 } = {}) {
   const resolvedPolicy = { ...DEFAULT_POLICY, ...policy };
   return async function promotionHandler({ campaignId, artifact, request, requestPath }) {
@@ -185,11 +206,23 @@ export function createPromotionHandler({
       };
     }
     const latest = publish(evidenceDir);
+    let publication = null;
+    if (autoPublish) {
+      try {
+        publication = publisher({ latest, evidenceDir });
+      } catch (error) {
+        publication = {
+          verdict: 'PUBLISH_FAILED',
+          error: String(error?.stderr ?? error?.message ?? error).slice(0, 1000),
+        };
+      }
+    }
     return {
       verdict: 'PROMOTE_EVIDENCE_READY',
       evidenceDir, latest, evidenceHash: result.evidence.evidenceHash,
       decision: result.decision,
       promotionTriggered: false,
+      publication,
       note: '证据已就绪；冠军落地与发布由 CI promotion-machine-gate 独立复核并 auto-merge',
     };
   };

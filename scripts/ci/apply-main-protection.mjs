@@ -4,9 +4,10 @@
  * 用法：
  *   node scripts/ci/apply-main-protection.mjs                        # 只打印
  *   CONFIRM_APPLY_MAIN_PROTECTION=yes node scripts/ci/apply-main-protection.mjs --apply
- *   ... --reviewer-login Xike-yuhuofei                               # 同时配置 promotion-approval 环境必需审核人
  *
- * 说明：本仓库当前（2026-10-25）无 Branch Protection、无 Ruleset。脚本不会自动运行。
+ * 说明：main 保护只要求机器检查（ci-summary/rules-cards/governance-tests）与
+ * 严格 up-to-date；required_approving_review_count=0，不依赖人工批准或
+ * promotion-approval Environment（冠军晋级已改为机器门禁）。
  */
 import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
@@ -49,23 +50,12 @@ export function buildRuleset() {
   };
 }
 
-export function buildEnvironmentPayload(reviewerId) {
-  return {
-    wait_timer: 0,
-    prevent_self_review: false,
-    reviewers: reviewerId ? [{ type: 'User', id: reviewerId }] : [],
-    deployment_branch_policy: null,
-  };
-}
-
 function gh(args, { input } = {}) {
   return execFileSync('gh', args, { encoding: 'utf8', input });
 }
 
 function main() {
   const apply = process.argv.includes('--apply');
-  const reviewerIndex = process.argv.indexOf('--reviewer-login');
-  const reviewerLogin = reviewerIndex >= 0 ? process.argv[reviewerIndex + 1] : null;
   const repo = process.env.GITHUB_REPOSITORY ||
     gh(['repo', 'view', '--json', 'nameWithOwner', '-q', '.nameWithOwner']).trim();
 
@@ -73,13 +63,6 @@ function main() {
   console.log(`目标仓库：${repo}`);
   console.log('Ruleset payload:');
   console.log(JSON.stringify(ruleset, null, 2));
-
-  let reviewerId = null;
-  if (reviewerLogin) {
-    reviewerId = Number(gh(['api', `users/${reviewerLogin}`, '--jq', '.id']).trim());
-    console.log(`promotion-approval 环境审核人：${reviewerLogin} (id=${reviewerId})`);
-    console.log(JSON.stringify(buildEnvironmentPayload(reviewerId), null, 2));
-  }
 
   if (!apply) {
     console.log('\n[dry-run] 未修改仓库设置。确认方案后使用：');
@@ -99,13 +82,6 @@ function main() {
   } else {
     const created = JSON.parse(gh(['api', '--method', 'POST', `repos/${repo}/rulesets`, '--input', '-'], { input: JSON.stringify(ruleset) }));
     console.log(`已创建 ruleset：${ruleset.name} (id=${created.id})`);
-  }
-
-  if (reviewerLogin) {
-    gh(['api', '--method', 'PUT', `repos/${repo}/environments/promotion-approval`, '--input', '-'], {
-      input: JSON.stringify(buildEnvironmentPayload(reviewerId)),
-    });
-    console.log('已配置 promotion-approval 环境必需审核人');
   }
 }
 

@@ -57,6 +57,16 @@ test('proxy-only 候选没有真实对局行为：拒绝进入正式挑战', asy
   assert.equal(outcome.reason, 'not-game-evaluable');
 });
 
+test('未显式声明 evaluationMode：fail-closed，不得默认 game', async () => {
+  const handler = createPromotionHandler({ challengeRunner: async () => assert.fail('不得调用') });
+  const artifact = gameArtifact({
+    algorithmStructure: { targetIds: ['acquisitionValue'], decisionCore: 'compiled-plugin' },
+  });
+  const outcome = await handler({ artifact, request: {}, requestPath: null });
+  assert.equal(outcome.verdict, 'BLOCKED');
+  assert.equal(outcome.reason, 'not-game-evaluable');
+});
+
 test('新 alpha 家族功效达标：自动发起挑战；不晋级时记录 NOT_PROMOTED', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'century-handler-'));
   const ledgerPath = join(dir, 'alpha.json');
@@ -88,7 +98,7 @@ test('新 alpha 家族功效达标：自动发起挑战；不晋级时记录 NOT
   }
 });
 
-test('统计合格证据就绪：不自行合并，交由 CI 机器门禁复核', async () => {
+test('统计合格证据就绪：自动发布冠军 PR，但处理器不直接合并', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'century-handler-'));
   const ledgerPath = join(dir, 'alpha.json');
   try {
@@ -97,6 +107,7 @@ test('统计合格证据就绪：不自行合并，交由 CI 机器门禁复核'
       authorization: 'unit-test', authorizedBy: 'unit-test', ledgerPath,
     });
     let published = null;
+    let publishInput = null;
     const handler = createPromotionHandler({
       ledgerPath,
       policy: { seedsPerSeat: 500, targetEffect: 0.2, variance: 1, minPower: 0.8 },
@@ -105,12 +116,44 @@ test('统计合格证据就绪：不自行合并，交由 CI 机器门禁复核'
         decision: { promote: true, verdict: 'PROMOTE', reasons: [] },
       }),
       publish: evidenceDir => { published = evidenceDir; return '/tmp/latest'; },
+      publisher: input => {
+        publishInput = input;
+        return { verdict: 'PR_OPENED', pr: 'https://example.invalid/pr/1' };
+      },
     });
     const outcome = await handler({ artifact: gameArtifact(), request: {}, requestPath: null });
     assert.equal(outcome.verdict, 'PROMOTE_EVIDENCE_READY');
     assert.equal(published, outcome.evidenceDir);
-    assert.equal(outcome.promotionTriggered, false, '处理器不得直接改冠军');
+    assert.equal(publishInput.latest, '/tmp/latest');
+    assert.equal(outcome.publication.verdict, 'PR_OPENED');
+    assert.equal(outcome.promotionTriggered, false, '处理器不得直接改冠军或合并 PR');
     assert.match(outcome.note, /CI promotion-machine-gate/);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('统计合格但禁止自动发布：保留证据，不调用发布器', async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'century-handler-'));
+  const ledgerPath = join(dir, 'alpha.json');
+  try {
+    initializeAlphaFamily({
+      mode: 'fixed-horizon-bonferroni', maxChallenges: 10, alphaBudget: 0.05,
+      authorization: 'unit-test', authorizedBy: 'unit-test', ledgerPath,
+    });
+    const handler = createPromotionHandler({
+      ledgerPath,
+      policy: { seedsPerSeat: 500, targetEffect: 0.2, variance: 1, minPower: 0.8 },
+      autoPublish: false,
+      challengeRunner: async () => ({
+        evidence: { evidenceHash: 'f'.repeat(64) },
+        decision: { promote: true, verdict: 'PROMOTE', reasons: [] },
+      }),
+      publisher: () => assert.fail('autoPublish=false 时不得发布'),
+    });
+    const outcome = await handler({ artifact: gameArtifact(), request: {}, requestPath: null });
+    assert.equal(outcome.verdict, 'PROMOTE_EVIDENCE_READY');
+    assert.equal(outcome.publication, null);
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }

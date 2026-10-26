@@ -1,0 +1,57 @@
+2026-10-26 05:01:49,030 - INFO - Logging to results/ai8-openevolve-r003/logs/openevolve_20261026_050149.log
+2026-10-26 05:01:49,056 - INFO - Set random seed to 42 for reproducibility
+2026-10-26 05:01:49,056 - INFO - Initialized LLM ensemble with models: gpt-5.6-sol (weight: 1.00)
+2026-10-26 05:01:49,060 - INFO - Initialized prompt sampler
+2026-10-26 05:01:49,060 - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-10-26 05:01:49,060 - INFO - Initialized program database with 0 programs
+2026-10-26 05:01:49,063 - INFO - Successfully loaded evaluation function from century_evaluator.py
+2026-10-26 05:01:49,063 - INFO - Initialized evaluator with century_evaluator.py
+2026-10-26 05:01:49,063 - INFO - Initialized OpenEvolve with program/acquisition_value.ts
+2026-10-26 05:01:49,063 - INFO - Adding initial program to database
+2026-10-26 05:08:50,713 - INFO - Evaluated program ccc6be82-43fe-4abd-ac73-c38985cb95c8 in 421.65s: combined_score=0.0000, stage_passed=0.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=1.0000, function_sha256_head=0.1631, code_complexity=2453.0000
+2026-10-26 05:08:50,725 - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 5, 'diversity': 0}
+2026-10-26 05:08:50,736 - INFO - Initialized process parallel controller with 1 workers
+2026-10-26 05:08:50,736 - INFO - Set max None tasks per child
+2026-10-26 05:08:50,736 - INFO - Started process pool with 1 processes
+2026-10-26 05:08:50,736 - INFO - Using island-based evolution with 2 islands
+2026-10-26 05:08:50,736 - INFO - Island Status:
+2026-10-26 05:08:50,736 - INFO -  * Island 0: 1 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0 (best: ccc6be82-43fe-4abd-ac73-c38985cb95c8)
+2026-10-26 05:08:50,737 - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-10-26 05:08:50,737 - INFO - Starting process-based evolution from iteration 1 for 3 iterations (total: 4)
+2026-10-26 05:08:50,739 - INFO - Early stopping disabled
+2026-10-26 05:16:20,505 - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 9, 'diversity': 5}
+2026-10-26 05:16:20,549 - INFO - Iteration 1: Program 8d4c670b-5c59-4084-b246-d48ca02e8954 (parent: ccc6be82-43fe-4abd-ac73-c38985cb95c8) completed in 449.29s | tokens: 187689 (prompt: 186408, completion: 1281)
+2026-10-26 05:16:20,549 - INFO - Metrics: combined_score=0.0000, stage_passed=0.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=0.0000, function_sha256_head=0.7035, code_complexity=2689.0000
+2026-10-26 05:23:42,968 - INFO - New MAP-Elites cell occupied in island 1: {'complexity': 5, 'diversity': 0}
+2026-10-26 05:23:42,968 - INFO - Iteration 2: Program 9deee54d-291e-4656-b6e1-cd904140e33d (parent: ccc6be82-43fe-4abd-ac73-c38985cb95c8) completed in 442.46s | tokens: 25750 (prompt: 24792, completion: 958)
+2026-10-26 05:23:42,968 - INFO - Metrics: combined_score=0.0000, stage_passed=0.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=0.0000, function_sha256_head=0.9011, code_complexity=2587.0000
+2026-10-26 05:23:42,968 - INFO - Checkpoint interval reached at iteration 2
+2026-10-26 05:23:42,969 - INFO - Island Status:
+2026-10-26 05:23:42,969 - INFO -  * Island 0: 2 programs, best=0.0000, avg=0.0000, diversity=73.60, gen=1 (best: ccc6be82-43fe-4abd-ac73-c38985cb95c8)
+2026-10-26 05:23:42,969 - INFO -    Island 1: 1 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=1 (best: 9deee54d-291e-4656-b6e1-cd904140e33d)
+2026-10-26 05:23:42,969 - INFO - Saved database with 3 programs to results/ai8-openevolve-r003/checkpoints/checkpoint_2
+2026-10-26 05:23:42,970 - INFO - Saved best program at checkpoint 2 with metrics: combined_score=0.0000, stage_passed=0.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=1.0000, function_sha256_head=0.1631, code_complexity=2453.0000
+2026-10-26 05:23:42,970 - INFO - Saved checkpoint at iteration 2 to results/ai8-openevolve-r003/checkpoints/checkpoint_2
+2026-10-26 05:31:13,899 - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 9, 'diversity': 0}
+2026-10-26 05:31:13,899 - INFO - Iteration 3: Program b91320af-bcca-43f0-991f-27e0093aadf4 (parent: 8d4c670b-5c59-4084-b246-d48ca02e8954) completed in 450.93s | tokens: 28378 (prompt: 26765, completion: 1613)
+2026-10-26 05:31:13,899 - INFO - Metrics: combined_score=0.0000, stage_passed=0.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=0.0000, function_sha256_head=0.9844, code_complexity=2691.0000
+2026-10-26 05:31:13,900 - INFO - ✅ Evolution completed - Maximum iterations reached
+2026-10-26 05:31:13,900 - INFO - 📊 Total LLM Token Usage (3 calls): total_tokens=241817 (prompt_tokens=237965, completion_tokens=3852)
+2026-10-26 05:31:13,903 - INFO - Stopped process pool
+2026-10-26 05:31:13,903 - INFO - Using tracked best program: ccc6be82-43fe-4abd-ac73-c38985cb95c8
+2026-10-26 05:31:13,903 - INFO - Evolution complete. Best program has metrics: combined_score=0.0000, stage_passed=0.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, identical_to_official=1.0000, function_sha256_head=0.1631, code_complexity=2453.0000
+2026-10-26 05:31:13,946 - INFO - Saved best program to results/ai8-openevolve-r003/best/best_program.ts with program info to results/ai8-openevolve-r003/best/best_program_info.json
+
+Evolution complete!
+Best program metrics:
+  combined_score: 0.0000
+  stage_passed: 0.0000
+  static_ok: 1.0000
+  compile_ok: 1.0000
+  probe_ok: 1.0000
+  identical_to_official: 1.0000
+  function_sha256_head: 0.1631
+  code_complexity: 2453.0000
+
+Latest checkpoint saved at: results/ai8-openevolve-r003/checkpoints/checkpoint_2
+To resume, use: --checkpoint results/ai8-openevolve-r003/checkpoints/checkpoint_2

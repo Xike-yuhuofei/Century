@@ -68,6 +68,13 @@ test('冠军治理元数据与候选资料不触发晋级门禁（避免信任�
   }
 });
 
+test('研究 pilot 证据不触发晋级门禁，但 latest 晋级证据触发', () => {
+  const pilot = scope(['training/reports/first-place-promotion/pilot-candidatecap-r1c7.json']);
+  assert.equal(pilot.promotion, false, '研究 pilot 只是证据，不是一次冠军晋级');
+  const latest = scope(['training/reports/first-place-promotion/latest/challenge-evidence.json']);
+  assert.equal(latest.promotion, true, 'CI 实际消费的 latest 证据必须触发晋级门禁');
+});
+
 test('B5 AI5 研究变更：跑研究检查，不误触发 web/training 单测', () => {
   const s = scope(['ai5/ppo/trainer.py']);
   assert.equal(s.ai5, true);
