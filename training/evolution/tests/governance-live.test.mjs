@@ -62,6 +62,19 @@ test('真实 Provider：同一 campaign 第二轮分配不同窗口（窗口不�
   }
 });
 
+test('真实 Provider：同一 campaign/round 重试分配下一个窗口（不得误报开发池耗尽）', () => {
+  const { dir, adapter } = tempProvider();
+  try {
+    const first = adapter.allocateDevSeedWindow({ campaignId: 'retry-test', round: 1, purpose: 'screen', count: 2 });
+    const retry = adapter.allocateDevSeedWindow({ campaignId: 'retry-test', round: 1, purpose: 'screen', count: 2 });
+    assert.notEqual(retry.windowId, first.windowId);
+    assert.notEqual(retry.base, first.base);
+    assert.ok(retry.base > first.base);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test('机器门禁队列：不再要求人工批准，但必须声明机器门禁且不直接晋级', () => {
   const { dir, adapter } = tempProvider();
   try {
