@@ -20,7 +20,7 @@
 import { GOLEM_BY_ID, MERCHANT_BY_ID, type Stock } from '../data.js';
 import { has, tradeLimit, type Action, type Color, type MarketMerchant } from '../engine.js';
 import type { AIParameters } from './parameters.js';
-import type { AIObservation } from './observation.js';
+import type { AIObservation, ObservationPlayer } from './observation.js';
 import { weighted, stockCount, cloneStock, publicKnowledge, futureDeckSupport } from './knowledge.js';
 import { goalGap, keepValue, trimStock, acquisitionValue } from './evaluator.js';
 import { engineValueFor, engineModelContext, type EngineModelContext } from './engine-model.js';
@@ -45,6 +45,14 @@ function evolvePressure(view: AIObservation, params: AIParameters): PressureMode
   return pressure;
 }
 
+/** 公开记分快照：只由观察中的已认领魔像、硬币与库存推导，不含隐藏牌库。 */
+export type StandingEntry = {
+  seat: number;
+  score: number;
+  claimed: number;
+  turns: number;
+};
+
 export type SearchState = {
   stock: Stock;
   hand: string[];
@@ -62,9 +70,28 @@ export type SearchState = {
   path: Action[];
   remainingClaims: number;
   terminal: boolean;
+  /** 焦点席位（公开）。 */
+  seat: number;
+  /** 当前公开得分（与 engine.score 同口径）。 */
+  baseScore: number;
+  /** baseScore 中来自非黄水晶库存的分值，用于把模拟路线后的库存变化折算回总分。 */
+  baseStockPoints: number;
+  /** 本局认领阈值（公开规则：2–3 人 6，4–5 人 5）。 */
+  claimThreshold: number;
+  /** 全部席位的公开名次快照（M06 胜率模型的合法输入）。 */
+  standings: StandingEntry[];
 };
 
 type ScoredState = SearchState & { quality: number; preferred?: string };
+
+const stockPoints = (stock: readonly number[]): number =>
+  stock.slice(1).reduce((sum, n) => sum + n, 0);
+
+/** 与 engine.score 相同的公开口径：已认领魔像 + 铜币 3 + 银币 1 + 非黄库存。 */
+function publicScore(player: ObservationPlayer): number {
+  return player.claimed.reduce((sum, id) => sum + GOLEM_BY_ID[id].points, 0)
+    + player.copper * 3 + player.silver + stockPoints(player.stock);
+}
 
 /** 从公开观察构造搜索根状态。 */
 export function initialState(view: AIObservation): SearchState {
@@ -81,6 +108,13 @@ export function initialState(view: AIObservation): SearchState {
     gained: 0, claimed: 0, acquired: 0, newCards: [], steps: 0,
     first: null, path: [], remainingClaims: threshold - player.claimed.length,
     terminal: false,
+    seat: view.current,
+    baseScore: publicScore(player),
+    baseStockPoints: stockPoints(player.stock),
+    claimThreshold: threshold,
+    standings: view.players.map(p => ({
+      seat: p.id, score: publicScore(p), claimed: p.claimed.length, turns: p.turns,
+    })),
   };
 }
 

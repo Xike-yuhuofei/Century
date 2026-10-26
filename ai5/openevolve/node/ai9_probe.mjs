@@ -66,9 +66,31 @@ function observationFixtures(official) {
   return fixtures;
 }
 
-function stateOf(view) {
+function publicScore(player, data) {
+  return player.claimed.reduce((sum, id) => sum + (data.GOLEM_BY_ID[id]?.points ?? 0), 0)
+    + player.copper * 3 + player.silver
+    + player.stock.slice(1).reduce((sum, n) => sum + n, 0);
+}
+
+function stateOf(view, data) {
   const me = view.players[view.playerId];
-  return { stock: me.stock, hand: [...me.hand], played: [...me.played] };
+  const threshold = view.players.length >= 4 ? 5 : 6;
+  return {
+    stock: me.stock, hand: [...me.hand], played: [...me.played],
+    merchantMarket: view.merchantMarket.map(m => ({ id: m.id, bonus: [...m.bonus] })),
+    golemMarket: [...view.golemMarket],
+    copper: view.copper, silver: view.silver,
+    gained: 0, claimed: 0, acquired: 0, newCards: [], steps: 0,
+    first: null, path: [], remainingClaims: threshold - me.claimed.length,
+    terminal: false,
+    seat: view.current,
+    baseScore: publicScore(me, data),
+    baseStockPoints: me.stock.slice(1).reduce((sum, n) => sum + n, 0),
+    claimThreshold: threshold,
+    standings: view.players.map(p => ({
+      seat: p.id, score: publicScore(p, data), claimed: p.claimed.length, turns: p.turns,
+    })),
+  };
 }
 
 function unseenMerchants(view, data) {
@@ -83,7 +105,7 @@ function makeCases(moduleId, ctx) {
   const me = view.players[view.playerId];
   const preferred = view.golemMarket[0] ?? null;
   const marketCard = view.merchantMarket[0]?.id ?? data.MERCHANT_DECK[0].id;
-  const state = stateOf(view);
+  const state = stateOf(view, data);
   const pressure = { mean: {}, peak: {} };
   for (const m of view.merchantMarket) { pressure.mean[m.id] = 0.3; pressure.peak[m.id] = 0.5; }
   const base = { fixture: fixture.name, args: null };

@@ -30,7 +30,11 @@ import type { AIObservation } from '../observation.js';
 import type { AIParameters } from '../parameters.js';
 import { VALUES, weighted, stockCount } from '../knowledge.js';
 
-/** 搜索状态的最小只读视图（planner 的 SearchState 结构子集）。 */
+/** 搜索状态的最小只读视图（planner 的 SearchState 结构子集）。
+ *
+ * 全部字段都来自公开观察：standings/baseScore 只由已认领魔像、硬币、库存与
+ * 回合数推导，与正式 engine.score 同口径；不包含牌库顺序或隐藏信息。
+ */
 export type EvolveStateView = {
   readonly stock: readonly number[];
   readonly hand: readonly string[];
@@ -38,6 +42,25 @@ export type EvolveStateView = {
   readonly golemMarket: readonly string[];
   readonly steps: number;
   readonly terminal: boolean;
+  /** 本模拟路线累计获得的正式得分（魔像分值 + 即时硬币）。 */
+  readonly gained: number;
+  /** 本模拟路线已认领的魔像数。 */
+  readonly claimed: number;
+  /** 焦点席位（公开）。 */
+  readonly seat: number;
+  /** 当前公开得分（engine.score 同口径）。 */
+  readonly baseScore: number;
+  /** baseScore 中来自非黄水晶库存的分值。 */
+  readonly baseStockPoints: number;
+  /** 本局认领阈值（2–3 人 6，4–5 人 5）。 */
+  readonly claimThreshold: number;
+  /** 全部席位的公开名次快照。 */
+  readonly standings: readonly {
+    readonly seat: number;
+    readonly score: number;
+    readonly claimed: number;
+    readonly turns: number;
+  }[];
 };
 
 /* EVOLVE-BLOCK-START */
@@ -70,7 +93,8 @@ export function restMultiplier(state: EvolveStateView, preferred: string | null,
 /* EVOLVE-BLOCK-START */
 /** M06 终局与胜率调整。
  *
- * 输入：搜索状态视图（terminal 表示本路线已完成最后一次认领）、参数集。
+ * 输入：搜索状态视图（terminal 表示本路线已完成最后一次认领；standings/baseScore/
+ * claimThreshold 提供全部席位的公开名次快照），参数集。
  * 输出：加到终局路线评分上的分值（建议 -20–20）。默认 0 = 冻结得分口径。
  * 只能使用：state、GOLEM_BY_ID、VALUES、weighted、stockCount。
  */
