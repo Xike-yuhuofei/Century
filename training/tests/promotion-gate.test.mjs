@@ -177,7 +177,9 @@ function runGate(fixture, extraArgs = [], overrides = {}) {
     '--champion', overrides.championPath ?? resolve(REPO_ROOT, 'training/champions/champion.json'),
     '--alpha-ledger', fixture.ledgerPath,
     '--governance-central', fixture.registryPath,
-    ...(overrides.mode === 'post-apply' ? ['--post-apply'] : ['--dry-run']),
+    ...(overrides.mode === 'post-apply'
+      ? ['--post-apply', '--base-champion', overrides.baseChampionPath ?? resolve(REPO_ROOT, 'training/champions/champion.json')]
+      : ['--dry-run']),
     ...extraArgs,
   ], { encoding: 'utf8', cwd: REPO_ROOT });
 }
@@ -286,6 +288,39 @@ test('机器门禁 post-apply：落地参数被篡改 → 拒绝', () => {
     assert.throws(
       () => runGate(fixture, [], { championPath: appliedPath, mode: 'post-apply' }),
       /参数哈希|不一致/,
+    );
+  });
+});
+
+test('机器门禁 post-apply：provenance/基线被伪造 → 拒绝', () => {
+  withFixture(fixture => {
+    const candidate = JSON.parse(readFileSync(fixture.candidatePath, 'utf8'));
+    const baseChampion = JSON.parse(readFileSync(resolve(REPO_ROOT, 'training/champions/champion.json'), 'utf8'));
+    const applied = {
+      ...candidate,
+      provenance: {
+        basedOn: baseChampion.parameters.id,
+        promotionEvidence: {
+          planId: fixture.plan.planId,
+          planHash: '0'.repeat(64),
+          challengeIndex: CHALLENGE_INDEX,
+          evidenceHash: fixture.evidence.evidenceHash,
+        },
+      },
+    };
+    const appliedPath = join(fixture.dir, 'applied-champion.json');
+    writeFileSync(appliedPath, JSON.stringify(applied, null, 2));
+    mkdirSync(join(fixture.dir, 'candidates'), { recursive: true });
+    writeFileSync(join(fixture.dir, 'candidates', `${candidate.id}.json`), JSON.stringify(candidate, null, 2));
+    assert.throws(
+      () => runGate(fixture, [], { championPath: appliedPath, mode: 'post-apply' }),
+      /provenance|planHash|不一致/,
+    );
+    assert.throws(
+      () => runGate(fixture, [], {
+        championPath: appliedPath, mode: 'post-apply', baseChampionPath: join(fixture.dir, 'missing-base.json'),
+      }),
+      /基线冠军文件不存在/,
     );
   });
 });

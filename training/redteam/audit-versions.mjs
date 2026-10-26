@@ -267,8 +267,24 @@ const isAdapter = r => r.reason.includes('联合');
 // ---- V7：晋级指纹（新格式：冠军自身 provenance vs 当前构建；旧格式按历史 js5 证据） ----
 {
   const prov = championDoc.provenance ?? {};
+  const championId = championDoc.parameters?.id ?? championDoc.id ?? null;
+  const legacyChampion = championId === 'joint-js5';
   const normalized = Boolean(prov.decisionSourceSha256 && prov.decisionArtifactSha256 && prov.championParametersSha256);
-  if (normalized) {
+  const pe = prov.promotionEvidence;
+  const peOk = Boolean(pe && typeof pe.planId === 'string'
+    && /^[0-9a-f]{64}$/.test(String(pe.planHash ?? ''))
+    && /^[0-9a-f]{64}$/.test(String(pe.evidenceHash ?? '')));
+  if (!normalized && !legacyChampion) {
+    // 非 legacy 冠军必须携带规范化身份；删除字段不能把审计降级到旧锚点。
+    note('P0', 'V7a', '新冠军缺少规范化 provenance（疑似删字段降级审计）',
+      `冠军=${String(championId)}；decisionSource/decisionArtifact/championParameters 至少缺一`,
+      '恢复 refresh-champion-provenance 写入的完整身份；禁止手工裁剪 provenance');
+  } else if (normalized) {
+    if (!peOk) {
+      note('P0', 'V7a', '冠军缺少可审计的 promotionEvidence',
+        `冠军=${String(championId)}；planId=${String(pe?.planId)}；planHash/evidenceHash 必须为 64 hex`,
+        '由 promote-first-place-champion 写入完整 provenance.promotionEvidence');
+    } else {
     // 新格式由 refresh-champion-provenance 在 apply+build 后回写。
     // 不再把任何一次历史挑战（js5）当作所有未来冠军的锚点。
     let currentProv = null;
@@ -293,6 +309,7 @@ const isAdapter = r => r.reason.includes('联合');
       } else {
         note('PASS', 'V7', '晋级身份一致（冠军 provenance = 当前构建）', detail);
       }
+    }
     }
   } else {
   const cand = JSON.parse(readFileSync(resolve(REPO_ROOT, 'training/reports/js5-promotion-challenge/candidate.json'), 'utf8'));

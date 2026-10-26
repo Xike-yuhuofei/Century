@@ -564,6 +564,8 @@ jobs:
             }
             console.log("前置机器检查全部成功");
           '
+      - name: 获取 main 基线冠军（post-apply 必须有可信基线）
+        run: git fetch --no-tags origin main
       - name: 第一名率证据独立复核（重算 + alpha 账本 + 种子治理 + 落地身份）
         run: |
           DIR=training/reports/first-place-promotion/latest
@@ -571,11 +573,12 @@ jobs:
           test -s "$DIR/preregistration.json" || { echo "::error::缺少 preregistration.json"; exit 1; }
           test -s "$DIR/candidate.json" || { echo "::error::缺少 candidate.json"; exit 1; }
           # PR 中 champion.json 已是候选本身；--post-apply 验证「落地冠军 ==
-          # 预注册候选」与 provenance 基线，而不是要求当前冠军仍等于旧冠军。
+          # 预注册候选」与 origin/main 基线，而不是要求当前冠军仍等于旧冠军。
           node training/scripts/promote-first-place-champion.mjs \
             --evidence "$DIR/challenge-evidence.json" \
             --plan "$DIR/preregistration.json" \
-            --candidate "$DIR/candidate.json" --post-apply
+            --candidate "$DIR/candidate.json" --post-apply \
+            --base-champion-ref origin/main
           # 落地冠军参数必须与 parameters.ts 生成区一致（训练/实战同一参数块）。
           node training/scripts/apply-champion.mjs --check
       - name: 自动启用 squash auto-merge（不绕过任何检查）

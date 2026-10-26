@@ -261,12 +261,15 @@ async function main() {
     writeFileSync(registryCopy, JSON.stringify(registry, null, 2));
 
     const championTarget = join(worktree, 'training/champions/champion.json');
+    const baseChampionSnapshot = join(base, 'base-champion.json');
+    copyFileSync(championTarget, baseChampionSnapshot);
     const promoteArgs = [
       PROMOTE,
       '--evidence', evidencePath,
       '--plan', locked.path,
       '--candidate', candidatePath,
       '--champion', championTarget,
+      '--base-champion', baseChampionSnapshot,
       '--alpha-ledger', ledgerCopy,
       '--governance-central', registryCopy,
     ];

@@ -129,6 +129,9 @@ try {
   if (existsSync(join(repoRoot, 'web-v1/node_modules'))) {
     symlinkSync(join(repoRoot, 'web-v1/node_modules'), join(tree, 'web-v1/node_modules'), 'dir');
   }
+  // 保存基线冠军快照：post-apply/CI 复核必须能验证 plan.champion 不是伪造的。
+  const baseChampionSnapshot = join(workRoot, 'base-champion.json');
+  copyFileSync(join(tree, 'training/champions/champion.json'), baseChampionSnapshot);
 
   const promoteArgs = [
     join(tree, 'training/scripts/promote-first-place-champion.mjs'),
@@ -136,6 +139,7 @@ try {
     '--plan', join(targetEvidence, 'preregistration.json'),
     '--candidate', join(targetEvidence, 'candidate.json'),
     '--champion', join(tree, 'training/champions/champion.json'),
+    '--base-champion', baseChampionSnapshot,
     '--alpha-ledger', join(tree, 'training/governance/alpha-ledger.json'),
     '--governance-central', join(tree, 'training/governance/seed-consumption-registry.json'),
   ];

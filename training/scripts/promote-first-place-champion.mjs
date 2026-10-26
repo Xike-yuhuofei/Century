@@ -22,6 +22,7 @@
 
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { ensureDir, readJSON } from '../lib/io.mjs';
 import { REPO_ROOT, buildProvenance, requireBuiltEngine } from '../lib/paths.mjs';
 import { loadPreregistration, assertValidationSeeds } from '../evaluator/preregistration.mjs';
@@ -56,6 +57,12 @@ for (const required of ['evidence', 'plan', 'candidate']) {
 }
 const dryRun = args['dry-run'] === true;
 const postApply = args['post-apply'] === true;
+const baseChampionPath = args['base-champion'] !== undefined
+  ? resolve(process.cwd(), args['base-champion'])
+  : null;
+const baseChampionRef = args['base-champion-ref'] !== undefined
+  ? String(args['base-champion-ref'])
+  : null;
 const evidencePath = resolve(process.cwd(), args.evidence);
 const planPath = resolve(process.cwd(), args.plan);
 const candidatePath = resolve(process.cwd(), args.candidate);
@@ -122,17 +129,52 @@ if (candidate.parametersSha256 !== plan.candidate.parametersSha256) {
 if (candidate.sourceHash !== plan.candidate.sourceHash) throw new Error('候选源码哈希与预注册不一致（候选在验证后被修改）');
 if (candidate.artifactHash !== plan.candidate.artifactHash) throw new Error('候选产物哈希与预注册不一致');
 
+// post-apply 必须能读取 origin/main 的基线冠军，防止 PR 伪造 plan/evidence/ledger
+// 后把任意参数“晋级”。在 CI 中传 --base-champion-ref origin/main；测试可传文件。
+function loadBaseChampion() {
+  if (baseChampionPath) {
+    if (!existsSync(baseChampionPath)) throw new Error(`基线冠军文件不存在：${baseChampionPath}`);
+    return readJSON(baseChampionPath);
+  }
+  if (baseChampionRef) {
+    try {
+      const text = execFileSync('git', ['show', `${baseChampionRef}:training/champions/champion.json`], {
+        encoding: 'utf8', cwd: REPO_ROOT,
+      });
+      return JSON.parse(text);
+    } catch (error) {
+      throw new Error(`无法读取基线冠军 ${baseChampionRef}:training/champions/champion.json：${String(error.stderr ?? error.message).slice(0, 300)}`);
+    }
+  }
+  return null;
+}
+
 const championParameters = championDoc.parameters ?? championDoc;
 if (postApply) {
   // 已落地冠军 PR 复核模式：champion.json 已经是候选本身，不能再要求
   // 当前冠军 == 预注册冻结冠军（那是挑战前状态的检查，放在 else 分支）。
-  // 这里改为验证「落地内容 == 预注册候选」以及 provenance 绑定的基线冠军。
+  // 这里改为验证「落地内容 == 预注册候选」以及「基线冠军 == origin/main」。
   if (championParameters.id !== candidate.id) {
     throw new Error(`落地冠军 ${String(championParameters.id)} ≠ 预注册候选 ${candidate.id}`);
   }
   const appliedSha = championParametersSha256(validateAIParameters(championParameters));
   if (appliedSha !== plan.candidate.parametersSha256) {
     throw new Error('落地冠军参数哈希与预注册候选不一致（PR 落地了错误的参数）');
+  }
+  if (candidate.id === plan.champion.id) {
+    throw new Error('候选与基线冠军相同——禁止空晋级');
+  }
+  const baseDoc = loadBaseChampion();
+  if (!baseDoc) {
+    throw new Error('post-apply 必须提供 --base-champion 或 --base-champion-ref（禁止无基线复核）');
+  }
+  const baseParameters = baseDoc.parameters ?? baseDoc;
+  if (baseParameters.id !== plan.champion.id) {
+    throw new Error(`基线冠军 ${String(baseParameters.id)} ≠ 预注册冻结冠军 ${plan.champion.id}（main 已被替换）`);
+  }
+  const baseSha = championParametersSha256(validateAIParameters(baseParameters));
+  if (baseSha !== plan.champion.parametersSha256) {
+    throw new Error('基线冠军参数哈希与预注册不一致（plan 被伪造或 main 已变化）');
   }
   const provenance = championDoc?.provenance ?? {};
   if (provenance.basedOn !== plan.champion.id) {
