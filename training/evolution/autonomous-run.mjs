@@ -62,6 +62,12 @@ const CODE_MODULES = [
   'web-v1/dist/js/engine.js',
   'web-v1/dist/js/ai.js',
   'web-v1/dist/js/js/adapter.js',
+  'web-v1/dist/js/ai/decision.js',
+  'web-v1/dist/js/js/champion-guided.js',
+  'web-v1/dist/js/js/joint-rollout.js',
+  'web-v1/dist/js/js/planner.js',
+  'web-v1/dist/js/js/config.js',
+  'web-v1/dist/js/ai-runtime/decision-core.js',
 ];
 
 function computeCodeVersion() {
