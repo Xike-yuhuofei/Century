@@ -1,37 +1,52 @@
 {
   "schema": "century-promotion-e2e-drill-v1",
-  "generatedAt": "2026-10-25T23:18:43.317Z",
+  "generatedAt": "2026-10-26T00:53:25.013Z",
   "verdict": "PASS",
   "checks": [
     {
       "id": "promotion-gate-dry-run",
       "status": "PASS",
-      "evidence": "{\n  \"verdict\": \"PROMOTE\",\n  \"candidateId\": \"drill-candidate-mvog8hjj\",\n  \"planHash\": \"93dfe6021a3b22069ff533b20795adf30ff628b735653c3a047c3637992fb3a3\",\n  \"challengeIndex\": 12,\n  \"dryRun\": true,\n  \"record\": {\n    \"id\": \"drill-candidate-mvog8hjj\",\n    \"name\": \"Century AI 冠军 drill-candidate-mvog8hjj\","
+      "evidence": "{\n  \"verdict\": \"PROMOTE\",\n  \"candidateId\": \"drill-candidate-mvojm105\",\n  \"planHash\": \"0088d82b539e824a5211cb2d896abe4d648eea7863601aa24ee27f03e7bf3c24\",\n  \"challengeIndex\": 12,\n  \"dryRun\": true,\n  \"record\": {\n    \"id\": \"drill-candidate-mvojm105\",\n    \"name\": \"Century AI 冠军 drill-candidate-mvojm105\","
     },
     {
       "id": "promotion-gate-applied",
       "status": "PASS",
-      "evidence": "{\n  \"verdict\": \"PROMOTE\",\n  \"candidateId\": \"drill-candidate-mvog8hjj\",\n  \"planHash\": \"93dfe6021a3b22069ff533b20795adf30ff628b735653c3a047c3637992fb3a3\",\n  \"challengeIndex\": 12\n}\n冠军记录：/var/folders/mq/_2m0mslx2pl08p1gg_n65g040000gn/T/century-promotion-e2e-Gmjtlx/repo/training/champions/champion.json\n候"
+      "evidence": "{\n  \"verdict\": \"PROMOTE\",\n  \"candidateId\": \"drill-candidate-mvojm105\",\n  \"planHash\": \"0088d82b539e824a5211cb2d896abe4d648eea7863601aa24ee27f03e7bf3c24\",\n  \"challengeIndex\": 12\n}\n冠军记录：/var/folders/mq/_2m0mslx2pl08p1gg_n65g040000gn/T/century-promotion-e2e-hwv9Q4/repo/training/champions/champion.json\n候"
+    },
+    {
+      "id": "promotion-gate-post-apply",
+      "status": "PASS",
+      "evidence": "{\n  \"verdict\": \"VERIFY_APPLIED\",\n  \"mode\": \"post-apply\",\n  \"candidateId\": \"drill-candidate-mvojm105\",\n  \"appliedChampion\": \"drill-candidate-mvojm105\",\n  \"basedOn\": \"joint-js5\",\n  \"planHash\": \"0088d82b539e824a5211cb2d896abe4d648eea7863601aa24ee27f03e7bf3c24\",\n  \"evidenceHash\": \"b5905e9cdc99535d80ad54"
+    },
+    {
+      "id": "publish-pr-dry-run",
+      "status": "PASS",
+      "evidence": "commit=b315275a14de files=10"
     },
     {
       "id": "apply-champion",
       "status": "PASS",
-      "evidence": "parameters.ts 含 drill-candidate-mvog8hjj"
+      "evidence": "parameters.ts 含 drill-candidate-mvojm105"
+    },
+    {
+      "id": "audit-gate-promotion",
+      "status": "PASS",
+      "evidence": "PASS；two-player-stats:INFO"
     },
     {
       "id": "build-embeds-champion",
       "status": "PASS",
-      "evidence": "index.html 含新冠军 id/adapter；artifact=3c8845bde307"
+      "evidence": "index.html 含新冠军 id/adapter；artifact=a90d8a9f7ea7"
     },
     {
       "id": "deploy-verify-new-champion",
       "status": "PASS",
-      "evidence": "[{\"id\":\"build-manifest-available\",\"status\":\"PASS\",\"evidence\":\"build-manifest.json 可解析\"},{\"id\":\"artifact-identity\",\"status\":\"PASS\",\"evidence\":\"部署 artifact=3c8845bde30729d4 期望=3c8845bde30729d4\"},{\"id\":\"manifest-schema\",\"status\":\"PASS\",\"evidence\":\"schema=century-web-build-manifest-v2\"}]"
+      "evidence": "[{\"id\":\"build-manifest-available\",\"status\":\"PASS\",\"evidence\":\"build-manifest.json 可解析\"},{\"id\":\"artifact-identity\",\"status\":\"PASS\",\"evidence\":\"部署 artifact=a90d8a9f7ea7c9c0 期望=a90d8a9f7ea7c9c0\"},{\"id\":\"manifest-schema\",\"status\":\"PASS\",\"evidence\":\"schema=century-web-build-manifest-v2\"}]"
     },
     {
       "id": "corrupt-deploy-rejected",
       "status": "PASS",
-      "evidence": "Command failed: /usr/local/bin/node /private/tmp/century-final/scripts/ci/verify-deploy.mjs --url http://127.0.0.1:59355/ --expected-artifact 3c8845bde30729d4fd8c1240ad4f6d04d3ad8c5c7f714d3c8d43cba0828300c8 --expected-champion drill-candidate-mvog8hjj\n"
+      "evidence": "Command failed: /usr/local/bin/node /private/tmp/century-final/scripts/ci/verify-deploy.mjs --url http://127.0.0.1:55149/ --expected-artifact a90d8a9f7ea7c9c00f566c2ea714ad070d64449449b0be0d46526a49062b3a9f --expected-champion drill-candidate-mvojm105\n"
     },
     {
       "id": "rollback-restores-previous",
@@ -44,7 +59,7 @@
       "evidence": "回滚版本 verify-deploy 放行"
     }
   ],
-  "candidateId": "drill-candidate-mvog8hjj",
+  "candidateId": "drill-candidate-mvojm105",
   "previousChampion": "joint-js5",
   "challengeIndex": 12,
   "alpha": 0.00001220703125,
