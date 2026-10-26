@@ -101,8 +101,13 @@ function assertResumeCodeVersion() {
   }
   const recorded = JSON.parse(readFileSync(CODE_VERSION_PATH, 'utf8'));
   const current = computeCodeVersion();
-  if (recorded.commit !== current.commit || recorded.dirty !== current.dirty) {
-    throw new Error(`resume 代码版本不一致：启动=${recorded.commit} dirty=${recorded.dirty}，当前=${current.commit} dirty=${current.dirty}`);
+  if (recorded.dirty !== false) {
+    throw new Error('启动时工作区不干净（dirty=true），该 campaign 不能作为可复现证据');
+  }
+  // 运行过程中会写入种子登记、证据与检查点，工作区 dirty 必然从 false 变为 true；
+  // 恢复时只要求 commit 与训练核心/构建产物哈希一致，不要求当前工作区干净。
+  if (recorded.commit !== current.commit) {
+    throw new Error(`resume 代码版本不一致：启动=${recorded.commit}，当前=${current.commit}`);
   }
   for (const [path, hash] of Object.entries(recorded.modules ?? {})) {
     if (current.modules[path] !== hash) {
