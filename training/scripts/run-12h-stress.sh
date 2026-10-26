@@ -10,13 +10,14 @@ ARGS=(
   --campaign "$CAMPAIGN"
   --rounds 500
   --player-counts 2,3,4,5
-  --quick-seeds 8
+  --quick-seeds 12
   --deep-seeds 12
   --candidates 8
   --max-candidates 2000
   --max-games 200000
   --max-wall-ms 43200000
   --max-concurrent 1
+  --max-deep-confirmations 24
   --continue-from-selected
 )
 if [ -f "training/reports/autonomous/$CAMPAIGN/state.json" ]; then
