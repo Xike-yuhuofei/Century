@@ -267,23 +267,23 @@ const isAdapter = r => r.reason.includes('联合');
 // ---- V7：晋级指纹（新格式：冠军自身 provenance vs 当前构建；旧格式按历史 js5 证据） ----
 {
   const prov = championDoc.provenance ?? {};
-  const normalized = prov.decisionSourceSha256 && prov.decisionArtifactSha256 && prov.championParametersSha256;
+  const normalized = Boolean(prov.decisionSourceSha256 && prov.decisionArtifactSha256 && prov.championParametersSha256);
   if (normalized) {
     // 新格式由 refresh-champion-provenance 在 apply+build 后回写。
     // 不再把任何一次历史挑战（js5）当作所有未来冠军的锚点。
     let currentProv = null;
     try { currentProv = buildProvenance(); } catch { /* dist 未构建 */ }
     const detail = currentProv
-      ? `decisionSource=${normalized.decisionSourceSha256.slice(0, 12)}/${currentProv.decisionSourceSha256.slice(0, 12)}；` +
-        `decisionArtifact=${normalized.decisionArtifactSha256.slice(0, 12)}/${currentProv.decisionArtifactSha256.slice(0, 12)}；` +
-        `championParameters=${normalized.championParametersSha256.slice(0, 12)}/${currentProv.championParametersSha256.slice(0, 12)}`
+      ? `decisionSource=${prov.decisionSourceSha256.slice(0, 12)}/${currentProv.decisionSourceSha256.slice(0, 12)}；` +
+        `decisionArtifact=${prov.decisionArtifactSha256.slice(0, 12)}/${currentProv.decisionArtifactSha256.slice(0, 12)}；` +
+        `championParameters=${prov.championParametersSha256.slice(0, 12)}/${currentProv.championParametersSha256.slice(0, 12)}`
       : `冠军=${championDoc.parameters?.id}；dist 未构建`;
     if (!currentProv) {
       note('BLOCKED', 'V7', '无法核验晋级身份：dist 未构建', detail, 'cd web-v1 && npm run build');
     } else {
-      const sourceDrift = normalized.decisionSourceSha256 !== currentProv.decisionSourceSha256;
-      const paramsDrift = normalized.championParametersSha256 !== currentProv.championParametersSha256;
-      const artifactDrift = normalized.decisionArtifactSha256 !== currentProv.decisionArtifactSha256;
+      const sourceDrift = prov.decisionSourceSha256 !== currentProv.decisionSourceSha256;
+      const paramsDrift = prov.championParametersSha256 !== currentProv.championParametersSha256;
+      const artifactDrift = prov.decisionArtifactSha256 !== currentProv.decisionArtifactSha256;
       if (sourceDrift || paramsDrift) {
         note('P0', 'V7a', '冠军 provenance 与当前源码/参数不一致', detail,
           '重新执行正式挑战或恢复正确 parameters.ts；禁止手工改 provenance');
