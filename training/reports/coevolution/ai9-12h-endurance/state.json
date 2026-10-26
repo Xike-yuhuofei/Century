@@ -1,0 +1,139 @@
+{
+  "schema": "century-evolution-campaign-v1",
+  "campaignId": "ai9-12h-endurance",
+  "runFingerprint": "24af8b23da043a4190f99fa1b12d6723ab6a19984bd99204142ed6d023cb0248",
+  "config": {
+    "version": 1,
+    "configRef": "ai9://campaign/coevolution",
+    "rounds": 500,
+    "playerCounts": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "quickSeeds": 8,
+    "deepSeeds": 8,
+    "maxMoves": 400,
+    "deadlineMs": 60000,
+    "retainTopK": 3,
+    "deepConfirmations": 4,
+    "generation": {
+      "count": 6,
+      "seed": 20261025,
+      "targetIds": [
+        "M01",
+        "M02",
+        "M05",
+        "M10",
+        "M11"
+      ],
+      "mode": "multi-module",
+      "strategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "ablation"
+      ],
+      "openevolveIterations": 2,
+      "includeControl": true,
+      "allowDeterministicFallback": true
+    },
+    "budget": {
+      "maxCandidates": 2000,
+      "maxGames": 200000,
+      "maxWallMs": 43200000,
+      "maxConcurrent": 1,
+      "maxDeepConfirmations": 4
+    },
+    "diagnosticsPath": "training/reports/diagnostics-latest/analysis.json",
+    "humanAnalyticsFailuresPath": null,
+    "parentCandidateId": null,
+    "continueFromSelected": true
+  },
+  "status": "running",
+  "phase": "running",
+  "currentRoundIndex": 0,
+  "rounds": [
+    {
+      "round": 1,
+      "seedWindows": {
+        "screen": {
+          "windowId": "ai9-screen-w015",
+          "purpose": "screen",
+          "pool": "dev",
+          "base": 1660015000,
+          "count": 1000,
+          "blockStart": 1660000000,
+          "blockEnd": 1670000000,
+          "index": 15
+        },
+        "deep": {
+          "windowId": "ai9-deep-w013",
+          "purpose": "deep",
+          "pool": "dev",
+          "base": 1670013000,
+          "count": 1000,
+          "blockStart": 1670000000,
+          "blockEnd": 1680000000,
+          "index": 13
+        }
+      },
+      "screenSeeds": [
+        1660015000,
+        1660015001,
+        1660015002,
+        1660015003,
+        1660015004,
+        1660015005,
+        1660015006,
+        1660015007
+      ],
+      "deepSeeds": [
+        1670013000,
+        1670013001,
+        1670013002,
+        1670013003,
+        1670013004,
+        1670013005,
+        1670013006,
+        1670013007
+      ],
+      "generated": false,
+      "selected": false,
+      "deepDone": false,
+      "approvalDone": false,
+      "diagnosticsDone": false,
+      "candidates": [],
+      "selectedIds": [],
+      "selectionSummary": null,
+      "diagnostics": null,
+      "rejectedAtGeneration": [],
+      "notes": []
+    }
+  ],
+  "checkpointSeq": 1,
+  "lastEventSeq": 1,
+  "createdAt": "2026-10-26T05:08:39.047Z",
+  "updatedAt": "2026-10-26T05:08:39.054Z",
+  "budgetUsed": {
+    "candidates": 0,
+    "games": 0,
+    "wallMs": 0,
+    "deepConfirmations": 0
+  },
+  "pendingApprovals": [],
+  "guardrails": {
+    "validationPoolConsumed": false,
+    "promotionTriggered": false,
+    "championMutation": "none",
+    "formalChallengeApprovalRequired": false,
+    "machineGateRequired": true
+  },
+  "promotionQueue": [],
+  "promotionOutcomes": [],
+  "moduleElites": [],
+  "mapElites": {},
+  "generationDiagnostics": []
+}

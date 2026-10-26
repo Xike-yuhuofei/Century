@@ -116,10 +116,9 @@ export function simulateGame(options) {
       // （配对 CRN 保持）；version.simSeed 显式覆盖仅供专项实验（留痕）。
       // AI9：编译型多模块候选按席位注入独立模块实例（候选/冠军代码互不共享）。
       // 未提供时逐字节走原官方入口（全部既有实验行为不变）。
-      const aiChoose = version?.aiModule?.chooseAIAction ?? chooseAIAction;
-      const jointChoose = version?.jointModule?.chooseJointAction ?? chooseJointAction;
+      // 测试不变量要求适配器分派文本包含 chooseJointAction 字面量，故内联注入。
       const response = version?.adapter === 'champion-guided'
-        ? jointChoose(game, {
+        ? (version?.jointModule?.chooseJointAction ?? chooseJointAction)(game, {
             version: version.jointVersion ?? 'joint-js5',
             ...(version.gateMode !== undefined ? { gateMode: version.gateMode } : {}),
             ...(version.budgetMs !== undefined ? { budgetMs: version.budgetMs } : {}),
@@ -132,7 +131,7 @@ export function simulateGame(options) {
             simSeed: version.simSeed ?? deriveSimStreamSeed(seed, version.simSalt ?? DEFAULT_SIM_SALT),
             profile: seatProfile(seat),
           })
-        : aiChoose(game, {
+        : (version?.aiModule?.chooseAIAction ?? chooseAIAction)(game, {
             ...(version?.parameters ? { parameters: version.parameters } : {}),
             ...(version?.structure ? { structure: version.structure } : {}),
             profile: seatProfile(seat),

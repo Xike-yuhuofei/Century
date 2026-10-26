@@ -11,7 +11,9 @@
 > - 三阶段工程能力已实现并真实运行；但**没有任何候选通过第一名率正式挑战**，冠军未变，也没有宣称的竞技提升。
 > - 机器门禁路径已真实执行：`ai9-live-coevolve-2` 中 2 个候选进入 `queued-machine-gate`，
 >   均被 `promotion-handler` 以 `insufficient-statistical-power` **正确拒绝**（未消费验证池/alpha）。
-> - `R09`（12 小时连续运行）在本会话内为 **NOT_RUN**；`R12`（真实冠军晋级/自动发布）为 **BLOCKED**，
+> - `R09`（12 小时连续运行）已启动 **IN_PROGRESS**（`ai9-12h-endurance`，13:08 CST 开始，12h 预算），
+>   但本报告生成时尚未完成，不能记为 PASS；停止/恢复机制已在 `ai9-live-coevolve-2` 实测。
+> - `R12`（真实冠军晋级/自动发布）为 **BLOCKED**，
 >   原因是统计预算/功效不足且没有合格候选，不是 PASS。
 > - 本报告把“接口存在”“单元测试通过”“模拟实验成功”与“真实多模块进化已完成”严格区分。
 > - 唯一竞技指标仍是 2–5 人焦点席位配对第一名率增量；平均分、搜索速度、代理评分均只作诊断。
@@ -316,7 +318,7 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 | 真实 OpenEvolve 多模块运行 | PASS | r001/r003 + 控制器内嵌（§4.2/§4.6.2） |
 | 停止 / 检查点 / 恢复实测 | PASS | `ai9-live-coevolve-2`：steps=7 停止 → resume → completed；events seq 25/26 |
 | 自动正式晋级 | BLOCKED | 门禁路径真实执行，2 次均因统计功效不足 BLOCKED；无合格候选，未触发验证池/alpha |
-| 12h 连续运行/恢复 | NOT_RUN | 见 §7 |
+| 12h 连续运行/恢复 | IN_PROGRESS | `ai9-12h-endurance` 于 2026-10-26 13:08 CST 启动（`--max-wall-ms 43200000`），本报告生成时仍在运行；完成前不得记 PASS。短周期停止/恢复已 PASS（§4.6.2） |
 
 ---
 
@@ -382,7 +384,7 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 
 | ID | 项目 | 状态 | 原因/解除条件 |
 |---|---|---|---|
-| R09 | 12 小时连续训练 + 强制终止恢复 | NOT_RUN | 本会话未提供 12h 连续窗口；命令与监控已就绪（见 §8） |
+| R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | 已于 13:08 CST 启动 `ai9-12h-endurance`（500 轮上限 / 12h 墙钟 / 2000 候选 / 200000 局上限）；本报告生成时未完成。短周期 stop→resume 已实测 PASS（§4.6.2）。完成条件：12h 后检查状态、预算与恢复证据 |
 | R12 | 真实冠军晋级 + 自动发布 + 回滚 | BLOCKED | 门禁路径已真实执行 2 次（`ai9-live-coevolve-2`），均 `BLOCKED/insufficient-statistical-power`（α=1.22e-5，需 ~10,249 种子/人数）；没有统计合格候选，不能伪造挑战/晋级。解除条件：补充独立验证预算与 alpha，且候选达到预注册阈值 |
 | — | 统计显著的第一名率提升 | 未证明 | 所有研究候选的区间下界均 ≤0；冠军保持 `joint-js5` |
 | — | 全模块逐一真实对局强度证明 | 部分 | 12 模块共同控制真实对局；逐模块“强度贡献”只做了探针与交互方向性实验 |
@@ -433,6 +435,15 @@ npm run coevolve:start -- --campaign ai9-nightly --rounds 2 --candidates 4 \
   --max-wall-ms 43200000 --max-games 600
 npm run coevolve:status -- --campaign ai9-nightly
 
+# 4b) 12h 持续运行（已启动；本报告生成时仍在运行）
+nohup caffeinate -i npm run coevolve:start -- --campaign ai9-12h-endurance \
+  --rounds 500 --candidates 6 --player-counts 2,3,4,5 \
+  --quick-seeds 8 --deep-seeds 8 --deep-confirmations 4 --max-deep-confirmations 4 \
+  --modules M01,M02,M05,M10,M11 --strategies single,pair,multi,crossover,ablation \
+  --max-candidates 2000 --max-games 200000 --continue-from-selected \
+  --max-wall-ms 43200000 --max-concurrent 1 > /tmp/ai9-12h.log 2>&1 &
+npm run coevolve:status -- --campaign ai9-12h-endurance
+
 # 5) 正式挑战（仅在候选达到发起条件时；会消费验证池/alpha）
 node training/tournament/run-first-place-challenge.mjs \
   --candidate training/reports/coevolution/<campaign>/artifacts/<candidate>.json \
@@ -454,5 +465,6 @@ node training/scripts/apply-modules.mjs --revert
 
 - **系统能力**：AI 9.0 已从单函数 OpenEvolve 升级为受控的全决策系统多模块协同进化平台；12 个模块真实接入、可独立/联合变异、可交叉/消融、可真实多人对局、可预注册评估、可进入冠军晋级门禁。
 - **竞技结果**：没有找到统计上更强的冠军；当前冠军仍为 `joint-js5`，第一名率提升未证明。任何相反表述都是不实。
-- **阻塞**：R09 12h 连续运行、R12 真实晋级/发布/回滚触发；解除条件见 §7。
-- **状态**：`CENTURY_AI9_COEVOLUTION_READY = false`（因 R09/R12 未完成；工程能力本身已就绪并可复现）。
+- **真实闭环**：`ai9-live-coevolve-2` 完成 2 轮 8 候选 192 局，含真实 LLM 调用、stop→resume、模块精英/MAP-Elites、2 次机器门禁 BLOCKED；另有真实模块交叉组合 16 局。
+- **阻塞**：R09 12h 已启动但未完成（IN_PROGRESS）；R12 真实晋级/发布因统计功效不足 BLOCKED。解除条件见 §7。
+- **状态**：`CENTURY_AI9_COEVOLUTION_READY = false`（因 R09 未完成、R12 阻塞；工程能力本身已就绪并可复现）。
