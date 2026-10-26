@@ -1,7 +1,7 @@
 # Century AI 9.0｜OpenEvolve 全决策系统自主协同进化工程 · 最终验收报告
 
 生成时间：2026-10-26（Asia/Shanghai）
-开发分支：`feat/ai9-coevolution`
+开发分支：`feat/ai9-coevolution`（PR #58 已 squash 合并到 main `1db83e94111017c01ab5a35871a7bca96a91fa56`）
 基线 main：`19d4b40c2f633c7b8ff8b5484941a0ee125a7bd1`
 基线冠军：`joint-js5`（未变更）
 开发 worktree：`/Volumes/Extreme SSD/Projects/Century-ai9`
@@ -11,8 +11,10 @@
 > - 三阶段工程能力已实现并真实运行；但**没有任何候选通过第一名率正式挑战**，冠军未变，也没有宣称的竞技提升。
 > - 机器门禁路径已真实执行：`ai9-live-coevolve-2` 中 2 个候选进入 `queued-machine-gate`，
 >   均被 `promotion-handler` 以 `insufficient-statistical-power` **正确拒绝**（未消费验证池/alpha）。
-> - `R09`（12 小时连续运行）已启动 **IN_PROGRESS**（`ai9-12h-endurance-2`，13:12 CST 开始，12h 预算）；
->   首次 `ai9-12h-endurance` 进程被宿主回收（无候选产出，状态保留为失败记录）。
+> - main 合并后完整 CI（run `40276963017`）**通过**；GitHub Pages 已部署本次构建并经 `deploy-verify`
+>   7/7 检查 **PASS**：gitCommit `1db83e94…`、artifact `e4d5ed58…`、冠军 `joint-js5`、适配器 `champion-guided`。
+> - `R09`（12 小时连续运行）已启动 **IN_PROGRESS**（`ai9-12h-endurance-3`，13:34 CST 开始，12h 预算）；
+>   前两次启动分别因宿主回收（无候选）和深验全局配额过低（`endurance-2` 跑完 288 局/4 次深验后停止）被替换；
 >   本报告生成时 12h 运行尚未完成，不能记为 PASS；停止/恢复机制已在 `ai9-live-coevolve-2` 实测。
 > - `R12`（真实冠军晋级/自动发布）为 **BLOCKED**，
 >   原因是统计预算/功效不足且没有合格候选，不是 PASS。
@@ -35,7 +37,7 @@
 | 8 | 测试与故障注入证据 | `training/reports/ai9/logs/`、`fault-injection.json`、`module-deploy-drill.json`（§3.3/§6） |
 | 9 | M4 16GB 性能与资源报告 | `training/reports/ai9/resource-report.json`（§6.1） |
 | 10 | 可复现端到端命令 | §8 |
-| 11 | 最新冠军/版本/部署核对 | `joint-js5`；`deploy-verification-local.json`（§1/§6） |
+| 11 | 最新冠军/版本/部署核对 | `joint-js5`；生产 Pages 部署核验 PASS（`production-deploy-verification.json`）；本地核验 `deploy-verification-local.json`（§1/§6） |
 | 12 | 本验收报告 | 本文件 |
 
 ---
@@ -45,9 +47,11 @@
 | 项目 | 事实 |
 |---|---|
 | 基线 main SHA | `19d4b40c2f633c7b8ff8b5484941a0ee125a7bd1` |
+| AI9 交付合并 | PR #58 → main `1db83e94111017c01ab5a35871a7bca96a91fa56`（2026-10-26T05:56:24Z squash merge；合并前 PR 检查全绿，ui-smoke 一次 1ms flake 后重跑通过） |
 | 当前冠军 | `joint-js5`（`training/champions/champion.json`） |
 | 冠军决策核心 | `champion-guided` / `joint-js5` / `budgetMs=100` / `acquisitionVariant=readiness-efficiency` |
 | 网页构建身份（本地核验） | source `d507667b8acc5167…`（74 文件）；artifact `e4d5ed58d031efdf…`（49 文件，含 `ai/evolve/modules.js`）；本地 `verify-deploy` PASS |
+| 网页部署身份（生产核验） | `https://xike-yuhuofei.github.io/Century/`：gitCommit `1db83e94…`、artifact `e4d5ed58…`、source `d507667b…`、冠军 `joint-js5`、适配器 `champion-guided`；CI `deploy-verify` 7/7 PASS（2026-10-26T06:20:39Z） |
 | AI8 遗留能力 | Campaign Controller、真实种子治理、第一名率评估器、预注册、alpha 账本、机器门禁、回滚演练均已存在并被复用 |
 | 审计发现的真实断点 | ①OpenEvolve 只进化 `acquisitionValue` 单函数；②其余“5 模块”只是声明式代理插件，未接生产决策；③Candidate Artifact 只覆盖单个函数/描述符；④Campaign Controller 只管理单目标候选；⑤12 模块体系不存在 |
 | 修复方式 | 不推倒 AI8；在其上扩展多模块注册表/多文件候选/12 模块接线/协同进化控制器，全部复用既有评估、种子、预注册、alpha 与机器门禁 |
@@ -345,7 +349,7 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 | 停止 / 检查点 / 恢复实测 | PASS | `ai9-live-coevolve-2`：steps=7 停止 → resume → completed；events seq 25/26 |
 | 自动晋级/回滚机器门禁（模拟分支） | PASS | `promote.test.mjs` 成功/伪造/拒绝分支 + `rollback-drill.json` PASS + 模块部署回滚 6/6；**模拟通过不改变正式冠军** |
 | 真实冠军晋级 | BLOCKED | 门禁路径真实执行，2 次均因统计功效不足 BLOCKED；无合格候选，未触发验证池/alpha |
-| 12h 连续运行/恢复 | IN_PROGRESS | `ai9-12h-endurance-2` 于 2026-10-26 13:12 CST 启动（`screen` 会话 `ai9-12h`，`--max-wall-ms 43200000`），本报告生成时仍在运行；完成前不得记 PASS。短周期停止/恢复已 PASS（§4.6.2） |
+| 12h 连续运行/恢复 | IN_PROGRESS | `ai9-12h-endurance-3` 于 2026-10-26 13:34 CST 启动（`screen` 会话 `ai9-12h3`，`--max-wall-ms 43200000`），本报告生成时仍在运行；完成前不得记 PASS。短周期停止/恢复已 PASS（§4.6.2） |
 
 ---
 
@@ -384,7 +388,8 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 | 故障注入 | 9 类故障（kill/timeout/illegal/compile/duplicate/seed-conflict/corrupt/resource/LLM）全部按预期 fail-closed | `training/reports/ai9/fault-injection.json` |
 | 断点恢复 | state/checkpoint/lock/stop；runFingerprint 防错配置 | Campaign Controller |
 | 部署/回滚 | apply/check/revert + 备份 + 全哈希 | `module-deploy-drill.mjs` 6/6 PASS |
-| 网页实际加载冠军 | 本地 `http.server` + `verify-deploy.mjs`：冠军 `joint-js5`/`champion-guided`/artifact 指纹全部 PASS | `training/reports/ai9/deploy-verification-local.json` |
+| 网页实际加载冠军（生产） | GitHub Pages 生产站点：`build-manifest` gitCommit `1db83e94…`、artifact `e4d5ed58…`、source `d507667b…`；包含冠军 `joint-js5` 与 `champion-guided` 标记，7/7 检查 PASS | CI `deploy-verify` + `training/reports/ai9/production-deploy-verification.json` |
+| 网页实际加载冠军（本地） | 本地 `http.server` + `verify-deploy.mjs`：冠军 `joint-js5`/`champion-guided`/artifact 指纹全部 PASS | `training/reports/ai9/deploy-verification-local.json` |
 
 ---
 
@@ -412,12 +417,12 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 
 | ID | 项目 | 状态 | 原因/解除条件 |
 |---|---|---|---|
-| R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | 已用 `screen` 会话 `ai9-12h` 于 13:12 CST 启动 `ai9-12h-endurance-2`（500 轮上限 / 12h 墙钟 / 2000 候选 / 200000 局上限）；截至本报告生成时已完成 round 1 生成/快筛/深验，产出 1 次 `BLOCKED/insufficient-statistical-power` 门禁结果并继续运行。首次启动 `ai9-12h-endurance` 被宿主回收（无候选）。短周期 stop→resume 已实测 PASS（§4.6.2）。完成条件：12h 后检查状态、预算与恢复证据 |
+| R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | 已用 `screen` 会话 `ai9-12h3` 于 13:34 CST 启动 `ai9-12h-endurance-3`（500 轮上限 / 12h 墙钟 / 3000 候选 / 400000 局上限；每轮 2 次深验、全局上限 200，避免早期配额耗尽）。截至 14:22 CST：5 轮、30 候选、560 局、8 次深验、8 个模块精英、4 次机器门禁结果（均 BLOCKED/insufficient-statistical-power）；状态 `training/reports/coevolution/ai9-12h-endurance-3/`。前两次启动：`endurance` 被宿主回收（无候选）；`endurance-2` 在 288 局/4 次深验后人工停止以修正全局深验配额。短周期 stop→resume 已实测 PASS（§4.6.2）。完成条件：12h 后检查状态、预算与恢复证据 |
 | R12 | 真实冠军晋级 + 自动发布 + 回滚 | BLOCKED | 门禁路径已真实执行 2 次（`ai9-live-coevolve-2`），均 `BLOCKED/insufficient-statistical-power`（α=1.22e-5，需 ~10,249 种子/人数）；没有统计合格候选，不能伪造挑战/晋级。机器的晋级/拒绝/回滚分支已由单元/演练测试覆盖（模拟证据），但**未改变正式冠军**。解除条件：补充独立验证预算与 alpha，且候选达到预注册阈值 |
 | — | 统计显著的第一名率提升 | 未证明 | 所有研究候选的区间下界均 ≤0；冠军保持 `joint-js5` |
 | — | 全模块逐一真实对局强度证明 | 部分 | 12 模块共同控制真实对局；逐模块“强度贡献”只做了探针与交互方向性实验 |
 | — | M12 在固定 workUnits 正式挑战中的效果 | 不适用 | 正式挑战固定 workUnits；M12 只在墙钟生产预算下有作用 |
-| — | 生产网页实际加载新模块冠军 | BLOCKED | 未晋级，未部署新模块；部署/回滚链路已演练 |
+| — | 生产网页实际加载新模块冠军 | BLOCKED | 未晋级，因此没有新模块冠军可部署；当前生产已部署本次构建（含中性模块钩子）并核验冠军仍为 `joint-js5`，部署/回滚链路已演练 |
 
 ---
 
@@ -453,6 +458,11 @@ node scripts/ci/verify-deploy.mjs --url http://127.0.0.1:8123/ \
   --json training/reports/ai9/deploy-verification-local.json
 kill %1
 
+# 2c) 生产 Pages 身份核验（main 合并/部署后）
+node scripts/ci/verify-deploy.mjs --url https://xike-yuhuofei.github.io/Century/ \
+  --expected-artifact "$ART" --expected-champion "$CH" \
+  --json training/reports/ai9/production-deploy-verification.json
+
 # 3) 真实 OpenEvolve 多模块联合进化
 npm run ai9:openevolve -- --modules M02,M11 --iterations 2 --out ai5/openevolve/results/ai9-r003
 
@@ -464,13 +474,13 @@ npm run coevolve:start -- --campaign ai9-nightly --rounds 2 --candidates 4 \
 npm run coevolve:status -- --campaign ai9-nightly
 
 # 4b) 12h 持续运行（已启动；本报告生成时仍在运行）
-screen -dmS ai9-12h /bin/zsh -c 'cd training && npm run coevolve:start -- --campaign ai9-12h-endurance-2 \
+screen -dmS ai9-12h3 /bin/zsh -c 'cd training && npm run coevolve:start -- --campaign ai9-12h-endurance-3 \
   --rounds 500 --candidates 6 --player-counts 2,3,4,5 \
-  --quick-seeds 8 --deep-seeds 8 --deep-confirmations 4 --max-deep-confirmations 4 \
+  --quick-seeds 8 --deep-seeds 8 --deep-confirmations 2 --max-deep-confirmations 200 \
   --modules M01,M02,M05,M10,M11 --strategies single,pair,multi,crossover,ablation \
-  --max-candidates 2000 --max-games 200000 --continue-from-selected \
-  --max-wall-ms 43200000 --max-concurrent 1 > /tmp/ai9-12h-2.log 2>&1'
-npm run coevolve:status -- --campaign ai9-12h-endurance-2
+  --max-candidates 3000 --max-games 400000 --continue-from-selected \
+  --max-wall-ms 43200000 --max-concurrent 1 > /tmp/ai9-12h-3.log 2>&1'
+npm run coevolve:status -- --campaign ai9-12h-endurance-3
 
 # 5) 正式挑战（仅在候选达到发起条件时；会消费验证池/alpha）
 node training/tournament/run-first-place-challenge.mjs \
@@ -491,6 +501,7 @@ node training/scripts/apply-modules.mjs --revert
 
 ## 9. 最终结论
 
+- **交付**：PR #58 已合并到 main `1db83e94…`；main CI run `40276963017` 全绿（含 research-seatbelt、deploy drill、fault injection）；GitHub Pages 已部署并以 `deploy-verify` 7/7 核验通过。
 - **系统能力**：AI 9.0 已从单函数 OpenEvolve 升级为受控的全决策系统多模块协同进化平台；12 个模块真实接入、可独立/联合变异、可交叉/消融、可真实多人对局、可预注册评估、可进入冠军晋级门禁。
 - **竞技结果**：没有找到统计上更强的冠军；当前冠军仍为 `joint-js5`，第一名率提升未证明。任何相反表述都是不实。
 - **真实闭环**：`ai9-live-coevolve-2` 完成 2 轮 8 候选 192 局，含真实 LLM 调用、stop→resume、模块精英/MAP-Elites、2 次机器门禁 BLOCKED；另有真实模块交叉组合 16 局。
