@@ -266,8 +266,11 @@ jobs:
   coevolve:
     name: ai9-coevolve
     if: github.event_name == 'schedule' && github.event.schedule == '30 2 * * *' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'coevolve')
-    runs-on: ubuntu-latest
-    timeout-minutes: 55
+    # 编译型多模块候选必须经 macOS Seatbelt 隔离；ubuntu 上 generateMultiModuleBatch
+    # 会 fail-closed 拒绝全部候选（实测 run 40347034854 得到 0 候选/0 局），
+    # 因此 AI9 协同进化必须跑 macOS 标准 Runner。
+    runs-on: macos-14
+    timeout-minutes: 60
     permissions:
       contents: write
       actions: read
@@ -362,8 +365,8 @@ jobs:
         with:
           name: ai9-coevolve-${{ github.run_id }}
           path: |
-            training/reports/coevolution/ai9-cloud-*/
-            training/reports/automation/ai9-cloud-*/
+            training/reports/coevolution/${{ steps.campaign.outputs.id }}/
+            training/reports/automation/${{ steps.campaign.outputs.id }}/
             training/reports/first-place-promotion/latest/
             training/governance/seed-consumption-registry.json
           if-no-files-found: warn
