@@ -19,12 +19,19 @@ export const CODE_VERSION_SCHEMA = 'century-code-version-v1';
 
 /** 进化器/候选编译链源码：改变它们会改变候选生成或评估语义。 */
 export const CODE_VERSION_EVOLUTION_FILES = Object.freeze([
+  'training/evolution/autonomous-run.mjs',
   'training/evolution/campaign-controller.mjs',
   'training/evolution/candidate-artifact.mjs',
   'training/evolution/compiled-game-evaluator.mjs',
+  'training/evolution/governance-provider-v2.mjs',
   'training/evolution/module-mutations.mjs',
   'training/evolution/multi-module-candidate.mjs',
   'training/evolution/multi-module-generator.mjs',
+  'training/evolution/openevolve-campaign.mjs',
+  'training/evolution/promotion-handler.mjs',
+  'training/evolution/safety-check.mjs',
+  'training/evolution/selection.mjs',
+  'training/lib/seeds.mjs',
 ]);
 
 function sha256Buffer(buffer) {
