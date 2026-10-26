@@ -154,6 +154,9 @@
 - `training npm test`：**213 / 213 pass**（7.7 min；`training/reports/ai9/logs/training-test.log`）；
 - `training npm run evolution:test`：**93 / 93 pass**（含 4 个 AI9 新测试文件；`training/reports/ai9/logs/evolution-test.log`）；
 - 12 模块 artifact 安全复核：10 项检查全 pass（`training/reports/ai9/all-modules-safety.json`）；
+- 故障注入：**9 / 9 PASS**（kill-recovery / candidate-timeout / illegal-source / compile-failure /
+  duplicate-campaign / seed-conflict / corrupt-state / resource-exhaustion / llm-unavailable；
+  `training/reports/ai9/fault-injection.json`）；
 - 模块部署/回滚演练：6 / 6 PASS（`training/reports/ai9/module-deploy-drill.json`）。
 
 ---
@@ -318,7 +321,8 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 | 失败诊断驱动搜索 | PASS（复用） | research hints 管线 |
 | 真实 OpenEvolve 多模块运行 | PASS | r001/r003 + 控制器内嵌（§4.2/§4.6.2） |
 | 停止 / 检查点 / 恢复实测 | PASS | `ai9-live-coevolve-2`：steps=7 停止 → resume → completed；events seq 25/26 |
-| 自动正式晋级 | BLOCKED | 门禁路径真实执行，2 次均因统计功效不足 BLOCKED；无合格候选，未触发验证池/alpha |
+| 自动晋级/回滚机器门禁（模拟分支） | PASS | `promote.test.mjs` 成功/伪造/拒绝分支 + `rollback-drill.json` PASS + 模块部署回滚 6/6；**模拟通过不改变正式冠军** |
+| 真实冠军晋级 | BLOCKED | 门禁路径真实执行，2 次均因统计功效不足 BLOCKED；无合格候选，未触发验证池/alpha |
 | 12h 连续运行/恢复 | IN_PROGRESS | `ai9-12h-endurance-2` 于 2026-10-26 13:12 CST 启动（`screen` 会话 `ai9-12h`，`--max-wall-ms 43200000`），本报告生成时仍在运行；完成前不得记 PASS。短周期停止/恢复已 PASS（§4.6.2） |
 
 ---
@@ -354,7 +358,8 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 | 合法行动复核 | 候选只能重排/剪枝合法行动；最终 action 由正式引擎复核 | `champion-guided.ts` / `simulateGame` |
 | 隐藏信息 | 决策只消费 `AIObservation`；静态扫描隐藏字段 | 探针/fairness 测试 |
 | 候选污染冠军 | 中性候选逐局一致；候选与官方模块实例分离 | `module-wiring.test.mjs` |
-| 崩溃/死循环 | 步数/墙钟上限；异常局与正常局分离 | evaluator/campaign |
+| 崩溃/死循环 | 步数/墙钟上限；异常局与正常局分离 | evaluator/campaign；故障注入 `candidate-timeout` |
+| 故障注入 | 9 类故障（kill/timeout/illegal/compile/duplicate/seed-conflict/corrupt/resource/LLM）全部按预期 fail-closed | `training/reports/ai9/fault-injection.json` |
 | 断点恢复 | state/checkpoint/lock/stop；runFingerprint 防错配置 | Campaign Controller |
 | 部署/回滚 | apply/check/revert + 备份 + 全哈希 | `module-deploy-drill.mjs` 6/6 PASS |
 | 网页实际加载冠军 | 本地 `http.server` + `verify-deploy.mjs`：冠军 `joint-js5`/`champion-guided`/artifact 指纹全部 PASS | `training/reports/ai9/deploy-verification-local.json` |
@@ -386,7 +391,7 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 | ID | 项目 | 状态 | 原因/解除条件 |
 |---|---|---|---|
 | R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | 已用 `screen` 会话 `ai9-12h` 于 13:12 CST 启动 `ai9-12h-endurance-2`（500 轮上限 / 12h 墙钟 / 2000 候选 / 200000 局上限）；本报告生成时未完成。首次启动 `ai9-12h-endurance` 被宿主回收（无候选）。短周期 stop→resume 已实测 PASS（§4.6.2）。完成条件：12h 后检查状态、预算与恢复证据 |
-| R12 | 真实冠军晋级 + 自动发布 + 回滚 | BLOCKED | 门禁路径已真实执行 2 次（`ai9-live-coevolve-2`），均 `BLOCKED/insufficient-statistical-power`（α=1.22e-5，需 ~10,249 种子/人数）；没有统计合格候选，不能伪造挑战/晋级。解除条件：补充独立验证预算与 alpha，且候选达到预注册阈值 |
+| R12 | 真实冠军晋级 + 自动发布 + 回滚 | BLOCKED | 门禁路径已真实执行 2 次（`ai9-live-coevolve-2`），均 `BLOCKED/insufficient-statistical-power`（α=1.22e-5，需 ~10,249 种子/人数）；没有统计合格候选，不能伪造挑战/晋级。机器的晋级/拒绝/回滚分支已由单元/演练测试覆盖（模拟证据），但**未改变正式冠军**。解除条件：补充独立验证预算与 alpha，且候选达到预注册阈值 |
 | — | 统计显著的第一名率提升 | 未证明 | 所有研究候选的区间下界均 ≤0；冠军保持 `joint-js5` |
 | — | 全模块逐一真实对局强度证明 | 部分 | 12 模块共同控制真实对局；逐模块“强度贡献”只做了探针与交互方向性实验 |
 | — | M12 在固定 workUnits 正式挑战中的效果 | 不适用 | 正式挑战固定 workUnits；M12 只在墙钟生产预算下有作用 |
