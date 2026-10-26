@@ -314,14 +314,16 @@ async function main() {
     let auditOk = false;
     let auditDetail = '';
     try {
-      const auditOut = execFileSync(process.execPath, [
+      const auditJsonPath = join(worktree, 'training/reports/audit-gate-promote-drill.json');
+      execFileSync(process.execPath, [
         join(worktree, 'training/redteam/audit-gate.mjs'), '--tier', 'promotion',
-        '--json', join(worktree, 'training/reports/audit-gate-promote-drill.json'),
+        '--json', auditJsonPath,
       ], { encoding: 'utf8', cwd: worktree, maxBuffer: 32 * 1024 * 1024 });
-      auditOk = /"verdict":\s*"PASS"/.test(auditOut);
-      auditDetail = auditOut.slice(0, 400);
+      const audit = JSON.parse(readFileSync(auditJsonPath, 'utf8'));
+      auditOk = audit.verdict === 'PASS';
+      auditDetail = `${audit.verdict}；${audit.checks.filter(c => c.status !== 'PASS').map(c => `${c.id}:${c.status}`).join(' ')}`.slice(0, 600);
     } catch (error) {
-      auditDetail = String(error.stdout ?? error.message).slice(0, 400);
+      auditDetail = String(error.stdout ?? error.message).slice(0, 600);
     }
     check('audit-gate-promotion', auditOk, auditDetail);
 
