@@ -23,6 +23,7 @@ import { assertResourceBudget, evaluateCapacity, resourceSnapshot } from '../lib
 import { CampaignController } from './campaign-controller.mjs';
 import { createLiveGovernanceProvider, createAutonomousGovernanceAdapter } from './governance-provider-v2.mjs';
 import { createPromotionHandler } from './promotion-handler.mjs';
+import { createOpenEvolveCampaignGenerator, writeOpenEvolveEvidence } from './openevolve-campaign.mjs';
 
 function parseArgs(argv) {
   const values = { _: [] };
@@ -51,6 +52,8 @@ function configFromArgs() {
   const playerCounts = args['player-counts']
     ? String(args['player-counts']).split(',').map(Number)
     : [2, 3, 4, 5];
+  const generatorMode = args.generator ? String(args.generator) : 'bounded';
+  const sourceEvolution = generatorMode === 'openevolve-hybrid' || generatorMode === 'openevolve-only';
   return {
     rounds: args.rounds !== undefined ? Number(args.rounds) : 1,
     playerCounts,
@@ -64,6 +67,14 @@ function configFromArgs() {
       count: args['candidates'] !== undefined ? Number(args['candidates']) : 6,
       seed: args['generation-seed'] !== undefined ? Number(args['generation-seed']) : 20_261_025,
       targetIds: args.targets ? String(args.targets).split(',') : null,
+      generator: generatorMode,
+      openevolve: sourceEvolution ? {
+        iterations: args['openevolve-iterations'] !== undefined ? Number(args['openevolve-iterations']) : 1,
+        timeoutMs: args['openevolve-timeout-ms'] !== undefined
+          ? Number(args['openevolve-timeout-ms']) : 3_600_000,
+        outputDir: args['openevolve-output'] ? resolve(REPO_ROOT, String(args['openevolve-output'])) : null,
+        onLlmUnavailable: args['on-llm-unavailable'] ? String(args['on-llm-unavailable']) : 'fallback',
+      } : null,
     },
     budget: {
       maxCandidates: args['max-candidates'] !== undefined ? Number(args['max-candidates']) : 24,
@@ -74,6 +85,19 @@ function configFromArgs() {
     },
     continueFromSelected: args['continue-from-selected'] === true,
   };
+}
+
+/** 依据配置构建生成器；bounded 走控制器默认的确定性变异。 */
+function generatorFromConfig(config) {
+  if (config.generation.generator === 'bounded') return null;
+  const source = config.generation.openevolve;
+  return createOpenEvolveCampaignGenerator({
+    mode: config.generation.generator,
+    iterations: source.iterations,
+    timeoutMs: source.timeoutMs,
+    outputDir: source.outputDir,
+    onLlmUnavailable: source.onLlmUnavailable,
+  });
 }
 
 async function main() {
@@ -110,9 +134,10 @@ async function main() {
     process.exit(2);
   }
 
+  const config = configFromArgs();
   const capacity = command === 'start'
-    ? assertResourceBudget({ requestedConcurrency: configFromArgs().budget.maxConcurrent })
-    : evaluateCapacity({ requestedConcurrency: configFromArgs().budget.maxConcurrent });
+    ? assertResourceBudget({ requestedConcurrency: config.budget.maxConcurrent })
+    : evaluateCapacity({ requestedConcurrency: config.budget.maxConcurrent });
   if (!capacity.ok) {
     console.log(JSON.stringify({ campaignId, status: 'blocked-by-resource', reasons: capacity.reasons, snapshot: capacity.snapshot }, null, 2));
     process.exit(3);
@@ -123,7 +148,8 @@ async function main() {
     campaignId,
     rootDir,
     governance,
-    config: configFromArgs(),
+    config,
+    generator: generatorFromConfig(config),
     ...(autoChallenge ? { promotionHandler: createPromotionHandler() } : {}),
   });
   const started = Date.now();
@@ -132,6 +158,17 @@ async function main() {
   // 压力测试可通过重启伪造时长）。
   const stateDoc = JSON.parse(readFileSync(resolve(rootDir, 'state.json'), 'utf8'));
   const campaignStartedAt = stateDoc.createdAt ?? new Date(started).toISOString();
+  const sourceEvolution = config.generation.generator !== 'bounded';
+  const openEvolveEvidence = [];
+  if (sourceEvolution) {
+    for (const round of results.rounds) {
+      if (!round.generatorMeta) continue;
+      const written = writeOpenEvolveEvidence({
+        dir: resolve(rootDir, 'openevolve'), round: round.round, generatorMeta: round.generatorMeta,
+      });
+      if (written) openEvolveEvidence.push(written);
+    }
+  }
   const summary = {
     schema: 'century-autonomous-run-summary-v1',
     campaignId,
@@ -144,9 +181,19 @@ async function main() {
     budgetUsed: results.budgetUsed,
     promotionQueue: results.promotionQueue,
     promotionOutcomes: results.promotionOutcomes,
+    generator: {
+      mode: config.generation.generator,
+      sourceEvolution,
+      openevolve: config.generation.openevolve,
+      sourceCandidates: results.rounds.flatMap(r => r.candidates)
+        .filter(c => c.generator === 'openevolve-llm')
+        .map(c => ({ candidateId: c.candidateId, stage: c.stage, buildKind: c.buildKind, sourceHash: c.sourceHash })),
+      evidenceFiles: openEvolveEvidence,
+    },
     candidates: results.rounds.flatMap(r => r.candidates).map(c => ({
       candidateId: c.candidateId,
       stage: c.stage,
+      generator: c.generator ?? null,
       quick: c.quick?.metrics ?? null,
       deep: c.deep?.metrics ?? null,
     })),
