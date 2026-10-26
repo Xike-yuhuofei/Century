@@ -51,6 +51,8 @@ export function verifyWorkflows(repoRoot) {
     'ai9-research', 'ai9-module-wiring-audit.mjs', 'ai9-module-execution-audit.mjs',
     // 分片计划是 PR 墙钟的关键；缺了它就退回单作业 20 分钟串行。
     'plan-test-shards.mjs',
+    // web 长测试（4×16 局完整对局）必须由专用并行作业执行，否则单作业 12 分钟。
+    'web-long-tests', 'CENTURY_AI_TEST_BOTS', '--exclude ai.test.mjs',
     // 回滚必须走独立门禁（证明被回滚的确实是一次晋级，且逐字节恢复）。
     'rollback-gate', 'verify-rollback.mjs',
     // 回滚门禁的隔离演练必须在 CI 中真实执行（放行/拒绝/循环三类分支）。

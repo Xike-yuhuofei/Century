@@ -24,6 +24,7 @@ const baseNeeds = (extra = {}) => ({
 const fullNeeds = (overrides = {}) => baseNeeds({
   build: job(),
   'web-unit': job(),
+  'web-long-tests': job(),
   'training-unit': job(),
   simulation: job(),
   'ui-smoke': job(),
@@ -33,6 +34,7 @@ const fullNeeds = (overrides = {}) => baseNeeds({
 const docsNeeds = () => baseNeeds({
   build: job('skipped'),
   'web-unit': job('skipped'),
+  'web-long-tests': job('skipped'),
   'training-unit': job('skipped'),
   simulation: job('skipped'),
   'ui-smoke': job('skipped'),
@@ -256,6 +258,14 @@ test('AI9 变更：ai9-research 必须真实执行，跳过即失败', () => {
   const skipped = evaluateSummary({ needs: fullNeeds({ 'ai9-research': job('skipped') }), scope, eventName: 'pull_request' });
   assert.equal(skipped.ok, false);
   assert.match(skipped.failures.join(';'), /ai9-research: skipped/);
+});
+
+test('web 长测试专用作业必须真实执行（覆盖不变地拆分 4×16 局）', () => {
+  const scope = { ...fullScope };
+  const skipped = evaluateSummary({ needs: fullNeeds({ 'web-long-tests': job('skipped') }), scope, eventName: 'pull_request' });
+  assert.equal(skipped.ok, false);
+  assert.match(skipped.failures.join(';'), /web-long-tests: skipped/);
+  assert.equal(requiredJobs(scope, { eventName: 'pull_request' }).has('web-long-tests'), true);
 });
 
 test('GITHUB_TOKEN 创建 PR 后用 workflow_dispatch 触发：机器门禁必须真实运行并与 PR 事件同权', () => {

@@ -192,7 +192,8 @@ jobs:
         working-directory: web-v1
         run: |
           mkdir -p test-results
-          files=$(node ../scripts/ci/plan-test-shards.mjs --dir tests --shards 4 --index ${{ matrix.shard }})
+          files=$(node ../scripts/ci/plan-test-shards.mjs --dir tests --shards 4 --index ${{ matrix.shard }} \
+            --exclude ai.test.mjs --weights ../scripts/ci/test-runtime-weights.json)
           echo "分片文件：$files"
           node --test --test-concurrency=2 \
             --test-reporter=spec --test-reporter-destination=stdout \
@@ -212,6 +213,49 @@ jobs:
         with:
           name: web-unit-junit-${{ matrix.shard }}
           path: web-v1/test-results/junit-${{ matrix.shard }}.xml
+          if-no-files-found: ignore
+          retention-days: 14
+
+  web-long-tests:
+    name: web-long-tests
+    needs: [changes, build]
+    if: needs.changes.outputs.web == 'true'
+    # ai.test.mjs 的 4×16 局完整对局约 12 分钟，是 PR 墙钟的绝对长尾。
+    # 覆盖不变：同一批对局按人数拆到 4 个并行作业，每个作业仍跑满 1..16 全部种子。
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        bots: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+      - name: 完整对局长测试（人数 ${{ matrix.bots }}，种子 1–16 全量）
+        working-directory: web-v1
+        env:
+          CENTURY_AI_TEST_BOTS: ${{ matrix.bots }}
+          CENTURY_AI_TEST_SEED_START: '1'
+          CENTURY_AI_TEST_SEED_END: '16'
+        run: |
+          mkdir -p test-results
+          node --test --test-concurrency=1 \
+            --test-reporter=spec --test-reporter-destination=stdout \
+            --test-reporter=junit --test-reporter-destination=test-results/junit-long-${{ matrix.bots }}.xml \
+            tests/ai.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-long-tests-junit-${{ matrix.bots }}
+          path: web-v1/test-results/junit-long-${{ matrix.bots }}.xml
           if-no-files-found: ignore
           retention-days: 14
 
@@ -247,7 +291,8 @@ jobs:
         run: |
           set -o pipefail
           count=$(node -e "console.log(JSON.parse(process.env.SHARDS).length)")
-          files=$(node ../scripts/ci/plan-test-shards.mjs --dir tests --shards "$count" --index ${{ matrix.shard }})
+          files=$(node ../scripts/ci/plan-test-shards.mjs --dir tests --shards "$count" --index ${{ matrix.shard }} \
+            --weights ../scripts/ci/test-runtime-weights.json)
           echo "分片文件：$files"
           node --test --test-concurrency=2 $files 2>&1 | tee "training-test-${{ matrix.shard }}.log"
       - name: AI7 进化控制面安全/可复现测试（仅分片 0）
@@ -677,7 +722,7 @@ jobs:
 
   promotion-machine-gate:
     name: promotion-machine-gate
-    needs: [changes, build, promotion-gate, web-unit, training-unit, simulation, rules-cards, governance-tests, ui-smoke, ai9-research]
+    needs: [changes, build, promotion-gate, web-unit, web-long-tests, training-unit, simulation, rules-cards, governance-tests, ui-smoke, ai9-research]
     if: ${{ always() && (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && needs.changes.outputs.promotion == 'true' && needs.promotion-gate.outputs.verdict == 'PASS' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -729,7 +774,7 @@ jobs:
         run: |
           node -e '
             const needs = JSON.parse(process.env.NEEDS_JSON);
-            const required = ["build","web-unit","training-unit","simulation","rules-cards","governance-tests","ui-smoke","ai9-research","promotion-gate"];
+            const required = ["build","web-unit","web-long-tests","training-unit","simulation","rules-cards","governance-tests","ui-smoke","ai9-research","promotion-gate"];
             for (const job of required) {
               const r = needs[job]?.result;
               if (r !== "success") { console.error(`前置机器检查未成功：${job}=${r}`); process.exit(1); }
@@ -904,6 +949,7 @@ jobs:
       - changes
       - build
       - web-unit
+      - web-long-tests
       - training-unit
       - simulation
       - rules-cards
@@ -911,6 +957,7 @@ jobs:
       - ui-smoke
       - audit-gate
       - research-node
+      - ai9-research
       - research-worker
       - research-e2e
       - research-python

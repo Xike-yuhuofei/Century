@@ -15,7 +15,10 @@ const ALWAYS_REQUIRED = ['changes', 'governance-tests', 'rules-cards'];
 export function requiredJobs(scope, { eventName = '', ref = '', promotionVerdict = '', promotionRequiresApproval = false } = {}) {
   const required = new Set(ALWAYS_REQUIRED);
   if (scope.build) required.add('build');
-  if (scope.web) required.add('web-unit');
+  if (scope.web) {
+    required.add('web-unit');
+    required.add('web-long-tests');
+  }
   if (scope.training) required.add('training-unit');
   if (scope.ai9) required.add('ai9-research');
   if (scope.simulation) required.add('simulation');
