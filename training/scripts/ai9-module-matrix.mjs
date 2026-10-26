@@ -40,7 +40,8 @@ const coevolveRoot = resolve(reports, 'coevolution');
 if (existsSync(coevolveRoot)) {
   for (const name of readdirSync(coevolveRoot)) {
     const state = readJsonIf(join(coevolveRoot, name, 'state.json'));
-    if (state) campaignStates.push({ campaignId: name, state });
+    // 运行中的 campaign 目录通常尚未归档；矩阵只引用已完成/已停止且可复核的证据。
+    if (state && state.status !== 'running') campaignStates.push({ campaignId: name, state });
   }
 }
 
