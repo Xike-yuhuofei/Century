@@ -27,6 +27,23 @@ import { engineValueFor, engineModelContext, type EngineModelContext } from './e
 import { profileFor, type Profile } from './profiles.js';
 import { pressureModel, golemSurvivalModel, type PressureModel } from './opponent-model.js';
 import { adaptiveWidth, structureRng, ROLLOUT_DEFAULTS, type AIStructure } from './structures.js';
+import {
+  goalPriority, restMultiplier, endgameBonus, opponentPressureDelta,
+  seatContestFactor, unknownSupportFactor,
+} from './evolve/modules.js';
+
+const clampFactor = (value: number, low: number, high: number): number =>
+  Number.isFinite(value) ? Math.min(high, Math.max(low, value)) : 1;
+
+/** M07：把可进化的对手压力增量合并进公开压力模型（缺省 delta=0，逐位不变）。 */
+function evolvePressure(view: AIObservation, params: AIParameters): PressureModel {
+  const pressure = pressureModel(view);
+  for (const id of Object.keys(pressure.mean)) {
+    pressure.mean[id] = Math.min(1, Math.max(0, pressure.mean[id] + opponentPressureDelta(view, id, 'mean', params)));
+    pressure.peak[id] = Math.min(1, Math.max(0, pressure.peak[id] + opponentPressureDelta(view, id, 'peak', params)));
+  }
+  return pressure;
+}
 
 export type SearchState = {
   stock: Stock;
@@ -227,7 +244,10 @@ function searchGrade(
 ): number {
   const goal = GOLEM_BY_ID[preferred];
   const gap = goalGap(state.stock, goal);
-  const restFactor = state.path.at(-1)?.type === 'rest' ? params.restWeight : 1;
+  // M05：休息调度乘子（缺省 1 = 冻结 restWeight 口径）。
+  const restFactor = state.path.at(-1)?.type === 'rest'
+    ? params.restWeight * clampFactor(restMultiplier(state, preferred, params), 0.2, 3)
+    : 1;
   // AI7 C2：获取支付机会成本（v2）——付出的非黄水晶终局各值 1 分，
   // 黄水晶按 0.5 分的转换机会成本计。v1 不启用（逐位不变）。
   const lastAction = state.path.at(-1);
@@ -253,9 +273,15 @@ function routeGrade(
   model: EngineModelContext | null,
 ): number {
   // gained 可能包括同一路径上先认领其他公开魔像取得的得分。
+  // M06：终局路线增量（缺省 0；只在路线完成最后一次认领时参与）。
+  const rawTerminalBonus = state.terminal ? endgameBonus(state, params) : 0;
+  const terminalBonus = Number.isFinite(rawTerminalBonus)
+    ? Math.min(20, Math.max(-20, rawTerminalBonus))
+    : 0;
   return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + .65, .90)
     + weighted(state.stock) * .055 * params.capacityWeight
-    + engineValueFor(state, preferred, params, model) * stage * .085 * profile.engine * params.engineWeight;
+    + engineValueFor(state, preferred, params, model) * stage * .085 * profile.engine * params.engineWeight
+    + terminalBonus;
 }
 
 function completedFirstGoal(state: SearchState, preferred: string): boolean {
@@ -298,7 +324,8 @@ export function choosePlan(
   // 全部求值路径调用冻结口径，行为逐位不变。
   const model = params.engineModel === 'v2' ? (modelInput ?? engineModelContext(view, params)) : null;
   const knowledge = publicKnowledge(view);
-  const pressure = pressureModel(view);
+  // M07：对手压力模型经可进化增量修正（缺省 delta=0，冻结口径逐位不变）。
+  const pressure = evolvePressure(view, params);
   const initial = initialState(view);
   const threshold = view.players.length >= 4 ? 5 : 6;
   const mostClaimed = Math.max(...view.players.map(p => p.claimed.length));
@@ -314,12 +341,18 @@ export function choosePlan(
   const allowAcquire = view.triggerPlayer === null;
   // beam-contest（Issue #20）：座位感知目标存活折扣。仅该结构启用，其余结构逐位不变。
   const survival = structure === 'beam-contest' ? golemSurvivalModel(view, depth) : null;
-  const survivalOf = (preferred: string) => survival?.[preferred] ?? 1;
+  // M08：座位/竞争乘子（缺省 1 = 冻结 golemSurvivalModel 口径）。
+  const survivalOf = (preferred: string) =>
+    (survival?.[preferred] ?? 1) * clampFactor(seatContestFactor(view, preferred, params), 0, 2);
   let solved: ScoredState | null = null, prospective: ScoredState | null = null;
-  const finalBeams: Array<{ preferred: string; futureSupport: number; beam: ScoredState[] }> = [];
+  const finalBeams: Array<{ preferred: string; futureSupport: number; goalFactor: number; beam: ScoredState[] }> = [];
   for (const preferred of initial.golemMarket) {
+    // M01：目标选择优先级乘子（缺省 1 = 冻结路线期望）。
+    const goalFactor = clampFactor(goalPriority(view, preferred, params), 0.25, 4);
     // 每个目标只算一次未来牌库支持度（纯公共知识，成本可控）。
-    const futureSupport = futureDeckSupport(initial.stock, preferred, knowledge.unseenMerchants);
+    // M09：未知牌支持度乘子（缺省 1 = 冻结 futureDeckSupport 口径）。
+    const futureSupport = futureDeckSupport(initial.stock, preferred, knowledge.unseenMerchants)
+      * clampFactor(unknownSupportFactor(view, preferred, knowledge.unseenMerchants, params), 0, 3);
     let beam: ScoredState[] = [{ ...initial, quality: 0 }];
     // 血统救援：休息及其后续推进状态共同构成"唯一可行的收卡路线"，
     // 每层为该血统的最佳后继保留一个束席位，防止即时质量剪枝饿死整条路线。
@@ -338,7 +371,8 @@ export function choosePlan(
           if (!next) continue;
           if (next.terminal && !completedFirstGoal(next, preferred)) continue;
           if (completedFirstGoal(next, preferred)) {
-            const quality = routeGrade(next, preferred, stage, profile, params, model) * survivalOf(preferred);
+            const quality = routeGrade(next, preferred, stage, profile, params, model)
+              * survivalOf(preferred) * goalFactor;
             if (!solved || quality > solved.quality) solved = { ...next, preferred, quality };
             continue;
           }
@@ -371,23 +405,23 @@ export function choosePlan(
       rescue(restFallback);
       for (const candidate of beam) {
         const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model)
-          * survivalOf(preferred);
+          * survivalOf(preferred) * goalFactor;
         if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
       }
     }
-    finalBeams.push({ preferred, futureSupport, beam: [...beam] });
+    finalBeams.push({ preferred, futureSupport, goalFactor, beam: [...beam] });
   }
   // beam-rollout / beam-contest：用确定性蒙特卡洛 rollout 评估最终束候选的"未来期望得分"，
   // 与公式先验按权重混合后取代解析 prospective（solved 路线仍优先）。
   // beam-contest 下公式先验与混合分都乘座位感知存活系数（截胡风险进入候选排序与选优）。
   if ((structure === 'beam-rollout' || structure === 'beam-contest') && !solved && finalBeams.length) {
-    const ranked = finalBeams.flatMap(({ preferred, futureSupport, beam }) => beam.map(state => ({
-      preferred, state,
+    const ranked = finalBeams.flatMap(({ preferred, futureSupport, goalFactor, beam }) => beam.map(state => ({
+      preferred, state, goalFactor,
       formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model)
-        * survivalOf(preferred),
+        * survivalOf(preferred) * goalFactor,
     }))).sort((a, b) => b.formula - a.formula).slice(0, ROLLOUT_DEFAULTS.topK);
     let rolloutBest: ScoredState | null = null;
-    for (const { preferred, state, formula } of ranked) {
+    for (const { preferred, state, formula, goalFactor } of ranked) {
       let total = 0;
       for (let r = 0; r < ROLLOUT_DEFAULTS.rollouts; r++) {
         const rng = structureRng(stateKey(state), preferred, view.turnNumber, r);
@@ -405,7 +439,7 @@ export function choosePlan(
       }
       const meanGained = total / ROLLOUT_DEFAULTS.rollouts;
       const quality = (ROLLOUT_DEFAULTS.blend * meanGained + (1 - ROLLOUT_DEFAULTS.blend) * formula)
-        * survivalOf(preferred);
+        * survivalOf(preferred) * goalFactor;
       if (!rolloutBest || quality > rolloutBest.quality) rolloutBest = { ...state, preferred, quality };
     }
     if (rolloutBest) prospective = rolloutBest;

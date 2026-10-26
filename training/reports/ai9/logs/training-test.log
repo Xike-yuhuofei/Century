@@ -1,0 +1,1365 @@
+
+> century-ai-training@4.0.0 pretest
+> node ../web-v1/scripts/sync-cards.mjs --check
+
+Canonical card table: OK
+
+> century-ai-training@4.0.0 test
+> node --test tests/*.test.mjs
+
+TAP version 13
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 审计缺陷复现：携带 adapter 的权重变体被分派到 JS5，权重不可达（确定性路由证明）
+ok 1 - 审计缺陷复现：携带 adapter 的权重变体被分派到 JS5，权重不可达（确定性路由证明）
+  ---
+  duration_ms: 5579.503458
+  type: 'test'
+  ...
+# Subtest: 修复有效性：strip-adapter 后同一权重扰动真实生效（束搜索路径）
+ok 2 - 修复有效性：strip-adapter 后同一权重扰动真实生效（束搜索路径）
+  ---
+  duration_ms: 3879.043709
+  type: 'test'
+  ...
+# Subtest: 注册表风格族：结构上无 adapter 字段，行为上与 JS5 冠军分歧
+ok 3 - 注册表风格族：结构上无 adapter 字段，行为上与 JS5 冠军分歧
+  ---
+  duration_ms: 8808.352334
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: spec 校验：schema/id/变异轴/核心约束全量拒绝路径
+ok 4 - spec 校验：schema/id/变异轴/核心约束全量拒绝路径
+  ---
+  duration_ms: 0.738625
+  type: 'test'
+  ...
+# Subtest: 物化：束搜索候选 strip-adapter + 权重合并，同 spec 同指纹
+ok 5 - 物化：束搜索候选 strip-adapter + 权重合并，同 spec 同指纹
+  ---
+  duration_ms: 0.240875
+  type: 'test'
+  ...
+# Subtest: 物化：冠军引导候选（JS5 基座 + jointOptions 轴）
+ok 6 - 物化：冠军引导候选（JS5 基座 + jointOptions 轴）
+  ---
+  duration_ms: 0.373125
+  type: 'test'
+  ...
+# Subtest: 物化：非适配器基座的冠军引导候选自动补显式 adapter 标记
+ok 7 - 物化：非适配器基座的冠军引导候选自动补显式 adapter 标记
+  ---
+  duration_ms: 0.080833
+  type: 'test'
+  ...
+# Subtest: 物化：custom 基座 + 越界权重拒绝 + 未注册基座拒绝
+ok 8 - 物化：custom 基座 + 越界权重拒绝 + 未注册基座拒绝
+  ---
+  duration_ms: 0.200917
+  type: 'test'
+  ...
+# Subtest: registerCandidates：评估注册表隔离（不修改原注册表）+ id 冲突拒绝
+ok 9 - registerCandidates：评估注册表隔离（不修改原注册表）+ id 冲突拒绝
+  ---
+  duration_ms: 0.86025
+  type: 'test'
+  ...
+# Subtest: candidateFromParameters：参数对象便利入口（含适配器参数自动分流）
+ok 10 - candidateFromParameters：参数对象便利入口（含适配器参数自动分流）
+  ---
+  duration_ms: 0.23975
+  type: 'test'
+  ...
+# Subtest: 示例候选全部可物化（文档化起点）
+ok 11 - 示例候选全部可物化（文档化起点）
+  ---
+  duration_ms: 0.352917
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: GENERALITY_POOL：不含冻结冠军本体（轴 A 的职责），含风格族与历史冠军
+ok 12 - GENERALITY_POOL：不含冻结冠军本体（轴 A 的职责），含风格族与历史冠军
+  ---
+  duration_ms: 0.338666
+  type: 'test'
+  ...
+# Subtest: evaluateCandidate：双轴分离、轴 A 对冠军 / 轴 G 对泛化池、种子分区不重叠
+ok 13 - evaluateCandidate：双轴分离、轴 A 对冠军 / 轴 G 对泛化池、种子分区不重叠
+  ---
+  duration_ms: 25926.963083
+  type: 'test'
+  ...
+# Subtest: evaluateCandidate：轴 A + 轴 G 双人数单元（5p 有向场双方向）
+ok 14 - evaluateCandidate：轴 A + 轴 G 双人数单元（5p 有向场双方向）
+  ---
+  duration_ms: 118402.612041
+  type: 'test'
+  ...
+# Subtest: selectStrongOpponents：四档判定逻辑（strong / specialist / weak-vs-champion / reject）
+ok 15 - selectStrongOpponents：四档判定逻辑（strong / specialist / weak-vs-champion / reject）
+  ---
+  duration_ms: 0.418584
+  type: 'test'
+  ...
+# Subtest: selectStrongOpponents：标准化版本描述符输出（第六阶段可消费）
+ok 16 - selectStrongOpponents：标准化版本描述符输出（第六阶段可消费）
+  ---
+  duration_ms: 144.505
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: matchSeats：焦点席位随 seedIndex 轮转覆盖全部座位
+ok 17 - matchSeats：焦点席位随 seedIndex 轮转覆盖全部座位
+  ---
+  duration_ms: 158.730375
+  type: 'test'
+  ...
+# Subtest: playLeagueGame：2 人局冒烟（js5 快档 vs 风格），终局与遥测完备
+ok 18 - playLeagueGame：2 人局冒烟（js5 快档 vs 风格），终局与遥测完备
+  ---
+  duration_ms: 5521.683292
+  type: 'test'
+  ...
+# Subtest: playLeagueGame：随机合法核心席位注入（三核心混战 3 人局）
+ok 19 - playLeagueGame：随机合法核心席位注入（三核心混战 3 人局）
+  ---
+  duration_ms: 2703.890334
+  type: 'test'
+  ...
+# Subtest: playLeagueGame：参数校验（seatCount 越界 / seatVersions 长度不符）
+ok 20 - playLeagueGame：参数校验（seatCount 越界 / seatVersions 长度不符）
+  ---
+  duration_ms: 159.9185
+  type: 'test'
+  ...
+# Subtest: planMatrix：2p 头对头单场、≥3p 双向场、种子场间不重叠、越块抛错
+ok 21 - planMatrix：2p 头对头单场、≥3p 双向场、种子场间不重叠、越块抛错
+  ---
+  duration_ms: 0.3185
+  type: 'test'
+  ...
+# Subtest: buildWinRateMatrix：异常局绝不计入统计但按层披露；2p 头对头双向互补计数
+ok 22 - buildWinRateMatrix：异常局绝不计入统计但按层披露；2p 头对头双向互补计数
+  ---
+  duration_ms: 0.42025
+  type: 'test'
+  ...
+# Subtest: buildWinRateMatrix：≥3p 有向场只计入焦点→对手方向
+ok 23 - buildWinRateMatrix：≥3p 有向场只计入焦点→对手方向
+  ---
+  duration_ms: 0.297167
+  type: 'test'
+  ...
+# Subtest: buildWinRateMatrix 分层不变量：相同版本、不同人数/协议绝不合并（P0-3）
+ok 24 - buildWinRateMatrix 分层不变量：相同版本、不同人数/协议绝不合并（P0-3）
+  ---
+  duration_ms: 0.639125
+  type: 'test'
+  ...
+# Subtest: buildWinRateMatrix：分层单元披露版本指纹与异常计数（审计口径）
+ok 25 - buildWinRateMatrix：分层单元披露版本指纹与异常计数（审计口径）
+  ---
+  duration_ms: 0.65425
+  type: 'test'
+  ...
+# Subtest: 端到端冒烟：2+5 人、3 版本、快档——报告结构、指纹、异常记账、座位覆盖
+ok 26 - 端到端冒烟：2+5 人、3 版本、快档——报告结构、指纹、异常记账、座位覆盖
+  ---
+  duration_ms: 192687.341416
+  type: 'test'
+  ...
+# Subtest: summarizeLeague：合成异常场记账与 finished 分离
+ok 27 - summarizeLeague：合成异常场记账与 finished 分离
+  ---
+  duration_ms: 108.61975
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 注册表构建：9 个版本、三决策核心齐备、确定性重建
+ok 28 - 注册表构建：9 个版本、三决策核心齐备、确定性重建
+  ---
+  duration_ms: 257.480125
+  type: 'test'
+  ...
+# Subtest: 注册表深冻结：任何变异都被拒绝
+ok 29 - 注册表深冻结：任何变异都被拒绝
+  ---
+  duration_ms: 163.67175
+  type: 'test'
+  ...
+# Subtest: 冻结版本身份来自晋级归档，不随活动冠军状态切换而变化
+ok 30 - 冻结版本身份来自晋级归档，不随活动冠军状态切换而变化
+  ---
+  duration_ms: 326.060959
+  type: 'test'
+  ...
+# Subtest: stripAdapter：恰好剥离 adapter/jointVersion/budgetMs 三个字段
+ok 31 - stripAdapter：恰好剥离 adapter/jointVersion/budgetMs 三个字段
+  ---
+  duration_ms: 0.3065
+  type: 'test'
+  ...
+# Subtest: 冠军基座参数：适配器归档缺省权重补 1.0，结构固定 beam-rollout
+ok 32 - 冠军基座参数：适配器归档缺省权重补 1.0，结构固定 beam-rollout
+  ---
+  duration_ms: 0.280583
+  type: 'test'
+  ...
+# Subtest: 指纹：键序不变性、权重敏感性、字段敏感性
+ok 33 - 指纹：键序不变性、权重敏感性、字段敏感性
+  ---
+  duration_ms: 0.291208
+  type: 'test'
+  ...
+# Subtest: 描述符校验：走私 adapter / 缺 adapter / 非法 id 全部拒绝
+ok 34 - 描述符校验：走私 adapter / 缺 adapter / 非法 id 全部拒绝
+  ---
+  duration_ms: 0.267917
+  type: 'test'
+  ...
+# Subtest: 权重覆盖：越界拒绝、未知键拒绝、合法合并
+ok 35 - 权重覆盖：越界拒绝、未知键拒绝、合法合并
+  ---
+  duration_ms: 0.160375
+  type: 'test'
+  ...
+# Subtest: resolveVersion：未注册 id 抛错（禁止静默回退）
+ok 36 - resolveVersion：未注册 id 抛错（禁止静默回退）
+  ---
+  duration_ms: 77.152458
+  type: 'test'
+  ...
+# Subtest: 注册表快照披露全部版本指纹
+ok 37 - 注册表快照披露全部版本指纹
+  ---
+  duration_ms: 100.038666
+  type: 'test'
+  ...
+# Subtest: A1 负向：删除/缺失账本 → 治理层 fail-closed
+ok 38 - A1 负向：删除/缺失账本 → 治理层 fail-closed
+  ---
+  duration_ms: 4.745083
+  type: 'test'
+  ...
+# Subtest: A1 负向：伪造 challengeIndex（小于累计/N+1）→ 正式挑战拒绝
+ok 39 - A1 负向：伪造 challengeIndex（小于累计/N+1）→ 正式挑战拒绝
+  ---
+  duration_ms: 0.289583
+  type: 'test'
+  ...
+# Subtest: A1 负向：重用已消费的验证种子块 → 登记与分配拒绝
+ok 40 - A1 负向：重用已消费的验证种子块 → 登记与分配拒绝
+  ---
+  duration_ms: 5.067292
+  type: 'test'
+  ...
+# Subtest: A1 历史：PPO 900M 验证块被识别；long20 未入账区间被保守占用
+ok 41 - A1 历史：PPO 900M 验证块被识别；long20 未入账区间被保守占用
+  ---
+  duration_ms: 0.195917
+  type: 'test'
+  ...
+# Subtest: A1/A4 负向：历史正式挑战基线被删除/截断 → 晋级 fail-closed
+ok 42 - A1/A4 负向：历史正式挑战基线被删除/截断 → 晋级 fail-closed
+  ---
+  duration_ms: 0.769917
+  type: 'test'
+  ...
+# Subtest: A1/A4 负向：账本截断导致验证池高水位回退 → 挑战与晋级均拒绝
+ok 43 - A1/A4 负向：账本截断导致验证池高水位回退 → 挑战与晋级均拒绝
+  ---
+  duration_ms: 0.450833
+  type: 'test'
+  ...
+# Subtest: A3 负向：修改源码但保留旧 dist → 构建一致性 fail-closed
+ok 44 - A3 负向：修改源码但保留旧 dist → 构建一致性 fail-closed
+  ---
+  duration_ms: 366.172667
+  type: 'test'
+  ...
+# Subtest: A3/A4 规范化身份：仅参数块变化 → 决策核心不变、参数身份变化
+ok 45 - A3/A4 规范化身份：仅参数块变化 → 决策核心不变、参数身份变化
+  ---
+  duration_ms: 285.949916
+  type: 'test'
+  ...
+# Subtest: A3 负向：篡改 dist 运行时产物 → 清单指纹不一致
+ok 46 - A3 负向：篡改 dist 运行时产物 → 清单指纹不一致
+  ---
+  duration_ms: 123.962791
+  type: 'test'
+  ...
+# Subtest: A3 负向：手改 dist 部署产物（standalone.html）→ dist 闭包不一致
+ok 47 - A3 负向：手改 dist 部署产物（standalone.html）→ dist 闭包不一致
+  ---
+  duration_ms: 114.743917
+  type: 'test'
+  ...
+# Subtest: A2 冻结身份：不同活动/未来冠军参数不改变冻结 JS5 的决策与配置身份
+ok 48 - A2 冻结身份：不同活动/未来冠军参数不改变冻结 JS5 的决策与配置身份
+  ---
+  duration_ms: 1563.219375
+  type: 'test'
+  ...
+# Subtest: A2 负向：决策核心/归档被静默修改 → 版本锁拒绝
+ok 49 - A2 负向：决策核心/归档被静默修改 → 版本锁拒绝
+  ---
+  duration_ms: 5.180458
+  type: 'test'
+  ...
+# Subtest: A3 溯源：当前构建清单记录 Git commit、dirty 状态与源码/产物双哈希
+ok 50 - A3 溯源：当前构建清单记录 Git commit、dirty 状态与源码/产物双哈希
+  ---
+  duration_ms: 146.298625
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: percentile：已知数组的 p50/p95/p99 线性插值正确
+ok 51 - percentile：已知数组的 p50/p95/p99 线性插值正确
+  ---
+  duration_ms: 0.587041
+  type: 'test'
+  ...
+# Subtest: latencySummary：空样本返回 null 字段，非空给出分位数
+ok 52 - latencySummary：空样本返回 null 字段，非空给出分位数
+  ---
+  duration_ms: 0.095083
+  type: 'test'
+  ...
+# Subtest: firstPlaceClusterCI：确定性（同输入同输出）且区间包含点估计
+ok 53 - firstPlaceClusterCI：确定性（同输入同输出）且区间包含点估计
+  ---
+  duration_ms: 50.404083
+  type: 'test'
+  ...
+# Subtest: firstPlaceClusterCI：全胜退化为点估计（区间不产生 NaN）
+ok 54 - firstPlaceClusterCI：全胜退化为点估计（区间不产生 NaN）
+  ---
+  duration_ms: 0.479
+  type: 'test'
+  ...
+# Subtest: firstPlaceClusterCI：拒绝非法输入（缺 seed / firstPlace 非布尔 / 重复种子聚类）
+ok 55 - firstPlaceClusterCI：拒绝非法输入（缺 seed / firstPlace 非布尔 / 重复种子聚类）
+  ---
+  duration_ms: 0.946041
+  type: 'test'
+  ...
+# Subtest: firstPlaceBy / pairedDiffSummary：分组与配对汇总正确
+ok 56 - firstPlaceBy / pairedDiffSummary：分组与配对汇总正确
+  ---
+  duration_ms: 11.53
+  type: 'test'
+  ...
+# Subtest: 基线种子布局：全部子块落在 AI6_BASELINE_BLOCK 内且互不重叠
+ok 57 - 基线种子布局：全部子块落在 AI6_BASELINE_BLOCK 内且互不重叠
+  ---
+  duration_ms: 0.29925
+  type: 'test'
+  ...
+# Subtest: allocateBaselineSeeds：顺序切片、块内唯一、账本推进且不回退
+ok 58 - allocateBaselineSeeds：顺序切片、块内唯一、账本推进且不回退
+  ---
+  duration_ms: 1.951
+  type: 'test'
+  ...
+# Subtest: allocateBaselineSeeds：拒绝未知配置与超额消费（宁终止也不复用）
+ok 59 - allocateBaselineSeeds：拒绝未知配置与超额消费（宁终止也不复用）
+  ---
+  duration_ms: 1.535083
+  type: 'test'
+  ...
+# Subtest: loadLedger：损坏 schema 拒绝加载
+ok 60 - loadLedger：损坏 schema 拒绝加载
+  ---
+  duration_ms: 0.708083
+  type: 'test'
+  ...
+# Subtest: 真实冠军记录结构完整（不依赖构建状态）：id / 参数 / provenance 齐备
+ok 61 - 真实冠军记录结构完整（不依赖构建状态）：id / 参数 / provenance 齐备
+  ---
+  duration_ms: 1.337
+  type: 'test'
+  ...
+# Subtest: 冻结清单：fixture 指纹与当前构建一致 → 核验通过，manifest 含复现入口
+ok 62 - 冻结清单：fixture 指纹与当前构建一致 → 核验通过，manifest 含复现入口
+  ---
+  duration_ms: 590.158083
+  type: 'test'
+  ...
+# Subtest: 冻结清单：provenance 指纹与当前构建不一致 → 拒绝冻结（漂移防线）
+ok 63 - 冻结清单：provenance 指纹与当前构建不一致 → 拒绝冻结（漂移防线）
+  ---
+  duration_ms: 81.241584
+  type: 'test'
+  ...
+# Subtest: 冻结清单：参数被篡改时校验必须失败（防配置漂移）
+ok 64 - 冻结清单：参数被篡改时校验必须失败（防配置漂移）
+  ---
+  duration_ms: 415.444209
+  type: 'test'
+  ...
+# Subtest: versionsForSeats：任意 N 与池大小下确定性轮换且覆盖全池
+ok 65 - versionsForSeats：任意 N 与池大小下确定性轮换且覆盖全池
+  ---
+  duration_ms: 2.440291
+  type: 'test'
+  ...
+# Subtest: 镜像基准 N=2..5：全部完成、座位公平性结构与吞吐/延迟字段齐全
+ok 66 - 镜像基准 N=2..5：全部完成、座位公平性结构与吞吐/延迟字段齐全
+  ---
+  duration_ms: 50027.428167
+  type: 'test'
+  ...
+# Subtest: 对抗基准 N=2..5：双方向配对、座位轮换全覆盖、第一名率推断结构完整
+ok 67 - 对抗基准 N=2..5：双方向配对、座位轮换全覆盖、第一名率推断结构完整
+  ---
+  duration_ms: 80698.374583
+  type: 'test'
+  ...
+# Subtest: 对抗基准：种子数少于席位数时座位覆盖断言按 min(N, seeds) 校验
+ok 68 - 对抗基准：种子数少于席位数时座位覆盖断言按 min(N, seeds) 校验
+  ---
+  duration_ms: 12865.78025
+  type: 'test'
+  ...
+# Subtest: outcomeKey：同种子同配置逐位一致，剔除计时字段后跨运行稳定
+ok 69 - outcomeKey：同种子同配置逐位一致，剔除计时字段后跨运行稳定
+  ---
+  duration_ms: 14583.849792
+  type: 'test'
+  ...
+# Subtest: 对抗基准：对手池含冠军本体时立即报错
+ok 70 - 对抗基准：对手池含冠军本体时立即报错
+  ---
+  duration_ms: 0.377458
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# [mirror N=2] 完成 2/2 局，异常 0，座位最大偏差 0.0pp，耗时 4.1s
+# [contest N=2] 完成 4/4 局，异常 0，第一名率 50.0%（bootstrap CI [50.0, 50.0]），耗时 6.4s
+# [mirror N=5] 完成 2/2 局，异常 0，座位最大偏差 80.0pp，耗时 7.2s
+# [contest N=5] 完成 4/4 局，异常 0，第一名率 50.0%（bootstrap CI [50.0, 50.0]），耗时 13.5s
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# [mirror N=2] 完成 2/2 局，异常 0，座位最大偏差 0.0pp，耗时 3.4s
+# [contest N=2] 完成 4/4 局，异常 0，第一名率 50.0%（bootstrap CI [50.0, 50.0]），耗时 5.5s
+# [mirror N=5] 完成 2/2 局，异常 0，座位最大偏差 80.0pp，耗时 5.3s
+# [contest N=5] 完成 4/4 局，异常 0，第一名率 50.0%（bootstrap CI [50.0, 50.0]），耗时 11.5s
+# Subtest: runBaseline 端到端：报告结构与冻结/账本注入正确
+ok 71 - runBaseline 端到端：报告结构与冻结/账本注入正确
+  ---
+  duration_ms: 83626.464041
+  type: 'test'
+  ...
+# Subtest: runBaseline：冻结清单缺失时拒绝执行（防无审计基线）
+ok 72 - runBaseline：冻结清单缺失时拒绝执行（防无审计基线）
+  ---
+  duration_ms: 1.9385
+  type: 'test'
+  ...
+# Subtest: evolve-cli 端到端：进化 → 状态/账本/报告完整落盘
+ok 73 - evolve-cli 端到端：进化 → 状态/账本/报告完整落盘
+  ---
+  duration_ms: 27164.485292
+  type: 'test'
+  ...
+# Subtest: evolve-cli 负向：缺少 --seed-ledger 必须 fail-closed
+ok 74 - evolve-cli 负向：缺少 --seed-ledger 必须 fail-closed
+  ---
+  duration_ms: 222.720208
+  type: 'test'
+  ...
+# Subtest: evolve-cli 负向：--resume 指向不存在断点必须 fail-closed
+ok 75 - evolve-cli 负向：--resume 指向不存在断点必须 fail-closed
+  ---
+  duration_ms: 180.434917
+  type: 'test'
+  ...
+# Subtest: evolve-cli 断点续训：--resume 从上次状态继续且种子游标单调前进
+ok 76 - evolve-cli 断点续训：--resume 从上次状态继续且种子游标单调前进
+  ---
+  duration_ms: 43543.612583
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 第一名率配对运行器：A/B 同种子、同对手、焦点席位轮换，第一名由引擎唯一裁定
+ok 77 - 第一名率配对运行器：A/B 同种子、同对手、焦点席位轮换，第一名由引擎唯一裁定
+  ---
+  duration_ms: 22290.809333
+  type: 'test'
+  ...
+# Subtest: 第一名率配对运行器：同种子/同配置重复执行结果完全一致（确定性）
+ok 78 - 第一名率配对运行器：同种子/同配置重复执行结果完全一致（确定性）
+  ---
+  duration_ms: 13659.462167
+  type: 'test'
+  ...
+# Subtest: 席位版本：search-control 候选的联合搜索配置按人数注入
+ok 79 - 席位版本：search-control 候选的联合搜索配置按人数注入
+  ---
+  duration_ms: 0.298333
+  type: 'test'
+  ...
+# Subtest: student t 分位数与已知临界值一致
+ok 80 - student t 分位数与已知临界值一致
+  ---
+  duration_ms: 2.403625
+  type: 'test'
+  ...
+# Subtest: 簇内多观测只作为一个独立样本（配对相关性不被忽略）
+ok 81 - 簇内多观测只作为一个独立样本（配对相关性不被忽略）
+  ---
+  duration_ms: 2.149709
+  type: 'test'
+  ...
+# Subtest: 同一 (seed, focusSeat) 重复测量被拒绝
+ok 82 - 同一 (seed, focusSeat) 重复测量被拒绝
+  ---
+  duration_ms: 0.256
+  type: 'test'
+  ...
+# Subtest: 100 条同种子记录不构成 100 个独立样本（同种子重复统计 → 拒绝显著）
+ok 83 - 100 条同种子记录不构成 100 个独立样本（同种子重复统计 → 拒绝显著）
+  ---
+  duration_ms: 0.153
+  type: 'test'
+  ...
+# Subtest: 反例1：平均得分更高但第一名率更低 → 不晋级
+ok 84 - 反例1：平均得分更高但第一名率更低 → 不晋级
+  ---
+  duration_ms: 3.074333
+  type: 'test'
+  ...
+# Subtest: 反例2：资源效率更高但第一名率更低 → 不晋级
+ok 85 - 反例2：资源效率更高但第一名率更低 → 不晋级
+  ---
+  duration_ms: 3.591791
+  type: 'test'
+  ...
+# Subtest: 反例3：5 人提升但 2 人显著退化 → 不晋级（非劣效失败）
+ok 86 - 反例3：5 人提升但 2 人显著退化 → 不晋级（非劣效失败）
+  ---
+  duration_ms: 1.660166
+  type: 'test'
+  ...
+# Subtest: 反例4：小样本碰巧领先但不显著 → 不晋级
+ok 87 - 反例4：小样本碰巧领先但不显著 → 不晋级
+  ---
+  duration_ms: 0.213875
+  type: 'test'
+  ...
+# Subtest: 反例5：跨人数复用同一种子 → 拒绝判定
+ok 88 - 反例5：跨人数复用同一种子 → 拒绝判定
+  ---
+  duration_ms: 1.393917
+  type: 'test'
+  ...
+# Subtest: 反例6：验证过程中修改候选 → 拒绝
+ok 89 - 反例6：验证过程中修改候选 → 拒绝
+  ---
+  duration_ms: 1.750209
+  type: 'test'
+  ...
+# Subtest: 反例7：研究种子混入正式验证 → 拒绝
+ok 90 - 反例7：研究种子混入正式验证 → 拒绝
+  ---
+  duration_ms: 1.247333
+  type: 'test'
+  ...
+# Subtest: 反例8：可选停止/补样本 → 固定样本核验失败
+ok 91 - 反例8：可选停止/补样本 → 固定样本核验失败
+  ---
+  duration_ms: 0.465833
+  type: 'test'
+  ...
+# Subtest: 反例9：重复挑战不得重置 Alpha（账本严格递增）
+ok 92 - 反例9：重复挑战不得重置 Alpha（账本严格递增）
+  ---
+  duration_ms: 5.624792
+  type: 'test'
+  ...
+# Subtest: 正向：2–5 人第一名率一致提升且非劣效 → 晋级判定通过
+ok 93 - 正向：2–5 人第一名率一致提升且非劣效 → 晋级判定通过
+  ---
+  duration_ms: 1.896291
+  type: 'test'
+  ...
+# Subtest: 正向：5p 提升、2p 轻微退化但仍在 2pp 非劣效内 → 晋级判定通过
+ok 94 - 正向：5p 提升、2p 轻微退化但仍在 2pp 非劣效内 → 晋级判定通过
+  ---
+  duration_ms: 5.646458
+  type: 'test'
+  ...
+# Subtest: 非劣效门槛边界：下界恰低于 −margin 时失败
+ok 95 - 非劣效门槛边界：下界恰低于 −margin 时失败
+  ---
+  duration_ms: 0.288125
+  type: 'test'
+  ...
+# Subtest: 加权汇总权重必须预注册且总和为 1
+ok 96 - 加权汇总权重必须预注册且总和为 1
+  ---
+  duration_ms: 1.571667
+  type: 'test'
+  ...
+# Subtest: 固定期限 Bonferroni：α 不随序号衰减，期满明确停止（可持续替代方案）
+ok 97 - 固定期限 Bonferroni：α 不随序号衰减，期满明确停止（可持续替代方案）
+  ---
+  duration_ms: 4.984333
+  type: 'test'
+  ...
+# Subtest: 初始化 alpha 家族必须显式授权（禁止静默重置预算）
+ok 98 - 初始化 alpha 家族必须显式授权（禁止静默重置预算）
+  ---
+  duration_ms: 0.611541
+  type: 'test'
+  ...
+# Subtest: 预注册计划落盘后不可修改（同 planId 不同内容 → 拒绝）
+ok 99 - 预注册计划落盘后不可修改（同 planId 不同内容 → 拒绝）
+  ---
+  duration_ms: 1.125708
+  type: 'test'
+  ...
+# Subtest: A2 自对照差 = 0（配对实现健全性）
+ok 100 - A2 自对照差 = 0（配对实现健全性）
+  ---
+  duration_ms: 13.124042
+  type: 'test'
+  ...
+# Subtest: A2 拒绝重复 (seed, direction) 记录
+ok 101 - A2 拒绝重复 (seed, direction) 记录
+  ---
+  duration_ms: 2.164542
+  type: 'test'
+  ...
+# Subtest: A2 拒绝非 finished（异常局）记录
+ok 102 - A2 拒绝非 finished（异常局）记录
+  ---
+  duration_ms: 1.161208
+  type: 'test'
+  ...
+# Subtest: A2 拒绝配对缺失（不得静默取交集）
+ok 103 - A2 拒绝配对缺失（不得静默取交集）
+  ---
+  duration_ms: 2.011292
+  type: 'test'
+  ...
+# Subtest: A2 拒绝座位分配协议不一致
+ok 104 - A2 拒绝座位分配协议不一致
+  ---
+  duration_ms: 0.945667
+  type: 'test'
+  ...
+# Subtest: A2 拒绝对手版本配置不一致
+ok 105 - A2 拒绝对手版本配置不一致
+  ---
+  duration_ms: 2.005708
+  type: 'test'
+  ...
+# Subtest: A2 候选席位 id 差异不构成配置不一致（候选按设计不同）
+ok 106 - A2 候选席位 id 差异不构成配置不一致（候选按设计不同）
+  ---
+  duration_ms: 2.2655
+  type: 'test'
+  ...
+# Subtest: A2 方向分离：A/B 口径独立报告，合并值带 caveat
+ok 107 - A2 方向分离：A/B 口径独立报告，合并值带 caveat
+  ---
+  duration_ms: 6.422083
+  type: 'test'
+  ...
+# Subtest: A2 零胜场附 Clopper–Pearson 精确上界
+ok 108 - A2 零胜场附 Clopper–Pearson 精确上界
+  ---
+  duration_ms: 4.76325
+  type: 'test'
+  ...
+# Subtest: A2 Bonferroni family 调整 CI 水平（区间不窄于 family=1）
+ok 109 - A2 Bonferroni family 调整 CI 水平（区间不窄于 family=1）
+  ---
+  duration_ms: 6.898875
+  type: 'test'
+  ...
+# Subtest: normalCdf 与已知分位点一致
+ok 110 - normalCdf 与已知分位点一致
+  ---
+  duration_ms: 1.147458
+  type: 'test'
+  ...
+# Subtest: 配对二元 delta 方差：独立/完全相关边界
+ok 111 - 配对二元 delta 方差：独立/完全相关边界
+  ---
+  duration_ms: 0.510583
+  type: 'test'
+  ...
+# Subtest: requiredSeeds 达到目标功效
+ok 112 - requiredSeeds 达到目标功效
+  ---
+  duration_ms: 0.527084
+  type: 'test'
+  ...
+# Subtest: MDE 随样本量与 alpha 严格变化
+ok 113 - MDE 随样本量与 alpha 严格变化
+  ---
+  duration_ms: 0.489333
+  type: 'test'
+  ...
+# Subtest: 非劣效样本量使用 margin 作为效应下界
+ok 114 - 非劣效样本量使用 margin 作为效应下界
+  ---
+  duration_ms: 0.356084
+  type: 'test'
+  ...
+# Subtest: 功效表覆盖当前 alpha 与可持续方案
+ok 115 - 功效表覆盖当前 alpha 与可持续方案
+  ---
+  duration_ms: 0.754458
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 晋级：四人数完整证据 + 账本 + 双指纹 → 归档并写入待人工批准记录
+ok 116 - 晋级：四人数完整证据 + 账本 + 双指纹 → 归档并写入待人工批准记录
+  ---
+  duration_ms: 251.473958
+  type: 'test'
+  ...
+# Subtest: 晋级：缺少验证账本必须被拒绝（账本强制，不再条件性核对）
+ok 117 - 晋级：缺少验证账本必须被拒绝（账本强制，不再条件性核对）
+  ---
+  duration_ms: 218.388541
+  type: 'test'
+  ...
+# Subtest: 晋级：缺少 2/3/4/5 任一人口证据必须被拒绝（缺失证据不得 PASS）
+ok 118 - 晋级：缺少 2/3/4/5 任一人口证据必须被拒绝（缺失证据不得 PASS）
+  ---
+  duration_ms: 243.93975
+  type: 'test'
+  ...
+# Subtest: 晋级：任一 seatCount 判定非 promote 必须被拒绝
+ok 119 - 晋级：任一 seatCount 判定非 promote 必须被拒绝
+  ---
+  duration_ms: 262.279375
+  type: 'test'
+  ...
+# Subtest: 晋级：伪造 promote 但配对证据不支持必须被拒绝
+ok 120 - 晋级：伪造 promote 但配对证据不支持必须被拒绝
+  ---
+  duration_ms: 279.476041
+  type: 'test'
+  ...
+# Subtest: 晋级：自报种子数/局数与证据不一致必须被拒绝
+ok 121 - 晋级：自报种子数/局数与证据不一致必须被拒绝
+  ---
+  duration_ms: 313.040292
+  type: 'test'
+  ...
+# Subtest: 晋级：逐种子证据替换为声明区间之外的种子必须被拒绝
+ok 122 - 晋级：逐种子证据替换为声明区间之外的种子必须被拒绝
+  ---
+  duration_ms: 253.950292
+  type: 'test'
+  ...
+# Subtest: 晋级：训练种子上的证据无效（必须来自验证池）
+ok 123 - 晋级：训练种子上的证据无效（必须来自验证池）
+  ---
+  duration_ms: 242.384667
+  type: 'test'
+  ...
+# Subtest: 晋级：决定性种子不足门槛必须被拒绝
+ok 124 - 晋级：决定性种子不足门槛必须被拒绝
+  ---
+  duration_ms: 271.602875
+  type: 'test'
+  ...
+# Subtest: 晋级：参数越界必须被拒绝
+ok 125 - 晋级：参数越界必须被拒绝
+  ---
+  duration_ms: 226.62625
+  type: 'test'
+  ...
+# Subtest: 晋级：伪造 challengeIndex（小于全局累计）必须被拒绝
+ok 126 - 晋级：伪造 challengeIndex（小于全局累计）必须被拒绝
+  ---
+  duration_ms: 301.611916
+  type: 'test'
+  ...
+# Subtest: 晋级：随附账本只有局部新条目（未合并全局正式挑战历史）必须被拒绝
+ok 127 - 晋级：随附账本只有局部新条目（未合并全局正式挑战历史）必须被拒绝
+  ---
+  duration_ms: 289.672084
+  type: 'test'
+  ...
+# Subtest: 晋级：随附账本累计到比证据更大的 challengeIndex 必须被拒绝
+ok 128 - 晋级：随附账本累计到比证据更大的 challengeIndex 必须被拒绝
+  ---
+  duration_ms: 272.251416
+  type: 'test'
+  ...
+# Subtest: 晋级：新证据未在中央种子登记（重建/改名本地账本）必须被拒绝
+ok 129 - 晋级：新证据未在中央种子登记（重建/改名本地账本）必须被拒绝
+  ---
+  duration_ms: 270.187583
+  type: 'test'
+  ...
+# Subtest: 晋级：中央登记状态为 voided 的挑战证据必须被拒绝
+ok 130 - 晋级：中央登记状态为 voided 的挑战证据必须被拒绝
+  ---
+  duration_ms: 298.472958
+  type: 'test'
+  ...
+# Subtest: 晋级：alphaBudget 被篡改必须被拒绝
+ok 131 - 晋级：alphaBudget 被篡改必须被拒绝
+  ---
+  duration_ms: 277.052458
+  type: 'test'
+  ...
+# Subtest: 晋级：自报检验阈值 z 被篡改必须被拒绝
+ok 132 - 晋级：自报检验阈值 z 被篡改必须被拒绝
+  ---
+  duration_ms: 299.730875
+  type: 'test'
+  ...
+# Subtest: 晋级：决策核心产物指纹不一致必须被拒绝（证据失效）
+ok 133 - 晋级：决策核心产物指纹不一致必须被拒绝（证据失效）
+  ---
+  duration_ms: 284.279459
+  type: 'test'
+  ...
+# Subtest: 晋级：旧布局（无规范化身份）缺失源码闭包必须被拒绝
+ok 134 - 晋级：旧布局（无规范化身份）缺失源码闭包必须被拒绝
+  ---
+  duration_ms: 276.631
+  type: 'test'
+  ...
+# Subtest: 晋级：决策核心源码不一致必须被拒绝（源码变更后未重新挑战）
+ok 135 - 晋级：决策核心源码不一致必须被拒绝（源码变更后未重新挑战）
+  ---
+  duration_ms: 318.193417
+  type: 'test'
+  ...
+# Subtest: 晋级：候选参数哈希与待发布参数不一致必须被拒绝
+ok 136 - 晋级：候选参数哈希与待发布参数不一致必须被拒绝
+  ---
+  duration_ms: 258.40625
+  type: 'test'
+  ...
+# Subtest: 晋级：复用历史验证种子块必须被拒绝（区间已消费且序号不匹配）
+ok 137 - 晋级：复用历史验证种子块必须被拒绝（区间已消费且序号不匹配）
+  ---
+  duration_ms: 302.265875
+  type: 'test'
+  ...
+# Subtest: 晋级：同名归档已存在且内容不同必须被拒绝（历史不可变）
+ok 138 - 晋级：同名归档已存在且内容不同必须被拒绝（历史不可变）
+  ---
+  duration_ms: 296.178833
+  type: 'test'
+  ...
+# Subtest: 晋级：已在该 id 的冠军不得被重新晋级覆盖 provenance
+ok 139 - 晋级：已在该 id 的冠军不得被重新晋级覆盖 provenance
+  ---
+  duration_ms: 315.339417
+  type: 'test'
+  ...
+# Subtest: 晋级：--seat-evidence 可汇总单人数证据文件
+ok 140 - 晋级：--seat-evidence 可汇总单人数证据文件
+  ---
+  duration_ms: 312.289708
+  type: 'test'
+  ...
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# file:///Volumes/Extreme%20SSD/Projects/Century-ai9/training/scripts/promote-first-place-champion.mjs:95
+#   throw new Error(`证据 evidenceHash 与内容不一致（记录 ${evidence.evidenceHash} ≠ 复算 ${recomputedEvidenceHash}）——证据被篡改`);
+#         ^
+# Error: 证据 evidenceHash 与内容不一致（记录 c04031ad88ee43a0e781ae0402049f40c032e6b56a2eec51f5cb179189d54560 ≠ 复算 f2a7850e4168490ff57c2c19e422a66c0002353bb6a696d4288f2c6c78d38804）——证据被篡改
+#     at file:///Volumes/Extreme%20SSD/Projects/Century-ai9/training/scripts/promote-first-place-champion.mjs:95:9
+#     at ModuleJob.run (node:internal/modules/esm/module_job:274:25)
+#     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:644:26)
+#     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+# Node.js v22.16.0
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# 构建一致性警告：当前工作区存在已跟踪文件改动（dirty=true）；正式挑战证据必须记录该状态
+# Subtest: 机器门禁正向：预注册证据 + alpha 账本 + 种子治理全部一致 → PROMOTE
+ok 141 - 机器门禁正向：预注册证据 + alpha 账本 + 种子治理全部一致 → PROMOTE
+  ---
+  duration_ms: 281.926334
+  type: 'test'
+  ...
+# Subtest: 机器门禁反向：证据内容被篡改 → 拒绝
+ok 142 - 机器门禁反向：证据内容被篡改 → 拒绝
+  ---
+  duration_ms: 293.432125
+  type: 'test'
+  ...
+# Subtest: 机器门禁反向：相关统计不达标 → 拒绝晋级
+ok 143 - 机器门禁反向：相关统计不达标 → 拒绝晋级
+  ---
+  duration_ms: 266.241333
+  type: 'test'
+  ...
+# Subtest: 缺失账本 fail-closed：分配/加载直接抛错，绝不静默按空白区处理
+ok 144 - 缺失账本 fail-closed：分配/加载直接抛错，绝不静默按空白区处理
+  ---
+  duration_ms: 1.500459
+  type: 'test'
+  ...
+# Subtest: 仓库账本：历史导入结构健康（verifyLedger 零缺陷）+ prereg 区间在场
+ok 145 - 仓库账本：历史导入结构健康（verifyLedger 零缺陷）+ prereg 区间在场
+  ---
+  duration_ms: 0.88375
+  type: 'test'
+  ...
+# Subtest: 已消费区间不得被新独立实验复用（改名/换输出目录不可规避）
+ok 146 - 已消费区间不得被新独立实验复用（改名/换输出目录不可规避）
+  ---
+  duration_ms: 70.205583
+  type: 'test'
+  ...
+# Subtest: 有意 CRN 配对：显式声明同组才允许共享；未声明/组不同一律拒绝
+ok 147 - 有意 CRN 配对：显式声明同组才允许共享；未声明/组不同一律拒绝
+  ---
+  duration_ms: 61.07125
+  type: 'test'
+  ...
+# Subtest: 并发申请不能分配相同种子（多进程文件锁串行化）
+ok 148 - 并发申请不能分配相同种子（多进程文件锁串行化）
+  ---
+  duration_ms: 374.705875
+  type: 'test'
+  ...
+# Subtest: 断点续跑：resume 返回已注册区间末端；重复注册同 ID 抛错；续跑不新增对局种子
+ok 149 - 断点续跑：resume 返回已注册区间末端；重复注册同 ID 抛错；续跑不新增对局种子
+  ---
+  duration_ms: 37.723
+  type: 'test'
+  ...
+# Subtest: 作废实验：区间继续占用（防相关样本）、必须留痕 reason、禁止续跑
+ok 150 - 作废实验：区间继续占用（防相关样本）、必须留痕 reason、禁止续跑
+  ---
+  duration_ms: 79.283458
+  type: 'test'
+  ...
+# Subtest: 账本记录完备性：seedStart/seedEnd/runId/commit/指纹/用途逐项落盘
+ok 151 - 账本记录完备性：seedStart/seedEnd/runId/commit/指纹/用途逐项落盘
+  ---
+  duration_ms: 83.604041
+  type: 'test'
+  ...
+# Subtest: 相同种子与配置的对局完全可复现（剔除计时字段后逐位一致）
+ok 152 - 相同种子与配置的对局完全可复现（剔除计时字段后逐位一致）
+  ---
+  duration_ms: 8926.119125
+  type: 'test'
+  ...
+# Subtest: 不同种子产生不同对局
+ok 153 - 不同种子产生不同对局
+  ---
+  duration_ms: 35323.060458
+  type: 'test'
+  ...
+# Subtest: 5 席全 AI 多种子连续完成且满足终局不变量
+ok 154 - 5 席全 AI 多种子连续完成且满足终局不变量
+  ---
+  duration_ms: 89009.500209
+  type: 'test'
+  ...
+# Subtest: 版本配置长度不匹配时立即报错
+ok 155 - 版本配置长度不匹配时立即报错
+  ---
+  duration_ms: 0.462917
+  type: 'test'
+  ...
+# Subtest: 种子超出引擎安全范围（≥ 2^31）必须拒绝（mod 2^32 回绕破坏复现与池隔离）
+ok 156 - 种子超出引擎安全范围（≥ 2^31）必须拒绝（mod 2^32 回绕破坏复现与池隔离）
+  ---
+  duration_ms: 0.239625
+  type: 'test'
+  ...
+# Subtest: 步数上限触发 anomaly 且不伪装成正常完成
+ok 157 - 步数上限触发 anomaly 且不伪装成正常完成
+  ---
+  duration_ms: 406.861416
+  type: 'test'
+  ...
+# Subtest: 时间预算触发 anomaly 且不伪装成正常完成
+ok 158 - 时间预算触发 anomaly 且不伪装成正常完成
+  ---
+  duration_ms: 130.931459
+  type: 'test'
+  ...
+# Subtest: 聚合统计将异常局与正常局严格分离
+ok 159 - 聚合统计将异常局与正常局严格分离
+  ---
+  duration_ms: 17540.207333
+  type: 'test'
+  ...
+# Subtest: 席位人格与正式游戏逐席一致（审计整改：代理席不再挤占人格序号）
+ok 160 - 席位人格与正式游戏逐席一致（审计整改：代理席不再挤占人格序号）
+  ---
+  duration_ms: 0.277
+  type: 'test'
+  ...
+# Subtest: 对局中实际人格经决策理由可验证（端到端对齐）
+ok 161 - 对局中实际人格经决策理由可验证（端到端对齐）
+  ---
+  duration_ms: 3599.871
+  type: 'test'
+  ...
+# Subtest: 逐席位版本可注入（Phase 4 起参数生效，本阶段验证接口兼容）
+ok 162 - 逐席位版本可注入（Phase 4 起参数生效，本阶段验证接口兼容）
+  ---
+  duration_ms: 18323.042875
+  type: 'test'
+  ...
+# Subtest: Wilson 区间数学性质
+ok 163 - Wilson 区间数学性质
+  ---
+  duration_ms: 1.546333
+  type: 'test'
+  ...
+# Subtest: 均值区间
+ok 164 - 均值区间
+  ---
+  duration_ms: 0.218584
+  type: 'test'
+  ...
+# Subtest: 晋级判定规则（独立样本版，仅用于诊断场景）
+ok 165 - 晋级判定规则（独立样本版，仅用于诊断场景）
+  ---
+  duration_ms: 0.29475
+  type: 'test'
+  ...
+# Subtest: 配对晋级判定：以种子为统计单位，配对样本不当独立局计数
+ok 166 - 配对晋级判定：以种子为统计单位，配对样本不当独立局计数
+  ---
+  duration_ms: 2.090916
+  type: 'test'
+  ...
+# Subtest: 双向混战挑战：基线 vs 基线（不同 id）产出配对样本且先名率约 0.5
+ok 167 - 双向混战挑战：基线 vs 基线（不同 id）产出配对样本且先名率约 0.5
+  ---
+  duration_ms: 38272.579291
+  type: 'test'
+  ...
+# Subtest: 对手池：非候选席位轮转使用池内对手
+ok 168 - 对手池：非候选席位轮转使用池内对手
+  ---
+  duration_ms: 17955.500541
+  type: 'test'
+  ...
+# Subtest: 对手池构建：冠军 + 基线 + 风格变体（去重、限量、全部合法）
+ok 169 - 对手池构建：冠军 + 基线 + 风格变体（去重、限量、全部合法）
+  ---
+  duration_ms: 0.720125
+  type: 'test'
+  ...
+# Subtest: 适配器冠军的风格变体：剥离 adapter 且权重真实生效（2026-10-24 audit 回归）
+ok 170 - 适配器冠军的风格变体：剥离 adapter 且权重真实生效（2026-10-24 audit 回归）
+  ---
+  duration_ms: 71.901709
+  type: 'test'
+  ...
+# Subtest: buildOpponentPool：适配器冠军入场但派生对手全部走束搜索基座
+ok 171 - buildOpponentPool：适配器冠军入场但派生对手全部走束搜索基座
+  ---
+  duration_ms: 4.134958
+  type: 'test'
+  ...
+# Subtest: beamBaseParameters：适配器参数归一化 + 非适配器参数原样保留
+ok 172 - beamBaseParameters：适配器参数归一化 + 非适配器参数原样保留
+  ---
+  duration_ms: 0.395542
+  type: 'test'
+  ...
+# Subtest: 验证种子账本：种子块不可重复使用（AI7-A1：无账本 fail-closed）
+ok 173 - 验证种子账本：种子块不可重复使用（AI7-A1：无账本 fail-closed）
+  ---
+  duration_ms: 2.517958
+  type: 'test'
+  ...
+# Subtest: 候选参数突变：合法、可复现、受边界约束
+ok 174 - 候选参数突变：合法、可复现、受边界约束
+  ---
+  duration_ms: 0.307333
+  type: 'test'
+  ...
+# Subtest: 进化循环：微型运行产出状态与历史
+ok 175 - 进化循环：微型运行产出状态与历史
+  ---
+  duration_ms: 33540.395959
+  type: 'test'
+  ...
+# Subtest: 进化循环：截止时间触发安全退出且保持状态一致（审计整改）
+ok 176 - 进化循环：截止时间触发安全退出且保持状态一致（审计整改）
+  ---
+  duration_ms: 0.144333
+  type: 'test'
+  ...
+# Subtest: 排序键：胜率优先，平均分差打破并列
+ok 177 - 排序键：胜率优先，平均分差打破并列
+  ---
+  duration_ms: 0.039958
+  type: 'test'
+  ...
+# Subtest: 配对判定的统计量是"配对得分优势率"，不是先名率（命名修正回归）
+ok 178 - 配对判定的统计量是"配对得分优势率"，不是先名率（命名修正回归）
+  ---
+  duration_ms: 0.09275
+  type: 'test'
+  ...
+# Subtest: firstPlaceStats：方向 A/B 与合并第一名率，合并期望 0.5
+ok 179 - firstPlaceStats：方向 A/B 与合并第一名率，合并期望 0.5
+  ---
+  duration_ms: 0.071334
+  type: 'test'
+  ...
+# Subtest: runChallenge：summary 必须携带 firstPlace 真实第一名率
+ok 180 - runChallenge：summary 必须携带 firstPlace 真实第一名率
+  ---
+  duration_ms: 49126.684667
+  type: 'test'
+  ...
+# Subtest: evolve：seedBase 必须真正驱动训练种子游标（P0 透传回归，块分配语义）
+ok 181 - evolve：seedBase 必须真正驱动训练种子游标（P0 透传回归，块分配语义）
+  ---
+  duration_ms: 35981.013833
+  type: 'test'
+  ...
+# Subtest: evolve：冠军切换后旧精英池与待定候选必须失效（P0 回归）
+ok 182 - evolve：冠军切换后旧精英池与待定候选必须失效（P0 回归）
+  ---
+  duration_ms: 27207.042041
+  type: 'test'
+  ...
+# Subtest: evolve：同一冠军断点续训保留精英池；参数被手改后精英失效
+ok 183 - evolve：同一冠军断点续训保留精英池；参数被手改后精英失效
+  ---
+  duration_ms: 29770.310333
+  type: 'test'
+  ...
+# Subtest: 对手池：历史冠军必须保底入池（P1 回归）
+ok 184 - 对手池：历史冠军必须保底入池（P1 回归）
+  ---
+  duration_ms: 2.245583
+  type: 'test'
+  ...
+# Subtest: 验证种子账本：下一块起点必须跳过全部已消费块（含大块历史）
+ok 185 - 验证种子账本：下一块起点必须跳过全部已消费块（含大块历史）
+  ---
+  duration_ms: 0.156917
+  type: 'test'
+  ...
+# Subtest: 验证种子账本：重叠消费必须被拒绝（防重复使用）
+ok 186 - 验证种子账本：重叠消费必须被拒绝（防重复使用）
+  ---
+  duration_ms: 0.2905
+  type: 'test'
+  ...
+# Subtest: probit：标准正态分位数精度达标
+ok 187 - probit：标准正态分位数精度达标
+  ---
+  duration_ms: 0.152375
+  type: 'test'
+  ...
+# Subtest: alphaSpendingThreshold：几何消耗，挑战越多阈值越紧，终身族错误率受控
+ok 188 - alphaSpendingThreshold：几何消耗，挑战越多阈值越紧，终身族错误率受控
+  ---
+  duration_ms: 0.325
+  type: 'test'
+  ...
+# Subtest: pairedPromotionDecision：同一证据下挑战序号越大判定越严格（多重检验回归）
+ok 189 - pairedPromotionDecision：同一证据下挑战序号越大判定越严格（多重检验回归）
+  ---
+  duration_ms: 0.090292
+  type: 'test'
+  ...
+# Subtest: challengeWithDecision：challengeIndex 透传到判定证据（供晋级脚本独立重算）
+ok 190 - challengeWithDecision：challengeIndex 透传到判定证据（供晋级脚本独立重算）
+  ---
+  duration_ms: 26139.867916
+  type: 'test'
+  ...
+# Subtest: versionsFor：pool=5（默认池）时每席位对手必须随种子轮转（塌缩回归）
+ok 191 - versionsFor：pool=5（默认池）时每席位对手必须随种子轮转（塌缩回归）
+  ---
+  duration_ms: 0.567708
+  type: 'test'
+  ...
+# Subtest: versionsFor：分配只依赖 (seedIndex, seat)，双向对战同席位对手一致（配对可比性）
+ok 192 - versionsFor：分配只依赖 (seedIndex, seat)，双向对战同席位对手一致（配对可比性）
+  ---
+  duration_ms: 0.180416
+  type: 'test'
+  ...
+# Subtest: 训练种子块分配：块对齐、池内、耗尽拒绝
+ok 193 - 训练种子块分配：块对齐、池内、耗尽拒绝
+  ---
+  duration_ms: 0.24175
+  type: 'test'
+  ...
+# Subtest: 种子池布局：训练池与验证池物理隔离且全部在引擎安全范围内
+ok 194 - 种子池布局：训练池与验证池物理隔离且全部在引擎安全范围内
+  ---
+  duration_ms: 0.029042
+  type: 'test'
+  ...
+# Subtest: 旧断点迁移：两种旧游标语义都确定性续接且不重复消费
+ok 195 - 旧断点迁移：两种旧游标语义都确定性续接且不重复消费
+  ---
+  duration_ms: 0.124125
+  type: 'test'
+  ...
+# Subtest: evolve：训练种子块互不重叠且全部落在训练池内（分配回归）
+ok 196 - evolve：训练种子块互不重叠且全部落在训练池内（分配回归）
+  ---
+  duration_ms: 172737.161125
+  type: 'test'
+  ...
+# Subtest: evolve：训练池耗尽必须抛错而不是越界污染验证池（边界值）
+ok 197 - evolve：训练池耗尽必须抛错而不是越界污染验证池（边界值）
+  ---
+  duration_ms: 26065.226542
+  type: 'test'
+  ...
+# Subtest: 注册表：冻结描述符结构不变量（legacy 无适配器字段、js1=beam-contest、深冻结）
+ok 198 - 注册表：冻结描述符结构不变量（legacy 无适配器字段、js1=beam-contest、深冻结）
+  ---
+  duration_ms: 2.728833
+  type: 'test'
+  ...
+# Subtest: 注册表：js0 参数逐字等于晋级归档文件（活动冠军切换不得漂移历史身份）
+ok 199 - 注册表：js0 参数逐字等于晋级归档文件（活动冠军切换不得漂移历史身份）
+  ---
+  duration_ms: 7.978458
+  type: 'test'
+  ...
+# Subtest: 注册表：live-champion 禁止用于历史对照（assertFrozenBaseline）
+ok 200 - 注册表：live-champion 禁止用于历史对照（assertFrozenBaseline）
+  ---
+  duration_ms: 1.1945
+  type: 'test'
+  ...
+# Subtest: 行为学：js0 实际执行冻结束搜索（= 归档冠军逐行动一致；不进 JS5 适配器）
+ok 201 - 行为学：js0 实际执行冻结束搜索（= 归档冠军逐行动一致；不进 JS5 适配器）
+  ---
+  duration_ms: 347.509958
+  type: 'test'
+  ...
+# Subtest: 行为学：js1 实际执行 beam-contest（结构标记在场 + 与 js0 存在行动分歧 + 不进适配器）
+ok 202 - 行为学：js1 实际执行 beam-contest（结构标记在场 + 与 js0 存在行动分歧 + 不进适配器）
+  ---
+  duration_ms: 409.2045
+  type: 'test'
+  ...
+# Subtest: 行为学：JS5 候选实际执行联合搜索（duel joint 分派 + 适配器 reason）
+ok 203 - 行为学：JS5 候选实际执行联合搜索（duel joint 分派 + 适配器 reason）
+  ---
+  duration_ms: 1029.579875
+  type: 'test'
+  ...
+# Subtest: 调用点链接：duel 与 equivalence-audit 的 js0/js1 解析到同一冻结描述符
+ok 204 - 调用点链接：duel 与 equivalence-audit 的 js0/js1 解析到同一冻结描述符
+  ---
+  duration_ms: 8.214125
+  type: 'test'
+  ...
+# Subtest: 对手池：全部变体 strip-adapter 且权重真实生效（极端权重探针可达束搜索核）
+ok 205 - 对手池：全部变体 strip-adapter 且权重真实生效（极端权重探针可达束搜索核）
+  ---
+  duration_ms: 438.379292
+  type: 'test'
+  ...
+# Subtest: 端到端：duel.runGame js0 候选席位完成对局且版本披露可审计
+ok 206 - 端到端：duel.runGame js0 候选席位完成对局且版本披露可审计
+  ---
+  duration_ms: 5233.935459
+  type: 'test'
+  ...
+# Subtest: 端到端：duel.runGame js0 与 js5 候选在同一受支持配置下行为不同（基线非 JS5 自我对弈）
+ok 207 - 端到端：duel.runGame js0 与 js5 候选在同一受支持配置下行为不同（基线非 JS5 自我对弈）
+  ---
+  duration_ms: 6546.424042
+  type: 'test'
+  ...
+# Subtest: 注册表快照：describeVersionRegistry 披露全部身份字段与指纹（报告可审计）
+ok 208 - 注册表快照：describeVersionRegistry 披露全部身份字段与指纹（报告可审计）
+  ---
+  duration_ms: 33.689041
+  type: 'test'
+  ...
+# Subtest: 金丝雀账本一致性：version-canary.json 指纹与 web-v1 注册表一致
+ok 209 - 金丝雀账本一致性：version-canary.json 指纹与 web-v1 注册表一致
+  ---
+  duration_ms: 0.905875
+  type: 'test'
+  ...
+# Subtest: classic 池（pools.mjs）：风格变体参数 ≠ 基座且走束搜索结构；冠军席 = joint-js5-frozen
+ok 210 - classic 池（pools.mjs）：风格变体参数 ≠ 基座且走束搜索结构；冠军席 = joint-js5-frozen
+  ---
+  duration_ms: 0.128042
+  type: 'test'
+  ...
+# Subtest: diverse 池（pools.mjs）：结构多样性成员齐全且变体参数互不相同
+ok 211 - diverse 池（pools.mjs）：结构多样性成员齐全且变体参数互不相同
+  ---
+  duration_ms: 0.149167
+  type: 'test'
+  ...
+# Subtest: phase5 历史池：冠军席 id = ai5-readiness-efficiency（历史重放专用）
+ok 212 - phase5 历史池：冠军席 id = ai5-readiness-efficiency（历史重放专用）
+  ---
+  duration_ms: 0.130583
+  type: 'test'
+  ...
+# Subtest: 决策级身份不等式：legacy-js0 ≠ legacy-js1 ≠ joint-js5（单局自对局）
+ok 213 - 决策级身份不等式：legacy-js0 ≠ legacy-js1 ≠ joint-js5（单局自对局）
+  ---
+  duration_ms: 10374.323125
+  type: 'test'
+  ...
+1..213
+# tests 213
+# suites 0
+# pass 213
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 459956.077583

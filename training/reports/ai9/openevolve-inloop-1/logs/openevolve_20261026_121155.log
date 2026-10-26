@@ -1,0 +1,44 @@
+2026-10-26 12:11:55,785 - openevolve.controller - INFO - Logging to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-openevolve-1792987915204/logs/openevolve_20261026_121155.log
+2026-10-26 12:11:55,811 - openevolve.controller - INFO - Set random seed to 42 for reproducibility
+2026-10-26 12:11:55,812 - openevolve.llm.ensemble - INFO - Initialized LLM ensemble with models: gpt-5.6-sol (weight: 1.00)
+2026-10-26 12:11:55,815 - openevolve.prompt.sampler - INFO - Initialized prompt sampler
+2026-10-26 12:11:55,815 - openevolve.prompt.sampler - INFO - Set custom templates: system=evaluator_system_message, user=None
+2026-10-26 12:11:55,815 - openevolve.database - INFO - Initialized program database with 0 programs
+2026-10-26 12:11:55,817 - openevolve.evaluator - INFO - Successfully loaded evaluation function from /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/century_evaluator_ai9.py
+2026-10-26 12:11:55,817 - openevolve.evaluator - INFO - Initialized evaluator with /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/century_evaluator_ai9.py
+2026-10-26 12:11:55,817 - openevolve.controller - INFO - Initialized OpenEvolve with /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-openevolve-1792987915204/input/program-bb3f5e0c7a2d45b7.ts
+2026-10-26 12:11:55,817 - openevolve.controller - INFO - Adding initial program to database
+2026-10-26 12:14:57,148 - openevolve.evaluator - INFO - Evaluated program 4d849974-c243-4463-87a8-cdd5c0197e1b in 181.33s: combined_score=0.0000, stage_passed=1.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, module_count=4.0000, changed_module_count=0.0000, identical_to_official=1.0000, module_mismatches=0.0000, code_complexity=692.0000, combined_module_hash_head=0.5173, first_place_delta=0.0000, first_place_ci_lower=0.0000, candidate_first_rate=0.4375, champion_first_rate=0.4375, games=32.0000, anomaly_rate=0.0000, p95_wall_ms=8380.7000, mean_decision_ms=38.7470, pooled_module_hash_head=0.5173, seed_block=1650.0000
+2026-10-26 12:14:57,149 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 5, 'diversity': 0}
+2026-10-26 12:14:57,156 - openevolve.process_parallel - INFO - Initialized process parallel controller with 1 workers
+2026-10-26 12:14:57,157 - openevolve.process_parallel - INFO - Set max None tasks per child
+2026-10-26 12:14:57,157 - openevolve.process_parallel - INFO - Started process pool with 1 processes
+2026-10-26 12:14:57,157 - openevolve.controller - INFO - Using island-based evolution with 3 islands
+2026-10-26 12:14:57,157 - openevolve.database - INFO - Island Status:
+2026-10-26 12:14:57,157 - openevolve.database - INFO -  * Island 0: 1 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0 (best: 4d849974-c243-4463-87a8-cdd5c0197e1b)
+2026-10-26 12:14:57,157 - openevolve.database - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-10-26 12:14:57,157 - openevolve.database - INFO -    Island 2: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-10-26 12:14:57,157 - openevolve.process_parallel - INFO - Starting process-based evolution from iteration 1 for 1 iterations (total: 2)
+2026-10-26 12:14:57,161 - openevolve.process_parallel - INFO - Early stopping disabled
+2026-10-26 12:32:19,626 - openevolve.database - INFO - New MAP-Elites cell occupied in island 0: {'complexity': 9, 'diversity': 5}
+2026-10-26 12:32:19,627 - openevolve.database - INFO - New best program 40f18913-5028-4f40-8342-10b3b274a9e1 replaces 4d849974-c243-4463-87a8-cdd5c0197e1b (combined_score: 0.0000 → 0.5000, +0.5000)
+2026-10-26 12:32:19,627 - openevolve.process_parallel - INFO - Iteration 1: Program 40f18913-5028-4f40-8342-10b3b274a9e1 (parent: 4d849974-c243-4463-87a8-cdd5c0197e1b) completed in 1041.93s | tokens: 285207 (prompt: 282951, completion: 2256)
+2026-10-26 12:32:19,627 - openevolve.process_parallel - INFO - Metrics: combined_score=0.5000, stage_passed=1.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, module_count=4.0000, changed_module_count=1.0000, identical_to_official=0.0000, module_mismatches=14.0000, code_complexity=694.0000, combined_module_hash_head=0.7789, first_place_delta=0.0000, first_place_ci_lower=0.0000, candidate_first_rate=0.4167, champion_first_rate=0.4167, games=96.0000, anomaly_rate=0.0000, p95_wall_ms=14606.0000, mean_decision_ms=60.1990, pooled_module_hash_head=0.7789, seed_block=1650.0000
+2026-10-26 12:32:19,627 - openevolve.process_parallel - INFO - 🌟 New best solution found at iteration 1: 40f18913-5028-4f40-8342-10b3b274a9e1
+2026-10-26 12:32:19,627 - openevolve.process_parallel - INFO - Checkpoint interval reached at iteration 1
+2026-10-26 12:32:19,627 - openevolve.database - INFO - Island Status:
+2026-10-26 12:32:19,627 - openevolve.database - INFO -  * Island 0: 2 programs, best=0.5000, avg=0.2500, diversity=13.20, gen=1 (best: 40f18913-5028-4f40-8342-10b3b274a9e1)
+2026-10-26 12:32:19,627 - openevolve.database - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-10-26 12:32:19,627 - openevolve.database - INFO -    Island 2: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0
+2026-10-26 12:32:19,629 - openevolve.database - INFO - Saved database with 2 programs to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-openevolve-1792987915204/checkpoints/checkpoint_1
+2026-10-26 12:32:19,629 - openevolve.controller - INFO - Saved best program at checkpoint 1 with metrics: combined_score=0.5000, stage_passed=1.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, module_count=4.0000, changed_module_count=1.0000, identical_to_official=0.0000, module_mismatches=14.0000, code_complexity=694.0000, combined_module_hash_head=0.7789, first_place_delta=0.0000, first_place_ci_lower=0.0000, candidate_first_rate=0.4167, champion_first_rate=0.4167, games=96.0000, anomaly_rate=0.0000, p95_wall_ms=14606.0000, mean_decision_ms=60.1990, pooled_module_hash_head=0.7789, seed_block=1650.0000
+2026-10-26 12:32:19,629 - openevolve.controller - INFO - Saved checkpoint at iteration 1 to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-openevolve-1792987915204/checkpoints/checkpoint_1
+2026-10-26 12:32:19,629 - openevolve.process_parallel - INFO - ✅ Evolution completed - Maximum iterations reached
+2026-10-26 12:32:19,629 - openevolve.process_parallel - INFO - 📊 Total LLM Token Usage (1 calls): total_tokens=285207 (prompt_tokens=282951, completion_tokens=2256)
+2026-10-26 12:32:19,630 - openevolve.database - INFO - Saved database with 2 programs to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-openevolve-1792987915204/checkpoints/checkpoint_1
+2026-10-26 12:32:19,630 - openevolve.controller - INFO - Saved best program at checkpoint 1 with metrics: combined_score=0.5000, stage_passed=1.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, module_count=4.0000, changed_module_count=1.0000, identical_to_official=0.0000, module_mismatches=14.0000, code_complexity=694.0000, combined_module_hash_head=0.7789, first_place_delta=0.0000, first_place_ci_lower=0.0000, candidate_first_rate=0.4167, champion_first_rate=0.4167, games=96.0000, anomaly_rate=0.0000, p95_wall_ms=14606.0000, mean_decision_ms=60.1990, pooled_module_hash_head=0.7789, seed_block=1650.0000
+2026-10-26 12:32:19,630 - openevolve.controller - INFO - Saved checkpoint at iteration 1 to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-openevolve-1792987915204/checkpoints/checkpoint_1
+2026-10-26 12:32:19,634 - openevolve.process_parallel - INFO - Stopped process pool
+2026-10-26 12:32:19,634 - openevolve.controller - INFO - Using tracked best program: 40f18913-5028-4f40-8342-10b3b274a9e1
+2026-10-26 12:32:19,635 - openevolve.controller - INFO - Evolution complete. Best program has metrics: combined_score=0.5000, stage_passed=1.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, module_count=4.0000, changed_module_count=1.0000, identical_to_official=0.0000, module_mismatches=14.0000, code_complexity=694.0000, combined_module_hash_head=0.7789, first_place_delta=0.0000, first_place_ci_lower=0.0000, candidate_first_rate=0.4167, champion_first_rate=0.4167, games=96.0000, anomaly_rate=0.0000, p95_wall_ms=14606.0000, mean_decision_ms=60.1990, pooled_module_hash_head=0.7789, seed_block=1650.0000
+2026-10-26 12:32:19,635 - openevolve.controller - INFO - Saved best program to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-openevolve-1792987915204/best/best_program.ts with program info to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-openevolve-1792987915204/best/best_program_info.json

@@ -1,0 +1,129 @@
+{
+  "schema": "century-ai9-openevolve-run-v1",
+  "startedAt": "2026-10-26T03:17:34.456Z",
+  "modules": [
+    "M02",
+    "M11"
+  ],
+  "iterations": 2,
+  "probe": {
+    "available": true,
+    "checks": [
+      {
+        "id": "venv-python",
+        "status": "PASS",
+        "evidence": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/.venv/bin/python"
+      },
+      {
+        "id": "runner",
+        "status": "PASS",
+        "evidence": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/run_openevolve.py"
+      },
+      {
+        "id": "evaluator",
+        "status": "PASS",
+        "evidence": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/century_evaluator_ai9.py"
+      },
+      {
+        "id": "config",
+        "status": "PASS",
+        "evidence": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/config-ai9.yaml"
+      },
+      {
+        "id": "codex-login",
+        "status": "PASS",
+        "evidence": "Logged in using ChatGPT"
+      }
+    ],
+    "blocked": [],
+    "generator": "openevolve-llm"
+  },
+  "outputDir": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r003",
+  "run": {
+    "ok": true,
+    "status": 0,
+    "elapsedMs": 1742131,
+    "bestProgramPath": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r003/best/best_program.ts",
+    "logTail": "rompt_tokens=986015, completion_tokens=6402)\n2026-10-26 11:46:36,516 - INFO - Saved database with 3 programs to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r003/checkpoints/checkpoint_2\n2026-10-26 11:46:36,516 - INFO - Saved best program at checkpoint 2 with metrics: combined_score=0.4271, stage_passed=1.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, module_count=2.0000, changed_module_count=1.0000, identical_to_official=0.0000, module_mismatches=8.0000, code_complexity=3154.0000, combined_module_hash_head=0.5151, first_place_delta=-0.1458, first_place_ci_lower=-0.2322, candidate_first_rate=0.2708, champion_first_rate=0.4167, games=96.0000, anomaly_rate=0.0000, p95_wall_ms=14155.5000, mean_decision_ms=66.7100, pooled_module_hash_head=0.5151, seed_block=1650.0000\n2026-10-26 11:46:36,516 - INFO - Saved checkpoint at iteration 2 to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r003/checkpoints/checkpoint_2\n2026-10-26 11:46:36,522 - INFO - Stopped process pool\n2026-10-26 11:46:36,522 - INFO - Using tracked best program: 3c133c80-32d6-44d2-877f-7580de2de242\n2026-10-26 11:46:36,522 - INFO - Evolution complete. Best program has metrics: combined_score=0.4271, stage_passed=1.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, module_count=2.0000, changed_module_count=1.0000, identical_to_official=0.0000, module_mismatches=8.0000, code_complexity=3154.0000, combined_module_hash_head=0.5151, first_place_delta=-0.1458, first_place_ci_lower=-0.2322, candidate_first_rate=0.2708, champion_first_rate=0.4167, games=96.0000, anomaly_rate=0.0000, p95_wall_ms=14155.5000, mean_decision_ms=66.7100, pooled_module_hash_head=0.5151, seed_block=1650.0000\n2026-10-26 11:46:36,523 - INFO - Saved best program to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r003/best/best_program.ts with program info to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r003/best/best_program_info.json\n"
+  },
+  "status": "completed",
+  "generator": "openevolve-llm",
+  "candidate": {
+    "candidateId": "cand-ai9-multi-r1c0-0afc3c",
+    "identityDigest": "0e932e566996c00e2ef90833462d709abf130835f079c8f456f39c080e0bdbc4",
+    "artifactHash": "5b96c61b3268fd856fe681f39a5e4f5a22f96465945c5dbf3e67a6ddbbd90007",
+    "sourceHash": "882ebf4c40b873d4cb9c9f5f9fbd17638b6eddf57499373606986fedf6092e56",
+    "modules": [
+      "M02",
+      "M11"
+    ],
+    "probe": {
+      "changedModules": [
+        "M02"
+      ],
+      "identicalToOfficial": false,
+      "mismatches": 8
+    },
+    "build": {
+      "protocol": "century-multi-module-candidate-v1",
+      "compiler": "tsc 5.9.3",
+      "modules": [
+        "M02",
+        "M11"
+      ],
+      "moduleHashes": {
+        "M02": "0ba951238e97c417df3de0bb84ff554f56149e9d0157cba2e1803f2965a490a6",
+        "M11": "3071a045f64429487e451881f2433d97f80a93e3b8a2cfb42f2fd5bead448ff1"
+      },
+      "combinedModuleHash": "83de7f1d260ef45005af4ebe3ee5a28efa48db46d9abded6a1950d2f00d77b64",
+      "compiledFiles": 49,
+      "compiledBytes": 333369,
+      "sourceOrigin": "openevolve-llm",
+      "mutation": "openevolve-best-program",
+      "sandbox": "macos-seatbelt",
+      "elapsedMs": 1056
+    },
+    "provenance": {
+      "generator": "openevolve-llm",
+      "outputDir": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r003",
+      "bestProgramPath": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r003/best/best_program.ts",
+      "combinedSha256": "83de7f1d260ef45005af4ebe3ee5a28efa48db46d9abded6a1950d2f00d77b64",
+      "modules": [
+        "M02",
+        "M11"
+      ],
+      "bestInfo": {
+        "id": "3c133c80-32d6-44d2-877f-7580de2de242",
+        "generation": 1,
+        "iteration": 2,
+        "timestamp": 1792986396.504641,
+        "parent_id": "cdcf06bf-fbeb-4338-a9b2-9364aa75ebe1",
+        "metrics": {
+          "combined_score": 0.4271,
+          "stage_passed": 1,
+          "static_ok": 1,
+          "compile_ok": 1,
+          "probe_ok": 1,
+          "module_count": 2,
+          "changed_module_count": 1,
+          "identical_to_official": 0,
+          "module_mismatches": 8,
+          "code_complexity": 3154,
+          "combined_module_hash_head": 0.5151137778337844,
+          "first_place_delta": -0.14583333333333334,
+          "first_place_ci_lower": -0.2322154362464931,
+          "candidate_first_rate": 0.2708,
+          "champion_first_rate": 0.4167,
+          "games": 96,
+          "anomaly_rate": 0,
+          "p95_wall_ms": 14155.5,
+          "mean_decision_ms": 66.71,
+          "pooled_module_hash_head": 0.5151137778337844,
+          "seed_block": 1650
+        },
+        "language": "unknown",
+        "saved_at": 1792986396.5229461
+      }
+    }
+  }
+}

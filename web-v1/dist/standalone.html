@@ -3449,7 +3449,39 @@
     blend: 0.7
   };
 
+  // src/ai/evolve/modules.ts
+  function goalPriority(view, goalId, params) {
+    return 1;
+  }
+  function restMultiplier(state, preferred, params) {
+    return 1;
+  }
+  function endgameBonus(state, params) {
+    return 0;
+  }
+  function opponentPressureDelta(view, cardId, dimension, params) {
+    return 0;
+  }
+  function seatContestFactor(view, goalId, params) {
+    return 1;
+  }
+  function unknownSupportFactor(view, preferred, unseenMerchants, params) {
+    return 1;
+  }
+  function rankRootActions(view, actions2, params) {
+    return actions2;
+  }
+
   // src/ai/planner.ts
+  var clampFactor = (value, low, high) => Number.isFinite(value) ? Math.min(high, Math.max(low, value)) : 1;
+  function evolvePressure(view, params) {
+    const pressure = pressureModel(view);
+    for (const id of Object.keys(pressure.mean)) {
+      pressure.mean[id] = Math.min(1, Math.max(0, pressure.mean[id] + opponentPressureDelta(view, id, "mean", params)));
+      pressure.peak[id] = Math.min(1, Math.max(0, pressure.peak[id] + opponentPressureDelta(view, id, "peak", params)));
+    }
+    return pressure;
+  }
   function initialState(view) {
     const player = view.players[view.current];
     const threshold = view.players.length >= 4 ? 5 : 6;
@@ -3638,13 +3670,15 @@
   function searchGrade(state, preferred, stage, profile, pressure, params, futureSupport, model) {
     const goal = GOLEM_BY_ID[preferred];
     const gap = goalGap(state.stock, goal);
-    const restFactor = state.path.at(-1)?.type === "rest" ? params.restWeight : 1;
+    const restFactor = state.path.at(-1)?.type === "rest" ? params.restWeight * clampFactor(restMultiplier(state, preferred, params), 0.2, 3) : 1;
     const lastAction = state.path.at(-1);
     const paymentCost = params.engineModel === "v2" && lastAction?.type === "acquire" ? lastAction.payment.reduce((sum, c) => sum + (c === 0 ? 0.5 : 1), 0) : 0;
     return -gap * 2.6 + weighted(state.stock) * 0.13 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.22 * profile.engine * params.engineWeight + futureSupport * stage * 0.45 * profile.engine * params.engineWeight + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params, model), 0) * stage * 0.35 - state.steps * 0.35 * profile.tempo * params.tempoWeight * restFactor - state.acquired * 0.15 - paymentCost * 0.55;
   }
   function routeGrade(state, preferred, stage, profile, params, model) {
-    return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + 0.65, 0.9) + weighted(state.stock) * 0.055 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.085 * profile.engine * params.engineWeight;
+    const rawTerminalBonus = state.terminal ? endgameBonus(state, params) : 0;
+    const terminalBonus = Number.isFinite(rawTerminalBonus) ? Math.min(20, Math.max(-20, rawTerminalBonus)) : 0;
+    return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + 0.65, 0.9) + weighted(state.stock) * 0.055 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.085 * profile.engine * params.engineWeight + terminalBonus;
   }
   function completedFirstGoal(state, preferred) {
     return !state.golemMarket.includes(preferred);
@@ -3657,7 +3691,7 @@
     const profile = profileOverride ?? profileFor(view);
     const model = params.engineModel === "v2" ? modelInput ?? engineModelContext(view, params) : null;
     const knowledge = publicKnowledge(view);
-    const pressure = pressureModel(view);
+    const pressure = evolvePressure(view, params);
     const initial = initialState(view);
     const threshold = view.players.length >= 4 ? 5 : 6;
     const mostClaimed = Math.max(...view.players.map((p) => p.claimed.length));
@@ -3669,11 +3703,12 @@
     const stage = Math.pow(rawStage, params.endgameWeight);
     const allowAcquire = view.triggerPlayer === null;
     const survival = structure === "beam-contest" ? golemSurvivalModel(view, depth) : null;
-    const survivalOf = (preferred) => survival?.[preferred] ?? 1;
+    const survivalOf = (preferred) => (survival?.[preferred] ?? 1) * clampFactor(seatContestFactor(view, preferred, params), 0, 2);
     let solved = null, prospective = null;
     const finalBeams = [];
     for (const preferred of initial.golemMarket) {
-      const futureSupport = futureDeckSupport(initial.stock, preferred, knowledge.unseenMerchants);
+      const goalFactor = clampFactor(goalPriority(view, preferred, params), 0.25, 4);
+      const futureSupport = futureDeckSupport(initial.stock, preferred, knowledge.unseenMerchants) * clampFactor(unknownSupportFactor(view, preferred, knowledge.unseenMerchants, params), 0, 3);
       let beam = [{ ...initial, quality: 0 }];
       const rescuedKeys = /* @__PURE__ */ new Set();
       for (let layer = 1; layer <= depth; layer++) {
@@ -3690,7 +3725,7 @@
             if (!next) continue;
             if (next.terminal && !completedFirstGoal(next, preferred)) continue;
             if (completedFirstGoal(next, preferred)) {
-              const quality2 = routeGrade(next, preferred, stage, profile, params, model) * survivalOf(preferred);
+              const quality2 = routeGrade(next, preferred, stage, profile, params, model) * survivalOf(preferred) * goalFactor;
               if (!solved || quality2 > solved.quality) solved = { ...next, preferred, quality: quality2 };
               continue;
             }
@@ -3718,20 +3753,21 @@
         rescue(lineagePlay ?? lineageRest ?? lineageOther);
         rescue(restFallback);
         for (const candidate of beam) {
-          const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred);
+          const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred) * goalFactor;
           if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
         }
       }
-      finalBeams.push({ preferred, futureSupport, beam: [...beam] });
+      finalBeams.push({ preferred, futureSupport, goalFactor, beam: [...beam] });
     }
     if ((structure === "beam-rollout" || structure === "beam-contest") && !solved && finalBeams.length) {
-      const ranked = finalBeams.flatMap(({ preferred, futureSupport, beam }) => beam.map((state) => ({
+      const ranked = finalBeams.flatMap(({ preferred, futureSupport, goalFactor, beam }) => beam.map((state) => ({
         preferred,
         state,
-        formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred)
+        goalFactor,
+        formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred) * goalFactor
       }))).sort((a, b) => b.formula - a.formula).slice(0, ROLLOUT_DEFAULTS.topK);
       let rolloutBest = null;
-      for (const { preferred, state, formula } of ranked) {
+      for (const { preferred, state, formula, goalFactor } of ranked) {
         let total = 0;
         for (let r = 0; r < ROLLOUT_DEFAULTS.rollouts; r++) {
           const rng = structureRng(stateKey(state), preferred, view.turnNumber, r);
@@ -3748,7 +3784,7 @@
           total += cursor.gained;
         }
         const meanGained = total / ROLLOUT_DEFAULTS.rollouts;
-        const quality = (ROLLOUT_DEFAULTS.blend * meanGained + (1 - ROLLOUT_DEFAULTS.blend) * formula) * survivalOf(preferred);
+        const quality = (ROLLOUT_DEFAULTS.blend * meanGained + (1 - ROLLOUT_DEFAULTS.blend) * formula) * survivalOf(preferred) * goalFactor;
         if (!rolloutBest || quality > rolloutBest.quality) rolloutBest = { ...state, preferred, quality };
       }
       if (rolloutBest) prospective = rolloutBest;
@@ -5139,7 +5175,13 @@
       return { gated: true, contestedGoals: [...view.golemMarket] };
     }
     const survival = options.survival ?? golemSurvivalModel(view, 6);
-    const contestedGoals = view.golemMarket.filter((id) => !options.immediateClaims.has(id) && (survival[id] ?? 1) < options.contestThreshold);
+    const params = options.params ?? CHAMPION_PARAMETERS;
+    const contestedGoals = view.golemMarket.filter((id) => {
+      if (options.immediateClaims.has(id)) return false;
+      const factor = seatContestFactor(view, id, params);
+      const adjusted = (survival[id] ?? 1) * (Number.isFinite(factor) ? Math.min(2, Math.max(0, factor)) : 1);
+      return adjusted < options.contestThreshold;
+    });
     return { gated: contestedGoals.length > 0, contestedGoals };
   }
   var actionKey = (a) => JSON.stringify(a);
@@ -5261,7 +5303,8 @@
       const risk = competitionRisk(observation, {
         contestThreshold: o.contestThreshold ?? 0.85,
         immediateClaims: immediateClaimGoals,
-        survival
+        survival,
+        params: championParameters
       });
       const gated = o.gateMode === "always" ? true : o.gateMode === "never" ? false : risk.gated;
       phase.gateMs = performance.now() - gateStart;
@@ -5308,10 +5351,28 @@
       }
       const screenStart = performance.now();
       const ctxRoot = heuristicContext(root.view, championParameters, NEUTRAL_PROFILE);
-      const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
+      let screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
         goalScope: o.screenGoalScope ?? "all",
         preferredGoal: plan?.preferred ?? null
       });
+      const rankActions = (list) => {
+        if (!list.length) return [];
+        const ranked = rankRootActions(observation, list, championParameters);
+        if (!Array.isArray(ranked) || ranked.length === 0) return [...list];
+        const allowed = new Set(list.map(actionKey));
+        const seenRank = /* @__PURE__ */ new Set();
+        const result = [];
+        for (const action of ranked) {
+          const key = actionKey(action);
+          if (!allowed.has(key) || seenRank.has(key)) continue;
+          seenRank.add(key);
+          result.push(action);
+        }
+        return result.length ? result : [...list];
+      };
+      const rankedRoot = rankActions(screened.map((s) => s.action));
+      const rootOrder = new Map(rankedRoot.map((action, i) => [actionKey(action), i]));
+      screened = screened.filter((s) => rootOrder.has(actionKey(s.action))).sort((a, b) => rootOrder.get(actionKey(a.action)) - rootOrder.get(actionKey(b.action)));
       phase.screenMs = performance.now() - screenStart;
       const candidates = [];
       const candidateSources = [];
@@ -5327,7 +5388,10 @@
         return true;
       };
       push(championAction, "champion");
-      const claimActions = legalRootActions.filter((x) => x.type === "claim");
+      let claimActions = legalRootActions.filter((x) => x.type === "claim");
+      const rankedClaims = rankActions(claimActions);
+      const claimOrder = new Map(rankedClaims.map((action, i) => [actionKey(action), i]));
+      claimActions = claimActions.filter((a) => claimOrder.has(actionKey(a))).sort((a, b) => claimOrder.get(actionKey(a)) - claimOrder.get(actionKey(b)));
       const claimDeltas = /* @__PURE__ */ new Map();
       const claimGross = /* @__PURE__ */ new Map();
       let bestClaim = null;
@@ -7324,7 +7388,45 @@
     blend: 0.7
   };
 
+  // src/ai/evolve/modules.ts
+  function goalPriority(view, goalId, params) {
+    return 1;
+  }
+  function restMultiplier(state, preferred, params) {
+    return 1;
+  }
+  function endgameBonus(state, params) {
+    return 0;
+  }
+  function opponentPressureDelta(view, cardId, dimension, params) {
+    return 0;
+  }
+  function seatContestFactor(view, goalId, params) {
+    return 1;
+  }
+  function unknownSupportFactor(view, preferred, unseenMerchants, params) {
+    return 1;
+  }
+  function rankRootActions(view, actions2, params) {
+    return actions2;
+  }
+  function searchPolicyOverrides(view, baseOptions, params) {
+    return {};
+  }
+  function budgetForDecision(view, baseMs, params) {
+    return baseMs;
+  }
+
   // src/ai/planner.ts
+  var clampFactor = (value, low, high) => Number.isFinite(value) ? Math.min(high, Math.max(low, value)) : 1;
+  function evolvePressure(view, params) {
+    const pressure = pressureModel(view);
+    for (const id of Object.keys(pressure.mean)) {
+      pressure.mean[id] = Math.min(1, Math.max(0, pressure.mean[id] + opponentPressureDelta(view, id, "mean", params)));
+      pressure.peak[id] = Math.min(1, Math.max(0, pressure.peak[id] + opponentPressureDelta(view, id, "peak", params)));
+    }
+    return pressure;
+  }
   function initialState(view) {
     const player = view.players[view.current];
     const threshold = view.players.length >= 4 ? 5 : 6;
@@ -7513,13 +7615,15 @@
   function searchGrade(state, preferred, stage, profile, pressure, params, futureSupport, model) {
     const goal = GOLEM_BY_ID[preferred];
     const gap = goalGap(state.stock, goal);
-    const restFactor = state.path.at(-1)?.type === "rest" ? params.restWeight : 1;
+    const restFactor = state.path.at(-1)?.type === "rest" ? params.restWeight * clampFactor(restMultiplier(state, preferred, params), 0.2, 3) : 1;
     const lastAction = state.path.at(-1);
     const paymentCost = params.engineModel === "v2" && lastAction?.type === "acquire" ? lastAction.payment.reduce((sum, c) => sum + (c === 0 ? 0.5 : 1), 0) : 0;
     return -gap * 2.6 + weighted(state.stock) * 0.13 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.22 * profile.engine * params.engineWeight + futureSupport * stage * 0.45 * profile.engine * params.engineWeight + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params, model), 0) * stage * 0.35 - state.steps * 0.35 * profile.tempo * params.tempoWeight * restFactor - state.acquired * 0.15 - paymentCost * 0.55;
   }
   function routeGrade(state, preferred, stage, profile, params, model) {
-    return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + 0.65, 0.9) + weighted(state.stock) * 0.055 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.085 * profile.engine * params.engineWeight;
+    const rawTerminalBonus = state.terminal ? endgameBonus(state, params) : 0;
+    const terminalBonus = Number.isFinite(rawTerminalBonus) ? Math.min(20, Math.max(-20, rawTerminalBonus)) : 0;
+    return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + 0.65, 0.9) + weighted(state.stock) * 0.055 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.085 * profile.engine * params.engineWeight + terminalBonus;
   }
   function completedFirstGoal(state, preferred) {
     return !state.golemMarket.includes(preferred);
@@ -7532,7 +7636,7 @@
     const profile = profileOverride ?? profileFor(view);
     const model = params.engineModel === "v2" ? modelInput ?? engineModelContext(view, params) : null;
     const knowledge = publicKnowledge(view);
-    const pressure = pressureModel(view);
+    const pressure = evolvePressure(view, params);
     const initial = initialState(view);
     const threshold = view.players.length >= 4 ? 5 : 6;
     const mostClaimed = Math.max(...view.players.map((p) => p.claimed.length));
@@ -7544,11 +7648,12 @@
     const stage = Math.pow(rawStage, params.endgameWeight);
     const allowAcquire = view.triggerPlayer === null;
     const survival = structure === "beam-contest" ? golemSurvivalModel(view, depth) : null;
-    const survivalOf = (preferred) => survival?.[preferred] ?? 1;
+    const survivalOf = (preferred) => (survival?.[preferred] ?? 1) * clampFactor(seatContestFactor(view, preferred, params), 0, 2);
     let solved = null, prospective = null;
     const finalBeams = [];
     for (const preferred of initial.golemMarket) {
-      const futureSupport = futureDeckSupport(initial.stock, preferred, knowledge.unseenMerchants);
+      const goalFactor = clampFactor(goalPriority(view, preferred, params), 0.25, 4);
+      const futureSupport = futureDeckSupport(initial.stock, preferred, knowledge.unseenMerchants) * clampFactor(unknownSupportFactor(view, preferred, knowledge.unseenMerchants, params), 0, 3);
       let beam = [{ ...initial, quality: 0 }];
       const rescuedKeys = /* @__PURE__ */ new Set();
       for (let layer = 1; layer <= depth; layer++) {
@@ -7565,7 +7670,7 @@
             if (!next) continue;
             if (next.terminal && !completedFirstGoal(next, preferred)) continue;
             if (completedFirstGoal(next, preferred)) {
-              const quality2 = routeGrade(next, preferred, stage, profile, params, model) * survivalOf(preferred);
+              const quality2 = routeGrade(next, preferred, stage, profile, params, model) * survivalOf(preferred) * goalFactor;
               if (!solved || quality2 > solved.quality) solved = { ...next, preferred, quality: quality2 };
               continue;
             }
@@ -7593,20 +7698,21 @@
         rescue(lineagePlay ?? lineageRest ?? lineageOther);
         rescue(restFallback);
         for (const candidate of beam) {
-          const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred);
+          const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred) * goalFactor;
           if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
         }
       }
-      finalBeams.push({ preferred, futureSupport, beam: [...beam] });
+      finalBeams.push({ preferred, futureSupport, goalFactor, beam: [...beam] });
     }
     if ((structure === "beam-rollout" || structure === "beam-contest") && !solved && finalBeams.length) {
-      const ranked = finalBeams.flatMap(({ preferred, futureSupport, beam }) => beam.map((state) => ({
+      const ranked = finalBeams.flatMap(({ preferred, futureSupport, goalFactor, beam }) => beam.map((state) => ({
         preferred,
         state,
-        formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred)
+        goalFactor,
+        formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred) * goalFactor
       }))).sort((a, b) => b.formula - a.formula).slice(0, ROLLOUT_DEFAULTS.topK);
       let rolloutBest = null;
-      for (const { preferred, state, formula } of ranked) {
+      for (const { preferred, state, formula, goalFactor } of ranked) {
         let total = 0;
         for (let r = 0; r < ROLLOUT_DEFAULTS.rollouts; r++) {
           const rng = structureRng(stateKey(state), preferred, view.turnNumber, r);
@@ -7623,7 +7729,7 @@
           total += cursor.gained;
         }
         const meanGained = total / ROLLOUT_DEFAULTS.rollouts;
-        const quality = (ROLLOUT_DEFAULTS.blend * meanGained + (1 - ROLLOUT_DEFAULTS.blend) * formula) * survivalOf(preferred);
+        const quality = (ROLLOUT_DEFAULTS.blend * meanGained + (1 - ROLLOUT_DEFAULTS.blend) * formula) * survivalOf(preferred) * goalFactor;
         if (!rolloutBest || quality > rolloutBest.quality) rolloutBest = { ...state, preferred, quality };
       }
       if (rolloutBest) prospective = rolloutBest;
@@ -10997,7 +11103,13 @@
       return { gated: true, contestedGoals: [...view.golemMarket] };
     }
     const survival = options.survival ?? golemSurvivalModel(view, 6);
-    const contestedGoals = view.golemMarket.filter((id) => !options.immediateClaims.has(id) && (survival[id] ?? 1) < options.contestThreshold);
+    const params = options.params ?? CHAMPION_PARAMETERS;
+    const contestedGoals = view.golemMarket.filter((id) => {
+      if (options.immediateClaims.has(id)) return false;
+      const factor = seatContestFactor(view, id, params);
+      const adjusted = (survival[id] ?? 1) * (Number.isFinite(factor) ? Math.min(2, Math.max(0, factor)) : 1);
+      return adjusted < options.contestThreshold;
+    });
     return { gated: contestedGoals.length > 0, contestedGoals };
   }
   var actionKey = (a) => JSON.stringify(a);
@@ -11119,7 +11231,8 @@
       const risk = competitionRisk(observation, {
         contestThreshold: o.contestThreshold ?? 0.85,
         immediateClaims: immediateClaimGoals,
-        survival
+        survival,
+        params: championParameters
       });
       const gated = o.gateMode === "always" ? true : o.gateMode === "never" ? false : risk.gated;
       phase.gateMs = performance.now() - gateStart;
@@ -11166,10 +11279,28 @@
       }
       const screenStart = performance.now();
       const ctxRoot = heuristicContext(root2.view, championParameters, NEUTRAL_PROFILE);
-      const screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
+      let screened = screenRootActions(observation, legalRootActions, ctxRoot, survival, {
         goalScope: o.screenGoalScope ?? "all",
         preferredGoal: plan?.preferred ?? null
       });
+      const rankActions = (list) => {
+        if (!list.length) return [];
+        const ranked = rankRootActions(observation, list, championParameters);
+        if (!Array.isArray(ranked) || ranked.length === 0) return [...list];
+        const allowed = new Set(list.map(actionKey));
+        const seenRank = /* @__PURE__ */ new Set();
+        const result = [];
+        for (const action2 of ranked) {
+          const key = actionKey(action2);
+          if (!allowed.has(key) || seenRank.has(key)) continue;
+          seenRank.add(key);
+          result.push(action2);
+        }
+        return result.length ? result : [...list];
+      };
+      const rankedRoot = rankActions(screened.map((s) => s.action));
+      const rootOrder = new Map(rankedRoot.map((action2, i) => [actionKey(action2), i]));
+      screened = screened.filter((s) => rootOrder.has(actionKey(s.action))).sort((a, b) => rootOrder.get(actionKey(a.action)) - rootOrder.get(actionKey(b.action)));
       phase.screenMs = performance.now() - screenStart;
       const candidates = [];
       const candidateSources = [];
@@ -11185,7 +11316,10 @@
         return true;
       };
       push(championAction, "champion");
-      const claimActions = legalRootActions.filter((x) => x.type === "claim");
+      let claimActions = legalRootActions.filter((x) => x.type === "claim");
+      const rankedClaims = rankActions(claimActions);
+      const claimOrder = new Map(rankedClaims.map((action2, i) => [actionKey(action2), i]));
+      claimActions = claimActions.filter((a) => claimOrder.has(actionKey(a))).sort((a, b) => claimOrder.get(actionKey(a)) - claimOrder.get(actionKey(b)));
       const claimDeltas = /* @__PURE__ */ new Map();
       const claimGross = /* @__PURE__ */ new Map();
       let bestClaim = null;
@@ -11822,6 +11956,54 @@
   }
 
   // src/js/adapter.ts
+  var SEARCH_POLICY_RULES = {
+    gateMode: { kind: "enum", values: ["auto", "always", "never", "rerank"] },
+    overrideMargin: { kind: "number", min: 0, max: 0.2 },
+    candidateCap: { kind: "int", min: 2, max: 8 },
+    contestThreshold: { kind: "number", min: 0.5, max: 0.99 },
+    claimRanking: { kind: "enum", values: ["enumeration", "prior"] },
+    nearTerminalCandidate: { kind: "enum", values: ["off", "replace", "add"] },
+    screenGoalScope: { kind: "enum", values: ["all", "preferred"] },
+    batchAdmission: { kind: "enum", values: ["legacy", "balanced"] },
+    endgameSolver: { kind: "enum", values: ["off", "exact"] },
+    endgameDiscard: { kind: "bool" },
+    arbitration: { kind: "enum", values: ["legacy", "paired"] },
+    minPairedTrials: { kind: "int", min: 2, max: 12 },
+    pairedZ: { kind: "number", min: 1, max: 3 },
+    claimProtection: { kind: "bool" },
+    claimProtectDelta: { kind: "number", min: 5, max: 30 },
+    claimProtectMargin: { kind: "number", min: 0, max: 0.5 },
+    ensureBestClaimCandidate: { kind: "bool" },
+    allocation: { kind: "enum", values: ["balanced", "racing"] },
+    racingDelta: { kind: "number", min: 5e-3, max: 0.2 },
+    endgameMode: { kind: "enum", values: ["default", "claimFocus"] },
+    worlds: { kind: "int", min: 1, max: 8 },
+    horizon: { kind: "int", min: 8, max: 96 },
+    championStructure: { kind: "enum", values: ["beam-lineage", "beam-adaptive", "beam-rollout", "beam-contest"] },
+    evaluator: { kind: "enum", values: ["L0", "L1", "L2", "L3"] },
+    workUnits: { kind: "int", min: 8, max: 512 }
+  };
+  function sanitizeSearchPolicy(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const source = raw;
+    const result = {};
+    for (const [key, rule] of Object.entries(SEARCH_POLICY_RULES)) {
+      const value = source[key];
+      if (value === void 0) continue;
+      if (rule.kind === "bool") {
+        if (typeof value === "boolean") result[key] = value;
+        continue;
+      }
+      if (rule.kind === "enum") {
+        if (typeof value === "string" && rule.values.includes(value)) result[key] = value;
+        continue;
+      }
+      if (typeof value !== "number" || !Number.isFinite(value)) continue;
+      const clamped = Math.min(rule.max, Math.max(rule.min, value));
+      result[key] = rule.kind === "int" ? Math.round(clamped) : clamped;
+    }
+    return result;
+  }
   var planners = /* @__PURE__ */ new Map();
   function plannerFor(versionId) {
     let p = planners.get(versionId);
@@ -11839,8 +12021,21 @@
     const seat = options.playerId ?? game2.current;
     if (game2.phase === "finished") throw new Error("游戏结束，无法决策");
     if (game2.current !== seat) throw new Error("决策席位不是当前行动者");
-    const resolvedOptions = mergeJointOptions(versionId, options);
+    const presetOptions = mergeJointOptions(versionId, options);
+    const presetParameters = presetOptions.championParameters ? validateAIParameters(presetOptions.championParameters) : CHAMPION_PARAMETERS;
+    const observation = buildObservation(game2, seat);
+    const policyOverrides = sanitizeSearchPolicy(searchPolicyOverrides(observation, options, presetParameters));
+    const explicitPolicy = Object.fromEntries(
+      Object.entries(policyOverrides).filter(([key]) => options[key] === void 0)
+    );
+    const resolvedOptions = mergeJointOptions(versionId, { ...explicitPolicy, ...options });
     const championParameters = resolvedOptions.championParameters ? validateAIParameters(resolvedOptions.championParameters) : CHAMPION_PARAMETERS;
+    const requestedBudget = typeof resolvedOptions.budgetMs === "number" ? resolvedOptions.budgetMs : version.kind === "champion-guided" ? 100 : null;
+    if (resolvedOptions.workUnits === void 0 && requestedBudget !== null) {
+      const rawBudget = budgetForDecision(observation, requestedBudget, championParameters);
+      const budgetMs = Number.isFinite(rawBudget) ? Math.min(1e3, Math.max(0, rawBudget)) : requestedBudget;
+      resolvedOptions.budgetMs = budgetMs;
+    }
     const baseConfig = resolveJointConfig(versionId, resolvedOptions, options.profile?.name);
     const config = { ...baseConfig, hash: jointConfigHash(baseConfig) };
     if (version.kind === "champion-contest") {
@@ -11862,7 +12057,6 @@
         config
       };
     }
-    const observation = buildObservation(game2, seat);
     const planner = plannerFor(versionId);
     const guidedDefaults = version.guided ?? {};
     const decision = version.kind === "champion-guided" ? planner.decide(observation, {

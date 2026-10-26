@@ -36,6 +36,15 @@ AI6_BASELINE_BLOCK = (1_100_000_000, 1_200_000_000)
 # 仅用于基准局面的引擎 replay 种子与固定工作量测试，不用于胜率/晋级统计。
 # 原拟 [1.4e9,1.5e9) 与对抗性联赛块重叠，按块不重叠纪律改登记 [1.5e9,1.6e9)。
 AI6_SCENARIO_BLOCK = (1_500_000_000, 1_600_000_000)
+# AI9 全决策系统协同进化（与全部既有块物理隔离；正式验证仍只用 [900M,1.06e9)）：
+# OpenEvolve 研究评估 / 快筛 / 深验 / 独立确认四个子块。
+AI9_BLOCK = (1_650_000_000, 1_700_000_000)
+AI9_OPENEVOLVE_STAGE2_BLOCK = (1_650_000_000, 1_650_000_016)
+AI9_OPENEVOLVE_STAGE3_BLOCK = (1_650_000_100, 1_650_000_148)
+AI9_PROBE_BLOCK = (1_650_002_000, 1_650_003_000)
+AI9_DEV_SCREEN_BLOCK = (1_660_000_000, 1_670_000_000)
+AI9_DEV_DEEP_BLOCK = (1_670_000_000, 1_680_000_000)
+AI9_CONFIRM_BLOCK = (1_680_000_000, 1_690_000_000)
 
 
 def assert_in_block(seed: int, block: tuple[int, int], name: str = "seed") -> int:

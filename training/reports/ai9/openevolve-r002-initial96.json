@@ -1,0 +1,126 @@
+{
+  "schema": "century-ai9-openevolve-run-v1",
+  "startedAt": "2026-10-26T02:49:10.720Z",
+  "modules": [
+    "M02",
+    "M11"
+  ],
+  "iterations": 2,
+  "probe": {
+    "available": true,
+    "checks": [
+      {
+        "id": "venv-python",
+        "status": "PASS",
+        "evidence": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/.venv/bin/python"
+      },
+      {
+        "id": "runner",
+        "status": "PASS",
+        "evidence": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/run_openevolve.py"
+      },
+      {
+        "id": "evaluator",
+        "status": "PASS",
+        "evidence": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/century_evaluator_ai9.py"
+      },
+      {
+        "id": "config",
+        "status": "PASS",
+        "evidence": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/config-ai9.yaml"
+      },
+      {
+        "id": "codex-login",
+        "status": "PASS",
+        "evidence": "Logged in using ChatGPT"
+      }
+    ],
+    "blocked": [],
+    "generator": "openevolve-llm"
+  },
+  "outputDir": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r002",
+  "run": {
+    "ok": true,
+    "status": 0,
+    "elapsedMs": 1158751,
+    "bestProgramPath": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r002/best/best_program.ts",
+    "logTail": " with 3 islands\n2026-10-26 11:07:36,114 - INFO - Island Status:\n2026-10-26 11:07:36,115 - INFO -  * Island 0: 1 programs, best=0.5000, avg=0.5000, diversity=0.00, gen=0 (best: c4c6073c-e1d1-4c4f-9ed8-feb7abe3868a)\n2026-10-26 11:07:36,115 - INFO -    Island 1: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0\n2026-10-26 11:07:36,115 - INFO -    Island 2: 0 programs, best=0.0000, avg=0.0000, diversity=0.00, gen=0\n2026-10-26 11:07:36,115 - INFO - Starting process-based evolution from iteration 1 for 2 iterations (total: 3)\n2026-10-26 11:07:36,119 - INFO - Early stopping disabled\n2026-10-26 11:08:29,453 - INFO - Received signal 15, initiating graceful shutdown...\n2026-10-26 11:08:29,464 - INFO - Graceful shutdown requested...\n2026-10-26 11:08:29,464 - INFO - Shutdown requested, canceling remaining evaluations...\n2026-10-26 11:08:29,464 - INFO - ✅ Evolution completed - Shutdown requested\n2026-10-26 11:08:29,464 - INFO - Evolution stopped due to shutdown request\n2026-10-26 11:08:29,468 - INFO - Stopped process pool\n2026-10-26 11:08:29,469 - INFO - Using tracked best program: c4c6073c-e1d1-4c4f-9ed8-feb7abe3868a\n2026-10-26 11:08:29,469 - INFO - Evolution complete. Best program has metrics: combined_score=0.5000, stage_passed=1.0000, static_ok=1.0000, compile_ok=1.0000, probe_ok=1.0000, module_count=2.0000, changed_module_count=0.0000, identical_to_official=1.0000, module_mismatches=0.0000, code_complexity=2664.0000, combined_module_hash_head=0.5413, first_place_delta=0.0000, first_place_ci_lower=0.0000, candidate_first_rate=0.4167, champion_first_rate=0.4167, games=96.0000, anomaly_rate=0.0000, p95_wall_ms=14270.9000, mean_decision_ms=65.0220, pooled_module_hash_head=0.5413, seed_block=1650.0000\n2026-10-26 11:08:29,470 - INFO - Saved best program to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r002/best/best_program.ts with program info to /Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r002/best/best_program_info.json\n"
+  },
+  "status": "completed",
+  "generator": "openevolve-llm",
+  "candidate": {
+    "candidateId": "cand-ai9-multi-r1c0-4cecfe",
+    "identityDigest": "3f519695f0b7a19a9c38a70b74c84ef15758b68297e539b9fa86742db3d4b687",
+    "artifactHash": "69d26682c6eee9b404508414adeeded1420bce989ad46676cca271b295797032",
+    "sourceHash": "57be2664d701d90ab40d06bc20d365b94a1f09c3effd41c8897a0b00b7d6ce6b",
+    "modules": [
+      "M02",
+      "M11"
+    ],
+    "probe": {
+      "changedModules": [],
+      "identicalToOfficial": true,
+      "mismatches": 0
+    },
+    "build": {
+      "protocol": "century-multi-module-candidate-v1",
+      "compiler": "tsc 5.9.3",
+      "modules": [
+        "M02",
+        "M11"
+      ],
+      "moduleHashes": {
+        "M02": "29c39d32e070cf2a1d5b4ef13236866385b9efd9de83dcb94422160d98af8b7e",
+        "M11": "3071a045f64429487e451881f2433d97f80a93e3b8a2cfb42f2fd5bead448ff1"
+      },
+      "combinedModuleHash": "8a8fc9ed984e5939302804046c6a0179404945de77ee42d8465872adb56dee30",
+      "compiledFiles": 49,
+      "compiledBytes": 332768,
+      "sourceOrigin": "openevolve-llm",
+      "mutation": "openevolve-best-program",
+      "sandbox": "macos-seatbelt"
+    },
+    "provenance": {
+      "generator": "openevolve-llm",
+      "outputDir": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r002",
+      "bestProgramPath": "/Volumes/Extreme SSD/Projects/Century-ai9/ai5/openevolve/results/ai9-r002/best/best_program.ts",
+      "combinedSha256": "8a8fc9ed984e5939302804046c6a0179404945de77ee42d8465872adb56dee30",
+      "modules": [
+        "M02",
+        "M11"
+      ],
+      "bestInfo": {
+        "id": "c4c6073c-e1d1-4c4f-9ed8-feb7abe3868a",
+        "generation": 0,
+        "iteration": 0,
+        "timestamp": 1792984056.105438,
+        "parent_id": null,
+        "metrics": {
+          "combined_score": 0.5,
+          "stage_passed": 1,
+          "static_ok": 1,
+          "compile_ok": 1,
+          "probe_ok": 1,
+          "module_count": 2,
+          "changed_module_count": 0,
+          "identical_to_official": 1,
+          "module_mismatches": 0,
+          "code_complexity": 2664,
+          "combined_module_hash_head": 0.541256542676421,
+          "first_place_delta": 0,
+          "first_place_ci_lower": 0,
+          "candidate_first_rate": 0.4167,
+          "champion_first_rate": 0.4167,
+          "games": 96,
+          "anomaly_rate": 0,
+          "p95_wall_ms": 14270.9,
+          "mean_decision_ms": 65.022,
+          "pooled_module_hash_head": 0.541256542676421,
+          "seed_block": 1650
+        },
+        "language": "unknown",
+        "saved_at": 1792984109.470092
+      }
+    }
+  }
+}

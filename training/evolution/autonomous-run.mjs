@@ -22,7 +22,10 @@ import { ensureDir, writeJSON } from '../lib/io.mjs';
 import { REPO_ROOT } from '../lib/paths.mjs';
 import { assertResourceBudget, evaluateCapacity, resourceSnapshot } from '../lib/resource-scheduler.mjs';
 import { CampaignController } from './campaign-controller.mjs';
-import { createLiveGovernanceProvider, createAutonomousGovernanceAdapter } from './governance-provider-v2.mjs';
+import {
+  createLiveGovernanceProvider, createAutonomousGovernanceAdapter,
+  createLiveGovernanceProviderAI9, createAutonomousGovernanceAdapterAI9,
+} from './governance-provider-v2.mjs';
 import { createPromotionHandler } from './promotion-handler.mjs';
 import { createOpenEvolveCampaignGenerator, writeOpenEvolveEvidence } from './openevolve-campaign.mjs';
 import { sha256Hex } from './core.mjs';
@@ -47,8 +50,11 @@ if (!campaignId) {
   console.error('必须提供 --campaign <id>');
   process.exit(2);
 }
-const rootDir = resolve(REPO_ROOT, 'training/reports/autonomous', campaignId);
-const governance = createAutonomousGovernanceAdapter({ provider: createLiveGovernanceProvider() });
+const coevolve = args.coevolve === true;
+const rootDir = resolve(REPO_ROOT, coevolve ? 'training/reports/coevolution' : 'training/reports/autonomous', campaignId);
+const governance = coevolve
+  ? createAutonomousGovernanceAdapterAI9({ provider: createLiveGovernanceProviderAI9() })
+  : createAutonomousGovernanceAdapter({ provider: createLiveGovernanceProvider() });
 const CODE_VERSION_PATH = resolve(rootDir, 'code-version.json');
 /** 12h/R09 证据必须能绑定到具体代码版本：commit + 干净工作区 + 训练核心模块哈希。 */
 const CODE_MODULES = [
@@ -114,6 +120,7 @@ function configFromArgs() {
   const sourceEvolution = generatorMode === 'openevolve-hybrid' || generatorMode === 'openevolve-only';
   return {
     rounds: args.rounds !== undefined ? Number(args.rounds) : 1,
+    ...(coevolve ? { configRef: 'ai9://campaign/coevolution' } : {}),
     playerCounts,
     quickSeeds: args['quick-seeds'] !== undefined ? Number(args['quick-seeds']) : 4,
     deepSeeds: args['deep-seeds'] !== undefined ? Number(args['deep-seeds']) : 6,
@@ -124,8 +131,14 @@ function configFromArgs() {
     generation: {
       count: args['candidates'] !== undefined ? Number(args['candidates']) : 6,
       seed: args['generation-seed'] !== undefined ? Number(args['generation-seed']) : 20_261_025,
-      targetIds: args.targets ? String(args.targets).split(',') : null,
+      targetIds: args.targets
+        ? String(args.targets).split(',')
+        : (args.modules ? String(args.modules).split(',') : null),
+      mode: coevolve ? 'multi-module' : 'descriptor',
+      strategies: args.strategies ? String(args.strategies).split(',') : null,
       generator: generatorMode,
+      openevolveIterations: args['openevolve-iterations'] !== undefined
+        ? Number(args['openevolve-iterations']) : 2,
       openevolve: sourceEvolution ? {
         iterations: args['openevolve-iterations'] !== undefined ? Number(args['openevolve-iterations']) : 1,
         timeoutMs: args['openevolve-timeout-ms'] !== undefined
@@ -133,6 +146,8 @@ function configFromArgs() {
         outputDir: args['openevolve-output'] ? resolve(REPO_ROOT, String(args['openevolve-output'])) : null,
         onLlmUnavailable: args['on-llm-unavailable'] ? String(args['on-llm-unavailable']) : 'fallback',
       } : null,
+      includeControl: args['no-control'] !== true,
+      allowDeterministicFallback: args['no-deterministic-fallback'] !== true,
     },
     budget: {
       maxCandidates: args['max-candidates'] !== undefined ? Number(args['max-candidates']) : 24,

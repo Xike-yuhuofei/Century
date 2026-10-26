@@ -96,6 +96,7 @@ export function focusSeatFor({ seedIndex, seatCount, seatOffset = 0 }) {
 export function runFirstPlaceSeatChallenge({
   champion, candidate, opponents, seeds, seatCount, seatOffset = 0,
   maxMoves = 1200, deadlineMs = 300_000, workUnits = DEFAULT_FORMAL_WORK_UNITS,
+  executorA = null,
 }) {
   assertCondition(champion?.id && candidate?.id, 'champion/candidate 必须带 id');
   assertCondition(champion.id !== candidate.id, '冠军与候选 id 不得相同');
@@ -116,8 +117,15 @@ export function runFirstPlaceSeatChallenge({
       if (seat === focusSeat) return null;
       return toSeatVersion(opponentForSeat({ seedIndex, seat, opponents }));
     });
+    const candidateVersion = toSeatVersion(candidate, { seatCount, workUnits });
+    // AI9 编译型多模块候选：以独立 ESM 模块实例注入 A 臂焦点席位；
+    // B 臂仍走官方编译产物（冻结冠军），两者不共享任何模块状态。
+    if (executorA) {
+      candidateVersion.aiModule = executorA.aiModule;
+      candidateVersion.jointModule = executorA.jointModule;
+    }
     const arms = [
-      { arm: 'A', version: toSeatVersion(candidate, { seatCount, workUnits }) },
+      { arm: 'A', version: candidateVersion },
       { arm: 'B', version: toSeatVersion(champion, { seatCount, workUnits }) },
     ];
     const results = {};
@@ -183,6 +191,7 @@ export function runFirstPlaceChallengeBundle({
   champion, candidate, opponents, seatPlans,
   weights = null, alpha = 0.05, margin = 0.02, minSeeds = 60, maxAnomalyRate = 0.02,
   seatOffset = 0, maxMoves = 1200, deadlineMs = 300_000, workUnits = DEFAULT_FORMAL_WORK_UNITS,
+  executorA = null,
 }) {
   assertCondition(Array.isArray(seatPlans) && seatPlans.length > 0, 'seatPlans 不能为空');
   const strata = [];
@@ -190,7 +199,7 @@ export function runFirstPlaceChallengeBundle({
   for (const plan of seatPlans) {
     const run = runFirstPlaceSeatChallenge({
       champion, candidate, opponents, seeds: plan.seeds, seatCount: plan.seatCount,
-      seatOffset, maxMoves, deadlineMs, workUnits,
+      seatOffset, maxMoves, deadlineMs, workUnits, executorA,
     });
     runs.push(run);
     strata.push({ seatCount: plan.seatCount, pairs: run.pairs });
@@ -219,6 +228,7 @@ export function runFirstPlaceChallengeBundle({
 export function runPreregisteredFirstPlaceChallenge({
   plan, champion, candidate, opponents, engine = null, recomputeIdentity = null,
   seatOffset = 0, maxMoves = 1200, deadlineMs = 300_000, workUnits = null,
+  executorA = null,
 }) {
   assertCondition(plan?.lockedAt, '预注册计划未锁定（缺少 lockedAt）');
   const planWorkUnits = plan.searchWorkUnits ?? DEFAULT_FORMAL_WORK_UNITS;
@@ -266,6 +276,7 @@ export function runPreregisteredFirstPlaceChallenge({
     maxMoves,
     deadlineMs,
     workUnits: planWorkUnits,
+    executorA,
   });
 
   if (recomputeIdentity) {

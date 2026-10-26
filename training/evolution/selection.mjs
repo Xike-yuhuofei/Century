@@ -32,6 +32,20 @@ export function behaviorDistance(a, b) {
       ? 0 : clamp(Math.abs(a.meanMoves - b.meanMoves) / 400, 0, 1);
     return Number((0.55 * actionDistance + 0.15 * rankDistance + 0.2 * scoreDistance + 0.1 * moveDistance).toFixed(6));
   }
+  if (a.kind === 'compiled-module-behavior-v1' && b.kind === 'compiled-module-behavior-v1') {
+    // 编译型多模块候选：动作分布是唯一稳定的行为维度（其余字段随人数分层）。
+    const keys = ['acquire', 'claim', 'rest', 'play'];
+    const actionL1 = keys.reduce((s, k) => s + Math.abs((a.actions?.[k] ?? 0) - (b.actions?.[k] ?? 0)), 0);
+    const moduleJaccard = (() => {
+      const setA = new Set(a.modules ?? []);
+      const setB = new Set(b.modules ?? []);
+      const union = new Set([...setA, ...setB]);
+      if (!union.size) return 0;
+      const intersection = [...setA].filter(id => setB.has(id)).length;
+      return 1 - intersection / union.size;
+    })();
+    return Number(clamp(0.7 * clamp(actionL1 / 2, 0, 1) + 0.3 * moduleJaccard, 0, 1).toFixed(6));
+  }
   if (a.kind === 'proxy-coefficients-v1') {
     if (a.targetId !== b.targetId) return 1;
     const keys = new Set([...Object.keys(a.coefficients ?? {}), ...Object.keys(b.coefficients ?? {})]);

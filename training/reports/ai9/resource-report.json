@@ -1,0 +1,142 @@
+{
+  "schema": "century-ai9-resource-report-v1",
+  "generatedAt": "2026-10-26T05:05:14.509Z",
+  "device": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuCount": 10,
+    "totalMemBytes": 17179869184,
+    "note": "目标设备 Apple M4 / 16GB 统一内存；本报告在开发机采集，字段为实测运行时。"
+  },
+  "bundle": {
+    "modules": [
+      "M01",
+      "M02",
+      "M03",
+      "M04",
+      "M05",
+      "M06",
+      "M07",
+      "M08",
+      "M09",
+      "M10",
+      "M11",
+      "M12"
+    ],
+    "compiledFiles": 49,
+    "compiledBytes": 333332,
+    "artifactJsonBytes": 429481,
+    "tscVersion": "tsc 5.9.3",
+    "buildElapsedMs": null,
+    "sandbox": "macos-seatbelt"
+  },
+  "inference": {
+    "perDecisionBudgetMsHardCap": 1000,
+    "observedMeanDecisionMs": 31.615,
+    "samples": [
+      {
+        "source": "all-modules 2–5p",
+        "meanDecisionMs": 24.139,
+        "games": 16,
+        "anomalies": 0
+      },
+      {
+        "source": "interaction:control",
+        "meanDecisionMs": 31.933,
+        "games": 32,
+        "anomalies": 0
+      },
+      {
+        "source": "interaction:single-M02",
+        "meanDecisionMs": 31.227,
+        "games": 32,
+        "anomalies": 0
+      },
+      {
+        "source": "interaction:single-M11",
+        "meanDecisionMs": 29.186,
+        "games": 32,
+        "anomalies": 0
+      },
+      {
+        "source": "interaction:pair-M02+M11",
+        "meanDecisionMs": 31.493,
+        "games": 32,
+        "anomalies": 0
+      },
+      {
+        "source": "interaction:multi-M02+M05+M11",
+        "meanDecisionMs": 33.287,
+        "games": 32,
+        "anomalies": 0
+      },
+      {
+        "source": "interaction:ablation-M02",
+        "meanDecisionMs": 40.037,
+        "games": 32,
+        "anomalies": 0
+      }
+    ],
+    "note": "均值来自真实 2–5 人对局的候选决策计时；整局墙钟受对手与机器负载影响，不作为推理预算判据。"
+  },
+  "memory": {
+    "snapshotAtRuntime": {
+      "at": "2026-10-26T05:05:14.517Z",
+      "platform": "darwin",
+      "arch": "arm64",
+      "cpuCount": 10,
+      "loadAverage": [
+        2.5751953125,
+        3.67578125,
+        4.98388671875
+      ],
+      "totalMem": 17179869184,
+      "freeMem": 506232832,
+      "availableMem": 5776146432,
+      "freeMemRatio": 0.0295,
+      "availableMemRatio": 0.3362,
+      "usedMem": 11403722752,
+      "freeDisk": 965194739712,
+      "processRss": 46776320
+    },
+    "campaignObserved": {
+      "campaignId": "ai9-smoke-003",
+      "budgetUsed": {
+        "candidates": 3,
+        "games": 40,
+        "wallMs": 184031,
+        "deepConfirmations": 2
+      },
+      "status": "completed"
+    },
+    "campaignsObserved": [
+      {
+        "campaignId": "ai9-smoke-003",
+        "budgetUsed": {
+          "candidates": 3,
+          "games": 40,
+          "wallMs": 184031,
+          "deepConfirmations": 2
+        },
+        "status": "completed"
+      },
+      {
+        "campaignId": "ai9-live-coevolve-2",
+        "budgetUsed": {
+          "candidates": 8,
+          "games": 192,
+          "wallMs": 1182721,
+          "deepConfirmations": 4
+        },
+        "status": "completed",
+        "rounds": 2
+      }
+    ]
+  },
+  "limits": {
+    "trainingConcurrency": 1,
+    "maxCompiledBundleBytes": 8388608,
+    "maxModuleSourceBytes": 12000,
+    "maxMovesPerGame": 400
+  }
+}

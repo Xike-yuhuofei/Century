@@ -143,6 +143,21 @@ export const AI7_CANDIDATE_DEV_SUBBLOCK = [1_410_000_000, 1_420_000_000];
  * （training/scenarios/data/generation-summary.json），逐局顺序分配、可审计。 */
 export const AI6_SCENARIO_BLOCK = [1_500_000_000, 1_600_000_000];
 
+/** AI9 全决策系统协同进化（2026-10-26 登记；与全部既有块物理隔离）：
+ * - [1.650e9, 1.651e9)  OpenEvolve 多模块研究评估：
+ *   stage2 16 种子、stage3 48 种子、行为探针固定夹具；
+ * - [1.66e9, 1.67e9)    协同进化快筛池（开发专用，永不进入正式晋级证据）；
+ * - [1.67e9, 1.68e9)    协同进化深验池（开发专用，与快筛物理隔离）；
+ * - [1.68e9, 1.69e9)    独立确认池（候选冻结后一次性使用，不复用调参）。
+ * 正式冠军晋级仍只能使用验证池 [900M, 1.06e9)，与本块零交集。 */
+export const AI9_BLOCK = [1_650_000_000, 1_700_000_000];
+export const AI9_OPENEVOLVE_STAGE2_BLOCK = [1_650_000_000, 1_650_000_016];
+export const AI9_OPENEVOLVE_STAGE3_BLOCK = [1_650_000_100, 1_650_000_148];
+export const AI9_PROBE_BLOCK = [1_650_002_000, 1_650_003_000];
+export const AI9_DEV_SCREEN_BLOCK = [1_660_000_000, 1_670_000_000];
+export const AI9_DEV_DEEP_BLOCK = [1_670_000_000, 1_680_000_000];
+export const AI9_CONFIRM_BLOCK = [1_680_000_000, 1_690_000_000];
+
 /** 断言种子落在指定区间内（含头不含尾）。 */
 export function assertInBlock(seed, block, name = 'seed') {
   if (!Number.isSafeInteger(seed)) {

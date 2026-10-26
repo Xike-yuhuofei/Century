@@ -26,8 +26,10 @@ import {
 import { createLiveGovernanceProvider, createAutonomousGovernanceAdapter } from './governance-provider-v2.mjs';
 import { ArtifactStore } from './artifact-store.mjs';
 import { generateCandidateBatch } from './candidate-generator.mjs';
+import { generateMultiModuleBatch, recordCoEvolutionElite } from './multi-module-generator.mjs';
 import { runSafetyChecks } from './safety-check.mjs';
 import { evaluateCandidate, assertIndependentWindows } from './dev-evaluator.mjs';
+import { AI9_DEV_BLOCKS } from './core.mjs';
 import { scoreCandidate, selectCandidates } from './selection.mjs';
 import {
   labelsFromDiagnosticsAnalysis, labelsFromHumanAnalytics, mergeLabels, toResearchHints,
@@ -48,7 +50,17 @@ export const DEFAULT_CAMPAIGN_CONFIG = deepFreeze({
   deadlineMs: 20_000,
   retainTopK: 3,
   deepConfirmations: 1,
-  generation: { count: 4, seed: 20_261_025, targetIds: null },
+  generation: {
+    count: 4,
+    seed: 20_261_025,
+    targetIds: null,
+    /** 'descriptor'（AI7 默认）| 'multi-module'（AI9 协同进化）。 */
+    mode: 'descriptor',
+    strategies: null,
+    openevolveIterations: 2,
+    includeControl: true,
+    allowDeterministicFallback: true,
+  },
   budget: {
     maxCandidates: 8,
     maxGames: 24,
@@ -79,6 +91,16 @@ function normalizeConfig(config) {
   assertCondition(merged.quickSeeds <= 1000 && merged.deepSeeds <= 1000, '种子窗口最多 1000');
   assertCondition(Number.isSafeInteger(merged.retainTopK) && merged.retainTopK > 0, 'retainTopK 非法');
   assertCondition(Number.isSafeInteger(merged.deepConfirmations) && merged.deepConfirmations >= 0, 'deepConfirmations 非法');
+  assertCondition(['descriptor', 'multi-module'].includes(merged.generation.mode),
+    `generation.mode 非法：${String(merged.generation.mode)}`);
+  if (merged.generation.strategies !== null) {
+    assertCondition(Array.isArray(merged.generation.strategies) && merged.generation.strategies.length > 0,
+      'generation.strategies 必须为非空数组或 null');
+    for (const strategy of merged.generation.strategies) {
+      assertCondition(['single', 'pair', 'multi', 'crossover', 'ablation', 'openevolve'].includes(strategy),
+        `未知生成策略：${String(strategy)}`);
+    }
+  }
   const b = merged.budget;
   for (const key of ['maxCandidates', 'maxGames', 'maxWallMs', 'maxConcurrent', 'maxDeepConfirmations']) {
     assertCondition(Number.isSafeInteger(b[key]) && b[key] >= 0, `budget.${key} 非法`);
@@ -98,8 +120,8 @@ function pidAliveDefault(pid) {
   try { process.kill(pid, 0); return true; } catch { return false; }
 }
 
-function expectedGames({ evidenceMode, seeds, playerCounts }) {
-  return evidenceMode === 'game' ? seeds.length * playerCounts.length : 0;
+function expectedGames({ evidenceMode, seeds, playerCounts, pairedArms = 1 }) {
+  return evidenceMode === 'game' ? seeds.length * playerCounts.length * pairedArms : 0;
 }
 
 /** 仓库内路径存相对路径（产物可移植）；仓库外（测试临时目录）保留绝对路径。 */
@@ -223,6 +245,9 @@ export class CampaignController {
       },
       promotionQueue: [],
       promotionOutcomes: [],
+      moduleElites: [],
+      mapElites: {},
+      generationDiagnostics: [],
     };
     this._startRound(state);
     return state;
@@ -255,7 +280,11 @@ export class CampaignController {
     });
     const screenSeeds = Array.from({ length: this.config.quickSeeds }, (_, i) => screenWindow.base + i);
     const deepSeeds = Array.from({ length: this.config.deepSeeds }, (_, i) => deepWindow.base + i);
-    assertIndependentWindows({ screenSeeds, deepSeeds });
+    assertIndependentWindows({
+      screenSeeds,
+      deepSeeds,
+      blocks: this.config.generation.mode === 'multi-module' ? AI9_DEV_BLOCKS : undefined,
+    });
     assertDisjoint([screenWindow.base, screenWindow.base + screenWindow.count], [deepWindow.base, deepWindow.base + deepWindow.count],
       'screen/deep 窗口');
     const roundData = {
@@ -324,6 +353,21 @@ export class CampaignController {
     return null;
   }
 
+  /** 精英候选 artifact：模块级精英池 + MAP-Elites 单元格（去重、坏引用跳过）。 */
+  _eliteArtifacts(state) {
+    const ids = new Set();
+    for (const entry of state.moduleElites ?? []) ids.add(entry.candidateId);
+    for (const entry of Object.values(state.mapElites ?? {})) ids.add(entry.candidateId);
+    const artifacts = [];
+    for (const id of ids) {
+      try {
+        const artifact = this.store.get(id);
+        if (artifact?.source?.modules?.length > 0) artifacts.push(artifact);
+      } catch { /* 精英候选已被清理：跳过，不阻断新一代生成 */ }
+    }
+    return artifacts;
+  }
+
   _normalizeBatch(result) {
     if (Array.isArray(result)) return { candidates: result, rejectedAtGeneration: [] };
     return {
@@ -347,12 +391,27 @@ export class CampaignController {
     const hints = state.rounds.length > 1
       ? state.rounds[state.rounds.length - 2]?.diagnostics?.researchHints ?? null
       : null;
-    const generator = this.generator ?? ((options) => generateCandidateBatch(options));
+    const multiModule = this.config.generation.mode === 'multi-module';
+    const generator = this.generator ?? (multiModule
+      ? (options) => generateMultiModuleBatch({
+          ...options,
+          moduleConfig: this.config.generation,
+          eliteArtifacts: this._eliteArtifacts(state),
+          mapElites: state.mapElites,
+        })
+      : (options) => generateCandidateBatch(options));
     const batch = this._normalizeBatch(generator({
       count, round: roundData.round, seed: this.config.generation.seed + roundData.round,
       experiment, parentArtifact, targetIds: this.config.generation.targetIds, hints,
     }));
     if (batch.generatorMeta) roundData.generatorMeta = batch.generatorMeta;
+    if (batch.rejectedAtGeneration?.length) {
+      state.generationDiagnostics.push({
+        round: roundData.round,
+        at: nowIso(),
+        rejected: batch.rejectedAtGeneration,
+      });
+    }
     for (const rejected of batch.rejectedAtGeneration) {
       roundData.rejectedAtGeneration.push(rejected);
       this._event(state, 'candidate-rejected-at-generation', rejected);
@@ -366,6 +425,8 @@ export class CampaignController {
         candidateId: artifact.candidateId,
         parentId: artifact.parentId,
         identityDigest: artifact.identityDigest,
+        strategy: item.strategy ?? null,
+        modules: artifact.source?.modules?.map(m => m.id) ?? null,
         evaluationMode: artifact.algorithmStructure.evaluationMode,
         targetIds: [...artifact.algorithmStructure.targetIds],
         artifactPath: portablePath(put.path),
@@ -442,11 +503,12 @@ export class CampaignController {
     return true;
   }
 
-  _quickNext(state, roundData) {
+  async _quickNext(state, roundData) {
     const item = roundData.candidates.find(c => c.stage === 'checked');
     if (!item) return false;
     const evidenceMode = item.evaluationMode;
-    const games = expectedGames({ evidenceMode, seeds: roundData.screenSeeds, playerCounts: this.config.playerCounts });
+    const pairedArms = this.config.generation.mode === 'multi-module' ? 2 : 1;
+    const games = expectedGames({ evidenceMode, seeds: roundData.screenSeeds, playerCounts: this.config.playerCounts, pairedArms });
     if (state.budgetUsed.games + games > this.config.budget.maxGames) {
       item.stage = 'budget-skipped';
       item.failure = { stage: 'quick-eval', reason: `game budget exceeded (${state.budgetUsed.games}+${games}>${this.config.budget.maxGames})` };
@@ -457,7 +519,7 @@ export class CampaignController {
     try {
       const artifact = this.store.get(item.candidateId);
       const evaluator = this.evaluator ?? evaluateCandidate;
-      const evidence = evaluator({
+      const evidence = await evaluator({
         artifact,
         seeds: roundData.screenSeeds,
         purpose: 'screen',
@@ -543,7 +605,7 @@ export class CampaignController {
     this._event(state, 'selection-completed', selection.summary);
   }
 
-  _deepNext(state, roundData) {
+  async _deepNext(state, roundData) {
     const pending = roundData.selectedIds
       .map(id => this._candidateState(roundData, id))
       .filter(item => item && item.evaluationMode === 'game' && item.stage === 'selected');
@@ -559,7 +621,8 @@ export class CampaignController {
       return true;
     }
     const item = pending.sort((a, b) => (b.quick?.score?.composite ?? 0) - (a.quick?.score?.composite ?? 0))[0];
-    const games = expectedGames({ evidenceMode: 'game', seeds: roundData.deepSeeds, playerCounts: this.config.playerCounts });
+    const pairedArms = this.config.generation.mode === 'multi-module' ? 2 : 1;
+    const games = expectedGames({ evidenceMode: 'game', seeds: roundData.deepSeeds, playerCounts: this.config.playerCounts, pairedArms });
     if (state.budgetUsed.games + games > this.config.budget.maxGames) {
       item.stage = 'deep-skipped';
       item.failure = { stage: 'deep-confirm', reason: 'game budget exhausted' };
@@ -580,7 +643,7 @@ export class CampaignController {
     try {
       const artifact = this.store.get(item.candidateId);
       const evaluator = this.evaluator ?? evaluateCandidate;
-      const evidence = evaluator({
+      const evidence = await evaluator({
         artifact,
         seeds: roundData.deepSeeds,
         purpose: 'deep',
@@ -627,6 +690,15 @@ export class CampaignController {
         this._event(state, 'candidate-deep-confirmed', {
           evidencePath, score: score.composite, metrics: item.deep.metrics,
         }, item.candidateId);
+        if (this.config.generation.mode === 'multi-module') {
+          recordCoEvolutionElite({ state, artifact, evidence, item, strategy: item.strategy ?? null });
+          this._event(state, 'coevolution-elite-recorded', {
+            candidateId: artifact.candidateId,
+            modules: artifact.source?.modules?.map(m => m.id) ?? [],
+            mapElites: Object.keys(state.mapElites ?? {}),
+            moduleElites: (state.moduleElites ?? []).map(e => e.moduleId),
+          }, item.candidateId);
+        }
       }
     } catch (error) {
       item.stage = 'deep-failed';
@@ -818,7 +890,10 @@ export class CampaignController {
         state = this._initState();
       }
       state.status = 'running';
-      state.phase = state.phase === 'initialized' ? 'running' : state.phase;
+      // 恢复时清除上一次停止阶段标签，避免 status=running 却仍显示 stopped-by-*。
+      state.phase = state.phase === 'initialized' || String(state.phase ?? '').startsWith('stopped')
+        ? 'running'
+        : state.phase;
       this._save(state);
       this._event(state, resume ? 'campaign-resumed' : 'campaign-started', {
         runFingerprint: this.runFingerprint, maxSteps,
@@ -914,6 +989,8 @@ export class CampaignController {
           candidateId: c.candidateId,
           parentId: c.parentId ?? null,
           identityDigest: c.identityDigest,
+          strategy: c.strategy ?? null,
+          modules: c.modules ?? null,
           evaluationMode: c.evaluationMode,
           targetIds: c.targetIds,
           stage: c.stage,
@@ -932,6 +1009,9 @@ export class CampaignController {
       pendingApprovals: current.pendingApprovals,
       promotionQueue: current.promotionQueue ?? [],
       promotionOutcomes: current.promotionOutcomes ?? [],
+      moduleElites: current.moduleElites ?? [],
+      mapElites: current.mapElites ?? {},
+      generationDiagnostics: current.generationDiagnostics ?? [],
       note: 'autonomous 模式：正式挑战请求进入机器门禁队列；人工审批已被机器门禁取代，门禁本身不删除',
     });
   }

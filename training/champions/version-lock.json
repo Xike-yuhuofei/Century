@@ -1,7 +1,7 @@
 {
   "schema": "century-algorithm-version-lock-v1",
   "algorithm": "sha256(file bytes)",
-  "createdAt": "2026-10-25T20:58:16.024Z",
+  "createdAt": "2026-10-26T03:54:08.732Z",
   "archives": {
     "training/champions/candidates/ai5-readiness-efficiency.json": "1de6c7f3beedda7e964c55271d6fe704df956ff7d78f1e29ef6761fc01ce3df5",
     "training/champions/candidates/joint-js5.json": "b584e99ba16db7e1b17228875c501036df5b3e4f2ddab2f5cf6cae99677ab73c",
@@ -9,8 +9,8 @@
   },
   "decisionSources": {
     "web-v1/src/ai/decision.ts": "c4f464c1a25e294e3e5d143ea0ce6746b9096d8c984e2265e24fd5716637ed99",
-    "web-v1/src/js/champion-guided.ts": "740b3cb941219eaffa61469abbb2b3f3ce0f63c402e2d5783a3ef4eabd4ec8a8",
-    "web-v1/src/js/adapter.ts": "c0c81c07957a644afcb4ba64b02e9a81c1178b1491f938d4083642857752b2b6",
+    "web-v1/src/js/champion-guided.ts": "e5062e2a3b8451519e9bf3a4dd07b9470a4aab4076a5e00b7708d474f26318e7",
+    "web-v1/src/js/adapter.ts": "88c83d78873622c446c2de6d004774e1799598bec1e3e12c46af06c0cd270c85",
     "web-v1/src/js/config.ts": "2e71edc7c2f50a43b1c47949b5a128377aec8fc2c1182fcf160a2c249b0c1465",
     "web-v1/src/js/joint-rollout.ts": "653ce2297de94a656945b42770f19426b1f2a1f8dd9ea1b9ce46681fd5d2c743",
     "web-v1/src/js/rollout-policy.ts": "16d17b5e0cc1fc67ab3f3e33ace790f3ad1fa4f390cee9ff8a52bef69cc16c8a",
@@ -20,8 +20,8 @@
     "web-v1/src/js/types.ts": "f2787723b8fe10dd62662737fb23be26fd8c96050cf1b8c835323528856046be",
     "web-v1/src/ai/version-registry.ts": "6b0769d29481c0e1c10364ce3ea0a3a6961a2e633dcce9a4e895d78dd58f70a9",
     "web-v1/src/ai/parameters.ts": "04cfc2804f48dffc8e33c3880e04acaf955bc12f51ba25dc2ebb3053b7a64526",
-    "web-v1/src/ai/planner.ts": "a0eecae250f6080bbc8f4ae91f3bc57438fe0c6bc0ce16caa3af968d6f522f3c",
+    "web-v1/src/ai/planner.ts": "245127f39523777cc525e5f7ffae96868f577ca8d6ed2bc7c9fe89d12083a38e",
     "web-v1/src/ai/evaluator.ts": "0321057e373505dd03070d971d9e1609477bfd7e2323718c3408e02fab69ea40"
   },
-  "note": "AI8 P3：decision.ts 新增可选 workUnits 固定工作量搜索（仅显式传入时生效，缺省冠军行为逐字节不变）；研究配对与正式挑战统一固定 workUnits，消除墙钟抖动。"
+  "note": "AI9: 预算钳制下界 0 保留冠军回退语义；M11/M12 模块接入 adapter"
 }

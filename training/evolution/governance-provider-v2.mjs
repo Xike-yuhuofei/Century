@@ -12,27 +12,31 @@
  */
 
 import { loadSeedGovernance, queryInterval, reserveConsumption, CENTRAL_REGISTRY_PATH } from '../lib/seed-governance.mjs';
-import { AI7_DEV_BLOCKS, AI7_WINDOW_SIZE, ai7WindowCount, windowId, sha256Canonical, shortHash, assertCondition } from './core.mjs';
+import { AI7_DEV_BLOCKS, AI9_DEV_BLOCKS, AI7_WINDOW_SIZE, ai7WindowCount, windowId, sha256Canonical, shortHash, assertCondition } from './core.mjs';
 
 export const GOVERNANCE_CONTRACT_V2 = 'century-governance-adapter-v2';
 
 const PURPOSE_CLASS = Object.freeze({ screen: 'screening', deep: 'deep-validation' });
 
-function windowIndexes(purpose) {
-  return Array.from({ length: ai7WindowCount(purpose) }, (_, i) => i);
+function windowIndexes(purpose, blocks) {
+  return Array.from({ length: (blocks[purpose][1] - blocks[purpose][0]) / AI7_WINDOW_SIZE }, (_, i) => i);
 }
 
-function intervalFor(purpose, index) {
-  const block = AI7_DEV_BLOCKS[purpose];
+function intervalFor(purpose, index, blocks) {
+  const block = blocks[purpose];
   const base = block[0] + index * AI7_WINDOW_SIZE;
   return { base, count: AI7_WINDOW_SIZE };
 }
 
-/** 真实 Provider：中央登记 + 全系统冲突检查 + 原子分配。 */
+/** 真实 Provider：中央登记 + 全系统冲突检查 + 原子分配。
+ * blocks/windowPrefix/experimentPrefix 允许 AI9 使用独立开发池；缺省保持 AI7。 */
 export function createLiveGovernanceProvider({
   registryPath = CENTRAL_REGISTRY_PATH,
   windowSize = AI7_WINDOW_SIZE,
   root = undefined,
+  blocks = AI7_DEV_BLOCKS,
+  windowPrefix = 'ai7',
+  experimentPrefix = 'ai7',
 } = {}) {
   assertCondition(windowSize === AI7_WINDOW_SIZE, `真实治理窗口大小固定为 ${AI7_WINDOW_SIZE}，实际：${windowSize}`);
   const requests = [];
@@ -53,23 +57,23 @@ export function createLiveGovernanceProvider({
       assertCondition(Number.isSafeInteger(round) && round >= 1, `round 非法：${String(round)}`);
       assertCondition(Number.isSafeInteger(count) && count > 0 && count <= windowSize, `窗口种子数非法：${String(count)}`);
       assertCondition(purpose === 'screen' || purpose === 'deep', `purpose 非法：${String(purpose)}`);
-      const block = AI7_DEV_BLOCKS[purpose];
+      const block = blocks[purpose];
       const registry = loadSeedGovernance({ strict: true, ...(root ? { root } : {}) });
       assertCondition(registry.complete, `种子治理层不完整：${registry.missingSources.join(',')}`);
       assertCondition((registry.conflicts ?? []).length === 0, '种子治理层存在跨系统冲突，禁止分配开发窗口');
       const excluded = new Set(excludeWindowIds);
       const total = (block[1] - block[0]) / windowSize;
       for (const offset of Array.from({ length: total }, (_, i) => (round - 1 + i) % total)) {
-        const id = windowId(purpose, offset);
+        const id = windowId(purpose, offset, windowPrefix);
         if (excluded.has(id)) continue;
-        const { base, count: size } = intervalFor(purpose, offset);
+        const { base, count: size } = intervalFor(purpose, offset, blocks);
         if (queryInterval(registry, base, size).length > 0) continue;
         // 原子登记：在动用种子之前占用窗口（中止不退还，绝不复用）。
-        const experimentId = `ai7-dev-${campaignId}-r${round}-${purpose}`;
+        const experimentId = `${experimentPrefix}-dev-${campaignId}-r${round}-${purpose}`;
         try {
           reserveConsumption({
             purposeClass: PURPOSE_CLASS[purpose],
-            purpose: `ai7-campaign-${purpose}`,
+            purpose: `${experimentPrefix}-campaign-${purpose}`,
             base,
             size,
             experimentId,
@@ -139,8 +143,8 @@ export function createLiveGovernanceProvider({
         mode: 'live',
         contractVersion: GOVERNANCE_CONTRACT_V2,
         windowSize,
-        screen: { block: [...AI7_DEV_BLOCKS.screen], windows: ai7WindowCount('screen'), windowSize },
-        deep: { block: [...AI7_DEV_BLOCKS.deep], windows: ai7WindowCount('deep'), windowSize },
+        screen: { block: [...blocks.screen], windows: windowIndexes('screen', blocks).length, windowSize },
+        deep: { block: [...blocks.deep], windows: windowIndexes('deep', blocks).length, windowSize },
         validationPoolConsumption: 'forbidden',
         promotion: 'machine-gate (no human approval)',
       };
@@ -151,7 +155,7 @@ export function createLiveGovernanceProvider({
 }
 
 /** 审计包装：断言 Provider 不触验证池、不直接晋级、请求进入机器门禁。 */
-export function createAutonomousGovernanceAdapter({ provider }) {
+export function createAutonomousGovernanceAdapter({ provider, blocks = AI7_DEV_BLOCKS, label = 'AI7' }) {
   assertCondition(provider && typeof provider === 'object', '治理 provider 缺失');
   for (const method of ['allocateDevSeedWindow', 'requestFormalChallenge', 'recordCampaignOutcome']) {
     assertCondition(typeof provider[method] === 'function', `治理 provider 缺少方法 ${method}`);
@@ -168,9 +172,9 @@ export function createAutonomousGovernanceAdapter({ provider }) {
       const window = provider.allocateDevSeedWindow({ campaignId, round, purpose, count, excludeWindowIds });
       assertCondition(window?.pool === 'dev', `治理 provider 返回非开发池：${String(window?.pool)}`);
       assertCondition(window.purpose === purpose, '窗口 purpose 不符');
-      assertCondition(window.blockStart === AI7_DEV_BLOCKS[purpose][0] && window.blockEnd === AI7_DEV_BLOCKS[purpose][1],
-        '窗口区块与 AI7 开发池不一致');
-      assertCondition(window.base >= AI7_DEV_BLOCKS[purpose][0] && window.base + count <= AI7_DEV_BLOCKS[purpose][1],
+      assertCondition(window.blockStart === blocks[purpose][0] && window.blockEnd === blocks[purpose][1],
+        `窗口区块与 ${label} 开发池不一致`);
+      assertCondition(window.base >= blocks[purpose][0] && window.base + count <= blocks[purpose][1],
         `窗口 [${window.base},${window.base + count}) 越界`);
       const overlap = allocated.find(w => w.purpose === purpose && w.base < window.base + window.count && window.base < w.base + w.count);
       assertCondition(!overlap, `窗口 ${window.windowId} 与已分配窗口 ${overlap?.windowId} 重叠`);
@@ -213,4 +217,18 @@ export function createAutonomousGovernanceAdapter({ provider }) {
       });
     },
   };
+}
+
+/** AI9 协同进化专属：独立开发池 + 独立窗口/实验命名，绝不与 AI7 混用。 */
+export function createLiveGovernanceProviderAI9(options = {}) {
+  return createLiveGovernanceProvider({
+    ...options,
+    blocks: AI9_DEV_BLOCKS,
+    windowPrefix: 'ai9',
+    experimentPrefix: 'ai9',
+  });
+}
+
+export function createAutonomousGovernanceAdapterAI9({ provider }) {
+  return createAutonomousGovernanceAdapter({ provider, blocks: AI9_DEV_BLOCKS, label: 'AI9' });
 }

@@ -36,6 +36,8 @@ import {
   createPreregistration, lockPreregistration, REQUIRED_SEAT_COUNTS, DEFAULT_SEARCH_WORK_UNITS,
 } from '../evaluator/preregistration.mjs';
 import { sha256Canonical } from '../evolution/core.mjs';
+import { validateArtifact } from '../evolution/candidate-artifact.mjs';
+import { loadCompiledCandidateModules } from '../evolution/multi-module-candidate.mjs';
 import { buildRegistry } from '../adversarial/registry.mjs';
 import { runPreregisteredFirstPlaceChallenge } from './first-place-challenge.mjs';
 import { validateAIParameters } from '../../web-v1/dist/js/ai/parameters.js';
@@ -88,7 +90,20 @@ const champion = championDoc.parameters;
 if (!champion?.id) throw new Error('冠军文件缺少 parameters.id');
 
 const candidateDoc = JSON.parse(readFileSync(candidatePath, 'utf8'));
-const candidateParameters = candidateDoc.parameters ?? candidateDoc;
+// AI9 编译型多模块候选：artifact 自带完整 ESM 决策包；必须独立加载为候选模块实例，
+// 与官方冻结冠军模块实例互不共享状态。加载前先做 artifact 全哈希复核。
+const compiledCandidate = candidateDoc.buildArtifact?.compiled === true
+  && Array.isArray(candidateDoc.source?.modules) && candidateDoc.source.modules.length > 0;
+let executorA = null;
+let loadedExecutor = null;
+if (compiledCandidate) {
+  validateArtifact(candidateDoc);
+  loadedExecutor = await loadCompiledCandidateModules(candidateDoc);
+  executorA = { aiModule: loadedExecutor.aiModule, jointModule: loadedExecutor.jointModule };
+}
+const candidateParameters = compiledCandidate
+  ? candidateDoc.parameters?.values
+  : (candidateDoc.parameters ?? candidateDoc);
 if (!candidateParameters?.id) throw new Error('候选文件缺少 parameters.id');
 const validatedCandidate = validateAIParameters(candidateParameters);
 // search-control 候选：联合搜索配置必须随候选进入正式挑战（否则候选与冠军同行为，
@@ -216,11 +231,16 @@ try {
     maxMoves,
     deadlineMs,
     workUnits,
-    recomputeIdentity: () => ({
-      parametersSha256: championParametersSha256(validatedCandidate),
-      sourceHash: candidateDoc.sourceHash ?? sha256Canonical(validatedCandidate),
-      artifactHash: candidateDoc.artifactHash ?? sha256Canonical(candidateDoc),
-    }),
+    executorA,
+    recomputeIdentity: () => {
+      // 编译型候选：执行前后都必须复核 artifact 全哈希（源码/模块/编译产物）。
+      if (compiledCandidate) validateArtifact(candidateDoc);
+      return {
+        parametersSha256: championParametersSha256(validatedCandidate),
+        sourceHash: candidateDoc.sourceHash ?? sha256Canonical(validatedCandidate),
+        artifactHash: candidateDoc.artifactHash ?? sha256Canonical(candidateDoc),
+      };
+    },
   });
 } catch (error) {
   runtimeError = error;
@@ -239,13 +259,16 @@ try {
     evidencePath: outDir,
     registryPath: CENTRAL_REGISTRY_PATH,
   });
+  if (loadedExecutor) loadedExecutor.cleanup();
 }
 if (runtimeError) throw runtimeError;
 
 writeJSON(resolve(outDir, 'challenge-evidence.json'), evidence);
 writeJSON(resolve(outDir, 'candidate.json'), {
   ...candidateDoc,
-  parameters: validatedCandidate,
+  parameters: compiledCandidate
+    ? { ...candidateDoc.parameters, values: validatedCandidate }
+    : validatedCandidate,
   planHash: plan.planHash,
   challengeIndex,
   decision: evidence.decision,
