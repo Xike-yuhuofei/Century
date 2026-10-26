@@ -3,7 +3,11 @@ import { applyAction, count, createGame, has, ranking, readable, score, tradeLim
 import { replayCoverage, replayMarkdown, validateReplay } from './replay.js';
 import { ARCHIVE_LIMIT, loadArchive, makeEntry, pushArchive, saveArchive, type ArchiveEntry } from './archive.js';
 import { autoExportEnabled, disableAutoExport, enableAutoExport, maybeAutoExport } from './auto-export.js';
-import { buildObservation } from './ai.js';
+import { buildObservation, chooseAIAction } from './ai.js';
+import {
+  createLLMPlayer, createOpenAICompatibleProvider, summarizeAction,
+  type LLMPlayer, type LLMPlayerDecision, type LLMTurnRecord, type LLMProvider,
+} from './ai/llm/index.js';
 import { championDecisionConfig, createDesktopAIRuntime, type DesktopAIRuntime, type DesktopDecision } from './ai-runtime/desktop-runtime.js';
 import { chooseVerifiedFallback } from './ai-runtime/fallback.js';
 import { visibleOrder, moveInOrder, stepInOrder, groupOrder } from './organize.js';
@@ -34,6 +38,103 @@ let botRun = 0;
 /** 游戏状态版本（每次正式行动/换局单调递增，用于废弃过期 Worker 结果）。 */
 let stateVersion = 1;
 let runtimeNoticeShown = false;
+/** LLM 玩家运行时（本地 Codex 代理；API Key 不进入浏览器）。 */
+type LLMSettings = {
+  endpoint: string;
+  model: string;
+  timeoutMs: number;
+  maxTokens: number;
+  maxCalls: number;
+  tokenBudget: number;
+};
+const LLM_CONFIG_KEY = 'century-llm-config-v1';
+const DEFAULT_LLM_SETTINGS: LLMSettings = {
+  endpoint: 'http://127.0.0.1:8787/v1',
+  model: 'codex-exec',
+  timeoutMs: 150_000,
+  maxTokens: 700,
+  maxCalls: 200,
+  tokenBudget: 2_500_000,
+};
+function loadLLMSettings(): LLMSettings {
+  try {
+    const raw = JSON.parse(localStorage.getItem(LLM_CONFIG_KEY) || 'null');
+    if (!raw || typeof raw !== 'object') return { ...DEFAULT_LLM_SETTINGS };
+    return {
+      endpoint: typeof raw.endpoint === 'string' ? raw.endpoint : DEFAULT_LLM_SETTINGS.endpoint,
+      model: typeof raw.model === 'string' ? raw.model : DEFAULT_LLM_SETTINGS.model,
+      timeoutMs: Number(raw.timeoutMs) > 0 ? Number(raw.timeoutMs) : DEFAULT_LLM_SETTINGS.timeoutMs,
+      maxTokens: Number(raw.maxTokens) > 0 ? Number(raw.maxTokens) : DEFAULT_LLM_SETTINGS.maxTokens,
+      maxCalls: Number(raw.maxCalls) > 0 ? Number(raw.maxCalls) : DEFAULT_LLM_SETTINGS.maxCalls,
+      tokenBudget: Number(raw.tokenBudget) > 0 ? Number(raw.tokenBudget) : DEFAULT_LLM_SETTINGS.tokenBudget,
+    };
+  } catch {
+    return { ...DEFAULT_LLM_SETTINGS };
+  }
+}
+let llmSettings = loadLLMSettings();
+let llmPlayer: LLMPlayer | null = null;
+let llmGameId: string | null = null;
+let llmRecords: Record<number, LLMTurnRecord[]> = {};
+let llmThinkingSeat: number | null = null;
+let llmNoticeShown = false;
+function saveLLMSettings(next: Partial<LLMSettings>) {
+  llmSettings = { ...llmSettings, ...next };
+  try { localStorage.setItem(LLM_CONFIG_KEY, JSON.stringify(llmSettings)); } catch { /* 无存储可运行 */ }
+}
+function llmSeatIds(): number[] {
+  return game?.players.filter(p => p.aiKind === 'llm').map(p => p.id) ?? [];
+}
+function llmEndpointHost(): string {
+  try { return new URL(llmSettings.endpoint).host; } catch { return llmSettings.endpoint || '未配置'; }
+}
+function unconfiguredLLMProvider(): LLMProvider {
+  return {
+    info: () => ({
+      id: 'unconfigured-codex-proxy', kind: 'openai-compatible', model: llmSettings.model || 'codex-exec',
+      endpointHost: null, mode: 'real', parameters: { configured: false },
+    }),
+    async complete() { throw new Error('LLM 代理未配置或不可达，已回退离线冠军'); },
+  };
+}
+function ensureLLMPlayer(): LLMPlayer {
+  if (llmPlayer) return llmPlayer;
+  const provider = llmSettings.endpoint.trim()
+    ? createOpenAICompatibleProvider({
+        id: 'codex-proxy',
+        baseUrl: llmSettings.endpoint.trim(),
+        model: llmSettings.model.trim() || 'codex-exec',
+        mode: 'real',
+      })
+    : unconfiguredLLMProvider();
+  llmPlayer = createLLMPlayer({
+    provider,
+    config: {
+      timeoutMs: llmSettings.timeoutMs,
+      maxRetries: 1,
+      maxTokens: llmSettings.maxTokens,
+      temperature: 0,
+      maxCalls: llmSettings.maxCalls,
+      tokenBudget: llmSettings.tokenBudget,
+      candidateLimit: 64,
+      shadowChampion: false,
+    },
+    record: record => {
+      const list = llmRecords[record.seat] ?? (llmRecords[record.seat] = []);
+      list.push(record);
+      if (list.length > 12) list.splice(0, list.length - 12);
+    },
+  });
+  return llmPlayer;
+}
+function resetLLMRuntime(newGame: boolean) {
+  llmPlayer = null;
+  llmRecords = {};
+  llmThinkingSeat = null;
+  llmNoticeShown = false;
+  llmGameId = newGame ? `ui-${Date.now().toString(36)}` : null;
+}
+
 type PlayerView = { order:string[]; folded:boolean };
 type ViewState = { compact:boolean; players:Record<string,PlayerView> };
 let viewState:ViewState = {compact:true,players:{}};
@@ -100,11 +201,27 @@ function aiRuntimeChip():string {
     : 'AI 决策在独立 Worker 中执行（公开观察 + 冠军 JS5 配置，不阻塞界面）';
   return `<span class="runtime-chip${degraded?' runtime-chip-degraded':''}" data-ai-runtime="${degraded?'main-thread':'worker'}" title="${esc(title)}">${degraded?'AI 主线程降级':'AI Worker'}</span>`;
 }
+/** LLM 玩家状态：思考中 / 空闲。失败回退会保留真实标记。 */
+function llmChip():string {
+  const seats=llmSeatIds();
+  if (!seats.length) return '';
+  const thinking=llmThinkingSeat!==null;
+  const title=thinking
+    ? `LLM 席位 ${llmThinkingSeat!+1} 正在经本地 Codex 代理思考；界面保持可操作`
+    : `LLM 玩家 ${seats.map(s=>s+1).join('、')} · 代理 ${llmEndpointHost()}`;
+  return `<span class="llm-chip${thinking?' llm-chip-thinking':''}" data-llm-runtime="${thinking?'thinking':'idle'}" title="${esc(title)}">${thinking?'LLM 思考中…':`LLM ×${seats.length}`}</span>`;
+}
+function llmExportButton():string {
+  if (!llmSeatIds().length) return '';
+  const count=Object.values(llmRecords).reduce((sum,list)=>sum+list.length,0);
+  return `<button class="subtle-btn llm-export-btn" data-action="export-llm" aria-label="导出 LLM 对局与决策理由" title="导出 LLM 对局、每回合行动与理由">LLM 记录${count?` ${count}`:''}</button>`;
+}
 /** 取消未决 AI 任务（UI 阻塞层/暂停/换局）。结果会被 runId 守卫丢弃。 */
 function cancelBot(reason:string) {
   if (botTimer !== null) { clearTimeout(botTimer); botTimer=null; }
   botRun++;
   botPending=false;
+  llmThinkingSeat=null;
   try { aiRuntime?.cancel(reason); } catch { /* 运行时已销毁 */ }
 }
 function degradationNotice(decision:DesktopDecision):string {
@@ -120,6 +237,11 @@ function exposeRuntimeDiagnostics() {
     stateVersion,
     playerCount: game?.players.length ?? 0,
     aiCount: game?.players.filter(p=>p.isAI).length ?? 0,
+    llmSeats: llmSeatIds(),
+    llmThinkingSeat,
+    llmStats: llmPlayer?.stats() ?? null,
+    llmEndpointHost: llmEndpointHost(),
+    llmDecisionCount: Object.values(llmRecords).reduce((sum,list)=>sum+list.length,0),
     config: championDecisionConfig(),
   });
 }
@@ -138,6 +260,10 @@ try {
     if (parsed?.version === 2 && Array.isArray(parsed.players) && parsed.players.length >= 2 && parsed.players.length <= 6 && parsed.players[parsed.current]) game = parsed;
   }
 } catch { /* 浏览器禁用存储时仍可游玩 */ }
+if (game?.players.some(p => p.aiKind === 'llm')) {
+  llmGameId = `ui-resume-${Date.now().toString(36)}`;
+  llmRecords = {};
+}
 
 function esc(value: unknown): string { return String(value).replace(/[&<>"']/g, x => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[x] || x)); }
 // 卡面直接绘制实际水晶数量。颜色数量仅保留在屏幕阅读器的 aria-label 中。
@@ -176,13 +302,22 @@ function merchantCard(id: string, marketIndex?: number, bonus?: Stock, view: 'ha
 }
 function renderSetup(): string {
   const botOptions=Array.from({length:5},(_,n)=>`<option value="${n}" ${n===4?'selected':''}>${n} 名</option>`).join('');
+  const llmOptions=Array.from({length:5},(_,n)=>`<option value="${n}" ${n===0?'selected':''}>${n} 名</option>`).join('');
   return `<main class="layout landing focus-landing"><header class="topbar focus-setup-top"><strong>晶石回廊</strong><div class="top-actions"><button class="subtle-btn" data-action="history">对局历史</button></div></header>
   <section class="focus-setup-panel"><h1>开始对局</h1><p>默认 1 名真人挑战 4 名 AI · 最多 4 名 AI</p>
     <div class="setup-players"><div><label for="humanCount">真人</label><select id="humanCount">${Array.from({length:5},(_,n)=>`<option value="${n+1}" ${n===0?'selected':''}>${n+1} 名</option>`).join('')}</select></div><div><label for="botCount">AI</label><select id="botCount">${botOptions}</select></div></div>
+    <div class="llm-setup">
+      <div class="llm-setup-row"><label for="llmSeats">LLM 玩家</label><select id="llmSeats">${llmOptions}</select><span class="llm-setup-hint">最后 N 个 AI 席位</span></div>
+      <details class="llm-config-panel"><summary>LLM 本地代理设置</summary>
+        <p class="small-muted">API Key 不进入浏览器；本地代理通过本机 <code>codex login</code> 调用 Codex。未连接时 LLM 席位自动回退离线冠军，并保留真实失败标记。</p>
+        <label for="llmEndpoint">代理地址</label><input id="llmEndpoint" value="${esc(llmSettings.endpoint)}" placeholder="http://127.0.0.1:8787/v1" />
+        <div class="llm-config-grid"><div><label for="llmModel">模型标识</label><input id="llmModel" value="${esc(llmSettings.model)}" placeholder="codex-exec" /></div><div><label for="llmTimeout">决策超时(ms)</label><input id="llmTimeout" type="number" min="5000" step="1000" value="${llmSettings.timeoutMs}" /></div></div>
+      </details>
+    </div>
     <label for="nameInputs">玩家名称</label><div id="nameInputs" class="name-inputs"><input maxlength="20" aria-label="玩家 1" value="玩家 1" /></div>
     <p class="setup-validation" id="setupValidation">共 5 人 · 标准模式</p>
     <button class="primary-btn big" data-action="start">开始游戏 <span>→</span></button>
-    <small class="focus-notice">本地离线对局 · 6 人局为非官方扩展</small>
+    <small class="focus-notice">本地离线对局 · 6 人局为非官方扩展 · LLM 需本地 Codex 代理</small>
   </section></main>`;
 }
 function syncSetup() {
@@ -201,14 +336,38 @@ function syncSetup() {
     if(caption) caption.textContent = n < bots ? '已加入' : '空席';
   }
   const sixHouse = humans===2 && bots===4;
-  const valid = humans+bots>=2 && (humans+bots<=5 || sixHouse);
+  const llmSelect = root.querySelector<HTMLSelectElement>('#llmSeats');
+  if (llmSelect) {
+    llmSelect.disabled = bots === 0;
+    [...llmSelect.options].forEach(option => { option.disabled = Number(option.value) > bots; });
+    if (Number(llmSelect.value) > bots) llmSelect.value = String(bots);
+  }
+  const endpointInput = root.querySelector<HTMLInputElement>('#llmEndpoint');
+  const modelInput = root.querySelector<HTMLInputElement>('#llmModel');
+  const timeoutInput = root.querySelector<HTMLInputElement>('#llmTimeout');
+  if (endpointInput && modelInput && timeoutInput) {
+    saveLLMSettings({
+      endpoint: endpointInput.value.trim(),
+      model: modelInput.value.trim() || 'codex-exec',
+      timeoutMs: Math.max(5000, Number(timeoutInput.value) || DEFAULT_LLM_SETTINGS.timeoutMs),
+    });
+  }
+  const llmCount = Number(llmSelect?.value || 0);
+  const llmConfigured = llmSettings.endpoint.trim().length > 0;
+  const valid = humans+bots>=2 && (humans+bots<=5 || sixHouse) && !(llmCount > 0 && !llmConfigured);
   const message = root.querySelector<HTMLElement>('#setupValidation');
-  if (message) { message.textContent = valid ? (sixHouse ? '6 人扩展模式：2 真人 + 4 AI。沿用 5 人终局门槛（5 张魔像）、起始水晶，并为第六席复制起始卡；非官方规则。' : `合计 ${humans+bots} 名参赛者，符合正式 2–5 人规则。`) : '至少 2 人；普通模式最多 5 人，仅允许 2 真人 + 4 AI 扩展到 6 人。'; message.classList.toggle('invalid',!valid); }
+  if (message) {
+    if (llmCount > 0 && !llmConfigured) message.textContent = '已选择 LLM 玩家：请先填写本地 Codex 代理地址（或把 LLM 玩家设回 0 名）。';
+    else if (llmCount > 0) message.textContent = `${humans+bots} 人 · ${llmCount} 名 LLM 玩家（经本地 Codex 代理；失败自动回退离线冠军）`;
+    else message.textContent = valid ? (sixHouse ? '6 人扩展模式：2 真人 + 4 AI。沿用 5 人终局门槛（5 张魔像）、起始水晶，并为第六席复制起始卡；非官方规则。' : `合计 ${humans+bots} 名参赛者，符合正式 2–5 人规则。`) : '至少 2 人；普通模式最多 5 人，仅允许 2 真人 + 4 AI 扩展到 6 人。';
+    message.classList.toggle('invalid',!valid);
+  }
   const submit = root.querySelector<HTMLButtonElement>('[data-action="start"]');
   if(submit) submit.disabled = !valid;
 }
 function playerCard(p: Game['players'][number], active: boolean): string {
-  return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${p.isAI ? (botPending && active ? 'AI…' : 'AI') : p.id + 1}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
+  const avatar = p.isAI ? (p.aiKind === 'llm' ? (llmThinkingSeat === p.id ? 'LLM…' : 'LLM') : (botPending && active ? 'AI…' : 'AI')) : p.id + 1;
+  return `<div class="player-pill ${active ? 'active-player' : ''}"><div class="avatar">${avatar}</div><div class="player-info"><b>${esc(p.name)}</b><small>${p.claimed.length} 张魔像 · ${p.turns} 回合</small></div><span class="player-score">${score(p)}<small>估分</small></span></div>`;
 }
 function golemCard(id: string, index: number, g: Game, stock = g.players[g.current].stock): string {
   const golem = GOLEM_BY_ID[id];
@@ -226,9 +385,11 @@ function golemCard(id: string, index: number, g: Game, stock = g.players[g.curre
 function renderDuelPlayer(g: Game, index: number): string {
   const p = g.players[index];
   const active = g.current === index && g.phase !== 'finished';
+  const thinking = llmThinkingSeat === p.id;
+  const status = active ? (p.aiKind === 'llm' ? (thinking ? 'LLM 思考中…' : 'LLM 行动') : '正在行动') : '';
   return `<section class="duel-player ${active ? 'duel-active' : 'duel-waiting'}" aria-label="${esc(p.name)}的游戏区域" data-player="${index}">
     <header class="duel-player-head">
-      <div class="duel-player-title"><span class="duel-avatar" aria-hidden="true">${index + 1}</span><div class="duel-name">${esc(p.name)}</div><span class="duel-status">${active ? '正在行动' : ''}</span></div>
+      <div class="duel-player-title"><span class="duel-avatar" aria-hidden="true">${index + 1}</span><div class="duel-name">${esc(p.name)}</div><span class="duel-status">${status}</span></div>
       <div class="duel-score" title="当前总分估算"><b>${score(p)}</b><small>分</small></div>
     </header>
     <div class="duel-stock"><div class="resource-bar" aria-label="${esc(p.name)}商队资源">${stones(p.stock)}<span class="stock-counter ${count(p.stock)>10?'over-capacity':''}" title="商队容量">${count(p.stock)}/10</span></div></div>
@@ -238,7 +399,42 @@ function renderDuelPlayer(g: Game, index: number): string {
       ${pref(p.id).folded?'':`<div class="duel-card-grid duel-used-grid" data-scroll-zone="played-${p.id}">${p.played.map(id => merchantCard(id, undefined, undefined, 'played')).join('')}</div>`}</div>
     <footer class="duel-player-footer"><div class="player-summary" title="已认领魔像与奖励硬币">魔像 ${p.claimed.length} · 铜 ${p.copper} · 银 ${p.silver}</div>
       <button type="button" class="rest-btn" data-action="rest" ${active && !p.isAI && g.phase === 'turn' ? '' : 'disabled'} title="休息占用一个回合，收回全部已打出商人卡">↶ 休息收回</button></footer>
+    ${renderLLMDecisionPanel(p)}
   </section>`;
+}
+/** LLM 每回合决策摘要（默认折叠，不占用原有牌面展示空间）。 */
+function renderLLMDecisionPanel(p:Game['players'][number]):string {
+  if (p.aiKind !== 'llm') return '';
+  const list = llmRecords[p.id] ?? [];
+  const thinking = llmThinkingSeat === p.id;
+  if (!list.length) {
+    return `<div class="llm-lane-status${thinking?' llm-lane-thinking':''}">${thinking?'LLM 思考中…':'LLM 席位 · 等待首次决策'}</div>`;
+  }
+  const last = list[list.length - 1];
+  const lastAction = summarizeAction(last.observation, last.executedAction);
+  const entries = list.slice(-3).reverse().map(record => {
+    const actionText = summarizeAction(record.observation, record.executedAction);
+    const alternatives = (record.parsed?.alternativeActions ?? []).map(alt => {
+      const candidate = record.candidateSet.candidates.find(x => x.id === alt.actionId);
+      return `${candidate?.summary ?? alt.actionId}：${alt.comparison}`;
+    });
+    const risks = record.parsed?.risks ?? [];
+    const benefits = record.parsed?.expectedBenefits ?? [];
+    return `<div class="llm-decision-entry">
+      <div class="llm-decision-head"><b>第 ${record.turnNumber} 手 · ${esc(actionText)}</b><span class="llm-source ${record.source === 'fallback' ? 'is-fallback' : ''}">${record.source === 'llm' ? 'LLM' : '回退'}</span></div>
+      ${record.source === 'fallback' ? `<p class="llm-fallback">回退原因：${esc(record.fallbackReason ?? record.fallbackCause ?? '未知')}</p>` : ''}
+      <p><b>理由：</b>${esc(record.parsed?.reason ?? record.fallbackReason ?? '—')}</p>
+      <p><b>目标：</b>${esc(record.parsed?.primaryGoal ?? '—')}</p>
+      ${alternatives.length ? `<p><b>替代：</b>${alternatives.map(x=>esc(x)).join('；')}</p>` : ''}
+      ${benefits.length ? `<p><b>收益：</b>${benefits.map(x=>esc(x)).join('；')}</p>` : ''}
+      ${risks.length ? `<p><b>风险：</b>${risks.map(x=>esc(x)).join('；')}</p>` : ''}
+      <p class="llm-meta">${esc(record.provider?.id ?? '')} · ${esc(record.effectiveModel ?? record.provider?.model ?? '')} · ${record.totalLatencyMs}ms · ${record.usage.totalTokens} tokens · ${esc((record.parsed?.strategyTags ?? []).join(' / ') || '无标签')}</p>
+    </div>`;
+  }).join('');
+  return `<details class="llm-decision-log" data-seat="${p.id}">
+    <summary>${thinking?'LLM 思考中… · ':''}LLM 决策记录（${list.length}）· 最近：${esc(lastAction)}</summary>
+    <div class="llm-decision-list">${entries}</div>
+  </details>`;
 }
 /** AI 公开信息轨道：已打出的商人卡（引擎）常驻展示，手牌数量与完整详情一键展开。
  * 已打出卡牌是本游戏最重要的公开对手信息；不再需要逐个 AI 打开面板比对。 */
@@ -246,9 +442,11 @@ function renderAICompactLane(g:Game,p:Game['players'][number]):string {
   const n=g.players.filter(x=>x.isAI).findIndex(x=>x.id===p.id)+1;
   const active=g.current===p.id&&g.phase!=='finished';
   const folded=pref(p.id).folded;
-  return `<div class="ai-lane ${active?'ai-lane-active':''}" aria-label="AI ${n} 的公开信息">
-    <button class="ai-lane-label" type="button" data-action="inspect-ai" data-player="${p.id}" title="展开 AI ${n} 的手牌与回收区详情" aria-label="查看 AI ${n} 详情，${score(p)} 分，手牌 ${p.hand.length} 张，回收区 ${p.played.length} 张">
-      <span class="ai-lane-name">AI ${n} <b>${score(p)}<small>分</small></b></span>
+  const isLLM = p.aiKind === 'llm';
+  const kindLabel = isLLM ? 'LLM' : 'AI';
+  return `<div class="ai-lane ${active?'ai-lane-active':''} ${isLLM?'ai-lane-llm':''}" aria-label="${kindLabel} ${n} 的公开信息">
+    <button class="ai-lane-label" type="button" data-action="inspect-ai" data-player="${p.id}" title="展开 ${kindLabel} ${n} 的手牌与回收区详情" aria-label="查看 ${kindLabel} ${n} 详情，${score(p)} 分，手牌 ${p.hand.length} 张，回收区 ${p.played.length} 张">
+      <span class="ai-lane-name">${kindLabel} ${n} <b>${score(p)}<small>分</small></b></span>
       <span class="ai-lane-resources">${stones(p.stock,true)}</span>
       <span class="ai-lane-count">手牌 ${p.hand.length} · 回收 ${p.played.length} <span class="ai-lane-more">详情 ↗</span></span>
     </button>
@@ -262,6 +460,7 @@ function renderAICompactLane(g:Game,p:Game['players'][number]):string {
         <div class="ai-lane-cards" data-scroll-zone="ai-hand-lane-${p.id}">${p.hand.length?p.hand.map(id=>merchantCard(id,undefined,undefined,'inactive')).join(''):'<span class="ai-lane-empty">无可用手牌</span>'}</div>
       </div>
     </div>
+    ${renderLLMDecisionPanel(p)}
   </div>`;
 }
 function renderAIInspector(g:Game):string {
@@ -269,16 +468,18 @@ function renderAIInspector(g:Game):string {
   const p=g.players[inspectedAI];
   if(!p?.isAI) return '';
   const n=g.players.filter(x=>x.isAI).findIndex(x=>x.id===p.id)+1;
-  return `<div class="ai-inspector" role="region" aria-label="AI ${n} 完整卡牌详情">
-    <div class="ai-inspector-head"><strong>AI ${n} · ${score(p)} 分</strong><div>${stones(p.stock,true)}</div><button type="button" data-action="inspect-ai" data-player="${p.id}" aria-label="收起 AI 详情">✕</button></div>
+  const kindLabel = p.aiKind === 'llm' ? 'LLM' : 'AI';
+  return `<div class="ai-inspector" role="region" aria-label="${kindLabel} ${n} 完整卡牌详情">
+    <div class="ai-inspector-head"><strong>${kindLabel} ${n} · ${score(p)} 分</strong><div>${stones(p.stock,true)}</div><button type="button" data-action="inspect-ai" data-player="${p.id}" aria-label="收起 AI 详情">✕</button></div>
     <div class="ai-inspector-sections"><section><h3>已打出 · ${p.played.length}</h3><div class="ai-inspector-cards" data-scroll-zone="ai-played-${p.id}">${p.played.map(id=>merchantCard(id,undefined,undefined,'played')).join('')||'<span class="duel-empty">无卡牌</span>'}</div></section>
     <section><h3>手牌 · ${p.hand.length}</h3><div class="ai-inspector-cards" data-scroll-zone="ai-hand-${p.id}">${p.hand.map(id=>merchantCard(id,undefined,undefined,'inactive')).join('')||'<span class="duel-empty">无手牌</span>'}</div></section></div>
     <div class="ai-inspector-foot">魔像 ${p.claimed.length} · 铜币 ${p.copper} · 银币 ${p.silver}</div>
+    ${renderLLMDecisionPanel(p)}
   </div>`;
 }
 function minimalTopbar(g:Game):string {
   const finished = g.phase==='finished';
-  return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${aiRuntimeChip()}${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact?'▦':'▣'}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="history" aria-label="对局历史" title="对局历史">⧉</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
+  return `<header class="topbar duel-topbar focus-topbar"><span class="focus-brand">晶石回廊</span><div class="duel-now">${finished?'对局结束':`第 ${g.turnNumber} 手 <strong>${esc(g.players[g.current].name)}</strong> 行动`}</div><div class="top-actions">${aiRuntimeChip()}${llmChip()}${llmExportButton()}${aiPauseControl(g)}<button class="subtle-btn size-switch" data-action="card-size" aria-label="切换手牌尺寸" title="切换手牌尺寸">${viewState.compact?'▦':'▣'}</button><button class="subtle-btn" data-action="toggle-log" aria-label="查看行动记录" title="行动记录">☷</button><button class="subtle-btn" data-action="history" aria-label="对局历史" title="对局历史">⧉</button><button class="subtle-btn" data-action="help" aria-label="规则" title="规则">?</button><button class="subtle-btn" data-action="reset" aria-label="新开一局" title="新开一局">↻</button></div></header>`;
 }
 function replayControls(g: Game): string {
   return `<div class="replay-controls"><small>${esc(replayCoverage(g))}</small></div>`;
@@ -380,7 +581,7 @@ function renderBoard(g: Game): string {
   const p = g.players[g.current];
   const target = g.players.length >= 4 ? 5 : 6;
   const finished = g.phase === 'finished';
-  return `<main class="layout board-layout ${viewState.compact?'compact-cards':'normal-cards'}"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span>${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="history">对局历史</button><button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
+  return `<main class="layout board-layout ${viewState.compact?'compact-cards':'normal-cards'}"><header class="topbar"><div class="brand-icon">◇</div><div class="brand-text"><strong>晶石回廊</strong><span>CRYSTAL CORRIDOR</span></div><div class="top-actions"><span class="turn-badge">第 ${g.turnNumber} 手</span>${llmChip()}${llmExportButton()}${aiPauseControl(g)}${cardSizeControl()}<button class="subtle-btn" data-action="history">对局历史</button><button class="subtle-btn" data-action="help">规则</button><button class="subtle-btn" data-action="reset">新开一局</button></div></header>
   <section class="players-strip">${g.players.map((x, i) => playerCard(x, i === g.current && !finished)).join('')}</section>
   ${g.triggerPlayer !== null && !finished ? '<div class="final-alert">终局已触发！本轮完成后结算。</div>' : ''}
   <section class="game-section"><div class="section-head"><div><span class="section-index">01 / THE GOLEMS</span><h2>魔像市场 <small>认领目标</small></h2></div><div class="section-meta">牌库剩余 ${g.golemDeck.length} 张 · 每人认领 ${target} 张触发终局</div></div>
@@ -399,7 +600,7 @@ function renderBoard(g: Game): string {
 function renderResult(g: Game): string {
   if (resultHidden || showHistory) return '';
   const result = ranking(g);
-  return `<div class="overlay cover"><section class="result-card"><button class="close-modal" data-action="close-result" aria-label="关闭结算面板">✕</button><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><div class="result-main"><b>${i + 1}. ${esc(p.name)}</b><strong>${score(p)} 分</strong></div><span>魔像 ${p.claimed.reduce((s, id) => s + GOLEM_BY_ID[id].points, 0)} 分 · 铜 ${p.copper * 3} · 银 ${p.silver} · 非黄水晶 ${p.stock[1] + p.stock[2] + p.stock[3]} 分</span></div>`).join('')}</div>${replayControls(g)}<div class="result-actions"><button class="primary-btn big" data-action="reset">开始新的一局 ↗</button><button class="secondary-btn" data-action="close-result">查看最终棋盘</button></div></section></div>`;
+  return `<div class="overlay cover"><section class="result-card"><button class="close-modal" data-action="close-result" aria-label="关闭结算面板">✕</button><div class="eyebrow">GAME COMPLETE</div><h2>对局结束</h2><div class="trophy">◇</div><p class="winner">获胜者：<strong>${esc(result[0].name)}</strong></p><p class="small-muted">平分时最后行动的玩家优先</p><div class="result-table">${result.map((p, i) => `<div><div class="result-main"><b>${i + 1}. ${esc(p.name)}</b><strong>${score(p)} 分</strong></div><span>魔像 ${p.claimed.reduce((s, id) => s + GOLEM_BY_ID[id].points, 0)} 分 · 铜 ${p.copper * 3} · 银 ${p.silver} · 非黄水晶 ${p.stock[1] + p.stock[2] + p.stock[3]} 分</span></div>`).join('')}</div>${replayControls(g)}<div class="result-actions">${llmExportButton()}<button class="primary-btn big" data-action="reset">开始新的一局 ↗</button><button class="secondary-btn" data-action="close-result">查看最终棋盘</button></div></section></div>`;
 }
 function modalBody(): string {
   if (!game || !modal) return '';
@@ -473,20 +674,63 @@ function start() {
   try {
     const humans = Number((root.querySelector('#humanCount') as HTMLSelectElement)?.value ?? inputs.length);
     const bots = Number((root.querySelector('#botCount') as HTMLSelectElement)?.value ?? 0);
+    const llmCount = Math.min(bots, Math.max(0, Number((root.querySelector('#llmSeats') as HTMLSelectElement)?.value ?? 0)));
     const names = [...inputs.map(x=>x.value),...Array.from({length:bots},(_,i)=>`AI 工匠 ${i+1}`)];
     if(humans!==inputs.length) throw new Error('人类玩家人数无效');
+    if (llmCount > 0 && !llmSettings.endpoint.trim()) throw new Error('已选择 LLM 玩家，但未配置本地 Codex 代理地址');
     cancelBot('开始新对局');
     try { aiRuntime?.reset(); } catch { /* 运行时已销毁 */ }
     aiRuntime = null;
     stateVersion = 1; runtimeNoticeShown = false;
+    resetLLMRuntime(true);
     game = createGame(names, undefined, Array.from({length:bots},(_,i)=>humans+i));
+    for (let seat = 0; seat < game.players.length; seat++) {
+      const isBot = seat >= humans;
+      game.players[seat].aiKind = isBot && seat >= humans + bots - llmCount ? 'llm' : 'offline';
+    }
     modal = null; handoff = false; botPaused = false; showHelp = false; showLog=false; inspectedAI=null; resultHidden = false; toast = ''; viewState.players={}; saveView(); save(); render();
   }
   catch(e) { notify(e instanceof Error ? e.message : '无法开始游戏'); }
 }
+function exportLLMGame() {
+  if (!game) return;
+  const decisions = Object.values(llmRecords).flat()
+    .slice()
+    .sort((a, b) => a.turnNumber - b.turnNumber || a.seat - b.seat);
+  const payload = {
+    schema: 'century-llm-ui-game-v1',
+    exportedAt: new Date().toISOString(),
+    gameId: llmGameId,
+    note: '浏览器 LLM 对局记录：完整 game/replay + 每回合结构化决策。API Key 不在前端，记录中不含任何密钥。',
+    config: {
+      endpointHost: llmEndpointHost(),
+      model: llmSettings.model,
+      timeoutMs: llmSettings.timeoutMs,
+      maxTokens: llmSettings.maxTokens,
+      maxCalls: llmSettings.maxCalls,
+      tokenBudget: llmSettings.tokenBudget,
+      source: 'local-codex-proxy',
+    },
+    llmStats: llmPlayer?.stats() ?? null,
+    llmSeats: llmSeatIds(),
+    game: JSON.parse(JSON.stringify(game)),
+    replay: game.replay ?? null,
+    decisions,
+  };
+  const url = URL.createObjectURL(new Blob([JSON.stringify(payload, null, 2)], {type: 'application/json;charset=utf-8'}));
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `century-llm-game-${llmGameId ?? 'ui'}-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  notify(`已导出 LLM 对局记录（${decisions.length} 条决策）`);
+}
 function control(target: HTMLElement) {
   const type = target.dataset.action || '';
   if (type === 'start') { start(); return; }
+  if (type === 'export-llm') { exportLLMGame(); return; }
   if (type === 'inspect-ai') { const id=Number(target.dataset.player); inspectedAI = inspectedAI===id ? null : id; render(); return; }
   if (type === 'history') { cancelBot('打开对局历史'); showHistory = true; historyViewId = null; render(); return; }
   if (type === 'close-history') { showHistory = false; historyViewId = null; render(); return; }
@@ -509,6 +753,7 @@ function control(target: HTMLElement) {
     cancelBot('结束当前对局');
     try { aiRuntime?.reset(); } catch { /* 运行时已销毁 */ }
     aiRuntime = null; stateVersion = 1; runtimeNoticeShown = false;
+    resetLLMRuntime(false);
     game = null; handoff = false; showHelp = false; showLog=false; inspectedAI=null; modal = null; botPaused = false; resultHidden = false; toast = ''; viewState.players={}; saveView(); save(); render(); return;
   }
   if (type === 'help') { cancelBot('打开规则'); showHelp = true; render(); return; }
@@ -600,17 +845,79 @@ async function runAITurn(run:number, expectedTurn:number, expectedPlayer:number)
   const snapshot = game!;
   const version = stateVersion;
   try {
+    if (snapshot.players[expectedPlayer]?.aiKind === 'llm') {
+      llmThinkingSeat = expectedPlayer;
+      render();
+      if (!llmGameId) llmGameId = `ui-${Date.now().toString(36)}`;
+      const decision = await ensureLLMPlayer().decide(snapshot, {
+        gameId: llmGameId,
+        seed: null,
+        seatCount: snapshot.players.length,
+        focusSeat: expectedPlayer,
+        experimentId: 'ui-llm',
+        channel: 'ui',
+      });
+      if (run!==botRun || version!==stateVersion || !aiTurnStillValid(expectedTurn,expectedPlayer)) return;
+      applyLLMDecision(decision);
+      return;
+    }
     const decision = await runtime().decide(snapshot, version);
     if (!decision) return; // superseded / cancelled：绝不提交
     if (run!==botRun || version!==stateVersion || !aiTurnStillValid(expectedTurn,expectedPlayer)) return;
     applyAIDecision(decision);
   } catch(e) {
+    if (run===botRun && aiTurnStillValid(expectedTurn,expectedPlayer)) {
+      // LLM 层自身异常也绝不阻塞对局：退回离线冠军并保留提示。
+      try {
+        const d = chooseAIAction(snapshot);
+        toast = `LLM 异常，已回退离线冠军：${e instanceof Error ? e.message : String(e)}`;
+        action(d.action);
+        return;
+      } catch { /* 继续走暂停路径 */ }
+    }
     if (run===botRun) {
       botPaused = true;
       notify(`AI 运行时异常，已暂停：${e instanceof Error ? e.message : String(e)}`);
     }
   } finally {
-    if (run===botRun) { botPending=false; scheduleBot(); }
+    if (run===botRun) {
+      const hadThinking = llmThinkingSeat !== null;
+      llmThinkingSeat=null; botPending=false;
+      if (hadThinking) render(); else scheduleBot();
+    }
+  }
+}
+/** 页面侧最后一道合法性闸：LLM 行动必须能被当前正式引擎接受。
+ * 回退来源显式提示一次；非法行动使用已验证回退，绝不提交未知行动。 */
+function applyLLMDecision(decision:LLMPlayerDecision) {
+  if (!game) return;
+  const notice = decision.source==='fallback' && !llmNoticeShown
+    ? `LLM 回退：${decision.record.fallbackReason ?? decision.record.fallbackCause ?? '服务不可用'}（已由离线冠军接管）`
+    : '';
+  try {
+    applyAction(game, decision.action);
+  } catch(e) {
+    let fallback: { action: Action };
+    try {
+      fallback = chooseVerifiedFallback(buildObservation(game, game.current));
+    } catch(fallbackError) {
+      botPaused = true;
+      notify(`LLM 行动未通过正式引擎校验，且无合法回退，已暂停：${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`);
+      return;
+    }
+    action(fallback.action);
+    if (!llmNoticeShown) {
+      llmNoticeShown = true;
+      toast = `LLM 行动未通过正式引擎校验，已使用合法回退（${e instanceof Error ? e.message : String(e)}）`;
+      render();
+    }
+    return;
+  }
+  action(decision.action);
+  if (notice) {
+    llmNoticeShown = true;
+    toast = notice;
+    render();
   }
 }
 /** 页面侧最后一道合法性闸：Worker 行动必须能被当前正式引擎接受。
@@ -684,8 +991,9 @@ root.addEventListener('dragend',()=>{
   root.querySelectorAll('.tile-drop-target,.tile-dragging').forEach(x=>x.classList.remove('tile-drop-target','tile-dragging'));
 });
 root.addEventListener('change', e => {
-  const element = e.target as HTMLSelectElement;
-  if (element.id !== 'humanCount' && element.id !== 'botCount') return;
+  const element = e.target as HTMLSelectElement | HTMLInputElement;
+  if (!['humanCount','botCount','llmSeats','llmEndpoint','llmModel','llmTimeout'].includes(element.id)) return;
+  if (element.id === 'llmEndpoint' || element.id === 'llmModel' || element.id === 'llmTimeout') llmPlayer = null;
   syncSetup();
 });
 window.addEventListener('pagehide', () => { try { aiRuntime?.dispose(); } catch { /* 已销毁 */ } });

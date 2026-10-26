@@ -1,0 +1,170 @@
+{
+  "schema": "century-llm-pair-summary-v1",
+  "stage": "smoke",
+  "status": "completed",
+  "evidenceClass": "real-llm",
+  "provider": {
+    "id": "codex-exec",
+    "kind": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "mode": "real",
+    "endpointHost": null,
+    "parameters": {
+      "transport": "codex exec --json",
+      "reasoningEffort": "low",
+      "sandbox": "read-only",
+      "ephemeral": true,
+      "ignoreUserConfig": true,
+      "outputSchema": "century-llm-decision-v1",
+      "cliVersion": "codex-cli 0.149.1",
+      "maxConcurrency": 2
+    }
+  },
+  "plannedPairs": 3,
+  "completedPairs": 3,
+  "validPairs": 3,
+  "anomalyPairs": 0,
+  "fallbackAffectedPairs": 0,
+  "usage": {
+    "calls": 111,
+    "tokens": 2219422,
+    "decisions": 110,
+    "llmGames": 3
+  },
+  "strata": {
+    "3": {
+      "seatCount": 3,
+      "pairs": 1,
+      "validPairs": 1,
+      "anomalies": 0,
+      "candidateFirst": 0,
+      "championFirst": 1,
+      "candidateFirstRate": 0,
+      "championFirstRate": 1,
+      "candidateWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.7934506856227626
+      },
+      "championWilsonCI": {
+        "point": 1,
+        "lower": 0.20654931437723745,
+        "upper": 1
+      },
+      "meanPairedDelta": -1,
+      "pairedDeltaCI": null,
+      "deltaCounts": {
+        "plus": 0,
+        "zero": 0,
+        "minus": 1
+      },
+      "fallbackGames": 0,
+      "fallbackRate": 0,
+      "medianDecisionLatencyMs": 20282,
+      "totalTokens": 868143,
+      "meanTokensPerGame": 868143,
+      "meanGameWallMs": 1032170
+    },
+    "4": {
+      "seatCount": 4,
+      "pairs": 1,
+      "validPairs": 1,
+      "anomalies": 0,
+      "candidateFirst": 0,
+      "championFirst": 0,
+      "candidateFirstRate": 0,
+      "championFirstRate": 0,
+      "candidateWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.7934506856227626
+      },
+      "championWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.7934506856227626
+      },
+      "meanPairedDelta": 0,
+      "pairedDeltaCI": null,
+      "deltaCounts": {
+        "plus": 0,
+        "zero": 1,
+        "minus": 0
+      },
+      "fallbackGames": 0,
+      "fallbackRate": 0,
+      "medianDecisionLatencyMs": 21227,
+      "totalTokens": 653943,
+      "meanTokensPerGame": 653943,
+      "meanGameWallMs": 732572
+    },
+    "5": {
+      "seatCount": 5,
+      "pairs": 1,
+      "validPairs": 1,
+      "anomalies": 0,
+      "candidateFirst": 1,
+      "championFirst": 0,
+      "candidateFirstRate": 1,
+      "championFirstRate": 0,
+      "candidateWilsonCI": {
+        "point": 1,
+        "lower": 0.20654931437723745,
+        "upper": 1
+      },
+      "championWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.7934506856227626
+      },
+      "meanPairedDelta": 1,
+      "pairedDeltaCI": null,
+      "deltaCounts": {
+        "plus": 1,
+        "zero": 0,
+        "minus": 0
+      },
+      "fallbackGames": 0,
+      "fallbackRate": 0,
+      "medianDecisionLatencyMs": 18399,
+      "totalTokens": 697336,
+      "meanTokensPerGame": 697336,
+      "meanGameWallMs": 729609
+    }
+  },
+  "limitations": [
+    "LLM Provider 非确定性（Codex/ChatGPT 后端可能在相同输入下产生不同行动），配对仅共享初始随机世界，不保证后续轨迹一致。",
+    "第一名率以焦点席位是否取得唯一第一名定义；异常局不计入有效配对。",
+    "阶段 A/B 为功能验证/探索性结论，不构成统计显著优势；不得据此宣称 LLM 更强或晋级冠军。"
+  ],
+  "runId": "codex-smoke-345-r1",
+  "runPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/codex-smoke-345-r1",
+  "startedAt": "2026-10-26T16:24:42.495Z",
+  "finishedAt": "2026-10-26T16:49:41.481Z",
+  "codeVersion": {
+    "commit": "925c866c49a4c06824db2b8caf76fb279f61516d",
+    "dirty": true,
+    "dirtyFiles": [
+      "M .github/workflows/ci.yml",
+      " M ai5/lib/seed_policy.mjs",
+      " M scripts/ci/tests/scope.test.mjs",
+      " M training/governance/seed-consumption-registry.json",
+      " M training/package.json",
+      " M web-v1/dist/standalone.html",
+      " M web-v1/src/app.ts",
+      " M web-v1/src/engine.ts",
+      " M web-v1/src/styles.css",
+      "?? training/llm/",
+      "?? training/reports/llm-player/",
+      "?? training/tests/llm-player.test.mjs",
+      "?? web-v1/scripts/smoke_llm_ui.py",
+      "?? web-v1/src/ai/llm/",
+      "?? web-v1/tests/llm-player.test.mjs"
+    ]
+  },
+  "champion": {
+    "id": "joint-js5",
+    "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3"
+  },
+  "preregistration": null
+}

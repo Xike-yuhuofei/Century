@@ -158,6 +158,21 @@ export const AI9_DEV_SCREEN_BLOCK = [1_660_000_000, 1_670_000_000];
 export const AI9_DEV_DEEP_BLOCK = [1_670_000_000, 1_680_000_000];
 export const AI9_CONFIRM_BLOCK = [1_680_000_000, 1_690_000_000];
 
+/** AI10 LLM 实时玩家研究（2026-10-26 登记；与全部既有块物理隔离）：
+ * - [1.700e9, 1.70001e9)   阶段 A 功能验证（每人数 1000 种子子块，仅用前若干个）；
+ * - [1.70001e9, 1.70041e9) 阶段 B 探索性配对（按人数分区，每区 10 万种子）；
+ * - [1.710e9, 1.720e9)     阶段 C 预注册独立确认（每人数 250 万种子；
+ *   仅在 preregistration.json 锁定后消费）。
+ * 本块不参与正式冠军晋级；正式晋级仍只能使用验证池 [900M, 1.06e9)。 */
+export const AI10_LLM_BLOCK = [1_700_000_000, 1_720_000_000];
+export const AI10_LLM_SMOKE_BLOCK = [1_700_000_000, 1_700_010_000];
+export const AI10_LLM_EXPLORATORY_BLOCK = [1_700_010_000, 1_700_410_000];
+export const AI10_LLM_CONFIRM_BLOCK = [1_710_000_000, 1_720_000_000];
+/** 每个人数独立子块（左右闭开）： */
+export const AI10_LLM_SMOKE_MODE_BASE = (mode) => 1_700_000_000 + (mode - 2) * 1_000;
+export const AI10_LLM_EXPLORE_MODE_BASE = (mode) => 1_700_010_000 + (mode - 2) * 100_000;
+export const AI10_LLM_CONFIRM_MODE_BASE = (mode) => 1_710_000_000 + (mode - 2) * 2_500_000;
+
 /** 断言种子落在指定区间内（含头不含尾）。 */
 export function assertInBlock(seed, block, name = 'seed') {
   if (!Number.isSafeInteger(seed)) {

@@ -57,7 +57,12 @@
     "ai9:structural": "node scripts/ai9-structural-search.mjs",
     "automation:report": "node scripts/automation-report.mjs",
     "automation:state:pull": "node scripts/automation-state.mjs pull",
-    "automation:state:push": "node scripts/automation-state.mjs push"
+    "automation:state:push": "node scripts/automation-state.mjs push",
+    "llm:proxy": "node llm/proxy.mjs",
+    "llm:analyze": "node llm/analyze.mjs",
+    "llm:preregister": "node llm/preregister.mjs",
+    "llm:smoke": "node llm/pair-experiment.mjs --stage smoke --modes 2,3,4,5 --provider codex",
+    "llm:explore": "node llm/pair-experiment.mjs --stage exploratory --modes 2,3,4,5 --provider codex --seeds-per-mode 4"
   },
   "engines": {
     "node": ">=20"

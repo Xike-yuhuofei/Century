@@ -13,6 +13,8 @@ export type Player = {
   turns: number;
   /** AI 席位；旧版存档缺省为人类。 */
   isAI?: boolean;
+  /** AI 类型：离线冠军或 LLM 实时玩家；旧存档缺省按离线处理。 */
+  aiKind?: 'offline' | 'llm';
 };
 export type MarketMerchant = { id: string; bonus: Stock };
 export type Game = {
