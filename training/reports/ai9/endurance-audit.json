@@ -1,0 +1,96 @@
+{
+  "schema": "century-ai9-endurance-audit-v1",
+  "generatedAt": "2026-10-26T06:36:16.237Z",
+  "campaignId": "ai9-12h-endurance-3",
+  "verdict": "IN_PROGRESS",
+  "status": {
+    "runtime": "running",
+    "phase": "generated",
+    "rounds": 6,
+    "createdAt": "2026-10-26T05:34:43.157Z",
+    "updatedAt": "2026-10-26T06:36:08.125Z",
+    "runFingerprint": "20f5b5e1e422db5f002cee1384b2f8b9823d1e9bbe11be34af34ea8c50406e26"
+  },
+  "requirements": {
+    "maxWallMs": 43200000,
+    "requiredWallMs": 41040000,
+    "minWallRatio": 0.95,
+    "budgetUsed": {
+      "candidates": 36,
+      "games": 736,
+      "wallMs": 3655540,
+      "deepConfirmations": 10
+    }
+  },
+  "checks": [
+    {
+      "id": "state-schema",
+      "status": "PASS",
+      "evidence": "century-evolution-campaign-v1"
+    },
+    {
+      "id": "wallet-budget-declared",
+      "status": "PASS",
+      "evidence": "maxWallMs=43200000，要求 >= 43,200,000（12h）"
+    },
+    {
+      "id": "player-counts",
+      "status": "PASS",
+      "evidence": "[2,3,4,5]"
+    },
+    {
+      "id": "multi-module-targets",
+      "status": "PASS",
+      "evidence": "[\"M01\",\"M02\",\"M05\",\"M10\",\"M11\"]"
+    },
+    {
+      "id": "strategy-coverage",
+      "status": "PASS",
+      "evidence": "[\"single\",\"pair\",\"multi\",\"crossover\",\"ablation\"]"
+    },
+    {
+      "id": "campaign-started",
+      "status": "PASS",
+      "evidence": "seq 2"
+    },
+    {
+      "id": "forced-stop-resume",
+      "status": "PASS",
+      "evidence": "stop seq 176 → resume seq 177，fingerprint=20f5b5e1e422db5f002cee1384b2f8b9823d1e9bbe11be34af34ea8c50406e26"
+    },
+    {
+      "id": "event-sequence-monotonic",
+      "status": "PASS",
+      "evidence": "events=208，state.lastEventSeq=208"
+    },
+    {
+      "id": "terminal-event",
+      "status": "IN_PROGRESS",
+      "evidence": "status=running"
+    },
+    {
+      "id": "wall-budget-consumed",
+      "status": "IN_PROGRESS",
+      "evidence": "wallMs=3655540，要求 >= 41040000（95% × 43200000）"
+    },
+    {
+      "id": "sample-volume",
+      "status": "IN_PROGRESS",
+      "evidence": "candidates=36，games=736，deepConfirmations=10"
+    },
+    {
+      "id": "machine-gate-path",
+      "status": "PASS",
+      "evidence": "outcomes=5，blocked=5，verdicts=[\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\"]"
+    },
+    {
+      "id": "governance-guardrails",
+      "status": "PASS",
+      "evidence": "{\"validationPoolConsumed\":false,\"promotionTriggered\":false,\"championMutation\":\"none\",\"formalChallengeApprovalRequired\":false,\"machineGateRequired\":true,\"promotionTriggeredFromOutcomes\":false}"
+    }
+  ],
+  "notes": [
+    "PASS 只表示 R09 的长时运行/恢复验收满足；不表示候选强度或冠军晋级。",
+    "正式冠军晋级仍须预注册统计门禁；BLOCKED/insufficient-statistical-power 是合法结果。"
+  ]
+}
