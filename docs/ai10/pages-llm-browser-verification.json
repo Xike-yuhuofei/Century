@@ -1,0 +1,37 @@
+{
+  "schema": "century-pages-llm-browser-verification-v1",
+  "verifiedAt": "2026-10-27T02:56:00+08:00",
+  "pagesUrl": "https://xike-yuhuofei.github.io/Century/",
+  "deployment": {
+    "commit": "830b9aea6f0aa870df6964382c0159d5c262acb6",
+    "artifact": "b105a2e56d246bb624ea5e4ac1004ebe98ee147f3eb76116fc8a58ac762e69dc",
+    "champion": "joint-js5",
+    "deployVerifyVerdict": "PASS",
+    "checks": "7/7 PASS（站点可达、index 非空、冠军 id、champion-guided、build-manifest、artifact 身份、manifest schema）"
+  },
+  "browser": {
+    "engine": "Playwright Chromium",
+    "viewport": "1440x1000",
+    "origin": "https://xike-yuhuofei.github.io",
+    "proxyEndpoint": "http://127.0.0.1:8787/v1",
+    "crossOriginHealthFetch": {
+      "ok": true,
+      "status": 200,
+      "verifiedProvider": "codex-exec",
+      "verifiedModel": "gpt-5.6-luna",
+      "note": "GitHub Pages HTTPS → 本地 HTTP loopback 的 CORS/PNA 预检通过"
+    },
+    "llmDecision": {
+      "source": "llm",
+      "model": "gpt-5.6-luna",
+      "latencyMs": 11103,
+      "totalTokens": 20360,
+      "fallbacks": 0,
+      "panelRendered": true,
+      "selectedAction": "获取市场第3张 M35（创造 黄4）"
+    },
+    "consoleErrors": 0,
+    "pageErrors": 0,
+    "screenshot": "docs/ai10/pages-llm-decision.png"
+  }
+}

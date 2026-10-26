@@ -1,0 +1,45 @@
+{
+  "schema": "century-deploy-verification-v1",
+  "verifiedAt": "2026-10-26T18:51:13.845Z",
+  "url": "https://xike-yuhuofei.github.io/Century/",
+  "expectedArtifact": "b105a2e56d246bb624ea5e4ac1004ebe98ee147f3eb76116fc8a58ac762e69dc",
+  "expectedChampion": "joint-js5",
+  "verdict": "PASS",
+  "checks": [
+    {
+      "id": "site-reachable",
+      "status": "PASS",
+      "evidence": "status=200"
+    },
+    {
+      "id": "index-non-empty",
+      "status": "PASS",
+      "evidence": "index.html 长度=705701"
+    },
+    {
+      "id": "champion-id-present",
+      "status": "PASS",
+      "evidence": "index.html 包含 冠军 id joint-js5"
+    },
+    {
+      "id": "champion-adapter-present",
+      "status": "PASS",
+      "evidence": "index.html 包含 适配器标记 champion-guided"
+    },
+    {
+      "id": "build-manifest-available",
+      "status": "PASS",
+      "evidence": "build-manifest.json 可解析"
+    },
+    {
+      "id": "artifact-identity",
+      "status": "PASS",
+      "evidence": "部署 artifact=b105a2e56d246bb6 期望=b105a2e56d246bb6"
+    },
+    {
+      "id": "manifest-schema",
+      "status": "PASS",
+      "evidence": "schema=century-web-build-manifest-v2"
+    }
+  ]
+}
