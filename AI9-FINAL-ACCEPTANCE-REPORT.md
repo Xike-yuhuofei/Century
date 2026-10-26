@@ -157,7 +157,9 @@
 - 故障注入：**9 / 9 PASS**（kill-recovery / candidate-timeout / illegal-source / compile-failure /
   duplicate-campaign / seed-conflict / corrupt-state / resource-exhaustion / llm-unavailable；
   `training/reports/ai9/fault-injection.json`）；
-- 模块部署/回滚演练：6 / 6 PASS（`training/reports/ai9/module-deploy-drill.json`）。
+- 模块部署/回滚演练：6 / 6 PASS（`training/reports/ai9/module-deploy-drill.json`）；
+- 移动端浏览器仿真（390×844，移动/触摸，非真机）：开始对局与对局页渲染、AI Worker 激活、
+  `scrollWidth=390=viewport` 无页面横向溢出（`training/reports/ai9/mobile-smoke.json`）。
 
 ---
 

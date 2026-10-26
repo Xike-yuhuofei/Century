@@ -1,0 +1,45 @@
+{
+  "schema": "century-ai9-mobile-smoke-v1",
+  "generatedAt": "2026-10-26T05:20:00.000Z",
+  "method": "Chrome DevTools MCP viewport emulation (not a physical device)",
+  "url": "http://127.0.0.1:8124/",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true
+  },
+  "measurements": {
+    "innerWidth": 390,
+    "innerHeight": 844,
+    "documentScrollWidth": 390,
+    "bodyScrollWidth": 390,
+    "horizontalOverflow": false,
+    "hasAiWorker": true,
+    "phaseText": "第 1 手 玩家 1 行动"
+  },
+  "checks": [
+    {
+      "id": "start-screen-rendered",
+      "status": "PASS",
+      "evidence": "开始对局表单在 390x844 宽度内完整显示，开始按钮可点击"
+    },
+    {
+      "id": "game-started",
+      "status": "PASS",
+      "evidence": "点击开始游戏后进入 5 人标准模式，显示第 1 手玩家 1行动"
+    },
+    {
+      "id": "offline-ai-worker-active",
+      "status": "PASS",
+      "evidence": "页面显示 AI Worker 与暂停 AI 控件"
+    },
+    {
+      "id": "no-horizontal-page-overflow",
+      "status": "PASS",
+      "evidence": "document.scrollWidth=390=viewport；商人区为局部横向滚动"
+    }
+  ],
+  "note": "移动端浏览器仿真冒烟；未在真实手机上执行。正式游戏推理由本地离线 Worker 完成。"
+}
