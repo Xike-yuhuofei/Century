@@ -14,7 +14,7 @@
  * - 候选源码只允许改 EVOLVE-BLOCK 内的 acquisitionValue；编译/静态检查仍在沙箱内。
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { assertCondition } from './core.mjs';
 import { generateCandidateBatch } from './candidate-generator.mjs';
@@ -61,6 +61,62 @@ function readBestEvidence(outputDir) {
       primaryMetric: 'first-place',
     },
   };
+}
+
+/** 从 OpenEvolve run.log 解析每次 LLM 迭代的真实对局指标（含未成为 best 的程序）。
+ * 这些程序同样经过白名单/静态/编译/探针/真实对局；保存它们能证明“行为变化 +
+ * 真实对局评估”不只发生在 best program 上。 */
+export function parseRunIterations(outputDir) {
+  const logPath = resolve(outputDir, 'run.log');
+  if (!existsSync(logPath)) return [];
+  const lines = readFileSync(logPath, 'utf8').split('\n');
+  const iterations = [];
+  let current = null;
+  for (const line of lines) {
+    const header = /Iteration (\d+): Program ([0-9a-f-]{8,})?(?:.*?parent: ([0-9a-f-]{8,}))?.*?tokens: (\d+) \(prompt: (\d+), completion: (\d+)\)/i.exec(line);
+    if (header) {
+      current = {
+        iteration: Number(header[1]),
+        programId: header[2] ?? null,
+        parentId: header[3] ?? null,
+        tokens: {
+          total: Number(header[4]), prompt: Number(header[5]), completion: Number(header[6]),
+        },
+        metrics: null,
+      };
+      continue;
+    }
+    const metricsLine = /Metrics: (.+)$/.exec(line);
+    if (metricsLine && current) {
+      const metrics = {};
+      for (const part of metricsLine[1].split(',')) {
+        const [key, raw] = part.trim().split('=');
+        if (!key || raw === undefined) continue;
+        const value = Number(raw);
+        metrics[key] = Number.isFinite(value) ? value : raw;
+      }
+      current.metrics = metrics;
+      iterations.push(current);
+      current = null;
+    }
+  }
+  return iterations.map(item => ({
+    iteration: item.iteration,
+    programId: item.programId,
+    parentId: item.parentId,
+    tokens: item.tokens,
+    identicalToOfficial: item.metrics?.identical_to_official === 1,
+    behaviorChanged: item.metrics ? item.metrics.identical_to_official !== 1 : null,
+    stagePassed: item.metrics?.stage_passed ?? null,
+    games: item.metrics?.games ?? 0,
+    firstPlaceDelta: item.metrics?.first_place_delta ?? null,
+    firstPlaceCiLower: item.metrics?.first_place_ci_lower ?? null,
+    candidateFirstRate: item.metrics?.candidate_first_rate ?? null,
+    championFirstRate: item.metrics?.champion_first_rate ?? null,
+    anomalyRate: item.metrics?.anomaly_rate ?? null,
+    combinedScore: item.metrics?.combined_score ?? null,
+    metrics: item.metrics,
+  }));
 }
 
 /**
@@ -121,6 +177,7 @@ export function createOpenEvolveCampaignGenerator({
       outputDir: roundOutputDir ?? outputDir,
       probe: null,
       run: null,
+      programIterations: [],
       evidence: null,
       fallback: null,
     };
@@ -145,6 +202,7 @@ export function createOpenEvolveCampaignGenerator({
           reason: run.reason ?? null,
         } : null;
         if (run?.ok === true) {
+          meta.programIterations = parseRunIterations(run.outputDir);
           const evidence = readBestEvidence(run.outputDir);
           meta.evidence = evidence.evidence;
           if (!evidence.loaded.available) {
@@ -269,6 +327,7 @@ export function writeOpenEvolveEvidence({ dir, round, generatorMeta }) {
     probe: generatorMeta.probe,
     run: generatorMeta.run,
     bestProgram: generatorMeta.evidence,
+    programIterations: generatorMeta.programIterations ?? [],
     fallback: generatorMeta.fallback,
     discipline: 'OpenEvolve 只做离线研发；正式冠军晋级仍由预注册第一名率挑战与机器门禁决定',
   };

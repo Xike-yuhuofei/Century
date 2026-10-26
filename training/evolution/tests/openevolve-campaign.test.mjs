@@ -14,7 +14,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createCandidateFromSpec, generateCandidateBatch } from '../candidate-generator.mjs';
 import {
-  createOpenEvolveCampaignGenerator, writeOpenEvolveEvidence,
+  createOpenEvolveCampaignGenerator, writeOpenEvolveEvidence, parseRunIterations,
 } from '../openevolve-campaign.mjs';
 import { sha256Canonical } from '../core.mjs';
 
@@ -162,6 +162,22 @@ test('targetIds 不含 acquisitionValue：跳过源码轨道并标记', () => {
   assert.equal(batch.candidates.length, 1);
   assert.match(batch.rejectedAtGeneration[0].error, /targetIds 不包含 acquisitionValue/);
   assert.equal(batch.generatorMeta.fallback, 'deterministic-bounded-mutation');
+});
+
+test('run.log 解析：未成为 best 的演化程序也有真实对局与行为变化证据', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'oe-log-'));
+  writeFileSync(join(dir, 'run.log'), [
+    '2026-10-26 10:00:42,590 - INFO - Iteration 1: Program 29962cce-f227-433c-b9d8-78b0d51c6b6f (parent: 8dffb3ab-fb53-4085-ba76-33c2401e64f9) completed in 577.29s | tokens: 26726 (prompt: 25038, completion: 1688)',
+    '2026-10-26 10:00:42,590 - INFO - Metrics: combined_score=0.0000, stage_passed=0.0000, identical_to_official=0.0000, first_place_delta=-0.0625, first_place_ci_lower=-0.3139, candidate_first_rate=0.2500, champion_first_rate=0.3125, games=32.0000, anomaly_rate=0.0000',
+  ].join('\n'));
+  const iterations = parseRunIterations(dir);
+  assert.equal(iterations.length, 1);
+  assert.equal(iterations[0].programId, '29962cce-f227-433c-b9d8-78b0d51c6b6f');
+  assert.equal(iterations[0].parentId, '8dffb3ab-fb53-4085-ba76-33c2401e64f9');
+  assert.equal(iterations[0].behaviorChanged, true);
+  assert.equal(iterations[0].games, 32);
+  assert.equal(iterations[0].firstPlaceDelta, -0.0625);
+  assert.equal(iterations[0].tokens.total, 26726);
 });
 
 test('sidecar：OpenEvolve 轮次证据可审计落盘', () => {
