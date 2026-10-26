@@ -3,7 +3,7 @@
 - 分支：`feat/ai9-actions-upgrade`
 - PR：https://github.com/Xike-yuhuofei/Century/pull/67
 - 基线：`main @ 1905b3a`
-- 证据运行：CI run `40322183056`（首跑，暴露 1 项真实缺口）、`40329160607`（全绿）
+- 证据运行：CI run `40322183056`（首跑，暴露 1 项真实缺口）、`40329160607`（全绿，9m34s）、`40334691777`（最终提交全绿，13m55s；长测试/宿主负载波动）
 - 交付范围：`.github/workflows/*`、`scripts/ci/*`、`training/scripts/{automation-report,automation-state,rollback-gate-drill}.mjs`、`training/lib/code-version.mjs`、`training/evolution/autonomous-run.mjs`、`training/readiness/run-readiness.mjs`、`web-v1/tests/ai.test.mjs`（仅测试并行化，不改断言）、`docs/ai9/AUTOMATION.md`
 
 ---
@@ -23,9 +23,11 @@
 | 自动冠军晋级端到端实测 | **BLOCKED（外部统计约束）** | 触发断层已修复并具备机器门禁；但没有统计合格候选：几何 alpha 已消耗 0.0499756，剩余 2.44e-5，功效门禁返回 `insufficient-statistical-power`（保留现冠军，属正确行为）。不伪造通过 |
 | 线上部署身份验证 | PASS | `deploy-verify` 3 次重试 + `deployment-identity.json`；历史 run `40221527752` site=PASS；本次 PR 未触发 Pages（非 main） |
 | 安全回滚演练 | PASS | `rollback-gate-drill.mjs` **8/8 PASS**（合法放行/手工改写拒绝/夹带拒绝/回滚循环拒绝/计划缺失关闭）；`rollback-drill.mjs`（既有）PASS |
-| CI 耗时/吞吐可测量改善 | PASS | PR 墙钟 **21m29s → 9m34s（−55%）**；最长作业 **20m53s → 8m50s（−58%）** |
+| CI 耗时/吞吐可测量改善 | PASS | PR 墙钟 **21m29s → 9m34s（−55%，run 40329160607）/ 13m55s（−35%，最终 run 40334691777）**；最长作业 **20m53s → 8m50s / 13m11s（−58% / −37%）** |
 | 训练过程可复现/可审计/可追溯 | PASS | `automation-report`（时长/候选/淘汰原因/算法轨道/晋级 verdict/冠军与部署 identity/恢复与下一轮）+ `automation-state` manifest |
-| 提交 PR + 运行证据 + 优化前后对比 | PASS | 本报告 + PR #67 |
+| 提交 PR + 运行证据 + 优化前后对比 | PASS | 本报告 + PR #67 + 上述三次 CI run |
+
+> 说明：CI 墙钟存在宿主负载与长测试波动。保守值取最终提交全绿 run `40334691777`（13m55s），最佳观测值为 `40329160607`（9m34s）。两者的共同结论是：原 web-unit 13m04s 的单一长尾已被消除；剩余主要耗时是 `tournament.test.mjs`（单文件约 8–13 分钟）与 macOS `ai9-research`（7–10 分钟），已在后续建议中列出。
 
 未执行/阻塞项（不使用模拟通过）：
 
@@ -37,21 +39,22 @@
 
 ## 二、优化前后对比（同一仓库、同样全量检查范围）
 
-| 指标 | 基线（main push, run 40302123426） | 整改后（PR, run 40329160607） | 变化 |
+| 指标 | 基线（main push, run 40302123426） | 整改后（PR, run 40329160607 / 40334691777） | 变化 |
 |---|---|---|---|
-| 墙钟 | 21m29s | 9m34s | **−55%** |
-| 最长作业 | training-unit 20m53s | training-unit(0) 8m50s | **−58%** |
-| 次长作业 | web-unit 13m04s | simulation 5m26s / ai9-research 7m37s（macOS，新增能力） | web 长尾消除 |
-| 作业累计 | 56m33s | 59m54s | +6%（新增 ai9-research、web-long-tests 4 分片、回滚门禁、PPO/AI9 作业） |
+| 墙钟 | 21m29s | 9m34s / 13m55s | **−55% / −35%** |
+| 最长作业 | training-unit 20m53s | training-unit(0) 8m50s / 13m11s | **−58% / −37%** |
+| 次长作业 | web-unit 13m04s | simulation 5m26s / web-unit(2) 7m06s（宿主波动）；ai9-research 7m37s / 10m01s（macOS 新增能力） | web 13m 长尾消除 |
+| 作业累计 | 56m33s | 59m54s / 71m37s | +6% / +27%（新增 ai9-research、web-long-tests 4 分片、回滚门禁、PPO/AI9 作业） |
 | 覆盖率 | 全部 web/training 测试 | 完全相同 | **不变**（分片只重排执行位置） |
 
 关键动作与量化依据：
 
 1. **web 长尾拆分**：从 run `40322183056` 的 junit 产物定位到单一用例 `所有 1–4 AI 人数组合能持续合法行动并完成整局` 独占 844.7s（web-unit(3) 全部墙钟）。按人数拆到 4 个并行作业（种子仍 1–16 全量）后，最长 4m59s。
-2. **training 分片实测权重**：`scripts/ci/test-runtime-weights.json` 修正纯字节代理的严重偏差；实测极端不均衡（848/360/166/165 秒）→ 300/232/230/232。
-3. **模拟评估**：4 分片 9m20s → 8 分片 5m26s（100 局覆盖不变、种子连续不重叠）。
+2. **training 分片实测权重**：`scripts/ci/test-runtime-weights.json` 修正纯字节代理的严重偏差；实测极端不均衡（848/360/166/165 秒）→ 500/232/230/232（tournament 单文件仍是剩余长尾）。
+3. **模拟评估**：4 分片 9m20s → 8 分片 5m07–5m26s（100 局覆盖不变、种子连续不重叠）。
 4. **晋级链路去重复构建**：promote 作业不再重复 promote→apply→build，统一由发布器在临时 worktree 完成。
 5. **定时预算重排**：AI9 协同进化每日 25 分钟预算（原先无 AI9 云端轨道）、AI4 参数进化降为每周、新增每周 OpenEvolve 入口与 PPO 冒烟，避免同一预算内重复构建与空转。
+6. **Playwright 安装**：新增 2 次重试与单步 12 分钟上限。首轮曾因镜像下载卡死 21 分钟导致 ui-smoke 被取消；修复后 ui-smoke 恢复 2m22s。
 
 ---
 
