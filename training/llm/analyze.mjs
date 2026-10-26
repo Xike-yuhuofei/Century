@@ -734,6 +734,10 @@ mkdirSync(baseOut, { recursive: true });
 const analysis = {
   schema: 'century-llm-analysis-v1',
   generatedAt: new Date().toISOString(),
+  evidenceClass: (() => {
+    const classes = [...new Set(runs.map(r => r.run.config?.evidenceClass).filter(Boolean))];
+    return classes.length === 1 ? classes[0] : classes.length ? 'mixed' : 'unknown';
+  })(),
   runs: runMeta,
   quality,
   agreement: {

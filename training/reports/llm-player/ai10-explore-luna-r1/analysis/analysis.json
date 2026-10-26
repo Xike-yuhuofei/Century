@@ -1,0 +1,1596 @@
+{
+  "schema": "century-llm-analysis-v1",
+  "generatedAt": "2026-10-26T18:15:48.421Z",
+  "evidenceClass": "real-llm",
+  "runs": [
+    {
+      "runId": "ai10-explore-luna-r1",
+      "runPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-luna-r1",
+      "stage": "exploratory",
+      "provider": {
+        "id": "codex-exec",
+        "kind": "codex-cli",
+        "model": "gpt-5.6-luna",
+        "mode": "real",
+        "endpointHost": null,
+        "parameters": {
+          "transport": "codex exec --json",
+          "reasoningEffort": "low",
+          "sandbox": "read-only",
+          "ephemeral": true,
+          "ignoreUserConfig": true,
+          "outputSchema": "century-llm-decision-v1",
+          "cliVersion": "codex-cli 0.149.1",
+          "maxConcurrency": 2
+        }
+      },
+      "config": {
+        "schema": "century-llm-experiment-config-v1",
+        "experimentId": "ai10-llm-v1",
+        "stage": "exploratory",
+        "modes": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "seedsPerMode": 4,
+        "offset": 0,
+        "focusSeatRotation": "pairIndex % seatCount（同一阶段/人数内均衡轮换）",
+        "opponentPool": "frozen-champion-all-non-focus-seats",
+        "champion": {
+          "id": "joint-js5",
+          "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3",
+          "sourceSha256": "0dd409e57afd62546e5ce8cd2b599306a14defdfa34628ea7753d13e39cd3321"
+        },
+        "provider": {
+          "id": "codex-exec",
+          "kind": "codex-cli",
+          "model": "gpt-5.6-luna",
+          "mode": "real",
+          "endpointHost": null,
+          "parameters": {
+            "transport": "codex exec --json",
+            "reasoningEffort": "low",
+            "sandbox": "read-only",
+            "ephemeral": true,
+            "ignoreUserConfig": true,
+            "outputSchema": "century-llm-decision-v1",
+            "cliVersion": "codex-cli 0.149.1",
+            "maxConcurrency": 2
+          }
+        },
+        "llmConfig": {
+          "timeoutMs": 120000,
+          "maxRetries": 1,
+          "maxTokens": 700,
+          "temperature": 0,
+          "maxCalls": 120,
+          "tokenBudget": 2500000,
+          "candidateLimit": 64,
+          "shadowChampion": true
+        },
+        "budgets": {
+          "runTokenBudget": 25000000,
+          "runCallBudget": 1500,
+          "maxWallMinutes": 240,
+          "concurrency": 2
+        },
+        "preregistration": null,
+        "codeVersion": {
+          "commit": "ca5f1b024cd2c4f4905a68820371c82edde4411a",
+          "dirty": false,
+          "dirtyFiles": []
+        },
+        "evidenceClass": "real-llm"
+      },
+      "codeVersion": {
+        "commit": "ca5f1b024cd2c4f4905a68820371c82edde4411a",
+        "dirty": false,
+        "dirtyFiles": []
+      },
+      "games": 32,
+      "finishedGames": 32,
+      "plannedPairs": 16,
+      "summaryStatus": "completed"
+    }
+  ],
+  "quality": {
+    "schema": "century-llm-quality-v1",
+    "runs": [
+      {
+        "runId": "ai10-explore-luna-r1",
+        "runPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-luna-r1",
+        "stage": "exploratory",
+        "provider": {
+          "id": "codex-exec",
+          "kind": "codex-cli",
+          "model": "gpt-5.6-luna",
+          "mode": "real",
+          "endpointHost": null,
+          "parameters": {
+            "transport": "codex exec --json",
+            "reasoningEffort": "low",
+            "sandbox": "read-only",
+            "ephemeral": true,
+            "ignoreUserConfig": true,
+            "outputSchema": "century-llm-decision-v1",
+            "cliVersion": "codex-cli 0.149.1",
+            "maxConcurrency": 2
+          }
+        },
+        "config": {
+          "schema": "century-llm-experiment-config-v1",
+          "experimentId": "ai10-llm-v1",
+          "stage": "exploratory",
+          "modes": [
+            2,
+            3,
+            4,
+            5
+          ],
+          "seedsPerMode": 4,
+          "offset": 0,
+          "focusSeatRotation": "pairIndex % seatCount（同一阶段/人数内均衡轮换）",
+          "opponentPool": "frozen-champion-all-non-focus-seats",
+          "champion": {
+            "id": "joint-js5",
+            "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3",
+            "sourceSha256": "0dd409e57afd62546e5ce8cd2b599306a14defdfa34628ea7753d13e39cd3321"
+          },
+          "provider": {
+            "id": "codex-exec",
+            "kind": "codex-cli",
+            "model": "gpt-5.6-luna",
+            "mode": "real",
+            "endpointHost": null,
+            "parameters": {
+              "transport": "codex exec --json",
+              "reasoningEffort": "low",
+              "sandbox": "read-only",
+              "ephemeral": true,
+              "ignoreUserConfig": true,
+              "outputSchema": "century-llm-decision-v1",
+              "cliVersion": "codex-cli 0.149.1",
+              "maxConcurrency": 2
+            }
+          },
+          "llmConfig": {
+            "timeoutMs": 120000,
+            "maxRetries": 1,
+            "maxTokens": 700,
+            "temperature": 0,
+            "maxCalls": 120,
+            "tokenBudget": 2500000,
+            "candidateLimit": 64,
+            "shadowChampion": true
+          },
+          "budgets": {
+            "runTokenBudget": 25000000,
+            "runCallBudget": 1500,
+            "maxWallMinutes": 240,
+            "concurrency": 2
+          },
+          "preregistration": null,
+          "codeVersion": {
+            "commit": "ca5f1b024cd2c4f4905a68820371c82edde4411a",
+            "dirty": false,
+            "dirtyFiles": []
+          },
+          "evidenceClass": "real-llm"
+        },
+        "codeVersion": {
+          "commit": "ca5f1b024cd2c4f4905a68820371c82edde4411a",
+          "dirty": false,
+          "dirtyFiles": []
+        },
+        "games": 32,
+        "finishedGames": 32,
+        "plannedPairs": 16,
+        "summaryStatus": "completed"
+      }
+    ],
+    "totals": {
+      "decisions": 649,
+      "llmDecisions": 648,
+      "fallbackDecisions": 1,
+      "games": 32,
+      "finishedGames": 32,
+      "replayConsistentGames": 32
+    },
+    "rates": {
+      "parseSuccessRate": 0.9984591679506933,
+      "illegalSuggestedRate": 0,
+      "missingReasonRate": 0.0015408320493066256,
+      "missingAlternativesRate": 0.0015408320493066256,
+      "fallbackRate": 0.0015408320493066256,
+      "apiFailureRate": 0.0015408320493066256,
+      "retryRecoveredRate": 0,
+      "duplicateRecordRate": 0,
+      "completeGameRate": 1,
+      "replayConsistencyRate": 1,
+      "hiddenLeakFree": true
+    },
+    "sampleClasses": {
+      "teacher-candidate": 648,
+      "interface-error": 1
+    },
+    "fallbackCauses": {
+      "schema-invalid": 1
+    },
+    "providerModels": {
+      "codex-exec/gpt-5.6-luna": 649
+    },
+    "hiddenLeakFindings": [],
+    "duplicateRecords": [],
+    "candidateGeneration": {
+      "prunedDecisions": 139,
+      "meanFullLegalCount": 54.66718027734977,
+      "meanKeptCount": 29.322033898305083,
+      "versions": [
+        "llm-candidates-v1"
+      ],
+      "actionEncoding": "ai5-action-v1",
+      "stateEncoding": "ai5-state-v1"
+    },
+    "latencyMs": {
+      "mean": 10710.966101694916,
+      "median": 10263,
+      "p95": 15158,
+      "max": 29640
+    },
+    "usage": {
+      "tokens": 11866647,
+      "calls": 650,
+      "promptTokens": 11321774,
+      "completionTokens": 544873
+    }
+  },
+  "agreement": {
+    "totalWithShadow": 649,
+    "agree": 210,
+    "byMode": {
+      "2": {
+        "total": 183,
+        "agree": 52
+      },
+      "3": {
+        "total": 171,
+        "agree": 49
+      },
+      "4": {
+        "total": 151,
+        "agree": 56
+      },
+      "5": {
+        "total": 144,
+        "agree": 53
+      }
+    },
+    "agreementRate": 0.3235747303543914,
+    "disagreements": 439
+  },
+  "strategyProfiles": {
+    "engine": {
+      "tag": "engine",
+      "decisions": 532,
+      "fallback": 0,
+      "invalid": 0,
+      "disagreement": 380,
+      "llmLostPairs": 397
+    },
+    "tempo": {
+      "tag": "tempo",
+      "decisions": 645,
+      "fallback": 0,
+      "invalid": 0,
+      "disagreement": 437,
+      "llmLostPairs": 479
+    },
+    "contest": {
+      "tag": "contest",
+      "decisions": 357,
+      "fallback": 0,
+      "invalid": 0,
+      "disagreement": 240,
+      "llmLostPairs": 251
+    },
+    "synergy": {
+      "tag": "synergy",
+      "decisions": 393,
+      "fallback": 0,
+      "invalid": 0,
+      "disagreement": 293,
+      "llmLostPairs": 298
+    },
+    "goal": {
+      "tag": "goal",
+      "decisions": 501,
+      "fallback": 0,
+      "invalid": 0,
+      "disagreement": 325,
+      "llmLostPairs": 356
+    },
+    "endgame": {
+      "tag": "endgame",
+      "decisions": 588,
+      "fallback": 0,
+      "invalid": 0,
+      "disagreement": 400,
+      "llmLostPairs": 439
+    },
+    "risk": {
+      "tag": "risk",
+      "decisions": 175,
+      "fallback": 0,
+      "invalid": 0,
+      "disagreement": 112,
+      "llmLostPairs": 130
+    },
+    "capacity": {
+      "tag": "capacity",
+      "decisions": 136,
+      "fallback": 0,
+      "invalid": 0,
+      "disagreement": 86,
+      "llmLostPairs": 109
+    },
+    "rest": {
+      "tag": "rest",
+      "decisions": 61,
+      "fallback": 0,
+      "invalid": 0,
+      "disagreement": 34,
+      "llmLostPairs": 46
+    }
+  },
+  "pairOutcomes": {
+    "llmWonChampionLost": [
+      {
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010002-f0",
+        "mode": 2,
+        "seed": 1700010002,
+        "focusSeat": 0,
+        "delta": 1
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010003-f1",
+        "mode": 2,
+        "seed": 1700010003,
+        "focusSeat": 1,
+        "delta": 1
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110001-f1",
+        "mode": 3,
+        "seed": 1700110001,
+        "focusSeat": 1,
+        "delta": 1
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310003-f3",
+        "mode": 5,
+        "seed": 1700310003,
+        "focusSeat": 3,
+        "delta": 1
+      }
+    ],
+    "championWonLlmLost": [
+      {
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+        "mode": 2,
+        "seed": 1700010000,
+        "focusSeat": 0,
+        "delta": -1
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110003-f0",
+        "mode": 3,
+        "seed": 1700110003,
+        "focusSeat": 0,
+        "delta": -1
+      }
+    ],
+    "sameOutcome": [
+      {
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010001-f1",
+        "mode": 2,
+        "seed": 1700010001,
+        "focusSeat": 1,
+        "delta": 0
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110000-f0",
+        "mode": 3,
+        "seed": 1700110000,
+        "focusSeat": 0,
+        "delta": 0
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110002-f2",
+        "mode": 3,
+        "seed": 1700110002,
+        "focusSeat": 2,
+        "delta": 0
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210000-f0",
+        "mode": 4,
+        "seed": 1700210000,
+        "focusSeat": 0,
+        "delta": 0
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210002-f2",
+        "mode": 4,
+        "seed": 1700210002,
+        "focusSeat": 2,
+        "delta": 0
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210001-f1",
+        "mode": 4,
+        "seed": 1700210001,
+        "focusSeat": 1,
+        "delta": 0
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210003-f3",
+        "mode": 4,
+        "seed": 1700210003,
+        "focusSeat": 3,
+        "delta": 0
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310000-f0",
+        "mode": 5,
+        "seed": 1700310000,
+        "focusSeat": 0,
+        "delta": 0
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310001-f1",
+        "mode": 5,
+        "seed": 1700310001,
+        "focusSeat": 1,
+        "delta": 0
+      },
+      {
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310002-f2",
+        "mode": 5,
+        "seed": 1700310002,
+        "focusSeat": 2,
+        "delta": 0
+      }
+    ],
+    "anomaly": []
+  },
+  "controversial": [
+    {
+      "schema": "century-llm-disagreement-v1",
+      "runId": "ai10-explore-luna-r1",
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "turnNumber": 1,
+      "seat": 0,
+      "phase": "turn",
+      "observationHash": "af7b9efb",
+      "llm": {
+        "actionId": "a0u239k1",
+        "action": {
+          "type": "acquire",
+          "index": 0,
+          "payment": []
+        },
+        "reason": "免费获取M14并保留3颗黄水晶，先建立蓝转绿/粉引擎；同时避免对手直接拿走这张高协同交易卡。当前水晶不足以立刻认领魔像，抢先扩展引擎的长期收益高于空打升级或增加黄水晶。",
+        "primaryGoal": "建立可持续的高阶水晶生产引擎，为后续高分魔像认领做准备",
+        "strategyTags": [
+          "engine",
+          "tempo",
+          "contest",
+          "synergy",
+          "goal"
+        ],
+        "risks": [
+          "M14需要蓝水晶才能启动，短期不能立即转化资源",
+          "对手可能先行打出或获取其他高效率商人卡",
+          "暂时放弃立即增加黄水晶的行动"
+        ]
+      },
+      "championShadow": {
+        "action": {
+          "type": "play",
+          "cardId": "S02",
+          "steps": [
+            0,
+            0
+          ]
+        },
+        "actionKey": "{\"cardId\":\"S02\",\"steps\":[0,0],\"type\":\"play\"}",
+        "reason": "离线冠军影子：js5 冠军直通（无争议目标：[无]）：G19"
+      },
+      "source": "llm",
+      "fallbackCause": null,
+      "outcomeClass": "llm-lost-champion-won",
+      "pairDelta": -1,
+      "finalResult": {
+        "status": "finished",
+        "focusFirst": false,
+        "focusRank": 2,
+        "focusScore": 46,
+        "winnerSeat": 1
+      },
+      "involvedModules": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08",
+        "M09",
+        "M10"
+      ],
+      "possibleOptimizationDirections": [
+        "检查目标魔像优先级与终局倒计时权重",
+        "检查商人卡获取估值与支付机会成本",
+        "检查商队容量/保留水晶价值",
+        "检查卡牌协同与引擎长期收益",
+        "检查休息节奏与回收成本",
+        "检查终局路线估值与胜率模型"
+      ],
+      "diagnosticOnly": true,
+      "note": "分歧仅表示行动不同，不表示 LLM 或冠军谁正确；结果类别只是配对终局的相关观察",
+      "controversyScore": 1
+    },
+    {
+      "schema": "century-llm-disagreement-v1",
+      "runId": "ai10-explore-luna-r1",
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "turnNumber": 5,
+      "seat": 0,
+      "phase": "turn",
+      "observationHash": "64706597",
+      "llm": {
+        "actionId": "a0u239k1",
+        "action": {
+          "type": "acquire",
+          "index": 0,
+          "payment": []
+        },
+        "reason": "当前无法认领魔像；免费获取M31可立即补足绿→黄/蓝/粉转换，并与M14、M16及S02形成高阶水晶循环。相比先打S01或升级，M31存在被对手拿走的竞争风险，且不消耗3颗黄水晶，保留后续转化与认领弹性。",
+        "primaryGoal": "抢先完成高阶水晶引擎，尽快转向G19、G18等高分魔像",
+        "strategyTags": [
+          "engine",
+          "synergy",
+          "contest",
+          "tempo",
+          "endgame"
+        ],
+        "risks": [
+          "本回合仍无法认领魔像，可能落后于对手的即时节奏",
+          "后续若缺少足够蓝或绿，M31暂时无法发挥作用",
+          "终局尚未触发但魔像竞争可能使高分目标被抢"
+        ]
+      },
+      "championShadow": {
+        "action": {
+          "type": "play",
+          "cardId": "S02",
+          "steps": [
+            0,
+            0
+          ]
+        },
+        "actionKey": "{\"cardId\":\"S02\",\"steps\":[0,0],\"type\":\"play\"}",
+        "reason": "离线冠军影子：js5 冠军直通（无争议目标：[无]）：G19"
+      },
+      "source": "llm",
+      "fallbackCause": null,
+      "outcomeClass": "llm-lost-champion-won",
+      "pairDelta": -1,
+      "finalResult": {
+        "status": "finished",
+        "focusFirst": false,
+        "focusRank": 2,
+        "focusScore": 46,
+        "winnerSeat": 1
+      },
+      "involvedModules": [
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08",
+        "M09",
+        "M10",
+        "M12"
+      ],
+      "possibleOptimizationDirections": [
+        "检查商人卡获取估值与支付机会成本",
+        "检查商队容量/保留水晶价值",
+        "检查卡牌协同与引擎长期收益",
+        "检查休息节奏与回收成本",
+        "检查终局路线估值与胜率模型",
+        "检查对手需求压力模型"
+      ],
+      "diagnosticOnly": true,
+      "note": "分歧仅表示行动不同，不表示 LLM 或冠军谁正确；结果类别只是配对终局的相关观察",
+      "controversyScore": 1
+    },
+    {
+      "schema": "century-llm-disagreement-v1",
+      "runId": "ai10-explore-luna-r1",
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "turnNumber": 9,
+      "seat": 0,
+      "phase": "turn",
+      "observationHash": "a1c4c135",
+      "llm": {
+        "actionId": "a0u239k1",
+        "action": {
+          "type": "acquire",
+          "index": 0,
+          "payment": []
+        },
+        "reason": "当前无足够水晶认领魔像，且M12可免费获取并保留3颗黄水晶。结合已有M14、M16、M31、M06与S02，先补充低成本的粉→绿转换，提升后续连续转化和高分魔像路线；相比立即升级，获取免费关键商人卡还能避免被对手抢走。",
+        "primaryGoal": "继续扩展高阶水晶引擎并保留认领弹性",
+        "strategyTags": [
+          "engine",
+          "synergy",
+          "contest",
+          "tempo",
+          "goal",
+          "endgame"
+        ],
+        "risks": [
+          "M12本身需粉色水晶启动，短期可能无法立即使用",
+          "继续建设引擎会推迟获得第一张魔像",
+          "对手可能先行积累资源并竞争G18或其他高分魔像"
+        ]
+      },
+      "championShadow": {
+        "action": {
+          "type": "play",
+          "cardId": "S01"
+        },
+        "actionKey": "{\"cardId\":\"S01\",\"type\":\"play\"}",
+        "reason": "离线冠军影子：js5 联合仲裁：覆盖为联合最优（联合模拟评价值 0.348，未校准胜率近似，12 轨迹，实际世界 4/4，争议目标 G30）"
+      },
+      "source": "llm",
+      "fallbackCause": null,
+      "outcomeClass": "llm-lost-champion-won",
+      "pairDelta": -1,
+      "finalResult": {
+        "status": "finished",
+        "focusFirst": false,
+        "focusRank": 2,
+        "focusScore": 46,
+        "winnerSeat": 1
+      },
+      "involvedModules": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08",
+        "M09",
+        "M10",
+        "M12"
+      ],
+      "possibleOptimizationDirections": [
+        "检查目标魔像优先级与终局倒计时权重",
+        "检查商人卡获取估值与支付机会成本",
+        "检查商队容量/保留水晶价值",
+        "检查卡牌协同与引擎长期收益",
+        "检查休息节奏与回收成本",
+        "检查终局路线估值与胜率模型"
+      ],
+      "diagnosticOnly": true,
+      "note": "分歧仅表示行动不同，不表示 LLM 或冠军谁正确；结果类别只是配对终局的相关观察",
+      "controversyScore": 1
+    },
+    {
+      "schema": "century-llm-disagreement-v1",
+      "runId": "ai10-explore-luna-r1",
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "turnNumber": 11,
+      "seat": 0,
+      "phase": "turn",
+      "observationHash": "6d2a31bf",
+      "llm": {
+        "actionId": "a0u239k1",
+        "action": {
+          "type": "acquire",
+          "index": 0,
+          "payment": []
+        },
+        "reason": "当前没有足够粉晶认领魔像，立即认领不可行。免费获取M05可锁定粉晶转化后的黄绿蓝分流，且避免被对手拿走；相比继续升级或产黄，投资成本为零，能增强M14、M16、M31、M12的后续联动。",
+        "primaryGoal": "抢先完善高阶水晶引擎并保留后续认领弹性",
+        "strategyTags": [
+          "engine",
+          "tempo",
+          "contest",
+          "synergy",
+          "goal"
+        ],
+        "risks": [
+          "本回合不增加水晶，启动认领路线会延后一回合",
+          "手牌继续增加，后续需要合理安排打出与休息",
+          "M05本身依赖粉晶，短期可能无法立即生效"
+        ]
+      },
+      "championShadow": {
+        "action": {
+          "type": "play",
+          "cardId": "S01"
+        },
+        "actionKey": "{\"cardId\":\"S01\",\"type\":\"play\"}",
+        "reason": "离线冠军影子：js5 联合仲裁：覆盖为联合最优（联合模拟评价值 0.313，未校准胜率近似，12 轨迹，实际世界 4/4，争议目标 G30）"
+      },
+      "source": "llm",
+      "fallbackCause": null,
+      "outcomeClass": "llm-lost-champion-won",
+      "pairDelta": -1,
+      "finalResult": {
+        "status": "finished",
+        "focusFirst": false,
+        "focusRank": 2,
+        "focusScore": 46,
+        "winnerSeat": 1
+      },
+      "involvedModules": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08",
+        "M09",
+        "M10"
+      ],
+      "possibleOptimizationDirections": [
+        "检查目标魔像优先级与终局倒计时权重",
+        "检查商人卡获取估值与支付机会成本",
+        "检查商队容量/保留水晶价值",
+        "检查卡牌协同与引擎长期收益",
+        "检查休息节奏与回收成本",
+        "检查终局路线估值与胜率模型"
+      ],
+      "diagnosticOnly": true,
+      "note": "分歧仅表示行动不同，不表示 LLM 或冠军谁正确；结果类别只是配对终局的相关观察",
+      "controversyScore": 1
+    },
+    {
+      "schema": "century-llm-disagreement-v1",
+      "runId": "ai10-explore-luna-r1",
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "turnNumber": 13,
+      "seat": 0,
+      "phase": "turn",
+      "observationHash": "93387a71",
+      "llm": {
+        "actionId": "a0alfzb6",
+        "action": {
+          "type": "play",
+          "cardId": "S01"
+        },
+        "reason": "当前无可认领魔像，3黄不足以直接转化出G19/G15所需的绿粉；打出S01获得2黄可将库存提升至5黄，下一回合既能支付3黄获取M43，又保留认领与转化弹性。相比立即升级，先补充资源更快开启已有高阶交易引擎；相比现在获取M43，避免库存过低而无法继续运转。",
+        "primaryGoal": "补足基础水晶并为M43及后续高分魔像路线建立启动资源",
+        "strategyTags": [
+          "engine",
+          "tempo",
+          "goal",
+          "endgame",
+          "risk"
+        ],
+        "risks": [
+          "对手可能在下一回合先获取M43或认领高价值魔像",
+          "本回合不获取新商人卡，暂时没有新增引擎组件",
+          "若后续仍无法获得粉水晶，G19/G15等高分目标会继续延后"
+        ]
+      },
+      "championShadow": {
+        "action": {
+          "type": "acquire",
+          "index": 3,
+          "payment": [
+            0,
+            0,
+            0
+          ]
+        },
+        "actionKey": "{\"index\":3,\"payment\":[0,0,0],\"type\":\"acquire\"}",
+        "reason": "离线冠军影子：js5 冠军直通（无争议目标：[无]）：G19"
+      },
+      "source": "llm",
+      "fallbackCause": null,
+      "outcomeClass": "llm-lost-champion-won",
+      "pairDelta": -1,
+      "finalResult": {
+        "status": "finished",
+        "focusFirst": false,
+        "focusRank": 2,
+        "focusScore": 46,
+        "winnerSeat": 1
+      },
+      "involvedModules": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M10",
+        "M11",
+        "M12"
+      ],
+      "possibleOptimizationDirections": [
+        "检查目标魔像优先级与终局倒计时权重",
+        "检查商人卡获取估值与支付机会成本",
+        "检查商队容量/保留水晶价值",
+        "检查卡牌协同与引擎长期收益",
+        "检查休息节奏与回收成本",
+        "检查终局路线估值与胜率模型"
+      ],
+      "diagnosticOnly": true,
+      "note": "分歧仅表示行动不同，不表示 LLM 或冠军谁正确；结果类别只是配对终局的相关观察",
+      "controversyScore": 1
+    },
+    {
+      "schema": "century-llm-disagreement-v1",
+      "runId": "ai10-explore-luna-r1",
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "turnNumber": 15,
+      "seat": 0,
+      "phase": "turn",
+      "observationHash": "da00bc3d",
+      "llm": {
+        "actionId": "a0u239k1",
+        "action": {
+          "type": "acquire",
+          "index": 0,
+          "payment": []
+        },
+        "reason": "当前暂无可认领魔像，且5黄不足以直接转出G19/G15所需的绿、粉资源。免费获取M13可把后续绿资源高效转为黄与蓝，补强现有M14、M16、M31、M06引擎；相比打出S02或获取M43，立即锁定免费关键转化牌的机会成本最低，也避免被对手拿走。",
+        "primaryGoal": "继续扩展高阶水晶引擎并为G19、G15及后续高分魔像建立转化弹性",
+        "strategyTags": [
+          "engine",
+          "synergy",
+          "tempo",
+          "contest",
+          "goal",
+          "capacity"
+        ],
+        "risks": [
+          "M13本身不能直接生成粉晶，仍需依赖M14、M16或M31完成高阶转化",
+          "免费获取后本回合无法直接认领魔像，终局推进会延后一回合",
+          "若后续市场刷新缺乏粉晶来源，单纯扩展引擎可能出现资源结构失衡"
+        ]
+      },
+      "championShadow": {
+        "action": {
+          "type": "play",
+          "cardId": "S02",
+          "steps": [
+            0,
+            0
+          ]
+        },
+        "actionKey": "{\"cardId\":\"S02\",\"steps\":[0,0],\"type\":\"play\"}",
+        "reason": "离线冠军影子：js5 冠军直通（无争议目标：[无]）：G23"
+      },
+      "source": "llm",
+      "fallbackCause": null,
+      "outcomeClass": "llm-lost-champion-won",
+      "pairDelta": -1,
+      "finalResult": {
+        "status": "finished",
+        "focusFirst": false,
+        "focusRank": 2,
+        "focusScore": 46,
+        "winnerSeat": 1
+      },
+      "involvedModules": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08",
+        "M09",
+        "M10"
+      ],
+      "possibleOptimizationDirections": [
+        "检查目标魔像优先级与终局倒计时权重",
+        "检查商人卡获取估值与支付机会成本",
+        "检查商队容量/保留水晶价值",
+        "检查卡牌协同与引擎长期收益",
+        "检查休息节奏与回收成本",
+        "检查终局路线估值与胜率模型"
+      ],
+      "diagnosticOnly": true,
+      "note": "分歧仅表示行动不同，不表示 LLM 或冠军谁正确；结果类别只是配对终局的相关观察",
+      "controversyScore": 1
+    },
+    {
+      "schema": "century-llm-disagreement-v1",
+      "runId": "ai10-explore-luna-r1",
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "turnNumber": 21,
+      "seat": 0,
+      "phase": "turn",
+      "observationHash": "211f675c",
+      "llm": {
+        "actionId": "a199w4s0",
+        "action": {
+          "type": "play",
+          "cardId": "M31",
+          "repeats": 1
+        },
+        "reason": "当前没有可认领魔像，3绿打出M31可转为黄、蓝、粉各1，立即补齐高分魔像所需的多色结构，尤其为G19/G15的粉色缺口和后续交易提供弹性。相比M13仅产黄蓝，M31更贴合当前高分目标；相比升级或休息，能在终局尚未触发时提高引擎密度。",
+        "primaryGoal": "建立多色高分魔像引擎并压缩后续认领回合数",
+        "strategyTags": [
+          "engine",
+          "synergy",
+          "goal",
+          "tempo",
+          "endgame",
+          "risk"
+        ],
+        "risks": [
+          "本回合仍无法认领魔像，可能给对手继续抢先拿取的机会",
+          "消耗全部绿水晶，短期缺少直接启动部分绿基交易的资源",
+          "若后续粉色资源不足，仍需休息或追加引擎回合"
+        ]
+      },
+      "championShadow": {
+        "action": {
+          "type": "play",
+          "cardId": "M13",
+          "repeats": 1
+        },
+        "actionKey": "{\"cardId\":\"M13\",\"repeats\":1,\"type\":\"play\"}",
+        "reason": "离线冠军影子：js5 冠军直通（无争议目标：[无]）：G07"
+      },
+      "source": "llm",
+      "fallbackCause": null,
+      "outcomeClass": "llm-lost-champion-won",
+      "pairDelta": -1,
+      "finalResult": {
+        "status": "finished",
+        "focusFirst": false,
+        "focusRank": 2,
+        "focusScore": 46,
+        "winnerSeat": 1
+      },
+      "involvedModules": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M09",
+        "M10",
+        "M11",
+        "M12"
+      ],
+      "possibleOptimizationDirections": [
+        "检查目标魔像优先级与终局倒计时权重",
+        "检查商人卡获取估值与支付机会成本",
+        "检查商队容量/保留水晶价值",
+        "检查卡牌协同与引擎长期收益",
+        "检查休息节奏与回收成本",
+        "检查终局路线估值与胜率模型"
+      ],
+      "diagnosticOnly": true,
+      "note": "分歧仅表示行动不同，不表示 LLM 或冠军谁正确；结果类别只是配对终局的相关观察",
+      "controversyScore": 1
+    },
+    {
+      "schema": "century-llm-disagreement-v1",
+      "runId": "ai10-explore-luna-r1",
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "turnNumber": 23,
+      "seat": 0,
+      "phase": "turn",
+      "observationHash": "2c3f9876",
+      "llm": {
+        "actionId": "a0u239k1",
+        "action": {
+          "type": "acquire",
+          "index": 0,
+          "payment": []
+        },
+        "reason": "当前没有可立即认领的魔像，免费获取M28可回收1黄并锁定黄绿转粉的关键补强，配合手中M12及已有高阶交易牌，为G19/G15的粉色需求建立更短路线；相比立即打出交易牌，先拿免费卡不消耗现有粉晶，也降低被对手抢走的风险。",
+        "primaryGoal": "锁定并强化通往高分魔像的多色转化引擎",
+        "strategyTags": [
+          "engine",
+          "synergy",
+          "tempo",
+          "contest",
+          "endgame"
+        ],
+        "risks": [
+          "本回合仍无法认领魔像，对手可能先完成认领并扩大分差",
+          "M28需要同时具备黄和绿，短期内未必立即转化",
+          "终局尚需6张魔像，后续仍需尽快恢复并运转已打出的商人卡"
+        ]
+      },
+      "championShadow": {
+        "action": {
+          "type": "acquire",
+          "index": 2,
+          "payment": [
+            0,
+            2
+          ]
+        },
+        "actionKey": "{\"index\":2,\"payment\":[0,2],\"type\":\"acquire\"}",
+        "reason": "离线冠军影子：js5 联合仲裁：覆盖为联合最优（联合模拟评价值 0.442，未校准胜率近似，8 轨迹，实际世界 4/4，争议目标 G07）"
+      },
+      "source": "llm",
+      "fallbackCause": null,
+      "outcomeClass": "llm-lost-champion-won",
+      "pairDelta": -1,
+      "finalResult": {
+        "status": "finished",
+        "focusFirst": false,
+        "focusRank": 2,
+        "focusScore": 46,
+        "winnerSeat": 1
+      },
+      "involvedModules": [
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08",
+        "M09",
+        "M10",
+        "M12"
+      ],
+      "possibleOptimizationDirections": [
+        "检查商人卡获取估值与支付机会成本",
+        "检查商队容量/保留水晶价值",
+        "检查卡牌协同与引擎长期收益",
+        "检查休息节奏与回收成本",
+        "检查终局路线估值与胜率模型",
+        "检查对手需求压力模型"
+      ],
+      "diagnosticOnly": true,
+      "note": "分歧仅表示行动不同，不表示 LLM 或冠军谁正确；结果类别只是配对终局的相关观察",
+      "controversyScore": 1
+    },
+    {
+      "schema": "century-llm-disagreement-v1",
+      "runId": "ai10-explore-luna-r1",
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "turnNumber": 25,
+      "seat": 0,
+      "phase": "turn",
+      "observationHash": "52ab3b17",
+      "llm": {
+        "actionId": "a0ojbefn",
+        "action": {
+          "type": "play",
+          "cardId": "M12",
+          "repeats": 1
+        },
+        "reason": "当前没有可立即认领的魔像；消耗唯一粉晶打出M12可得3绿，显著提高后续M13、M14及G23/G07路线的成型速度。相比休息或获取市场卡，立即扩充绿晶引擎更能压缩终局前的认领回合。",
+        "primaryGoal": "建立高效率绿晶引擎，尽快转化为可认领资源并追赶终局节奏。",
+        "strategyTags": [
+          "engine",
+          "tempo",
+          "synergy",
+          "goal",
+          "endgame"
+        ],
+        "risks": [
+          "消耗唯一粉晶，短期失去粉晶路线",
+          "对手可能在后续回合抢先认领市场魔像",
+          "本行动本身不增加分数，需及时衔接交易与认领"
+        ]
+      },
+      "championShadow": {
+        "action": {
+          "type": "acquire",
+          "index": 1,
+          "payment": [
+            0
+          ]
+        },
+        "actionKey": "{\"index\":1,\"payment\":[0],\"type\":\"acquire\"}",
+        "reason": "离线冠军影子：js5 联合仲裁：覆盖为联合最优（联合模拟评价值 0.426，未校准胜率近似，8 轨迹，实际世界 4/4，争议目标 G07）"
+      },
+      "source": "llm",
+      "fallbackCause": null,
+      "outcomeClass": "llm-lost-champion-won",
+      "pairDelta": -1,
+      "finalResult": {
+        "status": "finished",
+        "focusFirst": false,
+        "focusRank": 2,
+        "focusScore": 46,
+        "winnerSeat": 1
+      },
+      "involvedModules": [
+        "M01",
+        "M02",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M09",
+        "M10",
+        "M12"
+      ],
+      "possibleOptimizationDirections": [
+        "检查目标魔像优先级与终局倒计时权重",
+        "检查商人卡获取估值与支付机会成本",
+        "检查商队容量/保留水晶价值",
+        "检查卡牌协同与引擎长期收益",
+        "检查休息节奏与回收成本",
+        "检查终局路线估值与胜率模型"
+      ],
+      "diagnosticOnly": true,
+      "note": "分歧仅表示行动不同，不表示 LLM 或冠军谁正确；结果类别只是配对终局的相关观察",
+      "controversyScore": 1
+    },
+    {
+      "schema": "century-llm-disagreement-v1",
+      "runId": "ai10-explore-luna-r1",
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "turnNumber": 27,
+      "seat": 0,
+      "phase": "turn",
+      "observationHash": "c0053add",
+      "llm": {
+        "actionId": "a0ydto24",
+        "action": {
+          "type": "play",
+          "cardId": "S02",
+          "steps": [
+            0,
+            0
+          ]
+        },
+        "reason": "打出S02将2黄升级为2绿，形成绿5并可在下一回合精确认领G23；当前无可立即认领魔像，且该路线只需一回合准备，能抢先建立终局分数。",
+        "primaryGoal": "以最少准备回合抢得G23并推进终局得分节奏",
+        "strategyTags": [
+          "tempo",
+          "goal",
+          "endgame",
+          "capacity",
+          "contest"
+        ],
+        "risks": [
+          "对手可能在我下回合前通过交易争抢G23或其他高价值目标",
+          "G23分值有限，若对手快速形成粉晶引擎，后续高分魔像竞争会更困难"
+        ]
+      },
+      "championShadow": {
+        "action": {
+          "type": "acquire",
+          "index": 1,
+          "payment": [
+            0
+          ]
+        },
+        "actionKey": "{\"index\":1,\"payment\":[0],\"type\":\"acquire\"}",
+        "reason": "离线冠军影子：js5 联合仲裁：覆盖为联合最优（联合模拟评价值 0.332，未校准胜率近似，8 轨迹，实际世界 4/4，争议目标 G07）"
+      },
+      "source": "llm",
+      "fallbackCause": null,
+      "outcomeClass": "llm-lost-champion-won",
+      "pairDelta": -1,
+      "finalResult": {
+        "status": "finished",
+        "focusFirst": false,
+        "focusRank": 2,
+        "focusScore": 46,
+        "winnerSeat": 1
+      },
+      "involvedModules": [
+        "M01",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08",
+        "M09",
+        "M10",
+        "M12"
+      ],
+      "possibleOptimizationDirections": [
+        "检查目标魔像优先级与终局倒计时权重",
+        "检查商队容量/保留水晶价值",
+        "检查卡牌协同与引擎长期收益",
+        "检查休息节奏与回收成本",
+        "检查终局路线估值与胜率模型",
+        "检查对手需求压力模型"
+      ],
+      "diagnosticOnly": true,
+      "note": "分歧仅表示行动不同，不表示 LLM 或冠军谁正确；结果类别只是配对终局的相关观察",
+      "controversyScore": 1
+    }
+  ],
+  "pairStats": {
+    "2": {
+      "seatCount": 2,
+      "plannedPairs": 4,
+      "validPairs": 4,
+      "anomalyPairs": 0,
+      "llmFirst": 2,
+      "championFirst": 1,
+      "llmFirstRate": 0.5,
+      "championFirstRate": 0.25,
+      "llmFirstWilsonCI": {
+        "point": 0.5,
+        "lower": 0.15003898915214953,
+        "upper": 0.8499610108478505
+      },
+      "championFirstWilsonCI": {
+        "point": 0.25,
+        "lower": 0.04558726080970055,
+        "upper": 0.6993581574175981
+      },
+      "firstPlaceDelta": 0.25,
+      "deltaCounts": {
+        "plus": 2,
+        "zero": 1,
+        "minus": 1
+      },
+      "pairedDeltaCI": {
+        "mean": 0.25,
+        "variance": 0.9166666666666666,
+        "se": 0.47871355387816905,
+        "df": 3,
+        "tCritical": 2.353363434813218,
+        "alpha": 0.05,
+        "lower": -0.8765869734463705,
+        "upper": 1.3765869734463705,
+        "oneSidedLower": -0.8765869734463705,
+        "n": 4,
+        "candidateFirstRate": 0.5,
+        "championFirstRate": 0.25
+      },
+      "mdeAtObservedN": 1.2432374289301587,
+      "powerAtObservedEffect": 0.12613495410861836,
+      "requiredSeedsForObservedEffect": 99,
+      "meanScores": {
+        "llm": 63,
+        "champion": 72.75
+      },
+      "meanRank": {
+        "llm": 1.5,
+        "champion": 1.75
+      },
+      "meanGolems": {
+        "llm": 5,
+        "champion": 5.5
+      },
+      "meanDecisionLatencyMs": 10124,
+      "totalTokens": 3302843,
+      "meanTokensPerPair": 825710.75,
+      "fallbackAffectedPairs": 0,
+      "anomalyRate": 0
+    },
+    "3": {
+      "seatCount": 3,
+      "plannedPairs": 4,
+      "validPairs": 4,
+      "anomalyPairs": 0,
+      "llmFirst": 1,
+      "championFirst": 1,
+      "llmFirstRate": 0.25,
+      "championFirstRate": 0.25,
+      "llmFirstWilsonCI": {
+        "point": 0.25,
+        "lower": 0.04558726080970055,
+        "upper": 0.6993581574175981
+      },
+      "championFirstWilsonCI": {
+        "point": 0.25,
+        "lower": 0.04558726080970055,
+        "upper": 0.6993581574175981
+      },
+      "firstPlaceDelta": 0,
+      "deltaCounts": {
+        "plus": 1,
+        "zero": 2,
+        "minus": 1
+      },
+      "pairedDeltaCI": {
+        "mean": 0,
+        "variance": 0.6666666666666666,
+        "se": 0.408248290463863,
+        "df": 3,
+        "tCritical": 2.353363434813218,
+        "alpha": 0.05,
+        "lower": -0.9607565991026611,
+        "upper": 0.9607565991026611,
+        "oneSidedLower": -0.9607565991026611,
+        "n": 4,
+        "candidateFirstRate": 0.25,
+        "championFirstRate": 0.25
+      },
+      "mdeAtObservedN": 1.2432374289301587,
+      "powerAtObservedEffect": null,
+      "requiredSeedsForObservedEffect": null,
+      "meanScores": {
+        "llm": 53.5,
+        "champion": 65
+      },
+      "meanRank": {
+        "llm": 2.5,
+        "champion": 2.5
+      },
+      "meanGolems": {
+        "llm": 4.5,
+        "champion": 4.5
+      },
+      "meanDecisionLatencyMs": 10263,
+      "totalTokens": 3119488,
+      "meanTokensPerPair": 779872,
+      "fallbackAffectedPairs": 1,
+      "anomalyRate": 0
+    },
+    "4": {
+      "seatCount": 4,
+      "plannedPairs": 4,
+      "validPairs": 4,
+      "anomalyPairs": 0,
+      "llmFirst": 0,
+      "championFirst": 0,
+      "llmFirstRate": 0,
+      "championFirstRate": 0,
+      "llmFirstWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.4898908364545973
+      },
+      "championFirstWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.4898908364545973
+      },
+      "firstPlaceDelta": 0,
+      "deltaCounts": {
+        "plus": 0,
+        "zero": 4,
+        "minus": 0
+      },
+      "pairedDeltaCI": {
+        "mean": 0,
+        "variance": 0,
+        "se": 0,
+        "df": 3,
+        "tCritical": 2.353363434813218,
+        "alpha": 0.05,
+        "lower": 0,
+        "upper": 0,
+        "oneSidedLower": 0,
+        "n": 4,
+        "candidateFirstRate": 0,
+        "championFirstRate": 0
+      },
+      "mdeAtObservedN": 1.2432374289301587,
+      "powerAtObservedEffect": null,
+      "requiredSeedsForObservedEffect": null,
+      "meanScores": {
+        "llm": 49,
+        "champion": 55.25
+      },
+      "meanRank": {
+        "llm": 3.25,
+        "champion": 3.25
+      },
+      "meanGolems": {
+        "llm": 3.75,
+        "champion": 3.75
+      },
+      "meanDecisionLatencyMs": 10263,
+      "totalTokens": 2817223,
+      "meanTokensPerPair": 704305.75,
+      "fallbackAffectedPairs": 0,
+      "anomalyRate": 0
+    },
+    "5": {
+      "seatCount": 5,
+      "plannedPairs": 4,
+      "validPairs": 4,
+      "anomalyPairs": 0,
+      "llmFirst": 1,
+      "championFirst": 0,
+      "llmFirstRate": 0.25,
+      "championFirstRate": 0,
+      "llmFirstWilsonCI": {
+        "point": 0.25,
+        "lower": 0.04558726080970055,
+        "upper": 0.6993581574175981
+      },
+      "championFirstWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.4898908364545973
+      },
+      "firstPlaceDelta": 0.25,
+      "deltaCounts": {
+        "plus": 1,
+        "zero": 3,
+        "minus": 0
+      },
+      "pairedDeltaCI": {
+        "mean": 0.25,
+        "variance": 0.25,
+        "se": 0.25,
+        "df": 3,
+        "tCritical": 2.353363434813218,
+        "alpha": 0.05,
+        "lower": -0.33834085870330455,
+        "upper": 0.8383408587033045,
+        "oneSidedLower": -0.33834085870330455,
+        "n": 4,
+        "candidateFirstRate": 0.25,
+        "championFirstRate": 0
+      },
+      "mdeAtObservedN": 1.2432374289301587,
+      "powerAtObservedEffect": 0.12613495410861836,
+      "requiredSeedsForObservedEffect": 99,
+      "meanScores": {
+        "llm": 54.75,
+        "champion": 52.25
+      },
+      "meanRank": {
+        "llm": 3.5,
+        "champion": 3.25
+      },
+      "meanGolems": {
+        "llm": 4.25,
+        "champion": 3.75
+      },
+      "meanDecisionLatencyMs": 10485,
+      "totalTokens": 2627093,
+      "meanTokensPerPair": 656773.25,
+      "fallbackAffectedPairs": 0,
+      "anomalyRate": 0
+    }
+  },
+  "pooled": {
+    "status": "analyzed",
+    "metric": "weightedPairedFirstPlaceRateDelta",
+    "mean": 0.125,
+    "se": 0.1692508000965825,
+    "df": 7,
+    "tCritical": 1.8945786051044706,
+    "alpha": 0.05,
+    "lower": -0.1956589447597989,
+    "upper": 0.4456589447597989,
+    "weights": {
+      "2": 0.25,
+      "3": 0.25,
+      "4": 0.25,
+      "5": 0.25
+    },
+    "components": [
+      {
+        "seatCount": 2,
+        "weight": 0.25,
+        "mean": 0.25,
+        "n": 4,
+        "varianceContribution": 0.014322916666666666
+      },
+      {
+        "seatCount": 3,
+        "weight": 0.25,
+        "mean": 0,
+        "n": 4,
+        "varianceContribution": 0.010416666666666666
+      },
+      {
+        "seatCount": 4,
+        "weight": 0.25,
+        "mean": 0,
+        "n": 4,
+        "varianceContribution": 0
+      },
+      {
+        "seatCount": 5,
+        "weight": 0.25,
+        "mean": 0.25,
+        "n": 4,
+        "varianceContribution": 0.00390625
+      }
+    ],
+    "superiority": false
+  },
+  "inference": {
+    "class": "exploratory",
+    "stage": [
+      "exploratory"
+    ],
+    "alpha": 0.05,
+    "powerTarget": 0.8,
+    "multipleTestingControl": "探索性：未作正式多重检验；仅供方向性观察",
+    "conclusion": "配对第一名率增量区间跨越 0，无显著差异",
+    "note": "阶段 A/B 不得宣称统计显著优势，不得据此晋级冠军"
+  },
+  "counts": {
+    "decisions": 649,
+    "disagreements": 439,
+    "trainingCandidates": 649,
+    "diagnosisCases": 439
+  },
+  "cost": {
+    "providerMode": [
+      "real"
+    ],
+    "tokens": 11866647,
+    "calls": 650,
+    "marginalApiCostUsd": 0,
+    "basis": "Codex CLI 使用本机 ChatGPT 登录（订阅内）；无逐 token API 账单。若切换付费 OpenAI-compatible Provider，应按实际账单另计。"
+  },
+  "artifacts": {
+    "analysis": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-luna-r1/analysis/analysis.json",
+    "quality": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-luna-r1/analysis/quality.json",
+    "pairs": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-luna-r1/analysis/pairs.jsonl",
+    "disagreements": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-luna-r1/analysis/disagreements.jsonl",
+    "trainingCandidates": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-luna-r1/analysis/training-candidates.jsonl",
+    "openevolveDiagnosis": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-luna-r1/analysis/openevolve-diagnosis.jsonl",
+    "moduleMatrix": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-luna-r1/analysis/module-signal-matrix.json"
+  }
+}
