@@ -11,8 +11,9 @@
 > - 三阶段工程能力已实现并真实运行；但**没有任何候选通过第一名率正式挑战**，冠军未变，也没有宣称的竞技提升。
 > - 机器门禁路径已真实执行：`ai9-live-coevolve-2` 中 2 个候选进入 `queued-machine-gate`，
 >   均被 `promotion-handler` 以 `insufficient-statistical-power` **正确拒绝**（未消费验证池/alpha）。
-> - `R09`（12 小时连续运行）已启动 **IN_PROGRESS**（`ai9-12h-endurance`，13:08 CST 开始，12h 预算），
->   但本报告生成时尚未完成，不能记为 PASS；停止/恢复机制已在 `ai9-live-coevolve-2` 实测。
+> - `R09`（12 小时连续运行）已启动 **IN_PROGRESS**（`ai9-12h-endurance-2`，13:12 CST 开始，12h 预算）；
+>   首次 `ai9-12h-endurance` 进程被宿主回收（无候选产出，状态保留为失败记录）。
+>   本报告生成时 12h 运行尚未完成，不能记为 PASS；停止/恢复机制已在 `ai9-live-coevolve-2` 实测。
 > - `R12`（真实冠军晋级/自动发布）为 **BLOCKED**，
 >   原因是统计预算/功效不足且没有合格候选，不是 PASS。
 > - 本报告把“接口存在”“单元测试通过”“模拟实验成功”与“真实多模块进化已完成”严格区分。
@@ -318,7 +319,7 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 | 真实 OpenEvolve 多模块运行 | PASS | r001/r003 + 控制器内嵌（§4.2/§4.6.2） |
 | 停止 / 检查点 / 恢复实测 | PASS | `ai9-live-coevolve-2`：steps=7 停止 → resume → completed；events seq 25/26 |
 | 自动正式晋级 | BLOCKED | 门禁路径真实执行，2 次均因统计功效不足 BLOCKED；无合格候选，未触发验证池/alpha |
-| 12h 连续运行/恢复 | IN_PROGRESS | `ai9-12h-endurance` 于 2026-10-26 13:08 CST 启动（`--max-wall-ms 43200000`），本报告生成时仍在运行；完成前不得记 PASS。短周期停止/恢复已 PASS（§4.6.2） |
+| 12h 连续运行/恢复 | IN_PROGRESS | `ai9-12h-endurance-2` 于 2026-10-26 13:12 CST 启动（`screen` 会话 `ai9-12h`，`--max-wall-ms 43200000`），本报告生成时仍在运行；完成前不得记 PASS。短周期停止/恢复已 PASS（§4.6.2） |
 
 ---
 
@@ -384,7 +385,7 @@ npm run coevolve:start -- --campaign ai9-live-coevolve-2 --rounds 2 --candidates
 
 | ID | 项目 | 状态 | 原因/解除条件 |
 |---|---|---|---|
-| R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | 已于 13:08 CST 启动 `ai9-12h-endurance`（500 轮上限 / 12h 墙钟 / 2000 候选 / 200000 局上限）；本报告生成时未完成。短周期 stop→resume 已实测 PASS（§4.6.2）。完成条件：12h 后检查状态、预算与恢复证据 |
+| R09 | 12 小时连续训练 + 强制终止恢复 | IN_PROGRESS | 已用 `screen` 会话 `ai9-12h` 于 13:12 CST 启动 `ai9-12h-endurance-2`（500 轮上限 / 12h 墙钟 / 2000 候选 / 200000 局上限）；本报告生成时未完成。首次启动 `ai9-12h-endurance` 被宿主回收（无候选）。短周期 stop→resume 已实测 PASS（§4.6.2）。完成条件：12h 后检查状态、预算与恢复证据 |
 | R12 | 真实冠军晋级 + 自动发布 + 回滚 | BLOCKED | 门禁路径已真实执行 2 次（`ai9-live-coevolve-2`），均 `BLOCKED/insufficient-statistical-power`（α=1.22e-5，需 ~10,249 种子/人数）；没有统计合格候选，不能伪造挑战/晋级。解除条件：补充独立验证预算与 alpha，且候选达到预注册阈值 |
 | — | 统计显著的第一名率提升 | 未证明 | 所有研究候选的区间下界均 ≤0；冠军保持 `joint-js5` |
 | — | 全模块逐一真实对局强度证明 | 部分 | 12 模块共同控制真实对局；逐模块“强度贡献”只做了探针与交互方向性实验 |
@@ -436,13 +437,13 @@ npm run coevolve:start -- --campaign ai9-nightly --rounds 2 --candidates 4 \
 npm run coevolve:status -- --campaign ai9-nightly
 
 # 4b) 12h 持续运行（已启动；本报告生成时仍在运行）
-nohup caffeinate -i npm run coevolve:start -- --campaign ai9-12h-endurance \
+screen -dmS ai9-12h /bin/zsh -c 'cd training && npm run coevolve:start -- --campaign ai9-12h-endurance-2 \
   --rounds 500 --candidates 6 --player-counts 2,3,4,5 \
   --quick-seeds 8 --deep-seeds 8 --deep-confirmations 4 --max-deep-confirmations 4 \
   --modules M01,M02,M05,M10,M11 --strategies single,pair,multi,crossover,ablation \
   --max-candidates 2000 --max-games 200000 --continue-from-selected \
-  --max-wall-ms 43200000 --max-concurrent 1 > /tmp/ai9-12h.log 2>&1 &
-npm run coevolve:status -- --campaign ai9-12h-endurance
+  --max-wall-ms 43200000 --max-concurrent 1 > /tmp/ai9-12h-2.log 2>&1'
+npm run coevolve:status -- --campaign ai9-12h-endurance-2
 
 # 5) 正式挑战（仅在候选达到发起条件时；会消费验证池/alpha）
 node training/tournament/run-first-place-challenge.mjs \
