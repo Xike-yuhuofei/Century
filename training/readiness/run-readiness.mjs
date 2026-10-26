@@ -156,8 +156,10 @@ measured({
 
 // ---- R03 多代自主递归进化 ----
 {
-  // 优先使用 12h 真实长跑（轮次/对局/跨代继承更强）；12h 未结束时回退到 2 代 smoke。
-  const summary = readJSON('training/reports/autonomous/ai8-12h-v2/run-summary.json')
+  // 优先使用最终代码的 12h v3；v3 未完成时回退到 v2 历史运行（仅用于过渡报告，
+  // 完成后的最终矩阵必须使用 v3）。
+  const summary = readJSON('training/reports/autonomous/ai8-12h-v3/run-summary.json')
+    ?? readJSON('training/reports/autonomous/ai8-12h-v2/run-summary.json')
     ?? readJSON('training/reports/autonomous/ai8-smoke2/run-summary.json');
   const pass = Boolean(summary && summary.rounds >= 2 && summary.candidates?.length >= 2
     && ['completed', 'budget-exhausted'].includes(summary.status));
@@ -165,7 +167,7 @@ measured({
     id: 'R03', title: '多代自主递归进化（真实开发池对局 + 跨代继承）',
     status: pass ? 'PASS' : 'NOT_RUN',
     source: 'training/evolution/autonomous-run.mjs + campaign-controller.mjs',
-    testCommand: 'training/scripts/run-12h-stress.sh（ai8-12h-v2：500 rounds / 2–5p / 真实开发池 / checkpoint/resume）',
+    testCommand: 'training/scripts/run-12h-stress.sh（ai8-12h-v3：500 rounds / 2–5p / 真实开发池 / checkpoint/resume）',
     evidence: summary ? `status=${summary.status} rounds=${summary.rounds} candidates=${summary.candidates.length} games=${summary.budgetUsed.games} wallMs=${summary.budgetUsed.wallMs} promotionQueue=${summary.promotionQueue.length}` : '缺少运行产物',
     unmetReason: pass ? null : '未完成两代真实自主运行',
   });
