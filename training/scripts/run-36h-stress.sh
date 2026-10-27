@@ -73,19 +73,19 @@ while true; do
     echo "[$(date '+%F %T %Z')] operator stop marker found; exit"
     exit 0
   fi
-  status=$(status_of)
-  case "$status" in
+  campaign_status=$(status_of)
+  case "$campaign_status" in
     completed|budget-exhausted|stopped-by-budget)
-      echo "[$(date '+%F %T %Z')] terminal status=$status; supervisor exit"
+      echo "[$(date '+%F %T %Z')] terminal status=$campaign_status; supervisor exit"
       exit 0
       ;;
   esac
 
-  if [ "$status" = missing ]; then
+  if [ "$campaign_status" = missing ]; then
     echo "[$(date '+%F %T %Z')] start campaign"
     node evolution/autonomous-run.mjs start "${ARGS[@]}" &
   else
-    echo "[$(date '+%F %T %Z')] resume campaign status=$status"
+    echo "[$(date '+%F %T %Z')] resume campaign status=$campaign_status"
     node evolution/autonomous-run.mjs resume "${ARGS[@]}" &
   fi
   runner=$!
