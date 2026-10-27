@@ -1,22 +1,33 @@
 #!/usr/bin/env node
-/** 本地 Codex 代理（浏览器 LLM 玩家的唯一接入点）。
+/** 本地 LLM 代理（浏览器 LLM 玩家的唯一接入点）。
  *
  * - 只监听 127.0.0.1（可用 LLM_PROXY_HOST/PORT 覆盖）；
- * - 浏览器不持有任何 API Key；认证由本机 `codex login`（ChatGPT）管理；
- * - 提供最小 OpenAI-compatible `/v1/chat/completions`，把消息转给 Codex CLI；
+ * - 浏览器不持有任何 API Key；`LLM_PROXY_PROVIDER=codex`（默认）用本机
+ *   `codex login`，`glm`/`openrouter` 用服务端环境变量；
+ * - 提供最小 OpenAI-compatible `/v1/chat/completions`；
  * - CORS 仅允许 localhost / 127.0.0.1 / GitHub Pages 源；处理 Private Network Access 预检；
  * - 不记录提示词、响应或任何凭证，只记录方法/路径/状态/耗时；
- * - 全局并发上限（默认 2），超限返回 429，避免并发 Codex 进程压垮本机。
+ * - GLM/OpenRouter 免费接口强制并发 1（Provider 内部另有串行队列与 429 退避）。
  */
 
 import { createServer } from 'node:http';
 import { createCodexProvider } from './provider-codex.mjs';
+import { createGLMProvider } from './provider-glm.mjs';
+import { createOpenRouterProvider } from './provider-openrouter.mjs';
 
 const host = process.env.LLM_PROXY_HOST || '127.0.0.1';
 const port = Number(process.env.LLM_PROXY_PORT || 8787);
-const model = process.env.LLM_CODEX_MODEL || 'gpt-5.6-sol';
+const providerKind = process.env.LLM_PROXY_PROVIDER || 'codex';
+if (!['codex', 'glm', 'openrouter'].includes(providerKind)) throw new Error('LLM_PROXY_PROVIDER 只支持 codex|glm|openrouter');
+const model = providerKind === 'glm'
+  ? (process.env.GLM_MODEL || 'glm-4.7-flash')
+  : providerKind === 'openrouter'
+  ? (process.env.OPENROUTER_MODEL || 'xingchen-agi/xing4.0-29b-a4b:free')
+  : (process.env.LLM_CODEX_MODEL || 'gpt-5.6-sol');
 const reasoningEffort = process.env.LLM_CODEX_REASONING || 'low';
-const maxConcurrency = Math.max(1, Number(process.env.LLM_PROXY_CONCURRENCY || 2));
+const maxConcurrency = providerKind === 'codex'
+  ? Math.max(1, Number(process.env.LLM_PROXY_CONCURRENCY || 2))
+  : 1;
 const defaultTimeoutMs = Math.max(1000, Number(process.env.LLM_PROXY_TIMEOUT_MS || 150000));
 const maxBodyBytes = 2 * 1024 * 1024;
 const allowedOrigins = new Set([
@@ -27,7 +38,11 @@ const allowedOrigins = new Set([
   'http://localhost:8788', 'http://127.0.0.1:8788',
 ]);
 
-const provider = createCodexProvider({ model, reasoningEffort, maxConcurrency });
+const provider = providerKind === 'glm'
+  ? createGLMProvider({ model, maxConcurrency: 1 })
+  : providerKind === 'openrouter'
+  ? createOpenRouterProvider({ model, maxConcurrency: 1 })
+  : createCodexProvider({ model, reasoningEffort, maxConcurrency });
 let active = 0;
 
 function corsHeaders(origin) {
@@ -96,11 +111,11 @@ const server = createServer(async (req, res) => {
       finish(200);
       send(res, 200, {
         ok: true,
-        service: 'century-llm-codex-proxy',
+        service: 'century-llm-proxy',
         provider: provider.info(),
         active,
         maxConcurrency,
-        note: 'API Key 不经过浏览器；认证由本机 codex login 管理',
+        note: 'API Key 不经过浏览器；codex 由本机 codex login 管理，glm/openrouter 由服务端环境变量管理',
       }, origin);
       return;
     }
@@ -108,7 +123,7 @@ const server = createServer(async (req, res) => {
       finish(200);
       send(res, 200, {
         object: 'list',
-        data: [{ id: 'codex-exec', object: 'model', owned_by: 'local-codex', created: 0 }],
+        data: [{ id: provider.info().model, object: 'model', owned_by: `local-${providerKind}`, created: 0 }],
       }, origin);
       return;
     }
@@ -119,7 +134,7 @@ const server = createServer(async (req, res) => {
     }
     if (active >= maxConcurrency) {
       finish(429);
-      send(res, 429, { error: { code: 'busy', message: `本地 Codex 并发已满（${maxConcurrency}），请稍后重试` } }, origin);
+      send(res, 429, { error: { code: 'busy', message: `本地 ${providerKind} 并发已满（${maxConcurrency}），请稍后重试` } }, origin);
       return;
     }
     const raw = await readBody(req);
@@ -156,7 +171,7 @@ const server = createServer(async (req, res) => {
       });
       finish(200);
       send(res, 200, {
-        id: completion.providerRequestId || `codex-${Date.now()}`,
+        id: completion.providerRequestId || `${providerKind}-${Date.now()}`,
         object: 'chat.completion',
         created: Math.floor(Date.now() / 1000),
         model: completion.effectiveModel || model,
@@ -186,8 +201,8 @@ const server = createServer(async (req, res) => {
 
 server.listen(port, host, () => {
   const info = provider.info();
-  console.log(`Century LLM Codex 代理已启动：http://${host}:${port}`);
-  console.log(`模型：${info.model} · 推理：${info.parameters.reasoningEffort} · 并发上限：${maxConcurrency}`);
+  console.log(`Century LLM 代理已启动：http://${host}:${port}`);
+  console.log(`Provider：${providerKind} · 模型：${info.model} · 并发上限：${maxConcurrency}`);
   console.log('浏览器端只需配置代理地址，不需要 API Key；密钥/登录不进入前端。');
   console.log('健康检查：GET /health · OpenAI-compatible：POST /v1/chat/completions');
 });

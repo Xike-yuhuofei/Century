@@ -59,6 +59,8 @@
     "automation:state:pull": "node scripts/automation-state.mjs pull",
     "automation:state:push": "node scripts/automation-state.mjs push",
     "llm:proxy": "node llm/proxy.mjs",
+    "llm:proxy:glm": "LLM_PROXY_PROVIDER=glm node llm/proxy.mjs",
+    "llm:proxy:openrouter": "LLM_PROXY_PROVIDER=openrouter node llm/proxy.mjs",
     "llm:analyze": "node llm/analyze.mjs",
     "llm:preregister": "node llm/preregister.mjs",
     "llm:smoke": "node llm/pair-experiment.mjs --stage smoke --modes 2,3,4,5 --provider codex",

@@ -1,0 +1,225 @@
+{
+  "schema": "century-llm-dataset-manifest-v1",
+  "runId": "glm-backup-smoke-r1",
+  "generatedAt": "2026-10-26T23:50:32.027Z",
+  "codeVersion": {
+    "commit": "95af8d2389cdb63cf108a74c8d84848eb4f72f79",
+    "dirty": true,
+    "dirtyFiles": [
+      "M training/llm/config.mjs",
+      " M training/llm/pair-experiment.mjs",
+      " M training/llm/proxy.mjs",
+      " M web-v1/dist/standalone.html",
+      " M web-v1/src/app.ts",
+      "?? training/llm/provider-glm.mjs",
+      "?? training/tests/glm-provider.test.mjs"
+    ]
+  },
+  "provider": {
+    "id": "glm-4.7-flash",
+    "kind": "openai-compatible",
+    "model": "glm-4.7-flash",
+    "mode": "real",
+    "endpointHost": "open.bigmodel.cn",
+    "parameters": {
+      "freeTier": true,
+      "maxConcurrency": 1,
+      "minIntervalMs": 3000,
+      "maxTokens": 2500,
+      "maxRateLimitRetries": 8,
+      "retryBaseMs": 5000,
+      "retryMaxMs": 60000,
+      "thinking": "disabled",
+      "note": "免费接口；默认串行 + 退避，ProviderInfo 不含密钥"
+    }
+  },
+  "config": {
+    "schema": "century-llm-experiment-config-v1",
+    "experimentId": "ai10-llm-v1",
+    "stage": "smoke",
+    "modes": [
+      2
+    ],
+    "seedsPerMode": 1,
+    "offset": 0,
+    "focusSeatRotation": "pairIndex % seatCount（同一阶段/人数内均衡轮换）",
+    "opponentPool": "frozen-champion-all-non-focus-seats",
+    "champion": {
+      "id": "joint-js5",
+      "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3",
+      "sourceSha256": "0dd409e57afd62546e5ce8cd2b599306a14defdfa34628ea7753d13e39cd3321"
+    },
+    "provider": {
+      "id": "glm-4.7-flash",
+      "kind": "openai-compatible",
+      "model": "glm-4.7-flash",
+      "mode": "real",
+      "endpointHost": "open.bigmodel.cn",
+      "parameters": {
+        "freeTier": true,
+        "maxConcurrency": 1,
+        "minIntervalMs": 3000,
+        "maxTokens": 2500,
+        "maxRateLimitRetries": 8,
+        "retryBaseMs": 5000,
+        "retryMaxMs": 60000,
+        "thinking": "disabled",
+        "note": "免费接口；默认串行 + 退避，ProviderInfo 不含密钥"
+      }
+    },
+    "llmConfig": {
+      "timeoutMs": 120000,
+      "maxRetries": 1,
+      "maxTokens": 2500,
+      "temperature": 0,
+      "maxCalls": 120,
+      "tokenBudget": 2500000,
+      "candidateLimit": 64,
+      "shadowChampion": true
+    },
+    "budgets": {
+      "runTokenBudget": 3000000,
+      "runCallBudget": 200,
+      "maxWallMinutes": 60,
+      "concurrency": 1
+    },
+    "preregistration": null,
+    "codeVersion": {
+      "commit": "95af8d2389cdb63cf108a74c8d84848eb4f72f79",
+      "dirty": true,
+      "dirtyFiles": [
+        "M training/llm/config.mjs",
+        " M training/llm/pair-experiment.mjs",
+        " M training/llm/proxy.mjs",
+        " M web-v1/dist/standalone.html",
+        " M web-v1/src/app.ts",
+        "?? training/llm/provider-glm.mjs",
+        "?? training/tests/glm-provider.test.mjs"
+      ]
+    },
+    "evidenceClass": "real-llm"
+  },
+  "counts": {
+    "games": 2,
+    "finishedGames": 2,
+    "decisions": 44,
+    "llmDecisions": 43,
+    "fallbackDecisions": 1,
+    "turns": 168,
+    "duplicateDecisionIds": 0,
+    "orphanDecisions": 0
+  },
+  "duplicateDecisionIds": [],
+  "integrity": {
+    "decisionChains": [
+      {
+        "gameId": "ai10-llm-v1-smoke-2p-1700000000-f0-A",
+        "records": 44,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-smoke-2p-1700000000-f0-B",
+        "records": 0,
+        "ok": true
+      }
+    ],
+    "turnChains": [
+      {
+        "gameId": "ai10-llm-v1-smoke-2p-1700000000-f0-A",
+        "records": 85,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-smoke-2p-1700000000-f0-B",
+        "records": 83,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  "games": [
+    {
+      "gameId": "ai10-llm-v1-smoke-2p-1700000000-f0-A",
+      "mode": 2,
+      "seed": 1700000000,
+      "focusSeat": 0,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-smoke-2p-1700000000-f0",
+      "status": "finished",
+      "decisionCount": 44,
+      "llmDecisions": 43,
+      "fallbackCount": 1,
+      "fallbackRate": 0.022727272727272728,
+      "winnerSeat": 1,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 85,
+      "wallMs": 821905,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-smoke-2p-1700000000-f0-A",
+        "createdAt": "2026-10-26T23:36:50.043Z",
+        "mode": 2,
+        "seatCount": 2,
+        "seed": 1700000000,
+        "focusSeat": 0,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-smoke-2p-1700000000-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-smoke-2p-1700000000-f0-B",
+      "mode": 2,
+      "seed": 1700000000,
+      "focusSeat": 0,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-smoke-2p-1700000000-f0",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 1,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 83,
+      "wallMs": 6195,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-smoke-2p-1700000000-f0-B",
+        "createdAt": "2026-10-26T23:36:43.846Z",
+        "mode": 2,
+        "seatCount": 2,
+        "seed": 1700000000,
+        "focusSeat": 0,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-smoke-2p-1700000000-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    }
+  ],
+  "analysisPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/glm-backup-smoke-r1/summary.json"
+}

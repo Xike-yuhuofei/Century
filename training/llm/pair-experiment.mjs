@@ -22,11 +22,13 @@ import { createHash } from 'node:crypto';
 import { RunStore, newRunId, codeVersion } from './store.mjs';
 import { runGame } from './game-runner.mjs';
 import {
-  MODES, STAGES, DEFAULT_CODEX_MODEL, REPO_ROOT,
+  MODES, STAGES, DEFAULT_CODEX_MODEL, DEFAULT_GLM_MODEL, DEFAULT_OPENROUTER_MODEL, REPO_ROOT,
   loadChampion, stageSeeds, focusSeatFor, gameIds, frozenVersions,
   createProvider, defaultLlmConfig, providerIdentity,
 } from './config.mjs';
 import { createCodexProvider } from './provider-codex.mjs';
+import { createGLMProvider } from './provider-glm.mjs';
+import { createOpenRouterProvider } from './provider-openrouter.mjs';
 import { clusterMeanCI, clusterFirstPlacePairs } from '../../training/evaluator/first-place.mjs';
 import { wilsonCI } from '../../training/evaluator/stats.mjs';
 
@@ -48,8 +50,8 @@ if (has('--help') || has('-h')) {
   --offset N                   种子块内偏移（默认 0，不得与已完成种子重叠）
   --run-id ID                  运行 id（默认自动生成）；--resume 复用已有运行
   --root PATH                  数据根（默认 training/reports/llm-player）
-  --provider codex|mock        真实 Provider 默认 codex
-  --model MODEL                Codex 模型（默认 ${DEFAULT_CODEX_MODEL}）
+  --provider codex|glm|openrouter|mock  真实 Provider 默认 codex；glm/openrouter 为免费备用
+  --model MODEL                Codex 默认 ${DEFAULT_CODEX_MODEL}；GLM 默认 ${DEFAULT_GLM_MODEL}；OpenRouter 默认 ${DEFAULT_OPENROUTER_MODEL}
   --reasoning-effort low|medium|high
   --concurrency N              并发对局数（默认 2）
   --max-calls-per-game N       每局 LLM 调用上限（默认 120）
@@ -204,15 +206,15 @@ const maxWallMinutes = Number(value('--max-wall-minutes', 240));
 const runTokenBudget = Number(value('--run-token-budget', 25_000_000));
 const runCallBudget = Number(value('--run-call-budget', 1500));
 const providerKind = value('--provider', 'codex');
-if (!['codex', 'mock'].includes(providerKind)) throw new Error('--provider 当前支持 codex|mock（真实 Provider 只用 Codex）');
-const model = value('--model', DEFAULT_CODEX_MODEL);
+if (!['codex', 'glm', 'openrouter', 'mock'].includes(providerKind)) throw new Error('--provider 支持 codex|glm|openrouter|mock');
+const model = value('--model', providerKind === 'glm' ? DEFAULT_GLM_MODEL : providerKind === 'openrouter' ? DEFAULT_OPENROUTER_MODEL : DEFAULT_CODEX_MODEL);
 const reasoningEffort = value('--reasoning-effort', 'low');
 const llmConfig = defaultLlmConfig({
   maxCallsPerGame: Number(value('--max-calls-per-game', 120)),
   tokenBudgetPerGame: Number(value('--token-budget-per-game', 2_500_000)),
   timeoutMs: Number(value('--decision-timeout-ms', 120_000)),
   maxRetries: Number(value('--max-retries', 1)),
-  maxTokens: Number(value('--max-tokens', 700)),
+  maxTokens: Number(value('--max-tokens', providerKind === 'glm' ? 2500 : providerKind === 'openrouter' ? 2000 : 700)),
   candidateLimit: Number(value('--candidate-limit', 64)),
 });
 const root = resolve(value('--root', 'training/reports/llm-player'));
@@ -236,7 +238,8 @@ const champion = loadChampion();
 const dist = await import('../../web-v1/dist/js/ai/llm/index.js');
 const provider = createProvider({
   kind: providerKind, model, reasoningEffort, concurrency,
-  dist, codexModule: { createCodexProvider },
+  dist, codexModule: { createCodexProvider }, glmModule: { createGLMProvider },
+  openrouterModule: { createOpenRouterProvider },
   mockActionId: value('--mock-action'),
 });
 const providerInfo = providerIdentity(provider);
