@@ -28,7 +28,9 @@ ARGS=(
   --coevolve
   --campaign "$CAMPAIGN"
   --rounds 999
-  --candidates 6
+  # control 候选占用 1 个名额；6 个策略（single/pair/multi/crossover/ablation/openevolve）
+  # 必须给足 7 个名额，否则轮转永远到不了 openevolve。
+  --candidates 7
   --player-counts 2,3,4,5
   --quick-seeds 8
   --deep-seeds 8
