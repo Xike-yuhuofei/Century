@@ -43,7 +43,10 @@ prompt:
     strings; (5) every function must stay pure, deterministic and finite; (6) do
     not hardcode card/golem ids; (7) keep weighted parameters wired in; (8)
     modules marked with a neutral default should preserve the existing behaviour
-    unless you have a principled improvement. Evaluation: candidates are
+    unless you have a principled improvement; (9) returning the input program
+    unchanged — or changing only comments, formatting, or variable names without
+    changing decisions — is disqualified: at least one module's decision logic
+    must genuinely change. Evaluation: candidates are
     statically checked, assembled into an isolated source tree, compiled with the
     official rules engine, probed on public deterministic states, then play paired
     focus-seat games against the reigning frozen champion in 2/3/4/5-player modes
