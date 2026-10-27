@@ -62,6 +62,9 @@ if (has('--help') || has('-h')) {
   --max-pairs N                最多运行配对数（调试用）
   --preregistration PATH       阶段 C 预注册计划
   --mock-action ID             Mock Provider 固定选择（测试用）
+  --mock-failure KIND          Mock Provider 注入失败（api-error 等，测试用）
+  --halt-on-fallback           LLM 回退即暂停对局保留断点（confirm 默认开启）
+  --no-halt-on-fallback        关闭回退暂停（回退行动照常应用并计数）
   --allow-anomaly-retry        （保留；默认跳过已记录配对）
   --dry-run                    只打印计划与种子，不运行
   --no-export                  不生成完整 JSON 导出`);
@@ -106,7 +109,11 @@ function scanUsage(store) {
   return { calls, tokens, decisions, llmGames: llmGames.size };
 }
 
-function summarizePairs(pairs, requestedModes, stage, plannedPairs, status, usage, providerInfo) {
+function summarizePairs(allPairs, requestedModes, stage, plannedPairs, status, usage, providerInfo) {
+  // append-only 存储上的 latest-wins：同一 pairId 以最新一条记录为准（暂停续跑会覆盖旧记录）。
+  const latest = new Map();
+  for (const p of allPairs) latest.set(p.pairId, p);
+  const pairs = [...latest.values()];
   const modes = requestedModes;
   const strata = {};
   for (const mode of modes) {
@@ -133,6 +140,7 @@ function summarizePairs(pairs, requestedModes, stage, plannedPairs, status, usag
       pairs: list.length,
       validPairs: valid.length,
       anomalies: list.length - valid.length,
+      haltedPairs: list.filter(p => p.armA?.status === 'halted-fallback').length,
       candidateFirst: firstA,
       championFirst: firstB,
       candidateFirstRate: valid.length ? firstA / valid.length : null,
@@ -157,6 +165,7 @@ function summarizePairs(pairs, requestedModes, stage, plannedPairs, status, usag
   const totalValid = Object.values(strata).reduce((sum, s) => sum + s.validPairs, 0);
   const totalAnomalies = Object.values(strata).reduce((sum, s) => sum + s.anomalies, 0);
   const totalFallbacks = Object.values(strata).reduce((sum, s) => sum + s.fallbackGames, 0);
+  const totalHalted = Object.values(strata).reduce((sum, s) => sum + s.haltedPairs, 0);
   return {
     schema: 'century-llm-pair-summary-v1',
     stage,
@@ -167,6 +176,7 @@ function summarizePairs(pairs, requestedModes, stage, plannedPairs, status, usag
     completedPairs: pairs.length,
     validPairs: totalValid,
     anomalyPairs: totalAnomalies,
+    haltedPairs: totalHalted,
     fallbackAffectedPairs: totalFallbacks,
     usage,
     strata,
@@ -209,6 +219,10 @@ const providerKind = value('--provider', 'codex');
 if (!['codex', 'glm', 'openrouter', 'mock'].includes(providerKind)) throw new Error('--provider 支持 codex|glm|openrouter|mock');
 const model = value('--model', providerKind === 'glm' ? DEFAULT_GLM_MODEL : providerKind === 'openrouter' ? DEFAULT_OPENROUTER_MODEL : DEFAULT_CODEX_MODEL);
 const reasoningEffort = value('--reasoning-effort', 'low');
+/** 确认阶段默认启用：LLM 回退即暂停对局保留断点，防止回退污染配对；其他阶段可显式开启。 */
+let haltOnFallback = stage === 'confirm';
+if (has('--halt-on-fallback')) haltOnFallback = true;
+if (has('--no-halt-on-fallback')) haltOnFallback = false;
 const llmConfig = defaultLlmConfig({
   maxCallsPerGame: Number(value('--max-calls-per-game', 120)),
   tokenBudgetPerGame: Number(value('--token-budget-per-game', 2_500_000)),
@@ -241,6 +255,7 @@ const provider = createProvider({
   dist, codexModule: { createCodexProvider }, glmModule: { createGLMProvider },
   openrouterModule: { createOpenRouterProvider },
   mockActionId: value('--mock-action'),
+  mockFailure: value('--mock-failure'),
 });
 const providerInfo = providerIdentity(provider);
 
@@ -292,6 +307,7 @@ const runConfig = {
   champion: { id: champion.id, fingerprint: champion.fingerprint, sourceSha256: champion.sourceSha256 },
   provider: providerInfo,
   llmConfig, budgets: { runTokenBudget, runCallBudget, maxWallMinutes, concurrency },
+  haltOnFallback,
   preregistration: prereg ? { path: prereg.path, planHash: prereg.planHash, lockedAt: prereg.plan.lockedAt } : null,
   codeVersion: codeVersion(),
   evidenceClass: providerKind === 'mock' ? 'mock' : 'real-llm',
@@ -304,9 +320,16 @@ if (resume) {
   const previous = store.run.config ?? {};
   if (previous.stage !== stage) throw new Error(`恢复运行 stage 不一致：${previous.stage} vs ${stage}`);
   if (previous.provider?.model !== providerInfo.model) throw new Error(`恢复运行模型不一致：${previous.provider?.model} vs ${providerInfo.model}`);
+  if ((previous.haltOnFallback ?? false) !== haltOnFallback) {
+    throw new Error(`恢复运行 haltOnFallback 不一致：${previous.haltOnFallback ?? false} vs ${haltOnFallback}`);
+  }
 }
 
-const existingPairs = new Set(store.pairRecords().map(p => p.pairId));
+// 配对记录只追加；同一 pairId 以最新一条为准（暂停/异常的配对可被后续续跑覆盖）。
+const pairLatest = new Map();
+for (const p of store.pairRecords()) pairLatest.set(p.pairId, p);
+// 可续跑判断：A 局无结果（B 异常跳过）或状态为 halted-fallback 才值得重跑；
+// 其他异常（引擎拒绝等）不可自动修复，保持跳过以免反复空转。
 const tasks = [];
 for (const mode of modes) {
   const { seeds, focusSeats } = planStrata[mode];
@@ -315,7 +338,13 @@ for (const mode of modes) {
     const focusSeat = focusSeats[i];
     const ids = gameIds({ experimentId, stage, mode, seed, focusSeat, arm: '' });
     const pairId = ids.pairId;
-    if (existingPairs.has(pairId)) continue;
+    const latest = pairLatest.get(pairId);
+    if (latest) {
+      if (latest.anomaly === false) continue; // 已有效完成
+      const aResult = latest.armA?.gameId ? store.readResult(latest.armA.gameId) : null;
+      const aResumable = !aResult || aResult.status === 'halted-fallback';
+      if (!aResumable) continue;
+    }
     tasks.push({ mode, seed, focusSeat, pairId, index: i });
   }
 }
@@ -356,7 +385,7 @@ async function runPair(task) {
   const a = await runGame({
     store, gameId: idsA.gameId, seed, seatCount: mode, focusSeat, arm: 'llm',
     llmProvider: provider, llmConfig, versions, championParameters: champion.parameters,
-    experimentId, pairId, channel: 'experiment',
+    experimentId, pairId, channel: 'experiment', haltOnFallback,
   });
   usage = scanUsage(store);
   const decisionLatencies = store.loadEnvelopes(idsA.gameId, 'decision')
@@ -407,7 +436,12 @@ async function worker() {
     const task = tasks.shift();
     if (!task) break;
     try {
-      await runPair(task);
+      const pair = await runPair(task);
+      if (pair?.armA?.status === 'halted-fallback') {
+        // Provider 配额/服务当前不可用：停止调度新配对，保留断点等下一个窗口 --resume。
+        stopping = true;
+        console.error(`检测到 LLM 回退暂停（${pair.pairId} ${pair.armA.anomalyReason ?? ''}）：停止调度，稍后用 --resume 续跑`);
+      }
     } catch (error) {
       console.error(`配对 ${task.pairId} 失败：${error instanceof Error ? error.message : error}`);
       store.note(`配对失败 ${task.pairId}: ${error instanceof Error ? error.message : String(error)}`);
@@ -419,9 +453,15 @@ const workers = Array.from({ length: Math.min(concurrency, Math.max(1, tasks.len
 await Promise.all(workers);
 
 const pairs = store.pairRecords();
-const status = pairs.length >= plannedPairs
-  ? 'completed'
-  : (stopping || budgetExhausted()) ? (budgetExhausted() ? 'budget-exhausted' : 'stopped') : 'completed';
+// 最终状态：只要有最新记录处于 halted-fallback（等待下一配额窗口续跑），整体即标记为暂停。
+const latestFinal = new Map();
+for (const p of pairs) latestFinal.set(p.pairId, p);
+const hasHalted = [...latestFinal.values()].some(p => p.armA?.status === 'halted-fallback');
+const status = hasHalted
+  ? 'halted-fallback'
+  : latestFinal.size >= plannedPairs
+    ? 'completed'
+    : (stopping || budgetExhausted()) ? (budgetExhausted() ? 'budget-exhausted' : 'stopped') : 'completed';
 const summary = summarizePairs(pairs, modes, stage, plannedPairs, status, usage, providerInfo);
 summary.runId = runId;
 summary.runPath = store.path;

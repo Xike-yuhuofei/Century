@@ -105,13 +105,15 @@ export function verifyReplay(game) {
  * @param {number} [options.maxMoves]
  * @param {number} [options.maxWallMs]
  * @param {boolean} [options.retryAnomaly]
+ * @param {boolean} [options.haltOnFallback] LLM 回退时暂停对局（状态 halted-fallback），
+ *   保留 turns.jsonl 断点；再次以相同参数调用即从断点续跑。确认阶段默认开启。
  */
 export async function runGame(options) {
   const {
     store, gameId, seed, seatCount, focusSeat, arm, llmProvider, llmConfig,
     versions, championParameters = null, experimentId, pairId,
     maxMoves = DEFAULT_MAX_MOVES, maxWallMs = DEFAULT_MAX_WALL_MS,
-    channel = 'experiment', retryAnomaly = false,
+    channel = 'experiment', retryAnomaly = false, haltOnFallback = false,
   } = options;
   if (!['llm', 'champion'].includes(arm)) throw new Error(`未知 arm：${arm}`);
   if (!Number.isInteger(focusSeat) || focusSeat < 0 || focusSeat >= seatCount) {
@@ -127,7 +129,10 @@ export async function runGame(options) {
   store.ensureGame(gameId, meta);
   const existing = store.readResult(gameId);
   if (existing?.status === 'finished') return existing;
-  if (existing && existing.status !== 'finished' && !retryAnomaly) return existing;
+  // halted-fallback 是设计内的可恢复暂停：无参数时返回现有结果，
+  // 但任何一次带 haltOnFallback 的重新调用都会从 turns.jsonl 断点续跑。
+  if (existing && existing.status === 'halted-fallback' && !haltOnFallback) return existing;
+  if (existing && existing.status !== 'finished' && existing.status !== 'halted-fallback' && !retryAnomaly) return existing;
 
   const started = Date.now();
   let resumedTurns = 0;
@@ -205,6 +210,8 @@ export async function runGame(options) {
   let moves = 0;
   let anomalyReason = resumeError ? `恢复失败后重开：${resumeError}` : null;
   let status = 'finished';
+  /** halt-on-fallback：LLM 回退即暂停对局（不应用回退行动），保留断点跨配额窗口续跑。 */
+  let halt = null;
   const turnDecisionIds = [];
 
   try {
@@ -224,6 +231,17 @@ export async function runGame(options) {
         const decision = await llmPlayer.decide(game, {
           gameId, seed, seatCount, focusSeat, experimentId, channel,
         });
+        if (haltOnFallback && decision.source === 'fallback') {
+          // 回退决策已作为接口异常证据写入 decisions.jsonl（孤儿记录），但不应用——
+          // 确认阶段禁止回退污染；对局保持可恢复状态，等配额窗口恢复后 --resume 续跑。
+          halt = {
+            turnNumber,
+            seat,
+            cause: decision.record.fallbackCause,
+            reason: String(decision.record.fallbackReason ?? 'LLM 回退').slice(0, 400),
+          };
+          break;
+        }
         action = decision.action;
         reason = decision.reason;
         decisionId = decision.record.decisionId;
@@ -272,6 +290,11 @@ export async function runGame(options) {
     anomalyReason = error instanceof Error ? error.message : String(error);
   }
 
+  if (halt) {
+    status = 'halted-fallback';
+    anomalyReason = `halt-on-fallback：第 ${halt.turnNumber} 手（席位 ${halt.seat}）LLM 回退，暂停保留断点：${halt.cause} — ${halt.reason}`;
+  }
+
   // 正常终局校验：各席位回合数一致（终局整轮结算）。
   if (status === 'finished') {
     const turnCounts = new Set(game.players.map(p => p.turns));
@@ -289,9 +312,16 @@ export async function runGame(options) {
   const finalDecisions = store.loadEnvelopes(gameId, 'decision')
     .filter(d => d.record?.gameId === gameId)
     .map(d => d.record);
-  const fallbackCount = finalDecisions.filter(d => d.source === 'fallback').length;
-  const llmCount = finalDecisions.filter(d => d.source === 'llm').length;
-  const usage = finalDecisions.reduce((sum, d) => ({
+  // 已应用决策 = 出现在 turn 记录中的决策；halt 暂停时未应用的孤儿回退决策仅作为
+  // 接口异常证据保留（manifest orphanDecisions 统计），不计入 fallback/llm 用量——
+  // 否则续跑完成的对局会被误标为回退污染。
+  const appliedDecisionIds = new Set(
+    store.loadEnvelopes(gameId, 'turn').map(t => t.record?.decisionId).filter(Boolean),
+  );
+  const appliedDecisions = finalDecisions.filter(d => appliedDecisionIds.has(d.decisionId));
+  const fallbackCount = appliedDecisions.filter(d => d.source === 'fallback').length;
+  const llmCount = appliedDecisions.filter(d => d.source === 'llm').length;
+  const usage = appliedDecisions.reduce((sum, d) => ({
     promptTokens: sum.promptTokens + (d.usage?.promptTokens ?? 0),
     completionTokens: sum.completionTokens + (d.usage?.completionTokens ?? 0),
     totalTokens: sum.totalTokens + (d.usage?.totalTokens ?? 0),
@@ -312,6 +342,7 @@ export async function runGame(options) {
     focusRank: status === 'finished' ? focusRank : null,
     focusScore: score(focusPlayer),
     focusGolems: focusPlayer.claimed.length,
+    halt,
     ranking: rankingRows(game),
     decisionIds: [...new Set(finalDecisions.map(d => d.decisionId))],
     llmDecisionCount: llmCount,

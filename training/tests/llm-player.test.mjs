@@ -203,6 +203,104 @@ test('阶段 C 预注册计划可复核且明确标记预算阻塞', () => {
   assert.equal(JSON.stringify(plan).includes('ZHIPU'), false);
 });
 
+test('阶段 C v2 预注册：方差校准、luna 模型且声明 supersedes v1', () => {
+  const v1 = JSON.parse(readFileSync(join(REPO_ROOT, 'training/llm/preregistrations/ai10-llm-confirm-v1.json'), 'utf8'));
+  const plan = JSON.parse(readFileSync(join(REPO_ROOT, 'training/llm/preregistrations/ai10-llm-confirm-v2.json'), 'utf8'));
+  const { planHash, ...rest } = plan;
+  const recomputed = createHash('sha256').update(JSON.stringify(rest)).digest('hex');
+  assert.equal(planHash, recomputed, 'v2 planHash 必须可复算');
+  assert.equal(plan.planVersion, 'v2');
+  assert.equal(plan.statistics.variance, 0.5);
+  assert.match(plan.statistics.varianceBasis, /pilot/);
+  assert.equal(plan.statistics.requiredSeedsPerMode, 53);
+  assert.ok(plan.statistics.minimumDetectableEffectAtN <= plan.statistics.effect, 'n=53 必须覆盖预注册效应量');
+  assert.equal(plan.provider.model, 'gpt-5.6-luna');
+  assert.equal(plan.supersedes.planHash, v1.planHash);
+  assert.match(plan.supersedes.reason, /v1 种子块未消费/);
+  const blocks = [];
+  for (const mode of ['2', '3', '4', '5']) {
+    const stratum = plan.strata[mode];
+    assert.equal(stratum.seeds.length, 53);
+    assert.equal(new Set(stratum.seeds).size, 53);
+    assert.ok(stratum.seeds.every(seed => seed >= 1_720_000_000 && seed < 1_725_000_000), 'v2 种子必须在新确认块内');
+    assert.deepEqual(stratum.focusSeats.slice(0, mode), Array.from({ length: mode }, (_, i) => i));
+    blocks.push(stratum.seedBlock);
+  }
+  for (let i = 0; i < blocks.length; i++) {
+    for (let j = i + 1; j < blocks.length; j++) {
+      assert.ok(blocks[i][1] <= blocks[j][0] || blocks[j][1] <= blocks[i][0], '人数子块不得重叠');
+    }
+  }
+});
+
+test('halt-on-fallback：LLM 回退暂停保留断点，健康 Provider 续跑完成', async () => {
+  const root = tempRoot();
+  try {
+    const store = makeStore(root, 'halt');
+    const failing = createMockProvider({ failure: 'api-error' });
+    const opts = { mode: 3, seed: 1700000004, focusSeat: 1 };
+    const halted = await runGame(gameOptions(store, { ...opts, extra: { llmProvider: failing, haltOnFallback: true } }));
+    assert.equal(halted.status, 'halted-fallback');
+    assert.ok(halted.halt, '应记录 halt 详情');
+    assert.match(halted.anomalyReason, /halt-on-fallback/);
+    assert.equal(halted.fallbackCount, 0, '回退行动不得被应用或计数');
+    // 断点：至少一个已应用回合 + 一条孤儿回退决策作为接口异常证据
+    const turns = store.loadEnvelopes(halted.gameId, 'turn');
+    assert.ok(turns.length >= 1);
+    const decisionsAfterHalt = store.loadEnvelopes(halted.gameId, 'decision');
+    assert.equal(decisionsAfterHalt.length, 1);
+    assert.equal(decisionsAfterHalt[0].record.source, 'fallback');
+
+    const resumed = await runGame(gameOptions(store, { ...opts, extra: { haltOnFallback: true } }));
+    assert.equal(resumed.status, 'finished');
+    assert.ok(resumed.resumedFromTurns >= turns.length, `应从断点续跑，实际 ${resumed.resumedFromTurns}`);
+    assert.equal(resumed.replayConsistency.ok, true);
+    assert.equal(resumed.fallbackCount, 0, '孤儿回退决策不得污染恢复后的局');
+    assert.ok(resumed.llmDecisionCount > 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('配对 CLI halt→resume：跨窗口续跑且 latest-wins 覆盖配对记录', () => {
+  const root = tempRoot();
+  try {
+    const base = [
+      'training/llm/pair-experiment.mjs', '--stage', 'smoke', '--modes', '3',
+      '--provider', 'mock', '--root', root, '--run-id', 'pair-halt', '--no-export',
+      '--halt-on-fallback', '--max-retries', '0',
+    ];
+    execFileSync(process.execPath, [...base, '--mock-failure', 'api-error'],
+      { cwd: REPO_ROOT, stdio: 'pipe', timeout: 300_000 });
+    const summary1 = JSON.parse(readFileSync(join(root, 'pair-halt', 'summary.json'), 'utf8'));
+    assert.equal(summary1.status, 'halted-fallback');
+    assert.equal(summary1.haltedPairs, 1);
+    let lines = readFileSync(join(root, 'pair-halt', 'pairs.jsonl'), 'utf8').split('\n').filter(Boolean);
+    assert.equal(lines.length, 1);
+    const haltedPair = JSON.parse(lines[0]).record;
+    assert.equal(haltedPair.armA.status, 'halted-fallback');
+    assert.equal(haltedPair.anomaly, true);
+
+    execFileSync(process.execPath, [...base, '--resume'],
+      { cwd: REPO_ROOT, stdio: 'pipe', timeout: 300_000 });
+    const summary2 = JSON.parse(readFileSync(join(root, 'pair-halt', 'summary.json'), 'utf8'));
+    assert.equal(summary2.status, 'completed');
+    assert.equal(summary2.completedPairs, 1, 'latest-wins 去重后不得重复计数');
+    assert.equal(summary2.validPairs, 1);
+    assert.equal(summary2.haltedPairs, 0);
+    lines = readFileSync(join(root, 'pair-halt', 'pairs.jsonl'), 'utf8').split('\n').filter(Boolean);
+    assert.equal(lines.length, 2, 'append-only：续跑追加新记录而非改写');
+    assert.equal(new Set(lines.map(l => JSON.parse(l).record.pairId)).size, 1, '两条记录同一 pairId');
+    const latest = JSON.parse(lines.at(-1)).record;
+    assert.equal(latest.pairId, haltedPair.pairId);
+    assert.equal(latest.anomaly, false);
+    assert.equal(latest.armA.status, 'finished');
+    assert.equal(latest.armA.fallbackCount, 0);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('Schema 迁移入口对未知版本 fail-closed', () => {
   assert.throws(() => migrateSchema('run', { schema: 'century-llm-run-v0' }), /不支持/);
   assert.throws(() => migrateSchema('run', {}), /缺少 schema/);
