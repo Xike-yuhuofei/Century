@@ -14,6 +14,8 @@ import {
 export const MODES = Object.freeze([2, 3, 4, 5]);
 export const STAGES = Object.freeze(['smoke', 'exploratory', 'confirm']);
 export const DEFAULT_CODEX_MODEL = 'gpt-5.6-sol';
+export const DEFAULT_GLM_MODEL = 'glm-4.7-flash';
+export const DEFAULT_OPENROUTER_MODEL = 'xingchen-agi/xing4.0-29b-a4b:free';
 export const REPO_ROOT = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 
 export function sha256File(path) {
@@ -103,7 +105,25 @@ export function createProvider(options = {}) {
       maxConcurrency: options.concurrency ?? 1,
     });
   }
-  throw new Error(`不支持的 Provider：${kind}（当前唯一真实 Provider 为 codex）`);
+  if (kind === 'glm') {
+    const { createGLMProvider } = options.glmModule;
+    if (!createGLMProvider) throw new Error('缺少 glm provider 模块');
+    return createGLMProvider({
+      model: options.model ?? DEFAULT_GLM_MODEL,
+      maxConcurrency: 1,
+      apiKey: process.env.GLM_API_KEY,
+    });
+  }
+  if (kind === 'openrouter') {
+    const { createOpenRouterProvider } = options.openrouterModule;
+    if (!createOpenRouterProvider) throw new Error('缺少 openrouter provider 模块');
+    return createOpenRouterProvider({
+      model: options.model ?? DEFAULT_OPENROUTER_MODEL,
+      maxConcurrency: 1,
+      apiKey: process.env.OPENROUTER_API_KEY,
+    });
+  }
+  throw new Error(`不支持的 Provider：${kind}（支持 codex|glm|openrouter|mock）`);
 }
 
 export function defaultLlmConfig({

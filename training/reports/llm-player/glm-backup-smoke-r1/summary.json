@@ -1,0 +1,99 @@
+{
+  "schema": "century-llm-pair-summary-v1",
+  "stage": "smoke",
+  "status": "completed",
+  "evidenceClass": "real-llm",
+  "provider": {
+    "id": "glm-4.7-flash",
+    "kind": "openai-compatible",
+    "model": "glm-4.7-flash",
+    "mode": "real",
+    "endpointHost": "open.bigmodel.cn",
+    "parameters": {
+      "freeTier": true,
+      "maxConcurrency": 1,
+      "minIntervalMs": 3000,
+      "maxTokens": 2500,
+      "maxRateLimitRetries": 8,
+      "retryBaseMs": 5000,
+      "retryMaxMs": 60000,
+      "thinking": "disabled",
+      "note": "免费接口；默认串行 + 退避，ProviderInfo 不含密钥"
+    }
+  },
+  "plannedPairs": 1,
+  "completedPairs": 1,
+  "validPairs": 1,
+  "anomalyPairs": 0,
+  "fallbackAffectedPairs": 1,
+  "usage": {
+    "calls": 46,
+    "tokens": 315157,
+    "decisions": 44,
+    "llmGames": 1
+  },
+  "strata": {
+    "2": {
+      "seatCount": 2,
+      "pairs": 1,
+      "validPairs": 1,
+      "anomalies": 0,
+      "candidateFirst": 0,
+      "championFirst": 0,
+      "candidateFirstRate": 0,
+      "championFirstRate": 0,
+      "candidateWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.7934506856227626
+      },
+      "championWilsonCI": {
+        "point": 0,
+        "lower": 0,
+        "upper": 0.7934506856227626
+      },
+      "meanPairedDelta": 0,
+      "pairedDeltaCI": null,
+      "deltaCounts": {
+        "plus": 0,
+        "zero": 1,
+        "minus": 0
+      },
+      "fallbackGames": 1,
+      "fallbackRate": 1,
+      "medianDecisionLatencyMs": 7167.5,
+      "totalTokens": 315157,
+      "meanTokensPerGame": 315157,
+      "meanGameWallMs": 821905
+    }
+  },
+  "limitations": [
+    "LLM Provider 非确定性（Codex/ChatGPT 后端可能在相同输入下产生不同行动），配对仅共享初始随机世界，不保证后续轨迹一致。",
+    "第一名率以焦点席位是否取得唯一第一名定义；异常局不计入有效配对。",
+    "阶段 A/B 为功能验证/探索性结论，不构成统计显著优势；不得据此宣称 LLM 更强或晋级冠军。"
+  ],
+  "runId": "glm-backup-smoke-r1",
+  "runPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/glm-backup-smoke-r1",
+  "startedAt": "2026-10-26T23:36:43.845Z",
+  "finishedAt": "2026-10-26T23:50:31.967Z",
+  "codeVersion": {
+    "commit": "95af8d2389cdb63cf108a74c8d84848eb4f72f79",
+    "dirty": true,
+    "dirtyFiles": [
+      "M training/llm/config.mjs",
+      " M training/llm/pair-experiment.mjs",
+      " M training/llm/proxy.mjs",
+      " M training/package.json",
+      " M web-v1/dist/standalone.html",
+      " M web-v1/src/app.ts",
+      "?? training/llm/provider-glm.mjs",
+      "?? training/reports/llm-player/glm-backup-smoke-r1/",
+      "?? training/tests/glm-provider.test.mjs"
+    ]
+  },
+  "champion": {
+    "id": "joint-js5",
+    "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3"
+  },
+  "preregistration": null
+}

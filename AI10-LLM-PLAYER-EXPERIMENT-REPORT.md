@@ -376,3 +376,31 @@ cd web-v1 && npm run build && node scripts/serve.mjs
 - 线上页面：https://xike-yuhuofei.github.io/Century/（deploy-verify PASS，artifact `b105a2e56d246bb6`，冠军 `joint-js5`）
 - 部署证据：`docs/ai10/deployment-identity.json`、`docs/ai10/deploy-verification.json`
 - 线上 LLM 浏览器证据：`docs/ai10/pages-llm-browser-verification.json`、`docs/ai10/pages-llm-decision.png`
+
+## 附录 B：免费备用 Provider（2026-10-27 增补）
+
+为缓解 Codex 配额瓶颈，新增两个**独立备用** Provider；它们未参与本报告阶段 A/B 的任何成绩，若用于阶段 C 必须单独预注册、单独报告模型。
+
+| Provider | 模型 | 并发/间隔 | 真实验证 | 状态 |
+|---|---|---|---:|---|
+| GLM 4.7 Flash | `glm-4.7-flash`（thinking disabled） | 1 / 3s | 单决策 5.9s、4,224 Token、Schema 合法；2 人完整对局 44 决策、1 次 120s 超时回退 | 可用，偶发上游超时 |
+| OpenRouter Free | `xingchen-agi/xing4.0-29b-a4b:free` | 1 / 4s | 单决策 9.7s（含间隔 16.2s）、5,559 Token、Schema 合法；代理 `/health` PASS、无密钥泄露 | 可用，受免费池 429/404 限制 |
+
+共同安全与并发策略：
+
+- 密钥仅在本机 `~/.century-llm/env`（chmod 600）或受控后端环境变量；仓库、日志、ProviderInfo、浏览器与构建产物均不含密钥；
+- 免费接口默认串行；GLM 对 1305/429 退避最多 8 次、OpenRouter 429 退避最多 6 次；
+- 浏览器通过 `LLM_PROXY_PROVIDER=glm|openrouter` 启动本地代理接入，前端仍只配置代理地址；
+- 不使用 `openrouter/free` 路由器作为实验模型（实测会路由到不同模型，复现性不足）；
+- 免费池存在严格 RPM/日额度与上游 429/404，**不适合作为阶段 C 的大样本主 Provider**，只作为 Codex 配额耗尽时的备用与探索通道。
+
+证据：`docs/ai10/backup-provider-verification.json`、`training/reports/llm-player/glm-backup-smoke-r1/`。
+
+运行示例：
+
+```bash
+set -a; source ~/.century-llm/env; set +a
+LLM_PROXY_PROVIDER=openrouter node training/llm/proxy.mjs
+# 或
+LLM_PROXY_PROVIDER=glm node training/llm/proxy.mjs
+```

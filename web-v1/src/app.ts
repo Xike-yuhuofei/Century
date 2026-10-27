@@ -309,7 +309,7 @@ function renderSetup(): string {
     <div class="llm-setup">
       <div class="llm-setup-row"><label for="llmSeats">LLM 玩家</label><select id="llmSeats">${llmOptions}</select><span class="llm-setup-hint">最后 N 个 AI 席位</span></div>
       <details class="llm-config-panel"><summary>LLM 本地代理设置</summary>
-        <p class="small-muted">API Key 不进入浏览器；本地代理通过本机 <code>codex login</code> 调用 Codex。未连接时 LLM 席位自动回退离线冠军，并保留真实失败标记。</p>
+        <p class="small-muted">API Key 不进入浏览器；本地代理通过本机 <code>codex login</code> 调用 Codex，或通过服务端 <code>GLM_API_KEY</code>/<code>OPENROUTER_API_KEY</code> 使用 GLM 4.7 Flash / OpenRouter 免费模型备用（代理启动时选择）。未连接时 LLM 席位自动回退离线冠军，并保留真实失败标记。</p>
         <label for="llmEndpoint">代理地址</label><input id="llmEndpoint" value="${esc(llmSettings.endpoint)}" placeholder="http://127.0.0.1:8787/v1" />
         <div class="llm-config-grid"><div><label for="llmModel">模型标识</label><input id="llmModel" value="${esc(llmSettings.model)}" placeholder="codex-exec" /></div><div><label for="llmTimeout">决策超时(ms)</label><input id="llmTimeout" type="number" min="5000" step="1000" value="${llmSettings.timeoutMs}" /></div></div>
       </details>
