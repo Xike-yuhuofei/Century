@@ -26,7 +26,7 @@ llm:
       weight: 0.2
       timeout: 900
       reasoning_effort: "low"
-  temperature: 0.7
+  temperature: 0.85
   max_tokens: 20000
 
 prompt:
@@ -41,12 +41,15 @@ prompt:
     use the in-scope helpers listed in each module contract; (4) no imports, eval,
     process/network/fs/clock/random access, no hidden deck fields, no template
     strings; (5) every function must stay pure, deterministic and finite; (6) do
-    not hardcode card/golem ids; (7) keep weighted parameters wired in; (8)
-    modules marked with a neutral default should preserve the existing behaviour
-    unless you have a principled improvement; (9) returning the input program
-    unchanged — or changing only comments, formatting, or variable names without
-    changing decisions — is disqualified: at least one module's decision logic
-    must genuinely change. Evaluation: candidates are
+    not hardcode card/golem ids; (7) keep weighted parameters wired in.
+    MANDATORY BEHAVIOURAL CHANGE: you must modify executable logic inside at
+    least one EVOLVE-BLOCK. Returning the input program, or changing only
+    comments, formatting, variable names, or text outside EVOLVE-BLOCK, is an
+    automatic failure. A small concrete testable heuristic change is required —
+    for example add a public-state condition, adjust a coefficient, reorder
+    candidate filtering, change a threshold, or combine existing public features.
+    Do not answer "no change needed"; the evaluator, not you, decides whether a
+    change is good. Evaluation: candidates are
     statically checked, assembled into an isolated source tree, compiled with the
     official rules engine, probed on public deterministic states, then play paired
     focus-seat games against the reigning frozen champion in 2/3/4/5-player modes
