@@ -87,6 +87,44 @@ def _fail(stage, reason, **extra):
     }
 
 
+def worst_stratum_penalty(by_player_count):
+    """返回 (最差人数, 最差 delta, 惩罚值)。
+
+    分层只读取同一批真实配对对局已有的 byPlayerCount 统计，不新增种子、
+    不改变主指标；惩罚用于避免“总体提升但某个 2/3/4/5 人分层明显退化”的候选。
+    """
+    if not isinstance(by_player_count, dict):
+        return None, None, 0.0
+    values = []
+    for key, item in by_player_count.items():
+        if not isinstance(item, dict) or item.get("delta") is None:
+            continue
+        try:
+            values.append((int(key), float(item["delta"])))
+        except (TypeError, ValueError):
+            continue
+    if not values:
+        return None, None, 0.0
+    worst = min(values, key=lambda pair: pair[1])
+    return worst[0], worst[1], 0.20 * max(0.0, -worst[1])
+
+
+def compute_combined_score(delta_mean, anomaly_rate=0.0, latency_excess=0.0,
+                           complexity_excess=0.0, by_player_count=None):
+    """主指标 + 原有惩罚 + 最差分人数层惩罚（advisory，不替代正式验证）。"""
+    if delta_mean is None:
+        return 0.0
+    _, _, stratum_penalty = worst_stratum_penalty(by_player_count)
+    return (
+        0.5
+        + 0.5 * float(delta_mean)
+        - 1.5 * float(anomaly_rate or 0.0)
+        - 0.10 * float(latency_excess or 0.0)
+        - 0.05 * float(complexity_excess or 0.0)
+        - float(stratum_penalty)
+    )
+
+
 def _stage_impl(program_path: str, stage: int) -> dict:
     _ensure_dirs()
     program_path = str(Path(program_path).resolve())
@@ -194,24 +232,19 @@ def _stage_impl(program_path: str, stage: int) -> dict:
     (eval_dir / "probe.json").write_text(json.dumps(probe_result, ensure_ascii=False, indent=2))
 
     anomaly_rate = stats.get("anomalyRate", 1.0)
-    delta = (stats.get("firstPlaceDelta") or {}).get("ci")
+    first_place = stats.get("firstPlaceDelta") or {}
+    delta = first_place.get("ci")
     delta_mean = float(delta["mean"]) if delta else None
+    by_player_count = first_place.get("byPlayerCount") or {}
     p95_wall = stats.get("p95WallMs") or 0.0
     # 延迟约束按「单次决策平均耗时」判定（本地推理预算），整局墙钟只作诊断。
     mean_decision = stats.get("meanDecisionMs") or 0.0
     latency_excess = min(1.0, max(0.0, (mean_decision - 300.0) / 300.0))
     complexity_excess = min(1.0, max(0.0, total_source / 12000.0 - 1.0))
-
-    if delta_mean is not None:
-        combined = (
-            0.5
-            + 0.5 * delta_mean
-            - 1.5 * anomaly_rate
-            - 0.10 * latency_excess
-            - 0.05 * complexity_excess
-        )
-    else:
-        combined = 0.0
+    worst_count, worst_delta, stratum_penalty = worst_stratum_penalty(by_player_count)
+    combined = compute_combined_score(
+        delta_mean, anomaly_rate, latency_excess, complexity_excess, by_player_count,
+    )
     # 行为与官方完全一致 = 没有进化增量：只做诊断，不消耗 stage3 的 96 局深评。
     if probe_result.get("identicalToOfficial"):
         combined = 0.0
@@ -233,7 +266,10 @@ def _stage_impl(program_path: str, stage: int) -> dict:
         "code_complexity": float(total_source),
         "pooled_module_hash_head": float(int(combined_hash[:8], 16) / 0xFFFFFFFF),
         "seed_block": 1650.0,
-        "by_player_count": json.dumps((stats.get("firstPlaceDelta") or {}).get("byPlayerCount") or {}, ensure_ascii=False),
+        "worst_player_count": float(worst_count) if worst_count is not None else 0.0,
+        "worst_player_count_delta": float(worst_delta) if worst_delta is not None else 0.0,
+        "stratified_penalty": float(round(stratum_penalty, 4)),
+        "by_player_count": json.dumps(by_player_count, ensure_ascii=False),
     }
 
 

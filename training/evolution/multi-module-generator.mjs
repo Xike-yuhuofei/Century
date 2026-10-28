@@ -19,6 +19,7 @@ import { mutateModuleFunction } from './module-mutations.mjs';
 import { createCompiledModuleCandidate, candidateParametersFor } from './multi-module-candidate.mjs';
 import {
   runMultiModuleOpenEvolve, createCandidateFromOpenEvolveMulti, probeOpenEvolveAI9,
+  formatResearchFeedback,
 } from './openevolve-multi-bridge.mjs';
 import { assertCondition, sha256Canonical, shortHash } from './core.mjs';
 import { PARAMETER_BOUNDS } from '../../web-v1/dist/js/ai/parameters.js';
@@ -70,6 +71,14 @@ function pickMany(list, count, random) {
     out.push(pool.splice(index, 1)[0]);
   }
   return out;
+}
+
+/** 多轴联合进化：每个 LLM 提案覆盖 4–6 个模块（模块不足则全选）。 */
+export function selectOpenEvolveModules(ids, random) {
+  assertCondition(Array.isArray(ids) && ids.length > 0, '模块列表不能为空');
+  assertCondition(typeof random === 'function', 'random 必须为函数');
+  const wanted = 4 + Math.floor(random() * 3);
+  return pickMany(ids, Math.min(ids.length, Math.max(1, wanted)), random);
 }
 
 /** 候选 artifact 的模块函数文本（多模块 artifact）。 */
@@ -238,11 +247,13 @@ export function generateMultiModuleBatch({
           }));
           continue;
         }
-        const selected = pickMany(ids, Math.min(ids.length, Math.max(2, Math.min(4, ids.length))), random);
+        const selected = selectOpenEvolveModules(ids, random);
+        const feedback = formatResearchFeedback(hints, { selectedModules: selected });
         openEvolveAttempts += 1;
         const run = runMultiModuleOpenEvolve({
           moduleIds: selected,
           iterations: moduleConfig.openevolveIterations ?? 2,
+          feedback,
           outputDir: moduleConfig.openevolveOutputDir
             ? `${moduleConfig.openevolveOutputDir}/r${round}c${candidates.length}`
             : null,
@@ -257,7 +268,14 @@ export function generateMultiModuleBatch({
         });
         created.strategy = strategy;
         if (accept(created)) {
-          created.provenance = { ...created.provenance, strategy, selectedModules: selected, elapsedMs: run.elapsedMs };
+          created.provenance = {
+            ...created.provenance,
+            strategy,
+            selectedModules: selected,
+            elapsedMs: run.elapsedMs,
+            feedbackLines: feedback.length,
+            feedbackDigest: feedback.length ? sha256(feedback.join('\n')).slice(0, 16) : null,
+          };
         }
         continue;
       }

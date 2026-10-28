@@ -195,15 +195,24 @@ ${text}
 `;
 }
 
-/** 生成多模块联合程序（一个 EVOLVE-BLOCK = 一个模块函数）。 */
-export function composeProgram(moduleIds, { registry = moduleRegistry(), header = true } = {}) {
+/** 生成多模块联合程序（一个 EVOLVE-BLOCK = 一个模块函数）。
+ *
+ * feedback：失败诊断回流的研究提示（advisory only）。只以注释形式进入程序头，
+ * 不进入任何 reward/评分真值，也不改变 EVOLVE-BLOCK 的签名或结构。
+ */
+export function composeProgram(moduleIds, { registry = moduleRegistry(), header = true, feedback = [] } = {}) {
   const modules = moduleIds.map(id => getModule(id, registry));
+  const feedbackBlock = header && Array.isArray(feedback) && feedback.length > 0
+    ? `// === RESEARCH FEEDBACK (advisory only; not reward truth) ===
+${feedback.map(line => `// ${String(line).replace(/\s+/g, ' ').trim().slice(0, 300)}`).join('\n')}
+`
+    : '';
   const preamble = header ? `// AI9 多模块联合进化程序
 // 模块：${modules.map(m => `${m.id}:${m.functionName}`).join(' / ')}
 // 每个 EVOLVE-BLOCK 对应一个模块；不得增删 block、不得改签名。
 // 只能使用各模块的 scope 列出的作用域内依赖；禁止 import/eval/网络/文件/进程/
 // 随机数/时钟/隐藏牌库字段；函数必须纯且确定性。
-` : '';
+${feedbackBlock}` : '';
   const contracts = modules.map(m => `// ===== ${m.id} ${m.label} =====
 // 函数：${m.functionName}（${m.file}）
 // 签名：(${m.signature.join(', ')})
