@@ -68,6 +68,27 @@ export const AI7_TARGET_TO_MODULES = Object.freeze({
   playerCountScope: ['M08', 'M12'],
 });
 
+/** 把失败诊断目标映射到本次可编辑的 AI9 模块。 */
+export function mapResearchTargets(hints, moduleIds) {
+  if (!hints || typeof hints !== 'object') return [];
+  const selected = new Set((Array.isArray(moduleIds) ? moduleIds : []).map(String));
+  const rawTargets = [...new Set([
+    ...(Array.isArray(hints.suggestedTargets) ? hints.suggestedTargets : []),
+    ...(Array.isArray(hints.curriculum?.targetPriority) ? hints.curriculum.targetPriority : []),
+  ].map(String))];
+  const mapped = [];
+  for (const target of rawTargets) {
+    if (selected.has(target)) {
+      mapped.push(target);
+      continue;
+    }
+    for (const moduleId of AI7_TARGET_TO_MODULES[target] ?? []) {
+      if (selected.has(moduleId)) mapped.push(moduleId);
+    }
+  }
+  return [...new Set(mapped)].slice(0, 6);
+}
+
 /** 把上一轮失败诊断转成程序头反馈（advisory only）。
  *
  * 只读取 researchHints 的公开字段：suggestedTargets / curriculum.focusLabels /
@@ -77,21 +98,7 @@ export const AI7_TARGET_TO_MODULES = Object.freeze({
 export function formatResearchFeedback(hints, { selectedModules = [] } = {}) {
   if (!hints || typeof hints !== 'object') return [];
   const selected = Array.isArray(selectedModules) ? selectedModules.map(String) : [];
-  const rawTargets = [...new Set([
-    ...(Array.isArray(hints.suggestedTargets) ? hints.suggestedTargets : []),
-    ...(Array.isArray(hints.curriculum?.targetPriority) ? hints.curriculum.targetPriority : []),
-  ].map(String))];
-  const mapped = [];
-  for (const target of rawTargets) {
-    if (selected.includes(target)) {
-      mapped.push(target);
-      continue;
-    }
-    for (const moduleId of AI7_TARGET_TO_MODULES[target] ?? []) {
-      if (selected.includes(moduleId)) mapped.push(moduleId);
-    }
-  }
-  const targets = [...new Set(mapped)].slice(0, 6);
+  const targets = mapResearchTargets(hints, selected);
   const focus = (Array.isArray(hints.curriculum?.focusLabels) ? hints.curriculum.focusLabels : [])
     .filter(item => item && item.status === 'finding')
     .slice(0, 4);
