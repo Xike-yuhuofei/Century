@@ -1,0 +1,240 @@
+{
+  "schema": "century-ai9-module-dependency-graph-v1",
+  "generatedAt": "2026-10-26T11:31:01.603Z",
+  "registry": {
+    "path": "training/evolution/module-registry.json",
+    "version": 1,
+    "interfaceVersion": "ai9-module-interface-v1"
+  },
+  "nodes": [
+    {
+      "id": "M01",
+      "label": "魔像目标选择",
+      "functionName": "goalPriority",
+      "file": "ai/evolve/modules.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [],
+      "independentlyEvolvable": true,
+      "realDecisionPath": "chooseAIAction -> chooseJointAction(joint-js5) -> choosePlan -> goalPriority",
+      "fallback": "neutral-1"
+    },
+    {
+      "id": "M02",
+      "label": "商人卡获取",
+      "functionName": "acquisitionValue",
+      "file": "ai/evaluator.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [
+        "M03",
+        "M04"
+      ],
+      "independentlyEvolvable": false,
+      "realDecisionPath": "chooseAIAction/chooseJointAction -> choosePlan -> acquisitionValue",
+      "fallback": "official-function"
+    },
+    {
+      "id": "M03",
+      "label": "生产引擎评估",
+      "functionName": "cardEngineValue",
+      "file": "ai/knowledge.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [],
+      "independentlyEvolvable": true,
+      "realDecisionPath": "choosePlan -> engineValueFor -> engineValue -> cardEngineValue",
+      "fallback": "official-function"
+    },
+    {
+      "id": "M04",
+      "label": "水晶资源管理/保留价值",
+      "functionName": "keepValue",
+      "file": "ai/evaluator.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [],
+      "independentlyEvolvable": true,
+      "realDecisionPath": "choosePlan -> payments/step -> keepValue；overflow -> trimStock -> keepValue",
+      "fallback": "official-function"
+    },
+    {
+      "id": "M05",
+      "label": "打出与休息调度",
+      "functionName": "restMultiplier",
+      "file": "ai/evolve/modules.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [],
+      "independentlyEvolvable": true,
+      "realDecisionPath": "choosePlan -> searchGrade -> restMultiplier",
+      "fallback": "neutral-1"
+    },
+    {
+      "id": "M06",
+      "label": "终局与胜率决策",
+      "functionName": "endgameBonus",
+      "file": "ai/evolve/modules.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [],
+      "independentlyEvolvable": true,
+      "realDecisionPath": "choosePlan -> routeGrade(terminal) -> endgameBonus",
+      "fallback": "neutral-0"
+    },
+    {
+      "id": "M07",
+      "label": "对手行为预测",
+      "functionName": "opponentPressureDelta",
+      "file": "ai/evolve/modules.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [],
+      "independentlyEvolvable": true,
+      "realDecisionPath": "choosePlan -> evolvePressure -> opponentPressureDelta -> acquisitionValue/contest",
+      "fallback": "neutral-0"
+    },
+    {
+      "id": "M08",
+      "label": "多人竞争与时序",
+      "functionName": "seatContestFactor",
+      "file": "ai/evolve/modules.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [],
+      "independentlyEvolvable": true,
+      "realDecisionPath": "chooseJointAction -> competitionRisk / choosePlan -> seatContestFactor",
+      "fallback": "neutral-1"
+    },
+    {
+      "id": "M09",
+      "label": "未知牌概率模型",
+      "functionName": "unknownSupportFactor",
+      "file": "ai/evolve/modules.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [],
+      "independentlyEvolvable": true,
+      "realDecisionPath": "choosePlan -> futureDeckSupport -> unknownSupportFactor",
+      "fallback": "neutral-1"
+    },
+    {
+      "id": "M10",
+      "label": "行动候选生成/排序",
+      "functionName": "rankRootActions",
+      "file": "ai/evolve/modules.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [],
+      "independentlyEvolvable": true,
+      "realDecisionPath": "chooseJointAction -> ChampionGuidedPlanner.decide -> rankRootActions",
+      "fallback": "identity-order"
+    },
+    {
+      "id": "M11",
+      "label": "多人联合搜索结构",
+      "functionName": "searchPolicyOverrides",
+      "file": "ai/evolve/modules.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [],
+      "independentlyEvolvable": true,
+      "realDecisionPath": "chooseJointAction -> searchPolicyOverrides -> ChampionGuidedPlanner.decide",
+      "fallback": "empty-overrides"
+    },
+    {
+      "id": "M12",
+      "label": "自适应计算预算",
+      "functionName": "budgetForDecision",
+      "file": "ai/evolve/modules.ts",
+      "interfaceVersion": "ai9-module-interface-v1",
+      "dependsOn": [],
+      "independentlyEvolvable": true,
+      "realDecisionPath": "chooseJointAction -> budgetForDecision -> ChampionGuidedPlanner.decide",
+      "fallback": "base-budget"
+    }
+  ],
+  "edges": [
+    {
+      "from": "M02",
+      "to": "M03",
+      "type": "functional",
+      "reason": "M02 acquisitionValue 读取 M03 engineValue 与 M04 keepValue 的公开结果"
+    },
+    {
+      "from": "M02",
+      "to": "M04",
+      "type": "functional",
+      "reason": "M02 acquisitionValue 读取 M03 engineValue 与 M04 keepValue 的公开结果"
+    }
+  ],
+  "groups": {
+    "independentlyEvolvable": [
+      "M01",
+      "M03",
+      "M04",
+      "M05",
+      "M06",
+      "M07",
+      "M08",
+      "M09",
+      "M10",
+      "M11",
+      "M12"
+    ],
+    "functionallyCoupled": [
+      {
+        "modules": [
+          "M02",
+          "M03",
+          "M04"
+        ],
+        "reason": "function output dependency"
+      }
+    ],
+    "compileAtomic": [
+      {
+        "file": "ai/evolve/modules.ts",
+        "modules": [
+          "M01",
+          "M05",
+          "M06",
+          "M07",
+          "M08",
+          "M09",
+          "M10",
+          "M11",
+          "M12"
+        ],
+        "reason": "同一源码文件，候选编译必须保持接口签名一致"
+      },
+      {
+        "file": "ai/evaluator.ts",
+        "modules": [
+          "M02",
+          "M04"
+        ],
+        "reason": "同一源码文件，候选编译必须保持接口签名一致"
+      }
+    ],
+    "interactionReview": [
+      {
+        "modules": [
+          "M02",
+          "M07",
+          "M09"
+        ],
+        "reason": "共同进入 acquisitionValue 的对手压力与未来未知牌支持链路，组合后可能互相抵消或放大",
+        "evidence": "training/reports/ai9/interaction-experiment.json"
+      },
+      {
+        "modules": [
+          "M06",
+          "M10",
+          "M11"
+        ],
+        "reason": "终局回传、根行动筛选与联合搜索结构共同决定最终行动；M06 使用公开名次快照",
+        "evidence": "training/reports/ai9/structural-search-candidates.json"
+      },
+      {
+        "modules": [
+          "M10",
+          "M11",
+          "M12"
+        ],
+        "reason": "候选生成、搜索结构与计算预算共享联合搜索路径，需按同一 workUnits 口径比较",
+        "evidence": "training/reports/ai9/module-wiring-audit.json"
+      }
+    ]
+  },
+  "note": "依赖图用于候选组合/交叉前的接口与交互检查；真实强弱仍只由完整候选的配对第一名率决定。"
+}

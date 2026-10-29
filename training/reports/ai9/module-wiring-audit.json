@@ -1,6 +1,6 @@
 {
   "schema": "century-ai9-module-wiring-audit-v1",
-  "generatedAt": "2026-10-26T04:29:38.657Z",
+  "generatedAt": "2026-10-26T11:21:58.028Z",
   "seed": 1640000011,
   "note": "接线证据：证明模块代码在真实规则引擎对局中被执行并可改变决策；不是强度/胜率证据。",
   "playerCounts": {
@@ -164,27 +164,27 @@
     {
       "id": "M06",
       "path": "chooseAIAction",
-      "status": "FAIL-UNOBSERVED",
-      "limit": 200,
-      "cases": [
-        {
-          "seed": 1640000011,
-          "seatCount": 5
+      "status": "WIRED",
+      "divergence": {
+        "seed": 1640000011,
+        "seatCount": 5,
+        "move": 197,
+        "seat": 2,
+        "official": {
+          "type": "claim",
+          "index": 3
         },
-        {
-          "seed": 1640000012,
-          "seatCount": 4
-        },
-        {
-          "seed": 1640000013,
-          "seatCount": 3
+        "candidate": {
+          "type": "play",
+          "cardId": "M18",
+          "repeats": 1
         }
-      ],
+      },
       "probe": {
         "changedModules": [
           "M06"
         ],
-        "mismatches": 14
+        "mismatches": 28
       }
     },
     {
@@ -210,7 +210,7 @@
         "changedModules": [
           "M07"
         ],
-        "mismatches": 168
+        "mismatches": 124
       }
     },
     {
@@ -244,21 +244,21 @@
       "path": "chooseAIAction",
       "status": "WIRED",
       "divergence": {
-        "seed": 1640000012,
-        "seatCount": 4,
-        "move": 134,
-        "seat": 1,
+        "seed": 1640000011,
+        "seatCount": 5,
+        "move": 39,
+        "seat": 4,
         "official": {
-          "type": "play",
-          "cardId": "M07",
-          "repeats": 1
-        },
-        "candidate": {
           "type": "play",
           "cardId": "S02",
           "steps": [
-            2
+            0,
+            0
           ]
+        },
+        "candidate": {
+          "type": "play",
+          "cardId": "S01"
         }
       },
       "probe": {
@@ -324,7 +324,7 @@
       "divergence": {
         "seed": 1640000014,
         "seatCount": 5,
-        "move": 45,
+        "move": 5,
         "seat": 0,
         "official": {
           "type": "acquire",
@@ -332,8 +332,11 @@
           "payment": []
         },
         "candidate": {
-          "type": "play",
-          "cardId": "M37"
+          "type": "acquire",
+          "index": 1,
+          "payment": [
+            0
+          ]
         }
       },
       "probe": {
@@ -346,11 +349,10 @@
   ],
   "summary": {
     "total": 12,
-    "wired": 7,
+    "wired": 8,
     "unobserved": [
       "M04",
       "M05",
-      "M06",
       "M07",
       "M10"
     ]

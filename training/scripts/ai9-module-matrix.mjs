@@ -54,6 +54,15 @@ if (existsSync(oeRoot)) {
     if (summary) openEvolveRuns.push({ run: name, summary });
   }
 }
+// 归档证据：ai5 结果目录是临时产物，矩阵必须也能从版本库内的 run-summary 生成。
+const oeArchiveRoot = resolve(reports, 'ai9');
+if (existsSync(oeArchiveRoot)) {
+  for (const name of readdirSync(oeArchiveRoot)) {
+    if (!/^openevolve-.*-run$/.test(name)) continue;
+    const summary = readJsonIf(join(oeArchiveRoot, name, 'run-summary.json'));
+    if (summary) openEvolveRuns.push({ run: name, summary });
+  }
+}
 
 function campaignEvidenceFor(moduleId) {
   const evidence = [];
