@@ -146,3 +146,60 @@ test('父代哈希被篡改：拒绝继续进化', { skip: seatbeltSkip }, async
   const second = makeController(join(root, 'second'), { rounds: 1, parentCandidateId: candidate.candidateId });
   await assert.rejects(() => second.run(), /父候选不可用|sourceHash|哈希/i);
 });
+
+test('消融候选（移除模块）是真实变化，不得被判为"无变化伪代"', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'ai11-lineage-ablation-'));
+  const provider = createTestDoubleGovernance({
+    screenBlock: AI9_DEV_BLOCKS.screen, deepBlock: AI9_DEV_BLOCKS.deep,
+  });
+  const governance = createGovernanceAdapter({ provider, blocks: AI9_DEV_BLOCKS });
+  const controller = new CampaignController({
+    campaignId: 'lineage-ablation', rootDir: root, governance,
+    config: baseConfig({ rounds: 1, generation: { count: 1, seed: 1, mode: 'multi-module', strategies: ['single'], includeControl: false } }),
+    evaluator: fakeEvaluator,
+  });
+  const parent = {
+    candidateId: 'cand-parent-ablation',
+    parentId: null,
+    sourceHash: 'a'.repeat(64),
+    source: { modules: [
+      { id: 'M02', functionSha256: 'b'.repeat(64) },
+      { id: 'M03', functionSha256: 'c'.repeat(64) },
+    ] },
+  };
+  const child = {
+    candidateId: 'cand-child-ablation',
+    parentId: parent.candidateId,
+    sourceHash: 'd'.repeat(64),
+    source: { modules: [{ id: 'M02', functionSha256: 'b'.repeat(64) }] },
+    lineage: {
+      parentCandidateId: parent.candidateId,
+      parentSourceHash: parent.sourceHash,
+      parentModuleHashes: { M02: 'b'.repeat(64), M03: 'c'.repeat(64) },
+      inputProgramHash: null,
+      outputProgramHash: 'e'.repeat(64),
+      bestProgramHash: null,
+      modulesChanged: [],
+      modulesInherited: null,
+      fallbackToOfficial: null,
+      operator: 'ablation:remove-M03',
+      hypothesisId: null,
+      configPath: null,
+      checkpointResumedFrom: null,
+      llm: null,
+      outputDir: null,
+      bestProgramPath: null,
+    },
+  };
+  assert.equal(controller._verifyLineage({ artifact: child, parentArtifact: parent, round: 2 }), true,
+    '移除模块的消融候选必须被接受');
+  const noChange = {
+    ...child,
+    source: { modules: [
+      { id: 'M02', functionSha256: 'b'.repeat(64) },
+      { id: 'M03', functionSha256: 'c'.repeat(64) },
+    ] },
+  };
+  assert.throws(() => controller._verifyLineage({ artifact: noChange, parentArtifact: parent, round: 2 }),
+    /既无修改也无移除模块/, '真正无变化的候选必须被拒绝');
+});

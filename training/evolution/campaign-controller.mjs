@@ -529,8 +529,13 @@ export class CampaignController {
         assertCondition(parentHashes[id] === hash,
           `候选记录的父代模块 ${id} 哈希 ${hash} 与实际父代 ${String(parentHashes[id])} 不符`);
       }
-      assertCondition(lineage.modulesChanged.length > 0,
-        `候选 ${artifact.candidateId} 与父代源码完全相同（modulesChanged 为空）——拒绝无变化的"伪代"`);
+      // 消融（移除模块）同样是真实变化：不能只看"被修改的模块"，
+      // 还要看"相对父代被移除的模块"。否则 ablation 候选会被全部误杀。
+      const candidateModuleIds = new Set(artifact.source.modules.map(m => m.id));
+      const removedModules = Object.keys(lineage.parentModuleHashes ?? {})
+        .filter(id => !candidateModuleIds.has(id));
+      assertCondition(lineage.modulesChanged.length > 0 || removedModules.length > 0,
+        `候选 ${artifact.candidateId} 与父代源码完全相同（既无修改也无移除模块）——拒绝无变化的"伪代"`);
     } else {
       assertCondition(artifact.parentId === null,
         `第 ${round} 轮为引导代（无父代），候选却声明 parentId=${String(artifact.parentId)}`);

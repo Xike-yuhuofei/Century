@@ -44,3 +44,18 @@ test('运行时状态（种子登记/检查点/报告）不计入代码 dirty', 
   assert.equal(version.dirtyFiles.some(isRuntimeStatePath), false,
     `代码身份仍包含运行时状态：${version.dirtyFiles.filter(isRuntimeStatePath).join(', ')}`);
 });
+
+test('statusPath 兼容 1–2 个状态字符：runtime 账本不得被误判为脏', async () => {
+  const { statusPath, isRuntimeStatePath } = await import('../../lib/code-version.mjs');
+  for (const line of [
+    'M training/governance/seed-consumption-registry.json',
+    ' M training/governance/seed-consumption-registry.json',
+    'M  training/governance/seed-consumption-registry.json',
+    '?? training/reports/coevolution/x.json',
+    'R  old.json -> training/governance/seed-consumption-registry.json',
+  ]) {
+    const path = statusPath(line);
+    assert.ok(path.endsWith('seed-consumption-registry.json') || path.endsWith('x.json'), `解析失败：${line} → ${path}`);
+  }
+  assert.equal(isRuntimeStatePath('training/governance/seed-consumption-registry.json'), true);
+});
