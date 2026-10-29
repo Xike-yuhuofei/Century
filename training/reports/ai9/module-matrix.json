@@ -1,6 +1,6 @@
 {
   "schema": "century-ai9-module-matrix-v1",
-  "generatedAt": "2026-10-26T07:05:47.189Z",
+  "generatedAt": "2026-10-26T11:29:48.011Z",
   "registry": {
     "path": "training/evolution/module-registry.json",
     "version": 1,
@@ -10,9 +10,9 @@
   "evidenceSources": {
     "allModulesProbe": "training/reports/ai9/all-modules-probe.json",
     "allModulesBuild": {
-      "artifactHash": "381a68b9cac276467fcd5acb9bf6b30811b371f57857528711536cd2579fba03",
-      "sourceHash": "eb67aae658a590cc4fa03b7216804b77a3906b0997d83438344901c6da6aa0f4",
-      "identityDigest": "e1af2e37906b1d479153f13e6e096eedee25ca855346873c47a382432cb465f5",
+      "artifactHash": "338eba5c708d355bdb9b508429c46f0888f41ff9a7b7bf14bbf778423e2f9814",
+      "sourceHash": "a505d1c422c2066938368e95b3a8801e825af277f51fd4f8d6b6862de57b68a7",
+      "identityDigest": "49796522aa8468ab59c66ed893963b1bcd9891fa7d62bd5d61430a404282c7ad",
       "build": {
         "protocol": "century-multi-module-candidate-v1",
         "compiler": "tsc 5.9.3",
@@ -37,23 +37,23 @@
           "M04": "de810200e26d154ae40e88d34c069ec80df15a2002ab7d5e221f873bd776a680",
           "M05": "34af59c693aa8137ddab72aaefbe16b645d86b710fe163b55bcd5c5c04f0ce37",
           "M06": "97d24f81b3dff47080f55921c46ca05586139e5dab0ebdaccc6c19d1450a61ef",
-          "M07": "c258ca72a9f1f4709c39f42c594cdf3742480b9719f4119acb811c13268cffed",
+          "M07": "413cfb173b744ba275c84fc0509eebc9d153594b9df348a49325a9d8a34083c5",
           "M08": "ab7ad37d96da11c925480983c70a4abbe5135e66d973de7cf1d37743babe7fd2",
-          "M09": "69384b06ed41aa9f0359b40d4c40f399228fcef5ece38ff93c8d059876100c63",
-          "M10": "17fa1ed29429da7c5649677479995dc94ee39e2dcd683f9bcc19344d0760af26",
+          "M09": "4f98fb929d41ed5d07734b7ec870cb1ebc29f153d7bb63ba4a4124af64ff463a",
+          "M10": "49eec0105baa775c22d50fec29b09b3f00c390bf2cd0483e9c601f76df38f6f8",
           "M11": "0bd2c3deebf6cb766638f72de97c7819c12fb31a51a571085936a4d491bdc7ea",
           "M12": "67498e016df120ab4224adfa31040bc0077ecef602b01a0d81e0b6bcd73c35a3"
         },
-        "combinedModuleHash": "3e00e8b97686df54e1aa2472efecce8973ddc500f25c76179c06e636a49393b8",
+        "combinedModuleHash": "47e1ec94b621b80553d6e91697ffcaa6bf698d638612856355c3fa8eb7530c5e",
         "compiledFiles": 49,
-        "compiledBytes": 333332,
+        "compiledBytes": 337025,
         "sourceOrigin": "deterministic-template",
-        "mutation": "evidence:all-twelve-v2",
-        "sandbox": "macos-seatbelt"
+        "mutation": null,
+        "sandbox": "macos-seatbelt",
+        "elapsedMs": 1077
       }
     },
     "campaigns": [
-      "ai9-12h-endurance-2",
       "ai9-live-coevolve-2",
       "ai9-smoke-002",
       "ai9-smoke-003"
@@ -61,9 +61,8 @@
     "interaction": "training/reports/ai9/interaction-experiment.json",
     "structuralSearch": "training/reports/ai9/structural-search-candidates.json",
     "openEvolveRuns": [
-      "ai9-r001",
-      "ai9-r002",
-      "ai9-r003"
+      "openevolve-r001-run",
+      "openevolve-r003-run"
     ]
   },
   "modules": [
@@ -88,10 +87,10 @@
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 2645,
-          "joint": 2555
+          "ai": 2565,
+          "joint": 2525
         },
-        "total": 5200,
+        "total": 5090,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
@@ -127,72 +126,6 @@
       "structuralSearch": null,
       "openEvolveEvidence": [],
       "realGameEvidence": [
-        {
-          "campaignId": "ai9-12h-endurance-2",
-          "candidateId": "cand-ai9-control-r1-98215d",
-          "strategy": "control",
-          "stage": "deep-done",
-          "deep": {
-            "chanceAdjustedRate": 0.3042,
-            "minWilsonLower": 0.0945,
-            "anomalyRate": 0,
-            "finishedGames": 16
-          },
-          "quick": {
-            "chanceAdjustedRate": 0.1792,
-            "minWilsonLower": 0,
-            "anomalyRate": 0,
-            "p95WallMs": 5212.2
-          },
-          "modules": [
-            "M01"
-          ]
-        },
-        {
-          "campaignId": "ai9-12h-endurance-2",
-          "candidateId": "cand-ai9-multi-r1c3-37c1ba",
-          "strategy": "multi",
-          "stage": "deep-done",
-          "deep": {
-            "chanceAdjustedRate": 0.1792,
-            "minWilsonLower": 0,
-            "anomalyRate": 0,
-            "finishedGames": 16
-          },
-          "quick": {
-            "chanceAdjustedRate": 0.3042,
-            "minWilsonLower": 0,
-            "anomalyRate": 0,
-            "p95WallMs": 4414.7
-          },
-          "modules": [
-            "M01",
-            "M02",
-            "M05"
-          ]
-        },
-        {
-          "campaignId": "ai9-12h-endurance-2",
-          "candidateId": "cand-ai9-ablation-r2c5-80629e",
-          "strategy": "ablation",
-          "stage": "promotion-queued",
-          "deep": {
-            "chanceAdjustedRate": 0.3042,
-            "minWilsonLower": 0.0945,
-            "anomalyRate": 0,
-            "finishedGames": 16
-          },
-          "quick": {
-            "chanceAdjustedRate": 0.4292,
-            "minWilsonLower": 0.0945,
-            "anomalyRate": 0,
-            "p95WallMs": 5186.6
-          },
-          "modules": [
-            "M01",
-            "M02"
-          ]
-        },
         {
           "campaignId": "ai9-live-coevolve-2",
           "candidateId": "cand-ai9-multi-r1c1-0ceec1",
@@ -375,10 +308,10 @@
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 7300501,
-          "joint": 6543546
+          "ai": 7234319,
+          "joint": 6952728
         },
-        "total": 13844047,
+        "total": 14187047,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
@@ -413,7 +346,7 @@
       "structuralSearch": null,
       "openEvolveEvidence": [
         {
-          "run": "ai9-r001",
+          "run": "openevolve-r001-run",
           "status": "completed",
           "generator": "openevolve-llm",
           "changedModules": [
@@ -426,18 +359,7 @@
           ]
         },
         {
-          "run": "ai9-r002",
-          "status": "completed",
-          "generator": "openevolve-llm",
-          "changedModules": [],
-          "identicalToOfficial": true,
-          "modules": [
-            "M02",
-            "M11"
-          ]
-        },
-        {
-          "run": "ai9-r003",
+          "run": "openevolve-r003-run",
           "status": "completed",
           "generator": "openevolve-llm",
           "changedModules": [
@@ -451,51 +373,6 @@
         }
       ],
       "realGameEvidence": [
-        {
-          "campaignId": "ai9-12h-endurance-2",
-          "candidateId": "cand-ai9-multi-r1c3-37c1ba",
-          "strategy": "multi",
-          "stage": "deep-done",
-          "deep": {
-            "chanceAdjustedRate": 0.1792,
-            "minWilsonLower": 0,
-            "anomalyRate": 0,
-            "finishedGames": 16
-          },
-          "quick": {
-            "chanceAdjustedRate": 0.3042,
-            "minWilsonLower": 0,
-            "anomalyRate": 0,
-            "p95WallMs": 4414.7
-          },
-          "modules": [
-            "M01",
-            "M02",
-            "M05"
-          ]
-        },
-        {
-          "campaignId": "ai9-12h-endurance-2",
-          "candidateId": "cand-ai9-ablation-r2c5-80629e",
-          "strategy": "ablation",
-          "stage": "promotion-queued",
-          "deep": {
-            "chanceAdjustedRate": 0.3042,
-            "minWilsonLower": 0.0945,
-            "anomalyRate": 0,
-            "finishedGames": 16
-          },
-          "quick": {
-            "chanceAdjustedRate": 0.4292,
-            "minWilsonLower": 0.0945,
-            "anomalyRate": 0,
-            "p95WallMs": 5186.6
-          },
-          "modules": [
-            "M01",
-            "M02"
-          ]
-        },
         {
           "campaignId": "ai9-smoke-003",
           "candidateId": "cand-ai9-single-r1c1-66d778",
@@ -640,10 +517,10 @@
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 201937833,
-          "joint": 195918487
+          "ai": 213710996,
+          "joint": 200218269
         },
-        "total": 397856320,
+        "total": 413929265,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
@@ -724,10 +601,10 @@
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 8963201,
-          "joint": 7829494
+          "ai": 9158208,
+          "joint": 8349249
         },
-        "total": 16792695,
+        "total": 17507457,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
@@ -790,10 +667,10 @@
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 146112,
-          "joint": 134339
+          "ai": 146640,
+          "joint": 135059
         },
-        "total": 280451,
+        "total": 281699,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
@@ -808,7 +685,7 @@
       "structuralSearch": null,
       "openEvolveEvidence": [
         {
-          "run": "ai9-r001",
+          "run": "openevolve-r001-run",
           "status": "completed",
           "generator": "openevolve-llm",
           "changedModules": [
@@ -822,50 +699,6 @@
         }
       ],
       "realGameEvidence": [
-        {
-          "campaignId": "ai9-12h-endurance-2",
-          "candidateId": "cand-ai9-single-r1c1-cbc280",
-          "strategy": "single",
-          "stage": "promotion-queued",
-          "deep": {
-            "chanceAdjustedRate": 0.3042,
-            "minWilsonLower": 0.0945,
-            "anomalyRate": 0,
-            "finishedGames": 16
-          },
-          "quick": {
-            "chanceAdjustedRate": 0.1792,
-            "minWilsonLower": 0,
-            "anomalyRate": 0,
-            "p95WallMs": 5234
-          },
-          "modules": [
-            "M05"
-          ]
-        },
-        {
-          "campaignId": "ai9-12h-endurance-2",
-          "candidateId": "cand-ai9-multi-r1c3-37c1ba",
-          "strategy": "multi",
-          "stage": "deep-done",
-          "deep": {
-            "chanceAdjustedRate": 0.1792,
-            "minWilsonLower": 0,
-            "anomalyRate": 0,
-            "finishedGames": 16
-          },
-          "quick": {
-            "chanceAdjustedRate": 0.3042,
-            "minWilsonLower": 0,
-            "anomalyRate": 0,
-            "p95WallMs": 4414.7
-          },
-          "modules": [
-            "M01",
-            "M02",
-            "M05"
-          ]
-        },
         {
           "campaignId": "ai9-live-coevolve-2",
           "candidateId": "cand-ai9-multi-r1c1-0ceec1",
@@ -1033,22 +866,55 @@
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 404,
-          "joint": 277
+          "ai": 122,
+          "joint": 232
         },
-        "total": 681,
+        "total": 354,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
-        "status": "FAIL-UNOBSERVED",
+        "status": "WIRED",
         "path": "chooseAIAction",
-        "divergence": null,
+        "divergence": {
+          "seed": 1640000011,
+          "seatCount": 5,
+          "move": 197,
+          "seat": 2,
+          "official": {
+            "type": "claim",
+            "index": 3
+          },
+          "candidate": {
+            "type": "play",
+            "cardId": "M18",
+            "repeats": 1
+          }
+        },
         "source": "training/reports/ai9/module-wiring-audit.json"
       },
       "deterministicMutations": [
+        "public-standings-win-probability",
         "long-route-terminal-bonus"
       ],
-      "structuralSearch": null,
+      "structuralSearch": {
+        "status": "PASS",
+        "experiment": "ai9-structural-mvp02lx7",
+        "source": "training/reports/ai9/structural-search-candidates.json",
+        "candidates": [
+          {
+            "id": "cand-ai9-struct-m06-winprob",
+            "modules": [
+              "M06"
+            ],
+            "label": "public-standings-win-probability",
+            "probeMismatches": 28,
+            "behaviorChanged": false,
+            "games": 16,
+            "anomalies": 0,
+            "firstPlaceDelta": 0
+          }
+        ]
+      },
       "openEvolveEvidence": [],
       "realGameEvidence": [
         {
@@ -1095,14 +961,14 @@
       "compiledInAllModulesCandidate": true,
       "probeChanged": true,
       "probeCases": 168,
-      "probeMismatches": 168,
+      "probeMismatches": 124,
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 6348,
-          "joint": 6086
+          "ai": 6110,
+          "joint": 6060
         },
-        "total": 12434,
+        "total": 12170,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
@@ -1112,9 +978,28 @@
         "source": "training/reports/ai9/module-wiring-audit.json"
       },
       "deterministicMutations": [
+        "public-goal-inference",
         "peak-pressure-tilt"
       ],
-      "structuralSearch": null,
+      "structuralSearch": {
+        "status": "PASS",
+        "experiment": "ai9-structural-mvp02lx7",
+        "source": "training/reports/ai9/structural-search-candidates.json",
+        "candidates": [
+          {
+            "id": "cand-ai9-struct-m07-inference",
+            "modules": [
+              "M07"
+            ],
+            "label": "public-goal-inference",
+            "probeMismatches": 124,
+            "behaviorChanged": true,
+            "games": 16,
+            "anomalies": 0,
+            "firstPlaceDelta": 0
+          }
+        ]
+      },
       "openEvolveEvidence": [],
       "realGameEvidence": [
         {
@@ -1165,10 +1050,10 @@
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 263992,
-          "joint": 245993
+          "ai": 261136,
+          "joint": 245990
         },
-        "total": 509985,
+        "total": 507126,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
@@ -1245,39 +1130,58 @@
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 2645,
-          "joint": 2555
+          "ai": 2565,
+          "joint": 2525
         },
-        "total": 5200,
+        "total": 5090,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
         "status": "WIRED",
         "path": "chooseAIAction",
         "divergence": {
-          "seed": 1640000012,
-          "seatCount": 4,
-          "move": 134,
-          "seat": 1,
+          "seed": 1640000011,
+          "seatCount": 5,
+          "move": 39,
+          "seat": 4,
           "official": {
-            "type": "play",
-            "cardId": "M07",
-            "repeats": 1
-          },
-          "candidate": {
             "type": "play",
             "cardId": "S02",
             "steps": [
-              2
+              0,
+              0
             ]
+          },
+          "candidate": {
+            "type": "play",
+            "cardId": "S01"
           }
         },
         "source": "training/reports/ai9/module-wiring-audit.json"
       },
       "deterministicMutations": [
+        "posterior-expected-support",
         "unseen-supply-tilt"
       ],
-      "structuralSearch": null,
+      "structuralSearch": {
+        "status": "PASS",
+        "experiment": "ai9-structural-mvp02lx7",
+        "source": "training/reports/ai9/structural-search-candidates.json",
+        "candidates": [
+          {
+            "id": "cand-ai9-struct-m09-posterior",
+            "modules": [
+              "M09"
+            ],
+            "label": "posterior-expected-support",
+            "probeMismatches": 14,
+            "behaviorChanged": false,
+            "games": 16,
+            "anomalies": 0,
+            "firstPlaceDelta": 0
+          }
+        ]
+      },
       "openEvolveEvidence": [],
       "realGameEvidence": [
         {
@@ -1328,10 +1232,10 @@
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 589,
-          "joint": 558
+          "ai": 560,
+          "joint": 541
         },
-        "total": 1147,
+        "total": 1101,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
@@ -1346,7 +1250,7 @@
       ],
       "structuralSearch": {
         "status": "PASS",
-        "experiment": "ai9-structural-mvowh8du",
+        "experiment": "ai9-structural-mvp02lx7",
         "source": "training/reports/ai9/structural-search-candidates.json",
         "candidates": [
           {
@@ -1372,7 +1276,7 @@
             "behaviorChanged": false,
             "games": 16,
             "anomalies": 0,
-            "firstPlaceDelta": -0.375
+            "firstPlaceDelta": -0.25
           }
         ]
       },
@@ -1473,10 +1377,10 @@
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 535,
-          "joint": 517
+          "ai": 520,
+          "joint": 508
         },
-        "total": 1052,
+        "total": 1028,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
@@ -1506,7 +1410,7 @@
       ],
       "structuralSearch": {
         "status": "PASS",
-        "experiment": "ai9-structural-mvowh8du",
+        "experiment": "ai9-structural-mvp02lx7",
         "source": "training/reports/ai9/structural-search-candidates.json",
         "candidates": [
           {
@@ -1519,7 +1423,7 @@
             "behaviorChanged": true,
             "games": 16,
             "anomalies": 0,
-            "firstPlaceDelta": -0.375
+            "firstPlaceDelta": -0.25
           },
           {
             "id": "cand-ai9-struct-m10m11",
@@ -1532,24 +1436,13 @@
             "behaviorChanged": false,
             "games": 16,
             "anomalies": 0,
-            "firstPlaceDelta": -0.375
+            "firstPlaceDelta": -0.25
           }
         ]
       },
       "openEvolveEvidence": [
         {
-          "run": "ai9-r002",
-          "status": "completed",
-          "generator": "openevolve-llm",
-          "changedModules": [],
-          "identicalToOfficial": true,
-          "modules": [
-            "M02",
-            "M11"
-          ]
-        },
-        {
-          "run": "ai9-r003",
+          "run": "openevolve-r003-run",
           "status": "completed",
           "generator": "openevolve-llm",
           "changedModules": [
@@ -1671,10 +1564,10 @@
       "execution": {
         "status": "EXECUTED",
         "counts": {
-          "ai": 535,
-          "joint": 517
+          "ai": 520,
+          "joint": 508
         },
-        "total": 1052,
+        "total": 1028,
         "source": "training/reports/ai9/module-execution-audit.json"
       },
       "decisionDivergence": {
@@ -1683,7 +1576,7 @@
         "divergence": {
           "seed": 1640000014,
           "seatCount": 5,
-          "move": 45,
+          "move": 5,
           "seat": 0,
           "official": {
             "type": "acquire",
@@ -1691,8 +1584,11 @@
             "payment": []
           },
           "candidate": {
-            "type": "play",
-            "cardId": "M37"
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
           }
         },
         "source": "training/reports/ai9/module-wiring-audit.json"
@@ -1735,10 +1631,10 @@
     "total": 12,
     "compiledAndProbeChanged": 12,
     "executedInRealGames": 12,
-    "decisionDivergenceObserved": 7,
+    "decisionDivergenceObserved": 8,
     "withRealGameEvidence": 12,
     "withOpenEvolveEvidence": 3,
-    "withStructuralSearchEvidence": 2,
+    "withStructuralSearchEvidence": 5,
     "statuses": {
       "PASS": 12
     }
