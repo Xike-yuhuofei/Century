@@ -43,6 +43,55 @@ function identityFields(artifact) {
     buildArtifact: artifact.buildArtifact,
     gameRules: artifact.gameRules,
     applicablePlayerCounts: artifact.applicablePlayerCounts,
+    // 跨代谱系是算法身份的一部分：父代源码哈希不同 => 候选身份不同。
+    ...(artifact.lineage ? { lineage: artifact.lineage } : {}),
+  };
+}
+
+const LINEAGE_MODULES_RE = /^M[0-9]{2}$/;
+const LINEAGE_HASHES = ['parentSourceHash', 'inputProgramHash', 'outputProgramHash', 'bestProgramHash'];
+
+/** 规范化跨代谱系：父代源码哈希链 + 修改模块 + LLM 核算（缺失字段显式为 null）。 */
+function normalizeLineage(lineage) {
+  if (lineage === undefined || lineage === null) return null;
+  assertCondition(typeof lineage === 'object' && !Array.isArray(lineage), 'lineage 必须为对象');
+  assertCondition(lineage.parentCandidateId === null || typeof lineage.parentCandidateId === 'string',
+    'lineage.parentCandidateId 非法');
+  for (const key of LINEAGE_HASHES) {
+    const value = lineage[key];
+    assertCondition(value === null || value === undefined || /^[0-9a-f]{64}$/.test(String(value)),
+      `lineage.${key} 非法：${String(value)}`);
+  }
+  assertCondition(Array.isArray(lineage.modulesChanged), 'lineage.modulesChanged 必须为数组');
+  for (const id of lineage.modulesChanged) {
+    assertCondition(LINEAGE_MODULES_RE.test(id), `lineage.modulesChanged 含非法模块 id：${String(id)}`);
+  }
+  if (lineage.parentModuleHashes !== undefined && lineage.parentModuleHashes !== null) {
+    assertCondition(typeof lineage.parentModuleHashes === 'object' && !Array.isArray(lineage.parentModuleHashes),
+      'lineage.parentModuleHashes 必须为对象');
+    for (const [id, hash] of Object.entries(lineage.parentModuleHashes)) {
+      assertCondition(LINEAGE_MODULES_RE.test(id), `lineage.parentModuleHashes 含非法模块 id：${id}`);
+      assertCondition(hash === null || /^[0-9a-f]{64}$/.test(String(hash)),
+        `lineage.parentModuleHashes.${id} 非法`);
+    }
+  }
+  return {
+    parentCandidateId: lineage.parentCandidateId ?? null,
+    parentSourceHash: lineage.parentSourceHash ?? null,
+    parentModuleHashes: lineage.parentModuleHashes ?? null,
+    inputProgramHash: lineage.inputProgramHash ?? null,
+    outputProgramHash: lineage.outputProgramHash ?? null,
+    bestProgramHash: lineage.bestProgramHash ?? null,
+    modulesChanged: [...lineage.modulesChanged].sort(),
+    modulesInherited: Array.isArray(lineage.modulesInherited) ? [...lineage.modulesInherited].sort() : null,
+    fallbackToOfficial: Array.isArray(lineage.fallbackToOfficial) ? [...lineage.fallbackToOfficial].sort() : null,
+    operator: typeof lineage.operator === 'string' ? lineage.operator : 'unknown',
+    hypothesisId: typeof lineage.hypothesisId === 'string' ? lineage.hypothesisId : null,
+    configPath: typeof lineage.configPath === 'string' ? lineage.configPath : null,
+    checkpointResumedFrom: typeof lineage.checkpointResumedFrom === 'string' ? lineage.checkpointResumedFrom : null,
+    llm: lineage.llm && typeof lineage.llm === 'object' ? lineage.llm : null,
+    outputDir: typeof lineage.outputDir === 'string' ? lineage.outputDir : null,
+    bestProgramPath: typeof lineage.bestProgramPath === 'string' ? lineage.bestProgramPath : null,
   };
 }
 
@@ -213,7 +262,7 @@ export function createCandidateArtifact(input) {
   const {
     candidateId, parentId = null, algorithmStructure, parameters, source,
     experiment, applicablePlayerCounts = ALL_PLAYER_COUNTS, safety = { status: 'pending', checks: [] },
-    buildInput = null, gameRules, status = 'created',
+    buildInput = null, gameRules, status = 'created', lineage = null,
   } = input ?? {};
 
   assertCondition(typeof candidateId === 'string' && /^cand-[a-z0-9][a-z0-9._-]{2,63}$/i.test(candidateId),
@@ -272,6 +321,7 @@ export function createCandidateArtifact(input) {
   const algorithm = validateAlgorithmStructure(algorithmStructure, evaluationMode);
   const experimentNormalized = validateExperiment(experiment);
   const safetyNormalized = validateSafety(safety);
+  const lineageNormalized = normalizeLineage(lineage);
 
   const artifact = {
     schema: SCHEMAS.candidateArtifact,
@@ -293,6 +343,7 @@ export function createCandidateArtifact(input) {
     applicablePlayerCounts: [...applicablePlayerCounts].sort((a, b) => a - b),
     evidenceDir: null,
     safety: safetyNormalized,
+    ...(lineageNormalized ? { lineage: lineageNormalized } : {}),
     status,
     identityDigest: null,
     artifactHash: null,
@@ -358,6 +409,13 @@ export function validateArtifact(artifact) {
   validateAlgorithmStructure(artifact.algorithmStructure, artifact.algorithmStructure.evaluationMode);
   validateExperiment(artifact.experiment);
   validateSafety(artifact.safety);
+  if (artifact.lineage !== undefined && artifact.lineage !== null) {
+    const normalized = normalizeLineage(artifact.lineage);
+    assertCondition(sha256Canonical(normalized) === sha256Canonical(artifact.lineage),
+      'artifact lineage 未规范化或含未知字段（拒绝未审计的谱系字段）');
+    assertCondition(artifact.lineage.parentCandidateId === artifact.parentId,
+      `artifact lineage.parentCandidateId ${String(artifact.lineage.parentCandidateId)} ≠ parentId ${String(artifact.parentId)}`);
+  }
   assertCondition(SOURCE_KINDS.includes(artifact.source.kind), `artifact source.kind 非法：${String(artifact.source.kind)}`);
   assertCondition(Array.isArray(artifact.applicablePlayerCounts) && artifact.applicablePlayerCounts.length > 0,
     'artifact applicablePlayerCounts 缺失');

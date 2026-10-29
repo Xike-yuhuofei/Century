@@ -1,0 +1,50 @@
+{
+  "schema": "century-ai11-fault-injection-v1",
+  "generatedAt": "2026-10-29T09:06:41.536Z",
+  "commit": "52b1601a3d9834162baae62851e55f6741250265",
+  "verdict": "PARTIAL",
+  "checks": [
+    {
+      "id": "F1-llm-returning",
+      "title": "LLM 返回中断",
+      "status": "SKIP",
+      "evidence": "skipped（--skip-llm）"
+    },
+    {
+      "id": "F2-candidate-write",
+      "title": "候选源码写入中断",
+      "status": "PASS",
+      "evidence": "partialFiles=1 signal=SIGKILL；内容寻址仓库只会产生 .partial，不会出现半截 candidate.json"
+    },
+    {
+      "id": "F3-compile",
+      "title": "编译阶段中断",
+      "status": "PASS",
+      "evidence": "signal=SIGKILL；tsc 子进程随进程树清理，未产生可用 artifact"
+    },
+    {
+      "id": "F4-evaluation",
+      "title": "对局评估中途中断",
+      "status": "PASS",
+      "evidence": "evaluationStarted=true signal=SIGKILL evidenceFiles=0；中断候选不会写入半截 evidence JSON"
+    },
+    {
+      "id": "F5-result-commit",
+      "title": "实验结果提交中断",
+      "status": "PASS",
+      "evidence": "recovered=[{\"taskId\":\"task-e2be9dbe8693b340\",\"state\":\"COMMITTING\",\"action\":\"needs-verification\"}] duplicateRejected=true"
+    },
+    {
+      "id": "F6-checkpoint",
+      "title": "Checkpoint 写入中断（state 截断）",
+      "status": "PASS",
+      "evidence": "truncatedStateRejected=true lastCheckpointReadable=true"
+    },
+    {
+      "id": "F7-champion-publish",
+      "title": "冠军发布事务中断",
+      "status": "PASS",
+      "evidence": "championUnchanged=true partialTmpExists=true signal=SIGKILL；正式发布必须原子 rename"
+    }
+  ]
+}

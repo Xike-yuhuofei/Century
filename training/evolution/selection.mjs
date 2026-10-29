@@ -56,7 +56,12 @@ export function behaviorDistance(a, b) {
   return 1;
 }
 
-/** 单候选多维评分（不依赖其他候选）。 */
+/** 单候选多维评分（不依赖其他候选）。
+ *
+ * 竞技排序键（P0.3）：game 候选以**配对第一名率增量**为主键，
+ * 优先使用簇级单侧下界（对不确定性保守），下界缺失时退回点估计；
+ * composite 仅保留为诊断/研究保留评分，绝不替代配对增量决定竞技排序。
+ */
 export function scoreCandidate({ artifact, evidence }) {
   assertCondition(artifact && evidence, '评分需要 artifact 与 evidence');
   const safety = artifact.safety.status === 'passed' ? 1 : 0;
@@ -64,6 +69,8 @@ export function scoreCandidate({ artifact, evidence }) {
   let quality = 0;
   let stability = 0;
   let cost = 0;
+  let firstPlaceDelta = null;
+  let firstPlaceLower = null;
   if (mode === 'game') {
     const metrics = evidence.metrics;
     const chanceAdjusted = clamp(metrics.chanceAdjustedRate ?? 0, -1, 1);
@@ -71,6 +78,11 @@ export function scoreCandidate({ artifact, evidence }) {
     quality = clamp(0.6 * ((chanceAdjusted + 1) / 2) + 0.4 * wilsonLower, 0, 1);
     stability = clamp(1 - (metrics.anomalyRate ?? 1), 0, 1);
     cost = normalizedInverse(metrics.p95WallMs ?? metrics.meanWallMs ?? 60000, 30_000);
+    if (Number.isFinite(metrics.firstPlaceDelta)) firstPlaceDelta = Number(metrics.firstPlaceDelta);
+    const lower = metrics.firstPlaceDeltaCi?.oneSidedLower
+      ?? metrics.firstPlaceDeltaPooledCi?.oneSidedLower
+      ?? metrics.firstPlaceDeltaLower;
+    if (Number.isFinite(lower)) firstPlaceLower = Number(lower);
   } else {
     const metrics = evidence.metrics;
     quality = clamp((metrics.proxyDelta + 1) / 2, 0, 1);
@@ -80,6 +92,10 @@ export function scoreCandidate({ artifact, evidence }) {
   const composite = mode === 'game'
     ? 0.5 * quality + 0.2 * stability + 0.1 * cost + 0.2 * safety
     : 0.55 * quality + 0.2 * stability + 0.1 * cost + 0.15 * safety;
+  // 竞技排序键：配对增量下界 > 点估计 > 诊断 composite（proxy 无配对证据）。
+  const rankKey = mode === 'game'
+    ? (firstPlaceLower ?? firstPlaceDelta ?? (composite - 1))
+    : null;
   return deepFreeze({
     candidateId: artifact.candidateId,
     identityDigest: artifact.identityDigest,
@@ -90,6 +106,9 @@ export function scoreCandidate({ artifact, evidence }) {
     cost: Number(cost.toFixed(6)),
     safety,
     composite: Number(composite.toFixed(6)),
+    firstPlaceDelta,
+    firstPlaceLower,
+    rankKey,
   });
 }
 
@@ -151,7 +170,16 @@ export function selectCandidates({
     eligible.push(entry);
   }
 
-  eligible.sort((a, b) => (b.score.composite - a.score.composite) || (a.artifact.candidateId < b.artifact.candidateId ? -1 : 1));
+  // 竞技排序：配对第一名率增量优先（rankKey 为 null 的 proxy 候选排在 game 之后）。
+  const byCompetitive = (a, b) => {
+    const ka = a.score.rankKey;
+    const kb = b.score.rankKey;
+    if (ka !== null && kb !== null && ka !== kb) return kb - ka;
+    if (ka !== null && kb === null) return -1;
+    if (ka === null && kb !== null) return 1;
+    return (b.score.composite - a.score.composite) || (a.artifact.candidateId < b.artifact.candidateId ? -1 : 1);
+  };
+  eligible.sort(byCompetitive);
   const selected = [];
   const selectedIds = new Set();
 
@@ -167,12 +195,8 @@ export function selectCandidates({
     if (best) take(best);
   }
   // 2) 剩余名额优先保留对局候选（可挑战性），proxy 候选只作研究保留；
-  //    每一类内部按“质量优先 + 行为距离”贪心，填不满再放宽阈值。
-  const fillOrder = [...eligible].sort((a, b) => {
-    const modeRank = entry => (entry.artifact.algorithmStructure.evaluationMode === 'game' ? 0 : 1);
-    return (modeRank(a) - modeRank(b)) || (b.score.composite - a.score.composite)
-      || (a.artifact.candidateId < b.artifact.candidateId ? -1 : 1);
-  });
+  //    每一类内部按"配对增量优先 + 行为距离"贪心，填不满再放宽阈值。
+  const fillOrder = [...eligible].sort(byCompetitive);
   for (const entry of fillOrder) {
     if (selected.length >= maxKeep) break;
     if (selectedIds.has(entry.artifact.candidateId)) continue;

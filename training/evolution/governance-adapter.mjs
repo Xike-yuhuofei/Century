@@ -149,12 +149,12 @@ function assertProvider(provider) {
   return provider;
 }
 
-function validateWindowResponse(response, { purpose, requestedCount }) {
+function validateWindowResponse(response, { purpose, requestedCount, blocks = AI7_DEV_BLOCKS }) {
   assertCondition(response && typeof response === 'object', '治理 provider 未返回窗口');
   assertCondition(response.pool === 'dev', `治理 provider 返回非开发池：${String(response.pool)}（AI7 禁止正式验证池）`);
   assertCondition(response.purpose === purpose, `窗口 purpose 不符：期望 ${purpose}，实际 ${String(response.purpose)}`);
   assertCondition(typeof response.windowId === 'string' && response.windowId.length > 0, '窗口缺少 windowId');
-  const block = blockForPurpose(purpose);
+  const block = blocks[purpose];
   const normalized = assertWindow({ base: response.base, count: response.count, block, name: `治理窗口 ${response.windowId}` });
   assertCondition(normalized.count >= requestedCount,
     `治理窗口仅 ${normalized.count} 个种子，少于请求 ${requestedCount}`);
@@ -170,10 +170,11 @@ function validateWindowResponse(response, { purpose, requestedCount }) {
   });
 }
 
-export function createGovernanceAdapter({ provider, contractVersion = GOVERNANCE_CONTRACT_VERSION } = {}) {
+export function createGovernanceAdapter({ provider, contractVersion = GOVERNANCE_CONTRACT_VERSION, blocks = AI7_DEV_BLOCKS } = {}) {
   const p = assertProvider(provider);
   assertCondition(contractVersion === GOVERNANCE_CONTRACT_VERSION,
     `治理接口版本不符：期望 ${GOVERNANCE_CONTRACT_VERSION}，实际 ${contractVersion}`);
+  assertCondition(blocks?.screen && blocks?.deep, 'blocks 必须提供 screen/deep 两个开发块');
 
   const allocated = [];
   const requests = [];
@@ -187,7 +188,7 @@ export function createGovernanceAdapter({ provider, contractVersion = GOVERNANCE
     allocateDevSeedWindow({ campaignId, round, purpose, count, excludeWindowIds = [] }) {
       blockForPurpose(purpose);
       const response = p.allocateDevSeedWindow({ campaignId, round, purpose, count, excludeWindowIds });
-      const window = validateWindowResponse(response, { purpose, requestedCount: count });
+      const window = validateWindowResponse(response, { purpose, requestedCount: count, blocks });
       const overlap = allocated.find(w => w.purpose === purpose && w.base < window.base + window.count && window.base < w.base + w.count);
       assertCondition(!overlap, `治理窗口 ${window.windowId} 与已分配窗口 ${overlap?.windowId} 重叠`);
       allocated.push(window);

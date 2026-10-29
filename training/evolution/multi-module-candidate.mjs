@@ -89,7 +89,7 @@ export function createCompiledModuleCandidate({
   experiment, round = 1, index = 0, candidateId = null, parentId = null,
   parameters = null, applicablePlayerCounts = [2, 3, 4, 5],
   sourceOrigin = 'deterministic-template', mutationLabel = null,
-  timeoutMs = 300_000, probe = true,
+  timeoutMs = 300_000, probe = true, lineage = null,
 }) {
   assertCondition(SEATBELT_AVAILABLE, 'Seatbelt 不可用——拒绝创建编译型多模块候选（不做无沙箱编译）');
   assertCondition(existsSync(TSC), `tsc 不存在：${TSC}`);
@@ -222,6 +222,7 @@ export function createCompiledModuleCandidate({
         files: compiledFiles,
       },
       gameRules: gameRulesDescriptor(),
+      lineage,
     });
     validateArtifact(artifact);
 

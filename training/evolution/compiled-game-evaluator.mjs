@@ -159,6 +159,8 @@ export async function evaluateCompiledCandidateGames({
             meanDecisionMs: result.metrics?.meanDecisionMs ?? null,
             rank: finished ? rankOf(result, focusSeat) : null,
             candidateActions: finished ? actionCounts(result, focusSeat) : null,
+            // P1.3：双臂都记录焦点席位的动作分布，用于候选/冠军动作分歧检测
+            focusActions: finished ? actionCounts(result, focusSeat) : null,
             opponentIds,
             versions: seatVersions.map(v => v.id),
           });

@@ -215,6 +215,49 @@ export function composeProgram(moduleIds, { registry = moduleRegistry(), header 
   return `${preamble}${contracts}\n${blocks}`;
 }
 
+/**
+ * 以「给定模块文本」组合多模块程序（父代继承的唯一入口）。
+ *
+ * 与 composeProgram 的差别：模块函数体来自调用方提供的真实源码（父代候选），
+ * 而不是官方实现。缺失的模块才回落官方实现，并由调用方在同一 artifact 中标注
+ * inheritedFromParent=false，禁止把回落冒充继承。
+ *
+ * @param {string[]} moduleIds
+ * @param {Record<string,string>} texts 模块 id → 函数文本
+ * @param {{registry?:object, header?:boolean}} [options]
+ */
+export function composeProgramFromTexts(moduleIds, texts, { registry = moduleRegistry(), header = true } = {}) {
+  const modules = moduleIds.map(id => getModule(id, registry));
+  const preamble = header ? `// AI9 多模块联合进化程序（父代源码继承）
+// 模块：${modules.map(m => `${m.id}:${m.functionName}`).join(' / ')}
+// 每个 EVOLVE-BLOCK 对应一个模块；不得增删 block、不得改签名。
+// 只能使用各模块的 scope 列出的作用域内依赖；禁止 import/eval/网络/文件/进程/
+// 随机数/时钟/隐藏牌库字段；函数必须纯且确定性。
+` : '';
+  const contracts = modules.map(m => `// ===== ${m.id} ${m.label} =====
+// 函数：${m.functionName}（${m.file}）
+// 签名：(${m.signature.join(', ')})
+// 真实决策接线：${m.wiring}
+// 依赖模块：${(m.dependsOn ?? []).join(', ') || '无'}
+// 作用域内可用依赖：${(m.scope ?? []).join('、')}
+`).join('');
+  const blocks = modules.map(m => {
+    const text = texts?.[m.id];
+    if (text === undefined || text === null || String(text).trim().length === 0) {
+      return renderModuleProgram(m, { header: false });
+    }
+    const stripped = stripLiterals(String(text));
+    const fn = extractFunction(stripped, String(text), m.functionName);
+    if (fn.error) throw new Error(`${m.id} 父代模块文本非法：${fn.error}`);
+    const params = functionParams(fn.strippedText);
+    if (!params || JSON.stringify(params) !== JSON.stringify(m.signature)) {
+      throw new Error(`${m.id} 父代模块签名与注册表不一致：期望 (${m.signature.join(',')})，实际 (${(params ?? []).join(',')})`);
+    }
+    return `/* EVOLVE-BLOCK-START */\n${fn.text.trim()}\n/* EVOLVE-BLOCK-END */\n`;
+  }).join('\n');
+  return `${preamble}${contracts}\n${blocks}`;
+}
+
 /** 数学上界裁剪（候选输出/策略边界统一使用）。 */
 export function clampNumber(value, low, high, fallback = low) {
   return Number.isFinite(value) ? Math.min(high, Math.max(low, value)) : fallback;

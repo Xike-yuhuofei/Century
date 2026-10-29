@@ -22,6 +22,8 @@ import { probit } from '../evaluator/stats.mjs';
 
 export const ALPHA_LEDGER_SCHEMA = 'century-alpha-ledger-v1';
 export const ALPHA_LEDGER_PATH = resolve(REPO_ROOT, 'training/governance/alpha-ledger.json');
+/** 显式 alpha 家族注册表（新家族必须登记；未登记时沿用历史几何家族）。 */
+export const ALPHA_FAMILIES_PATH = resolve(REPO_ROOT, 'training/governance/alpha-families.json');
 export const DEFAULT_ALPHA_BUDGET = 0.05;
 const LOCK_TIMEOUT_MS = 10_000;
 const FLOAT_EPS = 1e-12;
@@ -74,6 +76,45 @@ function atomicWriteJSON(path, value) {
   const tmp = `${path}.tmp-${process.pid}-${Date.now()}`;
   writeFileSync(tmp, JSON.stringify(value, null, 2));
   renameSync(tmp, path);
+}
+
+/** 读取 alpha 家族注册表；不存在时只含历史几何家族。 */
+export function readAlphaFamilies(path = ALPHA_FAMILIES_PATH) {
+  if (!existsSync(path)) {
+    return {
+      schema: 'century-alpha-families-v1',
+      active: 'century-formal-challenges-v1',
+      families: [{
+        familyId: 'century-formal-challenges-v1',
+        ledgerPath: 'training/governance/alpha-ledger.json',
+        mode: 'geometric',
+        legacy: true,
+        note: '历史几何家族（只读保留审计；剩余预算 2.44e-5 已不可用）',
+      }],
+    };
+  }
+  const registry = JSON.parse(readFileSync(path, 'utf8'));
+  if (registry?.schema !== 'century-alpha-families-v1') throw new Error('alpha 家族注册表 schema 非法');
+  if (!Array.isArray(registry.families) || !registry.families.some(f => f.familyId === registry.active)) {
+    throw new Error(`alpha 家族注册表 active=${String(registry.active)} 未登记`);
+  }
+  return registry;
+}
+
+/** 当前生效的 alpha 家族与其账本绝对路径。 */
+export function activeAlphaFamily(path = ALPHA_FAMILIES_PATH) {
+  const registry = readAlphaFamilies(path);
+  const family = registry.families.find(f => f.familyId === registry.active);
+  const ledgerPath = resolve(REPO_ROOT, family.ledgerPath);
+  return { family, ledgerPath, registry };
+}
+
+export function activeAlphaLedgerPath(path = ALPHA_FAMILIES_PATH) {
+  return activeAlphaFamily(path).ledgerPath;
+}
+
+export function activeAlphaLedger(path = ALPHA_FAMILIES_PATH) {
+  return readAlphaLedger(activeAlphaLedgerPath(path));
 }
 
 export function readAlphaLedger(path = ALPHA_LEDGER_PATH) {

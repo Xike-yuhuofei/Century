@@ -152,6 +152,9 @@ function configFromArgs() {
       generator: generatorMode,
       openevolveIterations: args['openevolve-iterations'] !== undefined
         ? Number(args['openevolve-iterations']) : 2,
+      // P2：基础 OpenEvolve 配置可被监督器切换（模型故障转移），默认用 ai9 配置。
+      openevolveConfigPath: args['openevolve-config']
+        ? resolve(REPO_ROOT, String(args['openevolve-config'])) : null,
       openevolve: sourceEvolution ? {
         iterations: args['openevolve-iterations'] !== undefined ? Number(args['openevolve-iterations']) : 1,
         timeoutMs: args['openevolve-timeout-ms'] !== undefined
@@ -161,6 +164,11 @@ function configFromArgs() {
       } : null,
       includeControl: args['no-control'] !== true,
       allowDeterministicFallback: args['no-deterministic-fallback'] !== true,
+      // 实验开关（A/B/C 对照与消融）：
+      // allowInheritance=false 复现"旧路径：每代从官方源码重新开始"；
+      // researchContext=off|artifacts|brief 控制研究上下文注入强度。
+      allowInheritance: args['no-inherit'] !== true,
+      researchContext: args['research-context'] ?? 'brief',
     },
     budget: {
       maxCandidates: args['max-candidates'] !== undefined ? Number(args['max-candidates']) : 24,

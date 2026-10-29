@@ -8,7 +8,9 @@
  * - 变异只改变 AI 决策算法，不改变规则/裁判/信息边界。
  */
 
-import { officialFunctionText, moduleRegistry } from '../../ai5/openevolve/node/module_registry.mjs';
+import {
+  officialFunctionText, moduleRegistry, stripLiterals, extractFunction, functionParams,
+} from '../../ai5/openevolve/node/module_registry.mjs';
 import { assertCondition } from './core.mjs';
 
 /** 单点替换（唯一命中）。 */
@@ -261,6 +263,98 @@ export function mutateModuleFunction(moduleId, variant = 0) {
     id: moduleId,
     label: mutation.label,
     text: mutation.apply(officialFunctionText(module)),
+  };
+}
+
+/**
+ * 在**父代真实源码**上应用变异（跨代继承的唯一变异入口）。
+ *
+ * 两类算子：
+ * 1. curated：注册表内的人工审核变异；只有当父代文本仍唯一包含该变异锚点时可用
+ *    （典型情况：父代尚未在该处被改写过）；
+ * 2. generic-numeric / comparison：父代已偏离官方锚点时的确定性回退算子，
+ *    在父代文本内定位唯一的数值字面量或比较运算符做小幅扰动。
+ *
+ * 纪律：绝不"从官方文本重新生成"——父代的全部已累积改动必须保留。
+ * 找不到任何可用算子时抛错，由调用方记录生成失败，不得静默回落到官方基线。
+ *
+ * @param {string} moduleId
+ * @param {string} parentText 父代模块函数文本（必须与注册表签名一致）
+ * @param {number} variant 变异序号
+ * @param {number} seed 确定性种子
+ */
+export function mutateModuleText(moduleId, parentText, variant = 0, seed = 0) {
+  const registry = moduleRegistry();
+  const module = registry.modules.find(m => m.id === moduleId);
+  assertCondition(module, `未注册模块：${moduleId}`);
+  assertCondition(typeof parentText === 'string' && parentText.trim().length > 0,
+    `${moduleId} 父代源码缺失：拒绝在官方基线上假装继承`);
+  const stripped = stripLiterals(parentText);
+  const fn = extractFunction(stripped, parentText, module.functionName);
+  assertCondition(!fn.error, `${moduleId} 父代源码解析失败：${fn.error}`);
+  const params = functionParams(fn.strippedText);
+  assertCondition(params && JSON.stringify(params) === JSON.stringify(module.signature),
+    `${moduleId} 父代签名不符：期望 (${module.signature.join(',')})，实际 (${(params ?? []).join(',')})`);
+
+  const list = MODULE_MUTATIONS[moduleId] ?? [];
+  const index = list.length
+    ? ((Number.isInteger(variant) ? variant % list.length : 0) + list.length) % list.length
+    : 0;
+  if (list.length) {
+    try {
+      return {
+        id: moduleId,
+        label: list[index].label,
+        text: list[index].apply(parentText),
+        operator: `curated:${list[index].label}`,
+      };
+    } catch { /* 父代已偏离该锚点：转入通用算子，保留父代全部改动 */ }
+  }
+
+  const numeric = numericTweak(parentText, stripped, seed);
+  if (numeric) return { id: moduleId, label: numeric.label, text: numeric.text, operator: 'generic-numeric' };
+  const compare = comparisonTweak(parentText, stripped, seed);
+  if (compare) return { id: moduleId, label: compare.label, text: compare.text, operator: 'generic-comparison' };
+  throw new Error(`${moduleId} 没有可用的跨代变异算子（父代既无数字字面量也无比较运算符）`);
+}
+
+const NUMERIC_RE = /(?<![\w.$])(\d+(?:\.\d+)?)(?![\w.])/g;
+const SCALE_FACTORS = [1.06, 0.94, 1.12, 0.88, 1.2, 0.8];
+
+/** 父代文本内的确定性数值扰动（保留全部既有改动）。
+ * 匹配在剥离字符串/注释后的文本上进行（位置与原文等长），避免改写字面量内容。 */
+function numericTweak(original, stripped, seed) {
+  const matches = [...stripped.matchAll(NUMERIC_RE)];
+  if (!matches.length) return null;
+  const index = ((seed % matches.length) + matches.length) % matches.length;
+  const match = matches[index];
+  const raw = Number(match[1]);
+  if (!Number.isFinite(raw) || raw === 0) return null;
+  const factor = SCALE_FACTORS[((seed * 7 + index) % SCALE_FACTORS.length + SCALE_FACTORS.length) % SCALE_FACTORS.length];
+  const next = raw * factor;
+  const rendered = Number.isInteger(raw)
+    ? String(Math.max(1, Math.round(next)))
+    : String(Number(next.toFixed(4)));
+  if (rendered === match[1]) return null;
+  const start = match.index;
+  const end = start + match[0].length;
+  return {
+    label: `numeric@${start}:${match[1]}->${rendered}`,
+    text: `${original.slice(0, start)}${rendered}${original.slice(end)}`,
+  };
+}
+
+/** 父代文本内的确定性比较运算符扰动。 */
+function comparisonTweak(original, stripped, seed) {
+  const ops = [...stripped.matchAll(/(?<![<>!=])(<=|>=|<|>)(?![=])/g)];
+  if (!ops.length) return null;
+  const index = ((seed % ops.length) + ops.length) % ops.length;
+  const op = ops[index][1];
+  const replacement = op === '<' ? '<=' : op === '<=' ? '<' : op === '>' ? '>=' : '>';
+  const start = ops[index].index;
+  return {
+    label: `comparison@${start}:${op}->${replacement}`,
+    text: `${original.slice(0, start)}${replacement}${original.slice(start + op.length)}`,
   };
 }
 

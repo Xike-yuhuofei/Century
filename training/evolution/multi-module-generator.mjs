@@ -15,7 +15,7 @@
 
 import { readFileSync } from 'node:fs';
 import { moduleRegistry, getModule, sha256 } from '../../ai5/openevolve/node/module_registry.mjs';
-import { mutateModuleFunction } from './module-mutations.mjs';
+import { mutateModuleText, mutateModuleFunction } from './module-mutations.mjs';
 import { createCompiledModuleCandidate, candidateParametersFor } from './multi-module-candidate.mjs';
 import {
   runMultiModuleOpenEvolve, createCandidateFromOpenEvolveMulti, probeOpenEvolveAI9,
@@ -117,14 +117,49 @@ function modulesArray(map) {
     .map(([id, text]) => ({ id, text }));
 }
 
+/** 在父代源码上变异一个模块；父代缺失时回落官方实现并显式记录。 */
+function mutateFromParent(id, parentTexts, variant, seed) {
+  const parentText = parentTexts?.[id];
+  if (typeof parentText === 'string' && parentText.trim().length > 0) {
+    const result = mutateModuleText(id, parentText, variant, seed);
+    return { ...result, inherited: true };
+  }
+  const fallback = mutateModuleFunction(id, variant);
+  return { ...fallback, operator: `official-fallback:${fallback.label}`, inherited: false };
+}
+
 function createCandidate({
   strategy, moduleTexts, experiment, round, index, parentArtifact, label, sourceOrigin,
-  parameters = null, parameterMutation = null,
+  parameters = null, parameterMutation = null, parentTexts = null, operator = null,
+  hypothesisId = null, extraLineage = null, modulesInherited = null, fallbackToOfficial = null,
 }) {
   const modules = modulesArray(moduleTexts);
   assertCondition(modules.length > 0, `${strategy} 候选模块为空`);
   const id = candidateId({ strategy, round, index, modules: moduleTexts });
   const finalId = parentArtifact?.candidateId === id ? `${id}-x` : id;
+  const parentModuleHashes = parentTexts
+    ? Object.fromEntries(Object.entries(parentTexts).map(([mid, text]) => [mid, sha256(text)]))
+    : null;
+  const modulesChanged = parentModuleHashes
+    ? modules.filter(m => parentModuleHashes[m.id] !== sha256(m.text)).map(m => m.id).sort()
+    : modules.map(m => m.id).sort();
+  const lineage = {
+    parentCandidateId: parentArtifact?.candidateId ?? null,
+    parentSourceHash: parentArtifact?.sourceHash ?? null,
+    parentModuleHashes,
+    inputProgramHash: parentTexts
+      ? sha256Canonical(Object.entries(parentTexts).sort(([a], [b]) => a.localeCompare(b))
+        .map(([mid, text]) => [mid, sha256(text)]))
+      : null,
+    outputProgramHash: sha256Canonical(modules.map(m => [m.id, sha256(m.text)])),
+    bestProgramHash: null,
+    modulesChanged,
+    modulesInherited: modulesInherited ?? (parentTexts ? Object.keys(parentTexts).sort() : []),
+    fallbackToOfficial,
+    operator: operator ?? strategy,
+    hypothesisId,
+    ...(extraLineage ?? {}),
+  };
   const created = createCompiledModuleCandidate({
     modules,
     moduleIds: modules.map(m => m.id),
@@ -136,8 +171,9 @@ function createCandidate({
     parameters: parameters ? { ...parameters, id: finalId } : null,
     sourceOrigin,
     mutationLabel: label,
+    lineage,
   });
-  return { ...created, strategy, parameterMutation };
+  return { ...created, strategy, parameterMutation, lineage };
 }
 
 /**
@@ -186,9 +222,10 @@ export function generateMultiModuleBatch({
   // control 候选：官方模块（每个 campaign 至少保留一个行为基线）。
   if (moduleConfig.includeControl !== false) {
     try {
+      // 对照基线是"官方模块"本身，不是任何进化代的子代：parentId 必须为空。
       const official = createCompiledModuleCandidate({
         moduleIds: [ids[0]], experiment, round, index: 0,
-        parentId: parentArtifact?.candidateId ?? null,
+        parentId: null,
         sourceOrigin: 'deterministic-template',
         mutationLabel: 'official-control',
         candidateId: `cand-ai9-control-r${round}-${shortHash(sha256Canonical({ ids, round }), 6)}`,
@@ -214,12 +251,19 @@ export function generateMultiModuleBatch({
           });
           const selected = pickMany(ids, 2, random);
           const texts = {};
-          for (const id of selected) texts[id] = mutateModuleFunction(id, Math.floor(random() * 3)).text;
-          const expanded = expandDependencies(texts, { ...parentTexts }, registry);
+          const operators = [];
+          for (const id of selected) {
+            const mutated = mutateFromParent(id, parentTexts, Math.floor(random() * 3), Math.floor(random() * 1e9));
+            texts[id] = mutated.text;
+            operators.push(`${id}:${mutated.operator}`);
+          }
+          const expanded = expandDependencies({ ...parentTexts, ...texts }, { ...parentTexts }, registry);
           accept(createCandidate({
             strategy: 'pair-fallback', moduleTexts: expanded, experiment, round,
             index: candidates.length, parentArtifact,
             label: 'deterministic-fallback (OpenEvolve batch budget reached)', sourceOrigin: 'deterministic-template',
+            parentTexts, operator: operators.join(','),
+            fallbackToOfficial: ids.filter(id => !parentTexts[id]),
           }));
           continue;
         }
@@ -229,20 +273,37 @@ export function generateMultiModuleBatch({
           if (moduleConfig.allowDeterministicFallback === false) continue;
           const selected = pickMany(ids, 2, random);
           const texts = {};
-          for (const id of selected) texts[id] = mutateModuleFunction(id, Math.floor(random() * 3)).text;
-          const expanded = expandDependencies(texts, { ...parentTexts }, registry);
+          const operators = [];
+          for (const id of selected) {
+            const mutated = mutateFromParent(id, parentTexts, Math.floor(random() * 3), Math.floor(random() * 1e9));
+            texts[id] = mutated.text;
+            operators.push(`${id}:${mutated.operator}`);
+          }
+          const expanded = expandDependencies({ ...parentTexts, ...texts }, { ...parentTexts }, registry);
           accept(createCandidate({
             strategy: 'pair-fallback', moduleTexts: expanded, experiment, round,
             index: candidates.length, parentArtifact,
             label: 'deterministic-fallback (OpenEvolve unavailable)', sourceOrigin: 'deterministic-template',
+            parentTexts, operator: operators.join(','),
+            fallbackToOfficial: ids.filter(id => !parentTexts[id]),
           }));
           continue;
         }
         const selected = pickMany(ids, Math.min(ids.length, Math.max(2, Math.min(4, ids.length))), random);
         openEvolveAttempts += 1;
+        // 初始程序 = 父代真实源码（selected 模块），缺失模块才回落官方并逐模块标注。
+        const inheritanceTexts = {};
+        for (const id of selected) {
+          const text = parentTexts?.[id];
+          if (typeof text === 'string' && text.trim().length > 0) inheritanceTexts[id] = text;
+        }
         const run = runMultiModuleOpenEvolve({
           moduleIds: selected,
           iterations: moduleConfig.openevolveIterations ?? 2,
+          moduleTexts: Object.keys(inheritanceTexts).length ? inheritanceTexts : null,
+          checkpoint: moduleConfig.openevolveCheckpoint ?? null,
+          configPath: moduleConfig.openevolveConfigPath ?? null,
+          briefFile: moduleConfig.openevolveBriefPath ?? null,
           outputDir: moduleConfig.openevolveOutputDir
             ? `${moduleConfig.openevolveOutputDir}/r${round}c${candidates.length}`
             : null,
@@ -253,29 +314,42 @@ export function generateMultiModuleBatch({
         }
         const created = createCandidateFromOpenEvolveMulti({
           outputDir: run.outputDir, experiment, round, index: candidates.length,
-          parentId: parentArtifact?.candidateId ?? null, expectedModuleIds: selected,
+          parentArtifact, parentModuleTexts: inheritanceTexts,
+          expectedModuleIds: selected, run,
+          hypothesisId: hints?.hypothesisId ?? null,
         });
         created.strategy = strategy;
         if (accept(created)) {
-          created.provenance = { ...created.provenance, strategy, selectedModules: selected, elapsedMs: run.elapsedMs };
+          created.provenance = {
+            ...created.provenance, strategy, selectedModules: selected, elapsedMs: run.elapsedMs,
+          };
         }
         continue;
       }
       if (strategy === 'single') {
         const selected = [pick(ids, random)];
-        const text = mutateModuleFunction(selected[0], Math.floor(random() * 3)).text;
-        const expanded = expandDependencies({ [selected[0]]: text }, { ...parentTexts }, registry);
+        const mutated = mutateFromParent(selected[0], parentTexts, Math.floor(random() * 3), Math.floor(random() * 1e9));
+        const expanded = expandDependencies({ ...parentTexts, [selected[0]]: mutated.text }, { ...parentTexts }, registry);
         accept(createCandidate({
           strategy, moduleTexts: expanded, experiment, round, index: candidates.length,
           parentArtifact, label: `single:${selected[0]}`, sourceOrigin: 'deterministic-template',
+          parentTexts, operator: `${selected[0]}:${mutated.operator}`,
+          fallbackToOfficial: mutated.inherited ? null : [selected[0]],
         }));
         continue;
       }
       if (strategy === 'pair') {
         const selected = pickMany(ids, Math.min(2, ids.length), random);
         const texts = {};
-        for (const id of selected) texts[id] = mutateModuleFunction(id, Math.floor(random() * 3)).text;
-        const expanded = expandDependencies(texts, { ...parentTexts }, registry);
+        const operators = [];
+        const fallbacks = [];
+        for (const id of selected) {
+          const mutated = mutateFromParent(id, parentTexts, Math.floor(random() * 3), Math.floor(random() * 1e9));
+          texts[id] = mutated.text;
+          operators.push(`${id}:${mutated.operator}`);
+          if (!mutated.inherited) fallbacks.push(id);
+        }
+        const expanded = expandDependencies({ ...parentTexts, ...texts }, { ...parentTexts }, registry);
         const joint = jointParameterMutation({ moduleConfig, parentArtifact, random });
         accept(createCandidate({
           strategy, moduleTexts: expanded, experiment, round, index: candidates.length,
@@ -284,14 +358,23 @@ export function generateMultiModuleBatch({
           sourceOrigin: 'deterministic-template',
           parameters: joint?.parameters ?? null,
           parameterMutation: joint,
+          parentTexts, operator: operators.join(','),
+          fallbackToOfficial: fallbacks.length ? fallbacks : null,
         }));
         continue;
       }
       if (strategy === 'multi') {
         const selected = pickMany(ids, Math.min(3, ids.length), random);
         const texts = {};
-        for (const id of selected) texts[id] = mutateModuleFunction(id, Math.floor(random() * 3)).text;
-        const expanded = expandDependencies(texts, { ...parentTexts }, registry);
+        const operators = [];
+        const fallbacks = [];
+        for (const id of selected) {
+          const mutated = mutateFromParent(id, parentTexts, Math.floor(random() * 3), Math.floor(random() * 1e9));
+          texts[id] = mutated.text;
+          operators.push(`${id}:${mutated.operator}`);
+          if (!mutated.inherited) fallbacks.push(id);
+        }
+        const expanded = expandDependencies({ ...parentTexts, ...texts }, { ...parentTexts }, registry);
         const joint = jointParameterMutation({ moduleConfig, parentArtifact, random });
         accept(createCandidate({
           strategy, moduleTexts: expanded, experiment, round, index: candidates.length,
@@ -300,6 +383,8 @@ export function generateMultiModuleBatch({
           sourceOrigin: 'deterministic-template',
           parameters: joint?.parameters ?? null,
           parameterMutation: joint,
+          parentTexts, operator: operators.join(','),
+          fallbackToOfficial: fallbacks.length ? fallbacks : null,
         }));
         continue;
       }
@@ -322,8 +407,9 @@ export function generateMultiModuleBatch({
         const expanded = expandDependencies(texts, { ...aTexts, ...bTexts }, registry);
         accept(createCandidate({
           strategy, moduleTexts: expanded, experiment, round, index: candidates.length,
-          parentArtifact, label: `crossover:${a.candidateId}+${b.candidateId}`,
-          sourceOrigin: 'crossover',
+          parentArtifact: a, parentTexts: aTexts,
+          label: `crossover:${a.candidateId}+${b.candidateId}`,
+          sourceOrigin: 'crossover', operator: `crossover:${a.candidateId}+${b.candidateId}`,
         }));
         continue;
       }
@@ -348,8 +434,9 @@ export function generateMultiModuleBatch({
         }
         accept(createCandidate({
           strategy, moduleTexts: texts, experiment, round, index: candidates.length,
-          parentArtifact, label: `ablation:${removed}<-${donor.candidateId}`,
-          sourceOrigin: 'ablation',
+          parentArtifact: donor, parentTexts: textMap,
+          label: `ablation:${removed}<-${donor.candidateId}`,
+          sourceOrigin: 'ablation', operator: `ablation:remove-${removed}`,
         }));
         continue;
       }
