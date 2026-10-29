@@ -35,7 +35,7 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 | Supervisor | 完成 | 心跳、后代 CPU 活动判活、进程树清理、有界重试+退避、连续失败熔断、模型故障转移、资源门控、安全停止（15 分钟硬超时）、运行报告 |
 | 持久任务队列 | 完成 | `task-queue.mjs`：PENDING→…→DONE、幂等提交标记、COMMITTING 崩溃标记待核验、种子预留（重叠拒绝） |
 | 故障注入 7 点 | 7/7 实测 PASS | `training/reports/ai11-fault-injection.json`（含真实 OpenEvolve/codex 中断） |
-| 6 小时无人值守验收 | 进行中（最终运行 `ai11-6h-v4`，启动时 headDirty=false） | 见 B 节与 `ai11-endurance-audit.mjs --campaign ai11-6h-v4`；前三次尝试因真实缺陷重启，见 D 节 |
+| 6 小时无人值守验收 | **完成（PASS）** | `ai11-6h-v4`：6.109h / 58 轮 / 348 候选 / 3256 局；审计 8/8 硬性证据通过（`training/reports/ai11-6h-endurance-audit.json`） |
 
 ### P3 高级优化
 
@@ -99,6 +99,10 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 | B 失败反馈 | B2 简报+假设 | 4 | 48 | 1（回退 pair） | +0.25 | 1/2 | 0 |
 | C 研究效率 | C0 旧直接变异 | 6 | 64 | 0 | +0.125 | 1/2 | 0 |
 | C 研究效率 | C1 科研闭环 | 6 | 64 | 2（回退 pair） | 0 | 0/2 | 0 |
+| A2 checkpoint 恢复 | 停止→resume | 4 | 32 | 1 | 完成 2 轮 | 指纹/摘要一致、证据未覆盖、种子窗口 4/4 唯一 | 0 |
+
+A2（完整 checkpoint 恢复）实测 7/7 检查 PASS（`training/reports/ai11-a2-checkpoint-drill.json`），
+并在 6h 运行中以真实卡死恢复再次验证（kill → resume → 继续 26 轮）。
 
 ### 6 小时运行的分人数配对第一名率（描述性，非单一假设检验）
 
