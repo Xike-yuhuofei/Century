@@ -147,8 +147,8 @@ A2（完整 checkpoint 恢复）实测 7/7 检查 PASS（`training/reports/ai11-
 - PR：#75（https://github.com/Xike-yuhuofei/Century/pull/75）
 - 提交顺序：基线审计 → P0/P1/P2 主体 → 缺陷修复（crossover 谱系、无变化候选、
   statusPath 脏标记、消融判定）→ 实验与故障注入证据 → 6h 运行证据
-- CI：最新提交 28 个 job success、6 个 skipped（deploy/promotion/pages 仅在发布时运行）
-- 最终 `main` SHA：合并后回填
+- CI：PR 最终提交 **success（0 failure，deploy/promotion/pages 按预期 skipped）**；main 合并后 CI 另行复跑
+- 最终 `main` SHA：**`a3310a6e624caff98856f72935b43ba278143e98`**（squash 合并，2026-10-29 22:07:58 UTC）
 - 回滚方案：本 PR 只新增研究/监督/证据模块与开关，不修改冠军、规则引擎与正式评估器；
   回滚 = revert 合并提交并重新部署上一构建（`scripts/ci/rollback-champion.mjs` 已有演练）
 
