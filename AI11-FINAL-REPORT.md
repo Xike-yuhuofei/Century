@@ -26,6 +26,7 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 | Research Orchestrator | 完成 | `research-orchestrator.mjs`：bootstrap / exploit-weakness / replicate / ablate / switch-direction |
 | ResearchBrief 进入 LLM | 完成 | 每轮生成 `openevolve-configs/rNNN.yaml`（system_message 注入）+ `.brief.json`（evaluator artifacts 通道）；contextHash 可核验 |
 | Failure Diagnosis | 完成 | `failure-diagnosis.mjs` 按人数分层比较 A/B 动作分布与胜负翻转；状态 supported/weakened/rejected/inconclusive |
+| 最小失败改动定位 | 完成（观测性） | `module-effects.mjs` + `ai11-module-effects.mjs`：同 (轮, 父代, 种子) 层内比较含/不含模块的配对第一名结果；65 层、12 模块，M08 负关联、M10 正关联，其余 inconclusive；反事实回放未实现 |
 | Research Memory | 完成 | `research-memory.mjs` JSONL 跨进程；否定假设保留；检索已测假设/正向模块/失败 |
 
 ### P2 无人值守
@@ -56,6 +57,7 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 | 启动 / 恢复 / 状态 / 停止 | `node training/evolution/autonomous-run.mjs start|resume|status|stop`（`--coevolve` 多模块） |
 | 无人值守启动 | `node training/scripts/run-supervisor.mjs --campaign <id> --hours 6 ...` |
 | 研究/谱系/统计报告 | `node training/scripts/research-report.mjs --campaign <id> --out <path>` |
+| 模块级观测效应（最小改动定位） | `node training/scripts/ai11-module-effects.mjs --campaign <id> --out <path>` |
 | 运行验收 | `node training/scripts/ai11-endurance-audit.mjs --campaign <id> --hours 6` |
 | 故障注入 | `node training/scripts/ai11-fault-injection.mjs` |
 | 对照实验 | `node training/scripts/ai11-experiments.mjs --experiment A|B|C` |
@@ -65,7 +67,8 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 
 1. **竞技收益未证明**：6h 与三组实验均为 inconclusive/负增量；无候选满足正式挑战资格。
 2. **失败归因样本不足**：4 种子 × 4 人数 = 每层 1 对，57 份归因文件均为 inconclusive；
-   反馈通道存在，但没有"supported"级因果结论。
+   反馈通道存在，但没有"supported"级因果结论。模块级最小改动定位只到观测关联
+   （`ai11-module-effects.json`），**反事实回放未实现**。
 3. **顺序检验 interim 未启用**：设计已模拟验证（两次查看：313 种子/人、功效 0.80），
    runner 仍为固定样本单次 final look。
 4. **编排器停滞策略单一**：6h 中 crossover 134 + ablation 97，探索多样性不足（见 F 节）。
@@ -141,6 +144,21 @@ A2（完整 checkpoint 恢复）实测 7/7 检查 PASS（`training/reports/ai11-
 | 5 | 58 | 0.0000 | 同上 |
 
 深验总览：58 个深验候选中 6 个正向、15 个负向、37 个为 0；均值 −0.047。
+
+### 模块级观测边际效应（P1.3 最小失败改动定位）
+
+`training/scripts/ai11-module-effects.mjs` 以 (round, parentId) 分层（层内候选共享该轮
+screen 种子），对每个种子计算"改动含模块 M / 不含 M"的 candidateFirst 均值差，再跨层
+等权汇总 + 10,000 次 bootstrap 95% 区间（报告 `training/reports/ai11-module-effects.json`）：
+
+| 模块 | 层数 | 观测效应 | 95% 区间 | 方向 |
+|---|---|---|---|---|
+| M08 | 11 | −0.155 | [−0.258, −0.064] | negative-association |
+| M10 | 11 | +0.099 | [0.030, 0.174] | positive-association |
+| 其余 10 个模块 | 8–25 | −0.051…+0.119 | 均跨 0 | inconclusive |
+
+口径：观测性关联，不是因果；层内生成算子仍可能不同，反事实回放未实现，
+不得据此自动淘汰模块，只能作为下一轮简报的最小改动线索。
 
 ### 结论
 
