@@ -1,0 +1,69 @@
+{
+  "schema": "century-endurance-audit-v1",
+  "campaign": "ai11-6h-v4",
+  "verdict": "PASS",
+  "actualHours": 6.109,
+  "rounds": 58,
+  "candidates": 348,
+  "games": 3256,
+  "checks": [
+    {
+      "id": "P2-1",
+      "title": "连续运行 ≥ 请求时长（真实墙钟）",
+      "ok": true,
+      "evidence": "actualHours=6.109 required=6",
+      "unmet": null
+    },
+    {
+      "id": "P2-2",
+      "title": "真实候选与真实对局（非空转）",
+      "ok": true,
+      "evidence": "candidates=348 games=3256 rounds=58",
+      "unmet": null
+    },
+    {
+      "id": "P2-3",
+      "title": "真实 LLM 参与（OpenEvolve + token 核算）",
+      "ok": true,
+      "evidence": "llmCandidates=14 tokenRecords=14",
+      "unmet": null
+    },
+    {
+      "id": "P2-4",
+      "title": "跨代继承（≥3 代真实父源码链）",
+      "ok": true,
+      "evidence": "lineageRecords=290 threeGenerationChain=true",
+      "unmet": null
+    },
+    {
+      "id": "P2-5",
+      "title": "研究简报进入 LLM 配置 + 失败归因回流",
+      "ok": true,
+      "evidence": "briefConfigs=58 hypotheses=116 diagnoses=57",
+      "unmet": null
+    },
+    {
+      "id": "P2-6",
+      "title": "异常恢复证据",
+      "ok": true,
+      "evidence": "recoveries=1 failures=1 faultInjectionPass=7 faultInjectionFail=0",
+      "unmet": null
+    },
+    {
+      "id": "P2-7",
+      "title": "预算控制（墙钟不越界 + 正式验证池零消耗）",
+      "ok": true,
+      "evidence": "wallUsed=19259793 maxWall=21600000 validationPoolConsumed=false",
+      "unmet": null
+    },
+    {
+      "id": "P2-8",
+      "title": "持久任务队列与幂等提交",
+      "ok": true,
+      "evidence": "commitMarkers=1 queue={\"schema\":\"century-task-queue-v1\",\"tasks\":2,\"byState\":{\"RETRYING\":1,\"DONE\":1},\"seedReservations\":0,\"commits\":1}",
+      "unmet": null
+    }
+  ],
+  "unmet": [],
+  "note": "可靠性验收通过；是否带来竞技提升必须另行看配对第一名率证据"
+}

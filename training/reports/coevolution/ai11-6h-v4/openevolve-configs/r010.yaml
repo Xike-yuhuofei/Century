@@ -1,0 +1,83 @@
+# Century AI 9.0 × OpenEvolve 多模块联合进化配置
+# 演化对象：web-v1/src/ai/evolve/modules.ts、evaluator.ts、knowledge.ts 中注册的
+# 12 个决策模块函数；一个 program 可含多个 EVOLVE-BLOCK，每块 = 一个模块。
+# 运行方式见 training/evolution/openevolve-multi-bridge.mjs；LLM 走 codex 登录。
+
+max_iterations: 6
+checkpoint_interval: 1
+diff_based_evolution: true
+max_code_length: 40000
+enforce_evolve_blocks: true
+
+llm:
+  provider: "codex_app_server"
+  models:
+    # 36h 长周期按权重轮换同一账号下已验证可用的 5.6 系列模型：
+    # sol 为主，terra/luna 分摊额度；额度窗口耗尽时由生成器显式降级为确定性 pair。
+    - name: "gpt-5.6-sol"
+      weight: 0.5
+      timeout: 900
+      reasoning_effort: "low"
+    - name: "gpt-5.6-terra"
+      weight: 0.3
+      timeout: 900
+      reasoning_effort: "low"
+    - name: "gpt-5.6-luna"
+      weight: 0.2
+      timeout: 900
+      reasoning_effort: "low"
+  temperature: 0.85
+  max_tokens: 20000
+
+prompt:
+  language: "typescript"
+  system_message: |
+    ## Research brief (unverified hypotheses, do not treat as facts)
+    Round 10. Context hash: 937534916a12e0ec0d2e76c64110586645cb92e0269f24aab03b50454ca5a96a
+    Parent candidate: cand-ai9-crossover-r8c5-cc83ce
+    Paired first-place delta: 0 (lower 0, pairs 4)
+    Weakest seat stratum: 2p (delta 0)
+    Previously tested hypotheses (do not repeat without new evidence):
+    - H6A untested: 候选在 2 人层的配对第一名率增量为 0，可能源于资源获取/认领节奏失衡
+    - H6B untested: 候选改动可能只改变了行为分布而未触及胜负机制（无效探索）
+    - H7A untested: 候选在 2 人层的配对第一名率增量为 0，可能源于资源获取/认领节奏失衡
+    - H7B untested: 候选改动可能只改变了行为分布而未触及胜负机制（无效探索）
+    - H8A untested: 候选在 2 人层的配对第一名率增量为 0，可能源于资源获取/认领节奏失衡
+    - H8B untested: 候选改动可能只改变了行为分布而未触及胜负机制（无效探索）
+    - H9A untested: 候选在 2 人层的配对第一名率增量为 0，可能源于资源获取/认领节奏失衡
+    - H9B untested: 候选改动可能只改变了行为分布而未触及胜负机制（无效探索）
+    Competing mechanisms you must distinguish:
+    - H10A: 候选在 2 人层的配对第一名率增量为 0，可能源于资源获取/认领节奏失衡
+      * mechanism-acquisition-tempo: 获取（acquire）节奏偏离最优：过早/过晚认领导致目标竞争失败
+        prediction: 调整 M02/M04/M10 中的获取-认领权衡后，该层 championWinFlips 下降 ≥2
+        would be falsified if: 若动作分布 L1 改变但配对 delta 不变或下降，则该机制被否定
+        modules: M02, M04, M10
+      * mechanism-endgame-contest: 终局目标竞争估值不足：对手关键目标被抢或自身终局路线选错
+        prediction: 调整 M06/M07/M08 的终局/竞争项后，该层终局分差缩小且配对 delta 上升
+        would be falsified if: 若终局分差不变，则该机制被否定
+        modules: M06, M07, M08
+    - H10B: 候选改动可能只改变了行为分布而未触及胜负机制（无效探索）
+      * mechanism-behavior-only: 改动只改变动作分布，不改变关键决策点
+        prediction: 动作分布 L1 显著变化但同种子胜负不翻转
+        would be falsified if: 若出现 ≥2 个 candidate-win-flip 且无对应 champion-win-flip，则否定该机制
+        modules: M01, M02, M03, M04
+      * mechanism-variance: 观测到的差异来自小样本随机波动而非算法差异
+        prediction: 在新研究种子上独立复验时 delta 收缩到 0 附近
+        would be falsified if: 若独立种子复验仍显著为正，则否定该机制
+        modules: M01, M02, M03, M04
+    Allowed modules: M01, M02, M03, M04, M05, M06, M07, M08, M09, M10, M11, M12. Do not touch anything else.
+    Forbidden: rules engine, evaluator, statistics gate, tests, champion publishing, hidden deck order, imports/eval/IO/network/clock/randomness.
+# 级联：stage1 静态+编译+多模块探针；stage2 32 局真实对局；stage3 96 局。
+evaluator:
+  timeout: 9000
+  cascade_evaluation: true
+  cascade_thresholds: [0.5, 0.45]
+  max_retries: 1
+
+database:
+  population_size: 16
+  archive_size: 8
+  num_islands: 3
+  elite_selection_ratio: 0.2
+  exploitation_ratio: 0.7
+  similarity_threshold: 0.99

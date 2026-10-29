@@ -1,0 +1,123 @@
+{
+  "schema": "century-supervisor-report-v1",
+  "openEvolveStageSeeds": {
+    "stage2": 8,
+    "stage3": 8,
+    "note": "仅在无人值守运行中缩小研究评估规模；正式验证完全不使用这些数量"
+  },
+  "campaign": "ai11-6h-v4",
+  "startedAt": "2026-10-29T15:05:35.717Z",
+  "plannedHours": 6.1,
+  "stallMinutes": 45,
+  "maxFailures": 6,
+  "pollSeconds": 20,
+  "runs": [
+    {
+      "attempt": 1,
+      "command": "start",
+      "pid": 74534,
+      "startedAt": "2026-10-29T15:05:35.726Z",
+      "fallback": false,
+      "taskId": "task-ac9491882c47e00b",
+      "endedAt": "2026-10-29T19:02:37.015Z",
+      "code": null,
+      "signal": "SIGTERM",
+      "stalled": true
+    },
+    {
+      "attempt": 2,
+      "command": "resume",
+      "pid": 24506,
+      "startedAt": "2026-10-29T19:02:52.086Z",
+      "fallback": false,
+      "taskId": "task-7f8800b487b530d0",
+      "endedAt": "2026-10-29T21:12:06.985Z",
+      "code": 0,
+      "signal": null,
+      "stalled": false
+    }
+  ],
+  "failures": [
+    {
+      "at": "2026-10-29T19:02:37.018Z",
+      "attempt": 1,
+      "stalled": true,
+      "code": null,
+      "llmHint": false
+    }
+  ],
+  "recoveries": [
+    {
+      "at": "2026-10-29T19:02:37.018Z",
+      "attempt": 1,
+      "action": "kill-and-resume"
+    }
+  ],
+  "resourceSamples": [
+    {
+      "at": "2026-10-29T15:05:35.721Z",
+      "ok": true,
+      "snapshot": {
+        "at": "2026-10-29T15:05:35.723Z",
+        "platform": "darwin",
+        "arch": "arm64",
+        "cpuCount": 10,
+        "loadAverage": [
+          2.873046875,
+          3.01708984375,
+          3.78564453125
+        ],
+        "totalMem": 17179869184,
+        "freeMem": 1037008896,
+        "availableMem": 5255102464,
+        "freeMemRatio": 0.0604,
+        "availableMemRatio": 0.3059,
+        "usedMem": 11924766720,
+        "freeDisk": 961840934912,
+        "processRss": 51183616
+      }
+    },
+    {
+      "at": "2026-10-29T19:02:52.032Z",
+      "ok": true,
+      "snapshot": {
+        "at": "2026-10-29T19:02:52.038Z",
+        "platform": "darwin",
+        "arch": "arm64",
+        "cpuCount": 10,
+        "loadAverage": [
+          4.98193359375,
+          5.34521484375,
+          5.318359375
+        ],
+        "totalMem": 17179869184,
+        "freeMem": 1220673536,
+        "availableMem": 5441306624,
+        "freeMemRatio": 0.0711,
+        "availableMemRatio": 0.3167,
+        "usedMem": 11738562560,
+        "freeDisk": 961599655936,
+        "processRss": 62390272
+      }
+    }
+  ],
+  "modelFailover": [],
+  "stopReason": "supervisor-deadline",
+  "endedAt": "2026-10-29T21:12:07.003Z",
+  "actualHours": 6.109,
+  "queue": {
+    "schema": "century-task-queue-v1",
+    "tasks": 2,
+    "byState": {
+      "RETRYING": 1,
+      "DONE": 1
+    },
+    "seedReservations": 0,
+    "commits": 1
+  },
+  "recoveredTasks": [],
+  "campaignStatus": "stopped",
+  "eventsBytes": 885201,
+  "eventsSha256": "f61ce41a9603d9ddeffa65277ab20675bcfbd42e75142e29d54d10e2074670c4",
+  "finalState": "stopped"
+}

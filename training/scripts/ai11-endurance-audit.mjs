@@ -41,7 +41,7 @@ const indexLines = readLines(join(root, 'research-index.jsonl'));
 const memoryLines = readLines(join(root, 'research-memory.jsonl'));
 
 const checks = [];
-const add = (id, title, ok, evidence, unmet = null) => checks.push({ id, title, ok, evidence, unmet });
+const add = (id, title, ok, evidence, unmet = null) => checks.push({ id, title, ok, evidence, unmet: ok ? null : unmet });
 
 if (!state) {
   console.log(JSON.stringify({
