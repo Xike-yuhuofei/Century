@@ -228,8 +228,19 @@ async function runOnce({ attempt, useFallback }) {
     const timer = setInterval(() => {
       const now = Date.now();
       if (now >= deadline) {
-        log('deadline reached; requesting safe stop');
-        writeFileSync(join(campaignRoot, '.stop'), JSON.stringify({ reason: 'supervisor-deadline', at: new Date(now).toISOString() }));
+        if (!report.stopReason) {
+          report.stopReason = 'supervisor-deadline';
+          log('deadline reached; requesting safe stop');
+          writeFileSync(join(campaignRoot, '.stop'), JSON.stringify({ reason: 'supervisor-deadline', at: new Date(now).toISOString() }));
+        }
+        // 安全停止最多等 15 分钟；仍不退出则强制结束进程树，避免监督器被卡死任务拖住。
+        if (now >= deadline + 15 * 60_000) {
+          log('safe stop timeout; force killing process tree');
+          killTree(child.pid, 'SIGTERM');
+          setTimeout(() => killTree(child.pid, 'SIGKILL'), 30_000);
+          clearInterval(timer);
+          resolveExit({ code: null, signal: 'SIGKILL', stalled: true });
+        }
       }
       if (existsSync(join(campaignRoot, '.stop')) && !report.stopReason) {
         report.stopReason = 'operator-or-deadline';

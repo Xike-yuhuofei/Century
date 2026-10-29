@@ -45,8 +45,8 @@ const outRoot = resolve(REPO_ROOT, 'training/reports/ai11-experiments', `${exper
 
 const ARMS = {
   A: [
-    { id: 'A0', flags: ['--no-inherit'], strategies: 'single,pair', useOpenEvolve: false, researchContext: 'off' },
-    { id: 'A1', flags: [], strategies: 'single,pair', useOpenEvolve: false, researchContext: 'brief' },
+    { id: 'A0', flags: ['--no-inherit', '--research-context', 'off'], strategies: 'single,pair', useOpenEvolve: false, researchContext: 'off' },
+    { id: 'A1', flags: ['--research-context', 'brief'], strategies: 'single,pair', useOpenEvolve: false, researchContext: 'brief' },
   ],
   B: [
     { id: 'B0', flags: ['--research-context', 'off'], strategies: 'openevolve', useOpenEvolve: true, researchContext: 'off' },
@@ -105,8 +105,25 @@ function runArm(arm) {
     ? readFileSync(join(campaignRoot, 'research-index.jsonl'), 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l))
     : [];
   const candidatesAll = results.rounds.flatMap(r => r.candidates ?? []);
+  // 继承的判据是 parentId（真实父代 artifact），不是 lineage 字段存在与否：
+  // A0 的"引导代"也会写 lineage（parentCandidateId=null），不能被误算成继承。
+  const inherited = candidatesAll.filter(c => c.parentId);
   const lineage = candidatesAll.filter(c => c.lineage);
-  const modulesChanged = lineage.filter(c => (c.lineage?.modulesChanged ?? []).length > 0).length;
+  const modulesChanged = inherited.filter(c => (c.lineage?.modulesChanged ?? []).length > 0).length;
+  const parentMap = new Map(candidatesAll.map(c => [c.candidateId, c.parentId ?? null]));
+  const depthOf = (id) => {
+    let depth = 1;
+    let cursor = parentMap.get(id) ?? null;
+    const seen = new Set();
+    while (cursor && !seen.has(cursor)) {
+      seen.add(cursor);
+      depth += 1;
+      cursor = parentMap.get(cursor) ?? null;
+    }
+    return depth;
+  };
+  const maxGenerationDepth = candidatesAll.length ? Math.max(...candidatesAll.map(c => depthOf(c.candidateId))) : 0;
+  const distinctParents = new Set(inherited.map(c => c.parentId)).size;
   const behaviorHashes = new Set();
   const deep = candidatesAll.filter(c => c.deep?.status === 'done' && Number.isFinite(c.deep?.metrics?.firstPlaceDelta));
   const deltaValues = deep.map(c => c.deep.metrics.firstPlaceDelta);
@@ -121,8 +138,11 @@ function runArm(arm) {
     games: results.budgetUsed.games,
     wallMs: results.budgetUsed.wallMs,
     lineageCandidates: lineage.length,
+    inheritedCandidates: inherited.length,
+    distinctParents,
+    maxGenerationDepth,
     modulesChangedCandidates: modulesChanged,
-    behaviorChangeRate: lineage.length ? Number((modulesChanged / lineage.length).toFixed(4)) : null,
+    inheritedChangeRate: inherited.length ? Number((modulesChanged / inherited.length).toFixed(4)) : null,
     deepConfirmed: deep.length,
     meanFirstPlaceDelta: deltaValues.length
       ? Number((deltaValues.reduce((s, x) => s + x, 0) / deltaValues.length).toFixed(4)) : null,

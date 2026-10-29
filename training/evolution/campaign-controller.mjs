@@ -763,7 +763,15 @@ export class CampaignController {
           `候选 ${artifact.candidateId} 缺少 lineage（拒绝未登记谱系的候选）`);
         assertCondition(artifact.parentId === null, '对照基线候选不得声明父代');
       } else if (multiModule) {
-        this._verifyLineage({ artifact, parentArtifact, round: roundData.round });
+        // crossover/ablation 的真实父代是捐赠精英（可能不是本轮主父代），
+        // 谱系必须按 artifact 自己声明的 parentId 去 store 取回并核验，
+        // 不能拿"本轮父代"去否定合法的组合候选。
+        let lineageParent = parentArtifact;
+        if (artifact.parentId && artifact.parentId !== parentArtifact?.candidateId) {
+          lineageParent = this.store.get(artifact.parentId);
+          this._assertParentIntegrity(lineageParent, artifact.parentId);
+        }
+        this._verifyLineage({ artifact, parentArtifact: lineageParent, round: roundData.round });
       }
       const put = this.store.put(artifact);
       this.research.candidate({

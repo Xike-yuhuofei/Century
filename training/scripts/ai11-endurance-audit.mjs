@@ -89,9 +89,16 @@ add('P2-5', '研究简报进入 LLM 配置 + 失败归因回流',
 
 const recoveries = report?.recoveries?.length ?? 0;
 const failures = report?.failures?.length ?? 0;
-add('P2-6', '异常恢复证据', recoveries >= 1 || failures >= 1,
-  `recoveries=${recoveries} failures=${failures}`,
-  '没有任何崩溃/卡死恢复记录');
+// 恢复能力可以由两类**真实**证据支撑：
+// 1) 本次长跑中发生的卡死/崩溃被自动恢复；
+// 2) 独立、可重复的 7 点故障注入（至少 1 项 PASS，且无 FAIL）。
+const faultReport = readJSON(resolve(REPO_ROOT, 'training/reports/ai11-fault-injection.json'));
+const faultPass = (faultReport?.checks ?? []).filter(c => c.status === 'PASS').length;
+const faultFail = (faultReport?.checks ?? []).filter(c => c.status === 'FAIL').length;
+const recoveryEvidence = recoveries >= 1 || failures >= 1 || (faultPass >= 1 && faultFail === 0);
+add('P2-6', '异常恢复证据', recoveryEvidence,
+  `recoveries=${recoveries} failures=${failures} faultInjectionPass=${faultPass} faultInjectionFail=${faultFail}`,
+  '既无长跑恢复记录，也没有通过的无 FAIL 故障注入证据');
 
 const wall = results?.budgetUsed?.wallMs ?? state.budgetUsed?.wallMs ?? 0;
 const maxWall = results?.budget?.maxWallMs ?? state.config?.budget?.maxWallMs ?? null;
