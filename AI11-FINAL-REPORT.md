@@ -15,7 +15,7 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 | 项 | 状态 | 证据 |
 |---|---|---|
 | P0.1 真实跨代源码继承 | 完成 | `composeProgramFromTexts`、`mutateModuleText`、artifact `lineage` 哈希链；`lineage.test.mjs` 三代真实继承 + 父代缺失/哈希篡改拒绝（macOS CI `ai9-research` PASS） |
-| P0.2 统一证据契约 | 完成 | `research-index.mjs`（candidate/lineage/evaluation/failureCase/formalChallenge）；LLM token 从 OpenEvolve 日志聚合，未知写 null |
+| P0.2 统一证据契约 | 完成 | `research-index.mjs`（candidate/lineage/evaluation/failureCase/formalChallenge）；候选记录 `researchContextHash`、lineage 记录 `configPath`/`bestProgramHash`/`hypothesisId`、evaluation 记录 `behaviorHash` + 种子批次；LLM token 从 OpenEvolve 日志聚合，未知写 null |
 | P0.3 配对第一名率筛选 | 完成 | 深验指标保留 `firstPlaceDelta`/CI；selector 主键改为配对增量下界；研究保留 vs 正式挑战资格分离（≥10pp、≥16 对、非对照基线） |
 | P0.4 统计功效死锁 | 完成 | `statistical-plan-ai11.json`：K=12、α=1/240、方差 1.0、MDE 20pp、313 种子/人数、功效 0.80、H0 FWER 模拟 0.003；旧几何账本只读保留；`--check` 通过 |
 
@@ -26,7 +26,7 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 | Research Orchestrator | 完成 | `research-orchestrator.mjs`：bootstrap / exploit-weakness / replicate / ablate / switch-direction |
 | ResearchBrief 进入 LLM | 完成 | 每轮生成 `openevolve-configs/rNNN.yaml`（system_message 注入）+ `.brief.json`（evaluator artifacts 通道）；contextHash 可核验 |
 | Failure Diagnosis | 完成 | `failure-diagnosis.mjs` 按人数分层比较 A/B 动作分布与胜负翻转；状态 supported/weakened/rejected/inconclusive |
-| 最小失败改动定位 | 完成（观测性） | `module-effects.mjs` + `ai11-module-effects.mjs`：同 (轮, 父代, 种子) 层内比较含/不含模块的配对第一名结果；65 层、12 模块，M08 负关联、M10 正关联，其余 inconclusive；反事实回放未实现 |
+| 最小失败改动定位 | 完成（观测性） | `module-effects.mjs` + `ai11-module-effects.mjs`：同 (轮, 父代, 种子) 层内比较含/不含模块的配对第一名结果；65 层、12 模块，M08 负关联、M10 正关联，其余 inconclusive；同种子 A/B 政策反事实已由配对评估覆盖，单步动作反事实回放未实现 |
 | Research Memory | 完成 | `research-memory.mjs` JSONL 跨进程；否定假设保留；检索已测假设/正向模块/失败 |
 
 ### P2 无人值守
@@ -68,7 +68,8 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 1. **竞技收益未证明**：6h 与三组实验均为 inconclusive/负增量；无候选满足正式挑战资格。
 2. **失败归因样本不足**：4 种子 × 4 人数 = 每层 1 对，57 份归因文件均为 inconclusive；
    反馈通道存在，但没有"supported"级因果结论。模块级最小改动定位只到观测关联
-   （`ai11-module-effects.json`），**反事实回放未实现**。
+   （`ai11-module-effects.json`）；同种子 A/B 政策反事实已由配对评估覆盖，
+   **单步动作反事实回放未实现**（需引擎快照/恢复支持）。
 3. **顺序检验 interim 未启用**：设计已模拟验证（两次查看：313 种子/人、功效 0.80），
    runner 仍为固定样本单次 final look。
 4. **编排器停滞策略单一**：6h 中 crossover 134 + ablation 97，探索多样性不足（见 F 节）。
@@ -157,7 +158,7 @@ screen 种子），对每个种子计算"改动含模块 M / 不含 M"的 candid
 | M10 | 11 | +0.099 | [0.030, 0.174] | positive-association |
 | 其余 10 个模块 | 8–25 | −0.051…+0.119 | 均跨 0 | inconclusive |
 
-口径：观测性关联，不是因果；层内生成算子仍可能不同，反事实回放未实现，
+口径：观测性关联，不是因果；层内生成算子仍可能不同，单步动作反事实回放未实现，
 不得据此自动淘汰模块，只能作为下一轮简报的最小改动线索。
 
 ### 结论
@@ -188,12 +189,15 @@ screen 种子），对每个种子计算"改动含模块 M / 不含 M"的 candid
 
 ## E. GitHub 交付
 
-- 分支：`feat/ai11-research-system`
-- PR：#75（https://github.com/Xike-yuhuofei/Century/pull/75）
+- 分支：`feat/ai11-research-system`（主体）、`feat/ai11-module-effects`（P1.3 补充）、
+  `feat/ai11-evidence-context`（P0.2 证据字段加固）
+- PR：#75（https://github.com/Xike-yuhuofei/Century/pull/75，主体）、
+  #78（https://github.com/Xike-yuhuofei/Century/pull/78，模块级观测效应）
 - 提交顺序：基线审计 → P0/P1/P2 主体 → 缺陷修复（crossover 谱系、无变化候选、
   statusPath 脏标记、消融判定）→ 实验与故障注入证据 → 6h 运行证据
 - CI：PR 最终提交 **success（0 failure，deploy/promotion/pages 按预期 skipped）**；main 合并后 CI 另行复跑
-- 最终 `main` SHA：**`a3310a6e624caff98856f72935b43ba278143e98`**（squash 合并，2026-10-29 22:07:58 UTC）
+- 最终 `main` SHA：**`e3b884c`**（#78 squash 合并；AI11 主体代码合并为 `a3310a6`，
+  其后 #76/#77/#78 只新增研究证据/报告，不改变决策代码）
 - 回滚方案：本 PR 只新增研究/监督/证据模块与开关，不修改冠军、规则引擎与正式评估器；
   回滚 = revert 合并提交并重新部署上一构建（`scripts/ci/rollback-champion.mjs` 已有演练）
 
