@@ -100,6 +100,7 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 | Token | **624,013**（14 次调用，约 44.6k/候选） |
 | 谱系记录 | 290 条，最大深度 **5**，三代链 = true |
 | 研究简报 | 58 份注入配置（`openevolve-configs/rNNN.yaml` + `.brief.json`） |
+| 研究上下文可核验 | **58/58 轮**含 `contextHash`；14/14 LLM 候选可按轮映射到本次上下文哈希（候选级字段自 PR #79 起写入索引） |
 | 研究假设 | 116 条；失败归因文件 57 份 |
 | 预算 | wallUsed 19.26M / 21.6M ms；候选 348/4000；对局 3256/400000 |
 | 正式验证池 | **零消耗**（`validationPoolConsumed=false`，全程使用 AI9 开发块） |
