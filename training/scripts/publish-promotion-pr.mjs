@@ -74,6 +74,11 @@ function parseJSONWithWarnings(text) {
 
 const args = parseArgs(process.argv.slice(2));
 const dryRun = args['dry-run'] === true;
+const triggerMode = String(args['trigger'] ?? process.env.CENTURY_PR_TRIGGER ?? 'dispatch');
+if (!['dispatch', 'app', 'none'].includes(triggerMode)) {
+  console.error(`--trigger 必须为 dispatch|app|none，实际：${triggerMode}`);
+  process.exit(2);
+}
 const repoRoot = resolve(args['repo-root'] !== undefined ? process.cwd() : REPO_ROOT, args['repo-root'] ?? '.');
 const base = String(args.base ?? 'main');
 const evidenceArg = args['evidence-dir'] ?? 'training/reports/first-place-promotion/latest';
@@ -102,6 +107,37 @@ const repo = process.env.GITHUB_REPOSITORY
 const stamp = new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14);
 const branch = String(args.branch ?? `ai-champion/${candidateId}-${stamp}`);
 const baseCommit = args['base-commit'] !== undefined ? String(args['base-commit']) : null;
+
+/** 同一候选只允许一个开放晋级 PR：重复触发处理器时复用，而不是制造并行的
+ * auto-merge 竞态（两个 PR 都改 champion.json / alpha 账本）。 */
+function findOpenPromotionPr() {
+  const text = sh('gh', ['pr', 'list', '--repo', repo, '--state', 'open', '--base', base,
+    '--search', `${candidateId} in:title`, '--json', 'url,headRefName,number',
+    '--jq', '.[0] // empty'], { timeout: 120_000 }).trim();
+  if (!text) return null;
+  try { return JSON.parse(text); } catch { return null; }
+}
+
+function dispatchCi(targetBranch) {
+  if (triggerMode !== 'dispatch') return { mode: triggerMode, ok: triggerMode === 'app' };
+  sh('gh', ['workflow', 'run', 'ci.yml', '--repo', repo, '--ref', targetBranch,
+    '-f', 'promotion=true'], { timeout: 300_000 });
+  return { mode: 'dispatch', ok: true };
+}
+
+if (!dryRun) {
+  const existing = findOpenPromotionPr();
+  if (existing) {
+    const trigger = dispatchCi(existing.headRefName);
+    sh('gh', ['pr', 'merge', existing.url, '--squash', '--auto'], { timeout: 300_000 });
+    console.log(JSON.stringify({
+      verdict: 'PR_EXISTS', repo, base, branch: existing.headRefName,
+      candidateId, pr: existing.url, trigger,
+      note: '同一候选已有开放晋级 PR：复用并重新触发机器门禁，禁止并行创建第二个冠军 PR',
+    }, null, 2));
+    process.exit(0);
+  }
+}
 
 const workRoot = mkdtempSync(join(tmpdir(), 'century-promote-pr-'));
 const tree = join(workRoot, 'repo');
@@ -218,9 +254,19 @@ try {
   const pr = sh('gh', ['pr', 'create', '--repo', repo, '--base', base, '--head', branch,
     '--title', `第一名率冠军晋级：${candidateId}`, '--body', body], { cwd: tree, timeout: 300_000 }).trim();
   sh('gh', ['pr', 'merge', pr, '--squash', '--auto'], { cwd: tree, timeout: 300_000 });
+
+  // GITHUB_TOKEN 创建的 PR 不会触发 pull_request 工作流；若不显式 dispatch，
+  // branch protection 的 ci-summary 永远不会出现，auto-merge 将永久挂起。
+  // App/PAT 身份创建的 PR 会正常触发，此时 trigger=app 避免重复运行。
+  const trigger = dispatchCi(branch);
   console.log(JSON.stringify({
     verdict: 'PR_OPENED', repo, base, branch, commit, candidateId, pr,
-    note: 'PR 已创建并启用 auto-merge；CI 机器门禁通过后自动合并',
+    trigger,
+    note: triggerMode === 'dispatch'
+      ? 'PR 已创建并 dispatch ci.yml；机器门禁会在同一 head SHA 上真实执行，通过后自动合并'
+      : (triggerMode === 'app'
+        ? 'PR 由 App/PAT 身份创建，pull_request 工作流会自动触发'
+        : 'PR 已创建但未触发 CI（仅限本地演练；生产禁止使用 none）'),
   }, null, 2));
 } catch (error) {
   console.error(JSON.stringify({

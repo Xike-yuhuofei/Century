@@ -1,7 +1,7 @@
 /** D4 Campaign Controller：检查点/恢复/安全停止/预算/失败隔离/重复运行保护/人工审批。 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CampaignController } from '../campaign-controller.mjs';
@@ -212,6 +212,32 @@ test('安全停止（外部 requestStop）后可恢复', async () => {
   assert.equal(stopped.status, 'stopped');
   const resumed = await controller.run({ resume: true });
   assert.equal(resumed.status, 'completed');
+});
+
+test('恢复时以事件日志最大 seq 续接：append 后未落盘 state 的崩溃窗口不产生重复 seq', async () => {
+  const root = tempRoot();
+  const { controller } = makeController({ root });
+  controller.requestStop('crash-window-test');
+  const stopped = await controller.run();
+  assert.equal(stopped.status, 'stopped');
+
+  const statePath = join(root, 'state.json');
+  const logPath = join(root, 'logs', 'events.jsonl');
+  const readEvents = () => readFileSync(logPath, 'utf8').trim().split('\n').map(line => JSON.parse(line));
+  const logTailSeq = readEvents().at(-1).seq;
+  // 复现缺陷现场：事件已 append，但 state.lastEventSeq 未跟上（进程在 _save 前退出）。
+  const state = readJSON(statePath);
+  state.lastEventSeq = logTailSeq - 1;
+  writeFileSync(statePath, `${JSON.stringify(state, null, 2)}\n`);
+
+  await controller.run({ resume: true, maxSteps: 0 });
+
+  const events = readEvents();
+  const seqs = events.map(event => event.seq);
+  assert.equal(new Set(seqs).size, seqs.length, `事件 seq 必须唯一：${seqs.join(',')}`);
+  assert.deepEqual(seqs, [...seqs].sort((a, b) => a - b), '事件 seq 必须严格递增');
+  assert.ok(seqs.filter(seq => seq > logTailSeq).length >= 1, '恢复后必须产生新事件');
+  assert.equal(readJSON(statePath).lastEventSeq, seqs.at(-1), 'state 必须与日志尾部对齐');
 });
 
 test('重复运行保护：活动锁存在时拒绝第二个进程', async () => {

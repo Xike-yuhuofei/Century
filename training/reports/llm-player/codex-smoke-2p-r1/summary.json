@@ -1,0 +1,97 @@
+{
+  "schema": "century-llm-pair-summary-v1",
+  "stage": "smoke",
+  "status": "completed",
+  "evidenceClass": "real-llm",
+  "provider": {
+    "id": "codex-exec",
+    "kind": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "mode": "real",
+    "endpointHost": null,
+    "parameters": {
+      "transport": "codex exec --json",
+      "reasoningEffort": "low",
+      "sandbox": "read-only",
+      "ephemeral": true,
+      "ignoreUserConfig": true,
+      "outputSchema": "century-llm-decision-v1",
+      "cliVersion": "codex-cli 0.149.1",
+      "maxConcurrency": 1
+    }
+  },
+  "plannedPairs": 1,
+  "completedPairs": 1,
+  "validPairs": 1,
+  "anomalyPairs": 0,
+  "fallbackAffectedPairs": 0,
+  "usage": {
+    "calls": 45,
+    "tokens": 879831,
+    "decisions": 45,
+    "llmGames": 1
+  },
+  "strata": {
+    "2": {
+      "seatCount": 2,
+      "pairs": 1,
+      "validPairs": 1,
+      "anomalies": 0,
+      "candidateFirst": 1,
+      "championFirst": 1,
+      "candidateFirstRate": 1,
+      "championFirstRate": 1,
+      "candidateWilsonCI": {
+        "point": 1,
+        "lower": 0.20654931437723745,
+        "upper": 1
+      },
+      "championWilsonCI": {
+        "point": 1,
+        "lower": 0.20654931437723745,
+        "upper": 1
+      },
+      "meanPairedDelta": 0,
+      "pairedDeltaCI": null,
+      "deltaCounts": {
+        "plus": 0,
+        "zero": 1,
+        "minus": 0
+      },
+      "fallbackGames": 0,
+      "fallbackRate": 0,
+      "medianDecisionLatencyMs": 20016,
+      "totalTokens": 879831,
+      "meanTokensPerGame": 879831,
+      "meanGameWallMs": 957657
+    }
+  },
+  "limitations": [
+    "LLM Provider 非确定性（Codex/ChatGPT 后端可能在相同输入下产生不同行动），配对仅共享初始随机世界，不保证后续轨迹一致。",
+    "第一名率以焦点席位是否取得唯一第一名定义；异常局不计入有效配对。",
+    "阶段 A/B 为功能验证/探索性结论，不构成统计显著优势；不得据此宣称 LLM 更强或晋级冠军。"
+  ],
+  "runId": "codex-smoke-2p-r1",
+  "runPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/codex-smoke-2p-r1",
+  "startedAt": "2026-10-26T16:06:55.020Z",
+  "finishedAt": "2026-10-26T16:22:57.670Z",
+  "codeVersion": {
+    "commit": "925c866c49a4c06824db2b8caf76fb279f61516d",
+    "dirty": true,
+    "dirtyFiles": [
+      "M ai5/lib/seed_policy.mjs",
+      " M web-v1/dist/standalone.html",
+      " M web-v1/src/app.ts",
+      " M web-v1/src/engine.ts",
+      " M web-v1/src/styles.css",
+      "?? training/llm/",
+      "?? training/reports/llm-player/",
+      "?? web-v1/src/ai/llm/"
+    ]
+  },
+  "champion": {
+    "id": "joint-js5",
+    "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3"
+  },
+  "preregistration": null
+}

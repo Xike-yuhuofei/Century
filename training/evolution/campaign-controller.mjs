@@ -14,7 +14,7 @@
  */
 
 import {
-  existsSync, openSync, writeSync, closeSync, unlinkSync, readdirSync,
+  existsSync, openSync, writeSync, closeSync, unlinkSync, readdirSync, readFileSync,
 } from 'node:fs';
 import { resolve, relative, isAbsolute } from 'node:path';
 import { performance } from 'node:perf_hooks';
@@ -39,6 +39,21 @@ import { computeCodeVersion, sameCodeDigest } from '../lib/code-version.mjs';
 const CAMPAIGN_CONFIG_VERSION = 1;
 /** 深验异常率上限：超过则判"深验不稳定"，绝不进入正式挑战待审批请求。 */
 const DEEP_MAX_ANOMALY_RATE = 0.2;
+
+/** 读取 append-only 事件日志中的最大 seq：崩溃窗口下 state 可能落后于日志尾部。 */
+function lastLoggedEventSeq(logPath) {
+  if (!existsSync(logPath)) return 0;
+  const lines = readFileSync(logPath, 'utf8').split('\n');
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    try {
+      const seq = JSON.parse(line).seq;
+      if (Number.isSafeInteger(seq) && seq > 0) return seq;
+    } catch { /* 跳过截断/损坏行，继续向前找 */ }
+  }
+  return 0;
+}
 
 export const DEFAULT_CAMPAIGN_CONFIG = deepFreeze({
   version: CAMPAIGN_CONFIG_VERSION,
@@ -896,6 +911,11 @@ export class CampaignController {
         if (state.status === 'completed') {
           throw new Error('campaign 已完成——重复运行保护（不会再次消费预算/种子）');
         }
+        // 事件 append 与 state._save 分两次落盘：若上次进程在 append 之后、save 之前退出，
+        // state.lastEventSeq 会落后于日志尾部；以日志最大 seq 续接，避免新事件复用旧 seq。
+        state.lastEventSeq = Math.max(
+          Number(state.lastEventSeq ?? 0), lastLoggedEventSeq(this.logPath),
+        );
       } else {
         state = this._initState();
       }

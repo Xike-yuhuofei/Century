@@ -1,0 +1,119 @@
+{
+  "schema": "century-llm-run-v1",
+  "runId": "codex-smoke-345-r1",
+  "createdAt": "2026-10-26T16:24:42.468Z",
+  "updatedAt": "2026-10-26T16:49:41.672Z",
+  "status": "completed",
+  "codeVersion": {
+    "commit": "925c866c49a4c06824db2b8caf76fb279f61516d",
+    "dirty": true,
+    "dirtyFiles": [
+      "M ai5/lib/seed_policy.mjs",
+      " M web-v1/dist/standalone.html",
+      " M web-v1/src/app.ts",
+      " M web-v1/src/engine.ts",
+      " M web-v1/src/styles.css",
+      "?? training/llm/",
+      "?? training/reports/llm-player/",
+      "?? web-v1/src/ai/llm/"
+    ]
+  },
+  "provider": {
+    "id": "codex-exec",
+    "kind": "codex-cli",
+    "model": "gpt-5.6-sol",
+    "mode": "real",
+    "endpointHost": null,
+    "parameters": {
+      "transport": "codex exec --json",
+      "reasoningEffort": "low",
+      "sandbox": "read-only",
+      "ephemeral": true,
+      "ignoreUserConfig": true,
+      "outputSchema": "century-llm-decision-v1",
+      "cliVersion": "codex-cli 0.149.1",
+      "maxConcurrency": 2
+    }
+  },
+  "config": {
+    "schema": "century-llm-experiment-config-v1",
+    "experimentId": "ai10-llm-v1",
+    "stage": "smoke",
+    "modes": [
+      3,
+      4,
+      5
+    ],
+    "seedsPerMode": 1,
+    "offset": 0,
+    "focusSeatRotation": "pairIndex % seatCount（同一阶段/人数内均衡轮换）",
+    "opponentPool": "frozen-champion-all-non-focus-seats",
+    "champion": {
+      "id": "joint-js5",
+      "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3",
+      "sourceSha256": "0dd409e57afd62546e5ce8cd2b599306a14defdfa34628ea7753d13e39cd3321"
+    },
+    "provider": {
+      "id": "codex-exec",
+      "kind": "codex-cli",
+      "model": "gpt-5.6-sol",
+      "mode": "real",
+      "endpointHost": null,
+      "parameters": {
+        "transport": "codex exec --json",
+        "reasoningEffort": "low",
+        "sandbox": "read-only",
+        "ephemeral": true,
+        "ignoreUserConfig": true,
+        "outputSchema": "century-llm-decision-v1",
+        "cliVersion": "codex-cli 0.149.1",
+        "maxConcurrency": 2
+      }
+    },
+    "llmConfig": {
+      "timeoutMs": 120000,
+      "maxRetries": 1,
+      "maxTokens": 700,
+      "temperature": 0,
+      "maxCalls": 120,
+      "tokenBudget": 2500000,
+      "candidateLimit": 64,
+      "shadowChampion": true
+    },
+    "budgets": {
+      "runTokenBudget": 12000000,
+      "runCallBudget": 1500,
+      "maxWallMinutes": 120,
+      "concurrency": 2
+    },
+    "preregistration": null,
+    "codeVersion": {
+      "commit": "925c866c49a4c06824db2b8caf76fb279f61516d",
+      "dirty": true,
+      "dirtyFiles": [
+        "M ai5/lib/seed_policy.mjs",
+        " M web-v1/dist/standalone.html",
+        " M web-v1/src/app.ts",
+        " M web-v1/src/engine.ts",
+        " M web-v1/src/styles.css",
+        "?? training/llm/",
+        "?? training/reports/llm-player/",
+        "?? web-v1/src/ai/llm/"
+      ]
+    },
+    "evidenceClass": "real-llm"
+  },
+  "schemaVersions": {
+    "run": "century-llm-run-v1",
+    "game": "century-llm-game-v1",
+    "decisionEnvelope": "century-llm-decision-envelope-v1",
+    "turnEnvelope": "century-llm-turn-envelope-v1"
+  },
+  "environment": {
+    "node": "v22.16.0",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "notes": [],
+  "summaryPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/codex-smoke-345-r1/summary.json"
+}

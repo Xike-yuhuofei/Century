@@ -1,0 +1,7509 @@
+{
+  "schema": "century-llm-game-v1",
+  "gameId": "ai10-llm-v1-exploratory-2p-1700010002-f0-B",
+  "experimentId": "ai10-llm-v1",
+  "pairId": "ai10-llm-v1-exploratory-2p-1700010002-f0",
+  "arm": "champion",
+  "seed": 1700010002,
+  "seatCount": 2,
+  "focusSeat": 0,
+  "status": "finished",
+  "anomaly": false,
+  "anomalyReason": null,
+  "resumedFromTurns": 0,
+  "startTurn": 1,
+  "moves": 94,
+  "wallMs": 5524,
+  "winnerSeat": 1,
+  "focusFirst": false,
+  "focusRank": 2,
+  "focusScore": 77,
+  "focusGolems": 6,
+  "ranking": [
+    {
+      "seat": 1,
+      "score": 88,
+      "golems": 5,
+      "copper": 3,
+      "silver": 1,
+      "crystals": 3,
+      "turns": 47,
+      "claimed": [
+        "G32",
+        "G11",
+        "G23",
+        "G25",
+        "G15"
+      ]
+    },
+    {
+      "seat": 0,
+      "score": 77,
+      "golems": 6,
+      "copper": 1,
+      "silver": 1,
+      "crystals": 0,
+      "turns": 47,
+      "claimed": [
+        "G07",
+        "G26",
+        "G31",
+        "G14",
+        "G09",
+        "G24"
+      ]
+    }
+  ],
+  "decisionIds": [],
+  "llmDecisionCount": 0,
+  "fallbackCount": 0,
+  "fallbackRate": null,
+  "llmUsage": {
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "totalTokens": 0
+  },
+  "provider": null,
+  "rulesVersion": "engine-v2",
+  "opponentVersionIds": [
+    "joint-js5",
+    "joint-js5"
+  ],
+  "replay": {
+    "version": 1,
+    "fromStart": true,
+    "initial": {
+      "version": 2,
+      "players": [
+        {
+          "id": 0,
+          "name": "席位0",
+          "isAI": false,
+          "stock": [
+            3,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 0
+        },
+        {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 0
+        }
+      ],
+      "current": 0,
+      "merchantMarket": [
+        {
+          "id": "M01",
+          "bonus": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "M07",
+          "bonus": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "M25",
+          "bonus": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "M06",
+          "bonus": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "M15",
+          "bonus": [
+            0,
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": "M29",
+          "bonus": [
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      ],
+      "merchantDeck": [
+        "M31",
+        "M34",
+        "M28",
+        "M36",
+        "M24",
+        "M20",
+        "M03",
+        "M22",
+        "M19",
+        "M38",
+        "M21",
+        "M35",
+        "M04",
+        "M10",
+        "M27",
+        "M33",
+        "M09",
+        "M16",
+        "M30",
+        "M32",
+        "M42",
+        "M18",
+        "M40",
+        "M14",
+        "M13",
+        "M26",
+        "M05",
+        "M08",
+        "M37",
+        "M02",
+        "M17",
+        "M41",
+        "M23",
+        "M39",
+        "M43",
+        "M12",
+        "M11"
+      ],
+      "golemMarket": [
+        "G07",
+        "G11",
+        "G32",
+        "G26",
+        "G23"
+      ],
+      "golemDeck": [
+        "G25",
+        "G22",
+        "G31",
+        "G15",
+        "G24",
+        "G14",
+        "G02",
+        "G09",
+        "G05",
+        "G35",
+        "G12",
+        "G18",
+        "G27",
+        "G21",
+        "G06",
+        "G33",
+        "G36",
+        "G17",
+        "G29",
+        "G16",
+        "G19",
+        "G20",
+        "G34",
+        "G01",
+        "G08",
+        "G13",
+        "G28",
+        "G04",
+        "G10",
+        "G03",
+        "G30"
+      ],
+      "copper": 4,
+      "silver": 4,
+      "phase": "turn",
+      "triggerPlayer": null,
+      "log": [
+        "游戏开始，2 人对局，由 席位0 先手"
+      ],
+      "turnNumber": 1
+    },
+    "turns": [
+      {
+        "turnNumber": 1,
+        "round": 1,
+        "playerTurn": 1,
+        "playerId": 0,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            3,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 0,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 1,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 2,
+        "round": 1,
+        "playerTurn": 1,
+        "playerId": 1,
+        "cardId": "S01",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S01"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 0,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            6,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "S02"
+          ],
+          "played": [
+            "S01"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 1,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 3,
+        "round": 2,
+        "playerTurn": 2,
+        "playerId": 0,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 1,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 2,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 4,
+        "round": 2,
+        "playerTurn": 2,
+        "playerId": 1,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            6,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "S02"
+          ],
+          "played": [
+            "S01"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 1,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            2,
+            0,
+            0
+          ],
+          "hand": [],
+          "played": [
+            "S01",
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 2,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 5,
+        "round": 3,
+        "playerTurn": 3,
+        "playerId": 0,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              1
+            ]
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 2,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            2,
+            1,
+            0
+          ],
+          "hand": [
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 3,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 6,
+        "round": 3,
+        "playerTurn": 3,
+        "playerId": 1,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            2,
+            0,
+            0
+          ],
+          "hand": [],
+          "played": [
+            "S01",
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 2,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 3,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 7,
+        "round": 4,
+        "playerTurn": 4,
+        "playerId": 0,
+        "cardId": "S01",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S01"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            2,
+            1,
+            0
+          ],
+          "hand": [
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 3,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            2,
+            1,
+            0
+          ],
+          "hand": [],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 4,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 8,
+        "round": 4,
+        "playerTurn": 4,
+        "playerId": 1,
+        "cardId": "M25",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 2,
+            "payment": [
+              0,
+              1
+            ]
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 3,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            3,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "S02",
+            "M25"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 4,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 9,
+        "round": 5,
+        "playerTurn": 5,
+        "playerId": 0,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            2,
+            1,
+            0
+          ],
+          "hand": [],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 4,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            2,
+            1,
+            0
+          ],
+          "hand": [
+            "S02",
+            "S01"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 5,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 10,
+        "round": 5,
+        "playerTurn": 5,
+        "playerId": 1,
+        "cardId": "S01",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S01"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            3,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "S02",
+            "M25"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 4,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            5,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "S02",
+            "M25"
+          ],
+          "played": [
+            "S01"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 5,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 11,
+        "round": 6,
+        "playerTurn": 6,
+        "playerId": 0,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              1
+            ]
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            2,
+            1,
+            0
+          ],
+          "hand": [
+            "S02",
+            "S01"
+          ],
+          "played": [],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 5,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            2,
+            0
+          ],
+          "hand": [
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 6,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 12,
+        "round": 6,
+        "playerTurn": 6,
+        "playerId": 1,
+        "cardId": "M25",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M25",
+            "repeats": 1
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            5,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "S02",
+            "M25"
+          ],
+          "played": [
+            "S01"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 5,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            1,
+            3,
+            0
+          ],
+          "hand": [
+            "S02"
+          ],
+          "played": [
+            "S01",
+            "M25"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 6,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 13,
+        "round": 7,
+        "playerTurn": 7,
+        "playerId": 0,
+        "cardId": "M07",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              1
+            ]
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            2,
+            0
+          ],
+          "hand": [
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 6,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            2,
+            0
+          ],
+          "hand": [
+            "S01",
+            "M07"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 7,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 14,
+        "round": 7,
+        "playerTurn": 7,
+        "playerId": 1,
+        "cardId": "M06",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              1
+            ]
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            1,
+            3,
+            0
+          ],
+          "hand": [
+            "S02"
+          ],
+          "played": [
+            "S01",
+            "M25"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 6,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            3,
+            0
+          ],
+          "hand": [
+            "S02",
+            "M06"
+          ],
+          "played": [
+            "S01",
+            "M25"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 7,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 15,
+        "round": 8,
+        "playerTurn": 8,
+        "playerId": 0,
+        "cardId": "G07",
+        "actions": [
+          {
+            "type": "claim",
+            "index": 0
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            2,
+            0
+          ],
+          "hand": [
+            "S01",
+            "M07"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 7,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "M07"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 8,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 16,
+        "round": 8,
+        "playerTurn": 8,
+        "playerId": 1,
+        "cardId": "M01",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            3,
+            0
+          ],
+          "hand": [
+            "S02",
+            "M06"
+          ],
+          "played": [
+            "S01",
+            "M25"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 7,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "hand": [
+            "S02",
+            "M06",
+            "M01"
+          ],
+          "played": [
+            "S01",
+            "M25"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 8,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 17,
+        "round": 9,
+        "playerTurn": 9,
+        "playerId": 0,
+        "cardId": "S01",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S01"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "S01",
+            "M07"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 8,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            3,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 9,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 18,
+        "round": 9,
+        "playerTurn": 9,
+        "playerId": 1,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              1,
+              2
+            ]
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            3,
+            0
+          ],
+          "hand": [
+            "S02",
+            "M06",
+            "M01"
+          ],
+          "played": [
+            "S01",
+            "M25"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 8,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            1,
+            3,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M01"
+          ],
+          "played": [
+            "S01",
+            "M25",
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 9,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 19,
+        "round": 10,
+        "playerTurn": 10,
+        "playerId": 0,
+        "cardId": "M29",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            3,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 9,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 10,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 20,
+        "round": 10,
+        "playerTurn": 10,
+        "playerId": 1,
+        "cardId": "G32",
+        "actions": [
+          {
+            "type": "claim",
+            "index": 1
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            1,
+            3,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M01"
+          ],
+          "played": [
+            "S01",
+            "M25",
+            "S02"
+          ],
+          "claimed": [],
+          "copper": 0,
+          "silver": 0,
+          "turns": 9,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01"
+          ],
+          "played": [
+            "S01",
+            "M25",
+            "S02"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 10,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 21,
+        "round": 11,
+        "playerTurn": 11,
+        "playerId": 0,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 10,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "S02",
+            "S01"
+          ],
+          "played": [],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 11,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 22,
+        "round": 11,
+        "playerTurn": 11,
+        "playerId": 1,
+        "cardId": "M15",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01"
+          ],
+          "played": [
+            "S01",
+            "M25",
+            "S02"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 10,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M15"
+          ],
+          "played": [
+            "S01",
+            "M25",
+            "S02"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 11,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 23,
+        "round": 12,
+        "playerTurn": 12,
+        "playerId": 0,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "S02",
+            "S01"
+          ],
+          "played": [],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 11,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 12,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 24,
+        "round": 12,
+        "playerTurn": 12,
+        "playerId": 1,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M15"
+          ],
+          "played": [
+            "S01",
+            "M25",
+            "S02"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 11,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M15",
+            "S01",
+            "M25",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 12,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 25,
+        "round": 13,
+        "playerTurn": 13,
+        "playerId": 0,
+        "cardId": "S01",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S01"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 12,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 13,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 26,
+        "round": 13,
+        "playerTurn": 13,
+        "playerId": 1,
+        "cardId": "S01",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S01"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M15",
+            "S01",
+            "M25",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 12,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            3,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M15",
+            "M25",
+            "S02"
+          ],
+          "played": [
+            "S01"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 13,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 27,
+        "round": 14,
+        "playerTurn": 14,
+        "playerId": 0,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 13,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "S02",
+            "S01"
+          ],
+          "played": [],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 14,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 28,
+        "round": 14,
+        "playerTurn": 14,
+        "playerId": 1,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            3,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M15",
+            "M25",
+            "S02"
+          ],
+          "played": [
+            "S01"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 13,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M15",
+            "M25"
+          ],
+          "played": [
+            "S01",
+            "S02"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 14,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 29,
+        "round": 15,
+        "playerTurn": 15,
+        "playerId": 0,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "S02",
+            "S01"
+          ],
+          "played": [],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 14,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            4,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 15,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 30,
+        "round": 15,
+        "playerTurn": 15,
+        "playerId": 1,
+        "cardId": "M31",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M15",
+            "M25"
+          ],
+          "played": [
+            "S01",
+            "S02"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 14,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M15",
+            "M25",
+            "M31"
+          ],
+          "played": [
+            "S01",
+            "S02"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 15,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 31,
+        "round": 16,
+        "playerTurn": 16,
+        "playerId": 0,
+        "cardId": "G26",
+        "actions": [
+          {
+            "type": "claim",
+            "index": 1
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            4,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G07"
+          ],
+          "copper": 1,
+          "silver": 0,
+          "turns": 15,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 16,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 32,
+        "round": 16,
+        "playerTurn": 16,
+        "playerId": 1,
+        "cardId": "M15",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M15",
+            "repeats": 1
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M15",
+            "M25",
+            "M31"
+          ],
+          "played": [
+            "S01",
+            "S02"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 15,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            1,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M25",
+            "M31"
+          ],
+          "played": [
+            "S01",
+            "S02",
+            "M15"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 16,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 33,
+        "round": 17,
+        "playerTurn": 17,
+        "playerId": 0,
+        "cardId": "S01",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S01"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "S01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 16,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 17,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 34,
+        "round": 17,
+        "playerTurn": 17,
+        "playerId": 1,
+        "cardId": "M34",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            1,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M25",
+            "M31"
+          ],
+          "played": [
+            "S01",
+            "S02",
+            "M15"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 16,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            1,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M25",
+            "M31",
+            "M34"
+          ],
+          "played": [
+            "S01",
+            "S02",
+            "M15"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 17,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 35,
+        "round": 18,
+        "playerTurn": 18,
+        "playerId": 0,
+        "cardId": "M28",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 17,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 18,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 36,
+        "round": 18,
+        "playerTurn": 18,
+        "playerId": 1,
+        "cardId": "M34",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M34",
+            "repeats": 1
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            1,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M25",
+            "M31",
+            "M34"
+          ],
+          "played": [
+            "S01",
+            "S02",
+            "M15"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 17,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            2,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M25",
+            "M31"
+          ],
+          "played": [
+            "S01",
+            "S02",
+            "M15",
+            "M34"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 18,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 37,
+        "round": 19,
+        "playerTurn": 19,
+        "playerId": 0,
+        "cardId": "M36",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 18,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M36"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 19,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 38,
+        "round": 19,
+        "playerTurn": 19,
+        "playerId": 1,
+        "cardId": "M01",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M01",
+            "repeats": 2
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            2,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M01",
+            "M25",
+            "M31"
+          ],
+          "played": [
+            "S01",
+            "S02",
+            "M15",
+            "M34"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 18,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            4,
+            0,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31"
+          ],
+          "played": [
+            "S01",
+            "S02",
+            "M15",
+            "M34",
+            "M01"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 19,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 39,
+        "round": 20,
+        "playerTurn": 20,
+        "playerId": 0,
+        "cardId": "M24",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M36"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 19,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M36",
+            "M24"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 20,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 40,
+        "round": 20,
+        "playerTurn": 20,
+        "playerId": 1,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            4,
+            0,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31"
+          ],
+          "played": [
+            "S01",
+            "S02",
+            "M15",
+            "M34",
+            "M01"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 19,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            4,
+            0,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "S02",
+            "M15",
+            "M34",
+            "M01"
+          ],
+          "played": [],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 20,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 41,
+        "round": 21,
+        "playerTurn": 21,
+        "playerId": 0,
+        "cardId": "M36",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M36"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M36",
+            "M24"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 20,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M24"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 21,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 42,
+        "round": 21,
+        "playerTurn": 21,
+        "playerId": 1,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              1
+            ]
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            4,
+            0,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "S02",
+            "M15",
+            "M34",
+            "M01"
+          ],
+          "played": [],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 20,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            4,
+            1,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "M15",
+            "M34",
+            "M01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 21,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 43,
+        "round": 22,
+        "playerTurn": 22,
+        "playerId": 0,
+        "cardId": "M20",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M24"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 21,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M24",
+            "M20"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 22,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 44,
+        "round": 22,
+        "playerTurn": 22,
+        "playerId": 1,
+        "cardId": "G11",
+        "actions": [
+          {
+            "type": "claim",
+            "index": 0
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            1,
+            4,
+            1,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "M15",
+            "M34",
+            "M01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G32"
+          ],
+          "copper": 0,
+          "silver": 1,
+          "turns": 21,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "M15",
+            "M34",
+            "M01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 22,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 45,
+        "round": 23,
+        "playerTurn": 23,
+        "playerId": 0,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M24",
+            "M20"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 22,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S02",
+            "S01",
+            "M36"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 23,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 46,
+        "round": 23,
+        "playerTurn": 23,
+        "playerId": 1,
+        "cardId": "M03",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "M15",
+            "M34",
+            "M01"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 22,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "M15",
+            "M34",
+            "M01",
+            "M03"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 23,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 47,
+        "round": 24,
+        "playerTurn": 24,
+        "playerId": 0,
+        "cardId": "M36",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M36"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S02",
+            "S01",
+            "M36"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 23,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            2
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S02",
+            "S01"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 24,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 48,
+        "round": 24,
+        "playerTurn": 24,
+        "playerId": 1,
+        "cardId": "M19",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              1
+            ]
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "M15",
+            "M34",
+            "M01",
+            "M03"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 23,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 24,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 49,
+        "round": 25,
+        "playerTurn": 25,
+        "playerId": 0,
+        "cardId": "M07",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M07",
+            "repeats": 2
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            2
+          ],
+          "hand": [
+            "M07",
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S02",
+            "S01"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 24,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            4,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S02",
+            "S01"
+          ],
+          "played": [
+            "M36",
+            "M07"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 25,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 50,
+        "round": 25,
+        "playerTurn": 25,
+        "playerId": 1,
+        "cardId": "M22",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 24,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M22"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 25,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 51,
+        "round": 26,
+        "playerTurn": 26,
+        "playerId": 0,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              2,
+              2
+            ]
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            4,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S02",
+            "S01"
+          ],
+          "played": [
+            "M36",
+            "M07"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 25,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            2,
+            2
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "S02"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 26,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 52,
+        "round": 26,
+        "playerTurn": 26,
+        "playerId": 1,
+        "cardId": "S01",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S01"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "S01",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M22"
+          ],
+          "played": [
+            "S02"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 25,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M22"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 26,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 53,
+        "round": 27,
+        "playerTurn": 27,
+        "playerId": 0,
+        "cardId": "G31",
+        "actions": [
+          {
+            "type": "claim",
+            "index": 3
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            2,
+            2
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "S02"
+          ],
+          "claimed": [
+            "G07",
+            "G26"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 26,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "S02"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 27,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 54,
+        "round": 27,
+        "playerTurn": 27,
+        "playerId": 1,
+        "cardId": "M38",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M22"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 26,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M22",
+            "M38"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 27,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 55,
+        "round": 28,
+        "playerTurn": 28,
+        "playerId": 0,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "S02"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 27,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "M36",
+            "M07",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 28,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 56,
+        "round": 28,
+        "playerTurn": 28,
+        "playerId": 1,
+        "cardId": "M38",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M38"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            1,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M22",
+            "M38"
+          ],
+          "played": [
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 27,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M22"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 28,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 57,
+        "round": 29,
+        "playerTurn": 29,
+        "playerId": 0,
+        "cardId": "M36",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M36"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "M36",
+            "M07",
+            "S02"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 28,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "M07",
+            "S02"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 29,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 58,
+        "round": 29,
+        "playerTurn": 29,
+        "playerId": 1,
+        "cardId": "M35",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 1,
+            "payment": [
+              0
+            ]
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M22"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 28,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M22",
+            "M35"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 29,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 59,
+        "round": 30,
+        "playerTurn": 30,
+        "playerId": 0,
+        "cardId": "M21",
+        "actions": [
+          {
+            "type": "acquire",
+            "index": 0,
+            "payment": []
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "M07",
+            "S02"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 29,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "M07",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 30,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 60,
+        "round": 30,
+        "playerTurn": 30,
+        "playerId": 1,
+        "cardId": "M22",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M22",
+            "repeats": 1
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            3,
+            2,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M22",
+            "M35"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 29,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            5,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M35"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M38",
+            "M22"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 30,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 61,
+        "round": 31,
+        "playerTurn": 31,
+        "playerId": 0,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "M07",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 30,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "M07",
+            "S02",
+            "M21",
+            "M36"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 31,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 62,
+        "round": 31,
+        "playerTurn": 31,
+        "playerId": 1,
+        "cardId": "G23",
+        "actions": [
+          {
+            "type": "claim",
+            "index": 0
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            5,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M35"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M38",
+            "M22"
+          ],
+          "claimed": [
+            "G32",
+            "G11"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 30,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M35"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M38",
+            "M22"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 31,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 63,
+        "round": 32,
+        "playerTurn": 32,
+        "playerId": 0,
+        "cardId": "M36",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M36"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "M07",
+            "S02",
+            "M21",
+            "M36"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 31,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            2
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "M07",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 32,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 64,
+        "round": 32,
+        "playerTurn": 32,
+        "playerId": 1,
+        "cardId": "M35",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M35"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "M35"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M38",
+            "M22"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 31,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M38",
+            "M22",
+            "M35"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 32,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 65,
+        "round": 33,
+        "playerTurn": 33,
+        "playerId": 0,
+        "cardId": "M07",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M07",
+            "repeats": 2
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            2
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "M07",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 32,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            4,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 33,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 66,
+        "round": 33,
+        "playerTurn": 33,
+        "playerId": 1,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19"
+          ],
+          "played": [
+            "S02",
+            "S01",
+            "M38",
+            "M22",
+            "M35"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 32,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38",
+            "M22",
+            "M35"
+          ],
+          "played": [],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 33,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 67,
+        "round": 34,
+        "playerTurn": 34,
+        "playerId": 0,
+        "cardId": "G14",
+        "actions": [
+          {
+            "type": "claim",
+            "index": 4
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            4,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 33,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 34,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 68,
+        "round": 34,
+        "playerTurn": 34,
+        "playerId": 1,
+        "cardId": "M35",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M35"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38",
+            "M22",
+            "M35"
+          ],
+          "played": [],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 33,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            8,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38",
+            "M22"
+          ],
+          "played": [
+            "M35"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 34,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 69,
+        "round": 35,
+        "playerTurn": 35,
+        "playerId": 0,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 34,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21",
+            "M36",
+            "M07"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 35,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 70,
+        "round": 35,
+        "playerTurn": 35,
+        "playerId": 1,
+        "cardId": "M22",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M22",
+            "repeats": 2
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            8,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38",
+            "M22"
+          ],
+          "played": [
+            "M35"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 34,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            6,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "played": [
+            "M35",
+            "M22"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 35,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 71,
+        "round": 36,
+        "playerTurn": 36,
+        "playerId": 0,
+        "cardId": "M36",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M36"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21",
+            "M36",
+            "M07"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 35,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21",
+            "M07"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 36,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 72,
+        "round": 36,
+        "playerTurn": 36,
+        "playerId": 1,
+        "cardId": "M31",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M31",
+            "repeats": 2
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            6,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M31",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "played": [
+            "M35",
+            "M22"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 35,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            2,
+            2
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 36,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 73,
+        "round": 37,
+        "playerTurn": 37,
+        "playerId": 0,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21",
+            "M07"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 36,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21",
+            "M07",
+            "M36"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 37,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 74,
+        "round": 37,
+        "playerTurn": 37,
+        "playerId": 1,
+        "cardId": "M34",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M34",
+            "repeats": 1
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            2,
+            2
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M34",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 36,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            3,
+            3
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 37,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 75,
+        "round": 38,
+        "playerTurn": 38,
+        "playerId": 0,
+        "cardId": "M36",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M36"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21",
+            "M07",
+            "M36"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 37,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            2
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21",
+            "M07"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 38,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 76,
+        "round": 38,
+        "playerTurn": 38,
+        "playerId": 1,
+        "cardId": "G25",
+        "actions": [
+          {
+            "type": "claim",
+            "index": 0
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            3,
+            3
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23"
+          ],
+          "copper": 2,
+          "silver": 1,
+          "turns": 37,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 38,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 77,
+        "round": 39,
+        "playerTurn": 39,
+        "playerId": 0,
+        "cardId": "M07",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M07",
+            "repeats": 2
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            0,
+            2
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21",
+            "M07"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 38,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            4,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 39,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 78,
+        "round": 39,
+        "playerTurn": 39,
+        "playerId": 1,
+        "cardId": "M38",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M38"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01",
+            "M38"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 38,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            1,
+            0,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 39,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 79,
+        "round": 40,
+        "playerTurn": 40,
+        "playerId": 0,
+        "cardId": "M24",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M24",
+            "repeats": 1
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            4,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M24",
+            "M20",
+            "S01",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 39,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            1,
+            3
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "S01",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "M24"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 40,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 80,
+        "round": 40,
+        "playerTurn": 40,
+        "playerId": 1,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              0
+            ]
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            1,
+            0,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M19",
+            "S02",
+            "S01"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 39,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            3,
+            0,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M19",
+            "S01"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 40,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 81,
+        "round": 41,
+        "playerTurn": 41,
+        "playerId": 0,
+        "cardId": "S02",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S02",
+            "steps": [
+              0,
+              1
+            ]
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            1,
+            0,
+            1,
+            3
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "S01",
+            "S02",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "M24"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 40,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            2,
+            3
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "S01",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "M24",
+            "S02"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 41,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 82,
+        "round": 41,
+        "playerTurn": 41,
+        "playerId": 1,
+        "cardId": "M19",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M19",
+            "repeats": 1
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            3,
+            0,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M19",
+            "S01"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 40,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            3
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "S01"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02",
+            "M19"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 41,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 83,
+        "round": 42,
+        "playerTurn": 42,
+        "playerId": 0,
+        "cardId": "G09",
+        "actions": [
+          {
+            "type": "claim",
+            "index": 4
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            2,
+            3
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "S01",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "M24",
+            "S02"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 41,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "S01",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "M24",
+            "S02"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14",
+            "G09"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 42,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 84,
+        "round": 42,
+        "playerTurn": 42,
+        "playerId": 1,
+        "cardId": "S01",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S01"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            3
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "S01"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02",
+            "M19"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 41,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            3
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02",
+            "M19",
+            "S01"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 42,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 85,
+        "round": 43,
+        "playerTurn": 43,
+        "playerId": 0,
+        "cardId": "S01",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "S01"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "S01",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "M24",
+            "S02"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14",
+            "G09"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 42,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "M24",
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14",
+            "G09"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 43,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 86,
+        "round": 43,
+        "playerTurn": 43,
+        "playerId": 1,
+        "cardId": "G15",
+        "actions": [
+          {
+            "type": "claim",
+            "index": 1
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            3
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02",
+            "M19",
+            "S01"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 42,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02",
+            "M19",
+            "S01"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25",
+            "G15"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 43,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 87,
+        "round": 44,
+        "playerTurn": 44,
+        "playerId": 0,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "M21"
+          ],
+          "played": [
+            "M36",
+            "M07",
+            "M24",
+            "S02",
+            "S01"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14",
+            "G09"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 43,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "M21",
+            "M36",
+            "M07",
+            "M24",
+            "S02",
+            "S01"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14",
+            "G09"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 44,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 88,
+        "round": 44,
+        "playerTurn": 44,
+        "playerId": 1,
+        "actions": [
+          {
+            "type": "rest"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03"
+          ],
+          "played": [
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02",
+            "M19",
+            "S01"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25",
+            "G15"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 43,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02",
+            "M19",
+            "S01"
+          ],
+          "played": [],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25",
+            "G15"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 44,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 89,
+        "round": 45,
+        "playerTurn": 45,
+        "playerId": 0,
+        "cardId": "M36",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M36"
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "M21",
+            "M36",
+            "M07",
+            "M24",
+            "S02",
+            "S01"
+          ],
+          "played": [],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14",
+            "G09"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 44,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "M21",
+            "M07",
+            "M24",
+            "S02",
+            "S01"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14",
+            "G09"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 45,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 90,
+        "round": 45,
+        "playerTurn": 45,
+        "playerId": 1,
+        "cardId": "M35",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M35"
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M35",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02",
+            "M19",
+            "S01"
+          ],
+          "played": [],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25",
+            "G15"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 44,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02",
+            "M19",
+            "S01"
+          ],
+          "played": [
+            "M35"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25",
+            "G15"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 45,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 91,
+        "round": 46,
+        "playerTurn": 46,
+        "playerId": 0,
+        "cardId": "M07",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M07",
+            "repeats": 1
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            0,
+            1
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "M21",
+            "M07",
+            "M24",
+            "S02",
+            "S01"
+          ],
+          "played": [
+            "M36"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14",
+            "G09"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 45,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            2,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "M21",
+            "M24",
+            "S02",
+            "S01"
+          ],
+          "played": [
+            "M36",
+            "M07"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14",
+            "G09"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 46,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 92,
+        "round": 46,
+        "playerTurn": 46,
+        "playerId": 1,
+        "cardId": "M34",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M34",
+            "repeats": 1
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            4,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M22",
+            "M31",
+            "M34",
+            "M38",
+            "S02",
+            "M19",
+            "S01"
+          ],
+          "played": [
+            "M35"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25",
+            "G15"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 45,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M22",
+            "M31",
+            "M38",
+            "S02",
+            "M19",
+            "S01"
+          ],
+          "played": [
+            "M35",
+            "M34"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25",
+            "G15"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 46,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      },
+      {
+        "turnNumber": 93,
+        "round": 47,
+        "playerTurn": 47,
+        "playerId": 0,
+        "cardId": "G24",
+        "actions": [
+          {
+            "type": "claim",
+            "index": 1
+          }
+        ],
+        "before": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            2,
+            0,
+            2,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "M21",
+            "M24",
+            "S02",
+            "S01"
+          ],
+          "played": [
+            "M36",
+            "M07"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14",
+            "G09"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 46,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 0,
+          "name": "席位0",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            0,
+            0
+          ],
+          "hand": [
+            "M29",
+            "M28",
+            "M20",
+            "M21",
+            "M24",
+            "S02",
+            "S01"
+          ],
+          "played": [
+            "M36",
+            "M07"
+          ],
+          "claimed": [
+            "G07",
+            "G26",
+            "G31",
+            "G14",
+            "G09",
+            "G24"
+          ],
+          "copper": 1,
+          "silver": 1,
+          "turns": 47,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": true
+      },
+      {
+        "turnNumber": 94,
+        "round": 47,
+        "playerTurn": 47,
+        "playerId": 1,
+        "cardId": "M03",
+        "actions": [
+          {
+            "type": "play",
+            "cardId": "M03",
+            "repeats": 1
+          }
+        ],
+        "before": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            0,
+            1,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M03",
+            "M22",
+            "M31",
+            "M38",
+            "S02",
+            "M19",
+            "S01"
+          ],
+          "played": [
+            "M35",
+            "M34"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25",
+            "G15"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 46,
+          "aiKind": "offline"
+        },
+        "after": {
+          "id": 1,
+          "name": "席位1",
+          "isAI": true,
+          "stock": [
+            0,
+            2,
+            0,
+            1
+          ],
+          "hand": [
+            "M06",
+            "M25",
+            "M15",
+            "M01",
+            "M22",
+            "M31",
+            "M38",
+            "S02",
+            "M19",
+            "S01"
+          ],
+          "played": [
+            "M35",
+            "M34",
+            "M03"
+          ],
+          "claimed": [
+            "G32",
+            "G11",
+            "G23",
+            "G25",
+            "G15"
+          ],
+          "copper": 3,
+          "silver": 1,
+          "turns": 47,
+          "aiKind": "offline"
+        },
+        "completed": true,
+        "triggersEnd": false
+      }
+    ]
+  },
+  "replayConsistency": {
+    "ok": true,
+    "reason": null,
+    "checkedActions": 94,
+    "finalPhase": "finished",
+    "livePhase": "finished"
+  },
+  "completedAt": "2026-10-26T17:04:57.572Z",
+  "gameMeta": {
+    "schema": "century-llm-game-v1",
+    "mode": 2,
+    "seatCount": 2,
+    "seed": 1700010002,
+    "focusSeat": 0,
+    "arm": "champion",
+    "pairId": "ai10-llm-v1-exploratory-2p-1700010002-f0",
+    "experimentId": "ai10-llm-v1",
+    "channel": "experiment",
+    "rulesVersion": "engine-v2",
+    "aiSeats": [
+      0,
+      1
+    ],
+    "opponentVersionIds": [
+      "joint-js5",
+      "joint-js5"
+    ]
+  }
+}

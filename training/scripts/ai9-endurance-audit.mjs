@@ -115,7 +115,14 @@ const running = state.status === 'running';
 
 const started = events.find(event => event.type === 'campaign-started');
 const stoppedOperator = events.find(event => event.type === 'campaign-stopped' && event.payload?.reason === 'operator-request');
-const resumed = events.find(event => event.type === 'campaign-resumed');
+// 取 operator 停止之后、且指纹一致的第一条 resume：日志中可能存在 watchdog 重启产生的
+// 早于停止点的 resume，不能按整份日志取第一条，否则会误判「未发生停止→恢复」。
+const resumed = stoppedOperator
+  ? events.find(event => event.type === 'campaign-resumed'
+    && event.seq > stoppedOperator.seq
+    && event.payload?.runFingerprint === state.runFingerprint)
+  : events.find(event => event.type === 'campaign-resumed'
+    && event.payload?.runFingerprint === state.runFingerprint);
 const terminalEvent = events.find(event => event.type === 'campaign-completed' || event.type === 'campaign-budget-exhausted');
 
 add('campaign-started', started ? 'PASS' : 'FAIL', started ? `seq ${started.seq}` : 'missing');

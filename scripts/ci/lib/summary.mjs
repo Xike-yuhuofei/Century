@@ -15,8 +15,12 @@ const ALWAYS_REQUIRED = ['changes', 'governance-tests', 'rules-cards'];
 export function requiredJobs(scope, { eventName = '', ref = '', promotionVerdict = '', promotionRequiresApproval = false } = {}) {
   const required = new Set(ALWAYS_REQUIRED);
   if (scope.build) required.add('build');
-  if (scope.web) required.add('web-unit');
+  if (scope.web) {
+    required.add('web-unit');
+    required.add('web-long-tests');
+  }
   if (scope.training) required.add('training-unit');
+  if (scope.ai9) required.add('ai9-research');
   if (scope.simulation) required.add('simulation');
   if (scope.ui) required.add('ui-smoke');
   if (scope.research) {
@@ -27,9 +31,15 @@ export function requiredJobs(scope, { eventName = '', ref = '', promotionVerdict
     required.add('research-seatbelt');
   }
   if (scope.audit && !scope.promotion) required.add('audit-gate');
+  if (scope.rollback) required.add('rollback-gate');
   if (scope.promotion) {
     required.add('promotion-gate');
-    required.add('promotion-machine-gate');
+    // promotion-machine-gate 是“合并前”动作：只在候选 PR 的 pull_request/
+    // workflow_dispatch 上要求。main push 是合并后的部署验证，不能再要求它，
+    // 否则每次冠军合并后的 main CI 都会因该作业 skipped 而失败。
+    if (eventName === 'pull_request' || eventName === 'workflow_dispatch') {
+      required.add('promotion-machine-gate');
+    }
   }
   const isMainPush = eventName === 'push' && ref === 'refs/heads/main';
   const isMainDispatch = eventName === 'workflow_dispatch' && ref === 'refs/heads/main';
@@ -163,11 +173,13 @@ export function scopeFromEnv(env) {
     web: b('SCOPE_WEB'),
     training: b('SCOPE_TRAINING'),
     ai5: b('SCOPE_AI5'),
+    ai9: b('SCOPE_AI9'),
     ui: b('SCOPE_UI'),
     simulation: b('SCOPE_SIMULATION'),
     audit: b('SCOPE_AUDIT'),
     research: b('SCOPE_RESEARCH'),
     promotion: b('SCOPE_PROMOTION'),
+    rollback: b('SCOPE_ROLLBACK'),
     pages: b('SCOPE_PAGES'),
     rules: b('SCOPE_RULES'),
     governance: b('SCOPE_GOVERNANCE'),

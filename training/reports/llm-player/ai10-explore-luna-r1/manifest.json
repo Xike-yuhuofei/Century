@@ -1,0 +1,1836 @@
+{
+  "schema": "century-llm-dataset-manifest-v1",
+  "runId": "ai10-explore-luna-r1",
+  "generatedAt": "2026-10-26T18:13:25.854Z",
+  "codeVersion": {
+    "commit": "ca5f1b024cd2c4f4905a68820371c82edde4411a",
+    "dirty": false,
+    "dirtyFiles": []
+  },
+  "provider": {
+    "id": "codex-exec",
+    "kind": "codex-cli",
+    "model": "gpt-5.6-luna",
+    "mode": "real",
+    "endpointHost": null,
+    "parameters": {
+      "transport": "codex exec --json",
+      "reasoningEffort": "low",
+      "sandbox": "read-only",
+      "ephemeral": true,
+      "ignoreUserConfig": true,
+      "outputSchema": "century-llm-decision-v1",
+      "cliVersion": "codex-cli 0.149.1",
+      "maxConcurrency": 2
+    }
+  },
+  "config": {
+    "schema": "century-llm-experiment-config-v1",
+    "experimentId": "ai10-llm-v1",
+    "stage": "exploratory",
+    "modes": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "seedsPerMode": 4,
+    "offset": 0,
+    "focusSeatRotation": "pairIndex % seatCount（同一阶段/人数内均衡轮换）",
+    "opponentPool": "frozen-champion-all-non-focus-seats",
+    "champion": {
+      "id": "joint-js5",
+      "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3",
+      "sourceSha256": "0dd409e57afd62546e5ce8cd2b599306a14defdfa34628ea7753d13e39cd3321"
+    },
+    "provider": {
+      "id": "codex-exec",
+      "kind": "codex-cli",
+      "model": "gpt-5.6-luna",
+      "mode": "real",
+      "endpointHost": null,
+      "parameters": {
+        "transport": "codex exec --json",
+        "reasoningEffort": "low",
+        "sandbox": "read-only",
+        "ephemeral": true,
+        "ignoreUserConfig": true,
+        "outputSchema": "century-llm-decision-v1",
+        "cliVersion": "codex-cli 0.149.1",
+        "maxConcurrency": 2
+      }
+    },
+    "llmConfig": {
+      "timeoutMs": 120000,
+      "maxRetries": 1,
+      "maxTokens": 700,
+      "temperature": 0,
+      "maxCalls": 120,
+      "tokenBudget": 2500000,
+      "candidateLimit": 64,
+      "shadowChampion": true
+    },
+    "budgets": {
+      "runTokenBudget": 25000000,
+      "runCallBudget": 1500,
+      "maxWallMinutes": 240,
+      "concurrency": 2
+    },
+    "preregistration": null,
+    "codeVersion": {
+      "commit": "ca5f1b024cd2c4f4905a68820371c82edde4411a",
+      "dirty": false,
+      "dirtyFiles": []
+    },
+    "evidenceClass": "real-llm"
+  },
+  "counts": {
+    "games": 32,
+    "finishedGames": 32,
+    "decisions": 649,
+    "llmDecisions": 648,
+    "fallbackDecisions": 1,
+    "turns": 4302,
+    "duplicateDecisionIds": 0,
+    "orphanDecisions": 0
+  },
+  "duplicateDecisionIds": [],
+  "integrity": {
+    "decisionChains": [
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+        "records": 42,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010001-f1-A",
+        "records": 48,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010001-f1-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010002-f0-A",
+        "records": 41,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010002-f0-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010003-f1-A",
+        "records": 52,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010003-f1-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110000-f0-A",
+        "records": 41,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110000-f0-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110001-f1-A",
+        "records": 42,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110001-f1-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110002-f2-A",
+        "records": 44,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110002-f2-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110003-f0-A",
+        "records": 44,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110003-f0-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210000-f0-A",
+        "records": 35,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210000-f0-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210001-f1-A",
+        "records": 44,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210001-f1-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210002-f2-A",
+        "records": 34,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210002-f2-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210003-f3-A",
+        "records": 38,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210003-f3-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310000-f0-A",
+        "records": 36,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310000-f0-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310001-f1-A",
+        "records": 36,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310001-f1-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310002-f2-A",
+        "records": 39,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310002-f2-B",
+        "records": 0,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310003-f3-A",
+        "records": 33,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310003-f3-B",
+        "records": 0,
+        "ok": true
+      }
+    ],
+    "turnChains": [
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+        "records": 84,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-B",
+        "records": 96,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010001-f1-A",
+        "records": 95,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010001-f1-B",
+        "records": 80,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010002-f0-A",
+        "records": 81,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010002-f0-B",
+        "records": 92,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010003-f1-A",
+        "records": 104,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010003-f1-B",
+        "records": 101,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110000-f0-A",
+        "records": 123,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110000-f0-B",
+        "records": 149,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110001-f1-A",
+        "records": 124,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110001-f1-B",
+        "records": 140,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110002-f2-A",
+        "records": 132,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110002-f2-B",
+        "records": 124,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110003-f0-A",
+        "records": 132,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110003-f0-B",
+        "records": 117,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210000-f0-A",
+        "records": 140,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210000-f0-B",
+        "records": 134,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210001-f1-A",
+        "records": 164,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210001-f1-B",
+        "records": 137,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210002-f2-A",
+        "records": 134,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210002-f2-B",
+        "records": 153,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210003-f3-A",
+        "records": 153,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210003-f3-B",
+        "records": 142,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310000-f0-A",
+        "records": 181,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310000-f0-B",
+        "records": 141,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310001-f1-A",
+        "records": 181,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310001-f1-B",
+        "records": 177,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310002-f2-A",
+        "records": 194,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310002-f2-B",
+        "records": 156,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310003-f3-A",
+        "records": 168,
+        "ok": true
+      },
+      {
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310003-f3-B",
+        "records": 173,
+        "ok": true
+      }
+    ],
+    "errors": []
+  },
+  "games": [
+    {
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "status": "finished",
+      "decisionCount": 42,
+      "llmDecisions": 42,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 1,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 84,
+      "wallMs": 443527,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-A",
+        "createdAt": "2026-10-26T17:10:46.279Z",
+        "mode": 2,
+        "seatCount": 2,
+        "seed": 1700010000,
+        "focusSeat": 0,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-B",
+      "mode": 2,
+      "seed": 1700010000,
+      "focusSeat": 0,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 0,
+      "focusFirst": true,
+      "anomaly": false,
+      "moves": 96,
+      "wallMs": 4784,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010000-f0-B",
+        "createdAt": "2026-10-26T17:10:36.757Z",
+        "mode": 2,
+        "seatCount": 2,
+        "seed": 1700010000,
+        "focusSeat": 0,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010000-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010001-f1-A",
+      "mode": 2,
+      "seed": 1700010001,
+      "focusSeat": 1,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010001-f1",
+      "status": "finished",
+      "decisionCount": 48,
+      "llmDecisions": 48,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 0,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 95,
+      "wallMs": 521119,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010001-f1-A",
+        "createdAt": "2026-10-26T17:10:46.288Z",
+        "mode": 2,
+        "seatCount": 2,
+        "seed": 1700010001,
+        "focusSeat": 1,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010001-f1",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010001-f1-B",
+      "mode": 2,
+      "seed": 1700010001,
+      "focusSeat": 1,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010001-f1",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 0,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 80,
+      "wallMs": 4736,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010001-f1-B",
+        "createdAt": "2026-10-26T17:10:41.542Z",
+        "mode": 2,
+        "seatCount": 2,
+        "seed": 1700010001,
+        "focusSeat": 1,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010001-f1",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010002-f0-A",
+      "mode": 2,
+      "seed": 1700010002,
+      "focusSeat": 0,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010002-f0",
+      "status": "finished",
+      "decisionCount": 41,
+      "llmDecisions": 41,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 0,
+      "focusFirst": true,
+      "anomaly": false,
+      "moves": 81,
+      "wallMs": 404571,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010002-f0-A",
+        "createdAt": "2026-10-26T17:18:15.097Z",
+        "mode": 2,
+        "seatCount": 2,
+        "seed": 1700010002,
+        "focusSeat": 0,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010002-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010002-f0-B",
+      "mode": 2,
+      "seed": 1700010002,
+      "focusSeat": 0,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010002-f0",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 1,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 92,
+      "wallMs": 5275,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010002-f0-B",
+        "createdAt": "2026-10-26T17:18:09.821Z",
+        "mode": 2,
+        "seatCount": 2,
+        "seed": 1700010002,
+        "focusSeat": 0,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010002-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010003-f1-A",
+      "mode": 2,
+      "seed": 1700010003,
+      "focusSeat": 1,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010003-f1",
+      "status": "finished",
+      "decisionCount": 52,
+      "llmDecisions": 52,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 1,
+      "focusFirst": true,
+      "anomaly": false,
+      "moves": 104,
+      "wallMs": 577104,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010003-f1-A",
+        "createdAt": "2026-10-26T17:19:32.730Z",
+        "mode": 2,
+        "seatCount": 2,
+        "seed": 1700010003,
+        "focusSeat": 1,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010003-f1",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-2p-1700010003-f1-B",
+      "mode": 2,
+      "seed": 1700010003,
+      "focusSeat": 1,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-2p-1700010003-f1",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 0,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 101,
+      "wallMs": 5307,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-2p-1700010003-f1-B",
+        "createdAt": "2026-10-26T17:19:27.422Z",
+        "mode": 2,
+        "seatCount": 2,
+        "seed": 1700010003,
+        "focusSeat": 1,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-2p-1700010003-f1",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-3p-1700110000-f0-A",
+      "mode": 3,
+      "seed": 1700110000,
+      "focusSeat": 0,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-3p-1700110000-f0",
+      "status": "finished",
+      "decisionCount": 41,
+      "llmDecisions": 41,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 2,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 123,
+      "wallMs": 439710,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110000-f0-A",
+        "createdAt": "2026-10-26T17:25:10.597Z",
+        "mode": 3,
+        "seatCount": 3,
+        "seed": 1700110000,
+        "focusSeat": 0,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110000-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-3p-1700110000-f0-B",
+      "mode": 3,
+      "seed": 1700110000,
+      "focusSeat": 0,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-3p-1700110000-f0",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 2,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 149,
+      "wallMs": 10896,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110000-f0-B",
+        "createdAt": "2026-10-26T17:24:59.699Z",
+        "mode": 3,
+        "seatCount": 3,
+        "seed": 1700110000,
+        "focusSeat": 0,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110000-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-3p-1700110001-f1-A",
+      "mode": 3,
+      "seed": 1700110001,
+      "focusSeat": 1,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-3p-1700110001-f1",
+      "status": "finished",
+      "decisionCount": 42,
+      "llmDecisions": 41,
+      "fallbackCount": 1,
+      "fallbackRate": 0.023809523809523808,
+      "winnerSeat": 1,
+      "focusFirst": true,
+      "anomaly": false,
+      "moves": 124,
+      "wallMs": 475970,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110001-f1-A",
+        "createdAt": "2026-10-26T17:29:21.759Z",
+        "mode": 3,
+        "seatCount": 3,
+        "seed": 1700110001,
+        "focusSeat": 1,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110001-f1",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-3p-1700110001-f1-B",
+      "mode": 3,
+      "seed": 1700110001,
+      "focusSeat": 1,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-3p-1700110001-f1",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 2,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 140,
+      "wallMs": 11883,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110001-f1-B",
+        "createdAt": "2026-10-26T17:29:09.875Z",
+        "mode": 3,
+        "seatCount": 3,
+        "seed": 1700110001,
+        "focusSeat": 1,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110001-f1",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-3p-1700110002-f2-A",
+      "mode": 3,
+      "seed": 1700110002,
+      "focusSeat": 2,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-3p-1700110002-f2",
+      "status": "finished",
+      "decisionCount": 44,
+      "llmDecisions": 44,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 1,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 132,
+      "wallMs": 466782,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110002-f2-A",
+        "createdAt": "2026-10-26T17:32:40.165Z",
+        "mode": 3,
+        "seatCount": 3,
+        "seed": 1700110002,
+        "focusSeat": 2,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110002-f2",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-3p-1700110002-f2-B",
+      "mode": 3,
+      "seed": 1700110002,
+      "focusSeat": 2,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-3p-1700110002-f2",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 0,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 124,
+      "wallMs": 9827,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110002-f2-B",
+        "createdAt": "2026-10-26T17:32:30.337Z",
+        "mode": 3,
+        "seatCount": 3,
+        "seed": 1700110002,
+        "focusSeat": 2,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110002-f2",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-3p-1700110003-f0-A",
+      "mode": 3,
+      "seed": 1700110003,
+      "focusSeat": 0,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-3p-1700110003-f0",
+      "status": "finished",
+      "decisionCount": 44,
+      "llmDecisions": 44,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 2,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 132,
+      "wallMs": 469208,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110003-f0-A",
+        "createdAt": "2026-10-26T17:37:27.746Z",
+        "mode": 3,
+        "seatCount": 3,
+        "seed": 1700110003,
+        "focusSeat": 0,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110003-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-3p-1700110003-f0-B",
+      "mode": 3,
+      "seed": 1700110003,
+      "focusSeat": 0,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-3p-1700110003-f0",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 0,
+      "focusFirst": true,
+      "anomaly": false,
+      "moves": 117,
+      "wallMs": 9980,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-3p-1700110003-f0-B",
+        "createdAt": "2026-10-26T17:37:17.765Z",
+        "mode": 3,
+        "seatCount": 3,
+        "seed": 1700110003,
+        "focusSeat": 0,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-3p-1700110003-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-4p-1700210000-f0-A",
+      "mode": 4,
+      "seed": 1700210000,
+      "focusSeat": 0,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-4p-1700210000-f0",
+      "status": "finished",
+      "decisionCount": 35,
+      "llmDecisions": 35,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 2,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 140,
+      "wallMs": 389808,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210000-f0-A",
+        "createdAt": "2026-10-26T17:40:39.183Z",
+        "mode": 4,
+        "seatCount": 4,
+        "seed": 1700210000,
+        "focusSeat": 0,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210000-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-4p-1700210000-f0-B",
+      "mode": 4,
+      "seed": 1700210000,
+      "focusSeat": 0,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-4p-1700210000-f0",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 1,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 134,
+      "wallMs": 12197,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210000-f0-B",
+        "createdAt": "2026-10-26T17:40:26.985Z",
+        "mode": 4,
+        "seatCount": 4,
+        "seed": 1700210000,
+        "focusSeat": 0,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210000-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-4p-1700210001-f1-A",
+      "mode": 4,
+      "seed": 1700210001,
+      "focusSeat": 1,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-4p-1700210001-f1",
+      "status": "finished",
+      "decisionCount": 44,
+      "llmDecisions": 44,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 3,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 164,
+      "wallMs": 510417,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210001-f1-A",
+        "createdAt": "2026-10-26T17:45:29.094Z",
+        "mode": 4,
+        "seatCount": 4,
+        "seed": 1700210001,
+        "focusSeat": 1,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210001-f1",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-4p-1700210001-f1-B",
+      "mode": 4,
+      "seed": 1700210001,
+      "focusSeat": 1,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-4p-1700210001-f1",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 3,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 137,
+      "wallMs": 12096,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210001-f1-B",
+        "createdAt": "2026-10-26T17:45:16.997Z",
+        "mode": 4,
+        "seatCount": 4,
+        "seed": 1700210001,
+        "focusSeat": 1,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210001-f1",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-4p-1700210002-f2-A",
+      "mode": 4,
+      "seed": 1700210002,
+      "focusSeat": 2,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-4p-1700210002-f2",
+      "status": "finished",
+      "decisionCount": 34,
+      "llmDecisions": 34,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 3,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 134,
+      "wallMs": 360554,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210002-f2-A",
+        "createdAt": "2026-10-26T17:47:22.179Z",
+        "mode": 4,
+        "seatCount": 4,
+        "seed": 1700210002,
+        "focusSeat": 2,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210002-f2",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-4p-1700210002-f2-B",
+      "mode": 4,
+      "seed": 1700210002,
+      "focusSeat": 2,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-4p-1700210002-f2",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 1,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 153,
+      "wallMs": 13139,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210002-f2-B",
+        "createdAt": "2026-10-26T17:47:09.038Z",
+        "mode": 4,
+        "seatCount": 4,
+        "seed": 1700210002,
+        "focusSeat": 2,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210002-f2",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-4p-1700210003-f3-A",
+      "mode": 4,
+      "seed": 1700210003,
+      "focusSeat": 3,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-4p-1700210003-f3",
+      "status": "finished",
+      "decisionCount": 38,
+      "llmDecisions": 38,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 2,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 153,
+      "wallMs": 407019,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210003-f3-A",
+        "createdAt": "2026-10-26T17:53:34.954Z",
+        "mode": 4,
+        "seatCount": 4,
+        "seed": 1700210003,
+        "focusSeat": 3,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210003-f3",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-4p-1700210003-f3-B",
+      "mode": 4,
+      "seed": 1700210003,
+      "focusSeat": 3,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-4p-1700210003-f3",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 1,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 142,
+      "wallMs": 12129,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-4p-1700210003-f3-B",
+        "createdAt": "2026-10-26T17:53:22.824Z",
+        "mode": 4,
+        "seatCount": 4,
+        "seed": 1700210003,
+        "focusSeat": 3,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-4p-1700210003-f3",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-5p-1700310000-f0-A",
+      "mode": 5,
+      "seed": 1700310000,
+      "focusSeat": 0,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-5p-1700310000-f0",
+      "status": "finished",
+      "decisionCount": 36,
+      "llmDecisions": 36,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 4,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 181,
+      "wallMs": 410597,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310000-f0-A",
+        "createdAt": "2026-10-26T17:54:12.378Z",
+        "mode": 5,
+        "seatCount": 5,
+        "seed": 1700310000,
+        "focusSeat": 0,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310000-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-5p-1700310000-f0-B",
+      "mode": 5,
+      "seed": 1700310000,
+      "focusSeat": 0,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-5p-1700310000-f0",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 4,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 141,
+      "wallMs": 12810,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310000-f0-B",
+        "createdAt": "2026-10-26T17:53:59.567Z",
+        "mode": 5,
+        "seatCount": 5,
+        "seed": 1700310000,
+        "focusSeat": 0,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310000-f0",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-5p-1700310001-f1-A",
+      "mode": 5,
+      "seed": 1700310001,
+      "focusSeat": 1,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-5p-1700310001-f1",
+      "status": "finished",
+      "decisionCount": 36,
+      "llmDecisions": 36,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 4,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 181,
+      "wallMs": 405867,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310001-f1-A",
+        "createdAt": "2026-10-26T18:00:37.936Z",
+        "mode": 5,
+        "seatCount": 5,
+        "seed": 1700310001,
+        "focusSeat": 1,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310001-f1",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-5p-1700310001-f1-B",
+      "mode": 5,
+      "seed": 1700310001,
+      "focusSeat": 1,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-5p-1700310001-f1",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 0,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 177,
+      "wallMs": 15855,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310001-f1-B",
+        "createdAt": "2026-10-26T18:00:22.079Z",
+        "mode": 5,
+        "seatCount": 5,
+        "seed": 1700310001,
+        "focusSeat": 1,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310001-f1",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-5p-1700310002-f2-A",
+      "mode": 5,
+      "seed": 1700310002,
+      "focusSeat": 2,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-5p-1700310002-f2",
+      "status": "finished",
+      "decisionCount": 39,
+      "llmDecisions": 39,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 0,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 194,
+      "wallMs": 455893,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310002-f2-A",
+        "createdAt": "2026-10-26T18:01:16.240Z",
+        "mode": 5,
+        "seatCount": 5,
+        "seed": 1700310002,
+        "focusSeat": 2,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310002-f2",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-5p-1700310002-f2-B",
+      "mode": 5,
+      "seed": 1700310002,
+      "focusSeat": 2,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-5p-1700310002-f2",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 3,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 156,
+      "wallMs": 13202,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310002-f2-B",
+        "createdAt": "2026-10-26T18:01:03.037Z",
+        "mode": 5,
+        "seatCount": 5,
+        "seed": 1700310002,
+        "focusSeat": 2,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310002-f2",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-5p-1700310003-f3-A",
+      "mode": 5,
+      "seed": 1700310003,
+      "focusSeat": 3,
+      "arm": "llm",
+      "pairId": "ai10-llm-v1-exploratory-5p-1700310003-f3",
+      "status": "finished",
+      "decisionCount": 33,
+      "llmDecisions": 33,
+      "fallbackCount": 0,
+      "fallbackRate": 0,
+      "winnerSeat": 3,
+      "focusFirst": true,
+      "anomaly": false,
+      "moves": 168,
+      "wallMs": 346655,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310003-f3-A",
+        "createdAt": "2026-10-26T18:07:38.824Z",
+        "mode": 5,
+        "seatCount": 5,
+        "seed": 1700310003,
+        "focusSeat": 3,
+        "arm": "llm",
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310003-f3",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    },
+    {
+      "gameId": "ai10-llm-v1-exploratory-5p-1700310003-f3-B",
+      "mode": 5,
+      "seed": 1700310003,
+      "focusSeat": 3,
+      "arm": "champion",
+      "pairId": "ai10-llm-v1-exploratory-5p-1700310003-f3",
+      "status": "finished",
+      "decisionCount": 0,
+      "llmDecisions": 0,
+      "fallbackCount": 0,
+      "fallbackRate": null,
+      "winnerSeat": 4,
+      "focusFirst": false,
+      "anomaly": false,
+      "moves": 173,
+      "wallMs": 14896,
+      "replayConsistent": true,
+      "meta": {
+        "schema": "century-llm-game-v1",
+        "gameId": "ai10-llm-v1-exploratory-5p-1700310003-f3-B",
+        "createdAt": "2026-10-26T18:07:23.925Z",
+        "mode": 5,
+        "seatCount": 5,
+        "seed": 1700310003,
+        "focusSeat": 3,
+        "arm": "champion",
+        "pairId": "ai10-llm-v1-exploratory-5p-1700310003-f3",
+        "experimentId": "ai10-llm-v1",
+        "channel": "experiment",
+        "rulesVersion": "engine-v2",
+        "aiSeats": [
+          0,
+          1,
+          2,
+          3,
+          4
+        ],
+        "opponentVersionIds": [
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5",
+          "joint-js5"
+        ]
+      }
+    }
+  ],
+  "analysisPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/ai10-explore-luna-r1/summary.json"
+}

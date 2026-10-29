@@ -1,0 +1,117 @@
+{
+  "schema": "century-llm-run-v1",
+  "runId": "glm-backup-smoke-r1",
+  "createdAt": "2026-10-26T23:36:43.796Z",
+  "updatedAt": "2026-10-26T23:50:32.112Z",
+  "status": "completed",
+  "codeVersion": {
+    "commit": "95af8d2389cdb63cf108a74c8d84848eb4f72f79",
+    "dirty": true,
+    "dirtyFiles": [
+      "M training/llm/config.mjs",
+      " M training/llm/pair-experiment.mjs",
+      " M training/llm/proxy.mjs",
+      " M web-v1/dist/standalone.html",
+      " M web-v1/src/app.ts",
+      "?? training/llm/provider-glm.mjs",
+      "?? training/tests/glm-provider.test.mjs"
+    ]
+  },
+  "provider": {
+    "id": "glm-4.7-flash",
+    "kind": "openai-compatible",
+    "model": "glm-4.7-flash",
+    "mode": "real",
+    "endpointHost": "open.bigmodel.cn",
+    "parameters": {
+      "freeTier": true,
+      "maxConcurrency": 1,
+      "minIntervalMs": 3000,
+      "maxTokens": 2500,
+      "maxRateLimitRetries": 8,
+      "retryBaseMs": 5000,
+      "retryMaxMs": 60000,
+      "thinking": "disabled",
+      "note": "免费接口；默认串行 + 退避，ProviderInfo 不含密钥"
+    }
+  },
+  "config": {
+    "schema": "century-llm-experiment-config-v1",
+    "experimentId": "ai10-llm-v1",
+    "stage": "smoke",
+    "modes": [
+      2
+    ],
+    "seedsPerMode": 1,
+    "offset": 0,
+    "focusSeatRotation": "pairIndex % seatCount（同一阶段/人数内均衡轮换）",
+    "opponentPool": "frozen-champion-all-non-focus-seats",
+    "champion": {
+      "id": "joint-js5",
+      "fingerprint": "3900b71f21d1bd4d8242994b456a3d075627281fd88a6f6d9e571e6ded05afc3",
+      "sourceSha256": "0dd409e57afd62546e5ce8cd2b599306a14defdfa34628ea7753d13e39cd3321"
+    },
+    "provider": {
+      "id": "glm-4.7-flash",
+      "kind": "openai-compatible",
+      "model": "glm-4.7-flash",
+      "mode": "real",
+      "endpointHost": "open.bigmodel.cn",
+      "parameters": {
+        "freeTier": true,
+        "maxConcurrency": 1,
+        "minIntervalMs": 3000,
+        "maxTokens": 2500,
+        "maxRateLimitRetries": 8,
+        "retryBaseMs": 5000,
+        "retryMaxMs": 60000,
+        "thinking": "disabled",
+        "note": "免费接口；默认串行 + 退避，ProviderInfo 不含密钥"
+      }
+    },
+    "llmConfig": {
+      "timeoutMs": 120000,
+      "maxRetries": 1,
+      "maxTokens": 2500,
+      "temperature": 0,
+      "maxCalls": 120,
+      "tokenBudget": 2500000,
+      "candidateLimit": 64,
+      "shadowChampion": true
+    },
+    "budgets": {
+      "runTokenBudget": 3000000,
+      "runCallBudget": 200,
+      "maxWallMinutes": 60,
+      "concurrency": 1
+    },
+    "preregistration": null,
+    "codeVersion": {
+      "commit": "95af8d2389cdb63cf108a74c8d84848eb4f72f79",
+      "dirty": true,
+      "dirtyFiles": [
+        "M training/llm/config.mjs",
+        " M training/llm/pair-experiment.mjs",
+        " M training/llm/proxy.mjs",
+        " M web-v1/dist/standalone.html",
+        " M web-v1/src/app.ts",
+        "?? training/llm/provider-glm.mjs",
+        "?? training/tests/glm-provider.test.mjs"
+      ]
+    },
+    "evidenceClass": "real-llm"
+  },
+  "schemaVersions": {
+    "run": "century-llm-run-v1",
+    "game": "century-llm-game-v1",
+    "decisionEnvelope": "century-llm-decision-envelope-v1",
+    "turnEnvelope": "century-llm-turn-envelope-v1"
+  },
+  "environment": {
+    "node": "v22.16.0",
+    "platform": "darwin",
+    "arch": "arm64"
+  },
+  "notes": [],
+  "summaryPath": "/Volumes/Extreme SSD/Projects/Century-ai10/training/reports/llm-player/glm-backup-smoke-r1/summary.json"
+}

@@ -1,21 +1,33 @@
 name: AI 4.0 auto training
 
-# 定时训练/周挑战/自动晋级（非 CI）。
+# 定时训练/周挑战/AI9 协同进化/自动晋级（非 CI）。
 # PR 验证统一由 .github/workflows/ci.yml 负责；本工作流不再在 pull_request 上触发，
 # 避免同一提交重复执行 web/training 大规模测试与共享构建。
+#
+# 分工原则：
+# - GitHub 标准 Runner 承担「有界、可复现、可审计」的日常进化与候选评估；
+# - OpenEvolve LLM 提案与 GPU/长周期训练留在本地 Mac M4（runner 上显式 BLOCKED，
+#   不伪造成功）；
+# - 冠军晋级仍必须经第一名率预注册证据 + CI 机器门禁，本工作流不直接改冠军。
 on:
   schedule:
-    # 每日 02:00 UTC 参数优化训练（约 40 分钟预算）
-    - cron: '0 2 * * *'
+    # 每周日 02:00 UTC AI4 参数进化（legacy 回归轨道，约 40 分钟预算）
+    - cron: '0 2 * * 0'
     # 每周一 03:00 UTC 大规模冠军挑战
     - cron: '0 3 * * 1'
+    # 每日 02:30 UTC（北京 10:30）AI9 多模块协同进化（有界预算，真实开发池对局）
+    - cron: '30 2 * * *'
+    # 每周日 04:00 UTC AI9 OpenEvolve 多模块入口（无 LLM/venv 时显式 BLOCKED）
+    - cron: '0 4 * * 0'
+    # 每周日 06:00 UTC MLP+PPO 冒烟训练（真实训练入口/断点/指标，不作为冠军证据）
+    - cron: '0 6 * * 0'
   workflow_dispatch:
     inputs:
       mode:
         description: '运行模式'
         type: choice
         default: evolve
-        options: [evolve, challenge]
+        options: [evolve, challenge, coevolve, ai9-openevolve, ppo]
       generations:
         description: '进化代数（1-30）'
         default: '3'
@@ -37,6 +49,26 @@ on:
       pool-size:
         description: '训练对手池大小（1=仅冠军，2-8）'
         default: '5'
+      modules:
+        description: 'AI9 模块（逗号分隔，至少两个；空=全模块协同）'
+        default: ''
+      coevolve-rounds:
+        description: 'AI9 协同进化轮数（1-40）'
+        default: '4'
+      coevolve-candidates:
+        description: 'AI9 每轮候选数（1-24）'
+        default: '6'
+      coevolve-max-games:
+        description: 'AI9 对局预算（1-20000）'
+        default: '600'
+      coevolve-wall-min:
+        description: 'AI9 墙钟预算（分钟，5-40）'
+        default: '25'
+      generator:
+        description: 'AI9 生成器（bounded=确定性变异；openevolve-hybrid/openevolve-only 需要本地 LLM）'
+        type: choice
+        default: bounded
+        options: [bounded, openevolve-hybrid, openevolve-only]
 
 # 默认只读；写权限仅在 promote 任务内显式声明。
 permissions:
@@ -49,13 +81,17 @@ concurrency:
 
 jobs:
   evolve:
-    if: github.event_name == 'schedule' && github.event.schedule == '0 2 * * *' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'evolve')
+    if: github.event_name == 'schedule' && github.event.schedule == '0 2 * * 0' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'evolve')
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          fetch-depth: 0
+          persist-credentials: true
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -64,6 +100,10 @@ jobs:
       - name: 构建 web-v1（训练与正式游戏共用同一编译产物）
         working-directory: web-v1
         run: npm ci --no-audit --no-fund && npm run build
+      - name: 恢复自动化状态（跨运行长期持久化的断点与治理账本；构建后执行以保持构建清单 gitDirty=false）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node training/scripts/automation-state.mjs pull
       - name: 校验手动输入（白名单：纯数字 + 范围，经环境变量传递，杜绝注入 Shell）
         env:
           GENERATIONS: ${{ inputs.generations || '3' }}
@@ -92,20 +132,58 @@ jobs:
         run: |
           node web-v1/scripts/sync-cards.mjs --check
           node training/redteam/audit-gate.mjs --tier dev --json training/reports/audit-gate-scheduled.json --md training/reports/audit-gate-scheduled.md
-      - name: 下载上次训练状态（断点续训 + 验证种子账本）
-        continue-on-error: true
+      - name: 下载上次训练状态（artifact 兜底：状态分支不可用时仍可续训）
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          # 不按 --status=success 过滤：失败/取消的运行同样用 if: always() 上传了
+          # 更新后的断点与验证种子账本，只用成功运行会回退到更旧状态并浪费计算。
           mkdir -p training/state-prev
           found=0
-          for run_id in $(gh run list --workflow=ai-training.yml --status=success -L 10 --json databaseId --jq '.[].databaseId'); do
+          for run_id in $(gh run list --workflow=ai-training.yml --limit 30 --json databaseId --jq '.[].databaseId'); do
             if gh run download "$run_id" --name evolve-state-latest --dir training/state-prev 2>/dev/null; then
               echo "已恢复 run $run_id 的训练状态"; found=1; break
             fi
           done
-          [ "$found" = "1" ] || echo "无可用历史状态，从全新状态开始（种子基数仍按日期递进）"
+          [ "$found" = "1" ] || echo "无可用 artifact 状态；沿用状态分支/仓库内账本"
+      - name: 归并状态来源（状态分支优先，artifact 仅作兜底）
+        run: |
+          mkdir -p training/state
+          if [ -f training/state/pull.json ] && grep -q '"source": "state-branch"' training/state/pull.json; then
+            echo "使用状态分支恢复的状态（长期持久、可审计）"
+          else
+            for name in state.json validation-ledger.json; do
+              if [ -f "training/state-prev/$name" ] && [ ! -f "training/state/$name" ]; then
+                cp "training/state-prev/$name" "training/state/$name"
+                echo "artifact 兜底恢复：$name"
+              fi
+            done
+          fi
+          ls -la training/state || true
+      - name: 初始化 AI4 验证账本（仅首次冷启动；状态分支已存在时必须已有账本）
+        run: |
+          if [ -f training/state/validation-ledger.json ]; then
+            echo "已有验证账本，继续续接"
+            exit 0
+          fi
+          source=$(node -p "JSON.parse(require('fs').readFileSync('training/state/pull.json','utf8')).source" 2>/dev/null || echo unknown)
+          if [ "$source" = "state-branch" ]; then
+            echo "::error::状态分支存在但验证账本缺失——拒绝静默从头开始（会重复消费验证种子）"
+            exit 1
+          fi
+          node -e "
+            const fs=require('fs');
+            const path='training/state/validation-ledger.json';
+            if (fs.existsSync(path)) process.exit(0);
+            fs.writeFileSync(path, JSON.stringify({
+              lastBase: null, challengeCount: 0, history: [],
+              note: 'cold-start initialized by ai-training.yml; 历史正式挑战仍由中央种子治理层合并，不会因此重置 alpha 或验证池高水位',
+              initializedAt: new Date().toISOString(),
+            }, null, 2));
+            console.log('冷启动验证账本已显式初始化（空历史；治理层仍强制核对全部历史来源）');
+          "
       - name: 参数进化训练（每日种子递进 + 断点续训 + 时间预算安全退出）
+        id: train
         env:
           GENERATIONS: ${{ inputs.generations || '3' }}
           POPULATION: ${{ inputs.population || '8' }}
@@ -115,13 +193,14 @@ jobs:
           POOL_SIZE: ${{ inputs['pool-size'] || '5' }}
         run: |
           seed_base=$(date +%Y%m%d)
+          out="training/reports/evolve-$(date +%Y%m%d)"
           resume_args=()
-          if [ -f training/state-prev/state.json ]; then
-            resume_args+=(--resume training/state-prev/state.json)
+          if [ -f training/state/state.json ]; then
+            resume_args+=(--resume training/state/state.json)
             echo "续训：从上次状态继续（种子游标与精英池继承）"
           fi
-          if [ -f training/state-prev/validation-ledger.json ]; then
-            resume_args+=(--seed-ledger training/state-prev/validation-ledger.json)
+          if [ -f training/state/validation-ledger.json ]; then
+            resume_args+=(--seed-ledger training/state/validation-ledger.json)
             echo "验证种子账本：从上次消费位置续接（种子块不可复用）"
           fi
           node training/optimizer/evolve-cli.mjs \
@@ -133,21 +212,46 @@ jobs:
             --pool-size "$POOL_SIZE" \
             --seed-base "$seed_base" \
             "${resume_args[@]}" \
-            --out "training/reports/evolve-$(date +%Y%m%d)"
+            --out "$out"
+          echo "dir=$out" >> "$GITHUB_OUTPUT"
+      - name: 训练有效性校验 + 统一运行报告（工作流成功 ≠ 训练有效）
+        if: always()
+        env:
+          RUN_DIR: ${{ steps.train.outputs.dir }}
+        run: |
+          test -n "$RUN_DIR" || { echo "::error::训练步骤没有产出目录——本次运行不计为有效训练"; exit 1; }
+          node training/scripts/automation-report.mjs \
+            --run-dir "$RUN_DIR" --mode ai4-evolve \
+            --out "training/reports/automation/$(basename "$RUN_DIR")" --validate
       - name: 归集训练状态（供次日续训）
         if: always()
+        env:
+          RUN_DIR: ${{ steps.train.outputs.dir }}
         run: |
           mkdir -p training/state
-          cp training/reports/evolve-*/state.json training/state/ 2>/dev/null || true
-          cp training/reports/evolve-*/validation-ledger.json training/state/ 2>/dev/null || true
+          if [ -n "$RUN_DIR" ]; then
+            cp "$RUN_DIR/state.json" training/state/ 2>/dev/null || true
+            cp "$RUN_DIR/validation-ledger.json" training/state/ 2>/dev/null || true
+          fi
+          ls -la training/state || true
+      - name: 持久化自动化状态（独立分支，含断点与治理账本）
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node training/scripts/automation-state.mjs push \
+            --run-id "${GITHUB_RUN_ID}" --commit "${GITHUB_SHA}" \
+            --message "chore(automation): ai4 evolve run=${GITHUB_RUN_ID} on ${GITHUB_SHA:0:12}"
       - name: 上传训练状态
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: evolve-state-latest
           path: training/state/
+          # 断点与验证种子账本静默丢失会让下一次运行重复消费种子/重置游标，
+          # 因此这里必须失败关闭，而不是 ignore。
+          if-no-files-found: error
           retention-days: 30
-          if-no-files-found: ignore
       - name: 上传训练产物
         uses: actions/upload-artifact@v4
         if: always()
@@ -155,12 +259,251 @@ jobs:
           name: evolve-${{ github.run_id }}
           path: |
             training/reports/evolve-*/
+            training/reports/automation/evolve-*/
+          if-no-files-found: warn
+          retention-days: 30
+
+  coevolve:
+    name: ai9-coevolve
+    if: github.event_name == 'schedule' && github.event.schedule == '30 2 * * *' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'coevolve')
+    # 编译型多模块候选必须经 macOS Seatbelt 隔离；ubuntu 上 generateMultiModuleBatch
+    # 会 fail-closed 拒绝全部候选（实测 run 40347034854 得到 0 候选/0 局），
+    # 因此 AI9 协同进化必须跑 macOS 标准 Runner。
+    runs-on: macos-14
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web-v1/package-lock.json
+      - name: 构建 web-v1（AI9 候选编译与真实对局共用同一引擎产物）
+        working-directory: web-v1
+        run: npm ci --no-audit --no-fund && npm run build
+      - name: 恢复自动化状态（AI9 开发池种子登记必须跨运行可见；构建后执行以保持构建清单 gitDirty=false）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node training/scripts/automation-state.mjs pull
+      - name: 校验手动输入（白名单：纯数字 + 范围）
+        env:
+          ROUNDS: ${{ inputs['coevolve-rounds'] || '4' }}
+          CANDIDATES: ${{ inputs['coevolve-candidates'] || '6' }}
+          MAX_GAMES: ${{ inputs['coevolve-max-games'] || '600' }}
+          WALL_MIN: ${{ inputs['coevolve-wall-min'] || '25' }}
+        run: |
+          check() {
+            name="$1"; value="$2"; low="$3"; high="$4"
+            case "$value" in ''|*[!0-9]*) echo "输入 $name 非法：$value"; exit 1;; esac
+            if [ "$value" -lt "$low" ] || [ "$value" -gt "$high" ]; then echo "输入 $name 越界 [$low,$high]：$value"; exit 1; fi
+          }
+          check ROUNDS "$ROUNDS" 1 40
+          check CANDIDATES "$CANDIDATES" 1 24
+          check MAX_GAMES "$MAX_GAMES" 1 20000
+          check WALL_MIN "$WALL_MIN" 5 40
+      - name: AI9 多模块协同进化（真实 2–5 人对局 + 模块联合/交叉/消融策略）
+        id: campaign
+        env:
+          ROUNDS: ${{ inputs['coevolve-rounds'] || '4' }}
+          CANDIDATES: ${{ inputs['coevolve-candidates'] || '6' }}
+          MAX_GAMES: ${{ inputs['coevolve-max-games'] || '600' }}
+          WALL_MIN: ${{ inputs['coevolve-wall-min'] || '25' }}
+          MODULES: ${{ inputs.modules || '' }}
+          GENERATOR: ${{ inputs.generator || 'bounded' }}
+        run: |
+          campaign="ai9-cloud-$(date +%Y%m%d)"
+          module_args=()
+          if [ -n "$MODULES" ]; then module_args+=(--modules "$MODULES"); fi
+          node training/evolution/autonomous-run.mjs start \
+            --campaign "$campaign" \
+            --coevolve \
+            --rounds "$ROUNDS" \
+            --player-counts 2,3,4,5 \
+            --quick-seeds 6 --deep-seeds 6 \
+            --candidates "$CANDIDATES" \
+            --max-candidates 200 --max-games "$MAX_GAMES" \
+            --max-wall-ms $((WALL_MIN * 60 * 1000)) \
+            --max-concurrent 1 --max-deep-confirmations 4 \
+            --strategies single,pair,multi,crossover,ablation \
+            --generator "$GENERATOR" \
+            --continue-from-selected \
+            "${module_args[@]}"
+          echo "id=$campaign" >> "$GITHUB_OUTPUT"
+      - name: 训练有效性校验 + 统一运行报告（无候选＝保留冠军，不是失败；无产物＝失败）
+        if: always()
+        env:
+          RUN_DIR: training/reports/coevolution/${{ steps.campaign.outputs.id }}
+        run: |
+          test -d "$RUN_DIR" || { echo "::error::AI9 campaign 没有产出任何目录"; exit 1; }
+          node training/scripts/automation-report.mjs \
+            --run-dir "$RUN_DIR" --mode ai9-coevolve \
+            --out "training/reports/automation/$(basename "$RUN_DIR")" \
+            --validate --min-candidates 1 --min-games 1
+      - name: 披露 AI9 本轮结论（无候选/门禁 BLOCKED 均显式记录）
+        if: always()
+        run: |
+          report="training/reports/automation/${{ steps.campaign.outputs.id }}/run-report.md"
+          if [ -f "$report" ]; then cat "$report" >> "$GITHUB_STEP_SUMMARY"; fi
+      - name: 持久化自动化状态（AI9 开发池种子登记 + 治理账本）
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          campaign="${{ steps.campaign.outputs.id }}"
+          test -n "$campaign" || campaign=$(basename "$(ls -d training/reports/coevolution/ai9-cloud-* 2>/dev/null | tail -1)")
+          node training/scripts/automation-state.mjs push \
+            --run-id "${GITHUB_RUN_ID}" --commit "${GITHUB_SHA}" --campaign "$campaign" \
+            --message "chore(automation): ai9 coevolve ${campaign} run=${GITHUB_RUN_ID}"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai9-coevolve-${{ github.run_id }}
+          path: |
+            training/reports/coevolution/${{ steps.campaign.outputs.id }}/
+            training/reports/automation/${{ steps.campaign.outputs.id }}/
+            training/reports/first-place-promotion/latest/
+            training/governance/seed-consumption-registry.json
+          if-no-files-found: warn
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-v1-dist
+          path: web-v1/dist
+          if-no-files-found: error
+          retention-days: 7
+          include-hidden-files: true
+
+  ai9-openevolve:
+    name: ai9-openevolve
+    if: github.event_name == 'schedule' && github.event.schedule == '0 4 * * 0' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'ai9-openevolve')
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web-v1/package-lock.json
+      - name: 构建 web-v1（候选编译需要引擎产物）
+        working-directory: web-v1
+        run: npm ci --no-audit --no-fund && npm run build
+      - name: AI9 OpenEvolve 多模块联合进化（需要本地 LLM/venv；云端缺失时显式 BLOCKED）
+        id: run
+        run: |
+          modules="${{ inputs.modules || 'M02,M05' }}"
+          out="ai5/openevolve/results/ai9-cloud-$(date +%Y%m%d)"
+          set +e
+          node training/evolution/run-ai9-openevolve.mjs \
+            --modules "$modules" \
+            --iterations "${{ inputs['coevolve-candidates'] || '2' }}" \
+            --out "$out" > /tmp/ai9-openevolve.out 2>&1
+          status=$?
+          set -e
+          cat /tmp/ai9-openevolve.out
+          case "$status" in
+            0) echo "status=completed" >> "$GITHUB_OUTPUT" ;;
+            3) echo "status=blocked" >> "$GITHUB_OUTPUT" ;;
+            *) echo "status=failed" >> "$GITHUB_OUTPUT"; exit 1 ;;
+          esac
+          echo "out=$out" >> "$GITHUB_OUTPUT"
+      - name: 披露运行结果（BLOCKED 必须显式记录，绝不伪装成功）
+        run: |
+          out="${{ steps.run.outputs.out }}"
+          node -e "
+            const fs=require('fs');
+            const path='$out/run-summary.json';
+            if (!fs.existsSync(path)) { console.error('::error::缺少 run-summary.json'); process.exit(1); }
+            const s=JSON.parse(fs.readFileSync(path,'utf8'));
+            if (s.status === 'blocked') {
+              console.log('::warning::AI9 OpenEvolve 在 GitHub Runner 上不可用（需要本地 codex/venv）：' + (s.reason ?? ''));
+              console.log('本地等价命令：node training/evolution/run-ai9-openevolve.mjs --modules ' + (s.modules ?? []).join(',') + ' --iterations ' + s.iterations);
+            } else {
+              console.log('AI9 OpenEvolve 完成：' + JSON.stringify(s.candidate ?? s.run ?? {}).slice(0, 800));
+            }
+          "
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai9-openevolve-${{ github.run_id }}
+          path: |
+            ${{ steps.run.outputs.out }}/
+          if-no-files-found: warn
+          retention-days: 30
+
+  ppo-smoke:
+    name: ppo-smoke
+    if: github.event_name == 'schedule' && github.event.schedule == '0 6 * * 0' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'ppo')
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web-v1/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-torch-cpu-py312-v1
+      - name: 安装 CPU torch + numpy
+        run: |
+          python -m pip install --upgrade pip
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install numpy
+      - name: 构建 web-v1（PPO worker 使用正式引擎与冠军）
+        working-directory: web-v1
+        run: npm ci --no-audit --no-fund && npm run build
+      - name: MLP+PPO 冒烟训练（真实训练入口；不作为冠军证据）
+        run: |
+          out="ai5/ppo/reports/ci-smoke-$(date +%Y%m%d)"
+          python -m ai5.ppo.training.train_cli \
+            --config ai5/ppo/configs/smoke.json \
+            --smoke --iterations 2 --time-budget-min 8 \
+            --out "$out"
+          echo "PPO_OUT=$out" >> "$GITHUB_ENV"
+      - name: 校验 PPO 训练产物（训练成功但无 checkpoint/metrics 即失败）
+        run: |
+          test -s "$PPO_OUT/summary.json" || { echo "::error::缺少 summary.json"; exit 1; }
+          test -s "$PPO_OUT/last.pt" || { echo "::error::缺少 checkpoint last.pt"; exit 1; }
+          node -e "
+            const s=require('./'+process.env.PPO_OUT+'/summary.json');
+            if (!(s.iterationsDone >= 1)) { console.error('PPO 未完成任何迭代：', s.iterationsDone); process.exit(1); }
+            console.log('PPO 冒烟完成：iterations=' + s.iterationsDone + ' interrupted=' + s.interrupted);
+          "
+          {
+            echo "## MLP+PPO 冒烟训练"
+            echo
+            echo "- 输出：\`$PPO_OUT\`"
+            echo "- 说明：这是研究轨道的真实训练入口冒烟，不产生冠军晋级证据；正式晋级仍只认 2–5 人第一名率挑战。"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ppo-smoke-${{ github.run_id }}
+          path: |
+            ai5/ppo/reports/ci-smoke-*/
           if-no-files-found: warn
           retention-days: 30
 
   promote:
-    needs: evolve
-    if: needs.evolve.result == 'success'
+    needs: [evolve, coevolve]
+    if: always() && (needs.evolve.result == 'success' || needs.coevolve.result == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -169,19 +512,34 @@ jobs:
       actions: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: web-v1/package-lock.json
-      - name: 构建 web-v1（晋级脚本需要编译产物）
+      - name: 构建 web-v1（发布器需要 dist 与 node_modules）
         working-directory: web-v1
         run: npm ci --no-audit --no-fund && npm run build
-      - name: 下载训练产物
+      - name: 恢复自动化状态（晋级必须使用最新的 alpha 账本与种子登记；构建后执行）
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node training/scripts/automation-state.mjs pull
+      - name: 下载 AI9 训练产物（含 first-place-promotion/latest）
+        if: needs.coevolve.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: ai9-coevolve-${{ github.run_id }}
+          path: training/reports/
+          if-no-files-found: error
+      - name: 下载 AI4 训练产物（仅用于显式披露无候选，不产生晋级证据）
+        if: needs.evolve.result == 'success'
         uses: actions/download-artifact@v4
         with:
           name: evolve-${{ github.run_id }}
           path: training/reports/
+          if-no-files-found: error
       - name: 检查第一名率晋级证据是否存在
         id: candidate
         run: |
@@ -195,51 +553,31 @@ jobs:
             echo "ready=false" >> "$GITHUB_OUTPUT"
             echo "没有第一名率正式挑战证据：保留当前冠军，不晋级。"
           fi
-      - name: 机器门禁晋级（第一名率证据复核 + 归档 + 参数区落地 + 终检）
+      - name: 显式披露本轮晋级结论（无候选 ≠ 失败，但不得静默）
+        if: steps.candidate.outputs.ready != 'true'
+        run: |
+          {
+            echo "## 本轮训练结论"
+            echo
+            echo "- 训练已完成，但没有候选通过第一名率正式挑战：**保留现任冠军**。"
+            echo "- 候选可能被快筛/深验/统计功效/alpha 预算门禁淘汰，属于正常结果；下一轮训练照常继续。"
+            echo "- 淘汰原因与第一名率诊断见 training/reports/automation/ 下的 run-report.md。"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: 统一发布器（origin/main 基线 + alpha 前缀 + PR + dispatch CI）
         if: steps.candidate.outputs.ready == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.AUTOMATION_TOKEN || secrets.GITHUB_TOKEN }}
+          CENTURY_PR_TRIGGER: ${{ secrets.AUTOMATION_TOKEN != '' && 'app' || 'dispatch' }}
           EVIDENCE_DIR: ${{ steps.candidate.outputs.dir }}
           CANDIDATE_ID: ${{ steps.candidate.outputs.id }}
         run: |
-          git config user.name "century-ai-bot"
-          git config user.email "actions@users.noreply.github.com"
-          branch="ai-champion/${CANDIDATE_ID}-$(date +%Y%m%d%H%M)"
-          node training/scripts/promote-first-place-champion.mjs \
-            --evidence "$EVIDENCE_DIR/challenge-evidence.json" \
-            --plan "$EVIDENCE_DIR/preregistration.json" \
-            --candidate "$EVIDENCE_DIR/candidate.json"
-          node training/scripts/apply-champion.mjs --champion training/champions/champion.json
-          (cd web-v1 && npm ci --no-audit --no-fund && npm run build)
-          node training/scripts/apply-champion.mjs --check
-          node training/scripts/refresh-champion-provenance.mjs
-          node training/scripts/version-lock.mjs --write --note "第一名率冠军晋级 ${CANDIDATE_ID}（机器门禁）"
-          node training/redteam/audit-gate.mjs --tier promotion --json training/reports/audit-gate-promote.json
-          git checkout -b "$branch"
-          git add training/champions/ web-v1/src/ai/parameters.ts web-v1/dist training/reports/
-          git commit -m "feat(ai8): 第一名率晋级冠军 ${CANDIDATE_ID}（机器门禁，无人工审批）"
-          git push origin "$branch"
-          {
-            echo "## 第一名率冠军晋级：${CANDIDATE_ID}"
-            echo
-            echo "### 主判据"
-            echo '2–5 人配对第一名率增量（预注册 + 固定样本 + 几何 alpha 消耗）；平均得分/资源效率仅诊断。'
-            echo
-            echo '### 完整证据'
-            node -e "const d=require('./$EVIDENCE_DIR/challenge-evidence.json');console.log('\`\`\`json\\n'+JSON.stringify(d.decision,null,2)+'\\n\`\`\`')"
-            echo '### 机器门禁'
-            echo '- promotion-gate：结构化审计 verdict 必须为 PASS'
-            echo '- promotion-machine-gate：独立重算第一名率证据、alpha 账本、种子治理、构建身份'
-            echo '- 全部必需检查通过后自动 squash merge；无人工批准、无管理员强制合并'
-          } > pr-body.md
-          pr_url=$(gh pr create --title "第一名率冠军晋级：${CANDIDATE_ID}" --body-file pr-body.md --base main --head "$branch")
-          echo "候选 PR：$pr_url"
-          gh workflow run ci.yml --ref "$branch" -f promotion=true || {
-            echo "::error::无法 dispatch ci.yml";
-            exit 1
-          }
-          gh pr merge "$pr_url" --squash --auto
-          echo "已启用 auto-merge：全部机器检查通过后自动合并并触发 Pages 部署。"
+          test -n "$CANDIDATE_ID" || { echo "::error::缺少候选 id"; exit 1; }
+          # 发布器在干净的 origin/main worktree 中重新执行 promote/apply/build，
+          # 校验并发 alpha 前缀，然后创建 PR。
+          # - 配置 AUTOMATION_TOKEN（App/PAT）时由 pull_request 自动触发 CI；
+          # - 仅 GITHUB_TOKEN 时 PR 不会触发 pull_request，发布器必须显式 dispatch。
+          node training/scripts/publish-promotion-pr.mjs \
+            --evidence-dir "$EVIDENCE_DIR"
 
   challenge:
     if: github.event_name == 'schedule' && github.event.schedule == '0 3 * * 1' || (github.event_name == 'workflow_dispatch' && inputs.mode == 'challenge')

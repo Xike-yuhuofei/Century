@@ -57,8 +57,17 @@ test('AI 能在可认领时优先认领魔像', () => {
 });
 
 test('所有 1–4 AI 人数组合能持续合法行动并完成整局', () => {
-  for(let bots=1;bots<=4;bots++) {
-    for(let seed=1;seed<=16;seed++) {
+  // 该用例要跑 4×16 局完整对局（每局 ~10s），单进程约 12 分钟，是 CI 最长单一测试。
+  // 覆盖不变的前提下把「同一批对局」按人数拆到并行作业：CI 通过 CENTURY_AI_TEST_BOTS
+  // 指定本作业负责的人数，种子范围保持 1..16 全量。
+  const botsList = process.env.CENTURY_AI_TEST_BOTS
+    ? process.env.CENTURY_AI_TEST_BOTS.split(',').map(Number).filter(n => n >= 1 && n <= 4)
+    : [1, 2, 3, 4];
+  const seedStart = Number(process.env.CENTURY_AI_TEST_SEED_START ?? 1);
+  const seedEnd = Number(process.env.CENTURY_AI_TEST_SEED_END ?? 16);
+  assert.ok(botsList.length > 0, `CENTURY_AI_TEST_BOTS 非法：${process.env.CENTURY_AI_TEST_BOTS}`);
+  for(const bots of botsList) {
+    for(let seed=seedStart;seed<=seedEnd;seed++) {
       let g=gameWithBots(bots,seed);
       // 测试全程自动行动：临时把人类座位当作自动测试玩家，不改变产品规则。
       g.players[0].isAI = true;

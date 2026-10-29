@@ -1,0 +1,74 @@
+{
+  "schema": "century-llm-backup-provider-verification-v1",
+  "verifiedAt": "2026-10-27T08:00:00+08:00",
+  "secrets": {
+    "storage": "~/.century-llm/env",
+    "mode": "600",
+    "inRepo": false,
+    "inBrowser": false,
+    "note": "GLM_API_KEY / OPENROUTER_API_KEY 仅在本机受控环境文件；ProviderInfo/日志/前端均不含密钥"
+  },
+  "providers": [
+    {
+      "id": "glm-4.7-flash",
+      "kind": "openai-compatible",
+      "endpoint": "https://open.bigmodel.cn/api/paas/v4",
+      "model": "glm-4.7-flash",
+      "freeTier": true,
+      "concurrency": 1,
+      "minIntervalMs": 3000,
+      "thinking": "disabled",
+      "rateLimitBackoff": "1305/429 指数退避，最多 8 次，封顶 60s",
+      "singleDecisionProbe": {
+        "latencyMs": 5903,
+        "totalTokens": 4224,
+        "schemaValid": true,
+        "model": "glm-4.7-flash"
+      },
+      "fullGameSmoke": {
+        "runId": "glm-backup-smoke-r1",
+        "mode": 2,
+        "status": "finished",
+        "llmDecisions": 43,
+        "fallbackDecisions": 1,
+        "fallbackCause": "timeout（turn 43，2×120s 后回退）",
+        "totalTokens": 315157,
+        "medianDecisionLatencyMs": 7167.5,
+        "note": "仅验证备用链路可完成整局；不计入 AI10 阶段 A/B 成绩"
+      }
+    },
+    {
+      "id": "openrouter-free",
+      "kind": "openai-compatible",
+      "endpoint": "https://openrouter.ai/api/v1",
+      "model": "xingchen-agi/xing4.0-29b-a4b:free",
+      "freeTier": true,
+      "concurrency": 1,
+      "minIntervalMs": 4000,
+      "rateLimitBackoff": "429 指数退避，最多 6 次，封顶 60s",
+      "modelSelection": "固定具体免费模型；未使用 openrouter/free 路由器（其实际模型会漂移，实测路由到 cohere/north-mini-code:free）",
+      "singleDecisionProbe": {
+        "latencyMs": 9737,
+        "totalDecisionLatencyMs": 16240,
+        "totalTokens": 5559,
+        "schemaValid": true,
+        "model": "xingchen-agi/xing4.0-29b-a4b:free"
+      },
+      "proxyHealth": {
+        "ok": true,
+        "provider": "openrouter-free",
+        "maxConcurrency": 1,
+        "keyLeak": false
+      },
+      "limitations": [
+        "免费池受上游共享池限流，实测多个模型返回 429/404；不适合作为阶段 C 的大样本主 Provider",
+        "未运行完整对局以保留免费额度；仅做单决策与健康检查"
+      ]
+    }
+  ],
+  "excludedModels": {
+    "google/gemma-4-31b-it:free": "429 upstream shared pool",
+    "nvidia/nemotron-3-super-120b-a12b:free": "404 provider error",
+    "openrouter/free": "路由到不同模型，复现性不足"
+  }
+}
