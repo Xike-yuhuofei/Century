@@ -48,6 +48,33 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 
 **P3 结论**：按任务书"根据实证收益逐项启用"的要求，本轮不强行集成高级优化器；保留接口与数据积累路径。
 
+### 统一操作入口（融入现有工程）
+
+| 能力 | 命令 |
+|---|---|
+| 环境诊断 | `node training/readiness/run-readiness.mjs`；`node training/scripts/statistical-plan-ai11.mjs --check` |
+| 启动 / 恢复 / 状态 / 停止 | `node training/evolution/autonomous-run.mjs start|resume|status|stop`（`--coevolve` 多模块） |
+| 无人值守启动 | `node training/scripts/run-supervisor.mjs --campaign <id> --hours 6 ...` |
+| 研究/谱系/统计报告 | `node training/scripts/research-report.mjs --campaign <id> --out <path>` |
+| 运行验收 | `node training/scripts/ai11-endurance-audit.mjs --campaign <id> --hours 6` |
+| 故障注入 | `node training/scripts/ai11-fault-injection.mjs` |
+| 对照实验 | `node training/scripts/ai11-experiments.mjs --experiment A|B|C` |
+| checkpoint 恢复演练 | `node training/scripts/ai11-a2-checkpoint-drill.mjs` |
+
+### 限制与未完成（必须显式披露）
+
+1. **竞技收益未证明**：6h 与三组实验均为 inconclusive/负增量；无候选满足正式挑战资格。
+2. **失败归因样本不足**：4 种子 × 4 人数 = 每层 1 对，57 份归因文件均为 inconclusive；
+   反馈通道存在，但没有"supported"级因果结论。
+3. **顺序检验 interim 未启用**：设计已模拟验证（两次查看：313 种子/人、功效 0.80），
+   runner 仍为固定样本单次 final look。
+4. **编排器停滞策略单一**：6h 中 crossover 134 + ablation 97，探索多样性不足（见 F 节）。
+5. **长跑内存/耗时**：第 32 轮出现 45 分钟无推进（进程仍占 CPU），靠监督器杀进程恢复；
+   根因未定位，建议把候选评估移入子进程。
+6. **P3 高级优化未启用**（多保真新实现、CMA-ES/BO、bandit、MCTS/神经价值网络）。
+7. **docs PR 影响**：`a3310a6` 为 AI11 代码合并 SHA；随后 docs PR #76 及本次回填仅改文档/账本，
+   不改变决策代码身份。
+
 ## B. 系统运行能力
 
 ### LLM 与路由
