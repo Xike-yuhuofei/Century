@@ -193,12 +193,13 @@ screen 种子），对每个种子计算"改动含模块 M / 不含 M"的 candid
 - 分支：`feat/ai11-research-system`（主体）、`feat/ai11-module-effects`（P1.3 补充）、
   `feat/ai11-evidence-context`（P0.2 证据字段加固）
 - PR：#75（https://github.com/Xike-yuhuofei/Century/pull/75，主体）、
-  #78（https://github.com/Xike-yuhuofei/Century/pull/78，模块级观测效应）
+  #78（https://github.com/Xike-yuhuofei/Century/pull/78，模块级观测效应）、
+  #79（https://github.com/Xike-yuhuofei/Century/pull/79，证据字段加固）
 - 提交顺序：基线审计 → P0/P1/P2 主体 → 缺陷修复（crossover 谱系、无变化候选、
   statusPath 脏标记、消融判定）→ 实验与故障注入证据 → 6h 运行证据
 - CI：PR 最终提交 **success（0 failure，deploy/promotion/pages 按预期 skipped）**；main 合并后 CI 另行复跑
-- 最终 `main` SHA：**`e3b884c`**（#78 squash 合并；AI11 主体代码合并为 `a3310a6`，
-  其后 #76/#77/#78 只新增研究证据/报告，不改变决策代码）
+- 最终 `main` SHA：**`7fc068e`**（#79 squash 合并；AI11 主体代码合并为 `a3310a6`，
+  其后 #76–#79 只新增研究证据/报告与索引字段，不改变决策代码路径）
 - 回滚方案：本 PR 只新增研究/监督/证据模块与开关，不修改冠军、规则引擎与正式评估器；
   回滚 = revert 合并提交并重新部署上一构建（`scripts/ci/rollback-champion.mjs` 已有演练）
 
