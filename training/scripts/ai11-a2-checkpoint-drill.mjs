@@ -58,7 +58,18 @@ function run(command) {
 }
 
 function sleep(ms) {
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+  // 必须是异步 sleep：同步阻塞会冻结事件循环，process 'exit' 事件无法触发，
+  // 导致演练在每个等待循环里白等满超时（历史实现因此拖到 40 分钟）。
+  return new Promise(resolveSleep => setTimeout(resolveSleep, ms));
+}
+
+async function waitFor(predicate, timeoutMs, stepMs = 1000) {
+  const started = Date.now();
+  while (Date.now() - started < timeoutMs) {
+    if (predicate()) return true;
+    await sleep(stepMs);
+  }
+  return false;
 }
 
 function readState() {
@@ -78,15 +89,10 @@ let firstExit = null;
 first.on('exit', (code, signal) => { firstExit = { code, signal }; });
 
 // 等第 1 轮完成深验（最多 40 分钟）
-let reached = false;
-for (let i = 0; i < 2400; i += 1) {
-  sleep(1000);
+const reached = await waitFor(() => {
   const state = readState();
-  if (!state) continue;
-  const round1 = state.rounds?.[0];
-  if (round1?.deepDone) { reached = true; break; }
-  if (firstExit) break;
-}
+  return Boolean(state?.rounds?.[0]?.deepDone) || Boolean(firstExit);
+}, 40 * 60_000);
 add('A2-1', '第 1 轮深验完成后再停止', reached, `deepDone=${Boolean(readState()?.rounds?.[0]?.deepDone)}`);
 
 // 2. 安全停止
@@ -102,7 +108,7 @@ if (beforeStop) {
   }
 }
 writeFileSync(join(root, '.stop'), JSON.stringify({ reason: 'a2-drill', at: new Date().toISOString() }));
-for (let i = 0; i < 600 && !firstExit; i += 1) sleep(500);
+await waitFor(() => Boolean(firstExit), 10 * 60_000, 500);
 const stopped = readState();
 add('A2-2', '安全停止保留状态', firstExit !== null && Boolean(stopped) && stopped.status !== 'completed',
   `exit=${JSON.stringify(firstExit)} status=${stopped?.status}`);
@@ -111,7 +117,7 @@ add('A2-2', '安全停止保留状态', firstExit !== null && Boolean(stopped) &
 const second = run('resume');
 let secondExit = null;
 second.on('exit', (code, signal) => { secondExit = { code, signal }; });
-for (let i = 0; i < 2400 && !secondExit; i += 1) sleep(1000);
+await waitFor(() => Boolean(secondExit), 40 * 60_000);
 const final = readState();
 
 const fingerprintMatch = stopped && final && stopped.runFingerprint === final.runFingerprint;
