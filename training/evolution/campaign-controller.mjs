@@ -795,6 +795,7 @@ export class CampaignController {
         generator: item.generator ?? artifact.lineage?.operator ?? null,
         experiment: { configRef: this.config.configRef, round: roundData.round },
         hypothesisId: artifact.lineage?.hypothesisId ?? null,
+        researchContextHash: roundData.researchBrief?.contextHash ?? null,
         llm: artifact.lineage?.llm ?? null,
       });
       if (artifact.lineage) {

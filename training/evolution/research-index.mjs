@@ -67,8 +67,13 @@ export function createResearchIndex({ path, campaignId = null }) {
   return {
     path,
 
-    candidate({ artifact, strategy = null, generator = null, experiment = null, hypothesisId = null, llm = null }) {
+    candidate({
+      artifact, strategy = null, generator = null, experiment = null, hypothesisId = null,
+      llm = null, researchContextHash = null,
+    }) {
       assertCondition(artifact?.candidateId, 'candidate 记录缺少 artifact.candidateId');
+      assertCondition(researchContextHash === null || /^[0-9a-f]{64}$/.test(String(researchContextHash)),
+        `researchContextHash 非法：${String(researchContextHash)}`);
       return append('candidate', {
         candidateId: artifact.candidateId,
         parentId: artifact.parentId ?? null,
@@ -81,6 +86,8 @@ export function createResearchIndex({ path, campaignId = null }) {
         strategy,
         generator,
         hypothesisId,
+        // 该候选生成时模型实际看到的 ResearchBrief 上下文哈希（无简报时为 null）。
+        researchContextHash,
         experiment,
         llm: normalizeLlmUsage(llm),
       });
@@ -95,8 +102,11 @@ export function createResearchIndex({ path, campaignId = null }) {
         parentSourceHash: lineage.parentSourceHash ?? null,
         inputProgramHash: lineage.inputProgramHash ?? null,
         outputProgramHash: lineage.outputProgramHash ?? null,
+        bestProgramHash: lineage.bestProgramHash ?? null,
         modulesChanged: lineage.modulesChanged ?? [],
         operator: lineage.operator ?? null,
+        hypothesisId: lineage.hypothesisId ?? null,
+        configPath: lineage.configPath ?? null,
         checkpointResumedFrom: lineage.checkpointResumedFrom ?? null,
       });
     },
@@ -125,6 +135,8 @@ export function createResearchIndex({ path, campaignId = null }) {
         metrics: metrics ?? evidence?.metrics ?? null,
         games: games ?? evidence?.metrics?.totalGames ?? null,
         seedWindow: seedWindow ?? evidence?.seedWindow ?? null,
+        // 行为探针哈希：用于区分"源码变化"与"实际行为变化"。
+        behaviorHash: evidence?.behaviorHash ?? null,
         pairs: evidence?.metrics?.pairs ?? null,
         firstPlaceDelta: evidence?.metrics?.firstPlaceDelta ?? null,
         anomalyRate: evidence?.metrics?.anomalyRate ?? null,
