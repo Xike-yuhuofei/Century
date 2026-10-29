@@ -33,8 +33,22 @@ WORK_ROOT = AI9_ROOT / "work-ai9"
 CACHE_ROOT = WORK_ROOT / "cache"
 RESULTS_ROOT = AI9_ROOT / "results" / "ai9-evaluations"
 
-STAGE2_SEEDS = list(range(1_650_000_000, 1_650_000_016))   # 16 种子（每人 4）
-STAGE3_SEEDS = list(range(1_650_000_100, 1_650_000_148))   # 48 种子（每人 12）
+# 研究评估种子数量可被无人值守运行显式缩小（必须在报告中记录），
+# 默认 16/48 保持不变；数量按人数层（4）对齐，余数丢弃，绝不跨层复用种子。
+def _stage_seed_count(env_name: str, default: int) -> int:
+    raw = os.environ.get(env_name)
+    try:
+        value = int(raw) if raw else default
+    except ValueError:
+        value = default
+    value = max(4, value)
+    return value - (value % 4)
+
+
+STAGE2_COUNT = _stage_seed_count("CENTURY_OPENEVOLVE_STAGE2_SEEDS", 16)
+STAGE3_COUNT = _stage_seed_count("CENTURY_OPENEVOLVE_STAGE3_SEEDS", 48)
+STAGE2_SEEDS = list(range(1_650_000_000, 1_650_000_000 + STAGE2_COUNT))
+STAGE3_SEEDS = list(range(1_650_000_100, 1_650_000_100 + STAGE3_COUNT))
 PLAYER_COUNTS = [2, 3, 4, 5]
 FORMAL_WORK_UNITS = 32
 
@@ -237,26 +251,60 @@ def _stage_impl(program_path: str, stage: int) -> dict:
     }
 
 
+def _research_artifacts() -> dict:
+    """P1.2：把本轮研究简报作为 OpenEvolve artifacts 注入后续提示上下文。
+    只读取由 campaign 控制器写下的简报文件；文件缺失时返回空 dict，绝不伪造。"""
+    path = os.environ.get("CENTURY_RESEARCH_BRIEF")
+    if not path or not os.path.exists(path):
+        return {}
+    try:
+        with open(path, "r", encoding="utf-8") as handle:
+            brief = json.load(handle)
+    except Exception:
+        return {}
+    hypotheses = brief.get("hypotheses") or []
+    lines = [f"Research brief (unverified) contextHash={brief.get('contextHash')}"]
+    for hypothesis in hypotheses:
+        lines.append(f"- {hypothesis.get('id')}: {hypothesis.get('statement')}")
+        for mechanism in hypothesis.get("mechanisms") or []:
+            lines.append(f"  * {mechanism.get('id')}: {mechanism.get('claim')} | prediction: {mechanism.get('prediction')}")
+    for failure in brief.get("failures") or []:
+        lines.append(f"- observed weakness [{failure.get('status')}] {failure.get('detail')}")
+    return {"research_brief": "\n".join(lines), "research_brief_hash": brief.get("contentHash") or ""}
+
+
+def _wrap(metrics: dict):
+    """返回 EvaluationResult，把研究简报放进原生 artifacts 通道。"""
+    artifacts = _research_artifacts()
+    if not artifacts:
+        return metrics
+    try:
+        from openevolve.evaluation_result import EvaluationResult
+        return EvaluationResult(metrics=metrics, artifacts=artifacts)
+    except Exception:
+        return metrics
+
+
 def evaluate(program_path: str, cascade_thresholds=None):
     for stage in (1, 2, 3):
         metrics = _stage_impl(program_path, stage)
         if metrics.get("stage_passed") != 1.0:
             return metrics
         if cascade_thresholds and stage < 3 and metrics["combined_score"] < cascade_thresholds[stage - 1]:
-            return metrics
-    return metrics
+            return _wrap(metrics)
+    return _wrap(metrics)
 
 
 def evaluate_stage1(program_path: str):
-    return _stage_impl(program_path, 1)
+    return _wrap(_stage_impl(program_path, 1))
 
 
 def evaluate_stage2(program_path: str):
-    return _stage_impl(program_path, 2)
+    return _wrap(_stage_impl(program_path, 2))
 
 
 def evaluate_stage3(program_path: str):
-    return _stage_impl(program_path, 3)
+    return _wrap(_stage_impl(program_path, 3))
 
 
 if __name__ == "__main__":

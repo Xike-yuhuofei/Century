@@ -1,0 +1,51 @@
+{
+  "schema": "century-ai11-a2-drill-v1",
+  "campaign": "ai11-a2",
+  "at": "2026-10-29T21:43:27.882Z",
+  "checks": [
+    {
+      "id": "A2-1",
+      "title": "第 1 轮深验完成后再停止",
+      "status": "PASS",
+      "evidence": "deepDone=true"
+    },
+    {
+      "id": "A2-2",
+      "title": "安全停止保留状态",
+      "status": "PASS",
+      "evidence": "exit={\"code\":0,\"signal\":null} status=stopped"
+    },
+    {
+      "id": "A2-3",
+      "title": "同一 runFingerprint / codeDigest 恢复",
+      "status": "PASS",
+      "evidence": "fingerprint=true digest=true exit={\"code\":0,\"signal\":null}"
+    },
+    {
+      "id": "A2-4",
+      "title": "已确认的评估结果未被覆盖",
+      "status": "PASS",
+      "evidence": "checked=2 intact=true"
+    },
+    {
+      "id": "A2-5",
+      "title": "种子窗口不重复消费",
+      "status": "PASS",
+      "evidence": "windows=4 unique=4"
+    },
+    {
+      "id": "A2-6",
+      "title": "谱系在恢复后仍可解析",
+      "status": "PASS",
+      "evidence": "inherited=1 parentsResolvable=true"
+    },
+    {
+      "id": "A2-7",
+      "title": "恢复后正常完成",
+      "status": "PASS",
+      "evidence": "status=completed rounds=2"
+    }
+  ],
+  "verdict": "PASS",
+  "finalStatus": "completed"
+}

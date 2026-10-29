@@ -31,7 +31,7 @@ import {
   CENTRAL_REGISTRY_PATH,
 } from '../lib/seed-governance.mjs';
 import { VALIDATION_POOL_BASE } from '../lib/seeds.mjs';
-import { reserveAlpha, completeAlpha, ALPHA_LEDGER_PATH } from '../lib/alpha-ledger.mjs';
+import { reserveAlpha, completeAlpha, activeAlphaLedgerPath } from '../lib/alpha-ledger.mjs';
 import {
   createPreregistration, lockPreregistration, REQUIRED_SEAT_COUNTS, DEFAULT_SEARCH_WORK_UNITS,
 } from '../evaluator/preregistration.mjs';
@@ -201,7 +201,7 @@ const alphaReservation = reserveAlpha({
   planId: plan.planId,
   candidateId: candidateIdentity.id,
   evidenceDir: outDir,
-  ledgerPath: ALPHA_LEDGER_PATH,
+  ledgerPath: activeAlphaLedgerPath(),
 });
 console.log(`alpha 已预留：α_${challengeIndex}=${alphaReservation.alpha}（累计预算 ${alphaReservation.alphaBudget}）`);
 const experimentId = `fp-formal-${candidateIdentity.id}-c${challengeIndex}`;
@@ -251,7 +251,7 @@ try {
     planId: plan.planId,
     decision: decision?.promote ? 'promote' : runtimeError ? 'aborted' : 'not-promoted',
     evidenceHash: evidence?.evidenceHash ?? null,
-    ledgerPath: ALPHA_LEDGER_PATH,
+    ledgerPath: activeAlphaLedgerPath(),
   });
   completeConsumption(experimentId, {
     status: runtimeError ? 'voided' : 'completed',

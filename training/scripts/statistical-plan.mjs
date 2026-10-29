@@ -88,7 +88,12 @@ const frozen = {
     '统计预算耗尽时明确停止；新家族必须由 initializeAlphaFamily 显式授权并留痕',
   ],
 };
-const frozenHash = sha256Canonical(frozen);
+// 冻结哈希只覆盖统计内容：generatedAt/commit 是审计元数据，不参与一致性校验。
+function hashInput(value) {
+  const { generatedAt: _generatedAt, commit: _commit, frozenHash: _frozenHash, ...rest } = value;
+  return rest;
+}
+const frozenHash = sha256Canonical(hashInput(frozen));
 const plan = { ...frozen, frozenHash };
 
 if (write) {

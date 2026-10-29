@@ -656,7 +656,10 @@ jobs:
             evolution/tests/module-registry.test.mjs \
             evolution/tests/multi-module-candidate.test.mjs \
             evolution/tests/coevolution.test.mjs \
-            evolution/tests/module-wiring.test.mjs
+            evolution/tests/module-wiring.test.mjs \
+            evolution/tests/lineage.test.mjs \
+            evolution/tests/research.test.mjs \
+            evolution/tests/task-queue.test.mjs
       - name: AI9 模块部署/回滚隔离演练
         working-directory: training
         run: node scripts/module-deploy-drill.mjs

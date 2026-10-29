@@ -60,10 +60,13 @@ export function isRuntimeStatePath(path) {
 
 /** 解析 `git status --porcelain` 行，返回仓库相对路径（处理重命名）。 */
 export function statusPath(line) {
-  const text = String(line ?? '');
-  if (!text.trim()) return '';
+  const text = String(line ?? '').trim();
+  if (!text) return '';
   const arrow = text.indexOf(' -> ');
-  const raw = arrow >= 0 ? text.slice(arrow + 4) : text.slice(3);
+  // porcelain 前缀是 1–2 个状态字符 + 空白；旧实现硬编码 slice(3)，
+  // 对 "M path"（单状态字符）会把路径首字母吃掉，导致 runtime 账本被误判为脏，
+  // 长跑在启动时 headDirty=true 从而永久不可 resume。
+  const raw = arrow >= 0 ? text.slice(arrow + 4) : text.replace(/^[A-Z?!]{1,2}\s+/, '');
   return raw.trim().replace(/^"|"$/g, '');
 }
 

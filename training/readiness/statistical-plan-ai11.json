@@ -1,0 +1,148 @@
+{
+  "schema": "century-statistical-plan-ai11-v1",
+  "generatedAt": "2026-10-29T08:32:16.693Z",
+  "commit": "52b1601a3d9834162baae62851e55f6741250265",
+  "primaryObjective": "firstPlaceWinRate",
+  "primaryMetric": "pairedFirstPlaceRateDelta",
+  "seatCounts": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "weights": {
+    "2": 0.25,
+    "3": 0.25,
+    "4": 0.25,
+    "5": 0.25
+  },
+  "nonInferiorityMargin": 0.02,
+  "family": {
+    "familyId": "century-fixed-horizon-ai11",
+    "ledgerPath": "training/governance/alpha-ledger-ai11.json",
+    "mode": "fixed-horizon-bonferroni",
+    "maxChallenges": 12,
+    "alphaBudget": 0.05,
+    "alphaPerChallenge": 0.004166666666666667,
+    "note": "最多 12 次正式挑战，每次 α=0.004166666666666667；期满必须停止或显式重新授权新家族"
+  },
+  "sequentialDesign": {
+    "active": false,
+    "note": "当前按固定样本单次 final look 执行；两次查看的顺序设计已模拟验证，需 runner 支持 interim 后才能启用",
+    "lookFractions": [
+      1
+    ],
+    "boundaries": [
+      2.688257
+    ],
+    "nominalAlphaSpent": [
+      0.003591
+    ],
+    "h0Fwer": 0.00378,
+    "calibrationTrials": 50000,
+    "calibrationSeed": 20261101,
+    "recheckSeed": 20261102,
+    "model": "Z(t) = mean(t)/SE(t)，look 相关 ρ=sqrt(t_min/t_max)，非中心 λ=effect*sqrt(n*t/variance)",
+    "discipline": "边界由 H0 模拟校准并复算；不得在查看正式结果后调整"
+  },
+  "alternativeDesign": {
+    "lookFractions": [
+      0.5,
+      1
+    ],
+    "boundaries": [
+      3.238257,
+      2.888257
+    ],
+    "h0Fwer": 0.0024333333333333334,
+    "seedsPerSeat": 313,
+    "totalGames": 2504,
+    "expectedSeedsPerSeat": 276.9,
+    "power": 0.8025,
+    "note": "效果大时可在 50% 信息量提前成功停止；实现 interim 后才能切换"
+  },
+  "varianceModel": {
+    "used": 1,
+    "note": "保守上界：配对 delta ∈ {−1,0,+1} 且未知 p11 时取方差上界 1；不采用\"典型 0.5\"乐观假设"
+  },
+  "minimumMeaningfulEffect": 0.2,
+  "powerTarget": 0.8,
+  "grid": [
+    {
+      "effect": 0.1,
+      "seedsPerSeat": 1252,
+      "totalGames": 10016,
+      "estimatedHours": 30.35,
+      "achievablePower": 0.8004,
+      "expectedSeedsPerSeat": 1252,
+      "feasibleWithinBudget": false
+    },
+    {
+      "effect": 0.15,
+      "seedsPerSeat": 556,
+      "totalGames": 4448,
+      "estimatedHours": 13.48,
+      "achievablePower": 0.8,
+      "expectedSeedsPerSeat": 556,
+      "feasibleWithinBudget": false
+    },
+    {
+      "effect": 0.2,
+      "seedsPerSeat": 313,
+      "totalGames": 2504,
+      "estimatedHours": 7.59,
+      "achievablePower": 0.8004,
+      "expectedSeedsPerSeat": 313,
+      "feasibleWithinBudget": true
+    },
+    {
+      "effect": 0.25,
+      "seedsPerSeat": 201,
+      "totalGames": 1608,
+      "estimatedHours": 4.87,
+      "achievablePower": 0.8021,
+      "expectedSeedsPerSeat": 201,
+      "feasibleWithinBudget": true
+    },
+    {
+      "effect": 0.3,
+      "seedsPerSeat": 139,
+      "totalGames": 1112,
+      "estimatedHours": 3.37,
+      "achievablePower": 0.8,
+      "expectedSeedsPerSeat": 139,
+      "feasibleWithinBudget": true
+    }
+  ],
+  "primaryDesign": {
+    "effect": 0.2,
+    "seedsPerSeat": 313,
+    "totalGames": 2504,
+    "estimatedHours": 7.59,
+    "achievablePower": 0.8004,
+    "expectedSeedsPerSeat": 313,
+    "feasibleWithinBudget": true
+  },
+  "throughput": {
+    "measuredGamesPerMinute": 5.5,
+    "source": "training/reports/coevolution/ai9-36h-endurance-2（12,960 局 / 39.24h）",
+    "note": "计划中的小时数只是资源可行性估计，不是验收标准"
+  },
+  "maxGamesPerChallenge": 4000,
+  "decisionRule": [
+    "主检验：2–5 人加权第一名率增量在顺序边界下越过临界值",
+    "非劣效：每个人数单侧下界 ≥ −0.02（final look）",
+    "跨人数种子不得复用；interim 只允许\"提前成功\"，不允许\"提前失败\"后放宽样本",
+    "任一条不满足 → 保留冠军，不晋级；不得复用正式验证种子重跑"
+  ],
+  "feasibility": {
+    "note": "若真实效应小于 MDE，计划会明确报告\"挑战不可行\"，而不是伪造通过",
+    "maxGamesPerChallenge": 4000
+  },
+  "freezeDiscipline": [
+    "本文件在读取任何正式验证结果之前写出；--check 只允许完全一致",
+    "不得根据正式结果放宽 effect / alpha / 方差 / 边界 / 样本量",
+    "新 alpha 家族必须由 --authorize 显式创建并登记，旧账本永久保留"
+  ],
+  "frozenHash": "14290385c02423d27f2ac56c98445e2be8f71a377e5efc4f33c1d344523be2f7"
+}

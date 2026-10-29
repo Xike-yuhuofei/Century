@@ -361,8 +361,8 @@ if (distReady || true) { // 核算是纯数据复算，不依赖 dist
 // ---- 6.6 Alpha 消耗账本（research 层；P0 长期错误率控制） ----
 {
   try {
-    const { readAlphaLedger, alphaLedgerSummary } = await import(`file://${resolve(REPO_ROOT, 'training/lib/alpha-ledger.mjs')}`);
-    const ledger = readAlphaLedger();
+    const { activeAlphaLedger, alphaLedgerSummary } = await import(`file://${resolve(REPO_ROOT, 'training/lib/alpha-ledger.mjs')}`);
+    const ledger = activeAlphaLedger();
     const summary = alphaLedgerSummary(ledger);
     add({
       id: 'alpha-ledger', tier: 'research', status: 'PASS', severity: 'PASS',

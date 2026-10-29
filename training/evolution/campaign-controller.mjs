@@ -35,10 +35,62 @@ import {
   labelsFromDiagnosticsAnalysis, labelsFromHumanAnalytics, mergeLabels, toResearchHints,
 } from './failure-labels.mjs';
 import { computeCodeVersion, sameCodeDigest } from '../lib/code-version.mjs';
+import { createResearchIndex } from './research-index.mjs';
+import { openResearchMemory } from './research-memory.mjs';
+import { diagnosePairedEvidence } from './failure-diagnosis.mjs';
+import { buildResearchBrief, writeBriefConfig } from './research-context.mjs';
+import { decideNextResearch, summarizeTrend, composeRoundPlan } from './research-orchestrator.mjs';
+import { moduleRegistry } from '../../ai5/openevolve/node/module_registry.mjs';
 
 const CAMPAIGN_CONFIG_VERSION = 1;
 /** 深验异常率上限：超过则判"深验不稳定"，绝不进入正式挑战待审批请求。 */
 const DEEP_MAX_ANOMALY_RATE = 0.2;
+/** P0.3 正式挑战资格（读取任何正式结果之前固定，禁止看结果后放宽）：
+ * - 最小有意义效应 10pp（与 statistical-plan 的 MDE 目标一致）；
+ * - 至少 16 个配对单位（8 种子 × 2 人数起）；
+ * - 单侧下界不得低于 −15pp（避免把完全不确定的候选送进正式验证）。 */
+export const CHALLENGE_MIN_EFFECT = 0.10;
+export const CHALLENGE_MIN_PAIRS = 16;
+export const CHALLENGE_MIN_LOWER = -0.15;
+
+/** 深验候选排序键：配对第一名率下界优先，其次点估计，最后诊断 composite。 */
+function rankOfDeep(item) {
+  const lower = item.deep?.metrics?.firstPlaceLower;
+  const delta = item.deep?.metrics?.firstPlaceDelta;
+  if (Number.isFinite(lower)) return lower;
+  if (Number.isFinite(delta)) return delta;
+  return (item.deep?.score?.composite ?? 0) - 1;
+}
+
+/**
+ * 正式挑战资格判定（研究保留与正式挑战必须分开）。
+ *
+ * @param {object} options
+ * @param {object} options.item 候选状态（含 strategy/deep.metrics）
+ * @param {number} options.minPairs 最少配对单位
+ * @param {number} options.minEffect 最小有意义效应
+ * @param {number} options.minLower 允许的单侧下界下限
+ */
+export function challengeEligibility({ item, minPairs, minEffect, minLower }) {
+  const metrics = item?.deep?.metrics ?? {};
+  const delta = metrics.firstPlaceDelta;
+  const lower = metrics.firstPlaceLower;
+  const pairs = metrics.pairs ?? 0;
+  const reasons = [];
+  if (item?.strategy === 'control') reasons.push('对照基线候选（官方模块）不得进入正式挑战');
+  if (!Number.isFinite(delta)) reasons.push('缺少配对第一名率增量（非配对设计）');
+  else if (delta < minEffect) reasons.push(`配对增量 ${delta} < 最小有意义效应 ${minEffect}`);
+  if (pairs < minPairs) reasons.push(`配对单位 ${pairs} < 下限 ${minPairs}`);
+  if (Number.isFinite(lower) && lower < minLower) reasons.push(`单侧下界 ${lower} < ${minLower}`);
+  return {
+    eligible: reasons.length === 0,
+    reason: reasons.length ? reasons.join('；') : null,
+    delta: Number.isFinite(delta) ? delta : null,
+    lower: Number.isFinite(lower) ? lower : null,
+    pairs,
+    minPairs, minEffect, minLower,
+  };
+}
 
 /** 读取 append-only 事件日志中的最大 seq：崩溃窗口下 state 可能落后于日志尾部。 */
 function lastLoggedEventSeq(logPath) {
@@ -105,6 +157,11 @@ function normalizeConfig(config) {
   assertCondition(Number.isSafeInteger(merged.quickSeeds) && merged.quickSeeds > 0, 'quickSeeds 非法');
   assertCondition(Number.isSafeInteger(merged.deepSeeds) && merged.deepSeeds > 0, 'deepSeeds 非法');
   assertCondition(merged.quickSeeds <= 1000 && merged.deepSeeds <= 1000, '种子窗口最多 1000');
+  // 编译型多模块评估要求每个种子独立分配到一个人数层：种子数必须 ≥ 人数层数。
+  assertCondition(merged.quickSeeds >= merged.playerCounts.length,
+    `quickSeeds=${merged.quickSeeds} 少于人数层数 ${merged.playerCounts.length}（无法分人数配对）`);
+  assertCondition(merged.deepSeeds >= merged.playerCounts.length,
+    `deepSeeds=${merged.deepSeeds} 少于人数层数 ${merged.playerCounts.length}（无法分人数配对）`);
   assertCondition(Number.isSafeInteger(merged.retainTopK) && merged.retainTopK > 0, 'retainTopK 非法');
   assertCondition(Number.isSafeInteger(merged.deepConfirmations) && merged.deepConfirmations >= 0, 'deepConfirmations 非法');
   assertCondition(['descriptor', 'multi-module'].includes(merged.generation.mode),
@@ -170,6 +227,10 @@ export class CampaignController {
     this.statePath = resolve(this.rootDir, 'state.json');
     this.lockPath = resolve(this.rootDir, '.campaign.lock');
     this.logPath = resolve(this.rootDir, 'logs', 'events.jsonl');
+    this.researchPath = resolve(this.rootDir, 'research-index.jsonl');
+    this.research = createResearchIndex({ path: this.researchPath, campaignId });
+    this.memoryPath = resolve(this.rootDir, 'research-memory.jsonl');
+    this.memory = openResearchMemory({ path: this.memoryPath });
     this.stopPath = resolve(this.rootDir, '.stop');
     this._stopRequested = false;
     this.runFingerprint = sha256Canonical({
@@ -352,10 +413,17 @@ export class CampaignController {
   }
 
   _parentArtifact(state, roundData) {
+    // 实验 A0：allowInheritance=false 精确复现旧路径（每代从官方源码开始，无父代）。
+    if (this.config.generation.allowInheritance === false) {
+      this._parentSource = 'disabled-for-experiment';
+      return null;
+    }
     // 显式父候选优先（可指向人工批准的 artifact；身份由 store 校验）。
     if (this.config.parentCandidateId) {
       try {
-        return this.store.get(this.config.parentCandidateId);
+        const parent = this.store.get(this.config.parentCandidateId);
+        this._assertParentIntegrity(parent, this.config.parentCandidateId);
+        return parent;
       } catch (error) {
         throw new Error(`显式父候选不可用：${this.config.parentCandidateId}（${error.message}）`);
       }
@@ -364,10 +432,224 @@ export class CampaignController {
       const previous = state.rounds[roundData.round - 2];
       const bestId = previous?.selectedIds?.[0];
       if (bestId) {
-        try { return this.store.get(bestId); } catch { /* 父候选不可用时回到基线 */ }
+        try {
+          const parent = this.store.get(bestId);
+          if (this.config.generation.mode === 'multi-module') this._assertParentIntegrity(parent, bestId);
+          return parent;
+        } catch (error) {
+          // P0.1：多模块模式下父代缺失/哈希错误必须拒绝继续，不得静默退回官方基线。
+          if (this.config.generation.mode === 'multi-module') {
+            throw new Error(`上一轮父候选不可用：${bestId}（${error.message}）——拒绝在无谱系的情况下继续进化`);
+          }
+          return null;
+        }
       }
     }
+    if (this.config.generation.mode === 'multi-module') {
+      const elite = this._bestEliteParent(state);
+      if (elite) return elite;
+      // 精英池为空（首轮深验尚未发生或全部未通过）：用上一轮快筛最优继续，
+      // 仍然必须是真实源码 artifact；再没有才允许引导代。
+      const previous = state.rounds[roundData.round - 2];
+      // 即使快筛失败，只要 artifact 真实存在且源码可校验，仍然可以作为父代继续进化
+      // （否则一次评估异常会让整个 campaign 停摆）。
+      const ranked = (previous?.candidates ?? [])
+        .filter(c => c.strategy !== 'control' && c.stage !== 'safety-failed')
+        .sort((a, b) => (b.quick?.score?.rankKey ?? -9) - (a.quick?.score?.rankKey ?? -9));
+      for (const candidate of ranked) {
+        try {
+          const parent = this.store.get(candidate.candidateId);
+          this._assertParentIntegrity(parent, candidate.candidateId);
+          this._parentSource = 'previous-round';
+          return parent;
+        } catch { /* 继续寻找下一个可用父代 */ }
+      }
+      this._parentSource = 'bootstrap';
+      return null;
+    }
     return null;
+  }
+
+  /** 多模块模式的跨代继承父代：按配对第一名率增量从精英池取最优。 */
+  _bestEliteParent(state) {
+    const elites = [...(state.moduleElites ?? [])];
+    const byCell = Object.values(state.mapElites ?? {});
+    const entries = [...elites, ...byCell].filter(entry => entry?.candidateId);
+    const candidates = entries.sort((a, b) => (b.score ?? -1) - (a.score ?? -1));
+    for (const entry of candidates) {
+      try {
+        const parent = this.store.get(entry.candidateId);
+        this._assertParentIntegrity(parent, entry.candidateId);
+        this._parentSource = 'elite';
+        return parent;
+      } catch (error) {
+        this._lastParentFailure = { candidateId: entry.candidateId, reason: error.message };
+      }
+    }
+    // 精英池全部不可用（文件缺失/哈希不符）→ 拒绝继续，绝不静默回落到官方基线。
+    if (entries.length > 0) {
+      throw new Error(
+        `精英池中的父代全部不可用（${this._lastParentFailure?.candidateId ?? '?'}：${this._lastParentFailure?.reason ?? 'unknown'}）——拒绝无谱系继续`,
+      );
+    }
+    this._parentSource = 'bootstrap';
+    return null;
+  }
+
+  /** 父代完整性：artifact 可被 store 校验（内容寻址哈希）+ 源码非空。 */
+  _assertParentIntegrity(artifact, candidateId) {
+    assertCondition(artifact, `父候选 ${candidateId} 不存在`);
+    assertCondition(artifact.candidateId === candidateId,
+      `父候选身份不符：请求 ${candidateId}，实际 ${artifact.candidateId}`);
+    assertCondition(typeof artifact.sourceHash === 'string' && /^[0-9a-f]{64}$/.test(artifact.sourceHash),
+      `父候选 ${candidateId} 缺少合法源码哈希`);
+    assertCondition(artifact.source?.modules?.length > 0,
+      `父候选 ${candidateId} 不是多模块源码候选（无法继承代码）`);
+    return true;
+  }
+
+  /**
+   * P0.1：跨代谱系核验（生成即校验，绝不把"父代 ID 元数据"当成继承）。
+   *
+   * 拒绝条件：parentId/父源码哈希不符、父模块哈希不符、没有任何模块变化、
+   * 依赖闭包缺失（候选模块集合不再包含父代被依赖模块时由编译期静态检查兜底）。
+   */
+  _verifyLineage({ artifact, parentArtifact, round }) {
+    const lineage = artifact.lineage;
+    assertCondition(lineage, `候选 ${artifact.candidateId} 缺少 lineage（拒绝未登记谱系的候选）`);
+    if (parentArtifact) {
+      assertCondition(artifact.parentId === parentArtifact.candidateId,
+        `候选 parentId ${String(artifact.parentId)} ≠ 本轮父代 ${parentArtifact.candidateId}`);
+      assertCondition(lineage.parentSourceHash === parentArtifact.sourceHash,
+        `候选 lineage.parentSourceHash 与父代源码哈希不符（期望 ${parentArtifact.sourceHash}，实际 ${String(lineage.parentSourceHash)}）`);
+      const parentHashes = Object.fromEntries(
+        parentArtifact.source.modules.map(m => [m.id, m.functionSha256]),
+      );
+      for (const [id, hash] of Object.entries(lineage.parentModuleHashes ?? {})) {
+        assertCondition(parentHashes[id] === hash,
+          `候选记录的父代模块 ${id} 哈希 ${hash} 与实际父代 ${String(parentHashes[id])} 不符`);
+      }
+      // 消融（移除模块）同样是真实变化：不能只看"被修改的模块"，
+      // 还要看"相对父代被移除的模块"。否则 ablation 候选会被全部误杀。
+      const candidateModuleIds = new Set(artifact.source.modules.map(m => m.id));
+      const removedModules = Object.keys(lineage.parentModuleHashes ?? {})
+        .filter(id => !candidateModuleIds.has(id));
+      assertCondition(lineage.modulesChanged.length > 0 || removedModules.length > 0,
+        `候选 ${artifact.candidateId} 与父代源码完全相同（既无修改也无移除模块）——拒绝无变化的"伪代"`);
+    } else {
+      assertCondition(artifact.parentId === null,
+        `第 ${round} 轮为引导代（无父代），候选却声明 parentId=${String(artifact.parentId)}`);
+    }
+    return true;
+  }
+
+  /**
+   * P1.1：研究控制层决策（趋势 → 决策 → ResearchBrief → 每轮 OpenEvolve 配置）。
+   * 仅多模块模式启用；descriptor 模式保持原有行为。
+   */
+  _researchPlan(state, roundData, parentArtifact, hints, { injectConfig = true } = {}) {
+    const history = [];
+    let lastEvidence = null;
+    let lastEvidencePath = null;
+    for (const round of state.rounds) {
+      if (round.round >= roundData.round) break;
+      const confirmed = (round.candidates ?? [])
+        .filter(c => c.deep?.status === 'done' && Number.isFinite(c.deep?.metrics?.firstPlaceDelta))
+        .sort((a, b) => (b.deep.metrics.firstPlaceLower ?? -9) - (a.deep.metrics.firstPlaceLower ?? -9));
+      const best = confirmed[0];
+      if (!best) continue;
+      history.push({
+        round: round.round,
+        delta: best.deep.metrics.firstPlaceDelta,
+        lower: best.deep.metrics.firstPlaceLower ?? null,
+        pairs: best.deep.metrics.pairs ?? null,
+      });
+      lastEvidencePath = best.deep.evidencePath;
+    }
+    if (lastEvidencePath) {
+      try { lastEvidence = readJSON(resolvePortable(lastEvidencePath)); } catch { lastEvidence = null; }
+    }
+    const trend = summarizeTrend(history);
+    const diagnosis = state.rounds[roundData.round - 2]?.diagnostics?.diagnosis ?? null;
+    const testedHypotheses = this.memory.testedHypotheses();
+    const positiveModules = this.memory.positiveModules();
+    const recentFailures = this.memory.readAll().filter(e => e.kind === 'failure').slice(-10);
+    const memorySummary = { testedHypotheses, positiveModules, recentFailures };
+    const modules = this.config.generation.targetIds?.length
+      ? this.config.generation.targetIds
+      : moduleRegistry().modules.map(m => m.id);
+    const budget = {
+      remainingCandidates: this.config.budget.maxCandidates - state.budgetUsed.candidates,
+      remainingGames: this.config.budget.maxGames - state.budgetUsed.games,
+    };
+    const decision = decideNextResearch({
+      trend, diagnosis, memory: memorySummary, modules, budget,
+      hasElites: (state.moduleElites ?? []).length > 0,
+    });
+    const brief = buildResearchBrief({
+      round: roundData.round,
+      parentArtifact,
+      evidence: lastEvidence,
+      diagnosis,
+      memory: memorySummary,
+      moduleIds: decision.targetIds.length ? decision.targetIds : modules,
+      experiment: {
+        playerCounts: this.config.playerCounts,
+        quickSeeds: this.config.quickSeeds,
+        deepSeeds: this.config.deepSeeds,
+      },
+      previousBest: { stagnantRounds: trend.stagnantRounds },
+    });
+    // 研究假设写入跨进程研究记忆（LLM 解释只能是假设，等待实验验证）。
+    for (const hypothesis of brief.hypotheses) {
+      const existing = testedHypotheses.find(h => h.hypothesisId === hypothesis.id);
+      if (existing) continue;
+      this.memory.recordHypothesis({
+        hypothesisId: hypothesis.id,
+        statement: hypothesis.statement,
+        mechanisms: hypothesis.mechanisms.map(m => m.claim),
+        predictions: hypothesis.mechanisms.map(m => m.prediction),
+        moduleScope: [...new Set(hypothesis.mechanisms.flatMap(m => m.modules))],
+        status: 'untested',
+        contextHash: brief.contextHash,
+      });
+    }
+    const plan = composeRoundPlan({
+      plan: decision,
+      briefContext: { round: roundData.round, parentArtifact, memory: memorySummary },
+      extra: { trend, contextHash: brief.contextHash },
+    });
+    let configPath = null;
+    let briefPath = null;
+    if (!injectConfig) {
+      // 实验 B1：只走 artifacts 通道（不替换 system_message）。
+      try {
+        const outPath = resolve(this.rootDir, 'openevolve-briefs', `r${String(roundData.round).padStart(3, '0')}.brief.json`);
+        briefPath = outPath;
+        mkdirSync(resolve(this.rootDir, 'openevolve-briefs'), { recursive: true });
+        writeFileSync(outPath, JSON.stringify(brief, null, 2));
+      } catch { /* 简报落盘失败不阻断生成 */ }
+    } else try {
+      const outPath = resolve(this.rootDir, 'openevolve-configs', `r${String(roundData.round).padStart(3, '0')}.yaml`);
+      const written = writeBriefConfig({
+        baseConfigPath: this.config.generation.openevolveConfigPath
+          ?? resolve(REPO_ROOT, 'ai5/openevolve/config-ai9.yaml'),
+        brief,
+        outPath,
+      });
+      configPath = written.path;
+      briefPath = written.briefPath;
+    } catch (error) {
+      this._event(state, 'research-brief-config-failed', { reason: String(error.message).slice(0, 300) });
+    }
+    return {
+      plan,
+      brief,
+      strategies: decision.strategies.length ? decision.strategies : this.config.generation.strategies,
+      configPath,
+      briefPath,
+      hints,
+    };
   }
 
   /** 精英候选 artifact：模块级精英池 + MAP-Elites 单元格（去重、坏引用跳过）。 */
@@ -403,23 +685,67 @@ export class CampaignController {
       return;
     }
     const count = Math.min(this.config.generation.count, remaining);
+    const multiModule = this.config.generation.mode === 'multi-module';
     const experiment = this._experimentFor(state, roundData);
     const parentArtifact = this._parentArtifact(state, roundData);
+    const generationParentSource = this._parentSource ?? (parentArtifact ? 'explicit' : 'bootstrap');
+    if (multiModule && this.config.generation.allowInheritance !== false) {
+      assertCondition(roundData.round === 1 || parentArtifact !== null,
+        `第 ${roundData.round} 轮没有可继承的父代——拒绝无谱系进化`);
+      this._event(state, 'generation-parent-selected', {
+        round: roundData.round,
+        parentCandidateId: parentArtifact?.candidateId ?? null,
+        parentSourceHash: parentArtifact?.sourceHash ?? null,
+        parentSource: generationParentSource,
+      });
+    }
     const hints = state.rounds.length > 1
       ? state.rounds[state.rounds.length - 2]?.diagnostics?.researchHints ?? null
       : null;
-    const multiModule = this.config.generation.mode === 'multi-module';
+    const researchContext = this.config.generation.researchContext ?? 'brief';
+    const researchPlan = multiModule && researchContext !== 'off'
+      ? this._researchPlan(state, roundData, parentArtifact, hints, { injectConfig: researchContext === 'brief' })
+      : null;
+    const generationConfig = researchPlan
+      ? {
+        ...this.config.generation,
+        strategies: researchPlan.strategies,
+        openevolveConfigPath: researchPlan.configPath,
+        openevolveBriefPath: researchPlan.briefPath,
+      }
+      : this.config.generation;
+    if (researchPlan) {
+      roundData.researchPlan = researchPlan.plan;
+      roundData.researchBrief = {
+        contextHash: researchPlan.brief.contextHash,
+        briefHash: researchPlan.brief.contentHash,
+        hypotheses: researchPlan.brief.hypotheses.map(h => h.id),
+        failures: researchPlan.brief.failures,
+      };
+      this._event(state, 'research-plan-decided', {
+        round: roundData.round,
+        decision: researchPlan.plan.decision,
+        reason: researchPlan.plan.reason,
+        targetIds: researchPlan.plan.targetIds,
+        strategies: researchPlan.plan.strategies,
+        contextHash: researchPlan.brief.contextHash,
+        configPath: researchPlan.configPath ?? null,
+      });
+    }
+    const targetIds = researchPlan?.plan?.targetIds?.length
+      ? researchPlan.plan.targetIds
+      : this.config.generation.targetIds;
     const generator = this.generator ?? (multiModule
       ? (options) => generateMultiModuleBatch({
           ...options,
-          moduleConfig: this.config.generation,
+          moduleConfig: generationConfig,
           eliteArtifacts: this._eliteArtifacts(state),
           mapElites: state.mapElites,
         })
       : (options) => generateCandidateBatch(options));
     const batch = this._normalizeBatch(generator({
       count, round: roundData.round, seed: this.config.generation.seed + roundData.round,
-      experiment, parentArtifact, targetIds: this.config.generation.targetIds, hints,
+      experiment, parentArtifact, targetIds, hints,
     }));
     if (batch.generatorMeta) roundData.generatorMeta = batch.generatorMeta;
     if (batch.rejectedAtGeneration?.length) {
@@ -436,7 +762,44 @@ export class CampaignController {
     for (const item of batch.candidates) {
       const artifact = item.artifact;
       assertCondition(artifact, '生成器返回的候选缺少 artifact');
+      // 对照基线（官方模块）不是"进化代"，不要求谱系；其余候选必须可追溯父代源码。
+      // 单个候选的谱系缺陷只拒绝该候选，不中断整个 campaign；
+      // 父代 artifact 本身缺失/哈希不符仍由 _parentArtifact 抛错中止（那是全局完整性）。
+      if (multiModule && !artifact.lineage) {
+        assertCondition(item.strategy === 'control',
+          `候选 ${artifact.candidateId} 缺少 lineage（拒绝未登记谱系的候选）`);
+        assertCondition(artifact.parentId === null, '对照基线候选不得声明父代');
+      } else if (multiModule) {
+        // crossover/ablation 的真实父代是捐赠精英（可能不是本轮主父代），
+        // 谱系必须按 artifact 自己声明的 parentId 去 store 取回并核验，
+        // 不能拿"本轮父代"去否定合法的组合候选。
+        let lineageParent = parentArtifact;
+        if (artifact.parentId && artifact.parentId !== parentArtifact?.candidateId) {
+          lineageParent = this.store.get(artifact.parentId);
+          this._assertParentIntegrity(lineageParent, artifact.parentId);
+        }
+        try {
+          this._verifyLineage({ artifact, parentArtifact: lineageParent, round: roundData.round });
+        } catch (error) {
+          const rejection = { candidateId: artifact.candidateId, strategy: item.strategy ?? null, stage: 'lineage-rejected', reason: error.message };
+          roundData.candidates.push({ ...rejection, stage: 'lineage-rejected', failure: { stage: 'lineage', reason: error.message } });
+          roundData.rejectedAtGeneration.push({ strategy: item.strategy ?? null, reason: error.message });
+          this._event(state, 'candidate-lineage-rejected', rejection, artifact.candidateId);
+          continue;
+        }
+      }
       const put = this.store.put(artifact);
+      this.research.candidate({
+        artifact,
+        strategy: item.strategy ?? null,
+        generator: item.generator ?? artifact.lineage?.operator ?? null,
+        experiment: { configRef: this.config.configRef, round: roundData.round },
+        hypothesisId: artifact.lineage?.hypothesisId ?? null,
+        llm: artifact.lineage?.llm ?? null,
+      });
+      if (artifact.lineage) {
+        this.research.lineage({ candidateId: artifact.candidateId, lineage: artifact.lineage });
+      }
       state.budgetUsed.candidates += 1;
       roundData.candidates.push({
         candidateId: artifact.candidateId,
@@ -444,6 +807,15 @@ export class CampaignController {
         identityDigest: artifact.identityDigest,
         strategy: item.strategy ?? null,
         modules: artifact.source?.modules?.map(m => m.id) ?? null,
+        lineage: artifact.lineage ? {
+          parentCandidateId: artifact.lineage.parentCandidateId,
+          parentSourceHash: artifact.lineage.parentSourceHash,
+          inputProgramHash: artifact.lineage.inputProgramHash,
+          outputProgramHash: artifact.lineage.outputProgramHash,
+          modulesChanged: artifact.lineage.modulesChanged,
+          operator: artifact.lineage.operator,
+          llm: artifact.lineage.llm,
+        } : null,
         evaluationMode: artifact.algorithmStructure.evaluationMode,
         targetIds: [...artifact.algorithmStructure.targetIds],
         artifactPath: portablePath(put.path),
@@ -478,6 +850,27 @@ export class CampaignController {
 
   _candidateState(roundData, candidateId) {
     return roundData.candidates.find(c => c.candidateId === candidateId);
+  }
+
+  /** 竞技证据摘要：配对第一名率增量是唯一主指标，其余仅诊断。 */
+  _competitiveMetrics(evidence) {
+    const metrics = evidence?.metrics ?? {};
+    const lower = metrics.firstPlaceDeltaCi?.oneSidedLower
+      ?? metrics.firstPlaceDeltaPooledCi?.oneSidedLower
+      ?? metrics.firstPlaceDeltaLower ?? null;
+    return {
+      firstPlaceDelta: Number.isFinite(metrics.firstPlaceDelta) ? Number(metrics.firstPlaceDelta) : null,
+      firstPlaceLower: Number.isFinite(lower) ? Number(lower) : null,
+      pairs: metrics.pairs ?? null,
+      finishedPairs: metrics.finishedPairs ?? null,
+      firstPlaceRate: metrics.firstPlaceRate ?? metrics.candidateFirstRate ?? null,
+      chanceAdjustedRate: metrics.chanceAdjustedRate ?? null,
+      minWilsonLower: metrics.minWilsonLower ?? null,
+      anomalyRate: metrics.anomalyRate ?? null,
+      finishedGames: metrics.finishedGames ?? null,
+      proxyDelta: metrics.proxyDelta ?? null,
+      p95WallMs: metrics.p95WallMs ?? null,
+    };
   }
 
   _safetyNext(state, roundData) {
@@ -559,14 +952,7 @@ export class CampaignController {
       item.quick = {
         evidencePath, evidenceType: evidence.metrics.evidenceType,
         score, games: evidence.metrics.totalGames,
-        metrics: {
-          firstPlaceRate: evidence.metrics.firstPlaceRate,
-          chanceAdjustedRate: evidence.metrics.chanceAdjustedRate,
-          minWilsonLower: evidence.metrics.minWilsonLower,
-          anomalyRate: evidence.metrics.anomalyRate,
-          proxyDelta: evidence.metrics.proxyDelta,
-          p95WallMs: evidence.metrics.p95WallMs,
-        },
+        metrics: this._competitiveMetrics(evidence),
         artifactHash: updated.artifactHash,
       };
       item.stage = 'quick-done';
@@ -575,6 +961,10 @@ export class CampaignController {
       this._event(state, 'candidate-quick-evaluated', {
         evidencePath, score: score.composite, metrics: item.quick.metrics,
       }, item.candidateId);
+      this.research.evaluation({
+        candidateId: item.candidateId, stage: 'quick', evidence,
+        metrics: item.quick.metrics, seedWindow: evidence.seedWindow ?? null,
+      });
     } catch (error) {
       item.stage = 'quick-failed';
       item.failure = { stage: 'quick-eval', reason: error.message.slice(0, 500) };
@@ -676,13 +1066,7 @@ export class CampaignController {
       const score = scoreCandidate({ artifact, evidence });
       const anomalyRate = evidence.metrics.anomalyRate ?? 1;
       const finishedGames = evidence.metrics.finishedGames ?? 0;
-      const deepMetrics = {
-        firstPlaceRate: evidence.metrics.firstPlaceRate,
-        chanceAdjustedRate: evidence.metrics.chanceAdjustedRate,
-        minWilsonLower: evidence.metrics.minWilsonLower,
-        anomalyRate,
-        finishedGames,
-      };
+      const deepMetrics = this._competitiveMetrics(evidence);
       state.budgetUsed.games += Number(evidence.metrics.totalGames ?? 0);
       state.budgetUsed.deepConfirmations += 1;
       if (anomalyRate > DEEP_MAX_ANOMALY_RATE || finishedGames === 0) {
@@ -694,6 +1078,10 @@ export class CampaignController {
           reason: `deep anomalyRate=${anomalyRate} > ${DEEP_MAX_ANOMALY_RATE} or no finished game`,
         };
         item.stage = 'deep-unstable';
+        this.research.failureCase({
+          candidateId: item.candidateId, stage: 'deep-confirm', category: 'unstable-evaluation',
+          status: 'inconclusive', detail: item.deep.reason, evidencePath,
+        });
         this._event(state, 'candidate-deep-unstable', {
           evidencePath, score: score.composite, metrics: deepMetrics, reason: item.deep.reason,
         }, item.candidateId);
@@ -704,6 +1092,10 @@ export class CampaignController {
           metrics: deepMetrics,
         };
         item.stage = 'deep-done';
+        this.research.evaluation({
+          candidateId: item.candidateId, stage: 'deep', evidence,
+          metrics: item.deep.metrics, seedWindow: evidence.seedWindow ?? null,
+        });
         this._event(state, 'candidate-deep-confirmed', {
           evidencePath, score: score.composite, metrics: item.deep.metrics,
         }, item.candidateId);
@@ -735,7 +1127,7 @@ export class CampaignController {
   async _approval(state, roundData) {
     const confirmed = roundData.candidates
       .filter(c => c.stage === 'deep-done' && c.deep?.status === 'done')
-      .sort((a, b) => (b.deep?.score?.composite ?? 0) - (a.deep?.score?.composite ?? 0));
+      .sort((a, b) => rankOfDeep(b) - rankOfDeep(a));
     if (confirmed.length === 0) {
       roundData.approvalDone = true;
       this._event(state, 'approval-request-skipped', { reason: 'no deep-confirmed game candidate' });
@@ -743,10 +1135,43 @@ export class CampaignController {
     }
     const item = confirmed[0];
     const artifact = this.store.get(item.candidateId);
-    const chanceAdjusted = item.deep?.metrics?.chanceAdjustedRate ?? null;
-    const deepVerdict = chanceAdjusted === null
-      ? 'inconclusive'
-      : chanceAdjusted > 0.05 ? 'promising' : chanceAdjusted < -0.05 ? 'no-advantage' : 'inconclusive';
+    // 多模块协同进化：P0.3 正式挑战资格 ≠ 研究保留资格。只有满足预注册最小有意义效应、
+    // 非对照基线、且配对样本量足够的候选才允许进入正式挑战队列；
+    // 其余一律标记 research-retained，保留 artifact/证据但不消费验证资源。
+    // AI7 descriptor 模式没有配对第一名率证据，保留原有 composite 语义（不影响新路径）。
+    const pairedMode = this.config.generation.mode === 'multi-module';
+    const eligibility = pairedMode
+      ? challengeEligibility({
+          item, minPairs: CHALLENGE_MIN_PAIRS, minEffect: CHALLENGE_MIN_EFFECT, minLower: CHALLENGE_MIN_LOWER,
+        })
+      : { eligible: true, reason: null, mode: 'descriptor-legacy' };
+    if (!eligibility.eligible) {
+      item.stage = 'research-retained';
+      item.failure = { stage: 'challenge-eligibility', reason: eligibility.reason };
+      this.store.update(item.candidateId, { status: 'archived' });
+      roundData.approvalDone = true;
+      this.research.failureCase({
+        candidateId: item.candidateId, stage: 'challenge-eligibility',
+        category: 'insufficient-evidence', status: 'weakened', detail: eligibility.reason,
+        evidencePath: item.deep?.evidencePath ?? null,
+      });
+      this._event(state, 'candidate-research-retained', {
+        candidateId: item.candidateId,
+        reason: eligibility.reason,
+        eligibility,
+        metrics: item.deep?.metrics ?? null,
+      }, item.candidateId);
+      return;
+    }
+    const deepDelta = item.deep?.metrics?.firstPlaceDelta ?? null;
+    const deepVerdict = !pairedMode
+      ? (() => {
+          const chanceAdjusted = item.deep?.metrics?.chanceAdjustedRate ?? null;
+          return chanceAdjusted === null ? 'inconclusive'
+            : chanceAdjusted > 0.05 ? 'promising' : chanceAdjusted < -0.05 ? 'no-advantage' : 'inconclusive';
+        })()
+      : (deepDelta === null ? 'inconclusive'
+        : deepDelta >= CHALLENGE_MIN_EFFECT ? 'promising' : deepDelta > 0 ? 'weak-positive' : 'no-advantage');
     const request = this.governance.requestFormalChallengeApproval({
       campaignId: this.campaignId,
       candidateId: item.candidateId,
@@ -760,12 +1185,14 @@ export class CampaignController {
         deep: item.deep,
         deepAssessment: {
           verdict: deepVerdict,
-          chanceAdjustedRate: chanceAdjusted,
-          minWilsonLower: item.deep?.metrics?.minWilsonLower ?? null,
+          pairedFirstPlaceDelta: deepDelta,
+          pairedFirstPlaceLower: item.deep?.metrics?.firstPlaceLower ?? null,
+          pairs: item.deep?.metrics?.pairs ?? null,
           anomalyRate: item.deep?.metrics?.anomalyRate ?? null,
+          eligibility,
           note: '小样本深验只用于机器门禁前的排序；正式判定必须使用预注册第一名率挑战',
         },
-        recommendation: deepVerdict === 'promising' ? 'queue-formal-challenge (positive signal)' : 'queue-formal-challenge (weak/inconclusive signal)',
+        recommendation: 'queue-formal-challenge (paired first-place evidence)',
         validationPoolConsumed: false,
         promotionTriggered: false,
       },
@@ -789,6 +1216,12 @@ export class CampaignController {
             campaignId: this.campaignId, artifact, request, requestPath,
           });
           state.promotionOutcomes.push({ requestId: request.requestId, at: nowIso(), outcome });
+          this.research.formalChallenge({
+            candidateId: item.candidateId, requestId: request.requestId,
+            planId: request.planId ?? null, challengeIndex: request.challengeIndex ?? null,
+            verdict: outcome?.verdict ?? 'unknown', reason: outcome?.reason ?? null,
+            evidenceHash: outcome?.evidenceHash ?? null,
+          });
           this._event(state, 'promotion-handler-completed', {
             requestId: request.requestId, verdict: outcome?.verdict ?? 'unknown',
           }, item.candidateId);
@@ -796,6 +1229,10 @@ export class CampaignController {
           state.promotionOutcomes.push({
             requestId: request.requestId, at: nowIso(),
             outcome: { verdict: 'ERROR', reason: String(error.message).slice(0, 500) },
+          });
+          this.research.formalChallenge({
+            candidateId: item.candidateId, requestId: request.requestId,
+            verdict: 'ERROR', reason: String(error.message).slice(0, 500),
           });
           this._event(state, 'promotion-handler-failed', {
             requestId: request.requestId, reason: String(error.message).slice(0, 500),
@@ -843,14 +1280,55 @@ export class CampaignController {
   _diagnostics(state, roundData) {
     const diagnostics = this._loadDiagnostics(roundData);
     const dir = ensureDir(resolve(this.rootDir, 'diagnostics'));
+    // P1.3：对深验最优候选做配对失败归因（只看公开对局明细，不用隐藏信息）。
+    const confirmed = roundData.candidates
+      .filter(c => c.deep?.status === 'done' && c.deep?.evidencePath)
+      .sort((a, b) => (b.deep.metrics.firstPlaceLower ?? -9) - (a.deep.metrics.firstPlaceLower ?? -9));
+    let diagnosis = null;
+    if (confirmed.length) {
+      const item = confirmed[0];
+      try {
+        const evidence = readJSON(resolvePortable(item.deep.evidencePath));
+        const result = diagnosePairedEvidence({ evidence, candidateId: item.candidateId });
+        diagnosis = { ...result.summary, evidencePath: item.deep.evidencePath };
+        writeJSON(resolve(dir, `failure-diagnosis-r${String(roundData.round).padStart(3, '0')}.json`), diagnosis);
+        for (const failureCase of result.summary.failureCases) {
+          this.memory.recordFailure({
+            candidateId: item.candidateId,
+            seatCount: failureCase.seatCount,
+            phase: null,
+            category: failureCase.category,
+            detail: failureCase.detail,
+            status: failureCase.status,
+            reproducible: failureCase.reproducible,
+          });
+          this.research.failureCase({
+            candidateId: item.candidateId, stage: 'diagnosis',
+            category: failureCase.category, status: failureCase.status,
+            detail: failureCase.detail, evidencePath: item.deep.evidencePath,
+          });
+        }
+        this._event(state, 'failure-diagnosis-completed', {
+          candidateId: item.candidateId,
+          pairs: diagnosis.pairs,
+          actionDivergedPairs: diagnosis.actionDivergedPairs,
+          failureCases: diagnosis.failureCases.length,
+        }, item.candidateId);
+      } catch (error) {
+        this._event(state, 'failure-diagnosis-failed', {
+          candidateId: item.candidateId, reason: String(error.message).slice(0, 300),
+        }, item.candidateId);
+      }
+    }
     writeJSON(resolve(dir, `failure-labels-r${String(roundData.round).padStart(3, '0')}.json`), diagnostics);
     writeJSON(resolve(dir, `research-hints-r${String(roundData.round).padStart(3, '0')}.json`), diagnostics.researchHints);
-    roundData.diagnostics = diagnostics;
+    roundData.diagnostics = { ...diagnostics, diagnosis };
     roundData.diagnosticsDone = true;
     this._event(state, 'failure-diagnostics-completed', {
       paths: diagnostics.paths,
       labels: diagnostics.labels?.filter(l => l.status !== 'absent').map(l => ({ code: l.code, status: l.status, occurrences: l.occurrences })) ?? [],
       suggestedTargets: diagnostics.researchHints?.suggestedTargets ?? [],
+      diagnosis: diagnosis ? { pairs: diagnosis.pairs, failureCases: diagnosis.failureCases.length } : null,
     });
   }
 
@@ -1028,6 +1506,7 @@ export class CampaignController {
           identityDigest: c.identityDigest,
           strategy: c.strategy ?? null,
           modules: c.modules ?? null,
+          lineage: c.lineage ?? null,
           evaluationMode: c.evaluationMode,
           targetIds: c.targetIds,
           stage: c.stage,

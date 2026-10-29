@@ -1,0 +1,167 @@
+{
+  "schema": "century-research-brief-v2",
+  "promptVersion": "ai11-research-brief-v1",
+  "round": 18,
+  "observation": {
+    "round": 18,
+    "parentCandidateId": "cand-ai9-crossover-r8c5-cc83ce",
+    "parentSourceHash": "ad04f48d3b2934acb89e2f548873c9f9ebdc6e195d4a5a2307d0c9fedbe8dd7b",
+    "pairedFirstPlaceDelta": 0,
+    "pairedFirstPlaceLower": 0,
+    "pairs": 4,
+    "anomalyRate": 0,
+    "weakestSeat": {
+      "seatCount": 2,
+      "delta": 0
+    },
+    "stagnation": 17
+  },
+  "failures": [],
+  "history": {
+    "testedHypotheses": [
+      {
+        "hypothesisId": "H14A",
+        "status": "untested",
+        "statement": "候选在 4 人层的配对第一名率增量为 -1，可能源于资源获取/认领节奏失衡"
+      },
+      {
+        "hypothesisId": "H14B",
+        "status": "untested",
+        "statement": "候选改动可能只改变了行为分布而未触及胜负机制（无效探索）"
+      },
+      {
+        "hypothesisId": "H15A",
+        "status": "untested",
+        "statement": "候选在 2 人层的配对第一名率增量为 0，可能源于资源获取/认领节奏失衡"
+      },
+      {
+        "hypothesisId": "H15B",
+        "status": "untested",
+        "statement": "候选改动可能只改变了行为分布而未触及胜负机制（无效探索）"
+      },
+      {
+        "hypothesisId": "H16A",
+        "status": "untested",
+        "statement": "候选在 2 人层的配对第一名率增量为 0，可能源于资源获取/认领节奏失衡"
+      },
+      {
+        "hypothesisId": "H16B",
+        "status": "untested",
+        "statement": "候选改动可能只改变了行为分布而未触及胜负机制（无效探索）"
+      },
+      {
+        "hypothesisId": "H17A",
+        "status": "untested",
+        "statement": "候选在 2 人层的配对第一名率增量为 0，可能源于资源获取/认领节奏失衡"
+      },
+      {
+        "hypothesisId": "H17B",
+        "status": "untested",
+        "statement": "候选改动可能只改变了行为分布而未触及胜负机制（无效探索）"
+      }
+    ],
+    "positiveModules": [],
+    "recentFailures": []
+  },
+  "hypotheses": [
+    {
+      "id": "H18A",
+      "statement": "候选在 2 人层的配对第一名率增量为 0，可能源于资源获取/认领节奏失衡",
+      "status": "unverified",
+      "mechanisms": [
+        {
+          "id": "mechanism-acquisition-tempo",
+          "claim": "获取（acquire）节奏偏离最优：过早/过晚认领导致目标竞争失败",
+          "prediction": "调整 M02/M04/M10 中的获取-认领权衡后，该层 championWinFlips 下降 ≥2",
+          "falsification": "若动作分布 L1 改变但配对 delta 不变或下降，则该机制被否定",
+          "modules": [
+            "M02",
+            "M04",
+            "M10"
+          ]
+        },
+        {
+          "id": "mechanism-endgame-contest",
+          "claim": "终局目标竞争估值不足：对手关键目标被抢或自身终局路线选错",
+          "prediction": "调整 M06/M07/M08 的终局/竞争项后，该层终局分差缩小且配对 delta 上升",
+          "falsification": "若终局分差不变，则该机制被否定",
+          "modules": [
+            "M06",
+            "M07",
+            "M08"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "H18B",
+      "statement": "候选改动可能只改变了行为分布而未触及胜负机制（无效探索）",
+      "status": "unverified",
+      "mechanisms": [
+        {
+          "id": "mechanism-behavior-only",
+          "claim": "改动只改变动作分布，不改变关键决策点",
+          "prediction": "动作分布 L1 显著变化但同种子胜负不翻转",
+          "falsification": "若出现 ≥2 个 candidate-win-flip 且无对应 champion-win-flip，则否定该机制",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04"
+          ]
+        },
+        {
+          "id": "mechanism-variance",
+          "claim": "观测到的差异来自小样本随机波动而非算法差异",
+          "prediction": "在新研究种子上独立复验时 delta 收缩到 0 附近",
+          "falsification": "若独立种子复验仍显著为正，则否定该机制",
+          "modules": [
+            "M01",
+            "M02",
+            "M03",
+            "M04"
+          ]
+        }
+      ]
+    }
+  ],
+  "allowedModules": [
+    "M01",
+    "M02",
+    "M03",
+    "M04",
+    "M05",
+    "M06",
+    "M07",
+    "M08",
+    "M09",
+    "M10",
+    "M11",
+    "M12"
+  ],
+  "forbidden": [
+    "规则引擎、裁判、评估器、统计门禁、测试与冠军发布脚本",
+    "隐藏牌库顺序 / 对手私有信息 / 正式验证种子",
+    "import / eval / 进程 / 文件 / 网络 / 时钟 / 随机数"
+  ],
+  "experiment": {
+    "playerCounts": [
+      2,
+      3,
+      4,
+      5
+    ],
+    "quickSeeds": 4,
+    "deepSeeds": 4,
+    "pairedArms": 2,
+    "independentSeeds": true,
+    "note": "同种子/同对手/同焦点席位配对；开发池与正式验证池严格隔离"
+  },
+  "discipline": [
+    "机制解释未经验证，只能作为假设",
+    "必须产生可执行的行为改变；原样返回或只改注释视为失败",
+    "优先小而有原则的改动，避免大规模重写"
+  ],
+  "contentHash": "fa84c523bc00cf135e4fc90496a9a443a7c0dd67a8c390d45b39e6181222dd80",
+  "contextHash": "9c987534ee7569d6c240f0a83859e18f1061bb85e2d9b2f925330203dd5d0a3a"
+}
