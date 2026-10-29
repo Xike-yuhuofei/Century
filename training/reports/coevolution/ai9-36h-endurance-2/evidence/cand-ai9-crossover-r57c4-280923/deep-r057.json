@@ -1,0 +1,815 @@
+{
+  "schema": "century-evolution-evidence-v1",
+  "candidateId": "cand-ai9-crossover-r57c4-280923",
+  "identityDigest": "069e1d4747d3aa98af232758d15336c83d8cbd1c684597cce34d3dc86cbc2fd5",
+  "evaluationMode": "game",
+  "purpose": "deep",
+  "round": 57,
+  "executorHash": "2523459913e76b4c7067bee47c3a2098a8a1c3d4109a9ba36e50e8ce981a4121",
+  "seedWindow": {
+    "byPlayerCount": {
+      "2": [
+        1670083000,
+        1670083001
+      ],
+      "3": [
+        1670083002,
+        1670083003
+      ],
+      "4": [
+        1670083004,
+        1670083005
+      ],
+      "5": [
+        1670083006,
+        1670083007
+      ]
+    },
+    "block": [
+      1670000000,
+      1680000000
+    ]
+  },
+  "opponentPolicy": {
+    "mode": "deep",
+    "anchor": "js5-frozen-champion",
+    "rotation": [
+      "ai5-readiness-efficiency",
+      "style-rush",
+      "style-engine",
+      "style-contest",
+      "neutral-baseline",
+      "random-legal"
+    ],
+    "controlArm": "js5-frozen-champion (immutable archive)",
+    "workUnits": 32
+  },
+  "metrics": {
+    "evidenceType": "dev-game-compiled-modules",
+    "totalGames": 16,
+    "finishedGames": 16,
+    "anomalies": 0,
+    "anomalyRate": 0,
+    "pairs": 8,
+    "finishedPairs": 8,
+    "candidateFirstRate": 0.5,
+    "championFirstRate": 0.25,
+    "firstPlaceDelta": 0.25,
+    "firstPlaceDeltaCi": null,
+    "firstPlaceDeltaPooledCi": {
+      "mean": 0.25,
+      "variance": 0.21428571428571427,
+      "se": 0.16366341767699427,
+      "df": 7,
+      "tCritical": 1.8945786051044706,
+      "alpha": 0.05,
+      "lower": -0.060073209569110164,
+      "upper": 0.5600732095691101,
+      "oneSidedLower": -0.060073209569110164,
+      "n": 8,
+      "candidateFirstRate": 0.5,
+      "championFirstRate": 0.25
+    },
+    "chanceAdjustedRate": 0.1792,
+    "minWilsonLower": 0,
+    "byPlayerCount": {
+      "2": {
+        "seatCount": 2,
+        "pairs": 2,
+        "candidateGames": 2,
+        "championGames": 2,
+        "candidateFirst": 2,
+        "championFirst": 1,
+        "candidateFirstRate": 1,
+        "championFirstRate": 0.5,
+        "delta": 0.5,
+        "wilson": {
+          "point": 1,
+          "lower": 0.34238022750665303,
+          "upper": 1
+        }
+      },
+      "3": {
+        "seatCount": 3,
+        "pairs": 2,
+        "candidateGames": 2,
+        "championGames": 2,
+        "candidateFirst": 0,
+        "championFirst": 0,
+        "candidateFirstRate": 0,
+        "championFirstRate": 0,
+        "delta": 0,
+        "wilson": {
+          "point": 0,
+          "lower": 0,
+          "upper": 0.6576197724933469
+        }
+      },
+      "4": {
+        "seatCount": 4,
+        "pairs": 2,
+        "candidateGames": 2,
+        "championGames": 2,
+        "candidateFirst": 1,
+        "championFirst": 1,
+        "candidateFirstRate": 0.5,
+        "championFirstRate": 0.5,
+        "delta": 0,
+        "wilson": {
+          "point": 0.5,
+          "lower": 0.09453120573423074,
+          "upper": 0.9054687942657693
+        }
+      },
+      "5": {
+        "seatCount": 5,
+        "pairs": 2,
+        "candidateGames": 2,
+        "championGames": 2,
+        "candidateFirst": 1,
+        "championFirst": 0,
+        "candidateFirstRate": 0.5,
+        "championFirstRate": 0,
+        "delta": 0.5,
+        "wilson": {
+          "point": 0.5,
+          "lower": 0.09453120573423074,
+          "upper": 0.9054687942657693
+        }
+      }
+    },
+    "meanDecisionMs": 43.872,
+    "p95WallMs": 7621.8
+  },
+  "behaviorSignature": {
+    "kind": "compiled-module-behavior-v1",
+    "modules": [
+      "M01",
+      "M02",
+      "M03",
+      "M05",
+      "M11"
+    ],
+    "actions": {
+      "acquire": 0.135,
+      "claim": 0.1095,
+      "rest": 0.1765,
+      "play": 0.579
+    },
+    "byPlayerCount": {
+      "2": {
+        "seatCount": 2,
+        "pairs": 2,
+        "candidateGames": 2,
+        "championGames": 2,
+        "candidateFirst": 2,
+        "championFirst": 1,
+        "candidateFirstRate": 1,
+        "championFirstRate": 0.5,
+        "delta": 0.5,
+        "wilson": {
+          "point": 1,
+          "lower": 0.34238022750665303,
+          "upper": 1
+        }
+      },
+      "3": {
+        "seatCount": 3,
+        "pairs": 2,
+        "candidateGames": 2,
+        "championGames": 2,
+        "candidateFirst": 0,
+        "championFirst": 0,
+        "candidateFirstRate": 0,
+        "championFirstRate": 0,
+        "delta": 0,
+        "wilson": {
+          "point": 0,
+          "lower": 0,
+          "upper": 0.6576197724933469
+        }
+      },
+      "4": {
+        "seatCount": 4,
+        "pairs": 2,
+        "candidateGames": 2,
+        "championGames": 2,
+        "candidateFirst": 1,
+        "championFirst": 1,
+        "candidateFirstRate": 0.5,
+        "championFirstRate": 0.5,
+        "delta": 0,
+        "wilson": {
+          "point": 0.5,
+          "lower": 0.09453120573423074,
+          "upper": 0.9054687942657693
+        }
+      },
+      "5": {
+        "seatCount": 5,
+        "pairs": 2,
+        "candidateGames": 2,
+        "championGames": 2,
+        "candidateFirst": 1,
+        "championFirst": 0,
+        "candidateFirstRate": 0.5,
+        "championFirstRate": 0,
+        "delta": 0.5,
+        "wilson": {
+          "point": 0.5,
+          "lower": 0.09453120573423074,
+          "upper": 0.9054687942657693
+        }
+      }
+    }
+  },
+  "behaviorHash": "539f57d53db8c2caad6e1f4e6a3ae84b20a8c47fab06312a488cf117b81b9f02",
+  "pairs": [
+    {
+      "seed": 1670083000,
+      "focusSeat": 0,
+      "seatCount": 2,
+      "candidateFirst": 1,
+      "championFirst": 0,
+      "anomalies": 0,
+      "status": "finished"
+    },
+    {
+      "seed": 1670083001,
+      "focusSeat": 1,
+      "seatCount": 2,
+      "candidateFirst": 1,
+      "championFirst": 1,
+      "anomalies": 0,
+      "status": "finished"
+    },
+    {
+      "seed": 1670083002,
+      "focusSeat": 2,
+      "seatCount": 3,
+      "candidateFirst": 0,
+      "championFirst": 0,
+      "anomalies": 0,
+      "status": "finished"
+    },
+    {
+      "seed": 1670083003,
+      "focusSeat": 0,
+      "seatCount": 3,
+      "candidateFirst": 0,
+      "championFirst": 0,
+      "anomalies": 0,
+      "status": "finished"
+    },
+    {
+      "seed": 1670083004,
+      "focusSeat": 0,
+      "seatCount": 4,
+      "candidateFirst": 1,
+      "championFirst": 1,
+      "anomalies": 0,
+      "status": "finished"
+    },
+    {
+      "seed": 1670083005,
+      "focusSeat": 1,
+      "seatCount": 4,
+      "candidateFirst": 0,
+      "championFirst": 0,
+      "anomalies": 0,
+      "status": "finished"
+    },
+    {
+      "seed": 1670083006,
+      "focusSeat": 1,
+      "seatCount": 5,
+      "candidateFirst": 1,
+      "championFirst": 0,
+      "anomalies": 0,
+      "status": "finished"
+    },
+    {
+      "seed": 1670083007,
+      "focusSeat": 2,
+      "seatCount": 5,
+      "candidateFirst": 0,
+      "championFirst": 0,
+      "anomalies": 0,
+      "status": "finished"
+    }
+  ],
+  "games": [
+    {
+      "seed": 1670083000,
+      "seedIndex": 0,
+      "seatCount": 2,
+      "focusSeat": 0,
+      "arm": "A",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": true,
+      "winnerSeat": 0,
+      "moves": 87,
+      "wallMs": 4470.25,
+      "score": 86,
+      "meanDecisionMs": 51.368,
+      "rank": 1,
+      "candidateActions": {
+        "acquire": 0.093,
+        "claim": 0.1395,
+        "rest": 0.2093,
+        "play": 0.5581
+      },
+      "opponentIds": [
+        "js5-frozen-champion"
+      ],
+      "versions": [
+        "cand-ai9-crossover-r57c4-280923",
+        "js5-frozen-champion"
+      ]
+    },
+    {
+      "seed": 1670083000,
+      "seedIndex": 0,
+      "seatCount": 2,
+      "focusSeat": 0,
+      "arm": "B",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": false,
+      "winnerSeat": 1,
+      "moves": 81,
+      "wallMs": 4834.25,
+      "score": 69,
+      "meanDecisionMs": 59.67,
+      "rank": 2,
+      "candidateActions": {
+        "acquire": 0.125,
+        "claim": 0.125,
+        "rest": 0.175,
+        "play": 0.575
+      },
+      "opponentIds": [
+        "js5-frozen-champion"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "js5-frozen-champion"
+      ]
+    },
+    {
+      "seed": 1670083001,
+      "seedIndex": 1,
+      "seatCount": 2,
+      "focusSeat": 1,
+      "arm": "A",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": true,
+      "winnerSeat": 1,
+      "moves": 98,
+      "wallMs": 4652.14,
+      "score": 88,
+      "meanDecisionMs": 47.457,
+      "rank": 1,
+      "candidateActions": {
+        "acquire": 0.1633,
+        "claim": 0.102,
+        "rest": 0.1429,
+        "play": 0.5918
+      },
+      "opponentIds": [
+        "js5-frozen-champion"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "cand-ai9-crossover-r57c4-280923"
+      ]
+    },
+    {
+      "seed": 1670083001,
+      "seedIndex": 1,
+      "seatCount": 2,
+      "focusSeat": 1,
+      "arm": "B",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": true,
+      "winnerSeat": 1,
+      "moves": 107,
+      "wallMs": 6275.8,
+      "score": 101,
+      "meanDecisionMs": 58.64,
+      "rank": 1,
+      "candidateActions": {
+        "acquire": 0.1509,
+        "claim": 0.1132,
+        "rest": 0.1321,
+        "play": 0.6038
+      },
+      "opponentIds": [
+        "js5-frozen-champion"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "js5-frozen-champion"
+      ]
+    },
+    {
+      "seed": 1670083002,
+      "seedIndex": 2,
+      "seatCount": 3,
+      "focusSeat": 2,
+      "arm": "A",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": false,
+      "winnerSeat": 0,
+      "moves": 144,
+      "wallMs": 5708.32,
+      "score": 69,
+      "meanDecisionMs": 39.627,
+      "rank": 3,
+      "candidateActions": {
+        "acquire": 0.1458,
+        "claim": 0.0833,
+        "rest": 0.1667,
+        "play": 0.6042
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "neutral-baseline"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "neutral-baseline",
+        "cand-ai9-crossover-r57c4-280923"
+      ]
+    },
+    {
+      "seed": 1670083002,
+      "seedIndex": 2,
+      "seatCount": 3,
+      "focusSeat": 2,
+      "arm": "B",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": false,
+      "winnerSeat": 1,
+      "moves": 130,
+      "wallMs": 7663.33,
+      "score": 70,
+      "meanDecisionMs": 58.935,
+      "rank": 2,
+      "candidateActions": {
+        "acquire": 0.1628,
+        "claim": 0.1163,
+        "rest": 0.186,
+        "play": 0.5349
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "neutral-baseline"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "neutral-baseline",
+        "js5-frozen-champion"
+      ]
+    },
+    {
+      "seed": 1670083003,
+      "seedIndex": 3,
+      "seatCount": 3,
+      "focusSeat": 0,
+      "arm": "A",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": false,
+      "winnerSeat": 1,
+      "moves": 126,
+      "wallMs": 5505.79,
+      "score": 80,
+      "meanDecisionMs": 43.683,
+      "rank": 2,
+      "candidateActions": {
+        "acquire": 0.0952,
+        "claim": 0.0952,
+        "rest": 0.1667,
+        "play": 0.6429
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "random-legal"
+      ],
+      "versions": [
+        "cand-ai9-crossover-r57c4-280923",
+        "js5-frozen-champion",
+        "random-legal"
+      ]
+    },
+    {
+      "seed": 1670083003,
+      "seedIndex": 3,
+      "seatCount": 3,
+      "focusSeat": 0,
+      "arm": "B",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": false,
+      "winnerSeat": 1,
+      "moves": 123,
+      "wallMs": 8146.93,
+      "score": 66,
+      "meanDecisionMs": 66.222,
+      "rank": 2,
+      "candidateActions": {
+        "acquire": 0.2439,
+        "claim": 0.0976,
+        "rest": 0.122,
+        "play": 0.5366
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "random-legal"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "js5-frozen-champion",
+        "random-legal"
+      ]
+    },
+    {
+      "seed": 1670083004,
+      "seedIndex": 4,
+      "seatCount": 4,
+      "focusSeat": 0,
+      "arm": "A",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": true,
+      "winnerSeat": 0,
+      "moves": 120,
+      "wallMs": 5098.62,
+      "score": 63,
+      "meanDecisionMs": 42.474,
+      "rank": 1,
+      "candidateActions": {
+        "acquire": 0.1,
+        "claim": 0.1667,
+        "rest": 0.1667,
+        "play": 0.5667
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "ai5-readiness-efficiency",
+        "style-rush"
+      ],
+      "versions": [
+        "cand-ai9-crossover-r57c4-280923",
+        "js5-frozen-champion",
+        "ai5-readiness-efficiency",
+        "style-rush"
+      ]
+    },
+    {
+      "seed": 1670083004,
+      "seedIndex": 4,
+      "seatCount": 4,
+      "focusSeat": 0,
+      "arm": "B",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": true,
+      "winnerSeat": 0,
+      "moves": 140,
+      "wallMs": 6677.86,
+      "score": 63,
+      "meanDecisionMs": 47.686,
+      "rank": 1,
+      "candidateActions": {
+        "acquire": 0.1714,
+        "claim": 0.1143,
+        "rest": 0.2,
+        "play": 0.5143
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "ai5-readiness-efficiency",
+        "style-rush"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "js5-frozen-champion",
+        "ai5-readiness-efficiency",
+        "style-rush"
+      ]
+    },
+    {
+      "seed": 1670083005,
+      "seedIndex": 5,
+      "seatCount": 4,
+      "focusSeat": 1,
+      "arm": "A",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": false,
+      "winnerSeat": 2,
+      "moves": 121,
+      "wallMs": 5385.42,
+      "score": 50,
+      "meanDecisionMs": 44.493,
+      "rank": 3,
+      "candidateActions": {
+        "acquire": 0.2667,
+        "claim": 0.1,
+        "rest": 0.1,
+        "play": 0.5333
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "style-rush",
+        "style-engine"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "cand-ai9-crossover-r57c4-280923",
+        "style-rush",
+        "style-engine"
+      ]
+    },
+    {
+      "seed": 1670083005,
+      "seedIndex": 5,
+      "seatCount": 4,
+      "focusSeat": 1,
+      "arm": "B",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": false,
+      "winnerSeat": 0,
+      "moves": 144,
+      "wallMs": 7286.77,
+      "score": 60,
+      "meanDecisionMs": 50.589,
+      "rank": 3,
+      "candidateActions": {
+        "acquire": 0.2222,
+        "claim": 0.1389,
+        "rest": 0.1111,
+        "play": 0.5278
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "style-rush",
+        "style-engine"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "js5-frozen-champion",
+        "style-rush",
+        "style-engine"
+      ]
+    },
+    {
+      "seed": 1670083006,
+      "seedIndex": 6,
+      "seatCount": 5,
+      "focusSeat": 1,
+      "arm": "A",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": true,
+      "winnerSeat": 1,
+      "moves": 185,
+      "wallMs": 7621.83,
+      "score": 75,
+      "meanDecisionMs": 41.184,
+      "rank": 1,
+      "candidateActions": {
+        "acquire": 0.0811,
+        "claim": 0.1081,
+        "rest": 0.2162,
+        "play": 0.5946
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "style-engine",
+        "style-contest",
+        "neutral-baseline"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "cand-ai9-crossover-r57c4-280923",
+        "style-engine",
+        "style-contest",
+        "neutral-baseline"
+      ]
+    },
+    {
+      "seed": 1670083006,
+      "seedIndex": 6,
+      "seatCount": 5,
+      "focusSeat": 1,
+      "arm": "B",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": false,
+      "winnerSeat": 0,
+      "moves": 185,
+      "wallMs": 7316.26,
+      "score": 55,
+      "meanDecisionMs": 39.534,
+      "rank": 4,
+      "candidateActions": {
+        "acquire": 0.0811,
+        "claim": 0.1081,
+        "rest": 0.2162,
+        "play": 0.5946
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "style-engine",
+        "style-contest",
+        "neutral-baseline"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "js5-frozen-champion",
+        "style-engine",
+        "style-contest",
+        "neutral-baseline"
+      ]
+    },
+    {
+      "seed": 1670083007,
+      "seedIndex": 7,
+      "seatCount": 5,
+      "focusSeat": 2,
+      "arm": "A",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": false,
+      "winnerSeat": 1,
+      "moves": 185,
+      "wallMs": 7530.59,
+      "score": 50,
+      "meanDecisionMs": 40.691,
+      "rank": 4,
+      "candidateActions": {
+        "acquire": 0.1351,
+        "claim": 0.0811,
+        "rest": 0.2432,
+        "play": 0.5405
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "style-contest",
+        "neutral-baseline",
+        "random-legal"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "style-contest",
+        "cand-ai9-crossover-r57c4-280923",
+        "neutral-baseline",
+        "random-legal"
+      ]
+    },
+    {
+      "seed": 1670083007,
+      "seedIndex": 7,
+      "seatCount": 5,
+      "focusSeat": 2,
+      "arm": "B",
+      "status": "finished",
+      "reason": null,
+      "firstPlace": false,
+      "winnerSeat": 3,
+      "moves": 195,
+      "wallMs": 7499.19,
+      "score": 55,
+      "meanDecisionMs": 38.443,
+      "rank": 2,
+      "candidateActions": {
+        "acquire": 0.1282,
+        "claim": 0.1026,
+        "rest": 0.2308,
+        "play": 0.5385
+      },
+      "opponentIds": [
+        "js5-frozen-champion",
+        "style-contest",
+        "neutral-baseline",
+        "random-legal"
+      ],
+      "versions": [
+        "js5-frozen-champion",
+        "style-contest",
+        "js5-frozen-champion",
+        "neutral-baseline",
+        "random-legal"
+      ]
+    }
+  ]
+}

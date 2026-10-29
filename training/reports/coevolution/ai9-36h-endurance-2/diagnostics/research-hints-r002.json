@@ -1,0 +1,47 @@
+{
+  "schema": "century-evolution-research-hints-v1",
+  "discipline": {
+    "advisoryOnly": true,
+    "notRewardTruth": true,
+    "rewardModified": false,
+    "canPromote": false,
+    "note": "失败标签只用于研究提示与课程配置，不进入任何奖励/评分真值"
+  },
+  "suggestedTargets": [
+    "candidateCap",
+    "overrideMargin",
+    "goalValue",
+    "acquisitionValue"
+  ],
+  "promptHints": [
+    "研究提示（认领延迟）：1: 竞争机会 4 次未转化为获取；优先探索 candidateCap/overrideMargin/goalValue，需独立回归验证。",
+    "研究提示（竞争抢牌失败）：1: 4 次他人获取时本席账面付得起位置费；优先探索 acquisitionValue/overrideMargin/candidateCap，需独立回归验证。"
+  ],
+  "curriculum": {
+    "schema": "century-evolution-curriculum-v1",
+    "focusLabels": [
+      {
+        "code": "claim-delay",
+        "label": "认领延迟",
+        "status": "finding",
+        "occurrences": 32
+      },
+      {
+        "code": "contest-loss",
+        "label": "竞争抢牌失败",
+        "status": "finding",
+        "occurrences": 32
+      }
+    ],
+    "targetPriority": [
+      "candidateCap",
+      "overrideMargin",
+      "goalValue",
+      "acquisitionValue"
+    ],
+    "advisoryOnly": true,
+    "notRewardTruth": true,
+    "rewardModified": false
+  },
+  "hintDigest": "a42cb209dce7d19b68d64749041771d8afd36312f2d0239d5fbd1baaab15a0d9"
+}

@@ -1,0 +1,313 @@
+{
+  "schema": "century-evolution-campaign-results-v1",
+  "campaignId": "ai9-36h-smoke",
+  "runFingerprint": "3d2158414bc83916795ea133f8270e904ca28794a81adc2e3b30efc81e642f0b",
+  "status": "completed",
+  "phase": "completed",
+  "checkpointSeq": 11,
+  "budget": {
+    "maxCandidates": 2,
+    "maxGames": 60,
+    "maxWallMs": 3600000,
+    "maxConcurrent": 1,
+    "maxDeepConfirmations": 0
+  },
+  "budgetUsed": {
+    "candidates": 2,
+    "games": 8,
+    "wallMs": 376065,
+    "deepConfirmations": 0
+  },
+  "guardrails": {
+    "validationPoolConsumed": false,
+    "promotionTriggered": false,
+    "championMutation": "none",
+    "formalChallengeApprovalRequired": false,
+    "machineGateRequired": true
+  },
+  "rounds": [
+    {
+      "round": 1,
+      "seedWindows": {
+        "screen": {
+          "windowId": "ai9-screen-w028",
+          "purpose": "screen",
+          "pool": "dev",
+          "base": 1660028000,
+          "count": 1000,
+          "blockStart": 1660000000,
+          "blockEnd": 1670000000,
+          "index": 28
+        },
+        "deep": {
+          "windowId": "ai9-deep-w025",
+          "purpose": "deep",
+          "pool": "dev",
+          "base": 1670025000,
+          "count": 1000,
+          "blockStart": 1670000000,
+          "blockEnd": 1680000000,
+          "index": 25
+        }
+      },
+      "seeds": {
+        "screen": [
+          1660028000,
+          1660028001
+        ],
+        "deep": [
+          1670025000,
+          1670025001
+        ]
+      },
+      "generated": true,
+      "generatorMeta": null,
+      "selection": {
+        "evaluated": 2,
+        "eligible": 2,
+        "selected": 2,
+        "rejected": 0,
+        "duplicates": 0,
+        "byMode": {
+          "game": 2,
+          "proxy": 0
+        },
+        "maxKeep": 3,
+        "minBehaviorDistance": 0.12,
+        "meanBehaviorDistance": 0.15,
+        "scoring": "composite = quality/stability/cost/safety 加权；game 与 proxy 分组保留"
+      },
+      "rejectedAtGeneration": [],
+      "diagnostics": {
+        "paths": [
+          "training/reports/diagnostics-latest/analysis.json"
+        ],
+        "labels": [
+          {
+            "code": "engine-deficiency",
+            "label": "引擎不足",
+            "status": "absent",
+            "evidence": [],
+            "occurrences": 0
+          },
+          {
+            "code": "claim-delay",
+            "label": "认领延迟",
+            "status": "finding",
+            "evidence": [
+              "1: 竞争机会 4 次未转化为获取",
+              "1: 竞争机会 5 次未转化为获取",
+              "1: 竞争机会 3 次未转化为获取",
+              "1: 竞争机会 6 次未转化为获取",
+              "2: 竞争机会 5 次未转化为获取",
+              "2: 竞争机会 4 次未转化为获取",
+              "2: 竞争机会 6 次未转化为获取",
+              "3: 竞争机会 3 次未转化为获取",
+              "3: 竞争机会 5 次未转化为获取",
+              "4: 竞争机会 5 次未转化为获取",
+              "4: 竞争机会 3 次未转化为获取",
+              "5: 竞争机会 6 次未转化为获取"
+            ],
+            "occurrences": 32
+          },
+          {
+            "code": "rest-waste",
+            "label": "休息浪费",
+            "status": "absent",
+            "evidence": [],
+            "occurrences": 0
+          },
+          {
+            "code": "capacity-waste",
+            "label": "资源容量浪费",
+            "status": "absent",
+            "evidence": [],
+            "occurrences": 0
+          },
+          {
+            "code": "endgame-error",
+            "label": "终局错误",
+            "status": "absent",
+            "evidence": [],
+            "occurrences": 0
+          },
+          {
+            "code": "contest-loss",
+            "label": "竞争抢牌失败",
+            "status": "finding",
+            "evidence": [
+              "1: 4 次他人获取时本席账面付得起位置费",
+              "1: 5 次他人获取时本席账面付得起位置费",
+              "1: 3 次他人获取时本席账面付得起位置费",
+              "1: 6 次他人获取时本席账面付得起位置费",
+              "2: 5 次他人获取时本席账面付得起位置费",
+              "2: 4 次他人获取时本席账面付得起位置费",
+              "2: 6 次他人获取时本席账面付得起位置费",
+              "3: 3 次他人获取时本席账面付得起位置费",
+              "3: 5 次他人获取时本席账面付得起位置费",
+              "4: 5 次他人获取时本席账面付得起位置费",
+              "4: 3 次他人获取时本席账面付得起位置费",
+              "5: 6 次他人获取时本席账面付得起位置费"
+            ],
+            "occurrences": 32
+          }
+        ],
+        "researchHints": {
+          "schema": "century-evolution-research-hints-v1",
+          "discipline": {
+            "advisoryOnly": true,
+            "notRewardTruth": true,
+            "rewardModified": false,
+            "canPromote": false,
+            "note": "失败标签只用于研究提示与课程配置，不进入任何奖励/评分真值"
+          },
+          "suggestedTargets": [
+            "candidateCap",
+            "overrideMargin",
+            "goalValue",
+            "acquisitionValue"
+          ],
+          "promptHints": [
+            "研究提示（认领延迟）：1: 竞争机会 4 次未转化为获取；优先探索 candidateCap/overrideMargin/goalValue，需独立回归验证。",
+            "研究提示（竞争抢牌失败）：1: 4 次他人获取时本席账面付得起位置费；优先探索 acquisitionValue/overrideMargin/candidateCap，需独立回归验证。"
+          ],
+          "curriculum": {
+            "schema": "century-evolution-curriculum-v1",
+            "focusLabels": [
+              {
+                "code": "claim-delay",
+                "label": "认领延迟",
+                "status": "finding",
+                "occurrences": 32
+              },
+              {
+                "code": "contest-loss",
+                "label": "竞争抢牌失败",
+                "status": "finding",
+                "occurrences": 32
+              }
+            ],
+            "targetPriority": [
+              "candidateCap",
+              "overrideMargin",
+              "goalValue",
+              "acquisitionValue"
+            ],
+            "advisoryOnly": true,
+            "notRewardTruth": true,
+            "rewardModified": false
+          },
+          "hintDigest": "a42cb209dce7d19b68d64749041771d8afd36312f2d0239d5fbd1baaab15a0d9"
+        }
+      },
+      "candidates": [
+        {
+          "candidateId": "cand-ai9-control-r1-37ef62",
+          "parentId": null,
+          "identityDigest": "ac64f39e26bf6e369541b2bfe4dfb118336197b2043ffb2d3fedc7508bce92dd",
+          "strategy": "control",
+          "modules": [
+            "M01"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01"
+          ],
+          "stage": "selected",
+          "safetyStatus": "passed",
+          "buildKind": "esm-module-bundle-v1",
+          "buildArtifactHash": "c5453bc337f4242f89090e1761f2b59755367409912b56ace502a936caf35752",
+          "sourceHash": "3fd0a972701bbe39bbf523fbbfb766b9178b72764132a3179cf3ef182e1cae45",
+          "generator": null,
+          "generatorMeta": null,
+          "evidenceDir": "training/reports/coevolution/ai9-36h-smoke/evidence/cand-ai9-control-r1-37ef62",
+          "quick": {
+            "evidencePath": "training/reports/coevolution/ai9-36h-smoke/evidence/cand-ai9-control-r1-37ef62/quick-r001.json",
+            "evidenceType": "dev-game-compiled-modules",
+            "score": {
+              "candidateId": "cand-ai9-control-r1-37ef62",
+              "identityDigest": "ac64f39e26bf6e369541b2bfe4dfb118336197b2043ffb2d3fedc7508bce92dd",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01"
+              ],
+              "quality": 0.58696,
+              "stability": 1,
+              "cost": 0.92868,
+              "safety": 1,
+              "composite": 0.786348
+            },
+            "games": 4,
+            "metrics": {
+              "chanceAdjustedRate": 0.5,
+              "minWilsonLower": 0.3424,
+              "anomalyRate": 0,
+              "p95WallMs": 2303.9
+            },
+            "artifactHash": "6f6b9d1062f217f2bd40e15bdf94ef2c58567048aeedf6ecc7121936825cf650"
+          },
+          "deep": null,
+          "failure": null
+        },
+        {
+          "candidateId": "cand-ai9-multi-r1c1-5c0aa8",
+          "parentId": null,
+          "identityDigest": "76af96933f0f43cb53175833a4ec63df8b4ecb0e9ec4043e328e19326951eb7d",
+          "strategy": "openevolve",
+          "modules": [
+            "M01",
+            "M02"
+          ],
+          "evaluationMode": "game",
+          "targetIds": [
+            "M01",
+            "M02"
+          ],
+          "stage": "selected",
+          "safetyStatus": "passed",
+          "buildKind": "esm-module-bundle-v1",
+          "buildArtifactHash": "c5453bc337f4242f89090e1761f2b59755367409912b56ace502a936caf35752",
+          "sourceHash": "c4ce01cdd0c2c1b6740a9f885a204552d1226c4801e109398a8cc3a8e5557bc1",
+          "generator": null,
+          "generatorMeta": null,
+          "evidenceDir": "training/reports/coevolution/ai9-36h-smoke/evidence/cand-ai9-multi-r1c1-5c0aa8",
+          "quick": {
+            "evidencePath": "training/reports/coevolution/ai9-36h-smoke/evidence/cand-ai9-multi-r1c1-5c0aa8/quick-r001.json",
+            "evidenceType": "dev-game-compiled-modules",
+            "score": {
+              "candidateId": "cand-ai9-multi-r1c1-5c0aa8",
+              "identityDigest": "76af96933f0f43cb53175833a4ec63df8b4ecb0e9ec4043e328e19326951eb7d",
+              "evaluationMode": "game",
+              "targetIds": [
+                "M01",
+                "M02"
+              ],
+              "quality": 0.58696,
+              "stability": 1,
+              "cost": 0.928839,
+              "safety": 1,
+              "composite": 0.786364
+            },
+            "games": 4,
+            "metrics": {
+              "chanceAdjustedRate": 0.5,
+              "minWilsonLower": 0.3424,
+              "anomalyRate": 0,
+              "p95WallMs": 2298.4
+            },
+            "artifactHash": "4ba58816155167f50b0c86d19254b04a3e03cc20c5b2714b2e6572a6aa049813"
+          },
+          "deep": null,
+          "failure": null
+        }
+      ]
+    }
+  ],
+  "pendingApprovals": [],
+  "promotionQueue": [],
+  "promotionOutcomes": [],
+  "moduleElites": [],
+  "mapElites": {},
+  "generationDiagnostics": [],
+  "note": "autonomous 模式：正式挑战请求进入机器门禁队列；人工审批已被机器门禁取代，门禁本身不删除"
+}

@@ -12,11 +12,21 @@ enforce_evolve_blocks: true
 llm:
   provider: "codex_app_server"
   models:
+    # 36h 长周期按权重轮换同一账号下已验证可用的 5.6 系列模型：
+    # sol 为主，terra/luna 分摊额度；额度窗口耗尽时由生成器显式降级为确定性 pair。
     - name: "gpt-5.6-sol"
-      weight: 1.0
+      weight: 0.5
       timeout: 900
       reasoning_effort: "low"
-  temperature: 0.7
+    - name: "gpt-5.6-terra"
+      weight: 0.3
+      timeout: 900
+      reasoning_effort: "low"
+    - name: "gpt-5.6-luna"
+      weight: 0.2
+      timeout: 900
+      reasoning_effort: "low"
+  temperature: 0.85
   max_tokens: 20000
 
 prompt:
@@ -31,9 +41,15 @@ prompt:
     use the in-scope helpers listed in each module contract; (4) no imports, eval,
     process/network/fs/clock/random access, no hidden deck fields, no template
     strings; (5) every function must stay pure, deterministic and finite; (6) do
-    not hardcode card/golem ids; (7) keep weighted parameters wired in; (8)
-    modules marked with a neutral default should preserve the existing behaviour
-    unless you have a principled improvement. Evaluation: candidates are
+    not hardcode card/golem ids; (7) keep weighted parameters wired in.
+    MANDATORY BEHAVIOURAL CHANGE: you must modify executable logic inside at
+    least one EVOLVE-BLOCK. Returning the input program, or changing only
+    comments, formatting, variable names, or text outside EVOLVE-BLOCK, is an
+    automatic failure. A small concrete testable heuristic change is required —
+    for example add a public-state condition, adjust a coefficient, reorder
+    candidate filtering, change a threshold, or combine existing public features.
+    Do not answer "no change needed"; the evaluator, not you, decides whether a
+    change is good. Evaluation: candidates are
     statically checked, assembled into an isolated source tree, compiled with the
     official rules engine, probed on public deterministic states, then play paired
     focus-seat games against the reigning frozen champion in 2/3/4/5-player modes
