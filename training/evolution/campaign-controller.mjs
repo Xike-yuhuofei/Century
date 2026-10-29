@@ -758,6 +758,8 @@ export class CampaignController {
       const artifact = item.artifact;
       assertCondition(artifact, '生成器返回的候选缺少 artifact');
       // 对照基线（官方模块）不是"进化代"，不要求谱系；其余候选必须可追溯父代源码。
+      // 单个候选的谱系缺陷只拒绝该候选，不中断整个 campaign；
+      // 父代 artifact 本身缺失/哈希不符仍由 _parentArtifact 抛错中止（那是全局完整性）。
       if (multiModule && !artifact.lineage) {
         assertCondition(item.strategy === 'control',
           `候选 ${artifact.candidateId} 缺少 lineage（拒绝未登记谱系的候选）`);
@@ -771,7 +773,15 @@ export class CampaignController {
           lineageParent = this.store.get(artifact.parentId);
           this._assertParentIntegrity(lineageParent, artifact.parentId);
         }
-        this._verifyLineage({ artifact, parentArtifact: lineageParent, round: roundData.round });
+        try {
+          this._verifyLineage({ artifact, parentArtifact: lineageParent, round: roundData.round });
+        } catch (error) {
+          const rejection = { candidateId: artifact.candidateId, strategy: item.strategy ?? null, stage: 'lineage-rejected', reason: error.message };
+          roundData.candidates.push({ ...rejection, stage: 'lineage-rejected', failure: { stage: 'lineage', reason: error.message } });
+          roundData.rejectedAtGeneration.push({ strategy: item.strategy ?? null, reason: error.message });
+          this._event(state, 'candidate-lineage-rejected', rejection, artifact.candidateId);
+          continue;
+        }
       }
       const put = this.store.put(artifact);
       this.research.candidate({

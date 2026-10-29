@@ -239,6 +239,11 @@ export function createCandidateFromOpenEvolveMulti({
   const modulesChanged = parentModuleHashes
     ? loaded.modules.filter(m => parentModuleHashes[m.id] !== m.functionSha256).map(m => m.id).sort()
     : [...loaded.moduleIds].sort();
+  // LLM 原样返回父代源码属于"无进化增量"，必须在生成阶段按候选拒绝，
+  // 不能让它进入谱系校验并中断整个 campaign（36h 基线实测 39% 的 LLM 输出无变化）。
+  if (parentModuleTexts && modulesChanged.length === 0) {
+    throw new Error(`LLM 未产生真实源码变化（identical-to-parent）：${outputDir}`);
+  }
   const created = createCompiledModuleCandidate({
     modules: loaded.modules,
     moduleIds: loaded.moduleIds,
