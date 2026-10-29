@@ -1,0 +1,117 @@
+{
+  "schema": "century-ai9-endurance-audit-v1",
+  "generatedAt": "2026-10-29T05:54:21.330Z",
+  "campaignId": "ai9-36h-endurance-2",
+  "verdict": "FAIL",
+  "status": {
+    "runtime": "budget-exhausted",
+    "phase": "stopped-by-budget",
+    "rounds": 91,
+    "createdAt": "2026-10-27T14:17:59.810Z",
+    "updatedAt": "2026-10-29T05:32:33.852Z",
+    "runFingerprint": "ff3cae936dce6ff58264b190644a7f7bb4a89fbf3f02428813a01b309256ab98",
+    "codeVersion": {
+      "headCommit": "c000f8e6e596d5f7d835b548a4d93c2e17baa3ed",
+      "codeDigest": "33bfbdf81b24ba53024e49de8802b47a6dbe416bad2bed9626fdb10b46a2dd50",
+      "webBuildCommit": "c000f8e6e596d5f7d835b548a4d93c2e17baa3ed"
+    }
+  },
+  "requirements": {
+    "maxWallMs": 129600000,
+    "requiredWallMs": 123120000,
+    "minWallRatio": 0.95,
+    "budgetUsed": {
+      "candidates": 637,
+      "games": 12960,
+      "wallMs": 130207101,
+      "deepConfirmations": 180
+    }
+  },
+  "checks": [
+    {
+      "id": "state-schema",
+      "status": "PASS",
+      "evidence": "century-evolution-campaign-v1"
+    },
+    {
+      "id": "code-version-declared",
+      "status": "PASS",
+      "evidence": "schema=century-code-version-v1，head=c000f8e6e596，digest=33bfbdf81b24"
+    },
+    {
+      "id": "code-version-clean",
+      "status": "PASS",
+      "evidence": "headDirty=false，webBuildDirty=false，dirtyFiles=0"
+    },
+    {
+      "id": "code-version-recomputed",
+      "status": "PASS",
+      "evidence": "state=33bfbdf81b24 ≠ current=33bfbdf81b24"
+    },
+    {
+      "id": "wall-budget-declared",
+      "status": "PASS",
+      "evidence": "maxWallMs=129600000，要求 >= 43,200,000（12h）"
+    },
+    {
+      "id": "player-counts",
+      "status": "PASS",
+      "evidence": "[2,3,4,5]"
+    },
+    {
+      "id": "multi-module-targets",
+      "status": "PASS",
+      "evidence": "[\"M01\",\"M02\",\"M03\",\"M04\",\"M05\",\"M06\",\"M07\",\"M08\",\"M09\",\"M10\",\"M11\",\"M12\"]"
+    },
+    {
+      "id": "strategy-coverage",
+      "status": "PASS",
+      "evidence": "[\"single\",\"pair\",\"multi\",\"crossover\",\"ablation\",\"openevolve\"]"
+    },
+    {
+      "id": "campaign-started",
+      "status": "PASS",
+      "evidence": "seq 2"
+    },
+    {
+      "id": "forced-stop-resume",
+      "status": "FAIL",
+      "evidence": "missing stop/resume pair"
+    },
+    {
+      "id": "event-sequence-monotonic",
+      "status": "PASS",
+      "evidence": "events=3560，state.lastEventSeq=3560"
+    },
+    {
+      "id": "terminal-event",
+      "status": "PASS",
+      "evidence": "seq 3560"
+    },
+    {
+      "id": "wall-budget-consumed",
+      "status": "PASS",
+      "evidence": "wallMs=130207101，要求 >= 123120000（95% × 129600000）"
+    },
+    {
+      "id": "sample-volume",
+      "status": "PASS",
+      "evidence": "candidates=637，games=12960，deepConfirmations=180"
+    },
+    {
+      "id": "machine-gate-path",
+      "status": "PASS",
+      "evidence": "outcomes=90，blocked=90，verdicts=[\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\",\"BLOCKED\"]"
+    },
+    {
+      "id": "governance-guardrails",
+      "status": "PASS",
+      "evidence": "{\"validationPoolConsumed\":false,\"promotionTriggered\":false,\"championMutation\":\"none\",\"formalChallengeApprovalRequired\":false,\"machineGateRequired\":true,\"promotionTriggeredFromOutcomes\":false}"
+    }
+  ],
+  "notes": [
+    "PASS 只表示 R09 的长时运行/恢复验收满足；不表示候选强度或冠军晋级。",
+    "正式冠军晋级仍须预注册统计门禁；BLOCKED/insufficient-statistical-power 是合法结果。",
+    "LEGACY 表示该 campaign 启动早于 codeVersion 捕获；不把当前代码冒充为历史起点，也不事后改写 state。"
+  ]
+}

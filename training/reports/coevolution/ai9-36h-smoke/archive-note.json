@@ -1,0 +1,25 @@
+{
+  "schema": "century-campaign-archive-note-v1",
+  "campaignId": "ai9-36h-smoke",
+  "archivedAt": "2026-10-27T21:46:45.146017+08:00",
+  "reason": "36h 启动前真实 OpenEvolve 烟雾测试（1 轮/2 候选）",
+  "result": {
+    "status": "completed",
+    "candidates": 2,
+    "games": 8,
+    "wallMs": 376065
+  },
+  "finding": "真实 Codex 多模型 ensemble 与 stage1-3 管线通过；但 LLM 返回与输入逐字节一致的 best_program（identical_to_official=1），已追加提示词硬约束并要求至少一个模块决策逻辑真实改变",
+  "codeVersion": {
+    "path": "training/reports/coevolution/ai9-36h-smoke/code-version.json",
+    "sha256": "bf97b6fdd379bd97d767174a02888da211827adf51a5597d0869dc48a19078d4"
+  },
+  "state": {
+    "path": "training/reports/coevolution/ai9-36h-smoke/state.json",
+    "sha256": "f3c120b2dc0c8542a5da1e6a3f8191b14585ea0255b6574e53fd4850bdef4c4a"
+  },
+  "summary": {
+    "path": "training/reports/coevolution/ai9-36h-smoke/run-summary.json",
+    "sha256": "81b03cb4c4237756ec2b251ef88a1b7b2d16d6504406cc5dde177b15955a361b"
+  }
+}

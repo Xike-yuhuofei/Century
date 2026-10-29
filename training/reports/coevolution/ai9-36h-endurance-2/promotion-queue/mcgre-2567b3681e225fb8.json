@@ -1,0 +1,88 @@
+{
+  "schema": "century-machine-gate-challenge-request-v1",
+  "requestId": "mcgre-2567b3681e225fb8",
+  "campaignId": "ai9-36h-endurance-2",
+  "candidateId": "cand-ai9-single-r10c1-38fe41",
+  "identityDigest": "046d1ebbbe537dfa59200438ea6da58a85be38e927044448211d196829a7853b",
+  "evidenceDir": "training/reports/coevolution/ai9-36h-endurance-2/evidence/cand-ai9-single-r10c1-38fe41",
+  "summary": {
+    "artifactHash": "6d8cb4e91df936bf48519bf31184d42aea86cd554ca11435c148fbff8671a7a9",
+    "sourceHash": "2fd2bd4d4908fbb3cf2157a552ad6ca58c0e12fff837a45b535241b4afadddb8",
+    "buildArtifactHash": "1b60150b98d3b9e8684fc77e1256331e5d1800427326e2fe5fe45dabb732c791",
+    "quick": {
+      "evidencePath": "training/reports/coevolution/ai9-36h-endurance-2/evidence/cand-ai9-single-r10c1-38fe41/quick-r010.json",
+      "evidenceType": "dev-game-compiled-modules",
+      "score": {
+        "candidateId": "cand-ai9-single-r10c1-38fe41",
+        "identityDigest": "046d1ebbbe537dfa59200438ea6da58a85be38e927044448211d196829a7853b",
+        "evaluationMode": "game",
+        "targetIds": [
+          "M11"
+        ],
+        "quality": 0.39156,
+        "stability": 1,
+        "cost": 0.87258,
+        "safety": 1,
+        "composite": 0.683038
+      },
+      "games": 16,
+      "metrics": {
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0.0945,
+        "anomalyRate": 0,
+        "p95WallMs": 4380.8
+      },
+      "artifactHash": "d7a705b6693850682998da87e9ab26cc62a6330af94104ea4f0d11f9a1baf8cc"
+    },
+    "deep": {
+      "status": "done",
+      "evidencePath": "training/reports/coevolution/ai9-36h-endurance-2/evidence/cand-ai9-single-r10c1-38fe41/deep-r010.json",
+      "score": {
+        "candidateId": "cand-ai9-single-r10c1-38fe41",
+        "identityDigest": "046d1ebbbe537dfa59200438ea6da58a85be38e927044448211d196829a7853b",
+        "evaluationMode": "game",
+        "targetIds": [
+          "M11"
+        ],
+        "quality": 0.27876,
+        "stability": 1,
+        "cost": 0.764386,
+        "safety": 1,
+        "composite": 0.615819
+      },
+      "games": 16,
+      "metrics": {
+        "chanceAdjustedRate": -0.0708,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "finishedGames": 16
+      }
+    },
+    "deepAssessment": {
+      "verdict": "no-advantage",
+      "chanceAdjustedRate": -0.0708,
+      "minWilsonLower": 0,
+      "anomalyRate": 0,
+      "note": "小样本深验只用于机器门禁前的排序；正式判定必须使用预注册第一名率挑战"
+    },
+    "recommendation": "queue-formal-challenge (weak/inconclusive signal)",
+    "validationPoolConsumed": false,
+    "promotionTriggered": false
+  },
+  "status": "queued-machine-gate",
+  "approvalRequired": false,
+  "machineGateRequired": true,
+  "promotionTriggered": false,
+  "gates": [
+    "first-place-preregistered-challenge",
+    "seat-count-non-inferiority",
+    "alpha-ledger",
+    "seed-governance",
+    "build-identity",
+    "full-ci",
+    "deploy-verification",
+    "rollback-verification"
+  ],
+  "requestedAt": "2026-10-27T18:18:10.824Z",
+  "validationPoolConsumed": false
+}
