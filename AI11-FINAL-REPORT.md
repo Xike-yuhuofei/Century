@@ -26,6 +26,7 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 | Research Orchestrator | 完成 | `research-orchestrator.mjs`：bootstrap / exploit-weakness / replicate / ablate / switch-direction |
 | ResearchBrief 进入 LLM | 完成 | 每轮生成 `openevolve-configs/rNNN.yaml`（system_message 注入）+ `.brief.json`（evaluator artifacts 通道）；contextHash 可核验 |
 | Failure Diagnosis | 完成 | `failure-diagnosis.mjs` 按人数分层比较 A/B 动作分布与胜负翻转；状态 supported/weakened/rejected/inconclusive |
+| 独立新种子复现 | 完成（结论 weakened/rejected） | `ai11-replicate-diagnosis.mjs`：对两个最深负增量候选各用独立 AI9 深验窗口、8 种子/人数（64 局/候选）复现；原 −0.25/−0.5 弱点**未复现**，判为噪声；结论写入研究索引与研究记忆 |
 | 最小失败改动定位 | 完成（观测性） | `module-effects.mjs` + `ai11-module-effects.mjs`：同 (轮, 父代, 种子) 层内比较含/不含模块的配对第一名结果；65 层、12 模块，M08 负关联、M10 正关联，其余 inconclusive；同种子 A/B 政策反事实已由配对评估覆盖，单步动作反事实回放未实现 |
 | Research Memory | 完成 | `research-memory.mjs` JSONL 跨进程；否定假设保留；检索已测假设/正向模块/失败 |
 
@@ -58,6 +59,7 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 | 无人值守启动 | `node training/scripts/run-supervisor.mjs --campaign <id> --hours 6 ...` |
 | 研究/谱系/统计报告 | `node training/scripts/research-report.mjs --campaign <id> --out <path>` |
 | 模块级观测效应（最小改动定位） | `node training/scripts/ai11-module-effects.mjs --campaign <id> --out <path>` |
+| 独立新种子复现 | `node training/scripts/ai11-replicate-diagnosis.mjs --campaign <id> --candidate <id> --seeds-per-count 8` |
 | 运行验收 | `node training/scripts/ai11-endurance-audit.mjs --campaign <id> --hours 6` |
 | 故障注入 | `node training/scripts/ai11-fault-injection.mjs` |
 | 对照实验 | `node training/scripts/ai11-experiments.mjs --experiment A|B|C` |
@@ -66,10 +68,11 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 ### 限制与未完成（必须显式披露）
 
 1. **竞技收益未证明**：6h 与三组实验均为 inconclusive/负增量；无候选满足正式挑战资格。
-2. **失败归因样本不足**：4 种子 × 4 人数 = 每层 1 对，57 份归因文件均为 inconclusive；
-   反馈通道存在，但没有"supported"级因果结论。模块级最小改动定位只到观测关联
-   （`ai11-module-effects.json`）；同种子 A/B 政策反事实已由配对评估覆盖，
-   **单步动作反事实回放未实现**（需引擎快照/恢复支持）。
+2. **未产生 supported 级弱点**：6h 内 57 份归因为 inconclusive（每层仅 1 对）；
+   对两个最深负增量候选做 8 种子/人独立复现，结论为 weakened/rejected——原负增量
+   是噪声而非系统性弱点。反馈通道存在且已写入研究记忆，但本轮没有"supported"结论。
+   模块级最小改动定位只到观测关联（`ai11-module-effects.json`）；同种子 A/B 政策
+   反事实已由配对评估覆盖，**单步动作反事实回放未实现**（需引擎快照/恢复支持）。
 3. **顺序检验 interim 未启用**：设计已模拟验证（两次查看：313 种子/人、功效 0.80），
    runner 仍为固定样本单次 final look。
 4. **编排器停滞策略单一**：6h 中 crossover 134 + ablation 97，探索多样性不足（见 F 节）。
@@ -161,6 +164,22 @@ screen 种子），对每个种子计算"改动含模块 M / 不含 M"的 candid
 
 口径：观测性关联，不是因果；层内生成算子仍可能不同，单步动作反事实回放未实现，
 不得据此自动淘汰模块，只能作为下一轮简报的最小改动线索。
+
+### 独立新种子复现（P1.3）
+
+对 6h 深验中负增量最深的两个候选，各分配一个**从未使用**的 AI9 开发深验窗口
+（8 种子/人数 × 4 人数 = 32 对 / 64 局），用同一预注册阈值重新判定：
+
+| 候选 | 原深验（4 对） | 新窗口 | 2p | 3p | 4p | 5p | supported |
+|---|---|---|---|---|---|---|---|
+| `cand-ai9-crossover-r30c4-031feb` | −0.50 | `ai9-deep-w499` (base 1670499000) | weakened (1/1) | weakened (2/1) | rejected (0/2) | weakened (2/1) | false |
+| `cand-ai9-pair-r1c2-cc83ce` | −0.25 | `ai9-deep-w500` (base 1670500000) | weakened (1/0) | rejected (0/2) | weakened (2/1) | weakened (1/1) | false |
+
+括号内为「冠军赢翻转 / 候选赢翻转」。结论：两个原负增量候选中，**没有一个弱点能被
+独立新种子复现**；原 −0.25/−0.5 更可能是 4 对样本噪声。复现结论已写入
+`research-index.jsonl`（`stage=replication`）与 `research-memory.jsonl`（`replication:*`），
+供下一代研究检索；未消耗正式验证种子。
+
 
 ### 结论
 

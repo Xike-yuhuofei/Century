@@ -1,0 +1,86 @@
+{
+  "schema": "century-ai11-replication-v1",
+  "generatedAt": "2026-10-29T23:27:59.585Z",
+  "campaign": "ai11-6h-v4",
+  "candidateId": "cand-ai9-crossover-r30c4-031feb",
+  "artifactPath": "training/reports/coevolution/ai11-6h-v4/artifacts/objects/cand-ai9-crossover-r30c4-031feb/ed26c4a07b9eaf356800c18ee092dccc9af6717359755b22a9620b3a47c155c3/candidate.json",
+  "sourceHash": "b89171665bfa95b4971b280d06320db981b929534086f7ca673d19a914ef6607",
+  "seedWindow": {
+    "windowId": "ai9-deep-w499",
+    "purpose": "deep",
+    "pool": "dev",
+    "base": 1670499000,
+    "count": 1000,
+    "blockStart": 1670000000,
+    "blockEnd": 1680000000,
+    "index": 499,
+    "replicationOf": "training/reports/coevolution/ai11-6h-v4/evidence/cand-ai9-crossover-r30c4-031feb/deep-r030.json"
+  },
+  "seedsPerCount": 8,
+  "playerCounts": [
+    2,
+    3,
+    4,
+    5
+  ],
+  "pairs": 32,
+  "games": 64,
+  "elapsedMs": 388347,
+  "evidencePath": "/Volumes/Extreme SSD/Projects/Century-ai11/training/reports/ai11-replication/replication-evidence-cand-ai9-crossover-r30c4-031feb.json",
+  "diagnosisPath": "/Volumes/Extreme SSD/Projects/Century-ai11/training/reports/ai11-replication/replication-diagnosis-cand-ai9-crossover-r30c4-031feb.json",
+  "verdicts": {
+    "2": {
+      "pairs": 8,
+      "verdict": "weakened",
+      "championWinFlips": 1,
+      "candidateWinFlips": 1,
+      "meanActionDistance": 0.108687
+    },
+    "3": {
+      "pairs": 8,
+      "verdict": "weakened",
+      "championWinFlips": 2,
+      "candidateWinFlips": 1,
+      "meanActionDistance": 0.158773
+    },
+    "4": {
+      "pairs": 8,
+      "verdict": "rejected",
+      "championWinFlips": 0,
+      "candidateWinFlips": 2,
+      "meanActionDistance": 0.144436
+    },
+    "5": {
+      "pairs": 8,
+      "verdict": "weakened",
+      "championWinFlips": 2,
+      "candidateWinFlips": 1,
+      "meanActionDistance": 0.141335
+    }
+  },
+  "supported": false,
+  "failureCases": [
+    {
+      "category": "paired-first-place-weakness",
+      "seatCount": 2,
+      "status": "weakened",
+      "detail": "2 人层：冠军赢翻转 1 vs 候选赢翻转 1（配对 8，动作分歧对 4，平均动作 L1 0.108687）",
+      "reproducible": false
+    },
+    {
+      "category": "paired-first-place-weakness",
+      "seatCount": 3,
+      "status": "weakened",
+      "detail": "3 人层：冠军赢翻转 2 vs 候选赢翻转 1（配对 8，动作分歧对 6，平均动作 L1 0.158773）",
+      "reproducible": false
+    },
+    {
+      "category": "paired-first-place-weakness",
+      "seatCount": 5,
+      "status": "weakened",
+      "detail": "5 人层：冠军赢翻转 2 vs 候选赢翻转 1（配对 8，动作分歧对 5，平均动作 L1 0.141335）",
+      "reproducible": false
+    }
+  ],
+  "note": "独立开发池新种子复现；结论只针对配对观测，不构成因果；不触碰正式验证种子"
+}
