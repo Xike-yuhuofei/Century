@@ -134,6 +134,21 @@ test('失败归因：按人数分层给出 supported/weakened/inconclusive，不
   }
 });
 
+test('失败归因：8 对/层足量时区分 supported 与 weakened（不做结果后调整）', () => {
+  const supported = diagnosePairedEvidence({
+    evidence: pairedEvidence({ seatCounts: [2], seeds: [1, 2, 3, 4, 5, 6, 7, 8], championWins: 3 }),
+    minSamplesPerStratum: 8,
+  });
+  assert.equal(supported.summary.strata['2'].pairs, 8);
+  assert.equal(supported.summary.strata['2'].verdict, 'supported');
+
+  const weakened = diagnosePairedEvidence({
+    evidence: pairedEvidence({ seatCounts: [2], seeds: [1, 2, 3, 4, 5, 6, 7, 8], championWins: 2 }),
+    minSamplesPerStratum: 8,
+  });
+  assert.equal(weakened.summary.strata['2'].verdict, 'weakened');
+});
+
 test('Orchestrator：无证据→bootstrap；连续负增益→exploit-weakness；停滞→replicate', () => {
   const modules = moduleRegistry().modules.map(m => m.id);
   const bootstrap = decideNextResearch({ trend: summarizeTrend([]), modules, hasElites: false });
