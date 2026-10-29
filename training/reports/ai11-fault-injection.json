@@ -1,14 +1,14 @@
 {
   "schema": "century-ai11-fault-injection-v1",
-  "generatedAt": "2026-10-29T09:06:41.536Z",
-  "commit": "52b1601a3d9834162baae62851e55f6741250265",
-  "verdict": "PARTIAL",
+  "generatedAt": "2026-10-29T12:00:44.774Z",
+  "commit": "e1fdf76fc89d6a94447700400e575a5786170dc0",
+  "verdict": "PASS",
   "checks": [
     {
       "id": "F1-llm-returning",
       "title": "LLM 返回中断",
-      "status": "SKIP",
-      "evidence": "skipped（--skip-llm）"
+      "status": "PASS",
+      "evidence": "llmLaunched=true signal=SIGKILL bestProgram=false candidateCommitted=false；未提交半成品候选，重试走新输出目录"
     },
     {
       "id": "F2-candidate-write",
