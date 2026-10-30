@@ -219,15 +219,16 @@ screen 种子），对每个种子计算"改动含模块 M / 不含 M"的 candid
 ## E. GitHub 交付
 
 - 分支：`feat/ai11-research-system`（主体）、`feat/ai11-module-effects`（P1.3 模块效应）、
-  `feat/ai11-evidence-context`（P0.2 证据字段加固）、`feat/ai11-replication-diagnosis`（P1.3 独立复现）
+  `feat/ai11-evidence-context`（P0.2 证据字段加固）、`feat/ai11-replication-diagnosis`（P1.3 独立复现）、
+  `fix/ai11-brief-memory-failures`（失败记忆进入提示）、`feat/ai11-experiment-c2`（实验 C2）
 - PR：#75（主体）、#78（模块级观测效应）、#79（证据字段加固）、
-  #81（独立新种子复现）、#84（历史失败进入提示通道）——均已 squash 合并；
-  #76/#77/#80/#82/#83 为文档回填
+  #81（独立新种子复现）、#84（历史失败进入提示通道）、#86（实验 C2）——均已 squash 合并；
+  #76/#77/#80/#82/#83/#85 为文档回填
 - 提交顺序：基线审计 → P0/P1/P2 主体 → 缺陷修复（crossover 谱系、无变化候选、
-  statusPath 脏标记、消融判定）→ 实验与故障注入证据 → 6h 运行证据 → 复现、证据字段与提示闭环
+  statusPath 脏标记、消融判定）→ 实验与故障注入证据 → 6h 运行证据 → 复现、证据字段、提示闭环与 C2
 - CI：每个代码 PR 最终提交 **success（0 failure，deploy/promotion/pages 按预期 skipped）**
-- 最终**代码与证据** `main` SHA：**`1333a00`**（#84 squash 合并；AI11 主体代码合并为 `a3310a6`，
-  其后 #76–#84 只新增研究证据/报告、索引字段与提示渲染，不改变决策代码路径）。
+- 最终**代码与证据** `main` SHA：**`0348c61`**（#86 squash 合并；AI11 主体代码合并为 `a3310a6`，
+  其后 #76–#86 只新增研究证据/报告、索引字段、提示渲染与实验臂，不改变决策代码路径）。
   仅文档的后续提交会使 `main` SHA 继续前进，但代码身份不变。
 - 回滚方案：本 PR 只新增研究/监督/证据模块与开关，不修改冠军、规则引擎与正式评估器；
   回滚 = revert 合并提交并重新部署上一构建（`scripts/ci/rollback-champion.mjs` 已有演练）
