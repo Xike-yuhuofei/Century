@@ -144,7 +144,9 @@ A2（完整 checkpoint 恢复）实测 7/7 检查 PASS（`training/reports/ai11-
 
 实验 C（`C-c11e`，2 LLM 候选/臂）：C0 7.2min；C1 19.3min / 51,228 token；C2 13.5min / 77,297 token。
 C2 相对 C1 墙钟 −30%，但 token +51%（仅 2 次调用，token 差异在噪声内）；两臂正向信号均 1/2
-（CI 0.09–0.91）。**效率差异 inconclusive**，不能声称 C2 更优。
+（CI 0.09–0.91）。**效率差异 inconclusive**，不能声称 C2 更优。原始 `results.json` /
+`research-index.jsonl` 保存在本机 `training/reports/coevolution/ai11-exp-C-*-c11e/`
+（仓库既有 `.gitignore` 不入库）；入库的是汇总报告、summary、候选哈希/指标与区间估计。
 
 ### 6 小时运行的分人数配对第一名率（描述性，非单一假设检验）
 
