@@ -12,7 +12,8 @@
  *
  * C：研究效率
  *   C0：旧版直接变异（无 OpenEvolve、无简报）
- *   C1：科研闭环（简报 + 编排 + OpenEvolve）
+ *   C1：科研闭环（简报 + 编排 + OpenEvolve，OpenEvolve 默认级联预算 stage2=16/stage3=48）
+ *   C2：科研闭环 + 经实测有效的预算分配（6h 运行验证的 stage2=8/stage3=8 级联预算）
  *
  * 用法：
  *   node training/scripts/ai11-experiments.mjs --experiment A [--rounds 2 --candidates 3]
@@ -56,6 +57,12 @@ const ARMS = {
   C: [
     { id: 'C0', flags: ['--research-context', 'off', '--no-inherit'], strategies: 'single,pair', useOpenEvolve: false, researchContext: 'off' },
     { id: 'C1', flags: ['--research-context', 'brief'], strategies: 'single,pair,openevolve', useOpenEvolve: true, researchContext: 'brief' },
+    {
+      id: 'C2', flags: ['--research-context', 'brief'], strategies: 'single,pair,openevolve',
+      useOpenEvolve: true, researchContext: 'brief',
+      // 6h v4 实测可用：级联 stage2/3 各 8 种子，避免 16/48 默认预算拖垮长跑。
+      env: { CENTURY_OPENEVOLVE_STAGE2_SEEDS: '8', CENTURY_OPENEVOLVE_STAGE3_SEEDS: '8' },
+    },
   ],
 };
 
@@ -88,6 +95,7 @@ function runArm(arm) {
   ];
   const result = spawnSync(process.execPath, cliArgs, {
     cwd: resolve(REPO_ROOT, 'training'), encoding: 'utf8', timeout: 3 * 3600_000, maxBuffer: 64 * 1024 * 1024,
+    env: { ...process.env, ...(arm.env ?? {}) },
   });
   const resultsPath = join(campaignRoot, 'results.json');
   if (!existsSync(resultsPath)) {
