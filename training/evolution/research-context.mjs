@@ -174,6 +174,13 @@ export function renderBriefPrompt(brief) {
     lines.push('Previously tested hypotheses (do not repeat without new evidence):');
     for (const h of brief.history.testedHypotheses) lines.push(`- ${h.hypothesisId} ${h.status}: ${h.statement}`);
   }
+  if (brief.history.recentFailures?.length) {
+    lines.push('Prior failure evidence (research memory; only supported is reproduced):');
+    for (const f of brief.history.recentFailures.slice(-5)) {
+      const detail = String(f.detail ?? '').replace(/\s+/g, ' ').slice(0, 240);
+      lines.push(`- [${f.status}] ${f.category ?? 'failure'} (${f.seatCount ?? '?'}p): ${detail}`);
+    }
+  }
   lines.push('Competing mechanisms you must distinguish:');
   for (const h of brief.hypotheses) {
     lines.push(`- ${h.id}: ${h.statement}`);
