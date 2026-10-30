@@ -75,6 +75,25 @@ test('lineage 记录完整哈希链、生成配置与假设', () => {
   assert.equal(record.checkpointResumedFrom, '/tmp/ckpt');
 });
 
+test('experiment 记录假设结论、种子与模块范围', () => {
+  const { path, index } = tempIndex();
+  index.experiment({
+    hypothesisId: 'H3A',
+    candidateId: 'cand-test-1',
+    stage: 'deep',
+    metrics: { pairs: 8, firstPlaceDelta: 0.25 },
+    verdict: 'supported',
+    seeds: [1670500000, 1670500001],
+    evidenceHash: 'a'.repeat(64),
+    moduleScope: ['M02'],
+  });
+  const [record] = readRecords(path);
+  assert.equal(record.schema, 'century-research-experiment-v1');
+  assert.equal(record.verdict, 'supported');
+  assert.equal(record.moduleScope[0], 'M02');
+  assert.equal(record.seeds.length, 2);
+});
+
 test('evaluation 记录行为探针哈希与种子批次', () => {
   const { path, index } = tempIndex();
   index.evaluation({

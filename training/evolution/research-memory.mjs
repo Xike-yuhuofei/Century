@@ -71,12 +71,13 @@ export function openResearchMemory({ path }) {
 
     /** 记录实验结论（带统计证据，不含 LLM 断言）。 */
     recordExperiment({
-      hypothesisId, candidateId, stage, metrics, verdict, seeds = null, notes = null,
+      hypothesisId, candidateId, stage, metrics, verdict, seeds = null, notes = null, moduleScope = [],
     }) {
       assertCondition(['supported', 'weakened', 'rejected', 'inconclusive'].includes(verdict),
         `实验结论非法：${String(verdict)}`);
       return append({
         kind: 'experiment', hypothesisId, candidateId, stage, metrics, verdict, seeds, notes,
+        moduleScope: Array.isArray(moduleScope) ? moduleScope : [],
       });
     },
 
