@@ -23,7 +23,7 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 
 | 项 | 状态 | 证据 |
 |---|---|---|
-| Research Orchestrator | 完成 | `research-orchestrator.mjs`：bootstrap / exploit-weakness / replicate / ablate / switch-direction |
+| Research Orchestrator | 完成 | `research-orchestrator.mjs`：bootstrap / exploit-weakness / replicate / ablate / switch-direction；每轮假设由 `pair-verdict-rule-v1` 与深验证据对齐并回写状态 |
 | ResearchBrief 进入 LLM | 完成 | 每轮生成 `openevolve-configs/rNNN.yaml`（system_message 注入）+ `.brief.json`（evaluator artifacts 通道）；contextHash 可核验 |
 | Failure Diagnosis | 完成 | `failure-diagnosis.mjs` 按人数分层比较 A/B 动作分布与胜负翻转；状态 supported/weakened/rejected/inconclusive |
 | 独立新种子复现 | 完成（结论 weakened/rejected） | `ai11-replicate-diagnosis.mjs`：对两个最深负增量候选各用独立 AI9 深验窗口、8 种子/人数（64 局/候选）复现；原 −0.25/−0.5 弱点**未复现**，判为噪声；结论写入研究索引与研究记忆 |
@@ -78,9 +78,10 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 4. **编排器停滞策略单一**：6h 中 crossover 134 + ablation 97，探索多样性不足（见 F 节）。
 5. **长跑内存/耗时**：第 32 轮出现 45 分钟无推进（进程仍占 CPU），靠监督器杀进程恢复；
    根因未定位，建议把候选评估移入子进程。
-6. **P3 高级优化未启用**（多保真新实现、CMA-ES/BO、bandit、MCTS/神经价值网络）。
-7. **docs PR 影响**：`a3310a6` 为 AI11 代码合并 SHA；随后 docs PR #76 及本次回填仅改文档/账本，
-   不改变决策代码身份。
+6. **6h 假设状态未回写**：6h 运行产生的 116 条假设在运行当时未写 experiment/status；
+   回写闭环随后补齐（演示运行得到 H2A supported / H2B rejected），但 6h 原始记忆保持原样。
+7. **P3 高级优化未启用**（多保真新实现、CMA-ES/BO、bandit、MCTS/神经价值网络）。
+8. **docs PR 影响**：代码/证据 SHA 与文档回填 SHA 分离；仅文档提交不改变决策代码身份。
 
 ## B. 系统运行能力
 
@@ -104,7 +105,8 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 | 谱系记录 | 290 条，最大深度 **5**，三代链 = true |
 | 研究简报 | 58 份注入配置（`openevolve-configs/rNNN.yaml` + `.brief.json`） |
 | 研究上下文可核验 | **58/58 轮**含 `contextHash`；14/14 LLM 候选可按轮映射到本次上下文哈希（候选级字段自 PR #79 起写入索引） |
-| 研究假设 | 116 条；失败归因文件 57 份 |
+| 行为改变率 | **285/285 = 100%**（有父代候选的 behaviorHash 与父代不同） |
+| 研究假设 | 6h：116 条（当时未回写）；演示：4 条已回写（H2A supported / H2B rejected / H1A-B inconclusive）；失败归因文件 57 份 |
 | 预算 | wallUsed 19.26M / 21.6M ms；候选 348/4000；对局 3256/400000 |
 | 有效研究时间 | wallUsed ≈ 5.35h / 总墙钟 6.109h（其余为轮间开销与卡死恢复） |
 | 设备资源基线 | M4 10 核 / 16GB；监督器采样：可用内存 30.6%→31.7%、进程 RSS 51→62MB、磁盘可用 961GB；未触发资源门控 |
@@ -122,6 +124,23 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 审计结论：`ai11-endurance-audit.mjs --campaign ai11-6h-v4 --hours 6` → **PASS**（8/8 硬性证据）。
 独立性说明：该运行**没有**任何候选通过正式冠军统计门禁，因此属于**可靠性验收通过**，
 不是竞技提升验收通过。
+
+### 假设-实验对齐（演示运行 `ai11-hyp-verdicts`）
+
+P1.4 的"已测假设/正模块"检索需要把每轮假设与深验证据对齐。新增 `pair-verdict-rule-v1`
+（pairs<8 或 delta=0 → inconclusive；delta>0 支持机制假设 A、否定无效探索 B，delta<0 反之），
+并用 2 轮 / 3 候选 / 32 深验种子（32 对）真实运行验证：
+
+| 假设 | 含义 | 32 对深验 delta | 结论 |
+|---|---|---|---|
+| H1A / H1B | 第 1 轮机制改善 / 无效探索 | 0 | inconclusive |
+| H2A | 第 2 轮机制改善 | +0.0625 | supported |
+| H2B | 第 2 轮仅行为改变 | +0.0625 | rejected |
+
+结论已写入 `research-memory.jsonl`（`experiment` + `hypothesis-update`）与
+`research-index.jsonl`（`century-research-experiment-v1`），下一轮简报会列出已测状态。
+**披露**：6h 运行的 116 条假设在运行当时未回写状态（该逻辑随后加入），本报告不追溯改写
+原始记忆；6h 的"0 tested"与演示运行的"4 tested"是两段真实事实。
 
 ## C. 竞技能力
 

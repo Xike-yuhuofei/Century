@@ -1,0 +1,86 @@
+{
+  "schema": "century-failure-diagnosis-v1",
+  "candidateId": "cand-ai9-pair-r2c2-697e04",
+  "evidenceHash": "69f53c9342d6042b12132262fa26be820670ae7321ec773ec0a154ce7875cc23",
+  "pairs": 32,
+  "actionDivergedPairs": 23,
+  "strata": {
+    "2": {
+      "seatCount": 2,
+      "pairs": 8,
+      "actionDiverged": 4,
+      "candidateWins": 2,
+      "championWins": 2,
+      "bothFirst": 1,
+      "neitherFirst": 5,
+      "meanActionDistance": 0.119897,
+      "verdict": "weakened",
+      "candidateWinFlips": 1,
+      "championWinFlips": 1
+    },
+    "3": {
+      "seatCount": 3,
+      "pairs": 8,
+      "actionDiverged": 7,
+      "candidateWins": 3,
+      "championWins": 4,
+      "bothFirst": 3,
+      "neitherFirst": 4,
+      "meanActionDistance": 0.15752,
+      "verdict": "weakened",
+      "candidateWinFlips": 0,
+      "championWinFlips": 1
+    },
+    "4": {
+      "seatCount": 4,
+      "pairs": 8,
+      "actionDiverged": 6,
+      "candidateWins": 3,
+      "championWins": 2,
+      "bothFirst": 0,
+      "neitherFirst": 3,
+      "meanActionDistance": 0.194284,
+      "verdict": "weakened",
+      "candidateWinFlips": 3,
+      "championWinFlips": 2
+    },
+    "5": {
+      "seatCount": 5,
+      "pairs": 8,
+      "actionDiverged": 6,
+      "candidateWins": 6,
+      "championWins": 4,
+      "bothFirst": 4,
+      "neitherFirst": 2,
+      "meanActionDistance": 0.13457,
+      "verdict": "rejected",
+      "candidateWinFlips": 2,
+      "championWinFlips": 0
+    }
+  },
+  "failureCases": [
+    {
+      "category": "paired-first-place-weakness",
+      "seatCount": 2,
+      "status": "weakened",
+      "detail": "2 人层：冠军赢翻转 1 vs 候选赢翻转 1（配对 8，动作分歧对 4，平均动作 L1 0.119897）",
+      "reproducible": false
+    },
+    {
+      "category": "paired-first-place-weakness",
+      "seatCount": 3,
+      "status": "weakened",
+      "detail": "3 人层：冠军赢翻转 1 vs 候选赢翻转 0（配对 8，动作分歧对 7，平均动作 L1 0.15752）",
+      "reproducible": false
+    },
+    {
+      "category": "paired-first-place-weakness",
+      "seatCount": 4,
+      "status": "weakened",
+      "detail": "4 人层：冠军赢翻转 2 vs 候选赢翻转 3（配对 8，动作分歧对 6，平均动作 L1 0.194284）",
+      "reproducible": false
+    }
+  ],
+  "note": "结论只针对配对观测；单场胜负不升级为因果结论，需新种子独立复现",
+  "evidencePath": "training/reports/coevolution/ai11-hyp-verdicts/evidence/cand-ai9-pair-r2c2-697e04/deep-r002.json"
+}
