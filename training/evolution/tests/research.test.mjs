@@ -75,6 +75,30 @@ test('ResearchBrief：包含 ≥2 个可区分机制、可证伪预测与上下�
   assert.ok(renderBriefPrompt(brief).includes(brief.contextHash));
 });
 
+test('ResearchBrief 把研究记忆中的历史失败写入真实提示（prompt 通道反馈闭环）', () => {
+  const brief = buildResearchBrief({
+    round: 5,
+    parentArtifact: null,
+    evidence: pairedEvidence(),
+    diagnosis: null,
+    memory: {
+      testedHypotheses: [],
+      positiveModules: [],
+      recentFailures: [{
+        status: 'weakened',
+        category: 'replication:paired-first-place-weakness',
+        seatCount: 2,
+        detail: '2 人层：冠军赢翻转 1 vs 候选赢翻转 0（配对 8）',
+      }],
+    },
+    moduleIds: ['M02', 'M06'],
+  });
+  const text = renderBriefPrompt(brief);
+  assert.ok(text.includes('Prior failure evidence'), '提示必须包含历史失败段');
+  assert.ok(text.includes('replication:paired-first-place-weakness'), '提示必须包含失败类别');
+  assert.ok(text.includes('weakened'), '提示必须保留结论状态');
+});
+
 test('ResearchBrief 写入真实 OpenEvolve 配置：system_message 被替换且上下文哈希可核验', () => {
   const root = mkdtempSync(join(tmpdir(), 'ai11-brief-'));
   const brief = buildResearchBrief({

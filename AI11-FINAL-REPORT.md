@@ -28,7 +28,7 @@ OpenEvolve：0.4.0（`ai5/openevolve/.venv`，Python 3.13.2）
 | Failure Diagnosis | 完成 | `failure-diagnosis.mjs` 按人数分层比较 A/B 动作分布与胜负翻转；状态 supported/weakened/rejected/inconclusive |
 | 独立新种子复现 | 完成（结论 weakened/rejected） | `ai11-replicate-diagnosis.mjs`：对两个最深负增量候选各用独立 AI9 深验窗口、8 种子/人数（64 局/候选）复现；原 −0.25/−0.5 弱点**未复现**，判为噪声；结论写入研究索引与研究记忆 |
 | 最小失败改动定位 | 完成（观测性） | `module-effects.mjs` + `ai11-module-effects.mjs`：同 (轮, 父代, 种子) 层内比较含/不含模块的配对第一名结果；65 层、12 模块，M08 负关联、M10 正关联，其余 inconclusive；同种子 A/B 政策反事实已由配对评估覆盖，单步动作反事实回放未实现 |
-| Research Memory | 完成 | `research-memory.mjs` JSONL 跨进程；否定假设保留；检索已测假设/正向模块/失败 |
+| Research Memory | 完成 | `research-memory.mjs` JSONL 跨进程；否定假设保留；检索已测假设/正向模块/失败；历史失败同时渲染进 `system_message`（prompt 通道）与 `.brief.json`（artifacts 通道） |
 
 ### P2 无人值守
 
