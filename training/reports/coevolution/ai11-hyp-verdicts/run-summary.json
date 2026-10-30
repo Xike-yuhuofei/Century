@@ -1,0 +1,212 @@
+{
+  "schema": "century-autonomous-run-summary-v1",
+  "campaignId": "ai11-hyp-verdicts",
+  "command": "start",
+  "startedAt": "2026-10-30T02:20:31.575Z",
+  "elapsedMs": 999604,
+  "status": "completed",
+  "phase": "completed",
+  "rounds": 2,
+  "budgetUsed": {
+    "candidates": 6,
+    "games": 176,
+    "wallMs": 999528,
+    "deepConfirmations": 2
+  },
+  "promotionQueue": [],
+  "promotionOutcomes": [],
+  "codeVersion": {
+    "schema": "century-code-version-v1",
+    "commit": "5c7eb19d38205381de4930e1878de2dcc3f70e1b",
+    "dirty": false,
+    "dirtyFiles": [],
+    "modules": {
+      "training/evolution/autonomous-run.mjs": "0930016cb8a0c9d336031b3a303f858fa1c603bde510dfa7516ebab1aa10f331",
+      "training/evolution/campaign-controller.mjs": "ac661c22b8f216e44da943ee78d5059b5554823b54240a4f6bc0b606840292a0",
+      "training/evolution/dev-evaluator.mjs": "eb4a86dccd6ab662fadea0764d1a8cd4c98c9c0d83d34eae7495bb03c9c9e4b6",
+      "training/evolution/candidate-generator.mjs": "ed8a8aa6c98699db36b5b34396dfe3f40ec4be66b09f83aa00e50f3db2bf0a97",
+      "training/evolution/selection.mjs": "e6ab7660cb370bcba5166bbbada95365dda5af17db8ca57c3d74eff7e548fb93",
+      "training/evolution/safety-check.mjs": "d45bc4c86e22d75aab7f91848fcd8d3cec38b392298e7a07a97870e2c48cce82",
+      "training/lib/seed-governance.mjs": "45027d71edaf56ce88ef5b33881ddb48b58de77afceb323fa0c6ea73194b57e7",
+      "web-v1/dist/js/engine.js": "2335d9fe4c921a952375e1394de39ffd7f0afd7268cd39020a45b53676a9e341",
+      "web-v1/dist/js/ai.js": "36712dcc6a02b6223cbfdd86f1afccb517c0f22707a757975a3e4f92f69f19e1",
+      "web-v1/dist/js/js/adapter.js": "3582a5455705a072795c6be644723785132b5521491df3c274afe7183c7440a4",
+      "web-v1/dist/js/ai/decision.js": "84304038c3d27e7c5e1abb1ca1182b2b95f0d6829991d2823b65ce72dd105853",
+      "web-v1/dist/js/js/champion-guided.js": "bcd496254addbe875194aba7dab352a70a2909ebac6e61d0e74487d70f4fb995",
+      "web-v1/dist/js/js/joint-rollout.js": "7e06815bd67a6aa6240f1285c08357d1822965450b7ff456c900c0482527e5f9",
+      "web-v1/dist/js/js/planner.js": "5ce76eb5dc47fa789f66144b9ecc30dc253ea0e8dccaad6cadf9ce1b180dcca3",
+      "web-v1/dist/js/js/config.js": "1cf6f6a620720c845e9a893f8fa5d8734a6e11a0043069e00db7c8316db69d87",
+      "web-v1/dist/js/ai-runtime/decision-core.js": "a299c78dcb99ed0d3b3c324d65bec9932b850479bd55a7515566530ad5b03ec3"
+    },
+    "recordedAt": "2026-10-30T02:20:31.548Z",
+    "note": "campaign 启动时冻结；resume 必须完全一致；R09 验收要求 dirty=false 且模块哈希与当前代码一致"
+  },
+  "generator": {
+    "mode": "bounded",
+    "sourceEvolution": false,
+    "openevolve": null,
+    "sourceCandidates": [],
+    "evidenceFiles": []
+  },
+  "candidates": [
+    {
+      "candidateId": "cand-ai9-control-r1-8e7700",
+      "stage": "selected",
+      "generator": null,
+      "quick": {
+        "firstPlaceDelta": 0,
+        "firstPlaceLower": 0,
+        "pairs": 4,
+        "finishedPairs": 4,
+        "firstPlaceRate": 0.5,
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "finishedGames": 8,
+        "proxyDelta": null,
+        "p95WallMs": 4046.1
+      },
+      "deep": null
+    },
+    {
+      "candidateId": "cand-ai9-single-r1c1-b41f41",
+      "stage": "selected",
+      "generator": null,
+      "quick": {
+        "firstPlaceDelta": 0,
+        "firstPlaceLower": 0,
+        "pairs": 4,
+        "finishedPairs": 4,
+        "firstPlaceRate": 0.5,
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "finishedGames": 8,
+        "proxyDelta": null,
+        "p95WallMs": 4232.5
+      },
+      "deep": null
+    },
+    {
+      "candidateId": "cand-ai9-pair-r1c2-1f2ee7",
+      "stage": "research-retained",
+      "generator": null,
+      "quick": {
+        "firstPlaceDelta": 0,
+        "firstPlaceLower": -0.9607565991026611,
+        "pairs": 4,
+        "finishedPairs": 4,
+        "firstPlaceRate": 0.5,
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "finishedGames": 8,
+        "proxyDelta": null,
+        "p95WallMs": 3664
+      },
+      "deep": {
+        "firstPlaceDelta": 0,
+        "firstPlaceLower": -0.17023418233428744,
+        "pairs": 32,
+        "finishedPairs": 32,
+        "firstPlaceRate": 0.4375,
+        "chanceAdjustedRate": 0.1167,
+        "minWilsonLower": 0.0715,
+        "anomalyRate": 0,
+        "finishedGames": 64,
+        "proxyDelta": null,
+        "p95WallMs": 7517.9
+      }
+    },
+    {
+      "candidateId": "cand-ai9-control-r2-0e5ad0",
+      "stage": "selected",
+      "generator": null,
+      "quick": {
+        "firstPlaceDelta": 0,
+        "firstPlaceLower": 0,
+        "pairs": 4,
+        "finishedPairs": 4,
+        "firstPlaceRate": 0.25,
+        "chanceAdjustedRate": -0.0708,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "finishedGames": 8,
+        "proxyDelta": null,
+        "p95WallMs": 4907.1
+      },
+      "deep": null
+    },
+    {
+      "candidateId": "cand-ai9-single-r2c1-ddcd86",
+      "stage": "selected",
+      "generator": null,
+      "quick": {
+        "firstPlaceDelta": 0.25,
+        "firstPlaceLower": -0.8765869734463705,
+        "pairs": 4,
+        "finishedPairs": 4,
+        "firstPlaceRate": 0.5,
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "finishedGames": 8,
+        "proxyDelta": null,
+        "p95WallMs": 5242.4
+      },
+      "deep": null
+    },
+    {
+      "candidateId": "cand-ai9-pair-r2c2-697e04",
+      "stage": "research-retained",
+      "generator": null,
+      "quick": {
+        "firstPlaceDelta": 0.25,
+        "firstPlaceLower": -0.8765869734463705,
+        "pairs": 4,
+        "finishedPairs": 4,
+        "firstPlaceRate": 0.5,
+        "chanceAdjustedRate": 0.1792,
+        "minWilsonLower": 0,
+        "anomalyRate": 0,
+        "finishedGames": 8,
+        "proxyDelta": null,
+        "p95WallMs": 5232.1
+      },
+      "deep": {
+        "firstPlaceDelta": 0.0625,
+        "firstPlaceLower": -0.10666687286400264,
+        "pairs": 32,
+        "finishedPairs": 32,
+        "firstPlaceRate": 0.4375,
+        "chanceAdjustedRate": 0.1167,
+        "minWilsonLower": 0.0715,
+        "anomalyRate": 0,
+        "finishedGames": 64,
+        "proxyDelta": null,
+        "p95WallMs": 9207.6
+      }
+    }
+  ],
+  "resourceAfter": {
+    "at": "2026-10-30T02:37:11.183Z",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpuCount": 10,
+    "loadAverage": [
+      2.43994140625,
+      2.326171875,
+      2.26123046875
+    ],
+    "totalMem": 17179869184,
+    "freeMem": 232079360,
+    "availableMem": 4463394816,
+    "freeMemRatio": 0.0135,
+    "availableMemRatio": 0.2598,
+    "usedMem": 12716474368,
+    "freeDisk": 961299468288,
+    "processRss": 300974080
+  },
+  "autoChallenge": false,
+  "note": "候选进入机器门禁队列后自动评估正式挑战资格；冠军落地/发布由 CI 机器门禁完成，本 CLI 不直接改冠军"
+}

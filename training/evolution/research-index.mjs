@@ -143,6 +143,22 @@ export function createResearchIndex({ path, campaignId = null }) {
       });
     },
 
+    experiment({ hypothesisId, candidateId, stage, metrics = null, verdict, seeds = null, evidenceHash = null, moduleScope = [] }) {
+      assertCondition(typeof hypothesisId === 'string' && hypothesisId.length > 0, 'experiment 记录缺少 hypothesisId');
+      assertCondition(['supported', 'weakened', 'rejected', 'inconclusive'].includes(verdict),
+        `实验结论非法：${String(verdict)}`);
+      return append('experiment', {
+        hypothesisId,
+        candidateId,
+        stage,
+        metrics,
+        verdict,
+        seeds,
+        evidenceHash,
+        moduleScope: Array.isArray(moduleScope) ? moduleScope : [],
+      });
+    },
+
     failureCase({ candidateId, stage, category, status, detail, evidencePath = null }) {
       assertCondition(['supported', 'weakened', 'rejected', 'inconclusive'].includes(status),
         `failure case 状态非法：${String(status)}`);

@@ -1315,6 +1315,59 @@ export class CampaignController {
           actionDivergedPairs: diagnosis.actionDivergedPairs,
           failureCases: diagnosis.failureCases.length,
         }, item.candidateId);
+        // P1.4：把本轮假设与深验证据对齐，记录实验结论并更新假设状态。
+        // 预注册规则（pair-verdict-rule-v1）：pairs<8 或 delta=0 → inconclusive；
+        // delta>0 支持"A（机制改善）"、否定"B（仅行为改变）"；delta<0 反之。
+        const hypothesisIds = roundData.researchBrief?.hypotheses ?? [];
+        const hypothesisScope = new Map(
+          this.memory.readAll()
+            .filter(e => e.kind === 'hypothesis')
+            .map(e => [e.hypothesisId, e.moduleScope ?? []]),
+        );
+        const pairs = Number(item.deep.metrics?.pairs ?? 0);
+        const delta = Number.isFinite(item.deep.metrics?.firstPlaceDelta) ? item.deep.metrics.firstPlaceDelta : null;
+        const verdicts = {};
+        for (const hypothesisId of hypothesisIds) {
+          let verdict = 'inconclusive';
+          if (pairs >= 8 && delta !== null && delta !== 0) {
+            const isMechanism = /A$/.test(hypothesisId);
+            verdict = (delta > 0) === isMechanism ? 'supported' : 'rejected';
+          }
+          verdicts[hypothesisId] = verdict;
+          const moduleScope = hypothesisScope.get(hypothesisId) ?? [];
+          this.memory.recordExperiment({
+            hypothesisId,
+            candidateId: item.candidateId,
+            stage: 'deep',
+            metrics: item.deep.metrics,
+            verdict,
+            seeds: roundData.deepSeeds ?? null,
+            notes: `pair-verdict-rule-v1 pairs=${pairs} delta=${delta}`,
+            moduleScope,
+          });
+          this.memory.updateHypothesis({
+            hypothesisId,
+            status: verdict,
+            evidenceRef: item.deep.evidencePath ?? null,
+            note: `pairs=${pairs}, delta=${delta}`,
+          });
+          this.research.experiment({
+            hypothesisId,
+            candidateId: item.candidateId,
+            stage: 'deep',
+            metrics: item.deep.metrics,
+            verdict,
+            seeds: roundData.deepSeeds ?? null,
+            evidenceHash: diagnosis.evidenceHash ?? null,
+            moduleScope,
+          });
+        }
+        if (hypothesisIds.length) {
+          roundData.hypothesisVerdicts = verdicts;
+          this._event(state, 'hypothesis-verdicts-recorded', {
+            candidateId: item.candidateId, verdicts,
+          }, item.candidateId);
+        }
       } catch (error) {
         this._event(state, 'failure-diagnosis-failed', {
           candidateId: item.candidateId, reason: String(error.message).slice(0, 300),

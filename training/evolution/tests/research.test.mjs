@@ -146,6 +146,24 @@ test('研究记忆：跨进程持久化，被否定的假设保留且可检索',
   assert.equal(reopened.positiveModules().length, 0);
 });
 
+test('研究记忆：实验结论携带 moduleScope 时正模块可检索', () => {
+  const path = join(mkdtempSync(join(tmpdir(), 'ai11-memory-pos-')), 'memory.jsonl');
+  const memory = openResearchMemory({ path });
+  memory.recordHypothesis({
+    hypothesisId: 'H7A', statement: 'M06 终局竞争假设',
+    mechanisms: ['终局估值不足', '对手竞争项缺失'], predictions: ['配对增量上升'], moduleScope: ['M06'],
+  });
+  memory.recordExperiment({
+    hypothesisId: 'H7A', candidateId: 'cand-7', stage: 'deep',
+    metrics: { firstPlaceDelta: 0.25, pairs: 8 }, verdict: 'supported',
+    seeds: [1, 2], moduleScope: ['M06'],
+  });
+  memory.updateHypothesis({ hypothesisId: 'H7A', status: 'supported', evidenceRef: 'deep-r007.json' });
+  const reopened = openResearchMemory({ path });
+  assert.deepEqual(reopened.positiveModules(), [{ moduleId: 'M06', positives: 1 }]);
+  assert.equal(reopened.testedHypotheses()[0].status, 'supported');
+});
+
 test('失败归因：按人数分层给出 supported/weakened/inconclusive，不使用隐藏信息', () => {
   const evidence = pairedEvidence({ seedCounts: undefined });
   const { summary, divergences } = diagnosePairedEvidence({ evidence, minSamplesPerStratum: 4 });
