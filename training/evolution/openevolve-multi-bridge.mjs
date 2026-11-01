@@ -52,6 +52,75 @@ export function probeOpenEvolveAI9() {
   return { available: blocked.length === 0, checks, blocked: blocked.map(c => c.id), generator: 'openevolve-llm' };
 }
 
+/** AI7 诊断目标名 → AI9 模块的保守映射（advisory only）。
+ *
+ * 失败诊断沿用 AI7 的 target 名称；AI9 多模块程序的 EVOLVE-BLOCK 是 M01–M12。
+ * 这里只做研究提示的翻译，不改变任何奖励/门禁口径。
+ */
+export const AI7_TARGET_TO_MODULES = Object.freeze({
+  acquisitionValue: ['M02', 'M03', 'M04', 'M06'],
+  engineValue: ['M03'],
+  goalValue: ['M01', 'M06'],
+  keepValue: ['M04', 'M05'],
+  restValue: ['M05'],
+  gateThreshold: ['M08', 'M10'],
+  overrideMargin: ['M10', 'M12'],
+  candidateCap: ['M10', 'M12'],
+  searchBudget: ['M11', 'M12'],
+  searchBudgetAllocation: ['M11', 'M12'],
+  playerCountScope: ['M08', 'M12'],
+});
+
+/** 把失败诊断目标映射到本次可编辑的 AI9 模块。 */
+export function mapResearchTargets(hints, moduleIds) {
+  if (!hints || typeof hints !== 'object') return [];
+  const selected = new Set((Array.isArray(moduleIds) ? moduleIds : []).map(String));
+  const rawTargets = [...new Set([
+    ...(Array.isArray(hints.suggestedTargets) ? hints.suggestedTargets : []),
+    ...(Array.isArray(hints.curriculum?.targetPriority) ? hints.curriculum.targetPriority : []),
+  ].map(String))];
+  const mapped = [];
+  for (const target of rawTargets) {
+    if (selected.has(target)) {
+      mapped.push(target);
+      continue;
+    }
+    for (const moduleId of AI7_TARGET_TO_MODULES[target] ?? []) {
+      if (selected.has(moduleId)) mapped.push(moduleId);
+    }
+  }
+  return [...new Set(mapped)].slice(0, 6);
+}
+
+/** 把上一轮失败诊断转成程序头反馈（advisory only）。
+ *
+ * 只读取 researchHints 的公开字段：suggestedTargets / curriculum.focusLabels /
+ * promptHints。输出为短注释行，长度受限，不进入奖励或评分真值。
+ * selectedModules 用于把 AI7 诊断目标映射到本次实际可编辑的 AI9 模块。
+ */
+export function formatResearchFeedback(hints, { selectedModules = [] } = {}) {
+  if (!hints || typeof hints !== 'object') return [];
+  const selected = Array.isArray(selectedModules) ? selectedModules.map(String) : [];
+  const targets = mapResearchTargets(hints, selected);
+  const focus = (Array.isArray(hints.curriculum?.focusLabels) ? hints.curriculum.focusLabels : [])
+    .filter(item => item && item.status === 'finding')
+    .slice(0, 4);
+  const lines = [];
+  if (selected.length) lines.push(`Selected modules: ${selected.join(', ')}. Only edit these EVOLVE-BLOCKs.`);
+  if (targets.length) lines.push(`Prioritize modules: ${targets.join(', ')}.`);
+  if (focus.length) {
+    lines.push(`Observed failure labels: ${focus
+      .map(item => `${String(item.label ?? item.code)}(${String(item.code)}, n=${Number(item.occurrences) || 0})`)
+      .join('; ')}.`);
+  }
+  for (const hint of (Array.isArray(hints.promptHints) ? hints.promptHints : []).slice(0, 4)) {
+    lines.push(`Hint: ${String(hint).replace(/\s+/g, ' ').trim().slice(0, 280)}`);
+  }
+  if (!lines.length) return [];
+  lines.push('Use these hints only to choose which modules and heuristics to change; validate with real paired games; do not hardcode outcomes.');
+  return lines;
+}
+
 /**
  * 生成并落盘多模块初始程序。
  *
@@ -59,23 +128,24 @@ export function probeOpenEvolveAI9() {
  * @param {object} [options]
  * @param {string|null} [options.outputDir]
  * @param {Record<string,string>|null} [options.moduleTexts] 父代模块源码；提供时逐模块继承
+ * @param {string[]} [options.feedback] 研究提示（advisory only）
  * @returns {{path:string, program:string, hash:string, moduleIds:string[],
- *           inherited:string[], fallbackToOfficial:string[]}}
+ *           inherited:string[], fallbackToOfficial:string[], feedbackLines:number}}
  */
-export function materializeMultiModuleProgram(moduleIds, { outputDir, moduleTexts = null } = {}) {
+export function materializeMultiModuleProgram(moduleIds, { outputDir, moduleTexts = null, feedback = [] } = {}) {
   const registry = moduleRegistry();
   const texts = moduleTexts ?? {};
   const inherited = moduleIds.filter(id => typeof texts[id] === 'string' && texts[id].trim().length > 0);
   const fallbackToOfficial = moduleIds.filter(id => !inherited.includes(id));
   const program = moduleTexts
-    ? composeProgramFromTexts(moduleIds, texts, { registry })
-    : composeProgram(moduleIds, { registry });
+    ? composeProgramFromTexts(moduleIds, texts, { registry, feedback })
+    : composeProgram(moduleIds, { registry, feedback });
   const hash = sha256Hex(program);
   const dir = outputDir ? resolve(outputDir) : PROGRAM_DIR;
   mkdirSync(dir, { recursive: true });
   const path = join(dir, `program-${hash.slice(0, 16)}.ts`);
   writeFileSync(path, program);
-  return { path, program, hash, moduleIds: [...moduleIds], inherited, fallbackToOfficial };
+  return { path, program, hash, moduleIds: [...moduleIds], inherited, fallbackToOfficial, feedbackLines: feedback.length };
 }
 
 /** 聚合 OpenEvolve 自身日志中的 token 用量（无日志时返回 null，不估算）。 */
@@ -107,17 +177,18 @@ export function aggregateTokenUsage(outputDir) {
  * 真实运行 OpenEvolve 多模块联合进化（父代源码为初始程序）。
  *
  * @param {object} options
- * @param {string[]} options.moduleIds 至少一个注册模块（建议 2–6 个）
+ * @param {string[]} options.moduleIds 至少一个注册模块（建议 4–6 个）
  * @param {number} [options.iterations]
  * @param {string|null} [options.outputDir]
  * @param {number} [options.timeoutMs]
  * @param {Record<string,string>|null} [options.moduleTexts] 父代模块源码
  * @param {string|null} [options.checkpoint] OpenEvolve 原生 checkpoint 目录（跨运行恢复）
  * @param {string|null} [options.configPath] 每轮生成的配置（研究简报注入）
+ * @param {string[]} [options.feedback] 研究提示（advisory only）
  */
 export function runMultiModuleOpenEvolve({
   moduleIds, iterations = 3, outputDir = null, timeoutMs = 7_200_000,
-  moduleTexts = null, checkpoint = null, configPath = null, briefFile = null,
+  moduleTexts = null, checkpoint = null, configPath = null, briefFile = null, feedback = [],
 }) {
   if (!Array.isArray(moduleIds) || moduleIds.length === 0) throw new Error('moduleIds 不能为空');
   const registry = moduleRegistry();
@@ -131,7 +202,7 @@ export function runMultiModuleOpenEvolve({
     return { available: true, ok: false, reason: `checkpoint 不存在：${checkpoint}`, checkpointMissing: true };
   }
   const outDir = outputDir ? resolve(outputDir) : resolve(OPENEVOLVE_ROOT, 'results', `ai9-openevolve-${Date.now()}`);
-  const program = materializeMultiModuleProgram(moduleIds, { outputDir: join(outDir, 'input'), moduleTexts });
+  const program = materializeMultiModuleProgram(moduleIds, { outputDir: join(outDir, 'input'), moduleTexts, feedback });
   const config = configPath ? resolve(configPath) : CONFIG;
   if (!existsSync(config)) return { available: true, ok: false, reason: `配置不存在：${config}` };
   const started = Date.now();
