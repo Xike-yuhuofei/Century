@@ -242,8 +242,11 @@ rollout 次数随预算近似线性增长（39→83），说明预算是**有效
 - 本轮提交内容：研究证据（`training/reports/ai12-research/`）、AI12 研究窗口登记
   （`training/governance/seed-consumption-registry.json`）、本报告。
 - **不含**冠军变更、不含规则引擎/裁判/评估器/晋级判定修改。
+- PR：**#91**（`research(ai12): 冠军进化审计与 16 个单因子配对实验`）→ CI 全绿后即可自动合并；
+  合并提交 `9c1269c`。
 - 冠军晋级 PR：**未创建**（无合格候选，创建即为伪造证据）。
-- CI/发布：见 §10（提交后回填实际运行结果）。
+- CI 结果（PR #91）：`changes`/`build`/`training-unit (0–3)`/`governance-tests`/`rules-cards`/`audit-gate`/`ci-summary` 全部 **SUCCESS**；
+  `promotion-gate`/`promotion-machine-gate`/`deploy-verify`/`pages-deploy` 按变更分类 **SKIPPED**（无冠军与产线变更，符合预期）。
 
 ---
 
