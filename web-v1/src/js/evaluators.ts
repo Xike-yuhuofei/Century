@@ -42,11 +42,14 @@ export type LeafVector = {
   turnNumber: number;
 };
 
-export function leafVector(state: PublicSimState, mySeat: number): LeafVector {
+export function leafVector(state: PublicSimState, mySeat: number, options?: { handWeight?: number }): LeafVector {
   const players = state.players;
+  const handWeight = options?.handWeight ?? 1;
   const score = players.map(p => engineScore(p as unknown as Player));
   const claimed = players.map(p => p.claimed.length);
-  const engine = players.map(p => p.hand.length + p.played.length);
+  // AI12：手牌是“未使用的资本”，与已打出的引擎不同。handWeight<1 时降低
+  // 囤牌在叶价值中的权重（缺省 1 = 冻结口径，行为逐位不变）。
+  const engine = players.map(p => p.hand.length * handWeight + p.played.length);
   const crystals = players.map(p => weighted(p.stock));
   const golems = state.golemMarket.map(id => {
     const goal = GOLEM_BY_ID[id];
@@ -144,9 +147,10 @@ export function evaluateLeaf(
   mySeat: number,
   level: LeafEvaluatorLevel,
   firstPlaceOf: (state: PublicSimState, seat: number) => boolean,
+  options?: { handWeight?: number },
 ): number {
   if (finished) return firstPlaceOf(state, mySeat) ? 1 : 0;
-  const v = leafVector(state, mySeat);
+  const v = leafVector(state, mySeat, options);
   switch (level) {
     case 'L0': return evaluateL0(v, mySeat);
     case 'L1': return evaluateL1(v, mySeat);

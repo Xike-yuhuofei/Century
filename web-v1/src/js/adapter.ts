@@ -54,6 +54,7 @@ const SEARCH_POLICY_RULES: Record<string, { kind: 'number' | 'int' | 'bool' | 'e
   claimProtectMargin: { kind: 'number', min: 0, max: 0.5 },
   ensureBestClaimCandidate: { kind: 'bool' },
   championAlternatives: { kind: 'int', min: 0, max: 3 },
+  evaluatorHandWeight: { kind: 'number', min: 0, max: 1 },
   allocation: { kind: 'enum', values: ['balanced', 'racing'] },
   racingDelta: { kind: 'number', min: 0.005, max: 0.2 },
   endgameMode: { kind: 'enum', values: ['default', 'claimFocus'] },
