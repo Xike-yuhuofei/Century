@@ -38,6 +38,61 @@ export const DEFAULT_STOPPING_RULE = Object.freeze({
   note: '固定样本；禁止因中途显著提前晋级（如需可选停止必须另行预注册并具备 anytime-valid 保证）',
 });
 
+/** 固定期限家族描述符的字段校验（alpha 口径必须与家族账本一致）。
+ * 只有显式传入时才写入计划；未传入 = 历史几何口径（兼容既有计划与测试）。 */
+function normalizeAlphaFamily(alphaFamily, alphaBudget) {
+  if (alphaFamily === null || alphaFamily === undefined) return null;
+  assertCondition(alphaFamily && typeof alphaFamily === 'object', 'alphaFamily 必须为对象');
+  assertCondition(typeof alphaFamily.familyId === 'string' && alphaFamily.familyId.length > 0,
+    'alphaFamily.familyId 不能为空');
+  assertCondition(alphaFamily.mode === 'fixed-horizon-bonferroni',
+    `alphaFamily.mode 必须为 fixed-horizon-bonferroni，实际：${String(alphaFamily.mode)}`);
+  const maxChallenges = Number(alphaFamily.maxChallenges);
+  const familyBudget = Number(alphaFamily.alphaBudget);
+  const challengeIndex = Number(alphaFamily.challengeIndex);
+  const alphaPerChallenge = Number(alphaFamily.alphaPerChallenge);
+  assertCondition(Number.isSafeInteger(maxChallenges) && maxChallenges >= 1,
+    `alphaFamily.maxChallenges 非法：${String(alphaFamily.maxChallenges)}`);
+  assertCondition(Number.isSafeInteger(challengeIndex) && challengeIndex >= 1 && challengeIndex <= maxChallenges,
+    `alphaFamily.challengeIndex 必须在 1..${maxChallenges}，实际：${String(alphaFamily.challengeIndex)}`);
+  assertCondition(Number.isFinite(familyBudget) && familyBudget > 0 && familyBudget < 1,
+    `alphaFamily.alphaBudget 非法：${String(alphaFamily.alphaBudget)}`);
+  assertCondition(Math.abs(familyBudget - alphaBudget) < 1e-12,
+    `alphaFamily.alphaBudget ${familyBudget} 与计划 alphaBudget ${alphaBudget} 不一致——禁止跨家族混用`);
+  const expected = familyBudget / maxChallenges;
+  assertCondition(Number.isFinite(alphaPerChallenge) && Math.abs(alphaPerChallenge - expected) < 1e-12,
+    `alphaFamily.alphaPerChallenge ${alphaPerChallenge} ≠ alphaBudget/maxChallenges=${expected}——禁止手工放宽`);
+  return {
+    familyId: alphaFamily.familyId,
+    mode: alphaFamily.mode,
+    maxChallenges,
+    alphaBudget: familyBudget,
+    alphaPerChallenge,
+    challengeIndex,
+  };
+}
+
+/** 计划的有效单次挑战 alpha（几何家族回退历史口径）。
+ * 固定期限家族必须使用计划内冻结的 alphaPerChallenge，不得按全局 challengeIndex 重算。 */
+export function resolvePlanAlpha(plan) {
+  if (plan?.alphaFamily) {
+    const family = plan.alphaFamily;
+    assertCondition(family.mode === 'fixed-horizon-bonferroni', `未知 alphaFamily.mode：${String(family.mode)}`);
+    const expected = family.alphaBudget / family.maxChallenges;
+    assertCondition(Math.abs(family.alphaPerChallenge - expected) < 1e-12,
+      `计划冻结 alphaPerChallenge 与家族预算不一致：${family.alphaPerChallenge} ≠ ${expected}`);
+    return {
+      alpha: family.alphaPerChallenge,
+      mode: family.mode,
+      familyId: family.familyId,
+      challengeIndex: family.challengeIndex,
+      maxChallenges: family.maxChallenges,
+    };
+  }
+  const alpha = plan.alphaBudget / 2 ** plan.challengeIndex;
+  return { alpha, mode: 'geometric', familyId: null, challengeIndex: null, maxChallenges: null };
+}
+
 function assertHex(value, name, length = 64) {
   assertCondition(typeof value === 'string' && new RegExp(`^[0-9a-f]{${length}}$`).test(value),
     `${name} 必须是 ${length} 位小写十六进制，实际：${String(value)}`);
@@ -113,6 +168,7 @@ export function createPreregistration({
   maxSeedsPerSeatCount = null,
   searchWorkUnits = DEFAULT_SEARCH_WORK_UNITS,
   engine = null,
+  alphaFamily = null,
   createdAt = null,
 }) {
   assertCondition(typeof planId === 'string' && /^[a-z0-9][a-z0-9._-]{2,95}$/i.test(planId),
@@ -126,6 +182,7 @@ export function createPreregistration({
     'nonInferiorityMargin 必须在 [0,1)');
   assertCondition(Number.isSafeInteger(searchWorkUnits) && searchWorkUnits >= 1 && searchWorkUnits <= 4096,
     `searchWorkUnits 必须为 1–4096 的整数，实际：${String(searchWorkUnits)}`);
+  const normalizedAlphaFamily = normalizeAlphaFamily(alphaFamily, alphaBudget);
 
   assertHex(candidate.parametersSha256, 'candidate.parametersSha256');
   assertHex(candidate.sourceHash, 'candidate.sourceHash');
@@ -188,11 +245,14 @@ export function createPreregistration({
     stoppingRule: { ...DEFAULT_STOPPING_RULE },
     multiplicity: {
       withinChallenge: 'IUT（主检验 + 各人数非劣效，各自在 alpha 水平，全部通过才晋级）',
-      acrossChallenges: '几何 alpha 消耗（α_k = alphaBudget / 2^k），由 alpha-ledger 强制',
+      acrossChallenges: normalizedAlphaFamily
+        ? `固定期限 Bonferroni（family=${normalizedAlphaFamily.familyId}，α=${normalizedAlphaFamily.alphaPerChallenge} × ${normalizedAlphaFamily.maxChallenges} 次）`
+        : '几何 alpha 消耗（α_k = alphaBudget / 2^k），由 alpha-ledger 强制',
       acrossCandidates: 'fixed-sequence：一次挑战只检验预注册的首选候选；失败即停止，不重置预算',
     },
     engine: engineDescriptor,
     validationPool: [VALIDATION_POOL_BASE, VALIDATION_POOL_MAX],
+    ...(normalizedAlphaFamily ? { alphaFamily: normalizedAlphaFamily } : {}),
     note: '计划创建后不可修改；读取正式验证结果前必须落盘加锁',
   };
   const planHash = sha256Canonical(plan);

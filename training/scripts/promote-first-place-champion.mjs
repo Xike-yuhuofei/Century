@@ -25,9 +25,11 @@ import { resolve, dirname, join } from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { ensureDir, readJSON } from '../lib/io.mjs';
 import { REPO_ROOT, buildProvenance, requireBuiltEngine } from '../lib/paths.mjs';
-import { loadPreregistration, assertValidationSeeds } from '../evaluator/preregistration.mjs';
+import { loadPreregistration, assertValidationSeeds, resolvePlanAlpha } from '../evaluator/preregistration.mjs';
 import { firstPlacePromotionDecision } from '../evaluator/first-place.mjs';
-import { readAlphaLedger, ALPHA_LEDGER_PATH, assertAlphaLedgerIntegrity } from '../lib/alpha-ledger.mjs';
+import {
+  readAlphaLedger, assertAlphaLedgerIntegrity, activeAlphaFamily, alphaForChallenge,
+} from '../lib/alpha-ledger.mjs';
 import {
   loadSeedGovernance, assertPromotionEvidenceRegistered, formalChallengeCount,
 } from '../lib/seed-governance.mjs';
@@ -71,7 +73,7 @@ const candidatePath = resolve(process.cwd(), args.candidate);
 const championPath = resolve(args.champion !== undefined ? process.cwd() : REPO_ROOT, args.champion ?? 'training/champions/champion.json');
 const alphaLedgerPath = args['alpha-ledger'] !== undefined
   ? resolve(process.cwd(), args['alpha-ledger'])
-  : ALPHA_LEDGER_PATH;
+  : activeAlphaFamily().ledgerPath;
 const centralRegistryPath = args['governance-central'] !== undefined
   ? resolve(process.cwd(), String(args['governance-central']))
   : undefined;
@@ -93,6 +95,30 @@ for (const [seatCount, window] of Object.entries(plan.seatWindows ?? {})) {
 }
 const candidateDoc = readJSON(candidatePath);
 const championDoc = readJSON(championPath);
+
+// ---- alpha 账本身份（必须在独立重算判定之前锁定） ----
+// 固定期限家族的 challengeIndex 是家族内序号（1..12），与种子治理的全局
+// challengeIndex（历史 11 次之后 = 12）不是同一序号；必须按 planId 查找本计划
+// 的预留，并用账本自己的 spendingPlan 计算有效 alpha。禁止按全局序号套几何公式。
+const alphaLedger = readAlphaLedger(alphaLedgerPath);
+assertAlphaLedgerIntegrity(alphaLedger);
+const reservation = alphaLedger.reservations.find(r => r.planId === plan.planId);
+if (!reservation) throw new Error(`alpha 账本缺少 planId=${plan.planId} 的预留——禁止晋级`);
+if (Math.abs(alphaLedger.alphaBudget - plan.alphaBudget) > 1e-12) {
+  throw new Error(`计划 alphaBudget ${plan.alphaBudget} 与账本 ${alphaLedger.alphaBudget} 不一致`);
+}
+const planAlpha = resolvePlanAlpha(plan);
+const ledgerAlpha = alphaForChallenge(reservation.challengeIndex, alphaLedger.alphaBudget, alphaLedger.spendingPlan);
+if (Math.abs(ledgerAlpha.alpha - reservation.alpha) > 1e-12) {
+  throw new Error(`alpha 预留值 ${reservation.alpha} ≠ 账本消耗计划 ${ledgerAlpha.alpha}（禁止绕过家族预算）`);
+}
+if (Math.abs(planAlpha.alpha - reservation.alpha) > 1e-12) {
+  throw new Error(`计划 alpha ${planAlpha.alpha} ≠ alpha 账本预留 ${reservation.alpha}——计划与家族口径不一致`);
+}
+if (planAlpha.challengeIndex !== null && planAlpha.challengeIndex !== reservation.challengeIndex) {
+  throw new Error(`计划家族序号 ${planAlpha.challengeIndex} ≠ alpha 账本预留序号 ${reservation.challengeIndex}`);
+}
+const alpha = planAlpha.alpha;
 
 if (evidence.schema !== 'century-first-place-formal-challenge-v1') {
   throw new Error(`证据 schema 非法：${String(evidence.schema)}（只接受第一名率正式挑战证据；旧配对得分优势率证据不得晋级）`);
@@ -245,8 +271,7 @@ for (const seatCount of plan.seatCounts) {
 }
 assertValidationSeeds({ plan, seedsBySeatCount });
 
-// ---- 独立重算判定（不信任自报） ----
-const alpha = plan.alphaBudget / 2 ** plan.challengeIndex;
+// ---- 独立重算判定（不信任自报）；alpha 来自计划/家族的冻结口径 ----
 const recomputed = firstPlacePromotionDecision({
   strata,
   weights: plan.weights,
@@ -274,15 +299,10 @@ for (const stratum of recomputed.strata) {
   }
 }
 
-// ---- alpha 账本：预留 + 结果必须一致 ----
-const alphaLedger = readAlphaLedger(alphaLedgerPath);
-assertAlphaLedgerIntegrity(alphaLedger);
-const reservation = alphaLedger.reservations.find(r => r.challengeIndex === plan.challengeIndex);
-if (!reservation) throw new Error(`alpha 账本缺少 challengeIndex=${plan.challengeIndex} 的预留——禁止晋级`);
-if (reservation.planId !== plan.planId) throw new Error('alpha 预留 planId 与预注册计划不一致');
-if (Math.abs(reservation.alpha - alpha) > 1e-12) throw new Error('alpha 预留值与预注册 alpha 不一致');
-const outcome = alphaLedger.outcomes.find(o => o.challengeIndex === plan.challengeIndex);
-if (!outcome) throw new Error('alpha 账本缺少该次挑战的结果记录——挑战未正常收尾');
+// ---- alpha 账本结果：必须与本次 plan/evidence 一致 ----
+const outcome = alphaLedger.outcomes.find(o => o.challengeIndex === reservation.challengeIndex);
+if (!outcome) throw new Error(`alpha 账本缺少该次挑战的结果记录——挑战未正常收尾`);
+if (outcome.planId !== plan.planId) throw new Error('alpha 账本结果 planId 与预注册计划不一致');
 if (outcome.decision !== 'promote') throw new Error(`alpha 账本结果为 ${outcome.decision}，与晋级判定冲突`);
 if (outcome.evidenceHash !== evidence.evidenceHash) throw new Error('alpha 账本 evidenceHash 与证据文件不一致');
 
@@ -367,6 +387,9 @@ const record = {
       planHash: plan.planHash,
       challengeIndex: plan.challengeIndex,
       alpha,
+      alphaFamilyId: planAlpha.familyId,
+      alphaMode: planAlpha.mode,
+      alphaChallengeIndex: planAlpha.challengeIndex,
       alphaBudget: plan.alphaBudget,
       nonInferiorityMargin: plan.nonInferiorityMargin,
       searchWorkUnits: planWorkUnits,
@@ -393,7 +416,8 @@ const record = {
         conflicts: governance.conflicts.length,
       },
       alphaLedger: {
-        challengeIndex: plan.challengeIndex,
+        familyId: planAlpha.familyId,
+        challengeIndex: reservation.challengeIndex,
         reservation,
         outcome,
       },

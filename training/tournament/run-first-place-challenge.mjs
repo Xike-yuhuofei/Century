@@ -6,7 +6,8 @@
  * - 一次挑战覆盖 2/3/4/5 人，每个人数使用独立种子子块（同一保留区间内切分，
  *   种子不重叠、不跨人数复用）；
  * - 读取结果前先落盘预注册计划（planHash 锁定候选/冠军/对手/种子/口径）；
- * - alpha 同时写入几何消耗账本（append-only，不可重置）；
+ * - alpha 同时写入当前家族的 append-only 消耗账本（不可重置）；固定期限家族的
+ *   家族内序号独立于历史几何家族的全局挑战序号；
  * - 所有席位使用正式引擎，候选与冻结冠军在同一焦点席位配对比较。
  *
  * 用法（干跑，不消费种子/不写账本）：
@@ -31,7 +32,7 @@ import {
   CENTRAL_REGISTRY_PATH,
 } from '../lib/seed-governance.mjs';
 import { VALIDATION_POOL_BASE } from '../lib/seeds.mjs';
-import { reserveAlpha, completeAlpha, activeAlphaLedgerPath } from '../lib/alpha-ledger.mjs';
+import { reserveAlpha, completeAlpha, activeAlphaFamily, readAlphaLedger, alphaForChallenge, nextFamilyChallengeIndex } from '../lib/alpha-ledger.mjs';
 import {
   createPreregistration, lockPreregistration, REQUIRED_SEAT_COUNTS, DEFAULT_SEARCH_WORK_UNITS,
 } from '../evaluator/preregistration.mjs';
@@ -136,24 +137,42 @@ const opponents = OPPONENT_IDS.map(id => {
 if (opponents.length === 0) throw new Error('对手阵容为空（候选/冠军过滤后）');
 
 const governance = loadSeedGovernance({ strict: true });
-const challengeIndex = formalChallengeCount(governance) + 1;
+// 种子治理的 challengeIndex 是「历史全部正式挑战」的全局序号（用于验证池分配）；
+// alpha 账本的 challengeIndex 是「当前家族内部」的序号（固定期限 Bonferroni 的
+// 12 次预算不包含历史几何家族的 11 次）。两者必须分开计算，禁止混用。
+const seedChallengeIndex = formalChallengeCount(governance) + 1;
+const { family: alphaFamilySpec, ledgerPath: alphaLedgerPath } = activeAlphaFamily();
+const alphaLedger = readAlphaLedger(alphaLedgerPath);
+const familyChallengeIndex = nextFamilyChallengeIndex(alphaLedger);
+const alphaEntry = alphaForChallenge(familyChallengeIndex, alphaLedger.alphaBudget, alphaLedger.spendingPlan);
 const totalSeeds = seedsPerSeat * REQUIRED_SEAT_COUNTS.length;
 const base = nextFormalValidationBase(governance);
-assertFormalChallengeAllocation({ registry: governance, base, size: totalSeeds, challengeIndex });
+assertFormalChallengeAllocation({ registry: governance, base, size: totalSeeds, challengeIndex: seedChallengeIndex });
 
 const seatWindows = Object.fromEntries(REQUIRED_SEAT_COUNTS.map((seatCount, index) => [
   String(seatCount),
   { base: base + index * seedsPerSeat, count: seedsPerSeat },
 ]));
 
-const planId = args['plan-id'] ?? `fp-${candidateIdentity.id}-c${challengeIndex}`;
+const planId = args['plan-id'] ?? `fp-${candidateIdentity.id}-c${seedChallengeIndex}`;
 const plan = createPreregistration({
   planId,
   candidate: candidateIdentity,
   champion: championIdentity,
   opponents: opponents.map(o => ({ id: o.id, fingerprint: sha256Canonical(o) })),
   seatWindows,
-  challengeIndex,
+  challengeIndex: seedChallengeIndex,
+  alphaBudget: alphaLedger.alphaBudget,
+  alphaFamily: alphaFamilySpec.mode === 'fixed-horizon-bonferroni'
+    ? {
+        familyId: alphaFamilySpec.familyId,
+        mode: alphaFamilySpec.mode,
+        maxChallenges: Number(alphaFamilySpec.maxChallenges),
+        alphaBudget: alphaLedger.alphaBudget,
+        alphaPerChallenge: alphaEntry.alpha,
+        challengeIndex: familyChallengeIndex,
+      }
+    : null,
   minSeedsPerSeatCount: MIN_FORMAL_SEEDS_PER_SEAT,
   maxSeedsPerSeatCount: seedsPerSeat,
   searchWorkUnits: workUnits,
@@ -169,7 +188,11 @@ const plan = createPreregistration({
 const planSummary = {
   planId: plan.planId,
   planHash: plan.planHash,
-  challengeIndex,
+  challengeIndex: seedChallengeIndex,
+  alphaFamily: alphaFamilySpec.familyId,
+  alphaFamilyMode: alphaFamilySpec.mode,
+  alphaChallengeIndex: familyChallengeIndex,
+  alpha: alphaEntry.alpha,
   base,
   totalSeeds,
   seedsPerSeat,
@@ -178,7 +201,6 @@ const planSummary = {
   candidate: candidateIdentity,
   champion: championIdentity,
   opponents: plan.opponents,
-  alpha: plan.alphaBudget / 2 ** challengeIndex,
   engine: plan.engine,
 };
 
@@ -197,21 +219,21 @@ console.log(`预注册计划已锁定：${planPath}（alreadyLocked=${locked.alr
 
 // alpha 预留必须在读取正式验证结果之前；种子也必须在动用前登记。
 const alphaReservation = reserveAlpha({
-  challengeIndex,
+  challengeIndex: familyChallengeIndex,
   planId: plan.planId,
   candidateId: candidateIdentity.id,
   evidenceDir: outDir,
-  ledgerPath: activeAlphaLedgerPath(),
+  ledgerPath: alphaLedgerPath,
 });
-console.log(`alpha 已预留：α_${challengeIndex}=${alphaReservation.alpha}（累计预算 ${alphaReservation.alphaBudget}）`);
-const experimentId = `fp-formal-${candidateIdentity.id}-c${challengeIndex}`;
+console.log(`alpha 已预留：家族 ${alphaFamilySpec.familyId} 第 ${familyChallengeIndex}/${alphaFamilySpec.maxChallenges ?? '∞'} 次，α=${alphaReservation.alpha}（累计预算 ${alphaReservation.alphaBudget}）`);
+const experimentId = `fp-formal-${candidateIdentity.id}-c${seedChallengeIndex}`;
 reserveConsumption({
   purposeClass: 'formal-challenge',
   purpose: `first-place-formal-challenge@2-5p`,
   base,
   size: totalSeeds,
   experimentId,
-  challengeIndex,
+  challengeIndex: seedChallengeIndex,
   evidencePath: outDir,
   codeCommit,
   registryPath: CENTRAL_REGISTRY_PATH,
@@ -247,11 +269,11 @@ try {
 } finally {
   const decision = evidence?.decision;
   completeAlpha({
-    challengeIndex,
+    challengeIndex: familyChallengeIndex,
     planId: plan.planId,
     decision: decision?.promote ? 'promote' : runtimeError ? 'aborted' : 'not-promoted',
     evidenceHash: evidence?.evidenceHash ?? null,
-    ledgerPath: activeAlphaLedgerPath(),
+    ledgerPath: alphaLedgerPath,
   });
   completeConsumption(experimentId, {
     status: runtimeError ? 'voided' : 'completed',
@@ -270,7 +292,10 @@ writeJSON(resolve(outDir, 'candidate.json'), {
     ? { ...candidateDoc.parameters, values: validatedCandidate }
     : validatedCandidate,
   planHash: plan.planHash,
-  challengeIndex,
+  challengeIndex: seedChallengeIndex,
+  alphaFamilyId: alphaFamilySpec.familyId,
+  alphaChallengeIndex: familyChallengeIndex,
+  alpha: alphaEntry.alpha,
   decision: evidence.decision,
 });
 

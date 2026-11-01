@@ -20,8 +20,9 @@ import {
 } from '../evaluator/preregistration.mjs';
 import {
   reserveAlpha, completeAlpha, readAlphaLedger, alphaLedgerSummary, assertAlphaLedgerIntegrity,
-  initializeAlphaFamily,
+  initializeAlphaFamily, nextFamilyChallengeIndex, alphaForChallenge,
 } from '../lib/alpha-ledger.mjs';
+import { resolvePlanAlpha } from '../evaluator/preregistration.mjs';
 
 const HEX = 'a'.repeat(64);
 
@@ -425,6 +426,79 @@ test('预注册计划落盘后不可修改（同 planId 不同内容 → 拒绝�
     assert.throws(
       () => assertResultsAfterLock({ plan: { ...reloaded, lockedAt: new Date(Date.now() + 60_000).toISOString() }, resultsProducedAt: new Date().toISOString() }),
       /早于计划锁定/,
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('固定期限家族：家族内序号与全局挑战序号解耦，α=预算/期限', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'century-fixed-horizon-'));
+  const ledgerPath = join(dir, 'alpha-ledger-ai11.json');
+  try {
+    writeFileSync(ledgerPath, JSON.stringify({
+      schema: 'century-alpha-ledger-v1',
+      alphaBudget: 0.05,
+      familyId: 'century-fixed-horizon-ai11',
+      spendingPlan: {
+        mode: 'fixed-horizon-bonferroni',
+        maxChallenges: 12,
+        createdAt: '2026-10-29T08:31:18.580Z',
+        authorization: 'AI11-P0.4-preregistered-fixed-horizon-family',
+        authorizedBy: 'Xike-yuhuofei',
+      },
+      createdAt: '2026-10-29T08:31:18.580Z',
+      reservations: [],
+      outcomes: [],
+    }, null, 2));
+    const ledger = readAlphaLedger(ledgerPath);
+    // 历史几何家族已消耗 11 次；新家族的序号从 1 开始，不受全局序号影响。
+    assert.equal(nextFamilyChallengeIndex(ledger), 1);
+    const entry = alphaForChallenge(1, ledger.alphaBudget, ledger.spendingPlan);
+    assert.ok(Math.abs(entry.alpha - 0.05 / 12) < 1e-12, `alpha=${entry.alpha}`);
+    assert.equal(entry.spendingMode, 'fixed-horizon-bonferroni');
+    assert.throws(() => alphaForChallenge(13, ledger.alphaBudget, ledger.spendingPlan), /预算已按预注册计划耗尽/);
+    reserveAlpha({ challengeIndex: 1, planId: 'fixed-plan-1', candidateId: 'cand', ledgerPath });
+    assert.equal(nextFamilyChallengeIndex(readAlphaLedger(ledgerPath)), 2);
+
+    // 预注册计划同时记录全局 challengeIndex（12）与家族内序号（1）。
+    const plan = createPreregistration({
+      planId: 'fixed-horizon-plan-test',
+      candidate: { id: 'cand-x', parametersSha256: HEX, sourceHash: 'b'.repeat(64), artifactHash: 'c'.repeat(64) },
+      champion: { id: 'joint-js5', parametersSha256: 'd'.repeat(64), artifactHash: 'e'.repeat(64) },
+      opponents: [{ id: 'style-engine', fingerprint: 'enemy-fingerprint-1' }],
+      seatWindows: {
+        2: { base: 900_000_000, count: 60 }, 3: { base: 900_000_100, count: 60 },
+        4: { base: 900_000_200, count: 60 }, 5: { base: 900_000_300, count: 60 },
+      },
+      challengeIndex: 12,
+      alphaBudget: 0.05,
+      alphaFamily: {
+        familyId: 'century-fixed-horizon-ai11',
+        mode: 'fixed-horizon-bonferroni',
+        maxChallenges: 12,
+        alphaBudget: 0.05,
+        alphaPerChallenge: 0.05 / 12,
+        challengeIndex: 1,
+      },
+    });
+    const resolved = resolvePlanAlpha(plan);
+    assert.equal(resolved.mode, 'fixed-horizon-bonferroni');
+    assert.equal(resolved.challengeIndex, 1);
+    assert.ok(Math.abs(resolved.alpha - 0.05 / 12) < 1e-12);
+    // 禁止通过计划手工放宽 alpha。
+    assert.throws(
+      () => createPreregistration({
+        planId: 'fixed-horizon-plan-bad',
+        candidate: plan.candidate,
+        champion: plan.champion,
+        opponents: plan.opponents,
+        seatWindows: plan.seatWindows,
+        challengeIndex: 12,
+        alphaBudget: 0.05,
+        alphaFamily: { ...plan.alphaFamily, alphaPerChallenge: 0.05 / 10 },
+      }),
+      /禁止手工放宽/,
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });

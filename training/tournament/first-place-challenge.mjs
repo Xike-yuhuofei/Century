@@ -20,7 +20,7 @@ import { sha256Canonical, assertCondition } from '../evolution/core.mjs';
 import { firstPlacePromotionDecision, clusterFirstPlacePairs } from '../evaluator/first-place.mjs';
 import {
   assertFixedSample, assertPlanIdentity, assertResultsAfterLock, assertValidationSeeds,
-  DEFAULT_SEARCH_WORK_UNITS,
+  DEFAULT_SEARCH_WORK_UNITS, resolvePlanAlpha,
 } from '../evaluator/preregistration.mjs';
 
 /** 正式挑战的固定搜索工作量：质量比较必须固定 workUnits，墙钟仅用于资源控制。
@@ -265,7 +265,7 @@ export function runPreregisteredFirstPlaceChallenge({
   const seedsBySeatCount = Object.fromEntries(seatPlans.map(p => [String(p.seatCount), p.seeds]));
   assertValidationSeeds({ plan, seedsBySeatCount });
 
-  const alphaEntry = { alpha: plan.alphaBudget / 2 ** plan.challengeIndex };
+  const alphaEntry = resolvePlanAlpha(plan);
   const { runs, decision } = runFirstPlaceChallengeBundle({
     champion, candidate, opponents, seatPlans,
     weights: plan.weights,
