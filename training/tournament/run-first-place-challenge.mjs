@@ -35,6 +35,7 @@ import { VALIDATION_POOL_BASE } from '../lib/seeds.mjs';
 import { reserveAlpha, completeAlpha, activeAlphaFamily, readAlphaLedger, alphaForChallenge, nextFamilyChallengeIndex } from '../lib/alpha-ledger.mjs';
 import {
   createPreregistration, lockPreregistration, REQUIRED_SEAT_COUNTS, DEFAULT_SEARCH_WORK_UNITS,
+  MIN_SEEDS_PER_SEAT, normalizeSeatSeedCounts,
 } from '../evaluator/preregistration.mjs';
 import { sha256Canonical } from '../evolution/core.mjs';
 import { validateArtifact } from '../evolution/candidate-artifact.mjs';
@@ -64,13 +65,21 @@ if (!args.candidate) {
 }
 const dryRun = args['dry-run'] === true;
 // 正式挑战的最小样本硬下限：冻结统计计划要求每人 ≥60 独立种子。
-// 允许 CLI 调用方把 --seeds-per-seat 降到 2 会制造“8 局全胜 = 下界 1”的
-// 假阳性通道，因此在此 fail-closed，而不是依赖调用方自觉。
-const MIN_FORMAL_SEEDS_PER_SEAT = 60;
-const seedsPerSeat = args['seeds-per-seat'] !== undefined ? Number(args['seeds-per-seat']) : 250;
-if (!Number.isSafeInteger(seedsPerSeat) || seedsPerSeat < MIN_FORMAL_SEEDS_PER_SEAT || seedsPerSeat > 2000) {
-  throw new Error(`--seeds-per-seat 必须为 ${MIN_FORMAL_SEEDS_PER_SEAT}–2000 的整数，实际：${seedsPerSeat}`);
+// 样本量可以是统一值，或按人数分配（把功效预算集中到行为真正改变的人数层；
+// 其余人数层若行为逐位不变，只需满足 ≥60 的硬下限）。两者不得同时提供。
+const MIN_FORMAL_SEEDS_PER_SEAT = MIN_SEEDS_PER_SEAT;
+const seedsPerSeatArg = args['seeds-per-seat'] !== undefined ? Number(args['seeds-per-seat']) : null;
+let seedsByCountArg = null;
+if (args['seeds-by-count'] !== undefined) {
+  try {
+    seedsByCountArg = JSON.parse(args['seeds-by-count']);
+  } catch (error) {
+    throw new Error(`--seeds-by-count 必须是合法 JSON：${String(error.message).slice(0, 120)}`);
+  }
 }
+const seatSeedCounts = normalizeSeatSeedCounts({ seedsPerSeat: seedsPerSeatArg, seedsByCount: seedsByCountArg });
+const totalSeeds = REQUIRED_SEAT_COUNTS.reduce((s, n) => s + seatSeedCounts[String(n)], 0);
+const maxSeedsPerSeat = Math.max(...REQUIRED_SEAT_COUNTS.map(n => seatSeedCounts[String(n)]));
 const seatOffset = args['seat-offset'] !== undefined ? Number(args['seat-offset']) : 0;
 if (!Number.isSafeInteger(seatOffset) || seatOffset < 0 || seatOffset > 4) throw new Error('--seat-offset 必须在 0..4');
 const maxMoves = args['max-moves'] !== undefined ? Number(args['max-moves']) : 1200;
@@ -145,14 +154,17 @@ const { family: alphaFamilySpec, ledgerPath: alphaLedgerPath } = activeAlphaFami
 const alphaLedger = readAlphaLedger(alphaLedgerPath);
 const familyChallengeIndex = nextFamilyChallengeIndex(alphaLedger);
 const alphaEntry = alphaForChallenge(familyChallengeIndex, alphaLedger.alphaBudget, alphaLedger.spendingPlan);
-const totalSeeds = seedsPerSeat * REQUIRED_SEAT_COUNTS.length;
+const totalSeedsFromCounts = totalSeeds;
 const base = nextFormalValidationBase(governance);
-assertFormalChallengeAllocation({ registry: governance, base, size: totalSeeds, challengeIndex: seedChallengeIndex });
+assertFormalChallengeAllocation({ registry: governance, base, size: totalSeedsFromCounts, challengeIndex: seedChallengeIndex });
 
-const seatWindows = Object.fromEntries(REQUIRED_SEAT_COUNTS.map((seatCount, index) => [
-  String(seatCount),
-  { base: base + index * seedsPerSeat, count: seedsPerSeat },
-]));
+let windowOffset = 0;
+const seatWindows = Object.fromEntries(REQUIRED_SEAT_COUNTS.map(seatCount => {
+  const count = seatSeedCounts[String(seatCount)];
+  const window = { base: base + windowOffset, count };
+  windowOffset += count;
+  return [String(seatCount), window];
+}));
 
 const planId = args['plan-id'] ?? `fp-${candidateIdentity.id}-c${seedChallengeIndex}`;
 const plan = createPreregistration({
@@ -174,7 +186,7 @@ const plan = createPreregistration({
       }
     : null,
   minSeedsPerSeatCount: MIN_FORMAL_SEEDS_PER_SEAT,
-  maxSeedsPerSeatCount: seedsPerSeat,
+  maxSeedsPerSeatCount: maxSeedsPerSeat,
   searchWorkUnits: workUnits,
   engine: {
     engineBundleSha256: provenance.engineBundleSha256,
@@ -195,7 +207,8 @@ const planSummary = {
   alpha: alphaEntry.alpha,
   base,
   totalSeeds,
-  seedsPerSeat,
+  seatSeedCounts,
+  seedsPerSeat: maxSeedsPerSeat,
   searchWorkUnits: workUnits,
   seatWindows,
   candidate: candidateIdentity,

@@ -17,6 +17,7 @@ import {
 import {
   createPreregistration, lockPreregistration, loadPreregistration,
   assertPlanIdentity, assertValidationSeeds, assertFixedSample, assertResultsAfterLock,
+  normalizeSeatSeedCounts, MIN_SEEDS_PER_SEAT,
 } from '../evaluator/preregistration.mjs';
 import {
   reserveAlpha, completeAlpha, readAlphaLedger, alphaLedgerSummary, assertAlphaLedgerIntegrity,
@@ -552,4 +553,18 @@ test('style-engine 覆盖可由冻结对手分配公式推导（不信任自报�
   // 5 人：任一非焦点席位命中 style-engine 即为 true。
   assert.equal(styleEnginePresentAt({ seedIndex: 0, seatCount: 5, focusSeat: 0, opponents }), true);
   assert.throws(() => styleEnginePresentAt({ seedIndex: 0, seatCount: 2, focusSeat: 2, opponents }), /focusSeat 非法/);
+});
+
+test('按人数分配样本量：硬下限/上限/键校验，且不得与统一口径同时提供', () => {
+  assert.deepEqual(normalizeSeatSeedCounts({}), { 2: 250, 3: 250, 4: 250, 5: 250 });
+  assert.deepEqual(normalizeSeatSeedCounts({ seedsPerSeat: 313 }), { 2: 313, 3: 313, 4: 313, 5: 313 });
+  assert.deepEqual(
+    normalizeSeatSeedCounts({ seedsByCount: { 2: 60, 3: 60, 4: 60, 5: 2000 } }),
+    { 2: 60, 3: 60, 4: 60, 5: 2000 },
+  );
+  assert.throws(() => normalizeSeatSeedCounts({ seedsPerSeat: 60, seedsByCount: { 2: 60, 3: 60, 4: 60, 5: 60 } }), /不得同时提供/);
+  assert.throws(() => normalizeSeatSeedCounts({ seedsByCount: { 2: 60, 3: 60, 4: 60 } }), /5 人种子数必须为/);
+  assert.throws(() => normalizeSeatSeedCounts({ seedsByCount: { 2: MIN_SEEDS_PER_SEAT - 1, 3: 60, 4: 60, 5: 60 } }), /2 人种子数必须为/);
+  assert.throws(() => normalizeSeatSeedCounts({ seedsByCount: { 2: 60, 3: 60, 4: 60, 5: 2001 } }), /5 人种子数必须为/);
+  assert.throws(() => normalizeSeatSeedCounts({ seedsByCount: { 2: 60, 3: 60, 4: 60, 5: 60, 6: 60 } }), /非法人数键/);
 });

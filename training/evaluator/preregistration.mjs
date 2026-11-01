@@ -28,6 +28,38 @@ export const PREREGISTRATION_LOCK_SCHEMA = 'century-preregistration-lock-v1';
 
 export const REQUIRED_SEAT_COUNTS = Object.freeze([2, 3, 4, 5]);
 export const DEFAULT_WEIGHTS = Object.freeze({ '2': 0.25, '3': 0.25, '4': 0.25, '5': 0.25 });
+/** 正式挑战最小/最大独立种子数（硬边界；低于 60 的样本不具备有效非劣效/优效证据）。 */
+export const MIN_SEEDS_PER_SEAT = 60;
+export const MAX_SEEDS_PER_SEAT = 2000;
+
+/** 统一 / 按人数分配两种样本量口径（返回 {2:n2,3:n3,4:n4,5:n5}）。
+ * 按人数分配允许候选在行为逐位不变的人数层只验证 ≥60 种子，而把功效预算集中到
+ * 真正改变行为的人数层；不得低于硬下限或超过上限。 */
+export function normalizeSeatSeedCounts({ seedsPerSeat = null, seedsByCount = null } = {}) {
+  const hasUniform = seedsPerSeat !== null && seedsPerSeat !== undefined;
+  const hasByCount = seedsByCount !== null && seedsByCount !== undefined;
+  assertCondition(!(hasUniform && hasByCount), 'seedsPerSeat 与 seedsByCount 不得同时提供');
+  if (hasByCount) {
+    assertCondition(seedsByCount && typeof seedsByCount === 'object' && !Array.isArray(seedsByCount),
+      'seedsByCount 必须为对象');
+    const result = {};
+    for (const seatCount of REQUIRED_SEAT_COUNTS) {
+      const value = seedsByCount[String(seatCount)] ?? seedsByCount[seatCount];
+      assertCondition(Number.isSafeInteger(value) && value >= MIN_SEEDS_PER_SEAT && value <= MAX_SEEDS_PER_SEAT,
+        `${seatCount} 人种子数必须为 ${MIN_SEEDS_PER_SEAT}–${MAX_SEEDS_PER_SEAT} 的整数，实际：${String(value)}`);
+      result[String(seatCount)] = value;
+    }
+    for (const key of Object.keys(seedsByCount)) {
+      assertCondition(REQUIRED_SEAT_COUNTS.includes(Number(key)),
+        `seedsByCount 含非法人数键：${key}`);
+    }
+    return result;
+  }
+  const value = hasUniform ? seedsPerSeat : 250;
+  assertCondition(Number.isSafeInteger(value) && value >= MIN_SEEDS_PER_SEAT && value <= MAX_SEEDS_PER_SEAT,
+    `seedsPerSeat 必须为 ${MIN_SEEDS_PER_SEAT}–${MAX_SEEDS_PER_SEAT} 的整数，实际：${String(value)}`);
+  return Object.fromEntries(REQUIRED_SEAT_COUNTS.map(n => [String(n), value]));
+}
 /** 正式挑战的固定搜索工作量（P3）：同一决策完全由显式种子与固定批次数决定，
  * 墙钟只用于资源保护，不参与展开顺序或行动选择。 */
 export const DEFAULT_SEARCH_WORK_UNITS = 64;
