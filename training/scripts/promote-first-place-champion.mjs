@@ -26,7 +26,7 @@ import { execFileSync } from 'node:child_process';
 import { ensureDir, readJSON } from '../lib/io.mjs';
 import { REPO_ROOT, buildProvenance, requireBuiltEngine } from '../lib/paths.mjs';
 import { loadPreregistration, assertValidationSeeds, resolvePlanAlpha } from '../evaluator/preregistration.mjs';
-import { firstPlacePromotionDecision } from '../evaluator/first-place.mjs';
+import { firstPlacePromotionDecision, styleEnginePresentAt } from '../evaluator/first-place.mjs';
 import {
   readAlphaLedger, assertAlphaLedgerIntegrity, activeAlphaFamily, alphaForChallenge,
 } from '../lib/alpha-ledger.mjs';
@@ -267,7 +267,20 @@ for (const seatCount of plan.seatCounts) {
     throw new Error(`${seatCount} 人层种子与预注册窗口不一致（固定样本/种子治理失败）`);
   }
   seedsBySeatCount[String(seatCount)] = expectedSeeds;
-  strata.push({ seatCount, pairs: run.pairs });
+  // style-engine 覆盖：优先使用运行器写入的公开分配标记；旧/合成证据按冻结
+  // 对手分配公式（seedIndex+seat）%K 补全，禁止把覆盖缺失当成“未退化”。
+  const pairs = run.pairs.map(pair => pair.styleEnginePresent === undefined
+    ? {
+        ...pair,
+        styleEnginePresent: styleEnginePresentAt({
+          seedIndex: pair.seed - window.base,
+          seatCount,
+          focusSeat: pair.focusSeat,
+          opponents: plan.opponents,
+        }),
+      }
+    : pair);
+  strata.push({ seatCount, pairs });
 }
 assertValidationSeeds({ plan, seedsBySeatCount });
 
@@ -279,6 +292,7 @@ const recomputed = firstPlacePromotionDecision({
   margin: plan.nonInferiorityMargin,
   minSeeds: plan.minSeedsPerSeatCount,
   requiredSeatCounts: plan.seatCounts,
+  requireStyleEngineCoverage: true,
 });
 if (!recomputed.promote) {
   console.log(JSON.stringify({ verdict: 'NOT_PROMOTED', reasons: recomputed.reasons }, null, 2));

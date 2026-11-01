@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import {
   clusterFirstPlacePairs, clusterMeanCI, studentTQuantile, studentTCdf,
   firstPlacePromotionDecision, analyzeSeatStratum, pooledWeightedDelta,
-  nonInferiorityDecision,
+  nonInferiorityDecision, styleEnginePresentAt,
 } from '../evaluator/first-place.mjs';
 import {
   createPreregistration, lockPreregistration, loadPreregistration,
@@ -521,7 +521,7 @@ test('style-engine 非劣效：主检验通过但克制型对手子集崩溃 →
     base += 10_000;
     return { seatCount, pairs };
   });
-  const decision = firstPlacePromotionDecision({ strata, margin: 0.02, minSeeds: 60 });
+  const decision = firstPlacePromotionDecision({ strata, margin: 0.02, minSeeds: 60, requireStyleEngineCoverage: true });
   // 主检验/各人数非劣效均通过（均值 +0.6），但 style-engine 汇总下界远低于 −2pp。
   assert.equal(decision.pooled.superiority, true);
   assert.equal(decision.nonInferiority.every(x => x.pass), true);
@@ -536,7 +536,20 @@ test('style-engine 覆盖缺失（历史证据无标记）→ fail-closed', () =
     seatCount: s.seatCount,
     pairs: s.pairs.map(({ styleEnginePresent: _drop, ...rest }) => rest),
   }));
-  const decision = firstPlacePromotionDecision({ strata: legacy, margin: 0.02, minSeeds: 60 });
+  const decision = firstPlacePromotionDecision({ strata: legacy, margin: 0.02, minSeeds: 60, requireStyleEngineCoverage: true });
   assert.equal(decision.promote, false);
   assert.ok(decision.reasons.some(r => r.includes('style-engine 对手覆盖缺失')));
+});
+
+test('style-engine 覆盖可由冻结对手分配公式推导（不信任自报字段）', () => {
+  const opponents = [
+    { id: 'ai5-readiness-efficiency' }, { id: 'ai4-struct-beam-rollout' },
+    { id: 'style-engine' }, { id: 'style-rush' }, { id: 'style-contest' }, { id: 'neutral-baseline' },
+  ];
+  // 2 人：焦点席位 0，对手席位 1 → 对手索引 (seedIndex+1)%6 = 2 ↔ style-engine。
+  assert.equal(styleEnginePresentAt({ seedIndex: 1, seatCount: 2, focusSeat: 0, opponents }), true);
+  assert.equal(styleEnginePresentAt({ seedIndex: 0, seatCount: 2, focusSeat: 0, opponents }), false);
+  // 5 人：任一非焦点席位命中 style-engine 即为 true。
+  assert.equal(styleEnginePresentAt({ seedIndex: 0, seatCount: 5, focusSeat: 0, opponents }), true);
+  assert.throws(() => styleEnginePresentAt({ seedIndex: 0, seatCount: 2, focusSeat: 2, opponents }), /focusSeat 非法/);
 });

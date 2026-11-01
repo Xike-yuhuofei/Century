@@ -193,7 +193,7 @@ export function runFirstPlaceChallengeBundle({
   champion, candidate, opponents, seatPlans,
   weights = null, alpha = 0.05, margin = 0.02, minSeeds = 60, maxAnomalyRate = 0.02,
   seatOffset = 0, maxMoves = 1200, deadlineMs = 300_000, workUnits = DEFAULT_FORMAL_WORK_UNITS,
-  executorA = null,
+  executorA = null, requireStyleEngineCoverage = true,
 }) {
   assertCondition(Array.isArray(seatPlans) && seatPlans.length > 0, 'seatPlans 不能为空');
   const strata = [];
@@ -207,7 +207,7 @@ export function runFirstPlaceChallengeBundle({
     strata.push({ seatCount: plan.seatCount, pairs: run.pairs });
   }
   const decision = firstPlacePromotionDecision({
-    strata, weights, alpha, margin, minSeeds, maxAnomalyRate,
+    strata, weights, alpha, margin, minSeeds, maxAnomalyRate, requireStyleEngineCoverage,
   });
   return { runs, decision };
 }

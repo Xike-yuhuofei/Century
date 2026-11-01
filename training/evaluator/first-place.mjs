@@ -345,6 +345,24 @@ export function pooledWeightedDelta({ strata, weights, alpha = DEFAULT_ALPHA }) 
 }
 
 /**
+ * 由冻结对手分配规则推导某种子对是否包含 style-engine（不信任自报字段）。
+ * 与 first-place-challenge.opponentForSeat 同一公式：opponents[(seedIndex+seat)%K]。
+ * 用于旧证据/合成夹具补全覆盖标记，同时作为正式证据的交叉核验口径。
+ */
+export function styleEnginePresentAt({ seedIndex, seatCount, focusSeat, opponents }) {
+  if (!Number.isSafeInteger(seedIndex) || seedIndex < 0) throw new Error(`seedIndex 非法：${String(seedIndex)}`);
+  if (!Number.isSafeInteger(seatCount) || seatCount < 2) throw new Error(`seatCount 非法：${String(seatCount)}`);
+  if (!Number.isSafeInteger(focusSeat) || focusSeat < 0 || focusSeat >= seatCount) throw new Error(`focusSeat 非法：${String(focusSeat)}`);
+  if (!Array.isArray(opponents) || opponents.length === 0) throw new Error('opponents 不能为空');
+  for (let seat = 0; seat < seatCount; seat++) {
+    if (seat === focusSeat) continue;
+    const descriptor = opponents[(seedIndex + seat) % opponents.length];
+    if (descriptor?.id === 'style-engine') return true;
+  }
+  return false;
+}
+
+/**
  * style-engine 克制型对手的跨人数预注册汇总非劣效检验（冻结标准的强制项）。
  *
  * 口径：只统计「对手阵容包含 style-engine」的种子对；每个人数层独立聚类，
@@ -437,6 +455,8 @@ function assertIndependentSeedBlocks(strata) {
  * @param {number} [options.minSeeds]
  * @param {number} [options.maxAnomalyRate]
  * @param {number[]} [options.requiredSeatCounts]
+ * @param {boolean} [options.requireStyleEngineCoverage] 是否强制 style-engine 汇总非劣效
+ *   （真实晋级路径必须为 true；合成夹具/历史复算可显式关闭并在输出中披露）。
  */
 export function firstPlacePromotionDecision({
   strata,
@@ -446,6 +466,7 @@ export function firstPlacePromotionDecision({
   minSeeds = 60,
   maxAnomalyRate = 0.02,
   requiredSeatCounts = [2, 3, 4, 5],
+  requireStyleEngineCoverage = false,
 }) {
   if (!Array.isArray(strata) || strata.length === 0) throw new Error('strata 不能为空');
   const seatSet = new Set();
@@ -475,11 +496,14 @@ export function firstPlacePromotionDecision({
   const nonInferiority = normalized.map(s => nonInferiorityDecision({ stratum: s, margin }));
   const pooled = normalized.every(s => s.ci) ? pooledWeightedDelta({ strata: normalized, weights: finalWeights, alpha }) : null;
   // 冻结标准强制项：style-engine 跨人数预注册汇总非劣效（与主检验/各层同处 alpha，
-  // 作为 IUT 组件）。覆盖缺失或下界越界 → 禁止晋级。
-  const styleEngine = styleEngineNonInferiority({
-    strata: strata.map(s => ({ seatCount: s.seatCount, pairs: s.pairs })),
-    weights: finalWeights, alpha, margin,
-  });
+  // 作为 IUT 组件）。真实晋级路径（正式挑战运行器 / 晋级脚本）强制开启；
+  // 合成夹具可显式关闭并在输出披露，但不得用于正式证据。
+  const styleEngine = requireStyleEngineCoverage
+    ? styleEngineNonInferiority({
+        strata: strata.map(s => ({ seatCount: s.seatCount, pairs: s.pairs })),
+        weights: finalWeights, alpha, margin,
+      })
+    : { required: false, pass: true, reason: '未要求 style-engine 覆盖（非正式晋级路径）' };
 
   const reasons = [];
   if (duplicatesAcrossStrata !== true) reasons.push(`跨人数种子复用：${duplicatesAcrossStrata}`);
@@ -491,7 +515,7 @@ export function firstPlacePromotionDecision({
   for (const ni of nonInferiority) {
     if (!ni.pass) reasons.push(`${ni.seatCount} 人非劣效失败：${ni.reason}`);
   }
-  if (!styleEngine.pass) reasons.push(`style-engine 非劣效失败：${styleEngine.reason}`);
+  if (requireStyleEngineCoverage && !styleEngine.pass) reasons.push(`style-engine 非劣效失败：${styleEngine.reason}`);
   if (!pooled || pooled.status !== 'analyzed') {
     reasons.push('加权汇总主检验不可执行');
   } else if (!pooled.superiority) {
