@@ -1,0 +1,75 @@
+{
+  "schema": "century-ai12-failure-profile-5p-v1",
+  "generatedAt": "2026-11-02",
+  "games": 48,
+  "seedBase": 1770000000,
+  "seatCount": 5,
+  "workUnits": 64,
+  "opponentPool": [
+    "ai5-readiness-efficiency",
+    "ai4-struct-beam-rollout",
+    "style-engine",
+    "style-rush",
+    "style-contest",
+    "neutral-baseline"
+  ],
+  "tool": "training/reports/ai12-research/harness/fail-diagnose-5p.mjs",
+  "won": {
+    "games": 23,
+    "decisions": 834,
+    "gatedRate": 0.9245,
+    "overrideRate": 0.3405,
+    "claimAvailableDecisions": 160,
+    "claimIgnoredRate": 0.3563,
+    "lateClaimAvailable": 38,
+    "lateClaimIgnoredRate": 0.1053,
+    "focus": {
+      "score": 68.57,
+      "claims": 4.48,
+      "plays": 2.87,
+      "hand": 4.26,
+      "turns": 36.26
+    },
+    "focusCards": 7.13,
+    "winner": {
+      "score": 68.57,
+      "claims": 4.48,
+      "plays": 2.87,
+      "hand": 4.26,
+      "turns": 36.26
+    },
+    "winnerCards": 7.13
+  },
+  "lost": {
+    "games": 25,
+    "decisions": 898,
+    "gatedRate": 0.9209,
+    "overrideRate": 0.2539,
+    "claimAvailableDecisions": 123,
+    "claimIgnoredRate": 0.2683,
+    "lateClaimAvailable": 23,
+    "lateClaimIgnoredRate": 0.3478,
+    "focus": {
+      "score": 52.56,
+      "claims": 3.6,
+      "plays": 2.52,
+      "hand": 4.64,
+      "turns": 35.92
+    },
+    "focusCards": 7.16,
+    "winner": {
+      "score": 63.64,
+      "claims": 4.52,
+      "plays": 2.96,
+      "hand": 3.28,
+      "turns": 35.92
+    },
+    "winnerCards": 6.24
+  },
+  "interpretation": "败局中焦点席位场均 3.60 次认领 / 手牌 4.64（总卡 7.16），胜者 4.52 次认领 / 手牌 3.28（总卡 6.24）：冠军在 5p 败局里累积更多卡牌、转换认领更少。终局前 remaining<=2 且可立即认领时，败局忽略率 34.8% vs 胜局 10.5%（样本 23 vs 38）。该画像为描述性证据，不构成单点决策错误的因果证明；不得据此直接改规则或降低门槛。",
+  "caveats": [
+    "描述性统计；胜/败局对手与隐藏牌序不同",
+    "可立即认领不等于应当认领（引擎建设可能更优）",
+    "小样本（lateClaim 23/38）"
+  ]
+}

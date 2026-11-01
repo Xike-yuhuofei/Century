@@ -1506,11 +1506,92 @@
       },
       "weighted": -0.0729,
       "verdict": "rejected-negative（3p −18.75pp，90% CI 上界 −3.88pp；cap5 扩大候选稀释试验预算，且路线候选本身在 2p/3p 为负）"
+    },
+    {
+      "id": "E40-5p-worlds6-cap3",
+      "hypothesis": "5p 定向组合：worlds 6 + candidateCap 3（更高世界覆盖 + 更少候选稀释）",
+      "config": {
+        "candidateJointOptionsByPlayerCount": {
+          "5": {
+            "worlds": 6,
+            "candidateCap": 3
+          }
+        }
+      },
+      "nPerSeatCount": 96,
+      "seedBase": 1780000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64) seats=5 only",
+      "perCount": {
+        "5": {
+          "delta": 0.0833,
+          "lo": -0.0114,
+          "hi": 0.1781,
+          "sd": 0.556,
+          "n": 96
+        }
+      },
+      "weightedAllModes": 0.0208,
+      "verdict": "exploratory-positive（5p +8.33pp；综合门禁增量 +2.08pp，但单侧下界折算为负，未达显著；需复现）"
+    },
+    {
+      "id": "E41-5p-worlds6-cap3-rep96",
+      "hypothesis": "E40 第二独立窗口复现（N=96）",
+      "config": {
+        "candidateJointOptionsByPlayerCount": {
+          "5": {
+            "worlds": 6,
+            "candidateCap": 3
+          }
+        }
+      },
+      "nPerSeatCount": 96,
+      "seedBase": 1782000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64) seats=5 only",
+      "perCount": {
+        "5": {
+          "delta": 0.0729,
+          "lo": -0.0298,
+          "hi": 0.1757,
+          "sd": 0.603,
+          "n": 96
+        }
+      },
+      "weightedAllModes": 0.0182,
+      "verdict": "direction-replicated（+7.29pp，方向一致但仍不显著）"
+    },
+    {
+      "id": "E42-5p-worlds6-cap3-rep192",
+      "hypothesis": "E40 第三独立窗口、更大样本（N=192）",
+      "config": {
+        "candidateJointOptionsByPlayerCount": {
+          "5": {
+            "worlds": 6,
+            "candidateCap": 3
+          }
+        }
+      },
+      "nPerSeatCount": 192,
+      "seedBase": 1781000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64) seats=5 only",
+      "perCount": {
+        "5": {
+          "delta": 0.0104,
+          "lo": -0.0614,
+          "hi": 0.0823,
+          "sd": 0.605,
+          "n": 192
+        }
+      },
+      "weightedAllModes": 0.0026,
+      "verdict": "not-replicated（N=192 仅 +1.04pp；前两窗口的 +8pp 视为小样本窗口噪声；不进入正式挑战）"
     }
   ],
   "conclusion": {
     "qualifiedCandidate": false,
-    "reason": "累计 39 个单因子/机制/结构/学习型/定向实验，无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；本轮新增：保真度蒸馏上限 62.7%；5p 定向 margin 0.05 未复现；5p worlds=6 仅 +4.17pp（综合 +1.04pp）；冠军路线候选 alt1/alt2 综合 −3.13/−2.60pp（2p 显著负），alt1+cap5 −7.29pp（3p 显著负）。",
+    "reason": "累计 42 个单因子/机制/结构/学习型/定向实验，无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；本轮新增：保真度蒸馏上限 62.7%；5p margin 0.05 未复现；5p worlds=6 仅 +4.17pp；冠军路线候选 −2.6~−7.3pp；5p worlds6+cap3 两窗口 +8.33/+7.29pp 但 N=192 复现仅 +1.04pp（不显著）。",
     "alphaConsumed": 0,
     "formalChallengesRun": 0,
     "rounds": 3
