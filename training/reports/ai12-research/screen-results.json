@@ -658,11 +658,403 @@
       },
       "weighted": -0.0156,
       "verdict": "null"
+    },
+    {
+      "id": "E17-L0-evaluator",
+      "hypothesis": "用纯分数差（L0）替代 L2 叶评价",
+      "config": {
+        "candidateJointOptions": {
+          "evaluator": "L0"
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1735600000,
+      "seedStride": 1000,
+      "harness": "legacy(wu32)",
+      "perCount": {
+        "2": {
+          "delta": -0.0625,
+          "lo": -0.1904,
+          "hi": 0.0654
+        },
+        "3": {
+          "delta": 0.0208,
+          "lo": -0.1079,
+          "hi": 0.1496
+        },
+        "4": {
+          "delta": -0.0625,
+          "lo": -0.2,
+          "hi": 0.075
+        },
+        "5": {
+          "delta": -0.0625,
+          "lo": -0.2175,
+          "hi": 0.0925
+        }
+      },
+      "weighted": -0.0417,
+      "verdict": "rejected（L2 的竞争/终局项是有效成分）"
+    },
+    {
+      "id": "E18-L1-evaluator",
+      "hypothesis": "用多人向量估值（L1）替代 L2",
+      "config": {
+        "candidateJointOptions": {
+          "evaluator": "L1"
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1735700000,
+      "seedStride": 1000,
+      "harness": "legacy(wu32)",
+      "perCount": {
+        "2": {
+          "delta": -0.0833,
+          "lo": -0.1684,
+          "hi": 0.0017
+        },
+        "3": {
+          "delta": -0.0208,
+          "lo": -0.1392,
+          "hi": 0.0976
+        },
+        "4": {
+          "delta": -0.0625,
+          "lo": -0.1686,
+          "hi": 0.0436
+        },
+        "5": {
+          "delta": -0.1042,
+          "lo": -0.2401,
+          "hi": 0.0318
+        }
+      },
+      "weighted": -0.0677,
+      "verdict": "rejected"
+    },
+    {
+      "id": "E19-om-v1-opponents",
+      "hypothesis": "用对手模型 om-v1 替代规则对手采样",
+      "config": {
+        "candidateJointOptions": {
+          "opponentMode": "om-v1"
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1735800000,
+      "seedStride": 1000,
+      "harness": "legacy(wu32)",
+      "perCount": {
+        "2": {
+          "delta": -0.125,
+          "lo": -0.2448,
+          "hi": -0.0052
+        },
+        "3": {
+          "delta": -0.125,
+          "lo": -0.2645,
+          "hi": 0.0145
+        },
+        "4": {
+          "delta": -0.2708,
+          "lo": -0.4285,
+          "hi": -0.1131
+        },
+        "5": {
+          "delta": -0.3125,
+          "lo": -0.4568,
+          "hi": -0.1682
+        }
+      },
+      "weighted": -0.2083,
+      "verdict": "strong-reject（对手模型显著劣于规则采样）"
+    },
+    {
+      "id": "E20-override-margin-0.04",
+      "hypothesis": "覆盖边际 0.04（介于默认 0.02 与 0.05 之间）",
+      "config": {
+        "candidateJointOptions": {
+          "overrideMargin": 0.04
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1735900000,
+      "seedStride": 1000,
+      "harness": "legacy(wu32)",
+      "perCount": {
+        "2": {
+          "delta": 0.0833,
+          "lo": -0.0017,
+          "hi": 0.1684
+        },
+        "3": {
+          "delta": -0.0208,
+          "lo": -0.1279,
+          "hi": 0.0862
+        },
+        "4": {
+          "delta": -0.0625,
+          "lo": -0.18,
+          "hi": 0.055
+        },
+        "5": {
+          "delta": 0.0625,
+          "lo": -0.0654,
+          "hi": 0.1904
+        }
+      },
+      "weighted": 0.0156,
+      "verdict": "null"
+    },
+    {
+      "id": "E21-paired-arbitration",
+      "hypothesis": "配对差置信下界仲裁（minPairedTrials=4）",
+      "config": {
+        "candidateJointOptions": {
+          "arbitration": "paired",
+          "minPairedTrials": 4
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1736200000,
+      "seedStride": 1000,
+      "harness": "legacy(wu32)",
+      "perCount": {
+        "2": {
+          "delta": 0.0417,
+          "lo": -0.1178,
+          "hi": 0.2011
+        },
+        "3": {
+          "delta": 0.0,
+          "lo": -0.1429,
+          "hi": 0.1429
+        },
+        "4": {
+          "delta": -0.0625,
+          "lo": -0.2,
+          "hi": 0.075
+        },
+        "5": {
+          "delta": -0.2083,
+          "lo": -0.3756,
+          "hi": -0.0411
+        }
+      },
+      "weighted": -0.0573,
+      "verdict": "rejected（5p 显著负）"
+    },
+    {
+      "id": "E22-near-terminal-candidate",
+      "hypothesis": "终局风险时注入当步最大净分行动（add）",
+      "config": {
+        "candidateJointOptions": {
+          "nearTerminalCandidate": "add"
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1736300000,
+      "seedStride": 1000,
+      "harness": "legacy(wu32)",
+      "perCount": {
+        "2": {
+          "delta": 0.0
+        },
+        "3": {
+          "delta": 0.0
+        },
+        "4": {
+          "delta": 0.0
+        },
+        "5": {
+          "delta": 0.0
+        }
+      },
+      "weighted": 0.0,
+      "verdict": "inert（触发条件在本对手池上未出现）"
+    },
+    {
+      "id": "E23-racing-allocation",
+      "hypothesis": "racing 预算淘汰",
+      "config": {
+        "candidateJointOptions": {
+          "allocation": "racing"
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1736100000,
+      "seedStride": 1000,
+      "harness": "legacy(wu32)",
+      "perCount": {
+        "2": {
+          "delta": 0.0
+        },
+        "3": {
+          "delta": 0.0
+        },
+        "4": {
+          "delta": 0.0
+        },
+        "5": {
+          "delta": 0.0
+        }
+      },
+      "weighted": 0.0,
+      "verdict": "inert（固定 workUnits 下与 balanced 逐位一致）"
+    },
+    {
+      "id": "E24-L4-tempo-projection",
+      "hypothesis": "节奏投影叶评价（按速率外推终局得分）",
+      "config": {
+        "candidateJointOptions": {
+          "evaluator": "L4"
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1736000000,
+      "seedStride": 1000,
+      "harness": "legacy(wu32)",
+      "perCount": {
+        "2": {
+          "delta": 0.0,
+          "lo": -0.113,
+          "hi": 0.113
+        },
+        "3": {
+          "delta": 0.0208,
+          "lo": -0.0976,
+          "hi": 0.1392
+        },
+        "4": {
+          "delta": 0.0833,
+          "lo": -0.083,
+          "hi": 0.2496
+        },
+        "5": {
+          "delta": -0.0625,
+          "lo": -0.209,
+          "hi": 0.084
+        }
+      },
+      "weighted": 0.0104,
+      "verdict": "null（临时源码实现，无证据后已回滚）"
+    },
+    {
+      "id": "E25-formal-override-margin-0.05",
+      "hypothesis": "正式结构复测 0.05 覆盖边际",
+      "config": {
+        "candidateJointOptions": {
+          "overrideMargin": 0.05
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1736600000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": 0.0208,
+          "lo": -0.0862,
+          "hi": 0.1279
+        },
+        "3": {
+          "delta": -0.0208,
+          "lo": -0.1765,
+          "hi": 0.1348
+        },
+        "4": {
+          "delta": -0.0417,
+          "lo": -0.165,
+          "hi": 0.0817
+        },
+        "5": {
+          "delta": 0.0833,
+          "lo": -0.0387,
+          "hi": 0.2054
+        }
+      },
+      "weighted": 0.0104,
+      "verdict": "null（旧 harness 的 +3.1pp 未复现）"
+    },
+    {
+      "id": "E26-formal-worlds-6",
+      "hypothesis": "正式结构复测信念世界 6",
+      "config": {
+        "candidateJointOptions": {
+          "worlds": 6
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1736700000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": -0.1042,
+          "lo": -0.2401,
+          "hi": 0.0318
+        },
+        "3": {
+          "delta": 0.0,
+          "lo": -0.1238,
+          "hi": 0.1238
+        },
+        "4": {
+          "delta": -0.0208,
+          "lo": -0.1591,
+          "hi": 0.1174
+        },
+        "5": {
+          "delta": 0.0,
+          "lo": -0.1429,
+          "hi": 0.1429
+        }
+      },
+      "weighted": -0.0312,
+      "verdict": "rejected（与旧窗口复现结论一致：负）"
+    },
+    {
+      "id": "E27-formal-L3",
+      "hypothesis": "正式结构复测 L3 校准评价器",
+      "config": {
+        "candidateJointOptions": {
+          "evaluator": "L3"
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1736800000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": -0.0417,
+          "lo": -0.1286,
+          "hi": 0.0452
+        },
+        "3": {
+          "delta": 0.0,
+          "lo": -0.113,
+          "hi": 0.113
+        },
+        "4": {
+          "delta": -0.0833,
+          "lo": -0.2248,
+          "hi": 0.0581
+        },
+        "5": {
+          "delta": 0.0,
+          "lo": -0.113,
+          "hi": 0.113
+        }
+      },
+      "weighted": -0.0312,
+      "verdict": "rejected"
     }
   ],
   "conclusion": {
     "qualifiedCandidate": false,
-    "reason": "16 个单因子候选无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；E14(+7.3pp) 在 5 人局崩至 −18.8pp，E15(+3.1pp) 不显著，E10 的正向在独立窗口未复现",
+    "reason": "累计 27 个单因子/结构实验（含正式结构复测）无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；最强单项为 E14(+7.3pp) 但 5p −18.8pp 违反非劣效；其余正向均在噪声内且未复现",
     "alphaConsumed": 0,
     "formalChallengesRun": 0
   },
@@ -705,6 +1097,13 @@
       },
       "verdict": "not-replicated",
       "note": "复现使用全新种子窗口，未复用探索种子"
+    }
+  ],
+  "methodNotes": [
+    {
+      "addedAt": "2026-11-01 (AI12 round 2)",
+      "note": "新增 paired-screen-formal.mjs：复用正式挑战的 toSeatVersion/opponentForSeat/focusSeatFor + simulateGame，AI 信念采样流按 deriveSimStreamSeed(seed) 派生（与正式挑战一致）。旧 harness 经 playLeagueGame 固定 simSeed=0，会令每局隐藏补牌世界相同；E17–E24 使用旧 harness（WU=32），E25–E27 使用正式结构（WU=64）。",
+      "validation": "A/A 配对必须恒为 0（已实测 0/0/0/0，分数逐位相同）；gateMode=never 在正式结构下复现强负（N=8 时 −37.5pp），证明 harness 能检出真实效应。"
     }
   ]
 }
