@@ -12,18 +12,18 @@ enforce_evolve_blocks: true
 llm:
   provider: "codex_app_server"
   models:
-    # 36h 长周期按权重轮换同一账号下已验证可用的 5.6 系列模型：
-    # sol 为主，terra/luna 分摊额度；额度窗口耗尽时由生成器显式降级为确定性 pair。
+    # v2：提高 sol 权重并提升推理强度；6.1 系列在当前 ChatGPT 账户不可用，
+    # 保留 terra/luna 分摊额度与降级路径。
     - name: "gpt-5.6-sol"
-      weight: 0.5
-      timeout: 900
-      reasoning_effort: "low"
+      weight: 0.6
+      timeout: 1200
+      reasoning_effort: "medium"
     - name: "gpt-5.6-terra"
-      weight: 0.3
+      weight: 0.25
       timeout: 900
       reasoning_effort: "low"
     - name: "gpt-5.6-luna"
-      weight: 0.2
+      weight: 0.15
       timeout: 900
       reasoning_effort: "low"
   temperature: 0.85
