@@ -1124,11 +1124,165 @@
       },
       "weighted": -0.0156,
       "verdict": "null"
+    },
+    {
+      "id": "E30-formal-beam-adaptive",
+      "hypothesis": "冠军基座结构 beam-rollout → beam-adaptive（前置宽后置窄）",
+      "config": {
+        "candidateJointOptions": {
+          "championStructure": "beam-adaptive"
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1737100000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": -0.125,
+          "lo": -0.2212,
+          "hi": -0.0288
+        },
+        "3": {
+          "delta": -0.0833,
+          "lo": -0.2154,
+          "hi": 0.0487
+        },
+        "4": {
+          "delta": 0.0625,
+          "lo": -0.0436,
+          "hi": 0.1686
+        },
+        "5": {
+          "delta": -0.0625,
+          "lo": -0.1686,
+          "hi": 0.0436
+        }
+      },
+      "weighted": -0.0521,
+      "verdict": "rejected（2p 显著负）"
+    },
+    {
+      "id": "E31-formal-beam-lineage",
+      "hypothesis": "冠军基座结构 → beam-lineage（无蒙特卡洛融合）",
+      "config": {
+        "candidateJointOptions": {
+          "championStructure": "beam-lineage"
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1737200000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": 0.0,
+          "lo": -0.0875,
+          "hi": 0.0875
+        },
+        "3": {
+          "delta": -0.0208,
+          "lo": -0.1279,
+          "hi": 0.0862
+        },
+        "4": {
+          "delta": -0.0625,
+          "lo": -0.1558,
+          "hi": 0.0308
+        },
+        "5": {
+          "delta": -0.0208,
+          "lo": -0.1006,
+          "hi": 0.0589
+        }
+      },
+      "weighted": -0.026,
+      "verdict": "rejected"
+    },
+    {
+      "id": "E32-formal-screen-goal-preferred",
+      "hypothesis": "根筛选目标范围 all → preferred（降低筛选成本）",
+      "config": {
+        "candidateJointOptions": {
+          "screenGoalScope": "preferred"
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1737300000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": 0.0,
+          "lo": 0.0,
+          "hi": 0.0
+        },
+        "3": {
+          "delta": 0.0,
+          "lo": 0.0,
+          "hi": 0.0
+        },
+        "4": {
+          "delta": -0.0417,
+          "lo": -0.0911,
+          "hi": 0.0078
+        },
+        "5": {
+          "delta": 0.0208,
+          "lo": -0.0145,
+          "hi": 0.0562
+        }
+      },
+      "weighted": -0.0052,
+      "verdict": "null（行为差异极小，sd 14–20pp）"
+    },
+    {
+      "id": "E33-learned-leaf-value-L5",
+      "hypothesis": "自博弈学习型叶价值（480 局 / 19158 样本 / 17 特征 logistic，验证 AUC 0.744、log-loss 0.5995）",
+      "config": {
+        "candidateJointOptions": {
+          "evaluator": "L5"
+        },
+        "training": {
+          "games": 480,
+          "samples": 19158,
+          "valAuc": 0.744,
+          "valLogLoss": 0.5995
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1737500000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": -0.0417,
+          "lo": -0.165,
+          "hi": 0.0817
+        },
+        "3": {
+          "delta": 0.0625,
+          "lo": -0.084,
+          "hi": 0.209
+        },
+        "4": {
+          "delta": -0.25,
+          "lo": -0.3973,
+          "hi": -0.1027
+        },
+        "5": {
+          "delta": -0.0625,
+          "lo": -0.2,
+          "hi": 0.075
+        }
+      },
+      "weighted": -0.0729,
+      "verdict": "rejected（4p 显著负）；离线精度更高 ≠ 决策更优，源码已回滚"
     }
   ],
   "conclusion": {
     "qualifiedCandidate": false,
-    "reason": "累计 29 个单因子/机制实验（含正式结构复测）无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；候选上限呈倒 U 型（2/3/6 均劣于默认 4），价值口径各变体均不优于 L2，对手模型与配对差仲裁显著负向",
+    "reason": "累计 33 个单因子/机制/结构/学习型实验无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；学习型叶价值（AUC 0.744）在仲裁中显著劣于手调 L2（−7.3pp，4p −25pp），说明价值函数的形状比离线精度更关键",
     "alphaConsumed": 0,
     "formalChallengesRun": 0
   },
