@@ -12,7 +12,7 @@ import { join } from 'node:path';
 import {
   clusterFirstPlacePairs, clusterMeanCI, studentTQuantile, studentTCdf,
   firstPlacePromotionDecision, analyzeSeatStratum, pooledWeightedDelta,
-  nonInferiorityDecision,
+  nonInferiorityDecision, styleEnginePresentAt,
 } from '../evaluator/first-place.mjs';
 import {
   createPreregistration, lockPreregistration, loadPreregistration,
@@ -20,8 +20,9 @@ import {
 } from '../evaluator/preregistration.mjs';
 import {
   reserveAlpha, completeAlpha, readAlphaLedger, alphaLedgerSummary, assertAlphaLedgerIntegrity,
-  initializeAlphaFamily,
+  initializeAlphaFamily, nextFamilyChallengeIndex, alphaForChallenge,
 } from '../lib/alpha-ledger.mjs';
+import { resolvePlanAlpha } from '../evaluator/preregistration.mjs';
 
 const HEX = 'a'.repeat(64);
 
@@ -29,6 +30,8 @@ function patternPairs({ base, count, candidatePattern = [0, 0, 1, 1, 0], champio
   return Array.from({ length: count }, (_, i) => ({
     seed: base + i,
     ...(focusSeat === null ? {} : { focusSeat }),
+    // 冻结标准要求 style-engine 覆盖；合成夹具标记为存在（真实挑战由运行器写入）。
+    styleEnginePresent: true,
     candidateFirst: candidatePattern[i % candidatePattern.length],
     championFirst: championPattern[i % championPattern.length],
     anomalies: 0,
@@ -287,6 +290,7 @@ test('正向：5p 提升、2p 轻微退化但仍在 2pp 非劣效内 → 晋级�
   // 2p：候选 49% vs 冠军 50% → delta 均值略负但下界仍 ≥ −2pp（需要大样本）。
   const twoPairs = Array.from({ length: 400 }, (_, i) => ({
     seed: base[2] + i, focusSeat: 0,
+    styleEnginePresent: true,
     candidateFirst: i % 100 < 49 ? 1 : 0,
     championFirst: i % 100 < 50 ? 1 : 0,
     anomalies: 0,
@@ -429,4 +433,123 @@ test('预注册计划落盘后不可修改（同 planId 不同内容 → 拒绝�
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('固定期限家族：家族内序号与全局挑战序号解耦，α=预算/期限', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'century-fixed-horizon-'));
+  const ledgerPath = join(dir, 'alpha-ledger-ai11.json');
+  try {
+    writeFileSync(ledgerPath, JSON.stringify({
+      schema: 'century-alpha-ledger-v1',
+      alphaBudget: 0.05,
+      familyId: 'century-fixed-horizon-ai11',
+      spendingPlan: {
+        mode: 'fixed-horizon-bonferroni',
+        maxChallenges: 12,
+        createdAt: '2026-10-29T08:31:18.580Z',
+        authorization: 'AI11-P0.4-preregistered-fixed-horizon-family',
+        authorizedBy: 'Xike-yuhuofei',
+      },
+      createdAt: '2026-10-29T08:31:18.580Z',
+      reservations: [],
+      outcomes: [],
+    }, null, 2));
+    const ledger = readAlphaLedger(ledgerPath);
+    // 历史几何家族已消耗 11 次；新家族的序号从 1 开始，不受全局序号影响。
+    assert.equal(nextFamilyChallengeIndex(ledger), 1);
+    const entry = alphaForChallenge(1, ledger.alphaBudget, ledger.spendingPlan);
+    assert.ok(Math.abs(entry.alpha - 0.05 / 12) < 1e-12, `alpha=${entry.alpha}`);
+    assert.equal(entry.spendingMode, 'fixed-horizon-bonferroni');
+    assert.throws(() => alphaForChallenge(13, ledger.alphaBudget, ledger.spendingPlan), /预算已按预注册计划耗尽/);
+    reserveAlpha({ challengeIndex: 1, planId: 'fixed-plan-1', candidateId: 'cand', ledgerPath });
+    assert.equal(nextFamilyChallengeIndex(readAlphaLedger(ledgerPath)), 2);
+
+    // 预注册计划同时记录全局 challengeIndex（12）与家族内序号（1）。
+    const plan = createPreregistration({
+      planId: 'fixed-horizon-plan-test',
+      candidate: { id: 'cand-x', parametersSha256: HEX, sourceHash: 'b'.repeat(64), artifactHash: 'c'.repeat(64) },
+      champion: { id: 'joint-js5', parametersSha256: 'd'.repeat(64), artifactHash: 'e'.repeat(64) },
+      opponents: [{ id: 'style-engine', fingerprint: 'enemy-fingerprint-1' }],
+      seatWindows: {
+        2: { base: 900_000_000, count: 60 }, 3: { base: 900_000_100, count: 60 },
+        4: { base: 900_000_200, count: 60 }, 5: { base: 900_000_300, count: 60 },
+      },
+      challengeIndex: 12,
+      alphaBudget: 0.05,
+      alphaFamily: {
+        familyId: 'century-fixed-horizon-ai11',
+        mode: 'fixed-horizon-bonferroni',
+        maxChallenges: 12,
+        alphaBudget: 0.05,
+        alphaPerChallenge: 0.05 / 12,
+        challengeIndex: 1,
+      },
+    });
+    const resolved = resolvePlanAlpha(plan);
+    assert.equal(resolved.mode, 'fixed-horizon-bonferroni');
+    assert.equal(resolved.challengeIndex, 1);
+    assert.ok(Math.abs(resolved.alpha - 0.05 / 12) < 1e-12);
+    // 禁止通过计划手工放宽 alpha。
+    assert.throws(
+      () => createPreregistration({
+        planId: 'fixed-horizon-plan-bad',
+        candidate: plan.candidate,
+        champion: plan.champion,
+        opponents: plan.opponents,
+        seatWindows: plan.seatWindows,
+        challengeIndex: 12,
+        alphaBudget: 0.05,
+        alphaFamily: { ...plan.alphaFamily, alphaPerChallenge: 0.05 / 10 },
+      }),
+      /禁止手工放宽/,
+    );
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('style-engine 非劣效：主检验通过但克制型对手子集崩溃 → 禁止晋级', () => {
+  let base = 900_000_000;
+  const strata = [2, 3, 4, 5].map(seatCount => {
+    const pairs = patternPairs({ base, count: 100, focusSeat: 0 }).map((p, i) => ({
+      ...p,
+      // 每层前 20 个种子为 style-engine 对局：候选全败；其余种子候选全胜。
+      styleEnginePresent: i < 20,
+      candidateFirst: i < 20 ? 0 : 1,
+      championFirst: i < 20 ? 1 : 0,
+    }));
+    base += 10_000;
+    return { seatCount, pairs };
+  });
+  const decision = firstPlacePromotionDecision({ strata, margin: 0.02, minSeeds: 60, requireStyleEngineCoverage: true });
+  // 主检验/各人数非劣效均通过（均值 +0.6），但 style-engine 汇总下界远低于 −2pp。
+  assert.equal(decision.pooled.superiority, true);
+  assert.equal(decision.nonInferiority.every(x => x.pass), true);
+  assert.equal(decision.styleEngine.pass, false);
+  assert.equal(decision.promote, false);
+  assert.ok(decision.reasons.some(r => r.includes('style-engine 非劣效失败')));
+});
+
+test('style-engine 覆盖缺失（历史证据无标记）→ fail-closed', () => {
+  const strata = fourStrata({ count: 100 });
+  const legacy = strata.map(s => ({
+    seatCount: s.seatCount,
+    pairs: s.pairs.map(({ styleEnginePresent: _drop, ...rest }) => rest),
+  }));
+  const decision = firstPlacePromotionDecision({ strata: legacy, margin: 0.02, minSeeds: 60, requireStyleEngineCoverage: true });
+  assert.equal(decision.promote, false);
+  assert.ok(decision.reasons.some(r => r.includes('style-engine 对手覆盖缺失')));
+});
+
+test('style-engine 覆盖可由冻结对手分配公式推导（不信任自报字段）', () => {
+  const opponents = [
+    { id: 'ai5-readiness-efficiency' }, { id: 'ai4-struct-beam-rollout' },
+    { id: 'style-engine' }, { id: 'style-rush' }, { id: 'style-contest' }, { id: 'neutral-baseline' },
+  ];
+  // 2 人：焦点席位 0，对手席位 1 → 对手索引 (seedIndex+1)%6 = 2 ↔ style-engine。
+  assert.equal(styleEnginePresentAt({ seedIndex: 1, seatCount: 2, focusSeat: 0, opponents }), true);
+  assert.equal(styleEnginePresentAt({ seedIndex: 0, seatCount: 2, focusSeat: 0, opponents }), false);
+  // 5 人：任一非焦点席位命中 style-engine 即为 true。
+  assert.equal(styleEnginePresentAt({ seedIndex: 0, seatCount: 5, focusSeat: 0, opponents }), true);
+  assert.throws(() => styleEnginePresentAt({ seedIndex: 0, seatCount: 2, focusSeat: 2, opponents }), /focusSeat 非法/);
 });

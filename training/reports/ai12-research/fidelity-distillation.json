@@ -1,0 +1,61 @@
+{
+  "schema": "century-ai12-fidelity-distillation-v1",
+  "kind": "development research evidence (NOT formal championship evidence)",
+  "recordedAt": "2026-11-02",
+  "question": "能否用廉价「状态→行动」特征线性/小 MLP 再排序器，把 rollout 内己方策略与冠军 choosePlan 首步一致率从 56.5% 提升到 ≥85%，用于提高联合仲裁的模拟保真度？",
+  "answer": "否。200 局开发池数据上，最佳模型（MLP-16）在可选中决策上的首步一致率为 62.7%（基线 1-ply 贪心 61.1%，类型 oracle 上限 67.5%），远低于 85% 门槛；未进入生产路径，未产生候选。",
+  "data": {
+    "collector": "training/reports/ai12-research/harness/collect-plan-data.mjs",
+    "trainer": "training/reports/ai12-research/harness/train-plan-policy.py",
+    "seedBase": 1739000000,
+    "seedStride": 1000,
+    "games": 200,
+    "shards": 4,
+    "decisions": 7936,
+    "candidateRows": 84798,
+    "featureCount": 54,
+    "split": "按种子奇偶切分（同一 seed 的全部决策只落一边）：train 3721 / val 3727 可选中决策",
+    "labelMissing": 0,
+    "greedyAgreementAll": 0.557,
+    "top12Coverage": 0.939
+  },
+  "models": {
+    "greedyBaseline": {
+      "valAccSelectable": 0.6107,
+      "valAccAllDecisions": 0.557
+    },
+    "linear54": {
+      "trainAcc": 0.5904,
+      "valAccSelectable": 0.6058,
+      "valAccAllDecisions": 0.5696,
+      "valAccOnGreedyDisagreements": 0.1932,
+      "verdict": "低于基线（不可用）"
+    },
+    "mlp54x16": {
+      "trainAcc": 0.6939,
+      "valAccSelectable": 0.6273,
+      "valAccAllDecisions": 0.5898,
+      "valAccOnGreedyDisagreements": 0.2402,
+      "verdict": "仅 +1.7pp（可选中）/ +3.3pp（全体），远低于 85% 门槛"
+    },
+    "typeOracleUpperBound": {
+      "valAcc": 0.675,
+      "note": "已知正确行动类型、类型内取贪心最高值——精确一致率的现实上限远低于 85%"
+    }
+  },
+  "interpretation": "冠军计划的偏差主要来自束搜索的长程路线选择与类型内具体卡牌/认领选择，无法由 54 个公开状态/行动特征的可加模型稳定复现。把 rollout 自身策略升级为 6 层束搜索的成本（实测 choosePlan 平均 16.7ms/决策，轨迹内约 12 次己方决策）在 100ms 预算内不可行；廉价蒸馏的保真度收益不足以进入生产。",
+  "decision": {
+    "deployed": false,
+    "sourceRolledBack": true,
+    "reason": "预注册门槛（一致率 ≥85%、单次推理 ≤0.2ms）未达成；不提交候选、不消耗 alpha。"
+  },
+  "cost": {
+    "dataGenerationWallMinutes": 8,
+    "trainingSeconds": 5,
+    "note": "本地 Mac mini M4；4 分片并行"
+  },
+  "nextHypotheses": [
+    "5 人模式定向：overrideMargin 0.05 在三次独立开发窗口的 5p 读数均为正（+6.25/+6.25/+8.33pp），其余模式混合；用 5p-only 覆盖可令 2–4 人行为逐位不变（非劣效恒等成立），只需 5p 达到 ≥8pp 才能满足综合 ≥+2pp 点估计门。",
+    "若 5p 定向复现失败，则记录为负例并保留冠军；不得降低晋级门槛。"
+  ]
+}

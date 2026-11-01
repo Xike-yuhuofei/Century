@@ -20,7 +20,7 @@ import { sha256Canonical, assertCondition } from '../evolution/core.mjs';
 import { firstPlacePromotionDecision, clusterFirstPlacePairs } from '../evaluator/first-place.mjs';
 import {
   assertFixedSample, assertPlanIdentity, assertResultsAfterLock, assertValidationSeeds,
-  DEFAULT_SEARCH_WORK_UNITS,
+  DEFAULT_SEARCH_WORK_UNITS, resolvePlanAlpha,
 } from '../evaluator/preregistration.mjs';
 
 /** 正式挑战的固定搜索工作量：质量比较必须固定 workUnits，墙钟仅用于资源控制。
@@ -117,6 +117,7 @@ export function runFirstPlaceSeatChallenge({
       if (seat === focusSeat) return null;
       return toSeatVersion(opponentForSeat({ seedIndex, seat, opponents }));
     });
+    const styleEnginePresent = baseVersions.some(v => v?.id === 'style-engine');
     const candidateVersion = toSeatVersion(candidate, { seatCount, workUnits });
     // AI9 编译型多模块候选：以独立 ESM 模块实例注入 A 臂焦点席位；
     // B 臂仍走官方编译产物（冻结冠军），两者不共享任何模块状态。
@@ -155,6 +156,7 @@ export function runFirstPlaceSeatChallenge({
     pairs.push({
       seed,
       focusSeat,
+      styleEnginePresent,
       candidateFirst: results.A.status === 'finished' ? results.A.ranking[0].seat === focusSeat : null,
       championFirst: results.B.status === 'finished' ? results.B.ranking[0].seat === focusSeat : null,
       anomalies: (results.A.status === 'finished' ? 0 : 1) + (results.B.status === 'finished' ? 0 : 1),
@@ -191,7 +193,7 @@ export function runFirstPlaceChallengeBundle({
   champion, candidate, opponents, seatPlans,
   weights = null, alpha = 0.05, margin = 0.02, minSeeds = 60, maxAnomalyRate = 0.02,
   seatOffset = 0, maxMoves = 1200, deadlineMs = 300_000, workUnits = DEFAULT_FORMAL_WORK_UNITS,
-  executorA = null,
+  executorA = null, requireStyleEngineCoverage = true,
 }) {
   assertCondition(Array.isArray(seatPlans) && seatPlans.length > 0, 'seatPlans 不能为空');
   const strata = [];
@@ -205,7 +207,7 @@ export function runFirstPlaceChallengeBundle({
     strata.push({ seatCount: plan.seatCount, pairs: run.pairs });
   }
   const decision = firstPlacePromotionDecision({
-    strata, weights, alpha, margin, minSeeds, maxAnomalyRate,
+    strata, weights, alpha, margin, minSeeds, maxAnomalyRate, requireStyleEngineCoverage,
   });
   return { runs, decision };
 }
@@ -265,7 +267,7 @@ export function runPreregisteredFirstPlaceChallenge({
   const seedsBySeatCount = Object.fromEntries(seatPlans.map(p => [String(p.seatCount), p.seeds]));
   assertValidationSeeds({ plan, seedsBySeatCount });
 
-  const alphaEntry = { alpha: plan.alphaBudget / 2 ** plan.challengeIndex };
+  const alphaEntry = resolvePlanAlpha(plan);
   const { runs, decision } = runFirstPlaceChallengeBundle({
     champion, candidate, opponents, seatPlans,
     weights: plan.weights,

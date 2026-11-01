@@ -1290,13 +1290,94 @@
       },
       "weighted": -0.0729,
       "verdict": "rejected（4p 显著负）；离线精度更高 ≠ 决策更优，源码已回滚"
+    },
+    {
+      "id": "E34-5p-margin-0.05",
+      "hypothesis": "5p 定向 overrideMargin 0.05 的确认性复现（三次历史窗口 5p 读数 +6.25/+6.25/+8.33pp）",
+      "config": {
+        "candidateJointOptionsByPlayerCount": {
+          "5": {
+            "overrideMargin": 0.05
+          }
+        },
+        "note": "2–4 人行为逐位不变（A/A=0），综合门禁增量 = 5p/4"
+      },
+      "nPerSeatCount": 96,
+      "seedBase": 1741000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64) seats=5 only",
+      "perCount": {
+        "5": {
+          "delta": 0.0,
+          "lo": -0.0958,
+          "hi": 0.0958,
+          "n": 96,
+          "sd": 0.562
+        }
+      },
+      "weightedAllModes": 0.0,
+      "verdict": "not-replicated（5p 定向 0.00pp；历史 +6~8pp 视为开发窗口噪声；综合门禁增量 0.00pp < 2pp）"
+    },
+    {
+      "id": "E35-5p-worlds-6",
+      "hypothesis": "5p 定向信念世界数 4→6（历史两次窗口 5p +2.08/+6.25pp）",
+      "config": {
+        "candidateJointOptionsByPlayerCount": {
+          "5": {
+            "worlds": 6
+          }
+        }
+      },
+      "nPerSeatCount": 96,
+      "seedBase": 1741000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64) seats=5 only",
+      "perCount": {
+        "5": {
+          "delta": 0.0417,
+          "lo": -0.0688,
+          "hi": 0.1521,
+          "n": 96,
+          "sd": 0.648
+        }
+      },
+      "weightedAllModes": 0.0104,
+      "verdict": "directionally-positive-not-significant（三次窗口 5p 一致为正 +2.08/+6.25/+4.17，但门禁加权仅 +1.04pp；5p 需 ≥8pp 才可能满足 +2pp 点估计，功效不足）"
+    },
+    {
+      "id": "E36-5p-margin-0.05-worlds-6",
+      "hypothesis": "5p 定向组合（margin 0.05 + worlds 6）",
+      "config": {
+        "candidateJointOptionsByPlayerCount": {
+          "5": {
+            "overrideMargin": 0.05,
+            "worlds": 6
+          }
+        }
+      },
+      "nPerSeatCount": 96,
+      "seedBase": 1741000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64) seats=5 only",
+      "perCount": {
+        "5": {
+          "delta": 0.0104,
+          "lo": -0.0931,
+          "hi": 0.1139,
+          "n": 96,
+          "sd": 0.607
+        }
+      },
+      "weightedAllModes": 0.0026,
+      "verdict": "null（组合未叠加出可用增量；综合门禁增量 +0.26pp）"
     }
   ],
   "conclusion": {
     "qualifiedCandidate": false,
-    "reason": "累计 33 个单因子/机制/结构/学习型实验无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；学习型叶价值（AUC 0.744）在仲裁中显著劣于手调 L2（−7.3pp，4p −25pp），说明价值函数的形状比离线精度更关键",
+    "reason": "累计 36 个单因子/机制/结构/学习型/定向实验，无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；本轮新增：保真度蒸馏上限 62.7%（目标 85%，未部署）；5p 定向 margin 0.05 未复现（0.00pp）；5p worlds=6 三次窗口一致为正但仅 +4.17pp（综合 +1.04pp，远低于 5p ≥8pp 的必要条件）。",
     "alphaConsumed": 0,
-    "formalChallengesRun": 0
+    "formalChallengesRun": 0,
+    "rounds": 3
   },
   "replications": [
     {
@@ -1344,6 +1425,11 @@
       "addedAt": "2026-11-01 (AI12 round 2)",
       "note": "新增 paired-screen-formal.mjs：复用正式挑战的 toSeatVersion/opponentForSeat/focusSeatFor + simulateGame，AI 信念采样流按 deriveSimStreamSeed(seed) 派生（与正式挑战一致）。旧 harness 经 playLeagueGame 固定 simSeed=0，会令每局隐藏补牌世界相同；E17–E24 使用旧 harness（WU=32），E25–E27 使用正式结构（WU=64）。",
       "validation": "A/A 配对必须恒为 0（已实测 0/0/0/0，分数逐位相同）；gateMode=never 在正式结构下复现强负（N=8 时 −37.5pp），证明 harness 能检出真实效应。"
+    },
+    {
+      "addedAt": "2026-11-02 (AI12 round 3)",
+      "note": "新增按人数定向覆盖（--a-per-count/--b-per-count）与 5p-only 快筛。5p-only 候选在 2–4 人行为逐位不变（A/A 实测 delta 恒为 0），因此综合门禁增量 = 5p 增量/4；只有 5p ≥ +8pp 才可能满足综合 ≥+2pp 点估计。",
+      "seedWindows": "[1741000000,1741000096) 用于 5p 定向复现（此前三次 5p 读数窗口 17353/17359/17366 互不重叠）"
     }
   ]
 }

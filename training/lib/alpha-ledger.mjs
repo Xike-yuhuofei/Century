@@ -190,6 +190,13 @@ export function assertAlphaLedgerIntegrity(ledger) {
   return true;
 }
 
+/** 当前家族内下一个正式挑战序号（固定期限家族 1..maxChallenges）。
+ * 与种子治理的全局 challengeIndex 解耦：历史几何家族的消耗不占用新家族预算。 */
+export function nextFamilyChallengeIndex(ledger) {
+  assertAlphaLedgerIntegrity(ledger);
+  return (ledger.reservations.at(-1)?.challengeIndex ?? 0) + 1;
+}
+
 /** 预留一次正式挑战的 alpha（必须在读取正式验证结果之前）。 */
 export function reserveAlpha({
   challengeIndex, planId, candidateId, evidenceDir = null,
