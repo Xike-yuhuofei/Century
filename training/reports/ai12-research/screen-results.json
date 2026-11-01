@@ -87,6 +87,18 @@
       "maxElapsedMs": 229,
       "avgRolloutsPerDecision": 82.9,
       "zeroTrialGated": 0
+    },
+    "rolloutFidelity": {
+      "tool": "training/reports/ai12-research/harness/rollout-fidelity.mjs",
+      "games": 12,
+      "seedBase": 1737600000,
+      "decisions": 480,
+      "planVsGreedyAgreement": 0.565,
+      "preTriggerAgreement": 0.563,
+      "postTriggerAgreement": 0.75,
+      "js5VsPlanAgreement": 0.76,
+      "js5VsGreedyAgreement": 0.477,
+      "interpretation": "JS5 轨迹内自身策略（1-ply 贪心）与冠军计划首步仅 56.5% 一致；实际仲裁结果有 76% 与冠军计划一致。说明仲裁看到的未来由明显不同的策略扮演——这是无法靠调参修复的模拟保真度缺口；而把该策略升级为 6 层束搜索的代价（20–70ms/调用 vs 1.8ms/轨迹）在 100ms 预算内不可行。"
     }
   },
   "experiments": [
