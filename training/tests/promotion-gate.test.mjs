@@ -84,6 +84,7 @@ function makeFixture(dir) {
     pairs: Array.from({ length: SEEDS_PER_SEAT }, (_, i) => ({
       seed: plan.seatWindows[String(seatCount)].base + i,
       focusSeat: 0,
+      styleEnginePresent: true,
       candidateFirst: i % 10 < 8 ? 1 : 0,
       championFirst: i % 10 < 2 ? 1 : 0,
       anomalies: 0,

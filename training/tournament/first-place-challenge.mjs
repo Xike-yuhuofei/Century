@@ -117,6 +117,7 @@ export function runFirstPlaceSeatChallenge({
       if (seat === focusSeat) return null;
       return toSeatVersion(opponentForSeat({ seedIndex, seat, opponents }));
     });
+    const styleEnginePresent = baseVersions.some(v => v?.id === 'style-engine');
     const candidateVersion = toSeatVersion(candidate, { seatCount, workUnits });
     // AI9 编译型多模块候选：以独立 ESM 模块实例注入 A 臂焦点席位；
     // B 臂仍走官方编译产物（冻结冠军），两者不共享任何模块状态。
@@ -155,6 +156,7 @@ export function runFirstPlaceSeatChallenge({
     pairs.push({
       seed,
       focusSeat,
+      styleEnginePresent,
       candidateFirst: results.A.status === 'finished' ? results.A.ranking[0].seat === focusSeat : null,
       championFirst: results.B.status === 'finished' ? results.B.ranking[0].seat === focusSeat : null,
       anomalies: (results.A.status === 'finished' ? 0 : 1) + (results.B.status === 'finished' ? 0 : 1),

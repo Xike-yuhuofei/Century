@@ -117,6 +117,7 @@ function makeEvidence({ plan, candidate, champion, alpha, seedsBySeatCount }) {
     pairs: Array.from({ length: SEEDS_PER_SEAT }, (_, i) => ({
       seed: seedsBySeatCount[seatCount][i],
       focusSeat: i % seatCount,
+      styleEnginePresent: true,
       candidateFirst: i % 10 < 8 ? 1 : 0,
       championFirst: i % 10 < 2 ? 1 : 0,
       anomalies: 0,

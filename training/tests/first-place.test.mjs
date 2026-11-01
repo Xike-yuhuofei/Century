@@ -30,6 +30,8 @@ function patternPairs({ base, count, candidatePattern = [0, 0, 1, 1, 0], champio
   return Array.from({ length: count }, (_, i) => ({
     seed: base + i,
     ...(focusSeat === null ? {} : { focusSeat }),
+    // 冻结标准要求 style-engine 覆盖；合成夹具标记为存在（真实挑战由运行器写入）。
+    styleEnginePresent: true,
     candidateFirst: candidatePattern[i % candidatePattern.length],
     championFirst: championPattern[i % championPattern.length],
     anomalies: 0,
@@ -288,6 +290,7 @@ test('正向：5p 提升、2p 轻微退化但仍在 2pp 非劣效内 → 晋级�
   // 2p：候选 49% vs 冠军 50% → delta 均值略负但下界仍 ≥ −2pp（需要大样本）。
   const twoPairs = Array.from({ length: 400 }, (_, i) => ({
     seed: base[2] + i, focusSeat: 0,
+    styleEnginePresent: true,
     candidateFirst: i % 100 < 49 ? 1 : 0,
     championFirst: i % 100 < 50 ? 1 : 0,
     anomalies: 0,
@@ -503,4 +506,37 @@ test('固定期限家族：家族内序号与全局挑战序号解耦，α=预�
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('style-engine 非劣效：主检验通过但克制型对手子集崩溃 → 禁止晋级', () => {
+  let base = 900_000_000;
+  const strata = [2, 3, 4, 5].map(seatCount => {
+    const pairs = patternPairs({ base, count: 100, focusSeat: 0 }).map((p, i) => ({
+      ...p,
+      // 每层前 20 个种子为 style-engine 对局：候选全败；其余种子候选全胜。
+      styleEnginePresent: i < 20,
+      candidateFirst: i < 20 ? 0 : 1,
+      championFirst: i < 20 ? 1 : 0,
+    }));
+    base += 10_000;
+    return { seatCount, pairs };
+  });
+  const decision = firstPlacePromotionDecision({ strata, margin: 0.02, minSeeds: 60 });
+  // 主检验/各人数非劣效均通过（均值 +0.6），但 style-engine 汇总下界远低于 −2pp。
+  assert.equal(decision.pooled.superiority, true);
+  assert.equal(decision.nonInferiority.every(x => x.pass), true);
+  assert.equal(decision.styleEngine.pass, false);
+  assert.equal(decision.promote, false);
+  assert.ok(decision.reasons.some(r => r.includes('style-engine 非劣效失败')));
+});
+
+test('style-engine 覆盖缺失（历史证据无标记）→ fail-closed', () => {
+  const strata = fourStrata({ count: 100 });
+  const legacy = strata.map(s => ({
+    seatCount: s.seatCount,
+    pairs: s.pairs.map(({ styleEnginePresent: _drop, ...rest }) => rest),
+  }));
+  const decision = firstPlacePromotionDecision({ strata: legacy, margin: 0.02, minSeeds: 60 });
+  assert.equal(decision.promote, false);
+  assert.ok(decision.reasons.some(r => r.includes('style-engine 对手覆盖缺失')));
 });

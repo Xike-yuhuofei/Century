@@ -344,6 +344,62 @@ export function pooledWeightedDelta({ strata, weights, alpha = DEFAULT_ALPHA }) 
   };
 }
 
+/**
+ * style-engine 克制型对手的跨人数预注册汇总非劣效检验（冻结标准的强制项）。
+ *
+ * 口径：只统计「对手阵容包含 style-engine」的种子对；每个人数层独立聚类，
+ * 再按预注册人数权重汇总（各层种子互不重叠）；单侧下界 ≥ −margin 才通过。
+ * 覆盖要求：每个人数层都必须有 style-engine 对局，否则 fail-closed（对手池
+ * 覆盖不足不能靠其他层掩盖）。该检验与主检验/各人数非劣效同处 alpha 水平，
+ * 作为 IUT 的一个组件，不额外放大 I 类错误。
+ */
+export function styleEngineNonInferiority({
+  strata, weights, alpha = DEFAULT_ALPHA, margin = DEFAULT_NON_INFERIORITY_MARGIN,
+  minSeeds = 2, maxAnomalyRate = 0.02,
+}) {
+  if (typeof weights !== 'object' || weights === null) throw new Error('必须提供预注册人数权重');
+  const missing = [];
+  const analyzed = [];
+  for (const stratum of strata) {
+    const subset = (stratum.pairs ?? []).filter(p => p?.styleEnginePresent === true);
+    if (!subset.length) { missing.push(stratum.seatCount); continue; }
+    const run = analyzeSeatStratum({
+      pairs: subset, alpha, minSeeds, maxAnomalyRate, seatCount: stratum.seatCount,
+    });
+    if (!run.ci) {
+      return {
+        pass: false,
+        reason: `${stratum.seatCount} 人 style-engine 子集不可分析：${run.reason ?? '缺少区间'}`,
+        modes: analyzed.map(s => s.seatCount), missingModes: missing,
+        margin,
+      };
+    }
+    analyzed.push(run);
+  }
+  if (missing.length) {
+    return {
+      pass: false,
+      reason: `style-engine 对手覆盖缺失：${missing.join('/')} 人层没有 style-engine 对局`,
+      modes: analyzed.map(s => s.seatCount), missingModes: missing,
+      margin,
+    };
+  }
+  const pooled = pooledWeightedDelta({ strata: analyzed, weights, alpha });
+  return {
+    pass: pooled.lower >= -margin,
+    margin,
+    modes: analyzed.map(s => s.seatCount),
+    uniqueSeeds: pooled.components.reduce((s, c) => s + c.n, 0),
+    mean: pooled.mean,
+    lower: pooled.lower,
+    upper: pooled.upper,
+    pooled,
+    reason: pooled.lower >= -margin
+      ? `style-engine 汇总下界 ${pooled.lower.toFixed(4)} ≥ −${margin}`
+      : `style-engine 汇总下界 ${pooled.lower.toFixed(4)} < −${margin}（克制型对手出现超过容忍范围的退化）`,
+  };
+}
+
 function assertIndependentSeedBlocks(strata) {
   const seen = new Map();
   for (const stratum of strata) {
@@ -368,7 +424,8 @@ function assertIndependentSeedBlocks(strata) {
  * 1. 每层异常率 ≤ 上限，独立种子数 ≥ 下限；
  * 2. 每层非劣效：单侧下界 ≥ −margin（默认 2pp）；
  * 3. 加权汇总主检验：单侧下界 > 0；
- * 4. 跨人数种子块互不重叠。
+ * 4. style-engine 克制型对手跨人数汇总非劣效：单侧下界 ≥ −margin；
+ * 5. 跨人数种子块互不重叠。
  *
  * 任一不满足 → 不晋级（保留冠军），并披露具体原因，便于自动诊断。
  *
@@ -417,6 +474,12 @@ export function firstPlacePromotionDecision({
   const finalWeights = weights ?? Object.fromEntries(requiredSeatCounts.map(n => [String(n), 1 / requiredSeatCounts.length]));
   const nonInferiority = normalized.map(s => nonInferiorityDecision({ stratum: s, margin }));
   const pooled = normalized.every(s => s.ci) ? pooledWeightedDelta({ strata: normalized, weights: finalWeights, alpha }) : null;
+  // 冻结标准强制项：style-engine 跨人数预注册汇总非劣效（与主检验/各层同处 alpha，
+  // 作为 IUT 组件）。覆盖缺失或下界越界 → 禁止晋级。
+  const styleEngine = styleEngineNonInferiority({
+    strata: strata.map(s => ({ seatCount: s.seatCount, pairs: s.pairs })),
+    weights: finalWeights, alpha, margin,
+  });
 
   const reasons = [];
   if (duplicatesAcrossStrata !== true) reasons.push(`跨人数种子复用：${duplicatesAcrossStrata}`);
@@ -428,6 +491,7 @@ export function firstPlacePromotionDecision({
   for (const ni of nonInferiority) {
     if (!ni.pass) reasons.push(`${ni.seatCount} 人非劣效失败：${ni.reason}`);
   }
+  if (!styleEngine.pass) reasons.push(`style-engine 非劣效失败：${styleEngine.reason}`);
   if (!pooled || pooled.status !== 'analyzed') {
     reasons.push('加权汇总主检验不可执行');
   } else if (!pooled.superiority) {
@@ -448,11 +512,12 @@ export function firstPlacePromotionDecision({
     weights: finalWeights,
     pooled,
     nonInferiority,
+    styleEngine,
     strata: normalized,
     promote,
     verdict: promote ? 'promote' : (pooled && pooled.status === 'analyzed' && pooled.mean > 0 ? 'inconclusive-or-violated' : 'rejected'),
     reasons,
-    multipleTestingControl: 'IUT：主检验与各人数非劣效均在 alpha 水平执行，全部通过才晋级（整体 I 类错误 ≤ alpha）；跨挑战 alpha 由几何消耗账本覆盖',
+    multipleTestingControl: 'IUT：主检验、各人数非劣效与 style-engine 汇总非劣效均在 alpha 水平执行，全部通过才晋级（整体 I 类错误 ≤ alpha）；跨挑战 alpha 由当前 alpha 家族账本覆盖',
     note: '平均得分、资源效率、搜索深度仅诊断，不参与晋级判定',
   };
 }
