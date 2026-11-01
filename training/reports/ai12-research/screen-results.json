@@ -1679,11 +1679,63 @@
       },
       "weighted": -0.026,
       "verdict": "rejected-negative（全人数 ≤0；更窄束宽损失多于深度收益）"
+    },
+    {
+      "id": "E45-5p-late-claim-replace",
+      "hypothesis": "5p 定向：remaining≤2 且可立即认领时，用当步净分最高认领替换先验槽位",
+      "config": {
+        "candidateJointOptionsByPlayerCount": {
+          "5": {
+            "lateClaimCandidate": "replace"
+          }
+        }
+      },
+      "nPerSeatCount": 96,
+      "seedBase": 1791000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64) seats=5 only",
+      "perCount": {
+        "5": {
+          "delta": 0.0,
+          "lo": 0.0,
+          "hi": 0.0,
+          "sd": 0.0,
+          "n": 96
+        }
+      },
+      "weightedAllModes": 0.0,
+      "verdict": "inert（96 种子逐局行为/得分完全一致；注入认领已被候选集覆盖，或仲裁从不因此改变）"
+    },
+    {
+      "id": "E46-5p-late-claim-add",
+      "hypothesis": "5p 定向：同条件下追加净分最高认领（cap+1）",
+      "config": {
+        "candidateJointOptionsByPlayerCount": {
+          "5": {
+            "lateClaimCandidate": "add"
+          }
+        }
+      },
+      "nPerSeatCount": 96,
+      "seedBase": 1792000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64) seats=5 only",
+      "perCount": {
+        "5": {
+          "delta": 0.0,
+          "lo": 0.0,
+          "hi": 0.0,
+          "sd": 0.0,
+          "n": 96
+        }
+      },
+      "weightedAllModes": 0.0,
+      "verdict": "inert（逐局行为零差异；失败画像中的“忽略认领”不是可通过候选注入修复的缺口）"
     }
   ],
   "conclusion": {
     "qualifiedCandidate": false,
-    "reason": "累计 44 个单因子/机制/结构/学习型/定向实验，无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；本轮新增：保真度蒸馏 62.7% 未达标；5p margin 0.05 未复现；5p worlds=6 +4.17pp；路线候选 −2.6~−7.3pp；5p worlds6+cap3 大样本 +1.04pp；深度/宽度覆盖 −2.60pp（3p 显著负）。",
+    "reason": "累计 46 个单因子/机制/结构/学习型/定向实验，无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；本轮新增：保真度蒸馏 62.7%；5p margin 0.05 未复现；5p worlds=6 +4.17pp；路线候选 −2.6~−7.3pp；5p worlds6+cap3 大样本 +1.04pp；深度/宽度 −2.60pp；终局前认领注入 inert（逐局零差异）。",
     "alphaConsumed": 0,
     "formalChallengesRun": 0,
     "rounds": 3
