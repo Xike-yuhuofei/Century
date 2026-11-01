@@ -255,6 +255,8 @@ export type JointSearchOptions = {
   /** 冠军计划路线候选（仅 champion-guided；缺省 0 = 冻结候选集）：
    * 把束搜索最终束中排名 2..N 的不同首步加入联合仲裁候选集。 */
   championAlternatives?: number;
+  /** 叶价值中的手牌权重（仅 champion-guided；缺省 1 = 冻结 L2 口径）。 */
+  evaluatorHandWeight?: number;
   /** 冠军基座参数集（AI7 身份冻结 + C2/C4 变体注入）：显式描述实际消费的
    * 冠军参数集。版本预设（parameterVariant）会注入候选变体；缺省 = 冻结
    * CHAMPION_PARAMETERS（仅兼容旧调用）。 */

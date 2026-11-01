@@ -16,11 +16,14 @@ import { CHAMPION_PARAMETERS } from '../dist/js/ai/parameters.js';
 import { NEUTRAL_PROFILE } from '../dist/js/ai/profiles.js';
 import { chooseJointAction } from '../dist/js/js/adapter.js';
 import { resolveJointConfig } from '../dist/js/js/config.js';
+import { createSimulation } from '../dist/js/sim/session.js';
+import { leafVector } from '../dist/js/js/evaluators.js';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const fixture = JSON.parse(readFileSync(resolve(HERE, 'fixtures/js5-near-terminal-c10.json'), 'utf8')).game;
 const clone = v => JSON.parse(JSON.stringify(v));
 const key = a => JSON.stringify(a);
+const createSimulationForTest = observation => createSimulation(observation, { simSeed: 0 });
 
 function planAlternatives(observation, count) {
   return choosePlan(observation, CHAMPION_PARAMETERS, NEUTRAL_PROFILE, 'beam-rollout', null, { alternatives: count });
@@ -83,4 +86,39 @@ test('championAlternatives 确定性：同输入两次决策完全一致', () =>
   const b = run();
   assert.equal(key(a.action), key(b.action));
   assert.equal(a.config.hash, b.config.hash);
+});
+
+test('叶价值手牌权重：缺省 1 与冻结口径一致，权重 0 只计已打出引擎', () => {
+  const observation = buildObservation(fixture, fixture.current);
+  const sim = createSimulationForTest(observation);
+  const base = { handWeight: 1 };
+  const frozen = leafVector(sim.view, sim.view.current);
+  const weighted = leafVector(sim.view, sim.view.current, base);
+  assert.deepEqual(weighted.engine, frozen.engine);
+  const playedOnly = leafVector(sim.view, sim.view.current, { handWeight: 0 });
+  for (let i = 0; i < playedOnly.engine.length; i++) {
+    assert.equal(playedOnly.engine[i], sim.view.players[i].played.length);
+  }
+  // 有手牌时，降低手牌权重必须降低该席位的 engine 值（否则选项无效）。
+  const hasHand = sim.view.players.some(p => p.hand.length > 0);
+  if (hasHand) {
+    const idx = sim.view.players.findIndex(p => p.hand.length > 0);
+    assert.ok(playedOnly.engine[idx] < frozen.engine[idx]);
+  }
+});
+
+test('evaluatorHandWeight=1 与缺省决策逐位一致（A/A）', () => {
+  const base = () => clone(fixture);
+  base().players[0].isAI = true;
+  const a = chooseJointAction(base(), {
+    version: 'joint-js5', workUnits: 32, championParameters: CHAMPION_PARAMETERS,
+    profile: NEUTRAL_PROFILE, simSeed: 20261102,
+  });
+  const b = chooseJointAction(base(), {
+    version: 'joint-js5', workUnits: 32, championParameters: CHAMPION_PARAMETERS,
+    profile: NEUTRAL_PROFILE, simSeed: 20261102, evaluatorHandWeight: 1,
+  });
+  assert.equal(key(a.action), key(b.action));
+  assert.equal(a.config.evaluatorHandWeight, 1);
+  assert.equal(b.config.evaluatorHandWeight, 1);
 });

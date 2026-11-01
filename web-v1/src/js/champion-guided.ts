@@ -135,6 +135,9 @@ export type ChampionGuidedOptions = {
    * 不同首步加入联合仲裁候选集（同一冠军计划、不同战略路线），用于检验
    * "仲裁候选空间过窄"是否限制冠军强度。 */
   championAlternatives?: number;
+  /** 叶价值中的手牌权重（缺省 1 = 冻结 L2 口径）。<1 降低“囤牌”价值，
+   * 用于检验 5p 败局画像中“手牌多、认领少”的转换不足。 */
+  evaluatorHandWeight?: number;
 };
 
 export type ChampionGuidedSearchOptions = JointSearchOptions & ChampionGuidedOptions;
@@ -567,6 +570,7 @@ class ChampionGuidedPlanner {
       profileName: o.profileName,
       params: o.championParameters ?? CHAMPION_PARAMETERS,
       endgameDiscard: o.endgameDiscard === true,
+      handWeight: o.evaluatorHandWeight ?? 1,
     } satisfies Omit<RolloutContext, 'events' | 'omTimeMs'>;
 
     const aggregates = candidates.map(action => ({
@@ -908,7 +912,7 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   'nearTerminalCandidate' | 'screenGoalScope' | 'batchAdmission' | 'endgameSolver' | 'endgameDiscard' |
   'arbitration' | 'minPairedTrials' | 'pairedZ' | 'claimProtection' | 'claimProtectDelta' |
   'claimProtectMargin' | 'ensureBestClaimCandidate' |
-  'allocation' | 'racingDelta' | 'endgameMode' | 'championAlternatives'>> & ChampionGuidedSearchOptions {
+  'allocation' | 'racingDelta' | 'endgameMode' | 'championAlternatives' | 'evaluatorHandWeight'>> & ChampionGuidedSearchOptions {
   const base = o ?? {};
   const nearTerminalCandidate = base.nearTerminalCandidate ?? 'off';
   if (!['off', 'replace', 'add'].includes(nearTerminalCandidate)) fail(`未知 nearTerminalCandidate：${String(nearTerminalCandidate)}`);
@@ -938,6 +942,10 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   if (!Number.isSafeInteger(championAlternatives) || championAlternatives < 0 || championAlternatives > 3) {
     fail(`championAlternatives 必须为 0–3 的整数，实际：${String(championAlternatives)}`);
   }
+  const evaluatorHandWeight = base.evaluatorHandWeight ?? 1;
+  if (!Number.isFinite(evaluatorHandWeight) || evaluatorHandWeight < 0 || evaluatorHandWeight > 1) {
+    fail(`evaluatorHandWeight 必须在 [0,1]，实际：${String(evaluatorHandWeight)}`);
+  }
   return {
     ...base,
     championStructure: base.championStructure ?? 'beam-rollout',
@@ -948,6 +956,7 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
     claimRanking: base.claimRanking ?? 'enumeration',
     allocation, racingDelta, endgameMode,
     championAlternatives,
+    evaluatorHandWeight,
     nearTerminalCandidate,
     screenGoalScope,
     batchAdmission,

@@ -48,6 +48,8 @@ export type RolloutContext = {
   params?: AIParameters;
   /** 终局圈强制弃置使用官方得分口径（非黄留存）；缺省 false = 冻结 trimStock。 */
   endgameDiscard?: boolean;
+  /** 叶价值中的手牌权重（缺省 1 = 冻结口径；<1 降低囤牌价值）。 */
+  handWeight?: number;
   /** 墙钟硬上限（预算模式；逐转移检查，超调 ≤ 1 步。固定工作量模式缺省 = 无）。 */
   deadline?: number;
   /** 市场事件采集（轨迹解释；仅选定行动的首条轨迹挂载）。 */
@@ -161,7 +163,7 @@ export function playJointTrajectory(
     opponentMeta = null;
   }
   const finished = sim.finished;
-  const value = evaluateLeaf(sim.view, finished, ctx.mySeat, ctx.evaluator, firstPlaceOf);
+  const value = evaluateLeaf(sim.view, finished, ctx.mySeat, ctx.evaluator, firstPlaceOf, { handWeight: ctx.handWeight });
   const finalRank = finished ? (firstPlaceOf(sim.view, ctx.mySeat) ? 1 : (ranking({ players: sim.view.players } as unknown as Parameters<typeof ranking>[0]).findIndex(r => r.id === ctx.mySeat) + 1)) : null;
   return { value, transitions, finished, finalRank };
 }
