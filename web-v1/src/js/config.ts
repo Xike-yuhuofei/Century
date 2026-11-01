@@ -52,6 +52,8 @@ export type JointSearchResolved = {
   claimProtectDelta: number;
   claimProtectMargin: number;
   ensureBestClaimCandidate: boolean;
+  /** 冠军计划路线候选数（0 = 冻结候选集）。 */
+  championAlternatives: number;
   /** 基座引擎模型/人数策略（来自冠军参数集；v1/flat = 冻结口径）。 */
   engineModel: string;
   seatPolicy: string;
@@ -80,6 +82,7 @@ export const JOINT_SEARCH_DEFAULTS = {
   claimProtectDelta: 10,
   claimProtectMargin: 0.10,
   ensureBestClaimCandidate: false,
+  championAlternatives: 0,
   variant: 'joint-rollout',
   worlds: 4,
   horizon: 48,
@@ -92,6 +95,7 @@ const PRESET_FIELDS = [
   'claimRanking', 'nearTerminalCandidate', 'screenGoalScope', 'batchAdmission',
   'endgameSolver', 'endgameDiscard', 'arbitration', 'minPairedTrials', 'pairedZ',
   'claimProtection', 'claimProtectDelta', 'claimProtectMargin', 'ensureBestClaimCandidate',
+  'championAlternatives',
   'variant', 'worlds', 'horizon', 'opponentMode', 'evaluator',
 ] as const;
 
@@ -193,6 +197,7 @@ export function resolveJointConfig(
     claimProtectDelta: Number(merged.claimProtectDelta),
     claimProtectMargin: Number(merged.claimProtectMargin),
     ensureBestClaimCandidate: Boolean(merged.ensureBestClaimCandidate),
+    championAlternatives: Number(merged.championAlternatives),
     engineModel: championParameters.engineModel ?? 'v1',
     seatPolicy: championParameters.seatPolicy ?? 'flat',
     preset,

@@ -345,15 +345,26 @@ function prospectiveFormula(
  * profileOverride：显式人格（训练模拟器按正式游戏席位映射注入）；
  * 缺省时沿用 profileFor 的席位推导，正式游戏行为不变。
  * structure：结构变体分派（缺省 beam-lineage = 冠军基线）。 */
+export type PlanAlternative = { action: Action; preferred: string; quality: number };
+export type PlanOptions = {
+  /** 附加返回的候选路线首步数（缺省 0 = 行为与返回结构逐位不变）。
+   * 仅用于联合仲裁的候选空间扩展；不影响 plan 本身的选择。 */
+  alternatives?: number;
+};
+
 export function choosePlan(
   view: AIObservation,
   params: AIParameters,
   profileOverride?: Profile,
   structureInput?: AIStructure,
   modelInput?: EngineModelContext | null,
-): (ScoredState & { profile: string; unseenCounts: number[] }) | null {
+  options: PlanOptions = {},
+): (ScoredState & { profile: string; unseenCounts: number[]; alternatives?: PlanAlternative[] }) | null {
   const structure = structureInput ?? 'beam-lineage';
   const profile = profileOverride ?? profileFor(view);
+  const wantAlternatives = Math.max(0, Math.min(3, Math.floor(Number(options.alternatives ?? 0))));
+  const solvedAlternatives: PlanAlternative[] = [];
+  const prospectiveAlternatives: PlanAlternative[] = [];
   // AI7 C2/C4：v2 引擎模型上下文（剩余回合/人数竞争）。v1 保持 null，
   // 全部求值路径调用冻结口径，行为逐位不变。
   const model = params.engineModel === 'v2' ? (modelInput ?? engineModelContext(view, params)) : null;
@@ -407,6 +418,9 @@ export function choosePlan(
           if (completedFirstGoal(next, preferred)) {
             const quality = routeGrade(next, preferred, stage, profile, params, model)
               * survivalOf(preferred) * goalFactor;
+            if (wantAlternatives && next.first) {
+              solvedAlternatives.push({ action: next.first, preferred, quality });
+            }
             if (!solved || quality > solved.quality) solved = { ...next, preferred, quality };
             continue;
           }
@@ -440,6 +454,9 @@ export function choosePlan(
       for (const candidate of beam) {
         const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model)
           * survivalOf(preferred) * goalFactor;
+        if (wantAlternatives && candidate.first) {
+          prospectiveAlternatives.push({ action: candidate.first, preferred, quality: expected });
+        }
         if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
       }
     }
@@ -480,7 +497,24 @@ export function choosePlan(
   }
   // 有可信的实际认领路线时优先执行；未找到时采用多回合目标推进的最佳前缀。
   const plan = solved ?? prospective;
-  return plan
-    ? { ...plan, profile: profile.name, unseenCounts: [knowledge.unseenMerchants.length, knowledge.unseenGolems.length] }
-    : null;
+  if (!plan) return null;
+  let alternatives: PlanAlternative[] | undefined;
+  if (wantAlternatives) {
+    const source = solved ? solvedAlternatives : prospectiveAlternatives;
+    const seen = new Set<string>([JSON.stringify(plan.first)]);
+    const picked: PlanAlternative[] = [];
+    for (const candidate of [...source].sort((a, b) => b.quality - a.quality)) {
+      const key = JSON.stringify(candidate.action);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      picked.push(candidate);
+      if (picked.length >= wantAlternatives) break;
+    }
+    alternatives = picked;
+  }
+  return {
+    ...plan, profile: profile.name,
+    unseenCounts: [knowledge.unseenMerchants.length, knowledge.unseenGolems.length],
+    ...(wantAlternatives ? { alternatives } : {}),
+  };
 }

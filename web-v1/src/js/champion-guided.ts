@@ -131,6 +131,10 @@ export type ChampionGuidedOptions = {
    * （不再限 2 个）∪ 先验 top 填满 cap——终局是小行动空间精确排序问题，
    * 认领顺序比探索宽度更重要。 */
   endgameMode?: 'default' | 'claimFocus';
+  /** 冠军计划路线候选（缺省 0 = 冻结行为）：把束搜索最终束中排名 2..N 的
+   * 不同首步加入联合仲裁候选集（同一冠军计划、不同战略路线），用于检验
+   * "仲裁候选空间过窄"是否限制冠军强度。 */
+  championAlternatives?: number;
 };
 
 export type ChampionGuidedSearchOptions = JointSearchOptions & ChampionGuidedOptions;
@@ -220,9 +224,14 @@ class ChampionGuidedPlanner {
     // 1. 冠军规划（冻结参数 + 显式结构；人格经 profileOverride 注入）。
     const profile: Profile = o.profileName ? profileByName(o.profileName) : NEUTRAL_PROFILE;
     const planStart = performance.now();
-    const plan = choosePlan(observation, championParameters, profile, o.championStructure ?? 'beam-rollout');
+    const plan = choosePlan(
+      observation, championParameters, profile, o.championStructure ?? 'beam-rollout',
+      null,
+      o.championAlternatives ? { alternatives: o.championAlternatives } : undefined,
+    );
     phase.planMs = performance.now() - planStart;
     const championAction: Action | null = plan?.first ?? null;
+    const championAlternatives: Action[] = (plan?.alternatives ?? []).map(a => a.action);
 
     // 溢出阶段在 adapter 层处理（champion trimStock 口径），不会进入这里。
 
@@ -383,10 +392,10 @@ class ChampionGuidedPlanner {
       .sort((a, b) => rootOrder.get(actionKey(a.action))! - rootOrder.get(actionKey(b.action))!);
     phase.screenMs = performance.now() - screenStart;
     const candidates: Action[] = [];
-    const candidateSources: Array<'champion' | 'claim' | 'prior' | 'near-terminal'> = [];
+    const candidateSources: Array<'champion' | 'champion-alt' | 'claim' | 'prior' | 'near-terminal'> = [];
     const priorOf = new Map<string, number>();
     const seen = new Set<string>();
-    const push = (a: Action | null | undefined, source: 'champion' | 'claim' | 'prior' | 'near-terminal') => {
+    const push = (a: Action | null | undefined, source: 'champion' | 'champion-alt' | 'claim' | 'prior' | 'near-terminal') => {
       if (!a) return false;
       const k = actionKey(a);
       if (seen.has(k)) return false;
@@ -396,6 +405,11 @@ class ChampionGuidedPlanner {
       return true;
     };
     push(championAction, 'champion');
+    // AI12：冠军计划的其他路线首步（仅显式选项；缺省 0 = 冻结候选集）。
+    for (const alt of championAlternatives) {
+      if (candidates.length >= (o.candidateCap ?? 4)) break;
+      push(alt, 'champion-alt');
+    }
     // C2：立即认领候选的选取原则（缺省 enumeration = PR #27 原始语义；
     // prior 模式按根筛选先验降序取前 2，避免枚举顺序偶然排除高分认领）。
     // C4 claimFocus：终局已触发时候选 = 冠军行动 ∪ 全部合法认领（认领顺序
@@ -894,7 +908,7 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   'nearTerminalCandidate' | 'screenGoalScope' | 'batchAdmission' | 'endgameSolver' | 'endgameDiscard' |
   'arbitration' | 'minPairedTrials' | 'pairedZ' | 'claimProtection' | 'claimProtectDelta' |
   'claimProtectMargin' | 'ensureBestClaimCandidate' |
-  'allocation' | 'racingDelta' | 'endgameMode'>> & ChampionGuidedSearchOptions {
+  'allocation' | 'racingDelta' | 'endgameMode' | 'championAlternatives'>> & ChampionGuidedSearchOptions {
   const base = o ?? {};
   const nearTerminalCandidate = base.nearTerminalCandidate ?? 'off';
   if (!['off', 'replace', 'add'].includes(nearTerminalCandidate)) fail(`未知 nearTerminalCandidate：${String(nearTerminalCandidate)}`);
@@ -920,6 +934,10 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   if (!['default', 'claimFocus'].includes(endgameMode)) fail(`未知 endgameMode：${String(endgameMode)}`);
   const racingDelta = base.racingDelta ?? 0.05;
   if (!(racingDelta > 0 && racingDelta < 1)) fail(`racingDelta 必须在 (0,1)，实际：${String(racingDelta)}`);
+  const championAlternatives = base.championAlternatives ?? 0;
+  if (!Number.isSafeInteger(championAlternatives) || championAlternatives < 0 || championAlternatives > 3) {
+    fail(`championAlternatives 必须为 0–3 的整数，实际：${String(championAlternatives)}`);
+  }
   return {
     ...base,
     championStructure: base.championStructure ?? 'beam-rollout',
@@ -929,6 +947,7 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
     contestThreshold: base.contestThreshold ?? 0.85,
     claimRanking: base.claimRanking ?? 'enumeration',
     allocation, racingDelta, endgameMode,
+    championAlternatives,
     nearTerminalCandidate,
     screenGoalScope,
     batchAdmission,
