@@ -138,6 +138,10 @@ export type ChampionGuidedOptions = {
   /** 叶价值中的手牌权重（缺省 1 = 冻结 L2 口径）。<1 降低“囤牌”价值，
    * 用于检验 5p 败局画像中“手牌多、认领少”的转换不足。 */
   evaluatorHandWeight?: number;
+  /** 研究用冠军束搜索深度覆盖（缺省 null = 冻结 6/3/1）。 */
+  championDepth?: number | null;
+  /** 研究用冠军束搜索宽度覆盖（缺省 null = 冻结 14/10）。 */
+  championWidth?: number | null;
 };
 
 export type ChampionGuidedSearchOptions = JointSearchOptions & ChampionGuidedOptions;
@@ -227,10 +231,14 @@ class ChampionGuidedPlanner {
     // 1. 冠军规划（冻结参数 + 显式结构；人格经 profileOverride 注入）。
     const profile: Profile = o.profileName ? profileByName(o.profileName) : NEUTRAL_PROFILE;
     const planStart = performance.now();
+    const planOptions: { alternatives?: number; depth?: number | null; width?: number | null } = {};
+    if (o.championAlternatives) planOptions.alternatives = o.championAlternatives;
+    if (o.championDepth != null) planOptions.depth = o.championDepth;
+    if (o.championWidth != null) planOptions.width = o.championWidth;
     const plan = choosePlan(
       observation, championParameters, profile, o.championStructure ?? 'beam-rollout',
       null,
-      o.championAlternatives ? { alternatives: o.championAlternatives } : undefined,
+      Object.keys(planOptions).length ? planOptions : undefined,
     );
     phase.planMs = performance.now() - planStart;
     const championAction: Action | null = plan?.first ?? null;
@@ -912,7 +920,8 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   'nearTerminalCandidate' | 'screenGoalScope' | 'batchAdmission' | 'endgameSolver' | 'endgameDiscard' |
   'arbitration' | 'minPairedTrials' | 'pairedZ' | 'claimProtection' | 'claimProtectDelta' |
   'claimProtectMargin' | 'ensureBestClaimCandidate' |
-  'allocation' | 'racingDelta' | 'endgameMode' | 'championAlternatives' | 'evaluatorHandWeight'>> & ChampionGuidedSearchOptions {
+  'allocation' | 'racingDelta' | 'endgameMode' | 'championAlternatives' | 'evaluatorHandWeight' |
+  'championDepth' | 'championWidth'>> & ChampionGuidedSearchOptions {
   const base = o ?? {};
   const nearTerminalCandidate = base.nearTerminalCandidate ?? 'off';
   if (!['off', 'replace', 'add'].includes(nearTerminalCandidate)) fail(`未知 nearTerminalCandidate：${String(nearTerminalCandidate)}`);
@@ -946,6 +955,14 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   if (!Number.isFinite(evaluatorHandWeight) || evaluatorHandWeight < 0 || evaluatorHandWeight > 1) {
     fail(`evaluatorHandWeight 必须在 [0,1]，实际：${String(evaluatorHandWeight)}`);
   }
+  const championDepth = base.championDepth ?? null;
+  if (championDepth !== null && (!Number.isSafeInteger(championDepth) || championDepth < 2 || championDepth > 12)) {
+    fail(`championDepth 必须为 2–12 的整数或 null，实际：${String(championDepth)}`);
+  }
+  const championWidth = base.championWidth ?? null;
+  if (championWidth !== null && (!Number.isSafeInteger(championWidth) || championWidth < 4 || championWidth > 24)) {
+    fail(`championWidth 必须为 4–24 的整数或 null，实际：${String(championWidth)}`);
+  }
   return {
     ...base,
     championStructure: base.championStructure ?? 'beam-rollout',
@@ -957,6 +974,8 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
     allocation, racingDelta, endgameMode,
     championAlternatives,
     evaluatorHandWeight,
+    championDepth,
+    championWidth,
     nearTerminalCandidate,
     screenGoalScope,
     batchAdmission,

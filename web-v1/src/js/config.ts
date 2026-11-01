@@ -56,6 +56,9 @@ export type JointSearchResolved = {
   championAlternatives: number;
   /** 叶价值手牌权重（1 = 冻结）。 */
   evaluatorHandWeight: number;
+  /** 冠军束搜索深度/宽度覆盖（null = 冻结）。 */
+  championDepth: number | null;
+  championWidth: number | null;
   /** 基座引擎模型/人数策略（来自冠军参数集；v1/flat = 冻结口径）。 */
   engineModel: string;
   seatPolicy: string;
@@ -86,6 +89,8 @@ export const JOINT_SEARCH_DEFAULTS = {
   ensureBestClaimCandidate: false,
   championAlternatives: 0,
   evaluatorHandWeight: 1,
+  championDepth: null,
+  championWidth: null,
   variant: 'joint-rollout',
   worlds: 4,
   horizon: 48,
@@ -98,7 +103,7 @@ const PRESET_FIELDS = [
   'claimRanking', 'nearTerminalCandidate', 'screenGoalScope', 'batchAdmission',
   'endgameSolver', 'endgameDiscard', 'arbitration', 'minPairedTrials', 'pairedZ',
   'claimProtection', 'claimProtectDelta', 'claimProtectMargin', 'ensureBestClaimCandidate',
-  'championAlternatives', 'evaluatorHandWeight',
+  'championAlternatives', 'evaluatorHandWeight', 'championDepth', 'championWidth',
   'variant', 'worlds', 'horizon', 'opponentMode', 'evaluator',
 ] as const;
 
@@ -202,6 +207,8 @@ export function resolveJointConfig(
     ensureBestClaimCandidate: Boolean(merged.ensureBestClaimCandidate),
     championAlternatives: Number(merged.championAlternatives),
     evaluatorHandWeight: Number(merged.evaluatorHandWeight),
+    championDepth: merged.championDepth == null ? null : Number(merged.championDepth),
+    championWidth: merged.championWidth == null ? null : Number(merged.championWidth),
     engineModel: championParameters.engineModel ?? 'v1',
     seatPolicy: championParameters.seatPolicy ?? 'flat',
     preset,

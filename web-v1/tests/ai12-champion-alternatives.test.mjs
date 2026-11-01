@@ -122,3 +122,19 @@ test('evaluatorHandWeight=1 与缺省决策逐位一致（A/A）', () => {
   assert.equal(a.config.evaluatorHandWeight, 1);
   assert.equal(b.config.evaluatorHandWeight, 1);
 });
+
+test('冠军束搜索深度/宽度覆盖：缺省 null 行为不变，显式覆盖首步合法且确定', () => {
+  const observation = buildObservation(fixture, fixture.current);
+  const base = choosePlan(observation, CHAMPION_PARAMETERS, NEUTRAL_PROFILE, 'beam-rollout');
+  const nullOverride = choosePlan(observation, CHAMPION_PARAMETERS, NEUTRAL_PROFILE, 'beam-rollout', null, { depth: null, width: null });
+  assert.equal(key(base.first), key(nullOverride.first));
+  const deeper = choosePlan(observation, CHAMPION_PARAMETERS, NEUTRAL_PROFILE, 'beam-rollout', null, { depth: 8, width: 10 });
+  assert.ok(deeper);
+  const game = clone(fixture);
+  assert.doesNotThrow(() => applyAction(game, deeper.first));
+  const again = choosePlan(observation, CHAMPION_PARAMETERS, NEUTRAL_PROFILE, 'beam-rollout', null, { depth: 8, width: 10 });
+  assert.equal(key(deeper.first), key(again.first));
+  const cfg = resolveJointConfig('joint-js5', { championDepth: 8, championWidth: 10 });
+  assert.equal(cfg.championDepth, 8);
+  assert.equal(cfg.championWidth, 10);
+});
