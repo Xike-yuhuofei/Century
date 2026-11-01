@@ -1370,11 +1370,147 @@
       },
       "weightedAllModes": 0.0026,
       "verdict": "null（组合未叠加出可用增量；综合门禁增量 +0.26pp）"
+    },
+    {
+      "id": "E37-champion-alternatives-1",
+      "hypothesis": "联合仲裁候选集加入冠军束搜索最终束中排名第 2 的不同路线首步（cap=4）",
+      "config": {
+        "candidateJointOptions": {
+          "championAlternatives": 1
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1750000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": -0.1042,
+          "lo": -0.2082,
+          "hi": -0.0001,
+          "sd": 0.4247,
+          "n": 48
+        },
+        "3": {
+          "delta": -0.0417,
+          "lo": -0.175,
+          "hi": 0.0916,
+          "sd": 0.5442,
+          "n": 48
+        },
+        "4": {
+          "delta": 0.0208,
+          "lo": -0.1174,
+          "hi": 0.1591,
+          "sd": 0.5645,
+          "n": 48
+        },
+        "5": {
+          "delta": 0.0,
+          "lo": -0.1337,
+          "hi": 0.1337,
+          "sd": 0.5458,
+          "n": 48
+        }
+      },
+      "weighted": -0.0313,
+      "verdict": "rejected-negative（2p −10.4pp，90% CI 上界 −0.01pp 已排除零；4/5p 小幅正但不抵消）"
+    },
+    {
+      "id": "E38-champion-alternatives-2",
+      "hypothesis": "加入排名第 2–3 的两条不同路线首步（cap=4）",
+      "config": {
+        "candidateJointOptions": {
+          "championAlternatives": 2
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1750000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": -0.1042,
+          "lo": -0.2082,
+          "hi": -0.0001,
+          "sd": 0.4247,
+          "n": 48
+        },
+        "3": {
+          "delta": -0.0625,
+          "lo": -0.18,
+          "hi": 0.055,
+          "sd": 0.4796,
+          "n": 48
+        },
+        "4": {
+          "delta": 0.0417,
+          "lo": -0.1096,
+          "hi": 0.1929,
+          "sd": 0.6174,
+          "n": 48
+        },
+        "5": {
+          "delta": 0.0208,
+          "lo": -0.1504,
+          "hi": 0.1921,
+          "sd": 0.6992,
+          "n": 48
+        }
+      },
+      "weighted": -0.026,
+      "verdict": "rejected-negative（2p 同样 −10.4pp；路线数增加未改善）"
+    },
+    {
+      "id": "E39-champion-alternatives-1-cap5",
+      "hypothesis": "路线候选不挤占先验候选：cap 4→5 同时保留冠军路线候选与先验 top",
+      "config": {
+        "candidateJointOptions": {
+          "championAlternatives": 1,
+          "candidateCap": 5
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1760000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": -0.0208,
+          "lo": -0.1681,
+          "hi": 0.1264,
+          "sd": 0.601,
+          "n": 48
+        },
+        "3": {
+          "delta": -0.1875,
+          "lo": -0.3362,
+          "hi": -0.0388,
+          "sd": 0.607,
+          "n": 48
+        },
+        "4": {
+          "delta": -0.0625,
+          "lo": -0.2331,
+          "hi": 0.1081,
+          "sd": 0.697,
+          "n": 48
+        },
+        "5": {
+          "delta": -0.0208,
+          "lo": -0.1765,
+          "hi": 0.1348,
+          "sd": 0.635,
+          "n": 48
+        }
+      },
+      "weighted": -0.0729,
+      "verdict": "rejected-negative（3p −18.75pp，90% CI 上界 −3.88pp；cap5 扩大候选稀释试验预算，且路线候选本身在 2p/3p 为负）"
     }
   ],
   "conclusion": {
     "qualifiedCandidate": false,
-    "reason": "累计 36 个单因子/机制/结构/学习型/定向实验，无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；本轮新增：保真度蒸馏上限 62.7%（目标 85%，未部署）；5p 定向 margin 0.05 未复现（0.00pp）；5p worlds=6 三次窗口一致为正但仅 +4.17pp（综合 +1.04pp，远低于 5p ≥8pp 的必要条件）。",
+    "reason": "累计 39 个单因子/机制/结构/学习型/定向实验，无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；本轮新增：保真度蒸馏上限 62.7%；5p 定向 margin 0.05 未复现；5p worlds=6 仅 +4.17pp（综合 +1.04pp）；冠军路线候选 alt1/alt2 综合 −3.13/−2.60pp（2p 显著负），alt1+cap5 −7.29pp（3p 显著负）。",
     "alphaConsumed": 0,
     "formalChallengesRun": 0,
     "rounds": 3
