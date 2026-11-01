@@ -52,11 +52,12 @@ function stats(values) {
   return { n, mean, lo: mean - t * se, hi: mean + t * se, sd: Math.sqrt(variance) };
 }
 
-function armVersion({ overrides, params, workUnits, seatCount, executor }) {
+function armVersion({ overrides, overridesPerCount, params, workUnits, seatCount, executor }) {
   const descriptor = { ...CHAMPION_PARAMS, ...(params ?? {}) };
   const version = toSeatVersion(descriptor, { seatCount, workUnits });
-  if (overrides && Object.keys(overrides).length) {
-    version.jointOptions = { ...(version.jointOptions ?? {}), ...overrides };
+  const merged = { ...(overrides ?? {}), ...(overridesPerCount?.[seatCount] ?? {}) };
+  if (Object.keys(merged).length) {
+    version.jointOptions = { ...(version.jointOptions ?? {}), ...merged };
   }
   if (executor) {
     version.aiModule = executor.aiModule;
@@ -65,7 +66,7 @@ function armVersion({ overrides, params, workUnits, seatCount, executor }) {
   return version;
 }
 
-export async function runFormalScreen({ overridesA, overridesB, paramsA, paramsB, n, seats, seedBase, seedStride, workUnits, artifactPath, maxMoves = 1200, deadlineMs = 300_000 }) {
+export async function runFormalScreen({ overridesA, overridesB, overridesAPerCount, overridesBPerCount, paramsA, paramsB, n, seats, seedBase, seedStride, workUnits, artifactPath, maxMoves = 1200, deadlineMs = 300_000 }) {
   let executorA = null;
   if (artifactPath) {
     const artifact = JSON.parse(readFileSync(artifactPath, 'utf8'));
@@ -83,8 +84,8 @@ export async function runFormalScreen({ overridesA, overridesB, paramsA, paramsB
     for (let i = 0; i < n; i++) {
       const seed = seedBase + seatCount * seedStride + i;
       const focusSeat = focusSeatFor({ seedIndex: i, seatCount });
-      const vA = armVersion({ overrides: overridesA, params: paramsA, workUnits, seatCount, executor: executorA });
-      const vB = armVersion({ overrides: overridesB, params: paramsB, workUnits, seatCount, executor: null });
+      const vA = armVersion({ overrides: overridesA, overridesPerCount: overridesAPerCount, params: paramsA, workUnits, seatCount, executor: executorA });
+      const vB = armVersion({ overrides: overridesB, overridesPerCount: overridesBPerCount, params: paramsB, workUnits, seatCount, executor: null });
       const baseVersions = Array.from({ length: seatCount }, (_, seat) => (seat === focusSeat
         ? null
         : toSeatVersion(registry.versions[opponentForSeat({ seedIndex: i, seat, opponents: OPPONENT_IDS })].parameters, { seatCount, workUnits })));
@@ -110,6 +111,7 @@ export async function runFormalScreen({ overridesA, overridesB, paramsA, paramsB
     schema: 'century-ai12-paired-screen-formal-v1',
     kind: 'development-screen (NOT formal evidence)',
     overridesA, overridesB, paramsA: paramsA ?? null, paramsB: paramsB ?? null,
+    overridesAPerCount: overridesAPerCount ?? null, overridesBPerCount: overridesBPerCount ?? null,
     artifactPath: artifactPath ?? null,
     n, seats, seedBase, seedStride, workUnits, weighted, byCount, anomalies,
     wallMinutes: +((Date.now() - started) / 60000).toFixed(1),
@@ -121,6 +123,8 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const result = await runFormalScreen({
     overridesA: JSON.parse(args.a ?? '{}'),
     overridesB: JSON.parse(args.b ?? '{}'),
+    overridesAPerCount: args['a-per-count'] ? JSON.parse(args['a-per-count']) : null,
+    overridesBPerCount: args['b-per-count'] ? JSON.parse(args['b-per-count']) : null,
     paramsA: args.pa ? JSON.parse(args.pa) : null,
     paramsB: args.pb ? JSON.parse(args.pb) : null,
     n: Number(args.n ?? 24),
