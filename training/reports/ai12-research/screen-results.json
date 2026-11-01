@@ -1050,11 +1050,85 @@
       },
       "weighted": -0.0312,
       "verdict": "rejected"
+    },
+    {
+      "id": "E28-formal-cap-2",
+      "hypothesis": "联合仲裁候选上限 4→2（每个候选双倍试验）",
+      "config": {
+        "candidateJointOptions": {
+          "candidateCap": 2
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1736900000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": -0.0625,
+          "lo": -0.2255,
+          "hi": 0.1005
+        },
+        "3": {
+          "delta": 0.0625,
+          "lo": -0.084,
+          "hi": 0.209
+        },
+        "4": {
+          "delta": -0.1667,
+          "lo": -0.2938,
+          "hi": -0.0395
+        },
+        "5": {
+          "delta": -0.1667,
+          "lo": -0.3125,
+          "hi": -0.0208
+        }
+      },
+      "weighted": -0.0833,
+      "verdict": "rejected（4p/5p 显著负）"
+    },
+    {
+      "id": "E29-formal-cap-3",
+      "hypothesis": "联合仲裁候选上限 4→3",
+      "config": {
+        "candidateJointOptions": {
+          "candidateCap": 3
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1737000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": -0.0208,
+          "lo": -0.1392,
+          "hi": 0.0976
+        },
+        "3": {
+          "delta": -0.0208,
+          "lo": -0.1496,
+          "hi": 0.1079
+        },
+        "4": {
+          "delta": -0.0625,
+          "lo": -0.2,
+          "hi": 0.075
+        },
+        "5": {
+          "delta": 0.0417,
+          "lo": -0.1178,
+          "hi": 0.2011
+        }
+      },
+      "weighted": -0.0156,
+      "verdict": "null"
     }
   ],
   "conclusion": {
     "qualifiedCandidate": false,
-    "reason": "累计 27 个单因子/结构实验（含正式结构复测）无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；最强单项为 E14(+7.3pp) 但 5p −18.8pp 违反非劣效；其余正向均在噪声内且未复现",
+    "reason": "累计 29 个单因子/机制实验（含正式结构复测）无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；候选上限呈倒 U 型（2/3/6 均劣于默认 4），价值口径各变体均不优于 L2，对手模型与配对差仲裁显著负向",
     "alphaConsumed": 0,
     "formalChallengesRun": 0
   },
