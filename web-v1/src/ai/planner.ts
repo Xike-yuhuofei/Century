@@ -350,6 +350,10 @@ export type PlanOptions = {
   /** 附加返回的候选路线首步数（缺省 0 = 行为与返回结构逐位不变）。
    * 仅用于联合仲裁的候选空间扩展；不影响 plan 本身的选择。 */
   alternatives?: number;
+  /** 研究用束搜索深度覆盖（缺省 null = 冻结：终局 1 / 临近终局 3 / 常规 6）。 */
+  depth?: number | null;
+  /** 研究用束宽覆盖（缺省 null = 冻结：临近终局 10 / 常规 14）。 */
+  width?: number | null;
 };
 
 export function choosePlan(
@@ -375,8 +379,16 @@ export function choosePlan(
   const threshold = view.players.length >= 4 ? 5 : 6;
   const mostClaimed = Math.max(...view.players.map(p => p.claimed.length));
   const nearEnd = view.triggerPlayer !== null || mostClaimed >= threshold - 1;
-  const depth = view.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
-  const baseWidth = nearEnd ? 10 : 14;
+  // AI12 研究选项：显式覆盖只作用于常规阶段；临近终局保持冻结深度/宽度
+  // （避免同时改变终局语义）。缺省 null = 逐位不变。
+  const defaultDepth = view.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
+  const depth = nearEnd || view.triggerPlayer !== null
+    ? defaultDepth
+    : (Number.isSafeInteger(options.depth) ? Math.max(2, Math.min(12, options.depth!)) : defaultDepth);
+  const defaultWidth = nearEnd ? 10 : 14;
+  const baseWidth = Number.isSafeInteger(options.width)
+    ? Math.max(4, Math.min(24, options.width!))
+    : defaultWidth;
   // beam-adaptive：宽度随层号自适应（前置宽、后置窄）；其余结构用固定宽度。
   const widthFor = (layer: number) =>
     structure === 'beam-adaptive' ? adaptiveWidth(layer, depth, baseWidth) : baseWidth;
