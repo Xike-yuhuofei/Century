@@ -1587,11 +1587,103 @@
       },
       "weightedAllModes": 0.0026,
       "verdict": "not-replicated（N=192 仅 +1.04pp；前两窗口的 +8pp 视为小样本窗口噪声；不进入正式挑战）"
+    },
+    {
+      "id": "E43-depth8-width10",
+      "hypothesis": "同预算下更深更窄的冠军束搜索（depth 6→8，width 14→10）",
+      "config": {
+        "candidateJointOptions": {
+          "championDepth": 8,
+          "championWidth": 10
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1790000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": 0.0417,
+          "lo": -0.0708,
+          "hi": 0.1542,
+          "sd": 0.459,
+          "n": 48
+        },
+        "3": {
+          "delta": -0.1458,
+          "lo": -0.2973,
+          "hi": 0.0057,
+          "sd": 0.618,
+          "n": 48
+        },
+        "4": {
+          "delta": -0.0417,
+          "lo": -0.165,
+          "hi": 0.0817,
+          "sd": 0.504,
+          "n": 48
+        },
+        "5": {
+          "delta": 0.0417,
+          "lo": -0.0589,
+          "hi": 0.1422,
+          "sd": 0.41,
+          "n": 48
+        }
+      },
+      "weighted": -0.026,
+      "verdict": "rejected-negative（3p −14.58pp；更深搜索未改善长程转换，反而在 3p 明显退化）"
+    },
+    {
+      "id": "E44-depth10-width8",
+      "hypothesis": "更极端更深更窄（depth 10，width 8）",
+      "config": {
+        "candidateJointOptions": {
+          "championDepth": 10,
+          "championWidth": 8
+        }
+      },
+      "nPerSeatCount": 48,
+      "seedBase": 1790000000,
+      "seedStride": 1000,
+      "harness": "formal(wu64)",
+      "perCount": {
+        "2": {
+          "delta": 0.0,
+          "lo": -0.1238,
+          "hi": 0.1238,
+          "sd": 0.505,
+          "n": 48
+        },
+        "3": {
+          "delta": -0.0417,
+          "lo": -0.2011,
+          "hi": 0.1178,
+          "sd": 0.651,
+          "n": 48
+        },
+        "4": {
+          "delta": -0.0417,
+          "lo": -0.175,
+          "hi": 0.0916,
+          "sd": 0.544,
+          "n": 48
+        },
+        "5": {
+          "delta": -0.0208,
+          "lo": -0.1279,
+          "hi": 0.0862,
+          "sd": 0.437,
+          "n": 48
+        }
+      },
+      "weighted": -0.026,
+      "verdict": "rejected-negative（全人数 ≤0；更窄束宽损失多于深度收益）"
     }
   ],
   "conclusion": {
     "qualifiedCandidate": false,
-    "reason": "累计 42 个单因子/机制/结构/学习型/定向实验，无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；本轮新增：保真度蒸馏上限 62.7%；5p margin 0.05 未复现；5p worlds=6 仅 +4.17pp；冠军路线候选 −2.6~−7.3pp；5p worlds6+cap3 两窗口 +8.33/+7.29pp 但 N=192 复现仅 +1.04pp（不显著）。",
+    "reason": "累计 44 个单因子/机制/结构/学习型/定向实验，无一同时满足综合 ≥+2pp 显著与各人数 −2pp 非劣效；本轮新增：保真度蒸馏 62.7% 未达标；5p margin 0.05 未复现；5p worlds=6 +4.17pp；路线候选 −2.6~−7.3pp；5p worlds6+cap3 大样本 +1.04pp；深度/宽度覆盖 −2.60pp（3p 显著负）。",
     "alphaConsumed": 0,
     "formalChallengesRun": 0,
     "rounds": 3
