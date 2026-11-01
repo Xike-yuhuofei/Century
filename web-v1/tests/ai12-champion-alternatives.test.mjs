@@ -138,3 +138,27 @@ test('冠军束搜索深度/宽度覆盖：缺省 null 行为不变，显式覆�
   assert.equal(cfg.championDepth, 8);
   assert.equal(cfg.championWidth, 10);
 });
+
+test('lateClaimCandidate=off 与缺省行为一致；显式 replace 配置身份可审计', () => {
+  const base = () => clone(fixture);
+  base().players[0].isAI = true;
+  const a = chooseJointAction(base(), {
+    version: 'joint-js5', workUnits: 32, championParameters: CHAMPION_PARAMETERS,
+    profile: NEUTRAL_PROFILE, simSeed: 20261102,
+  });
+  const b = chooseJointAction(base(), {
+    version: 'joint-js5', workUnits: 32, championParameters: CHAMPION_PARAMETERS,
+    profile: NEUTRAL_PROFILE, simSeed: 20261102, lateClaimCandidate: 'off', lateClaimThreshold: 2, lateClaimMinDelta: 1,
+  });
+  assert.equal(key(a.action), key(b.action));
+  const cfg = resolveJointConfig('joint-js5', { lateClaimCandidate: 'replace', lateClaimThreshold: 2, lateClaimMinDelta: 5 });
+  assert.equal(cfg.lateClaimCandidate, 'replace');
+  assert.equal(cfg.lateClaimThreshold, 2);
+  assert.equal(cfg.lateClaimMinDelta, 5);
+  const c = chooseJointAction(clone(fixture), {
+    version: 'joint-js5', workUnits: 32, championParameters: CHAMPION_PARAMETERS,
+    profile: NEUTRAL_PROFILE, simSeed: 20261102, lateClaimCandidate: 'replace',
+  });
+  const game = clone(fixture);
+  assert.doesNotThrow(() => applyAction(game, c.action));
+});

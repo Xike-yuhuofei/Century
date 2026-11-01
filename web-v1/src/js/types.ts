@@ -261,6 +261,10 @@ export type JointSearchOptions = {
   championDepth?: number | null;
   /** 研究用冠军束搜索宽度覆盖（缺省 null = 冻结）。 */
   championWidth?: number | null;
+  /** 终局前认领注入（仅 champion-guided；缺省 off）。 */
+  lateClaimCandidate?: 'off' | 'add' | 'replace';
+  lateClaimThreshold?: number;
+  lateClaimMinDelta?: number;
   /** 冠军基座参数集（AI7 身份冻结 + C2/C4 变体注入）：显式描述实际消费的
    * 冠军参数集。版本预设（parameterVariant）会注入候选变体；缺省 = 冻结
    * CHAMPION_PARAMETERS（仅兼容旧调用）。 */

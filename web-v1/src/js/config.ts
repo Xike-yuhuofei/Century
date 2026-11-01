@@ -59,6 +59,10 @@ export type JointSearchResolved = {
   /** 冠军束搜索深度/宽度覆盖（null = 冻结）。 */
   championDepth: number | null;
   championWidth: number | null;
+  /** 终局前认领注入。 */
+  lateClaimCandidate: string;
+  lateClaimThreshold: number;
+  lateClaimMinDelta: number;
   /** 基座引擎模型/人数策略（来自冠军参数集；v1/flat = 冻结口径）。 */
   engineModel: string;
   seatPolicy: string;
@@ -91,6 +95,9 @@ export const JOINT_SEARCH_DEFAULTS = {
   evaluatorHandWeight: 1,
   championDepth: null,
   championWidth: null,
+  lateClaimCandidate: 'off',
+  lateClaimThreshold: 2,
+  lateClaimMinDelta: 1,
   variant: 'joint-rollout',
   worlds: 4,
   horizon: 48,
@@ -104,6 +111,7 @@ const PRESET_FIELDS = [
   'endgameSolver', 'endgameDiscard', 'arbitration', 'minPairedTrials', 'pairedZ',
   'claimProtection', 'claimProtectDelta', 'claimProtectMargin', 'ensureBestClaimCandidate',
   'championAlternatives', 'evaluatorHandWeight', 'championDepth', 'championWidth',
+  'lateClaimCandidate', 'lateClaimThreshold', 'lateClaimMinDelta',
   'variant', 'worlds', 'horizon', 'opponentMode', 'evaluator',
 ] as const;
 
@@ -209,6 +217,9 @@ export function resolveJointConfig(
     evaluatorHandWeight: Number(merged.evaluatorHandWeight),
     championDepth: merged.championDepth == null ? null : Number(merged.championDepth),
     championWidth: merged.championWidth == null ? null : Number(merged.championWidth),
+    lateClaimCandidate: String(merged.lateClaimCandidate),
+    lateClaimThreshold: Number(merged.lateClaimThreshold),
+    lateClaimMinDelta: Number(merged.lateClaimMinDelta),
     engineModel: championParameters.engineModel ?? 'v1',
     seatPolicy: championParameters.seatPolicy ?? 'flat',
     preset,
