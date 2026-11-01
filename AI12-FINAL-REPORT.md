@@ -1,8 +1,8 @@
 # AI 12.0 最终报告：冠军进化审计、真实研究与晋级判定
 
-日期：2026-11-01（Asia/Shanghai）
+日期：2026-11-02（Asia/Shanghai；第 3 轮补充）
 执行环境：Mac mini M4 / 10 核 / 16 GB 统一内存 / macOS；Node v22.16.0
-基线：`origin/main` @ `8e10418`（工作树 `Century-ai12`，分支 `feat/ai12-champion-evolution`）
+基线：`origin/main` @ `c664bf7`（工作树 `Century-ai12`，分支 `research/ai12-distill`）
 状态：**SYSTEM_READY_NO_QUALIFIED_CHAMPION**
 
 > 口径澄清：本状态指“审计与晋级流水线可用、但本轮没有统计合格候选”。
@@ -24,7 +24,9 @@
 | 正式挑战 | 本轮 0 次；固定期限家族 `century-fixed-horizon-ai11` 已用 **0 / 12** |
 | Alpha | 几何家族历史 11 次消耗 0.0499756（剩余 2.44e-5）；新家族 0.05 全额保留 |
 | 跨家族错误率 | 并集界 0.0499756 + 0.05 = **0.0999756（≈10%）**，按授权披露，不可宣称全历史 5% |
-| 研究实验 | **33 个**单因子/机制/结构/学习型配对实验（第一轮 16 + 第二轮 13 + 第三轮 4；每实验 192–256 配对局，2–5 人分层），全部未达晋级门槛 |
+| 研究实验 | **36 个**单因子/机制/结构/学习型/定向配对实验（第一轮 16 + 第二轮 13 + 第三轮 4 + 第 3 轮补充 3；每实验 192–400 配对局，2–5 人分层），全部未达晋级门槛 |
+| 保真度蒸馏 | 200 局 / 7936 决策；最佳 MLP-16 首步一致率 **62.7%**（基线 61.1%，目标 85%）→ 未部署 |
+| 治理修复 | 固定期限家族 α 与全局挑战序号解耦；补齐 style-engine 跨人数非劣效门禁（均为独立提交 + 回归测试） |
 | 统计功效 | 观测配对方差 ≈0.33；α=1/240 下 313 种子/人数对 +2pp 的功效仅 **8%**，对 +8pp 为 **99%** |
 | 决策实现一致性 | 训练/正式/生产共用 `chooseAIAction → chooseJointAction(joint-js5)`；生产 100ms 实测 p95 **122ms** |
 | 晋级门禁 | `promotion-gate` + `promotion-machine-gate` 为 CI 强制门禁，机器自动 squash merge，无人工审批 |
@@ -101,8 +103,9 @@
 ### 3.4 IUT 与非劣效口径
 
 - 主检验：2–5 人等权加权配对第一名率增量，单侧下界 > 0；
-- 非劣效：每个位数单侧下界 > −2pp，与主检验同在一个 α 下执行（IUT，整体 I 类错误 ≤ α）；
-- 因此**每个人数自身也必须以 α=0.0041667 的 z≈2.638 计算下界**——这一点直接导致第 4 节的功效结论。
+- 非劣效：每个人数单侧下界 > −2pp；`style-engine` 跨人数汇总单侧下界 > −2pp
+  （新增门禁，见 §10.5.3）；全部检验同在一个 α 下执行（IUT，整体 I 类错误 ≤ α）；
+- 因此**每个检验自身也必须以 α=0.0041667 的 z≈2.638 计算下界**——这一点直接导致第 4 节的功效结论。
 
 ---
 
@@ -246,7 +249,7 @@ log-loss 0.5995），但在真实仲裁中 **−7.3pp（4p −25pp 显著负）*
 |---|---|
 | 综合点估计 ≥ +2pp 且单侧下界 > 0（α=1/240） | 未触发（无候选） |
 | 2/3/4/5 人逐一非劣效下界 > −2pp | 未触发 |
-| `style-engine` 跨人数汇总非劣效 | 未触发 |
+| `style-engine` 跨人数汇总非劣效 | 未触发（无候选）；门禁已实现并通过回归测试（§10.5.3） |
 | 身份/产物一致性、预注册、Alpha Ledger、种子治理 | 全套机器门禁存在且测试通过（见 §8） |
 | 100ms/200ms 性能 | 100ms p95=122ms、200ms p95=217ms（已测） |
 
@@ -344,6 +347,63 @@ rollout 次数随预算近似线性增长（39→83），说明预算是**有效
 
 ---
 
+## 10.5 第 3 轮补充（2026-11-02）：保真度蒸馏、5p 定向与治理闭环
+
+### 10.5.1 模拟保真度：廉价蒸馏不可行（负例）
+
+| 项 | 结果 |
+|---|---|
+| 数据 | 200 局开发池轨迹（种子窗口 `[1.739e9,1.7391e9)`），7936 个焦点决策，54 维公开特征，标签缺失 0 |
+| 基线 | rollout 内 1-ply 贪心与冠军 `choosePlan` 首步一致率 61.1%（可选中决策；全体 55.7%） |
+| 线性再排序 | 60.6%（低于基线） |
+| MLP-16 | **62.7%**（全体 59.0%），仅 +1.6pp |
+| 类型 oracle | 已知正确行动类型、类型内取贪心最高值 = 67.5%（精确一致率的现实上限） |
+| 预注册门槛 | ≥85% 首步一致率、单次推理 ≤0.2ms |
+| 判定 | **未达标、未部署、未产候选**；源码未进入生产路径 |
+
+结论：冠军计划的长程路线与类型内具体卡牌/认领选择，无法由 54 维可加模型稳定复现；
+把轨迹内策略升级为 6 层束搜索（实测 16.7ms/决策、轨迹内约 12 次己方决策）在 100ms
+预算内不可行。保真度缺口仍是结构性限制，但不是本轮可用的提升杠杆。
+
+### 10.5.2 5p 定向复现（全新开发窗口，N=96/组）
+
+| 实验 | 5p 增量 | 95% 区间（t 近似） | 综合门禁增量* | 判定 |
+|---|---|---|---|---|
+| E34 `overrideMargin 0.05`（仅 5p） | 0.00pp | [−9.58, +9.58] | 0.00pp | 历史 +6~8pp 未复现（窗口噪声） |
+| E35 `worlds 6`（仅 5p） | +4.17pp | [−6.88, +15.21] | +1.04pp | 三次窗口一致为正（+2.08/+6.25/+4.17），但远低于 5p 所需 ≥8pp |
+| E36 `margin 0.05 + worlds 6`（仅 5p） | +1.04pp | [−9.31, +11.39] | +0.26pp | null |
+
+\* 2–4 人行为逐位不变（A/A 实测 delta 恒为 0），因此综合门禁增量 = 5p 增量/4；
+要满足综合 ≥+2pp 点估计，5p 必须 ≥+8pp。三组均未接近该必要条件，不预注册正式挑战。
+
+### 10.5.3 治理与统计门禁修复（独立提交，未改冻结门槛）
+
+1. **固定期限家族 α 与全局挑战序号解耦**（`fix(governance)`）
+   - 根因：runner 将种子治理的全局 `challengeIndex`（历史 11 次后 = 12）同时用于 alpha 账本；
+     而 `century-fixed-horizon-ai11` 按家族内序号 1..12 记账，空账本时 12 ≠ 1 直接 fail-closed。
+   - 修复：种子治理继续用全局序号；alpha 使用家族内序号与账本 `spendingPlan` 的 α；
+     预注册计划冻结 `alphaFamily` 描述符；晋级脚本按 `planId` 查找预留并按账本口径重算 α。
+   - 验证：dry-run 输出 `challengeIndex=12 / alphaChallengeIndex=1 / α=0.004166667`；
+     71 项相关测试通过。
+
+2. **补齐 style-engine 跨人数非劣效门禁**（`fix(governance)`）
+   - 冻结标准要求 style-engine 汇总下界 > −2pp，但原机器门禁未实现该项，证据也未记录
+     style-engine 是否在场。
+   - 修复：挑战运行器在每个种子对写入 `styleEnginePresent`；晋级判定新增
+     `styleEngineNonInferiority`（按人数独立聚类 + 预注册权重汇总 + 单侧下界 ≥ −margin），
+     覆盖缺失 fail-closed；与主检验/各人数非劣效同处 α，作为 IUT 组件。
+   - 验证：新增 2 项回归测试（克制型子集崩溃 → 禁止晋级；历史证据缺标记 → fail-closed）。
+
+### 10.5.4 本轮判定
+
+- 冠军：**保持 `joint-js5`**；未晋级、未回滚。
+- 正式挑战：0 次；固定期限家族 **0 / 12**，α 全额保留；几何家族历史只读。
+- 状态：**SYSTEM_READY_NO_QUALIFIED_CHAMPION**。
+- 下一步优先级：在 ≥+8pp 真实效应的候选上才投入正式挑战；否则继续开发池研究，
+  不得为 <5pp 的候选消耗算力或降低门槛。
+
+---
+
 ## 附录 A：复现清单
 
 ```bash
@@ -370,8 +430,12 @@ node training/tournament/run-first-place-challenge.mjs \
 
 ## 附录 B：证据文件
 
-- `training/reports/ai12-research/screen-results.json`（33 个实验的逐人数统计、种子区间、判定）
+- `training/reports/ai12-research/screen-results.json`（36 个实验的逐人数统计、种子区间、判定）
+- `training/reports/ai12-research/fidelity-distillation.json`（保真度蒸馏负例：数据量/模型/一致率/成本/结论）
+- `training/reports/ai12-research/harness/collect-plan-data.mjs`（蒸馏数据采集器）
+- `training/reports/ai12-research/harness/train-plan-policy.py`（组内 softmax 训练/验证）
 - `training/reports/ai12-research/harness/paired-screen.mjs`（配对快筛器，开发池）
+- `training/reports/ai12-research/harness/paired-screen-formal.mjs`（正式结构快筛器；支持按人数定向覆盖）
 - `training/reports/ai12-research/harness/feasibility.mjs`（功效/样本量测算）
 - `training/governance/alpha-ledger-ai11.json`（0 消耗）
 - `training/governance/seed-consumption-registry.json`（AI12 研究窗口登记）
