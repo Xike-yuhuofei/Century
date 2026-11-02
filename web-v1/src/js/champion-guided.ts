@@ -142,6 +142,14 @@ export type ChampionGuidedOptions = {
   championDepth?: number | null;
   /** 研究用冠军束搜索宽度覆盖（缺省 null = 冻结 14/10）。 */
   championWidth?: number | null;
+  /** 终局前认领注入（缺省 off = 冻结）：当本人剩余认领 ≤ 阈值且有可立即认领的
+   * 正净分行动时，把其中净分最高的认领注入候选集（add 追加 / replace 替换先验槽位）。
+   * 用于检验 5p 失败画像中的“临门认领不足”。 */
+  lateClaimCandidate?: 'off' | 'add' | 'replace';
+  /** lateClaimCandidate 触发的剩余认领阈值（缺省 2）。 */
+  lateClaimThreshold?: number;
+  /** 注入认领的最小当步正式净分（缺省 1，只接受正净分）。 */
+  lateClaimMinDelta?: number;
 };
 
 export type ChampionGuidedSearchOptions = JointSearchOptions & ChampionGuidedOptions;
@@ -403,10 +411,10 @@ class ChampionGuidedPlanner {
       .sort((a, b) => rootOrder.get(actionKey(a.action))! - rootOrder.get(actionKey(b.action))!);
     phase.screenMs = performance.now() - screenStart;
     const candidates: Action[] = [];
-    const candidateSources: Array<'champion' | 'champion-alt' | 'claim' | 'prior' | 'near-terminal'> = [];
+    const candidateSources: Array<'champion' | 'champion-alt' | 'claim' | 'prior' | 'near-terminal' | 'late-claim'> = [];
     const priorOf = new Map<string, number>();
     const seen = new Set<string>();
-    const push = (a: Action | null | undefined, source: 'champion' | 'champion-alt' | 'claim' | 'prior' | 'near-terminal') => {
+    const push = (a: Action | null | undefined, source: 'champion' | 'champion-alt' | 'claim' | 'prior' | 'near-terminal' | 'late-claim') => {
       if (!a) return false;
       const k = actionKey(a);
       if (seen.has(k)) return false;
@@ -505,6 +513,38 @@ class ChampionGuidedPlanner {
             // 只有冠军行动（cap 极小）时不能替换，退化为追加并如实披露。
             push(best.action, 'near-terminal');
             injectionMode = 'add';
+          }
+        }
+      }
+    }
+    // AI12：终局前认领注入（显式 opt-in；缺省 off = 冻结行为）。
+    // 触发条件：本人剩余认领 ≤ lateClaimThreshold 且存在当步正式净分 ≥ minDelta
+    // 的可立即认领行动。add 追加（cap+1）；replace 替换先验/认领槽位（保持 cap）。
+    const lateMode = o.lateClaimCandidate ?? 'off';
+    if (lateMode !== 'off') {
+      const thresholdClaims = observation.players.length >= 4 ? 5 : 6;
+      const remainingClaims = thresholdClaims - observation.players[mySeat].claimed.length;
+      if (remainingClaims <= (o.lateClaimThreshold ?? 2)) {
+        let bestLate: { action: Action; delta: number } | null = null;
+        for (const a of claimActions) {
+          const scored = immediateOfficialScoreDelta(observation, a);
+          if (!scored || scored.delta < (o.lateClaimMinDelta ?? 1)) continue;
+          if (!bestLate || scored.delta > bestLate.delta) bestLate = { action: a, delta: scored.delta };
+        }
+        if (bestLate && !seen.has(actionKey(bestLate.action))) {
+          if (lateMode === 'add') {
+            push(bestLate.action, 'late-claim');
+          } else {
+            let idx = candidateSources.lastIndexOf('prior');
+            if (idx < 0) idx = candidateSources.lastIndexOf('claim');
+            if (idx >= 0) {
+              seen.delete(actionKey(candidates[idx]));
+              candidates[idx] = bestLate.action;
+              candidateSources[idx] = 'late-claim';
+              seen.add(actionKey(bestLate.action));
+            } else {
+              push(bestLate.action, 'late-claim');
+            }
           }
         }
       }
@@ -921,7 +961,8 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   'arbitration' | 'minPairedTrials' | 'pairedZ' | 'claimProtection' | 'claimProtectDelta' |
   'claimProtectMargin' | 'ensureBestClaimCandidate' |
   'allocation' | 'racingDelta' | 'endgameMode' | 'championAlternatives' | 'evaluatorHandWeight' |
-  'championDepth' | 'championWidth'>> & ChampionGuidedSearchOptions {
+  'championDepth' | 'championWidth' |
+  'lateClaimCandidate' | 'lateClaimThreshold' | 'lateClaimMinDelta'>> & ChampionGuidedSearchOptions {
   const base = o ?? {};
   const nearTerminalCandidate = base.nearTerminalCandidate ?? 'off';
   if (!['off', 'replace', 'add'].includes(nearTerminalCandidate)) fail(`未知 nearTerminalCandidate：${String(nearTerminalCandidate)}`);
@@ -963,6 +1004,16 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   if (championWidth !== null && (!Number.isSafeInteger(championWidth) || championWidth < 4 || championWidth > 24)) {
     fail(`championWidth 必须为 4–24 的整数或 null，实际：${String(championWidth)}`);
   }
+  const lateClaimCandidate = base.lateClaimCandidate ?? 'off';
+  if (!['off', 'add', 'replace'].includes(lateClaimCandidate)) fail(`未知 lateClaimCandidate：${String(lateClaimCandidate)}`);
+  const lateClaimThreshold = base.lateClaimThreshold ?? 2;
+  if (!Number.isSafeInteger(lateClaimThreshold) || lateClaimThreshold < 1 || lateClaimThreshold > 3) {
+    fail(`lateClaimThreshold 必须为 1–3 的整数，实际：${String(lateClaimThreshold)}`);
+  }
+  const lateClaimMinDelta = base.lateClaimMinDelta ?? 1;
+  if (!Number.isFinite(lateClaimMinDelta) || lateClaimMinDelta < 0 || lateClaimMinDelta > 30) {
+    fail(`lateClaimMinDelta 必须在 [0,30]，实际：${String(lateClaimMinDelta)}`);
+  }
   return {
     ...base,
     championStructure: base.championStructure ?? 'beam-rollout',
@@ -976,6 +1027,9 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
     evaluatorHandWeight,
     championDepth,
     championWidth,
+    lateClaimCandidate,
+    lateClaimThreshold,
+    lateClaimMinDelta,
     nearTerminalCandidate,
     screenGoalScope,
     batchAdmission,
