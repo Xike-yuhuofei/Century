@@ -1,0 +1,103 @@
+{
+  "checkpoint": "ai5/ppo/reports/ai13e-b-90m/last.pt",
+  "greedy": true,
+  "seedPool": "validation",
+  "seedRange": [
+    941516402,
+    941516411
+  ],
+  "uniqueSeedCount": 10,
+  "opponents": {
+    "champion": {
+      "games": 50,
+      "wins": 0,
+      "winRate": 0.0,
+      "wilson95GameLevel": [
+        0.0,
+        0.0713
+      ],
+      "seedClusters": {
+        "uniqueSeeds": 10,
+        "meanWinRate": 0.0,
+        "normal95": [
+          0.0,
+          0.0
+        ],
+        "note": "以唯一种子为统计单位（同种子跨旋位对局为相关样本，按 seed 聚类）"
+      },
+      "meanScore": 41.8,
+      "anomalies": 0,
+      "anomalyRate": 0.0,
+      "rankHistogram": {
+        "5": 42,
+        "4": 7,
+        "3": 1
+      },
+      "meanNodeDecisionMs": 100.39248262874224,
+      "meanMlpDecisionMs": 3.8739705354449767,
+      "verdict": "insufficient",
+      "verdictReason": "独立种子 10 不足（最少 30）"
+    },
+    "neutral": {
+      "games": 50,
+      "wins": 1,
+      "winRate": 0.02,
+      "wilson95GameLevel": [
+        0.0035,
+        0.105
+      ],
+      "seedClusters": {
+        "uniqueSeeds": 10,
+        "meanWinRate": 0.02,
+        "normal95": [
+          0.0,
+          0.0592
+        ],
+        "note": "以唯一种子为统计单位（同种子跨旋位对局为相关样本，按 seed 聚类）"
+      },
+      "meanScore": 42.54,
+      "anomalies": 0,
+      "anomalyRate": 0.0,
+      "rankHistogram": {
+        "2": 5,
+        "5": 26,
+        "4": 10,
+        "1": 1,
+        "3": 8
+      },
+      "meanNodeDecisionMs": 20.237546927406616,
+      "meanMlpDecisionMs": 2.9445295736436186,
+      "verdict": "insufficient",
+      "verdictReason": "独立种子 10 不足（最少 30）"
+    },
+    "init": {
+      "games": 40,
+      "wins": 40,
+      "winRate": 1.0,
+      "wilson95GameLevel": [
+        0.9124,
+        1.0
+      ],
+      "seedClusters": {
+        "uniqueSeeds": 10,
+        "meanWinRate": 1.0,
+        "normal95": [
+          1.0,
+          1.0
+        ],
+        "note": "以唯一种子为统计单位（同种子跨旋位对局为相关样本，按 seed 聚类）"
+      },
+      "meanScore": 65.3,
+      "anomalies": 10,
+      "anomalyRate": 0.2,
+      "rankHistogram": {
+        "1": 40
+      },
+      "meanNodeDecisionMs": null,
+      "meanMlpDecisionMs": 1.273614973214594,
+      "verdict": "invalid",
+      "verdictReason": "异常率 0.2 超过 2% 上限，先修复稳定性再评估"
+    }
+  },
+  "verdict": "本报告只呈现统计事实；是否超越冠军由人工依据置信区间与异常率判定"
+}
