@@ -1,0 +1,92 @@
+{
+  "run": "ai5/ppo/reports/smoke-ai13e",
+  "iterationsDone": 6,
+  "interrupted": false,
+  "totals": {
+    "games": 32,
+    "anomaly_games": 0,
+    "decisions": 1919,
+    "pruned_decisions": 0,
+    "updates": 6
+  },
+  "gitSha": "030e8109d6dbca61f1621ea37247bb2fede3251e",
+  "runSeed": 20261021,
+  "device": "mps",
+  "params": 258818,
+  "config": {
+    "train": {
+      "iterations": 6,
+      "rolloutSteps": 256,
+      "runSeed": 20261021,
+      "device": "auto",
+      "checkpointEvery": 2,
+      "logEvery": 1,
+      "collectWallMaxS": 240,
+      "timeBudgetMin": 0
+    },
+    "env": {
+      "workers": 2,
+      "maxMoves": 1200,
+      "deadlineMs": 60000,
+      "maxCandidates": 512,
+      "batchWaitMs": 2.0
+    },
+    "model": {
+      "obsDim": 1419,
+      "actDim": 84,
+      "hidden": [
+        128,
+        128
+      ],
+      "activation": "relu"
+    },
+    "ppo": {
+      "lr": 0.0005,
+      "lrSchedule": "constant",
+      "clip": 0.2,
+      "vfCoef": 0.5,
+      "entCoef": 0.01,
+      "epochs": 2,
+      "minibatch": 128,
+      "gamma": 0.999,
+      "gaeLambda": 0.95,
+      "maxGradNorm": 0.5,
+      "targetKl": 0.05,
+      "advantageNorm": true,
+      "valueClip": true
+    },
+    "reward": {
+      "mode": "rank_win",
+      "winWeight": 0.5,
+      "rankWeight": 0.5,
+      "scoreMarginWeight": 0.0,
+      "aux": {
+        "golemProgress": 0.0,
+        "turnEfficiency": 0.0
+      }
+    },
+    "seats": {
+      "layout": [
+        "learner",
+        "learner",
+        "node:champion",
+        "node:champion",
+        "snapshot"
+      ],
+      "snapshots": {
+        "every": 2,
+        "poolSize": 2
+      }
+    },
+    "eval": {
+      "every": 0,
+      "games": 20
+    }
+  },
+  "modelVersions": {
+    "stateEncoding": "ai5-state-v1",
+    "actionEncoding": "ai5-action-v1",
+    "interface": "ai5-inference-v1",
+    "modelHash": "c1378959b07acc39d2bd54dfcdbec52d1cf402c47f1d5ebff9390a9ce10d9061"
+  }
+}
