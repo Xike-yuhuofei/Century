@@ -293,11 +293,22 @@
 
 ### Q6. 新方案能否在现有硬件与推理预算下投入实际游戏？
 
-- `beam-score`：单局 5p 100ms 预算 mean 87.5ms / p95 108.3ms，**成本可接受**；
-  但胜率证据为负，**不部署**。
-- `beam-rollout-goal` / `beam-race` / `beam-contest`：成本与冠军同阶；证据见 §4，未部署。
-- PPO：MLP 推理 ~3.1ms/决策，但棋力远低于冠军，**不部署**。
-- 冻结冠军默认路径未变，生产行为逐位不变。
+**实际 100ms 生产预算测量**（同一 5p 种子 `1818505000`，单局，`budgetMs=100`；
+证据 `training/reports/ai13f/perf-100ms-5p.json`）：
+
+| 结构 | 决策数 | mean | p50 | p95 | max | >100ms | >200ms |
+|---|---|---|---|---|---|---|---|
+| 冻结冠军（默认） | 196 | 89.89ms | 91.26ms | 106.40ms | 114.47ms | 47 | 0 |
+| `beam-rollout-goal` | 190 | 85.31ms | 83.38ms | 109.34ms | 116.81ms | 40 | 0 |
+| `beam-race` | 196 | 88.31ms | 89.38ms | 109.10ms | 119.69ms | 45 | 0 |
+| `beam-score` | 208 | 86.53ms | 90.35ms | 105.29ms | 111.47ms | 24 | 0 |
+| `beam-contest` | 187 | 89.08ms | 87.31ms | 111.15ms | 118.65ms | 48 | 0 |
+
+所有结构的端到端耗时与冻结冠军同阶，均未出现 >200ms 的决策；100ms 名义预算下
+计划阶段本身已接近预算（这正是 §8 H-D 的动机）。计算成本不构成部署障碍。
+但四个结构的胜率证据均为负或未达门槛，**全部不部署**。
+PPO：MLP 推理 ~3.1ms/决策，但棋力远低于冠军，**不部署**。
+冻结冠军默认路径未变，生产行为逐位不变。
 
 ---
 
@@ -344,5 +355,6 @@ python -m ai5.ppo.evaluation.arena \
 - `training/reports/ai13f/exp-beam-rollout-goal-screen-wu32.json`
 - `training/reports/ai13f/exp-beam-contest-screen-wu32.json`
 - `training/reports/ai13f/exp-beam-race-screen-wu32.json`
+- `training/reports/ai13f/perf-100ms-5p.json`（100ms 生产预算耗时测量）
 - `ai5/ppo/reports/ai13e-b-90m/`：`summary.json`、`metrics.jsonl`、`arena-champion-30x5/`
 - `training/reports/ai13/ai12-distillation-audit.json`（历史证据未修改）
