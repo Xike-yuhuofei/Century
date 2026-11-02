@@ -150,6 +150,9 @@ export type ChampionGuidedOptions = {
   lateClaimThreshold?: number;
   /** 注入认领的最小当步正式净分（缺省 1，只接受正净分）。 */
   lateClaimMinDelta?: number;
+  /** AI13 方向 C：轨迹内规则对手认领价值偏置（缺省 0 = 冻结）。
+   * 正值使模拟对手更倾向立即认领，用于校准“对手认领不足”的仿真偏差。 */
+  opponentClaimBias?: number;
 };
 
 export type ChampionGuidedSearchOptions = JointSearchOptions & ChampionGuidedOptions;
@@ -619,6 +622,7 @@ class ChampionGuidedPlanner {
       params: o.championParameters ?? CHAMPION_PARAMETERS,
       endgameDiscard: o.endgameDiscard === true,
       handWeight: o.evaluatorHandWeight ?? 1,
+      opponentClaimBias: o.opponentClaimBias ?? 0,
     } satisfies Omit<RolloutContext, 'events' | 'omTimeMs'>;
 
     const aggregates = candidates.map(action => ({
@@ -962,7 +966,7 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   'claimProtectMargin' | 'ensureBestClaimCandidate' |
   'allocation' | 'racingDelta' | 'endgameMode' | 'championAlternatives' | 'evaluatorHandWeight' |
   'championDepth' | 'championWidth' |
-  'lateClaimCandidate' | 'lateClaimThreshold' | 'lateClaimMinDelta'>> & ChampionGuidedSearchOptions {
+  'lateClaimCandidate' | 'lateClaimThreshold' | 'lateClaimMinDelta' | 'opponentClaimBias'>> & ChampionGuidedSearchOptions {
   const base = o ?? {};
   const nearTerminalCandidate = base.nearTerminalCandidate ?? 'off';
   if (!['off', 'replace', 'add'].includes(nearTerminalCandidate)) fail(`未知 nearTerminalCandidate：${String(nearTerminalCandidate)}`);
@@ -1014,6 +1018,10 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   if (!Number.isFinite(lateClaimMinDelta) || lateClaimMinDelta < 0 || lateClaimMinDelta > 30) {
     fail(`lateClaimMinDelta 必须在 [0,30]，实际：${String(lateClaimMinDelta)}`);
   }
+  const opponentClaimBias = base.opponentClaimBias ?? 0;
+  if (!Number.isFinite(opponentClaimBias) || opponentClaimBias < 0 || opponentClaimBias > 1) {
+    fail(`opponentClaimBias 必须在 [0,1]，实际：${String(opponentClaimBias)}`);
+  }
   return {
     ...base,
     championStructure: base.championStructure ?? 'beam-rollout',
@@ -1030,6 +1038,7 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
     lateClaimCandidate,
     lateClaimThreshold,
     lateClaimMinDelta,
+    opponentClaimBias,
     nearTerminalCandidate,
     screenGoalScope,
     batchAdmission,

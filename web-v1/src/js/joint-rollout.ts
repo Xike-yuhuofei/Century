@@ -50,6 +50,8 @@ export type RolloutContext = {
   endgameDiscard?: boolean;
   /** 叶价值中的手牌权重（缺省 1 = 冻结口径；<1 降低囤牌价值）。 */
   handWeight?: number;
+  /** 轨迹内规则对手的认领价值偏置（缺省 0 = 冻结）。 */
+  opponentClaimBias?: number;
   /** 墙钟硬上限（预算模式；逐转移检查，超调 ≤ 1 步。固定工作量模式缺省 = 无）。 */
   deadline?: number;
   /** 市场事件采集（轨迹解释；仅选定行动的首条轨迹挂载）。 */
@@ -103,7 +105,7 @@ export function playJointTrajectory(
 ): RolloutOutcome {
   const mode = ctx.mode;
   const om = ctx.om;
-  const opponentCtx = createOpponentContext(mode, om);
+  const opponentCtx = createOpponentContext(mode, om, ctx.opponentClaimBias ?? 0);
   const pressureCache = new PressureCache();
   let transitions = 0;
   let opponentMeta: { family: string; p: number; label: string } | null = null;

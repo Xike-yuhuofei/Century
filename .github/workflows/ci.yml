@@ -284,6 +284,13 @@ jobs:
       - name: 卡表漂移检查
         working-directory: training
         run: node ../web-v1/scripts/sync-cards.mjs --check
+      # AI13 研究 harness 不进入决策路径，但必须保证可复现脚本的语法/导入不漂移。
+      - name: AI13 研究 harness 语法检查（仅分片 0）
+        if: matrix.shard == 0
+        run: |
+          node --check training/reports/ai13/harness/collect-plan-data-v2.mjs
+          node --check training/reports/ai13/harness/decision-probe.mjs
+          python3 -m py_compile training/reports/ai13/harness/*.py
       - name: training 系统测试（分片 ${{ matrix.shard }}，覆盖不变）
         working-directory: training
         env:

@@ -1,0 +1,303 @@
+{
+  "schema": "century-ai13-distillation-dataset-manifest-v1",
+  "generatedAt": "2026-11-02T02:14:34.307Z",
+  "codeCommit": "6b709de (origin/main base)",
+  "collector": "training/reports/ai13/harness/collect-plan-data-v2.mjs",
+  "featureCount": 333,
+  "windows": {
+    "train": "[1800000000,1800300000)",
+    "dev": "[1800300000,1800400000)",
+    "test": "[1800400000,1800500000)"
+  },
+  "splitDesign": "world-group isolated; independent windows; 2-5 players equally represented within each split",
+  "bySplit": {
+    "train": {
+      "games": 240,
+      "decisions": 9569,
+      "uniqueSeeds": 240,
+      "rows": 101892,
+      "seeds": "1800000000+shard*20000+seatCount*4000+g"
+    },
+    "dev": {
+      "games": 80,
+      "decisions": 3162,
+      "uniqueSeeds": 80,
+      "rows": 32968,
+      "seeds": "1800300000+shard*20000+seatCount*4000+g"
+    },
+    "test": {
+      "games": 80,
+      "decisions": 3180,
+      "uniqueSeeds": 80,
+      "rows": 33575,
+      "seeds": "1800400000+shard*20000+seatCount*4000+g"
+    }
+  },
+  "files": [
+    {
+      "split": "train",
+      "shard": 0,
+      "path": "/tmp/ai13-train-0.jsonl",
+      "sha256": "c285f28ff436545800c50021a81a59f6423ba0e106ea108d004092ec07a5e4c8",
+      "games": 60,
+      "decisions": 2351,
+      "rows": 24871,
+      "uniqueSeeds": 60,
+      "seedBase": 1800000000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.5755,
+      "greedyJs5Agreement": 0.4734,
+      "js5PlanAgreement": 0.7469,
+      "actionCounts": {
+        "play": 1323,
+        "acquire": 357,
+        "claim": 278,
+        "rest": 393,
+        "discard": 0
+      }
+    },
+    {
+      "split": "train",
+      "shard": 1,
+      "path": "/tmp/ai13-train-1.jsonl",
+      "sha256": "460f568b766e4ec4ddc27a5701444985d9813d924b56938b93f4922cb351db92",
+      "games": 60,
+      "decisions": 2388,
+      "rows": 25422,
+      "uniqueSeeds": 60,
+      "seedBase": 1800000000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.5687,
+      "greedyJs5Agreement": 0.4581,
+      "js5PlanAgreement": 0.7525,
+      "actionCounts": {
+        "play": 1356,
+        "acquire": 357,
+        "claim": 273,
+        "rest": 402,
+        "discard": 0
+      }
+    },
+    {
+      "split": "train",
+      "shard": 2,
+      "path": "/tmp/ai13-train-2.jsonl",
+      "sha256": "0d27fc33da145c3c946baea34b0d768fb46bed6cfd7866602edea77a4966e0dc",
+      "games": 60,
+      "decisions": 2420,
+      "rows": 25818,
+      "uniqueSeeds": 60,
+      "seedBase": 1800000000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.576,
+      "greedyJs5Agreement": 0.4558,
+      "js5PlanAgreement": 0.7318,
+      "actionCounts": {
+        "play": 1368,
+        "acquire": 370,
+        "claim": 277,
+        "rest": 405,
+        "discard": 0
+      }
+    },
+    {
+      "split": "train",
+      "shard": 3,
+      "path": "/tmp/ai13-train-3.jsonl",
+      "sha256": "312bf2f07763005509a3104cdc38842d261c5682e80166e2e9c70580f080de04",
+      "games": 60,
+      "decisions": 2410,
+      "rows": 25781,
+      "uniqueSeeds": 60,
+      "seedBase": 1800000000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.5651,
+      "greedyJs5Agreement": 0.4519,
+      "js5PlanAgreement": 0.7344,
+      "actionCounts": {
+        "play": 1358,
+        "acquire": 374,
+        "claim": 276,
+        "rest": 402,
+        "discard": 0
+      }
+    },
+    {
+      "split": "dev",
+      "shard": 0,
+      "path": "/tmp/ai13-dev-0.jsonl",
+      "sha256": "a36c7d18e089dc6a42de8085db7acebfd87513a75ed230dc992b90a9010e1309",
+      "games": 20,
+      "decisions": 791,
+      "rows": 8239,
+      "uniqueSeeds": 20,
+      "seedBase": 1800300000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.5689,
+      "greedyJs5Agreement": 0.4741,
+      "js5PlanAgreement": 0.7421,
+      "actionCounts": {
+        "play": 441,
+        "acquire": 117,
+        "claim": 91,
+        "rest": 142,
+        "discard": 0
+      }
+    },
+    {
+      "split": "dev",
+      "shard": 1,
+      "path": "/tmp/ai13-dev-1.jsonl",
+      "sha256": "d4879a75975163542f1cf2f2f5b1f13844ff4273d489a8a8bf865cbc03f33cee",
+      "games": 20,
+      "decisions": 788,
+      "rows": 8136,
+      "uniqueSeeds": 20,
+      "seedBase": 1800300000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.5406,
+      "greedyJs5Agreement": 0.467,
+      "js5PlanAgreement": 0.7703,
+      "actionCounts": {
+        "play": 441,
+        "acquire": 125,
+        "claim": 97,
+        "rest": 125,
+        "discard": 0
+      }
+    },
+    {
+      "split": "dev",
+      "shard": 2,
+      "path": "/tmp/ai13-dev-2.jsonl",
+      "sha256": "7e3233116a301faca591a987546fa13f9a0d452ec2bcf2b0285f5ecdb93231ac",
+      "games": 20,
+      "decisions": 788,
+      "rows": 8292,
+      "uniqueSeeds": 20,
+      "seedBase": 1800300000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.5787,
+      "greedyJs5Agreement": 0.4632,
+      "js5PlanAgreement": 0.7551,
+      "actionCounts": {
+        "play": 444,
+        "acquire": 125,
+        "claim": 95,
+        "rest": 124,
+        "discard": 0
+      }
+    },
+    {
+      "split": "dev",
+      "shard": 3,
+      "path": "/tmp/ai13-dev-3.jsonl",
+      "sha256": "f69dd19e315a6f8876b6a3c8b6bbf46b9b5d3dd371f025d60c0f4aa446946e17",
+      "games": 20,
+      "decisions": 795,
+      "rows": 8301,
+      "uniqueSeeds": 20,
+      "seedBase": 1800300000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.5547,
+      "greedyJs5Agreement": 0.4553,
+      "js5PlanAgreement": 0.7396,
+      "actionCounts": {
+        "play": 434,
+        "acquire": 134,
+        "claim": 92,
+        "rest": 135,
+        "discard": 0
+      }
+    },
+    {
+      "split": "test",
+      "shard": 0,
+      "path": "/tmp/ai13-test-0.jsonl",
+      "sha256": "19620625e924efa9e81f0e673dbf7899d82c9c849f3873d940eabdeb8a684771",
+      "games": 20,
+      "decisions": 798,
+      "rows": 8280,
+      "uniqueSeeds": 20,
+      "seedBase": 1800400000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.589,
+      "greedyJs5Agreement": 0.4674,
+      "js5PlanAgreement": 0.7544,
+      "actionCounts": {
+        "play": 454,
+        "acquire": 112,
+        "claim": 91,
+        "rest": 141,
+        "discard": 0
+      }
+    },
+    {
+      "split": "test",
+      "shard": 1,
+      "path": "/tmp/ai13-test-1.jsonl",
+      "sha256": "2ec40436681dc88d57eedf031b4a56bb5845352801cbefacc1b53d474ff9ce1f",
+      "games": 20,
+      "decisions": 795,
+      "rows": 8400,
+      "uniqueSeeds": 20,
+      "seedBase": 1800400000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.5786,
+      "greedyJs5Agreement": 0.4616,
+      "js5PlanAgreement": 0.7321,
+      "actionCounts": {
+        "play": 454,
+        "acquire": 123,
+        "claim": 92,
+        "rest": 126,
+        "discard": 0
+      }
+    },
+    {
+      "split": "test",
+      "shard": 2,
+      "path": "/tmp/ai13-test-2.jsonl",
+      "sha256": "47da7b279176bdd698a3783a26f61a12996cca833ef074d43b17b3fa5f58910d",
+      "games": 20,
+      "decisions": 811,
+      "rows": 8530,
+      "uniqueSeeds": 20,
+      "seedBase": 1800400000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.5499,
+      "greedyJs5Agreement": 0.455,
+      "js5PlanAgreement": 0.7596,
+      "actionCounts": {
+        "play": 459,
+        "acquire": 121,
+        "claim": 94,
+        "rest": 137,
+        "discard": 0
+      }
+    },
+    {
+      "split": "test",
+      "shard": 3,
+      "path": "/tmp/ai13-test-3.jsonl",
+      "sha256": "22169a9789b0c2e9038fa05192c27e7c7e7870eed6a45774d6ddcabd1a12814e",
+      "games": 20,
+      "decisions": 776,
+      "rows": 8365,
+      "uniqueSeeds": 20,
+      "seedBase": 1800400000,
+      "targetFeatureCount": 333,
+      "greedyPlanAgreement": 0.5541,
+      "greedyJs5Agreement": 0.4446,
+      "js5PlanAgreement": 0.7216,
+      "actionCounts": {
+        "play": 428,
+        "acquire": 134,
+        "claim": 90,
+        "rest": 124,
+        "discard": 0
+      }
+    }
+  ],
+  "note": "Raw JSONL are in /tmp and not committed; reproduce with the commands in AI13-FINAL-REPORT.md. SHA256 pins the exact data used for the committed model artifacts."
+}
