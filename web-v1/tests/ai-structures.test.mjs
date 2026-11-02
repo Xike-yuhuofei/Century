@@ -108,10 +108,12 @@ test('结构可内嵌于参数集并通过验证透传', async () => {
   const stripped = validateAIParameters({ ...BASELINE_PARAMETERS, id: 's2' });
   assert.equal(stripped.structure, undefined);
   assert.throws(() => validateAIParameters({ ...BASELINE_PARAMETERS, id: 's3', structure: 'bad' }), /未知 AI 结构/);
-  const goalRollout = validateAIParameters({ ...BASELINE_PARAMETERS, id: 's4', structure: 'beam-rollout-goal' });
-  assert.equal(goalRollout.structure, 'beam-rollout-goal');
-  const race = validateAIParameters({ ...BASELINE_PARAMETERS, id: 's5', structure: 'beam-race' });
-  assert.equal(race.structure, 'beam-race');
+  // AI13f 新结构是适配器研究选项（championStructure），不进入参数块枚举：
+  // parameters.ts 属于冠军晋级分类路径，禁止为研究结构修改它。
+  assert.throws(
+    () => validateAIParameters({ ...BASELINE_PARAMETERS, id: 's4', structure: 'beam-score' }),
+    /未知 AI 结构/,
+  );
 });
 
 test('rollout 结构决策耗时保持在交互预算内', () => {

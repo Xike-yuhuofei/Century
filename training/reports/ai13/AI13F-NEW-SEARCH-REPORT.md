@@ -98,6 +98,10 @@
   （85% 取先验最优、15% 探索）。假设随机轨迹让最终束排序被噪声主导。
 - **C-3 `beam-contest`（现有结构的新配置）**：冠军参数 + 座位感知目标存活折扣，此前未在
   AI12 的 46 个实验中作为候选配置系统筛选。
+- **接线边界**：三个新结构只经 `championStructure` 适配器选项启用，
+  **不写入 `AIParameters.structure`**，且 `parameters.ts` 保持基线字节不变
+  （该文件属于 CI 的冠军晋级分类路径）；正式候选通过
+  `algorithmStructure.jointOptionsByPlayerCount` 注入。
 
 ---
 
