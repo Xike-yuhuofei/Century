@@ -28,6 +28,7 @@ import { chooseJointAction } from '../../../../web-v1/dist/js/js/adapter.js';
 import { heuristicContext, myRankedActions, actionValue } from '../../../../web-v1/dist/js/js/rollout-policy.js';
 import { golemSurvivalModel } from '../../../../web-v1/dist/js/ai/opponent-model.js';
 import { GOLEM_BY_ID, MERCHANT_BY_ID, MERCHANT_DECK } from '../../../../web-v1/dist/js/data.js';
+import { mulberry32 } from '../../../../web-v1/dist/js/sim/rng.js';
 import { buildRegistry } from '../../../adversarial/registry.mjs';
 import { deriveSimStreamSeed, DEFAULT_SIM_SALT } from '../../../lib/sim-stream.mjs';
 
@@ -44,6 +45,10 @@ const gamesPerCount = Number(arg('games-per-count', 30));
 const seedBase = Number(arg('seed-base', 1800000000));
 const WU = Number(arg('wu', 32));
 const TOP = Number(arg('top', 12));
+// AI13e：policy 模式在 top-K 外再抽 sampleNegatives 个合法行动（确定性 RNG），
+// 用于全合法行动策略的可行性训练；缺省 top12 = 原纠正协议，行为不变。
+const sampleMode = String(arg('sample-mode', 'top12'));
+const sampleNegatives = Math.max(0, Number(arg('sample-negatives', 0)));
 const SHARD_STRIDE = Number(arg('shard-stride', 40000));
 const COUNT_STRIDE = Number(arg('count-stride', 8000));
 const out = arg('out', `/tmp/ai13-plan-${split}-${shard}.jsonl`);
@@ -427,6 +432,18 @@ for (const seatCount of SEATS) {
               if (!topKeys.has(key(x.action))) { kept.push(x); topKeys.add(key(x.action)); }
             }
           }
+          if (sampleMode === 'policy' && sampleNegatives > 0) {
+            const remaining = scored.filter(x => !topKeys.has(key(x.action)));
+            const rng = mulberry32((seed ^ Math.imul(game.turnNumber, 2654435761) ^ (seat + 1)) >>> 0);
+            for (let i = remaining.length - 1; i > 0; i--) {
+              const j = Math.floor(rng() * (i + 1));
+              [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+            }
+            for (const x of remaining.slice(0, sampleNegatives)) {
+              kept.push(x);
+              topKeys.add(key(x.action));
+            }
+          }
           const keptKeys = kept.map(x => key(x.action));
           const planIdx = planKey ? keptKeys.indexOf(planKey) : -1;
           const js5Idx = keptKeys.indexOf(js5Key);
@@ -447,6 +464,7 @@ for (const seatCount of SEATS) {
             schema: 'ai13-plan-data-v2',
             seed, seats: seatCount, focusSeat, turn: game.turnNumber,
             labelPlan: planIdx, labelJs5: js5Idx, planRank, js5Rank, planInTop, js5InTop,
+            legalCount: legal.length, sampleMode, sampleCount: kept.length,
             rows: kept.map(x => x.row),
           }));
           stats.rows += kept.length;
@@ -470,6 +488,7 @@ stats.uniqueSeeds = seenSeeds.size;
 const meta = {
   schema: 'ai13-plan-features-v1',
   split, shard, shards, seedBase, gamesPerCount, workUnits: WU,
+  sampleMode, sampleNegatives, topK: TOP,
   featureNames: FEATURE_NAMES,
   legacyFeatureNames: LEGACY_FEATURE_NAMES,
   targetFeatureCount: FEATURE_NAMES.length,
