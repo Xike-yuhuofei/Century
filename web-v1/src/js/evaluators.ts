@@ -16,7 +16,7 @@
  */
 
 import { GOLEM_BY_ID } from '../data.js';
-import { score as engineScore, type Player } from '../engine.js';
+import { score as engineScore, has, type Player } from '../engine.js';
 import type { PublicSimState } from '../sim/state.js';
 import { reachableStockOf } from './simview.js';
 import { VALUES, weighted } from '../ai/knowledge.js';
@@ -36,13 +36,16 @@ export type LeafVector = {
   claimed: number[];
   engine: number[];
   crystals: number[];
+  /** AI13-L6：多人认领竞赛威胁（剩余认领槽 × 平均分 + 即时/可达最高分）。
+   * 只由公开库存/手牌/市场推导；缺省 L0–L3 不消费。 */
+  claimThreat: number[];
   /** 市场魔像的竞争态势（我的覆盖 vs 最强对手覆盖）。 */
   golems: { id: string; points: number; myCoverage: number; maxRivalCoverage: number }[];
   triggerPlayer: number | null;
   turnNumber: number;
 };
 
-export function leafVector(state: PublicSimState, mySeat: number, options?: { handWeight?: number }): LeafVector {
+export function leafVector(state: PublicSimState, mySeat: number, options?: { handWeight?: number; withClaimThreat?: boolean }): LeafVector {
   const players = state.players;
   const handWeight = options?.handWeight ?? 1;
   const score = players.map(p => engineScore(p as unknown as Player));
@@ -68,7 +71,25 @@ export function leafVector(state: PublicSimState, mySeat: number, options?: { ha
     }
     return { id, points: goal?.points ?? 0, myCoverage, maxRivalCoverage };
   });
-  return { seats: players.map(p => p.id), score, claimed, engine, crystals, golems, triggerPlayer: state.triggerPlayer, turnNumber: state.turnNumber };
+  // AI13-L6：认领竞赛威胁。只在显式请求时计算（缺省 L0–L3 零额外开销）。
+  // 剩余槽位按 8 分/槽保守折算；即时可达（当前库存）计满分，手牌后可达
+  // （reachableStockOf）计半分——只使用公开信息。
+  const claimThreat: number[] = [];
+  if (options?.withClaimThreat === true) {
+    const threshold = players.length >= 4 ? 5 : 6;
+    for (const p of players) {
+      let immediate = 0, reachable = 0;
+      const reach = reachableStockOf(p.stock, p.hand);
+      for (const id of state.golemMarket) {
+        const goal = GOLEM_BY_ID[id];
+        if (!goal) continue;
+        if (has(p.stock, goal.cost)) immediate = Math.max(immediate, goal.points);
+        if (has(reach, goal.cost)) reachable = Math.max(reachable, goal.points);
+      }
+      claimThreat.push(8 * Math.max(0, threshold - p.claimed.length) + immediate + 0.5 * reachable);
+    }
+  }
+  return { seats: players.map(p => p.id), score, claimed, engine, crystals, claimThreat, golems, triggerPlayer: state.triggerPlayer, turnNumber: state.turnNumber };
 }
 
 function maxOther(values: number[], mySeat: number, seats: number[]): number {
@@ -140,6 +161,20 @@ export function evaluateL3(v: LeafVector, mySeat: number, copperPool: number, si
   return values[values.length - 1];
 }
 
+/** L6：多人认领竞赛投影（AI13 方向 A）。
+ *
+ * 假设：L2 的“当前分差 + 目标覆盖”低估了终局前最重要的多人量——剩余认领槽与
+ * 下一张可认领高分牌。5 人局失败画像（认领少、囤牌多）正对应此缺口。
+ * margin = L2 原始 margin + 0.20 × (我的认领威胁 − 最强对手认领威胁)。
+ * 威胁 = 8×剩余认领槽 + 当前可立即认领最高分 + 0.5×手牌后可认领最高分。
+ * 系数在开发池固定为 0.20（不看结果调参）；L0–L3 行为逐位不变。 */
+export function evaluateL6(v: LeafVector, mySeat: number, copperPool: number, silverPool: number): number {
+  const base = l2RawMargin(v, mySeat, copperPool, silverPool);
+  const mine = v.claimThreat[v.seats.indexOf(mySeat)] ?? 0;
+  const rival = maxOther(v.claimThreat, mySeat, v.seats);
+  return logisticWin(base + 0.20 * (mine - rival));
+}
+
 /** 评价器主入口。finished → 正式规则第一名判定；否则按层级。 */
 export function evaluateLeaf(
   state: PublicSimState,
@@ -150,11 +185,12 @@ export function evaluateLeaf(
   options?: { handWeight?: number },
 ): number {
   if (finished) return firstPlaceOf(state, mySeat) ? 1 : 0;
-  const v = leafVector(state, mySeat, options);
+  const v = leafVector(state, mySeat, { ...options, withClaimThreat: level === 'L6' });
   switch (level) {
     case 'L0': return evaluateL0(v, mySeat);
     case 'L1': return evaluateL1(v, mySeat);
     case 'L2': return evaluateL2(v, mySeat, state.copper, state.silver);
     case 'L3': return evaluateL3(v, mySeat, state.copper, state.silver, L3_CALIBRATION);
+    case 'L6': return evaluateL6(v, mySeat, state.copper, state.silver);
   }
 }

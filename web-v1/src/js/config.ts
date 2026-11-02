@@ -63,6 +63,8 @@ export type JointSearchResolved = {
   lateClaimCandidate: string;
   lateClaimThreshold: number;
   lateClaimMinDelta: number;
+  /** AI13：轨迹内规则对手认领偏置（0 = 冻结）。 */
+  opponentClaimBias: number;
   /** 基座引擎模型/人数策略（来自冠军参数集；v1/flat = 冻结口径）。 */
   engineModel: string;
   seatPolicy: string;
@@ -98,6 +100,7 @@ export const JOINT_SEARCH_DEFAULTS = {
   lateClaimCandidate: 'off',
   lateClaimThreshold: 2,
   lateClaimMinDelta: 1,
+  opponentClaimBias: 0,
   variant: 'joint-rollout',
   worlds: 4,
   horizon: 48,
@@ -111,7 +114,7 @@ const PRESET_FIELDS = [
   'endgameSolver', 'endgameDiscard', 'arbitration', 'minPairedTrials', 'pairedZ',
   'claimProtection', 'claimProtectDelta', 'claimProtectMargin', 'ensureBestClaimCandidate',
   'championAlternatives', 'evaluatorHandWeight', 'championDepth', 'championWidth',
-  'lateClaimCandidate', 'lateClaimThreshold', 'lateClaimMinDelta',
+  'lateClaimCandidate', 'lateClaimThreshold', 'lateClaimMinDelta', 'opponentClaimBias',
   'variant', 'worlds', 'horizon', 'opponentMode', 'evaluator',
 ] as const;
 
@@ -220,6 +223,7 @@ export function resolveJointConfig(
     lateClaimCandidate: String(merged.lateClaimCandidate),
     lateClaimThreshold: Number(merged.lateClaimThreshold),
     lateClaimMinDelta: Number(merged.lateClaimMinDelta),
+    opponentClaimBias: Number(merged.opponentClaimBias),
     engineModel: championParameters.engineModel ?? 'v1',
     seatPolicy: championParameters.seatPolicy ?? 'flat',
     preset,

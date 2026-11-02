@@ -1,0 +1,147 @@
+{
+  "schema": "century-ai13-ai12-distill-audit-v1",
+  "source": {
+    "shards": [
+      {
+        "/tmp/ai12-plan-s3.jsonl": "/tmp/ai12-plan-s0.jsonl",
+        "sha256": "2f74ef128a6d250b49c10c9b7b249fb63c4a3a9ac4576c5a69766a038166e598"
+      },
+      {
+        "/tmp/ai12-plan-s3.jsonl": "/tmp/ai12-plan-s1.jsonl",
+        "sha256": "23a0f3d97de9081eba2b5e0dec9b08fbb50b51202832a960cc6764efae145417"
+      },
+      {
+        "/tmp/ai12-plan-s3.jsonl": "/tmp/ai12-plan-s2.jsonl",
+        "sha256": "d121d600110f703c0a1131a3cf51449cbcfa011df492d3c1bc33a108b4f38735"
+      },
+      {
+        "/tmp/ai12-plan-s3.jsonl": "/tmp/ai12-plan-s3.jsonl",
+        "sha256": "b06e9c09135180eecc3f73565c477d77fa66d9d1b4001a1a332ba1c9c8c635db"
+      }
+    ],
+    "mlp": {
+      "path": "/tmp/ai12-plan-mlp16.json",
+      "sha256": "6e58bf478777f88fb171385b92bf160829d3936165cd80b567c485bdb1d6265f"
+    },
+    "linear": {
+      "path": "/tmp/ai12-plan-linear.json",
+      "sha256": "e5ff593e7879c7e56252a1ad4279adda1031b3ceaa0666c565a98304b095f20a"
+    }
+  },
+  "dataAudit": {
+    "gameRecords": 7936,
+    "uniqueSeeds": 50,
+    "recordsPerSeed": {
+      "min": 126,
+      "max": 203,
+      "mean": 158.72
+    },
+    "bySeatCount": {
+      "2": 2248,
+      "3": 2235,
+      "4": 1724,
+      "5": 1729
+    },
+    "paritySplit": {
+      "evenSeats": [
+        2,
+        4
+      ],
+      "oddSeats": [
+        3,
+        5
+      ],
+      "evenDecisions": 3972,
+      "oddDecisions": 3964
+    },
+    "shardSeedOverlap": "all four shards share the same seed set",
+    "note": "seed = seedBase + seatCount*1000 + g 与 shard 无关；focusSeat=(g+shard)%seatCount 只换焦点席位。"
+  },
+  "splitAudit": {
+    "trainSeatCounts": [
+      2,
+      4
+    ],
+    "valSeatCounts": [
+      3,
+      5
+    ],
+    "trainDecisions": 3972,
+    "valDecisions": 3964,
+    "conclusion": "seed 奇偶 == g 奇偶；g 偶→2/4 人、g 奇→3/5 人，因此“随机切分”实际是跨人数切分。"
+  },
+  "mlp16Recompute": {
+    "selectableN": 3727,
+    "acc": 0.6281191306680977,
+    "greedy": 0.6106788301583043,
+    "delta": 0.017440300509793394,
+    "byCount": {
+      "2": {
+        "n": 0,
+        "acc": null,
+        "greedy": null
+      },
+      "3": {
+        "n": 2083,
+        "acc": 0.6135381661065771,
+        "greedy": 0.6063370139222276
+      },
+      "4": {
+        "n": 0,
+        "acc": null,
+        "greedy": null
+      },
+      "5": {
+        "n": 1644,
+        "acc": 0.6465936739659367,
+        "greedy": 0.6161800486618005
+      }
+    },
+    "worldClusters": 25,
+    "deltaClusterBootstrap95": [
+      -0.0035204362143803625,
+      0.037827941269315
+    ],
+    "originalReportedValAcc": 0.6273141937214918,
+    "originalReportedValAccAll": 0.5898082744702321,
+    "originalReportedTypeAcc": 1.0,
+    "originalTypeAccRuleReproduced": 1.0,
+    "correctedTypeAcc": 0.8367810292633703
+  },
+  "linearRecompute": {
+    "selectableN": 3727,
+    "acc": 0.6045076469009928,
+    "greedy": 0.6106788301583043,
+    "delta": -0.0061711832573114744,
+    "byCount": {
+      "2": {
+        "n": 0,
+        "acc": null,
+        "greedy": null
+      },
+      "3": {
+        "n": 2083,
+        "acc": 0.6092174747959673,
+        "greedy": 0.6063370139222276
+      },
+      "4": {
+        "n": 0,
+        "acc": null,
+        "greedy": null
+      },
+      "5": {
+        "n": 1644,
+        "acc": 0.5985401459854015,
+        "greedy": 0.6161800486618005
+      }
+    },
+    "worldClusters": 25,
+    "deltaClusterBootstrap95": [
+      -0.024603733978269263,
+      0.011180093515871048
+    ],
+    "originalReportedValAcc": 0.6058492084786692,
+    "originalReportedTypeAcc": 1.0,
+    "correctedTypeAcc": 0.8261856710393541
+  }
+}

@@ -3739,9 +3739,12 @@
   function prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model) {
     return GOLEM_BY_ID[preferred].points / (depth + 0.65 + goalGap(state.stock, GOLEM_BY_ID[preferred]) / 3) + engineValueFor(state, preferred, params, model) * stage * 0.12 * profile.engine * params.engineWeight + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params, model), 0) * stage * 0.32 + futureSupport * stage * 0.25 * profile.engine * params.engineWeight - state.steps * 0.09 * profile.tempo * params.tempoWeight;
   }
-  function choosePlan(view, params, profileOverride, structureInput, modelInput) {
+  function choosePlan(view, params, profileOverride, structureInput, modelInput, options = {}) {
     const structure = structureInput ?? "beam-lineage";
     const profile = profileOverride ?? profileFor(view);
+    const wantAlternatives = Math.max(0, Math.min(3, Math.floor(Number(options.alternatives ?? 0))));
+    const solvedAlternatives = [];
+    const prospectiveAlternatives = [];
     const model = params.engineModel === "v2" ? modelInput ?? engineModelContext(view, params) : null;
     const knowledge = publicKnowledge(view);
     const pressure = evolvePressure(view, params);
@@ -3749,8 +3752,10 @@
     const threshold = view.players.length >= 4 ? 5 : 6;
     const mostClaimed = Math.max(...view.players.map((p) => p.claimed.length));
     const nearEnd = view.triggerPlayer !== null || mostClaimed >= threshold - 1;
-    const depth = view.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
-    const baseWidth = nearEnd ? 10 : 14;
+    const defaultDepth = view.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
+    const depth = nearEnd || view.triggerPlayer !== null ? defaultDepth : Number.isSafeInteger(options.depth) ? Math.max(2, Math.min(12, options.depth)) : defaultDepth;
+    const defaultWidth = nearEnd ? 10 : 14;
+    const baseWidth = Number.isSafeInteger(options.width) ? Math.max(4, Math.min(24, options.width)) : defaultWidth;
     const widthFor = (layer) => structure === "beam-adaptive" ? adaptiveWidth(layer, depth, baseWidth) : baseWidth;
     const rawStage = view.triggerPlayer !== null ? 0 : Math.max(0.12, 1 - mostClaimed / threshold);
     const stage = Math.pow(rawStage, params.endgameWeight);
@@ -3779,6 +3784,9 @@
             if (next.terminal && !completedFirstGoal(next, preferred)) continue;
             if (completedFirstGoal(next, preferred)) {
               const quality2 = routeGrade(next, preferred, stage, profile, params, model) * survivalOf(preferred) * goalFactor;
+              if (wantAlternatives && next.first) {
+                solvedAlternatives.push({ action: next.first, preferred, quality: quality2 });
+              }
               if (!solved || quality2 > solved.quality) solved = { ...next, preferred, quality: quality2 };
               continue;
             }
@@ -3807,6 +3815,9 @@
         rescue(restFallback);
         for (const candidate of beam) {
           const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred) * goalFactor;
+          if (wantAlternatives && candidate.first) {
+            prospectiveAlternatives.push({ action: candidate.first, preferred, quality: expected });
+          }
           if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
         }
       }
@@ -3843,7 +3854,27 @@
       if (rolloutBest) prospective = rolloutBest;
     }
     const plan = solved ?? prospective;
-    return plan ? { ...plan, profile: profile.name, unseenCounts: [knowledge.unseenMerchants.length, knowledge.unseenGolems.length] } : null;
+    if (!plan) return null;
+    let alternatives;
+    if (wantAlternatives) {
+      const source = solved ? solvedAlternatives : prospectiveAlternatives;
+      const seen = /* @__PURE__ */ new Set([JSON.stringify(plan.first)]);
+      const picked = [];
+      for (const candidate of [...source].sort((a, b) => b.quality - a.quality)) {
+        const key = JSON.stringify(candidate.action);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        picked.push(candidate);
+        if (picked.length >= wantAlternatives) break;
+      }
+      alternatives = picked;
+    }
+    return {
+      ...plan,
+      profile: profile.name,
+      unseenCounts: [knowledge.unseenMerchants.length, knowledge.unseenGolems.length],
+      ...wantAlternatives ? { alternatives } : {}
+    };
   }
 
   // src/js/simview.ts
@@ -4346,8 +4377,8 @@
   }
 
   // src/js/opponents.ts
-  function createOpponentContext(mode, om) {
-    return { mode, om, temperature: 0.2, params: CHAMPION_PARAMETERS };
+  function createOpponentContext(mode, om, claimBias = 0) {
+    return { mode, om, temperature: 0.2, params: CHAMPION_PARAMETERS, claimBias: Number.isFinite(claimBias) ? claimBias : 0 };
   }
   function opponentDiscard(state) {
     const player = state.players[state.current];
@@ -4363,7 +4394,7 @@
         if (seenSlots.has(entry.action.index)) continue;
         seenSlots.add(entry.action.index);
       }
-      out.push(entry);
+      out.push(entry.action.type === "claim" && ctx.claimBias !== 0 ? { ...entry, value: entry.value + ctx.claimBias } : entry);
     }
     return out;
   }
@@ -4460,11 +4491,12 @@
   function logisticWin(margin, scale = 8) {
     return 1 / (1 + Math.exp(-margin / scale));
   }
-  function leafVector(state, mySeat) {
+  function leafVector(state, mySeat, options) {
     const players = state.players;
+    const handWeight = options?.handWeight ?? 1;
     const score2 = players.map((p) => score(p));
     const claimed = players.map((p) => p.claimed.length);
-    const engine = players.map((p) => p.hand.length + p.played.length);
+    const engine = players.map((p) => p.hand.length * handWeight + p.played.length);
     const crystals = players.map((p) => weighted(p.stock));
     const golems = state.golemMarket.map((id) => {
       const goal = GOLEM_BY_ID[id];
@@ -4483,7 +4515,22 @@
       }
       return { id, points: goal?.points ?? 0, myCoverage, maxRivalCoverage };
     });
-    return { seats: players.map((p) => p.id), score: score2, claimed, engine, crystals, golems, triggerPlayer: state.triggerPlayer, turnNumber: state.turnNumber };
+    const claimThreat = [];
+    if (options?.withClaimThreat === true) {
+      const threshold = players.length >= 4 ? 5 : 6;
+      for (const p of players) {
+        let immediate = 0, reachable = 0;
+        const reach = reachableStockOf(p.stock, p.hand);
+        for (const id of state.golemMarket) {
+          const goal = GOLEM_BY_ID[id];
+          if (!goal) continue;
+          if (has(p.stock, goal.cost)) immediate = Math.max(immediate, goal.points);
+          if (has(reach, goal.cost)) reachable = Math.max(reachable, goal.points);
+        }
+        claimThreat.push(8 * Math.max(0, threshold - p.claimed.length) + immediate + 0.5 * reachable);
+      }
+    }
+    return { seats: players.map((p) => p.id), score: score2, claimed, engine, crystals, claimThreat, golems, triggerPlayer: state.triggerPlayer, turnNumber: state.turnNumber };
   }
   function maxOther(values, mySeat, seats) {
     let max = -Infinity;
@@ -4533,9 +4580,15 @@
     }
     return values[values.length - 1];
   }
-  function evaluateLeaf(state, finished, mySeat, level, firstPlaceOf2) {
+  function evaluateL6(v, mySeat, copperPool, silverPool) {
+    const base = l2RawMargin(v, mySeat, copperPool, silverPool);
+    const mine = v.claimThreat[v.seats.indexOf(mySeat)] ?? 0;
+    const rival = maxOther(v.claimThreat, mySeat, v.seats);
+    return logisticWin(base + 0.2 * (mine - rival));
+  }
+  function evaluateLeaf(state, finished, mySeat, level, firstPlaceOf2, options) {
     if (finished) return firstPlaceOf2(state, mySeat) ? 1 : 0;
-    const v = leafVector(state, mySeat);
+    const v = leafVector(state, mySeat, { ...options, withClaimThreat: level === "L6" });
     switch (level) {
       case "L0":
         return evaluateL0(v, mySeat);
@@ -4545,6 +4598,8 @@
         return evaluateL2(v, mySeat, state.copper, state.silver);
       case "L3":
         return evaluateL3(v, mySeat, state.copper, state.silver, L3_CALIBRATION);
+      case "L6":
+        return evaluateL6(v, mySeat, state.copper, state.silver);
     }
   }
 
@@ -4569,7 +4624,7 @@
   function playJointTrajectory(sim, rng, ctx) {
     const mode = ctx.mode;
     const om = ctx.om;
-    const opponentCtx = createOpponentContext(mode, om);
+    const opponentCtx = createOpponentContext(mode, om, ctx.opponentClaimBias ?? 0);
     const pressureCache = new PressureCache();
     let transitions = 0;
     let opponentMeta = null;
@@ -4624,7 +4679,7 @@
       opponentMeta = null;
     }
     const finished = sim.finished;
-    const value = evaluateLeaf(sim.view, finished, ctx.mySeat, ctx.evaluator, firstPlaceOf);
+    const value = evaluateLeaf(sim.view, finished, ctx.mySeat, ctx.evaluator, firstPlaceOf, { handWeight: ctx.handWeight });
     const finalRank = finished ? firstPlaceOf(sim.view, ctx.mySeat) ? 1 : ranking({ players: sim.view.players }).findIndex((r) => r.id === ctx.mySeat) + 1 : null;
     return { value, transitions, finished, finalRank };
   }
@@ -5267,9 +5322,21 @@
       if (observation.current !== mySeat) fail5("观察席位不是当前行动者");
       const profile = o.profileName ? profileByName(o.profileName) : NEUTRAL_PROFILE;
       const planStart = performance.now();
-      const plan = choosePlan(observation, championParameters, profile, o.championStructure ?? "beam-rollout");
+      const planOptions = {};
+      if (o.championAlternatives) planOptions.alternatives = o.championAlternatives;
+      if (o.championDepth != null) planOptions.depth = o.championDepth;
+      if (o.championWidth != null) planOptions.width = o.championWidth;
+      const plan = choosePlan(
+        observation,
+        championParameters,
+        profile,
+        o.championStructure ?? "beam-rollout",
+        null,
+        Object.keys(planOptions).length ? planOptions : void 0
+      );
       phase.planMs = performance.now() - planStart;
       const championAction = plan?.first ?? null;
+      const championAlternatives = (plan?.alternatives ?? []).map((a) => a.action);
       const worldCount = Math.max(1, Math.min(8, Math.floor(o.worlds ?? 4)));
       const rootSimStart = performance.now();
       const root = createSimulation(observation, { simSeed: worldSeed(o.simSeed ?? 0, 0), historySummary: o.historySummary });
@@ -5441,6 +5508,10 @@
         return true;
       };
       push(championAction, "champion");
+      for (const alt of championAlternatives) {
+        if (candidates.length >= (o.candidateCap ?? 4)) break;
+        push(alt, "champion-alt");
+      }
       let claimActions = legalRootActions.filter((x) => x.type === "claim");
       const rankedClaims = rankActions(claimActions);
       const claimOrder = new Map(rankedClaims.map((action, i) => [actionKey(action), i]));
@@ -5500,6 +5571,35 @@
             } else {
               push(best.action, "near-terminal");
               injectionMode = "add";
+            }
+          }
+        }
+      }
+      const lateMode = o.lateClaimCandidate ?? "off";
+      if (lateMode !== "off") {
+        const thresholdClaims = observation.players.length >= 4 ? 5 : 6;
+        const remainingClaims = thresholdClaims - observation.players[mySeat].claimed.length;
+        if (remainingClaims <= (o.lateClaimThreshold ?? 2)) {
+          let bestLate = null;
+          for (const a of claimActions) {
+            const scored = immediateOfficialScoreDelta(observation, a);
+            if (!scored || scored.delta < (o.lateClaimMinDelta ?? 1)) continue;
+            if (!bestLate || scored.delta > bestLate.delta) bestLate = { action: a, delta: scored.delta };
+          }
+          if (bestLate && !seen.has(actionKey(bestLate.action))) {
+            if (lateMode === "add") {
+              push(bestLate.action, "late-claim");
+            } else {
+              let idx = candidateSources.lastIndexOf("prior");
+              if (idx < 0) idx = candidateSources.lastIndexOf("claim");
+              if (idx >= 0) {
+                seen.delete(actionKey(candidates[idx]));
+                candidates[idx] = bestLate.action;
+                candidateSources[idx] = "late-claim";
+                seen.add(actionKey(bestLate.action));
+              } else {
+                push(bestLate.action, "late-claim");
+              }
             }
           }
         }
@@ -5588,7 +5688,9 @@
         om,
         profileName: o.profileName,
         params: o.championParameters ?? CHAMPION_PARAMETERS,
-        endgameDiscard: o.endgameDiscard === true
+        endgameDiscard: o.endgameDiscard === true,
+        handWeight: o.evaluatorHandWeight ?? 1,
+        opponentClaimBias: o.opponentClaimBias ?? 0
       };
       const aggregates = candidates.map((action) => ({
         action,
@@ -5902,6 +6004,36 @@
     if (!["default", "claimFocus"].includes(endgameMode)) fail5(`未知 endgameMode：${String(endgameMode)}`);
     const racingDelta = base.racingDelta ?? 0.05;
     if (!(racingDelta > 0 && racingDelta < 1)) fail5(`racingDelta 必须在 (0,1)，实际：${String(racingDelta)}`);
+    const championAlternatives = base.championAlternatives ?? 0;
+    if (!Number.isSafeInteger(championAlternatives) || championAlternatives < 0 || championAlternatives > 3) {
+      fail5(`championAlternatives 必须为 0–3 的整数，实际：${String(championAlternatives)}`);
+    }
+    const evaluatorHandWeight = base.evaluatorHandWeight ?? 1;
+    if (!Number.isFinite(evaluatorHandWeight) || evaluatorHandWeight < 0 || evaluatorHandWeight > 1) {
+      fail5(`evaluatorHandWeight 必须在 [0,1]，实际：${String(evaluatorHandWeight)}`);
+    }
+    const championDepth = base.championDepth ?? null;
+    if (championDepth !== null && (!Number.isSafeInteger(championDepth) || championDepth < 2 || championDepth > 12)) {
+      fail5(`championDepth 必须为 2–12 的整数或 null，实际：${String(championDepth)}`);
+    }
+    const championWidth = base.championWidth ?? null;
+    if (championWidth !== null && (!Number.isSafeInteger(championWidth) || championWidth < 4 || championWidth > 24)) {
+      fail5(`championWidth 必须为 4–24 的整数或 null，实际：${String(championWidth)}`);
+    }
+    const lateClaimCandidate = base.lateClaimCandidate ?? "off";
+    if (!["off", "add", "replace"].includes(lateClaimCandidate)) fail5(`未知 lateClaimCandidate：${String(lateClaimCandidate)}`);
+    const lateClaimThreshold = base.lateClaimThreshold ?? 2;
+    if (!Number.isSafeInteger(lateClaimThreshold) || lateClaimThreshold < 1 || lateClaimThreshold > 3) {
+      fail5(`lateClaimThreshold 必须为 1–3 的整数，实际：${String(lateClaimThreshold)}`);
+    }
+    const lateClaimMinDelta = base.lateClaimMinDelta ?? 1;
+    if (!Number.isFinite(lateClaimMinDelta) || lateClaimMinDelta < 0 || lateClaimMinDelta > 30) {
+      fail5(`lateClaimMinDelta 必须在 [0,30]，实际：${String(lateClaimMinDelta)}`);
+    }
+    const opponentClaimBias = base.opponentClaimBias ?? 0;
+    if (!Number.isFinite(opponentClaimBias) || opponentClaimBias < 0 || opponentClaimBias > 1) {
+      fail5(`opponentClaimBias 必须在 [0,1]，实际：${String(opponentClaimBias)}`);
+    }
     return {
       ...base,
       championStructure: base.championStructure ?? "beam-rollout",
@@ -5913,6 +6045,14 @@
       allocation,
       racingDelta,
       endgameMode,
+      championAlternatives,
+      evaluatorHandWeight,
+      championDepth,
+      championWidth,
+      lateClaimCandidate,
+      lateClaimThreshold,
+      lateClaimMinDelta,
+      opponentClaimBias,
       nearTerminalCandidate,
       screenGoalScope,
       batchAdmission,
@@ -6023,6 +6163,14 @@
     claimProtectDelta: 10,
     claimProtectMargin: 0.1,
     ensureBestClaimCandidate: false,
+    championAlternatives: 0,
+    evaluatorHandWeight: 1,
+    championDepth: null,
+    championWidth: null,
+    lateClaimCandidate: "off",
+    lateClaimThreshold: 2,
+    lateClaimMinDelta: 1,
+    opponentClaimBias: 0,
     variant: "joint-rollout",
     worlds: 4,
     horizon: 48,
@@ -6048,6 +6196,14 @@
     "claimProtectDelta",
     "claimProtectMargin",
     "ensureBestClaimCandidate",
+    "championAlternatives",
+    "evaluatorHandWeight",
+    "championDepth",
+    "championWidth",
+    "lateClaimCandidate",
+    "lateClaimThreshold",
+    "lateClaimMinDelta",
+    "opponentClaimBias",
     "variant",
     "worlds",
     "horizon",
@@ -6126,6 +6282,14 @@
       claimProtectDelta: Number(merged.claimProtectDelta),
       claimProtectMargin: Number(merged.claimProtectMargin),
       ensureBestClaimCandidate: Boolean(merged.ensureBestClaimCandidate),
+      championAlternatives: Number(merged.championAlternatives),
+      evaluatorHandWeight: Number(merged.evaluatorHandWeight),
+      championDepth: merged.championDepth == null ? null : Number(merged.championDepth),
+      championWidth: merged.championWidth == null ? null : Number(merged.championWidth),
+      lateClaimCandidate: String(merged.lateClaimCandidate),
+      lateClaimThreshold: Number(merged.lateClaimThreshold),
+      lateClaimMinDelta: Number(merged.lateClaimMinDelta),
+      opponentClaimBias: Number(merged.opponentClaimBias),
       engineModel: championParameters.engineModel ?? "v1",
       seatPolicy: championParameters.seatPolicy ?? "flat",
       preset,
@@ -7698,9 +7862,12 @@
   function prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model) {
     return GOLEM_BY_ID[preferred].points / (depth + 0.65 + goalGap(state.stock, GOLEM_BY_ID[preferred]) / 3) + engineValueFor(state, preferred, params, model) * stage * 0.12 * profile.engine * params.engineWeight + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params, model), 0) * stage * 0.32 + futureSupport * stage * 0.25 * profile.engine * params.engineWeight - state.steps * 0.09 * profile.tempo * params.tempoWeight;
   }
-  function choosePlan(view, params, profileOverride, structureInput, modelInput) {
+  function choosePlan(view, params, profileOverride, structureInput, modelInput, options = {}) {
     const structure = structureInput ?? "beam-lineage";
     const profile = profileOverride ?? profileFor(view);
+    const wantAlternatives = Math.max(0, Math.min(3, Math.floor(Number(options.alternatives ?? 0))));
+    const solvedAlternatives = [];
+    const prospectiveAlternatives = [];
     const model = params.engineModel === "v2" ? modelInput ?? engineModelContext(view, params) : null;
     const knowledge = publicKnowledge(view);
     const pressure = evolvePressure(view, params);
@@ -7708,8 +7875,10 @@
     const threshold = view.players.length >= 4 ? 5 : 6;
     const mostClaimed = Math.max(...view.players.map((p) => p.claimed.length));
     const nearEnd = view.triggerPlayer !== null || mostClaimed >= threshold - 1;
-    const depth = view.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
-    const baseWidth = nearEnd ? 10 : 14;
+    const defaultDepth = view.triggerPlayer !== null ? 1 : nearEnd ? 3 : 6;
+    const depth = nearEnd || view.triggerPlayer !== null ? defaultDepth : Number.isSafeInteger(options.depth) ? Math.max(2, Math.min(12, options.depth)) : defaultDepth;
+    const defaultWidth = nearEnd ? 10 : 14;
+    const baseWidth = Number.isSafeInteger(options.width) ? Math.max(4, Math.min(24, options.width)) : defaultWidth;
     const widthFor = (layer) => structure === "beam-adaptive" ? adaptiveWidth(layer, depth, baseWidth) : baseWidth;
     const rawStage = view.triggerPlayer !== null ? 0 : Math.max(0.12, 1 - mostClaimed / threshold);
     const stage = Math.pow(rawStage, params.endgameWeight);
@@ -7738,6 +7907,9 @@
             if (next.terminal && !completedFirstGoal(next, preferred)) continue;
             if (completedFirstGoal(next, preferred)) {
               const quality2 = routeGrade(next, preferred, stage, profile, params, model) * survivalOf(preferred) * goalFactor;
+              if (wantAlternatives && next.first) {
+                solvedAlternatives.push({ action: next.first, preferred, quality: quality2 });
+              }
               if (!solved || quality2 > solved.quality) solved = { ...next, preferred, quality: quality2 };
               continue;
             }
@@ -7766,6 +7938,9 @@
         rescue(restFallback);
         for (const candidate of beam) {
           const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model) * survivalOf(preferred) * goalFactor;
+          if (wantAlternatives && candidate.first) {
+            prospectiveAlternatives.push({ action: candidate.first, preferred, quality: expected });
+          }
           if (!prospective || expected > prospective.quality) prospective = { ...candidate, preferred, quality: expected };
         }
       }
@@ -7802,7 +7977,27 @@
       if (rolloutBest) prospective = rolloutBest;
     }
     const plan = solved ?? prospective;
-    return plan ? { ...plan, profile: profile.name, unseenCounts: [knowledge.unseenMerchants.length, knowledge.unseenGolems.length] } : null;
+    if (!plan) return null;
+    let alternatives;
+    if (wantAlternatives) {
+      const source = solved ? solvedAlternatives : prospectiveAlternatives;
+      const seen = /* @__PURE__ */ new Set([JSON.stringify(plan.first)]);
+      const picked = [];
+      for (const candidate of [...source].sort((a, b) => b.quality - a.quality)) {
+        const key = JSON.stringify(candidate.action);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        picked.push(candidate);
+        if (picked.length >= wantAlternatives) break;
+      }
+      alternatives = picked;
+    }
+    return {
+      ...plan,
+      profile: profile.name,
+      unseenCounts: [knowledge.unseenMerchants.length, knowledge.unseenGolems.length],
+      ...wantAlternatives ? { alternatives } : {}
+    };
   }
 
   // src/ai/version-registry.ts
@@ -10198,8 +10393,8 @@
   }
 
   // src/js/opponents.ts
-  function createOpponentContext(mode, om) {
-    return { mode, om, temperature: 0.2, params: CHAMPION_PARAMETERS };
+  function createOpponentContext(mode, om, claimBias = 0) {
+    return { mode, om, temperature: 0.2, params: CHAMPION_PARAMETERS, claimBias: Number.isFinite(claimBias) ? claimBias : 0 };
   }
   function opponentDiscard(state) {
     const player = state.players[state.current];
@@ -10215,7 +10410,7 @@
         if (seenSlots.has(entry.action.index)) continue;
         seenSlots.add(entry.action.index);
       }
-      out.push(entry);
+      out.push(entry.action.type === "claim" && ctx.claimBias !== 0 ? { ...entry, value: entry.value + ctx.claimBias } : entry);
     }
     return out;
   }
@@ -10312,11 +10507,12 @@
   function logisticWin(margin, scale = 8) {
     return 1 / (1 + Math.exp(-margin / scale));
   }
-  function leafVector(state, mySeat) {
+  function leafVector(state, mySeat, options) {
     const players = state.players;
+    const handWeight = options?.handWeight ?? 1;
     const score2 = players.map((p) => score(p));
     const claimed = players.map((p) => p.claimed.length);
-    const engine = players.map((p) => p.hand.length + p.played.length);
+    const engine = players.map((p) => p.hand.length * handWeight + p.played.length);
     const crystals = players.map((p) => weighted(p.stock));
     const golems = state.golemMarket.map((id) => {
       const goal = GOLEM_BY_ID[id];
@@ -10335,7 +10531,22 @@
       }
       return { id, points: goal?.points ?? 0, myCoverage, maxRivalCoverage };
     });
-    return { seats: players.map((p) => p.id), score: score2, claimed, engine, crystals, golems, triggerPlayer: state.triggerPlayer, turnNumber: state.turnNumber };
+    const claimThreat = [];
+    if (options?.withClaimThreat === true) {
+      const threshold = players.length >= 4 ? 5 : 6;
+      for (const p of players) {
+        let immediate = 0, reachable = 0;
+        const reach = reachableStockOf(p.stock, p.hand);
+        for (const id of state.golemMarket) {
+          const goal = GOLEM_BY_ID[id];
+          if (!goal) continue;
+          if (has(p.stock, goal.cost)) immediate = Math.max(immediate, goal.points);
+          if (has(reach, goal.cost)) reachable = Math.max(reachable, goal.points);
+        }
+        claimThreat.push(8 * Math.max(0, threshold - p.claimed.length) + immediate + 0.5 * reachable);
+      }
+    }
+    return { seats: players.map((p) => p.id), score: score2, claimed, engine, crystals, claimThreat, golems, triggerPlayer: state.triggerPlayer, turnNumber: state.turnNumber };
   }
   function maxOther(values, mySeat, seats) {
     let max = -Infinity;
@@ -10385,9 +10596,15 @@
     }
     return values[values.length - 1];
   }
-  function evaluateLeaf(state, finished, mySeat, level, firstPlaceOf2) {
+  function evaluateL6(v, mySeat, copperPool, silverPool) {
+    const base = l2RawMargin(v, mySeat, copperPool, silverPool);
+    const mine = v.claimThreat[v.seats.indexOf(mySeat)] ?? 0;
+    const rival = maxOther(v.claimThreat, mySeat, v.seats);
+    return logisticWin(base + 0.2 * (mine - rival));
+  }
+  function evaluateLeaf(state, finished, mySeat, level, firstPlaceOf2, options) {
     if (finished) return firstPlaceOf2(state, mySeat) ? 1 : 0;
-    const v = leafVector(state, mySeat);
+    const v = leafVector(state, mySeat, { ...options, withClaimThreat: level === "L6" });
     switch (level) {
       case "L0":
         return evaluateL0(v, mySeat);
@@ -10397,6 +10614,8 @@
         return evaluateL2(v, mySeat, state.copper, state.silver);
       case "L3":
         return evaluateL3(v, mySeat, state.copper, state.silver, L3_CALIBRATION);
+      case "L6":
+        return evaluateL6(v, mySeat, state.copper, state.silver);
     }
   }
 
@@ -10421,7 +10640,7 @@
   function playJointTrajectory(sim, rng, ctx) {
     const mode = ctx.mode;
     const om = ctx.om;
-    const opponentCtx = createOpponentContext(mode, om);
+    const opponentCtx = createOpponentContext(mode, om, ctx.opponentClaimBias ?? 0);
     const pressureCache = new PressureCache();
     let transitions = 0;
     let opponentMeta = null;
@@ -10476,7 +10695,7 @@
       opponentMeta = null;
     }
     const finished = sim.finished;
-    const value = evaluateLeaf(sim.view, finished, ctx.mySeat, ctx.evaluator, firstPlaceOf);
+    const value = evaluateLeaf(sim.view, finished, ctx.mySeat, ctx.evaluator, firstPlaceOf, { handWeight: ctx.handWeight });
     const finalRank = finished ? firstPlaceOf(sim.view, ctx.mySeat) ? 1 : ranking({ players: sim.view.players }).findIndex((r) => r.id === ctx.mySeat) + 1 : null;
     return { value, transitions, finished, finalRank };
   }
@@ -11209,9 +11428,21 @@
       if (observation.current !== mySeat) fail6("观察席位不是当前行动者");
       const profile = o.profileName ? profileByName(o.profileName) : NEUTRAL_PROFILE;
       const planStart = performance.now();
-      const plan = choosePlan(observation, championParameters, profile, o.championStructure ?? "beam-rollout");
+      const planOptions = {};
+      if (o.championAlternatives) planOptions.alternatives = o.championAlternatives;
+      if (o.championDepth != null) planOptions.depth = o.championDepth;
+      if (o.championWidth != null) planOptions.width = o.championWidth;
+      const plan = choosePlan(
+        observation,
+        championParameters,
+        profile,
+        o.championStructure ?? "beam-rollout",
+        null,
+        Object.keys(planOptions).length ? planOptions : void 0
+      );
       phase.planMs = performance.now() - planStart;
       const championAction = plan?.first ?? null;
+      const championAlternatives = (plan?.alternatives ?? []).map((a) => a.action);
       const worldCount = Math.max(1, Math.min(8, Math.floor(o.worlds ?? 4)));
       const rootSimStart = performance.now();
       const root2 = createSimulation(observation, { simSeed: worldSeed(o.simSeed ?? 0, 0), historySummary: o.historySummary });
@@ -11383,6 +11614,10 @@
         return true;
       };
       push(championAction, "champion");
+      for (const alt of championAlternatives) {
+        if (candidates.length >= (o.candidateCap ?? 4)) break;
+        push(alt, "champion-alt");
+      }
       let claimActions = legalRootActions.filter((x) => x.type === "claim");
       const rankedClaims = rankActions(claimActions);
       const claimOrder = new Map(rankedClaims.map((action2, i) => [actionKey(action2), i]));
@@ -11442,6 +11677,35 @@
             } else {
               push(best.action, "near-terminal");
               injectionMode = "add";
+            }
+          }
+        }
+      }
+      const lateMode = o.lateClaimCandidate ?? "off";
+      if (lateMode !== "off") {
+        const thresholdClaims = observation.players.length >= 4 ? 5 : 6;
+        const remainingClaims = thresholdClaims - observation.players[mySeat].claimed.length;
+        if (remainingClaims <= (o.lateClaimThreshold ?? 2)) {
+          let bestLate = null;
+          for (const a of claimActions) {
+            const scored = immediateOfficialScoreDelta(observation, a);
+            if (!scored || scored.delta < (o.lateClaimMinDelta ?? 1)) continue;
+            if (!bestLate || scored.delta > bestLate.delta) bestLate = { action: a, delta: scored.delta };
+          }
+          if (bestLate && !seen.has(actionKey(bestLate.action))) {
+            if (lateMode === "add") {
+              push(bestLate.action, "late-claim");
+            } else {
+              let idx = candidateSources.lastIndexOf("prior");
+              if (idx < 0) idx = candidateSources.lastIndexOf("claim");
+              if (idx >= 0) {
+                seen.delete(actionKey(candidates[idx]));
+                candidates[idx] = bestLate.action;
+                candidateSources[idx] = "late-claim";
+                seen.add(actionKey(bestLate.action));
+              } else {
+                push(bestLate.action, "late-claim");
+              }
             }
           }
         }
@@ -11530,7 +11794,9 @@
         om,
         profileName: o.profileName,
         params: o.championParameters ?? CHAMPION_PARAMETERS,
-        endgameDiscard: o.endgameDiscard === true
+        endgameDiscard: o.endgameDiscard === true,
+        handWeight: o.evaluatorHandWeight ?? 1,
+        opponentClaimBias: o.opponentClaimBias ?? 0
       };
       const aggregates = candidates.map((action2) => ({
         action: action2,
@@ -11844,6 +12110,36 @@
     if (!["default", "claimFocus"].includes(endgameMode)) fail6(`未知 endgameMode：${String(endgameMode)}`);
     const racingDelta = base.racingDelta ?? 0.05;
     if (!(racingDelta > 0 && racingDelta < 1)) fail6(`racingDelta 必须在 (0,1)，实际：${String(racingDelta)}`);
+    const championAlternatives = base.championAlternatives ?? 0;
+    if (!Number.isSafeInteger(championAlternatives) || championAlternatives < 0 || championAlternatives > 3) {
+      fail6(`championAlternatives 必须为 0–3 的整数，实际：${String(championAlternatives)}`);
+    }
+    const evaluatorHandWeight = base.evaluatorHandWeight ?? 1;
+    if (!Number.isFinite(evaluatorHandWeight) || evaluatorHandWeight < 0 || evaluatorHandWeight > 1) {
+      fail6(`evaluatorHandWeight 必须在 [0,1]，实际：${String(evaluatorHandWeight)}`);
+    }
+    const championDepth = base.championDepth ?? null;
+    if (championDepth !== null && (!Number.isSafeInteger(championDepth) || championDepth < 2 || championDepth > 12)) {
+      fail6(`championDepth 必须为 2–12 的整数或 null，实际：${String(championDepth)}`);
+    }
+    const championWidth = base.championWidth ?? null;
+    if (championWidth !== null && (!Number.isSafeInteger(championWidth) || championWidth < 4 || championWidth > 24)) {
+      fail6(`championWidth 必须为 4–24 的整数或 null，实际：${String(championWidth)}`);
+    }
+    const lateClaimCandidate = base.lateClaimCandidate ?? "off";
+    if (!["off", "add", "replace"].includes(lateClaimCandidate)) fail6(`未知 lateClaimCandidate：${String(lateClaimCandidate)}`);
+    const lateClaimThreshold = base.lateClaimThreshold ?? 2;
+    if (!Number.isSafeInteger(lateClaimThreshold) || lateClaimThreshold < 1 || lateClaimThreshold > 3) {
+      fail6(`lateClaimThreshold 必须为 1–3 的整数，实际：${String(lateClaimThreshold)}`);
+    }
+    const lateClaimMinDelta = base.lateClaimMinDelta ?? 1;
+    if (!Number.isFinite(lateClaimMinDelta) || lateClaimMinDelta < 0 || lateClaimMinDelta > 30) {
+      fail6(`lateClaimMinDelta 必须在 [0,30]，实际：${String(lateClaimMinDelta)}`);
+    }
+    const opponentClaimBias = base.opponentClaimBias ?? 0;
+    if (!Number.isFinite(opponentClaimBias) || opponentClaimBias < 0 || opponentClaimBias > 1) {
+      fail6(`opponentClaimBias 必须在 [0,1]，实际：${String(opponentClaimBias)}`);
+    }
     return {
       ...base,
       championStructure: base.championStructure ?? "beam-rollout",
@@ -11855,6 +12151,14 @@
       allocation,
       racingDelta,
       endgameMode,
+      championAlternatives,
+      evaluatorHandWeight,
+      championDepth,
+      championWidth,
+      lateClaimCandidate,
+      lateClaimThreshold,
+      lateClaimMinDelta,
+      opponentClaimBias,
       nearTerminalCandidate,
       screenGoalScope,
       batchAdmission,
@@ -11893,6 +12197,14 @@
     claimProtectDelta: 10,
     claimProtectMargin: 0.1,
     ensureBestClaimCandidate: false,
+    championAlternatives: 0,
+    evaluatorHandWeight: 1,
+    championDepth: null,
+    championWidth: null,
+    lateClaimCandidate: "off",
+    lateClaimThreshold: 2,
+    lateClaimMinDelta: 1,
+    opponentClaimBias: 0,
     variant: "joint-rollout",
     worlds: 4,
     horizon: 48,
@@ -11918,6 +12230,14 @@
     "claimProtectDelta",
     "claimProtectMargin",
     "ensureBestClaimCandidate",
+    "championAlternatives",
+    "evaluatorHandWeight",
+    "championDepth",
+    "championWidth",
+    "lateClaimCandidate",
+    "lateClaimThreshold",
+    "lateClaimMinDelta",
+    "opponentClaimBias",
     "variant",
     "worlds",
     "horizon",
@@ -11996,6 +12316,14 @@
       claimProtectDelta: Number(merged.claimProtectDelta),
       claimProtectMargin: Number(merged.claimProtectMargin),
       ensureBestClaimCandidate: Boolean(merged.ensureBestClaimCandidate),
+      championAlternatives: Number(merged.championAlternatives),
+      evaluatorHandWeight: Number(merged.evaluatorHandWeight),
+      championDepth: merged.championDepth == null ? null : Number(merged.championDepth),
+      championWidth: merged.championWidth == null ? null : Number(merged.championWidth),
+      lateClaimCandidate: String(merged.lateClaimCandidate),
+      lateClaimThreshold: Number(merged.lateClaimThreshold),
+      lateClaimMinDelta: Number(merged.lateClaimMinDelta),
+      opponentClaimBias: Number(merged.opponentClaimBias),
       engineModel: championParameters.engineModel ?? "v1",
       seatPolicy: championParameters.seatPolicy ?? "flat",
       preset,
@@ -12041,13 +12369,21 @@
     claimProtectDelta: { kind: "number", min: 5, max: 30 },
     claimProtectMargin: { kind: "number", min: 0, max: 0.5 },
     ensureBestClaimCandidate: { kind: "bool" },
+    championAlternatives: { kind: "int", min: 0, max: 3 },
+    evaluatorHandWeight: { kind: "number", min: 0, max: 1 },
+    championDepth: { kind: "int", min: 2, max: 12 },
+    championWidth: { kind: "int", min: 4, max: 24 },
+    lateClaimCandidate: { kind: "enum", values: ["off", "add", "replace"] },
+    lateClaimThreshold: { kind: "int", min: 1, max: 3 },
+    lateClaimMinDelta: { kind: "number", min: 0, max: 30 },
+    opponentClaimBias: { kind: "number", min: 0, max: 1 },
     allocation: { kind: "enum", values: ["balanced", "racing"] },
     racingDelta: { kind: "number", min: 5e-3, max: 0.2 },
     endgameMode: { kind: "enum", values: ["default", "claimFocus"] },
     worlds: { kind: "int", min: 1, max: 8 },
     horizon: { kind: "int", min: 8, max: 96 },
     championStructure: { kind: "enum", values: ["beam-lineage", "beam-adaptive", "beam-rollout", "beam-contest"] },
-    evaluator: { kind: "enum", values: ["L0", "L1", "L2", "L3"] },
+    evaluator: { kind: "enum", values: ["L0", "L1", "L2", "L3", "L6"] },
     workUnits: { kind: "int", min: 8, max: 512 }
   };
   function sanitizeSearchPolicy(raw) {

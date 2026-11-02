@@ -30,14 +30,16 @@ export type OpponentContext = {
   /** rule 模式 softmax 温度（缺省 0.6：接近贪心但保留行为方差）。 */
   temperature: number;
   params: AIParameters;
+  /** AI13：规则对手认领价值偏置（缺省 0 = 冻结口径）。 */
+  claimBias: number;
 };
 
 /** 创建对手上下文（参数固定为冻结冠军参数集——对手策略与候选 AI 共享同一
  * 启发式基线，保证消融对照只改变"对手行为来源"这一个因子）。
  * 温度 0.2：近确定性贪心而保留少量行为方差（τ=0.6→0.35→0.2 实测递减单轨迹
  * 叶值方差；CRN 配对下根行动间差异的信噪比随之上升）。 */
-export function createOpponentContext(mode: JointOpponentMode, om: OpponentModel | null): OpponentContext {
-  return { mode, om, temperature: 0.2, params: CHAMPION_PARAMETERS };
+export function createOpponentContext(mode: JointOpponentMode, om: OpponentModel | null, claimBias = 0): OpponentContext {
+  return { mode, om, temperature: 0.2, params: CHAMPION_PARAMETERS, claimBias: Number.isFinite(claimBias) ? claimBias : 0 };
 }
 
 /** 对手溢出弃置：所有模式统一走冠军 trimStock 口径（强制行动，选择空间小，
@@ -61,7 +63,10 @@ function ruleOpponentRanked(state: PublicSimState, ctx: OpponentContext) {
       if (seenSlots.has(entry.action.index)) continue;
       seenSlots.add(entry.action.index);
     }
-    out.push(entry);
+    // AI13：认领偏置只作用于规则对手的采样价值（正值提高立即认领的相对概率）。
+    out.push(entry.action.type === 'claim' && ctx.claimBias !== 0
+      ? { ...entry, value: entry.value + ctx.claimBias }
+      : entry);
   }
   return out;
 }

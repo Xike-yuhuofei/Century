@@ -32,7 +32,7 @@ export type JointOpponentMode = 'random' | 'rule' | 'om-v1';
 
 /** L0 当前冠军启发式；L1 多人向量估值；L2 目标存活/竞争风险/终局时间增强；
  * L3 独立校准的胜率近似（分段线性映射，权重经离线校准；缺权重时回落 L2）。 */
-export type LeafEvaluatorLevel = 'L0' | 'L1' | 'L2' | 'L3';
+export type LeafEvaluatorLevel = 'L0' | 'L1' | 'L2' | 'L3' | 'L6';
 
 // === 搜索结构（任务 C：两种对照搜索） ===
 
@@ -265,6 +265,9 @@ export type JointSearchOptions = {
   lateClaimCandidate?: 'off' | 'add' | 'replace';
   lateClaimThreshold?: number;
   lateClaimMinDelta?: number;
+  /** AI13 方向 C：轨迹内规则对手的认领偏置（价值单位；缺省 0 = 冻结）。
+   * 用于检验“模拟对手认领不足 → 我方过度囤牌”的仿真校准假设。 */
+  opponentClaimBias?: number;
   /** 冠军基座参数集（AI7 身份冻结 + C2/C4 变体注入）：显式描述实际消费的
    * 冠军参数集。版本预设（parameterVariant）会注入候选变体；缺省 = 冻结
    * CHAMPION_PARAMETERS（仅兼容旧调用）。 */

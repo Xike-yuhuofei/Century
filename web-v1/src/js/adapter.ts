@@ -60,13 +60,14 @@ const SEARCH_POLICY_RULES: Record<string, { kind: 'number' | 'int' | 'bool' | 'e
   lateClaimCandidate: { kind: 'enum', values: ['off', 'add', 'replace'] },
   lateClaimThreshold: { kind: 'int', min: 1, max: 3 },
   lateClaimMinDelta: { kind: 'number', min: 0, max: 30 },
+  opponentClaimBias: { kind: 'number', min: 0, max: 1 },
   allocation: { kind: 'enum', values: ['balanced', 'racing'] },
   racingDelta: { kind: 'number', min: 0.005, max: 0.2 },
   endgameMode: { kind: 'enum', values: ['default', 'claimFocus'] },
   worlds: { kind: 'int', min: 1, max: 8 },
   horizon: { kind: 'int', min: 8, max: 96 },
   championStructure: { kind: 'enum', values: ['beam-lineage', 'beam-adaptive', 'beam-rollout', 'beam-contest'] },
-  evaluator: { kind: 'enum', values: ['L0', 'L1', 'L2', 'L3'] },
+  evaluator: { kind: 'enum', values: ['L0', 'L1', 'L2', 'L3', 'L6'] },
   workUnits: { kind: 'int', min: 8, max: 512 },
 };
 
