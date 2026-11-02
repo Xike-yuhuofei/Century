@@ -10,13 +10,22 @@
  * 'beam-contest'（Issue #20）：beam-rollout + 座位感知目标存活折扣——
  * 在 rollout 评估之外，用 golemSurvivalModel 依据座位顺序与对手可达费用
  * 对每个目标的路线期望乘以存活系数，使后手 AI 不再与必被截胡的目标死磕。
+ *
+ * AI13e 后续（本轮新增，缺省关闭）：
+ * - 'beam-rollout-goal'：与 beam-rollout 相同的候选构造，但轨迹内策略从
+ *   “均匀随机合法行动”改为目标导向先验（15% 探索随机）。假设：均匀随机
+ *   让最终束排序被噪声主导；目标导向 rollout 能更真实地估计“这条路线还能
+ *   拿多少分”，从而选出更优计划。
+ * - 'beam-race'：在路线排序中加入公开信息的终局名次投影项（对手按公开
+ *   历史得分率外推，我方按路线完成后的得分），假设：只看“单位行动得分效率”
+ *   会低估多人对局中的名次竞争与终局时机。
  */
 
 import { mulberry32 } from './structures-rng.js';
 
-export type AIStructure = 'beam-lineage' | 'beam-adaptive' | 'beam-rollout' | 'beam-contest';
+export type AIStructure = 'beam-lineage' | 'beam-adaptive' | 'beam-rollout' | 'beam-contest' | 'beam-rollout-goal' | 'beam-race' | 'beam-score';
 
-export const AI_STRUCTURES: readonly AIStructure[] = ['beam-lineage', 'beam-adaptive', 'beam-rollout', 'beam-contest'];
+export const AI_STRUCTURES: readonly AIStructure[] = ['beam-lineage', 'beam-adaptive', 'beam-rollout', 'beam-contest', 'beam-rollout-goal', 'beam-race', 'beam-score'];
 
 export const DEFAULT_STRUCTURE: AIStructure = 'beam-lineage';
 

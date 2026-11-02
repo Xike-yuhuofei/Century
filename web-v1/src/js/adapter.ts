@@ -70,7 +70,7 @@ const SEARCH_POLICY_RULES: Record<string, { kind: 'number' | 'int' | 'bool' | 'e
   endgameMode: { kind: 'enum', values: ['default', 'claimFocus'] },
   worlds: { kind: 'int', min: 1, max: 8 },
   horizon: { kind: 'int', min: 8, max: 96 },
-  championStructure: { kind: 'enum', values: ['beam-lineage', 'beam-adaptive', 'beam-rollout', 'beam-contest'] },
+  championStructure: { kind: 'enum', values: ['beam-lineage', 'beam-adaptive', 'beam-rollout', 'beam-contest', 'beam-rollout-goal', 'beam-race', 'beam-score'] },
   evaluator: { kind: 'enum', values: ['L0', 'L1', 'L2', 'L3', 'L6'] },
   workUnits: { kind: 'int', min: 8, max: 512 },
 };

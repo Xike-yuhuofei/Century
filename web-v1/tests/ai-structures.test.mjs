@@ -19,8 +19,11 @@ test('结构标识归一化：缺省为冠军结构，非法值报错', () => {
   assert.equal(normalizeStructure(null), 'beam-lineage');
   assert.equal(normalizeStructure('beam-rollout'), 'beam-rollout');
   assert.equal(normalizeStructure('beam-contest'), 'beam-contest');
+  assert.equal(normalizeStructure('beam-rollout-goal'), 'beam-rollout-goal');
+  assert.equal(normalizeStructure('beam-race'), 'beam-race');
+  assert.equal(normalizeStructure('beam-score'), 'beam-score');
   assert.equal(DEFAULT_STRUCTURE, 'beam-lineage');
-  assert.deepEqual(AI_STRUCTURES, ['beam-lineage', 'beam-adaptive', 'beam-rollout', 'beam-contest']);
+  assert.deepEqual(AI_STRUCTURES, ['beam-lineage', 'beam-adaptive', 'beam-rollout', 'beam-contest', 'beam-rollout-goal', 'beam-race', 'beam-score']);
   assert.throws(() => normalizeStructure('monte-carlo-9000'), /未知 AI 结构/);
 });
 
@@ -82,14 +85,20 @@ test('结构变体确定性：同结构同局面决策逐位一致（含 rollout
 
 test('结构变体真实生效：至少一个位置上规划与冠军结构不同（非退化）', () => {
   const positions = midgamePositions(24);
-  let adaptiveDiff = 0, rolloutDiff = 0;
+  const diff = {};
   for (const g of positions) {
     const base = JSON.stringify(chooseAIAction(g, { parameters: BASELINE_PARAMETERS }).plan);
-    if (JSON.stringify(chooseAIAction(g, { structure: 'beam-adaptive', parameters: BASELINE_PARAMETERS }).plan) !== base) adaptiveDiff++;
-    if (JSON.stringify(chooseAIAction(g, { structure: 'beam-rollout', parameters: BASELINE_PARAMETERS }).plan) !== base) rolloutDiff++;
+    for (const structure of ['beam-adaptive', 'beam-rollout', 'beam-rollout-goal', 'beam-race', 'beam-score']) {
+      if (JSON.stringify(chooseAIAction(g, { structure, parameters: BASELINE_PARAMETERS }).plan) !== base) {
+        diff[structure] = (diff[structure] ?? 0) + 1;
+      }
+    }
   }
-  assert.ok(adaptiveDiff > 0, `beam-adaptive 在 ${positions.length} 个位置上与基线完全一致，疑似未生效`);
-  assert.ok(rolloutDiff > 0, `beam-rollout 在 ${positions.length} 个位置上与基线完全一致，疑似未生效`);
+  assert.ok((diff['beam-adaptive'] ?? 0) > 0, `beam-adaptive 在 ${positions.length} 个位置上与基线完全一致，疑似未生效`);
+  assert.ok((diff['beam-rollout'] ?? 0) > 0, `beam-rollout 在 ${positions.length} 个位置上与基线完全一致，疑似未生效`);
+  assert.ok((diff['beam-rollout-goal'] ?? 0) > 0, `beam-rollout-goal 在 ${positions.length} 个位置上与基线完全一致，疑似未生效`);
+  assert.ok((diff['beam-race'] ?? 0) > 0, `beam-race 在 ${positions.length} 个位置上与基线完全一致，疑似未生效`);
+  assert.ok((diff['beam-score'] ?? 0) > 0, `beam-score 在 ${positions.length} 个位置上与基线完全一致，疑似未生效`);
 });
 
 test('结构可内嵌于参数集并通过验证透传', async () => {
@@ -99,6 +108,10 @@ test('结构可内嵌于参数集并通过验证透传', async () => {
   const stripped = validateAIParameters({ ...BASELINE_PARAMETERS, id: 's2' });
   assert.equal(stripped.structure, undefined);
   assert.throws(() => validateAIParameters({ ...BASELINE_PARAMETERS, id: 's3', structure: 'bad' }), /未知 AI 结构/);
+  const goalRollout = validateAIParameters({ ...BASELINE_PARAMETERS, id: 's4', structure: 'beam-rollout-goal' });
+  assert.equal(goalRollout.structure, 'beam-rollout-goal');
+  const race = validateAIParameters({ ...BASELINE_PARAMETERS, id: 's5', structure: 'beam-race' });
+  assert.equal(race.structure, 'beam-race');
 });
 
 test('rollout 结构决策耗时保持在交互预算内', () => {

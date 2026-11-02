@@ -1,0 +1,93 @@
+{
+  "run": "ai5/ppo/reports/ai13e-b-90m",
+  "iterationsDone": 80,
+  "interrupted": true,
+  "totals": {
+    "games": 2716,
+    "anomaly_games": 0,
+    "decisions": 175251,
+    "pruned_decisions": 173,
+    "updates": 80
+  },
+  "gitSha": "19a8b66649f8da73caa051187efc509159cb6cca",
+  "runSeed": 20261102,
+  "device": "mps",
+  "params": 588418,
+  "config": {
+    "train": {
+      "iterations": 100,
+      "rolloutSteps": 2048,
+      "runSeed": 20261102,
+      "device": "auto",
+      "checkpointEvery": 5,
+      "logEvery": 1,
+      "collectWallMaxS": 1800,
+      "timeBudgetMin": 90
+    },
+    "env": {
+      "workers": 4,
+      "maxMoves": 1200,
+      "deadlineMs": 60000,
+      "maxCandidates": 512,
+      "batchWaitMs": 4.0
+    },
+    "model": {
+      "obsDim": 1419,
+      "actDim": 84,
+      "hidden": [
+        256,
+        256,
+        256
+      ],
+      "activation": "relu"
+    },
+    "ppo": {
+      "lr": 0.0003,
+      "lrSchedule": "constant",
+      "clip": 0.2,
+      "vfCoef": 0.5,
+      "entCoef": 0.01,
+      "epochs": 4,
+      "minibatch": 512,
+      "gamma": 0.999,
+      "gaeLambda": 0.95,
+      "maxGradNorm": 0.5,
+      "targetKl": 0.03,
+      "advantageNorm": true,
+      "valueClip": true
+    },
+    "reward": {
+      "mode": "rank_win",
+      "winWeight": 0.5,
+      "rankWeight": 0.5,
+      "scoreMarginWeight": 0.0,
+      "aux": {
+        "golemProgress": 0.0,
+        "turnEfficiency": 0.0
+      }
+    },
+    "seats": {
+      "layout": [
+        "learner",
+        "learner",
+        "node:champion",
+        "node:champion",
+        "snapshot"
+      ],
+      "snapshots": {
+        "every": 10,
+        "poolSize": 4
+      }
+    },
+    "eval": {
+      "every": 0,
+      "games": 40
+    }
+  },
+  "modelVersions": {
+    "stateEncoding": "ai5-state-v1",
+    "actionEncoding": "ai5-action-v1",
+    "interface": "ai5-inference-v1",
+    "modelHash": "e13e701c56b838ffd9a60a3692b4f7b6a1a5178150f00a930940e603e9c10dad"
+  }
+}

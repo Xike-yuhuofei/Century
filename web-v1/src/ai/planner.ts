@@ -21,7 +21,7 @@ import { GOLEM_BY_ID, MERCHANT_BY_ID, type Stock } from '../data.js';
 import { has, tradeLimit, type Action, type Color, type MarketMerchant } from '../engine.js';
 import type { AIParameters } from './parameters.js';
 import type { AIObservation, ObservationPlayer } from './observation.js';
-import { weighted, stockCount, cloneStock, publicKnowledge, futureDeckSupport } from './knowledge.js';
+import { VALUES, weighted, stockCount, cloneStock, publicKnowledge, futureDeckSupport } from './knowledge.js';
 import { goalGap, keepValue, trimStock, acquisitionValue } from './evaluator.js';
 import { engineValueFor, engineModelContext, type EngineModelContext } from './engine-model.js';
 import { profileFor, type Profile } from './profiles.js';
@@ -297,6 +297,29 @@ function searchGrade(
     - paymentCost * .55;
 }
 
+/** AI13e 后续：终局名次投影（beam-race 专用；缺省 null = 冻结口径）。
+ * 只消费公开 standings（当前分、已认领数、回合数）：
+ * 对手未来得分按其公开历史得分率外推（上限 4 分/回合），
+ * 我方按“路线完成后得分”计。输出 logistic(myFinal − 最强对手外推) − 0.5，
+ * 乘固定权重并入路线评分。系数在开发池预注册，不按结果调参。 */
+const RACE_WEIGHT = 6;
+const RACE_SCALE = 10;
+const RACE_RATE_CAP = 4;
+const RACE_RATE_FACTOR = 0.8;
+
+function raceAdjustment(state: SearchState, myExpectedPoints: number): number {
+  const steps = Math.max(1, state.steps);
+  const myFinal = state.baseScore + state.gained + myExpectedPoints;
+  let oppMax = 0;
+  for (const entry of state.standings) {
+    if (entry.seat === state.seat) continue;
+    const rate = Math.min(RACE_RATE_CAP, entry.score / Math.max(1, entry.turns)) * RACE_RATE_FACTOR;
+    const projected = entry.score + rate * steps;
+    if (projected > oppMax) oppMax = projected;
+  }
+  return RACE_WEIGHT * (1 / (1 + Math.exp(-(myFinal - oppMax) / RACE_SCALE)) - 0.5);
+}
+
 /** 完成路线评分：单位行动得分效率。 */
 function routeGrade(
   state: SearchState,
@@ -307,6 +330,7 @@ function routeGrade(
   model: EngineModelContext | null,
   optionTerminalBonus = 0,
   optionTerminalAware = false,
+  raceAware = false,
 ): number {
   // gained 可能包括同一路径上先认领其他公开魔像取得的得分。
   // M06：终局路线增量（缺省 0；只在路线完成最后一次认领时参与）。
@@ -326,7 +350,8 @@ function routeGrade(
   return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + .65, .90)
     + weighted(state.stock) * .055 * params.capacityWeight
     + engineValueFor(state, preferred, params, model) * stage * .085 * profile.engine * params.engineWeight
-    + terminalBonus + bonus;
+    + terminalBonus + bonus
+    + (raceAware ? raceAdjustment(state, 0) : 0);
 }
 
 function completedFirstGoal(state: SearchState, preferred: string): boolean {
@@ -344,12 +369,166 @@ function prospectiveFormula(
   depth: number,
   futureSupport: number,
   model: EngineModelContext | null,
+  raceAware = false,
 ): number {
   return GOLEM_BY_ID[preferred].points / (depth + .65 + goalGap(state.stock, GOLEM_BY_ID[preferred]) / 3)
     + engineValueFor(state, preferred, params, model) * stage * .12 * profile.engine * params.engineWeight
     + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params, model), 0) * stage * .32
     + futureSupport * stage * .25 * profile.engine * params.engineWeight
-    - state.steps * .09 * profile.tempo * params.tempoWeight;
+    - state.steps * .09 * profile.tempo * params.tempoWeight
+    + (raceAware ? raceAdjustment(state, GOLEM_BY_ID[preferred].points) : 0);
+}
+
+/** 目标导向 rollout 行动先验（beam-rollout-goal 专用）。
+ * 只读公开卡表与搜索状态，不执行 step 前瞻——避免把 rollout 成本放大一个数量级。
+ * 先验只负责“在随机束候选上选一条更接近冠军行为的轨迹”，不参与正式求值。 */
+function rolloutActionPrior(state: SearchState, action: Action, preferred: string): number {
+  const goal = GOLEM_BY_ID[preferred] ?? null;
+  if (action.type === 'claim') {
+    const id = state.golemMarket[action.index];
+    const golem = id ? GOLEM_BY_ID[id] : null;
+    if (!golem) return -Infinity;
+    let coin = 0;
+    if (action.index === 0) coin = state.copper > 0 ? 3 : (state.silver > 0 ? 1 : 0);
+    else if (action.index === 1 && state.copper > 0 && state.silver > 0) coin = 1;
+    return 60 + golem.points + coin + (id === preferred ? 40 : 0);
+  }
+  if (action.type === 'play') {
+    const card = MERCHANT_BY_ID[action.cardId];
+    if (!card) return -Infinity;
+    if (!goal) return 1;
+    if (card.kind === 'upgrade') {
+      let gain = 0;
+      for (const c of action.steps ?? []) {
+        if (goal.cost[c + 1] > state.stock[c + 1]) gain += VALUES[c + 1] - VALUES[c];
+      }
+      return 1 + gain * 2;
+    }
+    const repeats = card.kind === 'trade' ? (action.repeats ?? 1) : 1;
+    let useful = 0, gross = 0;
+    card.output!.forEach((n, c) => {
+      const scaled = n * repeats;
+      useful += Math.min(scaled, Math.max(0, goal.cost[c] - state.stock[c])) * VALUES[c];
+      gross += scaled * VALUES[c];
+    });
+    return 1 + useful * 1.8 + gross * .12;
+  }
+  if (action.type === 'acquire') {
+    const offer = state.merchantMarket[action.index];
+    if (!offer) return -Infinity;
+    const card = MERCHANT_BY_ID[offer.id];
+    let fit = 0;
+    if (goal && card?.output) {
+      fit = card.output.reduce((s, n, c) =>
+        s + Math.min(n, Math.max(0, goal.cost[c] - state.stock[c])) * VALUES[c], 0);
+    }
+    return .2 + weighted(offer.bonus) * .5 + fit * .9 - action.payment.length * .25;
+  }
+  if (action.type === 'rest') {
+    if (state.played.length === 0) return -1;
+    return state.hand.length === 0 ? 8 : (state.played.length >= 2 ? 2 : 0);
+  }
+  return -1;
+}
+
+/** 目标导向 rollout 选择：85% 取先验最优，15% 均匀探索（随机源与 rollout 同流）。 */
+function goalDirectedRolloutPick(
+  variants: readonly Action[],
+  state: SearchState,
+  preferred: string,
+  rng: () => number,
+): Action {
+  if (variants.length <= 1) return variants[0];
+  if (rng() < 0.15) return variants[Math.floor(rng() * variants.length)];
+  let best = variants[0];
+  let bestScore = -Infinity;
+  for (const action of variants) {
+    const score = rolloutActionPrior(state, action, preferred);
+    if (score > bestScore) { bestScore = score; best = action; }
+  }
+  return best;
+}
+
+/** beam-score（AI13e 后续方向 C）：累计得分束搜索。
+ *
+ * 冠军的束搜索按“目标路线”组织：每个市场魔像单独一条束，中间层评分不含
+ * 已得分数，只有完成偏好目标时才用 routeGrade 结算。多人对局（尤其 5p）的
+ * 失败画像正是“引擎空转、认领不足”：立即认领非偏好高分魔像的收益在中间层
+ * 被系统性忽略。本结构改为单一束搜索，评分直接包含累计得分，允许任意顺序
+ * 认领多个魔像；仍只消费公开观察，深度/宽度沿用调用方冻结口径。 */
+function scorePlanGoal(state: SearchState): string | null {
+  let best: string | null = null;
+  let bestScore = -Infinity;
+  for (const id of state.golemMarket) {
+    const goal = GOLEM_BY_ID[id];
+    if (!goal) continue;
+    const score = goal.points - 2.6 * goalGap(state.stock, goal);
+    if (score > bestScore) { bestScore = score; best = id; }
+  }
+  return best;
+}
+
+function scorePlanGrade(
+  state: SearchState,
+  stage: number,
+  profile: Profile,
+  params: AIParameters,
+  model: EngineModelContext | null,
+): number {
+  const goalId = scorePlanGoal(state);
+  const goal = goalId ? GOLEM_BY_ID[goalId] : null;
+  const gap = goal ? goalGap(state.stock, goal) : 0;
+  const potential = state.golemMarket.length
+    ? Math.max(...state.golemMarket.map(id => GOLEM_BY_ID[id]?.points ?? 0))
+    : 0;
+  return state.gained * .9
+    - gap * 1.6
+    + potential * .12
+    + engineValueFor(state, goalId, params, model) * stage * .16 * profile.engine * params.engineWeight
+    + weighted(state.stock) * .08 * params.capacityWeight
+    - state.steps * .3 * profile.tempo * params.tempoWeight
+    - state.acquired * .12;
+}
+
+/** 单一累计得分束搜索：返回终局最优或最终束最优状态（含 first 行动）。 */
+function chooseScorePlan(
+  initial: SearchState,
+  params: AIParameters,
+  profile: Profile,
+  model: EngineModelContext | null,
+  depth: number,
+  width: number,
+  allowAcquire: boolean,
+  stage: number,
+): ScoredState | null {
+  let beam: ScoredState[] = [{ ...initial, quality: 0 }];
+  let terminalBest: ScoredState | null = null;
+  for (let layer = 1; layer <= depth; layer++) {
+    const successors = new Map<string, ScoredState>();
+    for (const position of beam) {
+      for (const action of actions(position, null, allowAcquire, params)) {
+        const next = step(position, action, null, params);
+        if (!next) continue;
+        const quality = scorePlanGrade(next, stage, profile, params, model);
+        if (next.terminal) {
+          if (!terminalBest || quality > terminalBest.quality) {
+            terminalBest = { ...next, preferred: scorePlanGoal(next) ?? '', quality };
+          }
+          continue;
+        }
+        const key = stateKey(next);
+        if (!successors.has(key) || successors.get(key)!.quality < quality) {
+          successors.set(key, { ...next, quality });
+        }
+      }
+    }
+    if (!successors.size) break;
+    beam = [...successors.values()].sort((a, b) => b.quality - a.quality).slice(0, width);
+  }
+  if (terminalBest) return terminalBest;
+  let top: ScoredState | null = null;
+  for (const candidate of beam) if (!top || candidate.quality > top.quality) top = candidate;
+  return top ? { ...top, preferred: scorePlanGoal(top) ?? '' } : null;
 }
 
 /** 主规划入口：只依赖 AIObservation 与参数集，不接触任何隐藏信息。
@@ -380,6 +559,10 @@ export function choosePlan(
   options: PlanOptions = {},
 ): (ScoredState & { profile: string; unseenCounts: number[]; alternatives?: PlanAlternative[] }) | null {
   const structure = structureInput ?? 'beam-lineage';
+  // AI13e 后续：两个显式研究结构（缺省 false = 冻结口径，逐位不变）。
+  const goalRollout = structure === 'beam-rollout-goal';
+  const raceAware = structure === 'beam-race';
+  const useRollout = structure === 'beam-rollout' || structure === 'beam-contest' || goalRollout || raceAware;
   const profile = profileOverride ?? profileFor(view);
   const wantAlternatives = Math.max(0, Math.min(3, Math.floor(Number(options.alternatives ?? 0))));
   const terminalBonus = Number.isFinite(options.terminalBonus)
@@ -415,6 +598,13 @@ export function choosePlan(
   // endgameWeight：越接近终局，引擎/新卡项衰减越快（stage 的指数）。
   const stage = Math.pow(rawStage, params.endgameWeight);
   const allowAcquire = view.triggerPlayer === null;
+  // beam-score：单一累计得分束搜索（新搜索空间；缺省不启用）。
+  if (structure === 'beam-score') {
+    const scored = chooseScorePlan(initial, params, profile, model, depth, baseWidth, allowAcquire, stage);
+    return scored
+      ? { ...scored, profile: profile.name, unseenCounts: [knowledge.unseenMerchants.length, knowledge.unseenGolems.length] }
+      : null;
+  }
   // beam-contest（Issue #20）：座位感知目标存活折扣。仅该结构启用，其余结构逐位不变。
   const survival = structure === 'beam-contest' ? golemSurvivalModel(view, depth) : null;
   // M08：座位/竞争乘子（缺省 1 = 冻结 golemSurvivalModel 口径）。
@@ -447,7 +637,7 @@ export function choosePlan(
           if (!next) continue;
           if (next.terminal && !completedFirstGoal(next, preferred)) continue;
           if (completedFirstGoal(next, preferred)) {
-            const quality = routeGrade(next, preferred, stage, profile, params, model, terminalBonus, terminalAware)
+            const quality = routeGrade(next, preferred, stage, profile, params, model, terminalBonus, terminalAware, raceAware)
               * survivalOf(preferred) * goalFactor;
             if (wantAlternatives && next.first) {
               solvedAlternatives.push({ action: next.first, preferred, quality });
@@ -483,7 +673,7 @@ export function choosePlan(
       rescue(lineagePlay ?? lineageRest ?? lineageOther);
       rescue(restFallback);
       for (const candidate of beam) {
-        const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model)
+        const expected = prospectiveFormula(candidate, preferred, stage, profile, pressure, params, depth, futureSupport, model, raceAware)
           * survivalOf(preferred) * goalFactor;
         if (wantAlternatives && candidate.first) {
           prospectiveAlternatives.push({ action: candidate.first, preferred, quality: expected });
@@ -496,10 +686,10 @@ export function choosePlan(
   // beam-rollout / beam-contest：用确定性蒙特卡洛 rollout 评估最终束候选的"未来期望得分"，
   // 与公式先验按权重混合后取代解析 prospective（solved 路线仍优先）。
   // beam-contest 下公式先验与混合分都乘座位感知存活系数（截胡风险进入候选排序与选优）。
-  if ((structure === 'beam-rollout' || structure === 'beam-contest') && !solved && finalBeams.length) {
+  if (useRollout && !solved && finalBeams.length) {
     const ranked = finalBeams.flatMap(({ preferred, futureSupport, goalFactor, beam }) => beam.map(state => ({
       preferred, state, goalFactor,
-      formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model)
+      formula: prospectiveFormula(state, preferred, stage, profile, pressure, params, depth, futureSupport, model, raceAware)
         * survivalOf(preferred) * goalFactor,
     }))).sort((a, b) => b.formula - a.formula).slice(0, ROLLOUT_DEFAULTS.topK);
     let rolloutBest: ScoredState | null = null;
@@ -511,7 +701,9 @@ export function choosePlan(
         let taken = 0;
         while (!cursor.terminal && taken < ROLLOUT_DEFAULTS.stepCap) {
           const variants = actions(cursor, preferred, allowAcquire, params);
-          const pick = variants[Math.floor(rng() * variants.length)];
+          const pick = goalRollout
+            ? goalDirectedRolloutPick(variants, cursor, preferred, rng)
+            : variants[Math.floor(rng() * variants.length)];
           const next = step(cursor, pick, preferred, params);
           if (!next) break;
           cursor = next;
