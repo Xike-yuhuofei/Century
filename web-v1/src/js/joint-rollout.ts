@@ -52,6 +52,15 @@ export type RolloutContext = {
   handWeight?: number;
   /** 轨迹内规则对手的认领价值偏置（缺省 0 = 冻结）。 */
   opponentClaimBias?: number;
+  /** AI13 方向 C3：轨迹内己方策略是否跟随冠军计划路径（缺省 false = 1-ply 贪心）。
+   * plan 动作在当前模拟状态合法时优先执行，非法/耗尽后回退 1-ply。 */
+  selfPlanFollowing?: boolean;
+  /** 冠军计划路径（根行动后的后续动作；仅 selfPlanFollowing=true 时消费）。 */
+  selfPlan?: Action[];
+  /** AI13-C4：轨迹内己方政策锁定冠军计划的目标（缺省 false = 逐决策重选）。 */
+  selfGoalLock?: boolean;
+  /** 锁定的目标（仅 selfGoalLock=true 且仍在市场时生效）。 */
+  selfPreferredGoal?: string | null;
   /** 墙钟硬上限（预算模式；逐转移检查，超调 ≤ 1 步。固定工作量模式缺省 = 无）。 */
   deadline?: number;
   /** 市场事件采集（轨迹解释；仅选定行动的首条轨迹挂载）。 */
@@ -107,6 +116,9 @@ export function playJointTrajectory(
   const om = ctx.om;
   const opponentCtx = createOpponentContext(mode, om, ctx.opponentClaimBias ?? 0);
   const pressureCache = new PressureCache();
+  // 计划跟随游标：plan.path[0] 是根行动（已在 runJointRollout 中执行），从 1 开始。
+  let planCursor = ctx.selfPlanFollowing && ctx.selfPlan ? 1 : 0;
+  let following = ctx.selfPlanFollowing === true && Array.isArray(ctx.selfPlan);
   let transitions = 0;
   let opponentMeta: { family: string; p: number; label: string } | null = null;
   while (!sim.finished && transitions < ctx.horizon) {
@@ -124,8 +136,27 @@ export function playJointTrajectory(
           : { type: 'discard', colors: discardDecision(stock, state.golemMarket, CHAMPION_PARAMETERS) };
       } else {
         const ctxH = heuristicContext(state, ctx.params ?? CHAMPION_PARAMETERS, profileByName(ctx.profileName), pressureCache);
-        const ranked = myRankedActions(state, actor, ctxH).ranked;
-        action = ranked[0]?.action ?? { type: 'rest' };
+        const ranked = myRankedActions(
+          state, actor, ctxH,
+          ctx.selfGoalLock && ctx.selfPreferredGoal ? { preferred: ctx.selfPreferredGoal } : undefined,
+        ).ranked;
+        if (following && planCursor < (ctx.selfPlan?.length ?? 0)) {
+          const planned = ctx.selfPlan![planCursor];
+          // 计划中的 rest 不从计划强制：休息时机交给 1-ply（避免把陈旧计划
+          // 的“回牌”当成必须执行的指令）；遇到 rest 即回退并停止跟随。
+          const legal = planned.type !== 'rest'
+            && ranked.some(x => JSON.stringify(x.action) === JSON.stringify(planned));
+          if (legal) {
+            action = planned;
+            planCursor += 1;
+          } else {
+            following = false;
+            action = ranked[0]?.action ?? { type: 'rest' };
+          }
+        } else {
+          following = false;
+          action = ranked[0]?.action ?? { type: 'rest' };
+        }
       }
     } else {
       const sample = sampleOpponentAction(state, rng, opponentCtx, ms => { ctx.omTimeMs && (ctx.omTimeMs.value += ms); });

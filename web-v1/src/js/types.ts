@@ -261,6 +261,13 @@ export type JointSearchOptions = {
   championDepth?: number | null;
   /** 研究用冠军束搜索宽度覆盖（缺省 null = 冻结）。 */
   championWidth?: number | null;
+  /** AI13：终局路线显式加分（缺省 0 = 冻结）与“仅领先时加分”开关。 */
+  championTerminalBonus?: number;
+  championTerminalAware?: boolean;
+  /** AI13：轨迹内己方策略跟随冠军计划路径（缺省 false = 1-ply 贪心）。 */
+  selfPlanFollowing?: boolean;
+  /** AI13：轨迹内己方政策锁定冠军计划目标（缺省 false = 逐决策重选）。 */
+  selfGoalLock?: boolean;
   /** 终局前认领注入（仅 champion-guided；缺省 off）。 */
   lateClaimCandidate?: 'off' | 'add' | 'replace';
   lateClaimThreshold?: number;

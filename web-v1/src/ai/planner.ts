@@ -305,6 +305,8 @@ function routeGrade(
   profile: Profile,
   params: AIParameters,
   model: EngineModelContext | null,
+  optionTerminalBonus = 0,
+  optionTerminalAware = false,
 ): number {
   // gained 可能包括同一路径上先认领其他公开魔像取得的得分。
   // M06：终局路线增量（缺省 0；只在路线完成最后一次认领时参与）。
@@ -312,10 +314,19 @@ function routeGrade(
   const terminalBonus = Number.isFinite(rawTerminalBonus)
     ? Math.min(20, Math.max(-20, rawTerminalBonus))
     : 0;
+  // AI13 方向 A2：终局路线显式加分（缺省 0 = 冻结）。terminalAware 时只在
+  // “本路线结算后我仍领先”时加分——用于检验冠军是否因缺少终局触发动机而
+  // 在 5p 少认领/不结束。只消费公开 standings；不改变非终局路线。
+  const myProjected = state.baseScore + state.gained;
+  const bestOpp = Math.max(0, ...state.standings.filter(s => s.seat !== state.seat).map(s => s.score));
+  const bonus = state.terminal && optionTerminalBonus > 0
+    && (!optionTerminalAware || myProjected >= bestOpp)
+    ? optionTerminalBonus
+    : 0;
   return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + .65, .90)
     + weighted(state.stock) * .055 * params.capacityWeight
     + engineValueFor(state, preferred, params, model) * stage * .085 * profile.engine * params.engineWeight
-    + terminalBonus;
+    + terminalBonus + bonus;
 }
 
 function completedFirstGoal(state: SearchState, preferred: string): boolean {
@@ -354,6 +365,10 @@ export type PlanOptions = {
   depth?: number | null;
   /** 研究用束宽覆盖（缺省 null = 冻结：临近终局 10 / 常规 14）。 */
   width?: number | null;
+  /** AI13 研究：终局路线显式加分（缺省 0 = 冻结）。只在路线完成最后一次认领时生效。 */
+  terminalBonus?: number;
+  /** 终局加分只在“结算后我仍领先”时生效（缺省 false = 恒定加分）。 */
+  terminalAware?: boolean;
 };
 
 export function choosePlan(
@@ -367,6 +382,10 @@ export function choosePlan(
   const structure = structureInput ?? 'beam-lineage';
   const profile = profileOverride ?? profileFor(view);
   const wantAlternatives = Math.max(0, Math.min(3, Math.floor(Number(options.alternatives ?? 0))));
+  const terminalBonus = Number.isFinite(options.terminalBonus)
+    ? Math.max(0, Math.min(30, Number(options.terminalBonus)))
+    : 0;
+  const terminalAware = options.terminalAware === true;
   const solvedAlternatives: PlanAlternative[] = [];
   const prospectiveAlternatives: PlanAlternative[] = [];
   // AI7 C2/C4：v2 引擎模型上下文（剩余回合/人数竞争）。v1 保持 null，
@@ -428,7 +447,7 @@ export function choosePlan(
           if (!next) continue;
           if (next.terminal && !completedFirstGoal(next, preferred)) continue;
           if (completedFirstGoal(next, preferred)) {
-            const quality = routeGrade(next, preferred, stage, profile, params, model)
+            const quality = routeGrade(next, preferred, stage, profile, params, model, terminalBonus, terminalAware)
               * survivalOf(preferred) * goalFactor;
             if (wantAlternatives && next.first) {
               solvedAlternatives.push({ action: next.first, preferred, quality });
