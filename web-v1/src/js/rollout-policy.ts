@@ -202,6 +202,7 @@ export function myRankedActions(
   state: Parameters<typeof simViewToObservation>[0],
   mySeat: number,
   ctx: HeuristicContext,
+  options?: { preferred?: string | null },
 ): { search: SearchState; preferred: string | null; ranked: { action: Action; value: number }[] } {
   const view = simViewToObservation(state, mySeat);
   const search = initialState(view);
@@ -214,6 +215,10 @@ export function myRankedActions(
     if (!goal) continue;
     const score = goal.points - 2.6 * goalGap(search.stock, goal);
     if (score > bestGoal) { bestGoal = score; preferred = id; }
+  }
+  // AI13-C4：可选目标锁定（只在目标仍在市场时生效；被对手认领后回退重选）。
+  if (options?.preferred && search.golemMarket.includes(options.preferred)) {
+    preferred = options.preferred;
   }
   const variants = championActions(search, preferred, ctx.allowAcquire, ctx.params);
   const ranked = variants

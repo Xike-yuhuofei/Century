@@ -59,6 +59,13 @@ export type JointSearchResolved = {
   /** 冠军束搜索深度/宽度覆盖（null = 冻结）。 */
   championDepth: number | null;
   championWidth: number | null;
+  /** AI13：终局路线加分（0 = 冻结）与仅领先时生效。 */
+  championTerminalBonus: number;
+  championTerminalAware: boolean;
+  /** AI13：轨迹内己方策略跟随冠军计划路径（false = 冻结 1-ply）。 */
+  selfPlanFollowing: boolean;
+  /** AI13：轨迹内己方政策锁定冠军计划目标（false = 冻结逐决策重选）。 */
+  selfGoalLock: boolean;
   /** 终局前认领注入。 */
   lateClaimCandidate: string;
   lateClaimThreshold: number;
@@ -97,6 +104,10 @@ export const JOINT_SEARCH_DEFAULTS = {
   evaluatorHandWeight: 1,
   championDepth: null,
   championWidth: null,
+  championTerminalBonus: 0,
+  championTerminalAware: false,
+  selfPlanFollowing: false,
+  selfGoalLock: false,
   lateClaimCandidate: 'off',
   lateClaimThreshold: 2,
   lateClaimMinDelta: 1,
@@ -114,6 +125,7 @@ const PRESET_FIELDS = [
   'endgameSolver', 'endgameDiscard', 'arbitration', 'minPairedTrials', 'pairedZ',
   'claimProtection', 'claimProtectDelta', 'claimProtectMargin', 'ensureBestClaimCandidate',
   'championAlternatives', 'evaluatorHandWeight', 'championDepth', 'championWidth',
+  'championTerminalBonus', 'championTerminalAware', 'selfPlanFollowing', 'selfGoalLock',
   'lateClaimCandidate', 'lateClaimThreshold', 'lateClaimMinDelta', 'opponentClaimBias',
   'variant', 'worlds', 'horizon', 'opponentMode', 'evaluator',
 ] as const;
@@ -220,6 +232,10 @@ export function resolveJointConfig(
     evaluatorHandWeight: Number(merged.evaluatorHandWeight),
     championDepth: merged.championDepth == null ? null : Number(merged.championDepth),
     championWidth: merged.championWidth == null ? null : Number(merged.championWidth),
+    championTerminalBonus: Number(merged.championTerminalBonus),
+    championTerminalAware: Boolean(merged.championTerminalAware),
+    selfPlanFollowing: Boolean(merged.selfPlanFollowing),
+    selfGoalLock: Boolean(merged.selfGoalLock),
     lateClaimCandidate: String(merged.lateClaimCandidate),
     lateClaimThreshold: Number(merged.lateClaimThreshold),
     lateClaimMinDelta: Number(merged.lateClaimMinDelta),

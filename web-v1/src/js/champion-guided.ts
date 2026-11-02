@@ -142,6 +142,10 @@ export type ChampionGuidedOptions = {
   championDepth?: number | null;
   /** 研究用冠军束搜索宽度覆盖（缺省 null = 冻结 14/10）。 */
   championWidth?: number | null;
+  /** AI13 方向 A2：终局路线显式加分（缺省 0 = 冻结；只在路线完成最后一次认领时生效）。 */
+  championTerminalBonus?: number;
+  /** 终局加分只在“结算后我仍领先”时生效（缺省 false = 恒定加分）。 */
+  championTerminalAware?: boolean;
   /** 终局前认领注入（缺省 off = 冻结）：当本人剩余认领 ≤ 阈值且有可立即认领的
    * 正净分行动时，把其中净分最高的认领注入候选集（add 追加 / replace 替换先验槽位）。
    * 用于检验 5p 失败画像中的“临门认领不足”。 */
@@ -153,6 +157,11 @@ export type ChampionGuidedOptions = {
   /** AI13 方向 C：轨迹内规则对手认领价值偏置（缺省 0 = 冻结）。
    * 正值使模拟对手更倾向立即认领，用于校准“对手认领不足”的仿真偏差。 */
   opponentClaimBias?: number;
+  /** AI13 方向 C3：轨迹内己方策略跟随冠军计划路径（缺省 false = 1-ply 贪心）。
+   * 仅在计划动作对当前模拟状态合法时执行，否则回退 1-ply。 */
+  selfPlanFollowing?: boolean;
+  /** AI13-C4：轨迹内己方政策锁定冠军计划的目标（缺省 false = 逐决策重选）。 */
+  selfGoalLock?: boolean;
 };
 
 export type ChampionGuidedSearchOptions = JointSearchOptions & ChampionGuidedOptions;
@@ -242,10 +251,12 @@ class ChampionGuidedPlanner {
     // 1. 冠军规划（冻结参数 + 显式结构；人格经 profileOverride 注入）。
     const profile: Profile = o.profileName ? profileByName(o.profileName) : NEUTRAL_PROFILE;
     const planStart = performance.now();
-    const planOptions: { alternatives?: number; depth?: number | null; width?: number | null } = {};
+    const planOptions: { alternatives?: number; depth?: number | null; width?: number | null; terminalBonus?: number; terminalAware?: boolean } = {};
     if (o.championAlternatives) planOptions.alternatives = o.championAlternatives;
     if (o.championDepth != null) planOptions.depth = o.championDepth;
     if (o.championWidth != null) planOptions.width = o.championWidth;
+    if (o.championTerminalBonus) planOptions.terminalBonus = o.championTerminalBonus;
+    if (o.championTerminalAware) planOptions.terminalAware = true;
     const plan = choosePlan(
       observation, championParameters, profile, o.championStructure ?? 'beam-rollout',
       null,
@@ -623,6 +634,10 @@ class ChampionGuidedPlanner {
       endgameDiscard: o.endgameDiscard === true,
       handWeight: o.evaluatorHandWeight ?? 1,
       opponentClaimBias: o.opponentClaimBias ?? 0,
+      selfPlanFollowing: o.selfPlanFollowing === true,
+      selfPlan: plan?.path,
+      selfGoalLock: o.selfGoalLock === true,
+      selfPreferredGoal: plan?.preferred ?? null,
     } satisfies Omit<RolloutContext, 'events' | 'omTimeMs'>;
 
     const aggregates = candidates.map(action => ({
@@ -966,7 +981,8 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   'claimProtectMargin' | 'ensureBestClaimCandidate' |
   'allocation' | 'racingDelta' | 'endgameMode' | 'championAlternatives' | 'evaluatorHandWeight' |
   'championDepth' | 'championWidth' |
-  'lateClaimCandidate' | 'lateClaimThreshold' | 'lateClaimMinDelta' | 'opponentClaimBias'>> & ChampionGuidedSearchOptions {
+  'lateClaimCandidate' | 'lateClaimThreshold' | 'lateClaimMinDelta' | 'opponentClaimBias' |
+  'championTerminalBonus' | 'championTerminalAware' | 'selfPlanFollowing' | 'selfGoalLock'>> & ChampionGuidedSearchOptions {
   const base = o ?? {};
   const nearTerminalCandidate = base.nearTerminalCandidate ?? 'off';
   if (!['off', 'replace', 'add'].includes(nearTerminalCandidate)) fail(`未知 nearTerminalCandidate：${String(nearTerminalCandidate)}`);
@@ -1022,6 +1038,13 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
   if (!Number.isFinite(opponentClaimBias) || opponentClaimBias < 0 || opponentClaimBias > 1) {
     fail(`opponentClaimBias 必须在 [0,1]，实际：${String(opponentClaimBias)}`);
   }
+  const championTerminalBonus = base.championTerminalBonus ?? 0;
+  if (!Number.isFinite(championTerminalBonus) || championTerminalBonus < 0 || championTerminalBonus > 30) {
+    fail(`championTerminalBonus 必须在 [0,30]，实际：${String(championTerminalBonus)}`);
+  }
+  const championTerminalAware = base.championTerminalAware === true;
+  const selfPlanFollowing = base.selfPlanFollowing === true;
+  const selfGoalLock = base.selfGoalLock === true;
   return {
     ...base,
     championStructure: base.championStructure ?? 'beam-rollout',
@@ -1035,6 +1058,10 @@ function resolveChampionGuidedOptions(o?: ChampionGuidedSearchOptions): Required
     evaluatorHandWeight,
     championDepth,
     championWidth,
+    championTerminalBonus,
+    championTerminalAware,
+    selfPlanFollowing,
+    selfGoalLock,
     lateClaimCandidate,
     lateClaimThreshold,
     lateClaimMinDelta,

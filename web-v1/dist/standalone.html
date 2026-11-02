@@ -3728,10 +3728,13 @@
     const paymentCost = params.engineModel === "v2" && lastAction?.type === "acquire" ? lastAction.payment.reduce((sum, c) => sum + (c === 0 ? 0.5 : 1), 0) : 0;
     return -gap * 2.6 + weighted(state.stock) * 0.13 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.22 * profile.engine * params.engineWeight + futureSupport * stage * 0.45 * profile.engine * params.engineWeight + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params, model), 0) * stage * 0.35 - state.steps * 0.35 * profile.tempo * params.tempoWeight * restFactor - state.acquired * 0.15 - paymentCost * 0.55;
   }
-  function routeGrade(state, preferred, stage, profile, params, model) {
+  function routeGrade(state, preferred, stage, profile, params, model, optionTerminalBonus = 0, optionTerminalAware = false) {
     const rawTerminalBonus = state.terminal ? endgameBonus(state, params) : 0;
     const terminalBonus = Number.isFinite(rawTerminalBonus) ? Math.min(20, Math.max(-20, rawTerminalBonus)) : 0;
-    return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + 0.65, 0.9) + weighted(state.stock) * 0.055 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.085 * profile.engine * params.engineWeight + terminalBonus;
+    const myProjected = state.baseScore + state.gained;
+    const bestOpp = Math.max(0, ...state.standings.filter((s) => s.seat !== state.seat).map((s) => s.score));
+    const bonus = state.terminal && optionTerminalBonus > 0 && (!optionTerminalAware || myProjected >= bestOpp) ? optionTerminalBonus : 0;
+    return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + 0.65, 0.9) + weighted(state.stock) * 0.055 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.085 * profile.engine * params.engineWeight + terminalBonus + bonus;
   }
   function completedFirstGoal(state, preferred) {
     return !state.golemMarket.includes(preferred);
@@ -3743,6 +3746,8 @@
     const structure = structureInput ?? "beam-lineage";
     const profile = profileOverride ?? profileFor(view);
     const wantAlternatives = Math.max(0, Math.min(3, Math.floor(Number(options.alternatives ?? 0))));
+    const terminalBonus = Number.isFinite(options.terminalBonus) ? Math.max(0, Math.min(30, Number(options.terminalBonus))) : 0;
+    const terminalAware = options.terminalAware === true;
     const solvedAlternatives = [];
     const prospectiveAlternatives = [];
     const model = params.engineModel === "v2" ? modelInput ?? engineModelContext(view, params) : null;
@@ -3783,7 +3788,7 @@
             if (!next) continue;
             if (next.terminal && !completedFirstGoal(next, preferred)) continue;
             if (completedFirstGoal(next, preferred)) {
-              const quality2 = routeGrade(next, preferred, stage, profile, params, model) * survivalOf(preferred) * goalFactor;
+              const quality2 = routeGrade(next, preferred, stage, profile, params, model, terminalBonus, terminalAware) * survivalOf(preferred) * goalFactor;
               if (wantAlternatives && next.first) {
                 solvedAlternatives.push({ action: next.first, preferred, quality: quality2 });
               }
@@ -4085,7 +4090,7 @@
     }
     return base;
   }
-  function myRankedActions(state, mySeat, ctx) {
+  function myRankedActions(state, mySeat, ctx, options) {
     const view = simViewToObservation(state, mySeat);
     const search = initialState(view);
     let preferred = null;
@@ -4098,6 +4103,9 @@
         bestGoal = score2;
         preferred = id;
       }
+    }
+    if (options?.preferred && search.golemMarket.includes(options.preferred)) {
+      preferred = options.preferred;
     }
     const variants = actions(search, preferred, ctx.allowAcquire, ctx.params);
     const ranked = variants.map((action) => ({ action, value: actionValue(search, action, preferred, ctx) })).filter((x) => Number.isFinite(x.value)).sort((a, b) => b.value - a.value);
@@ -4626,6 +4634,8 @@
     const om = ctx.om;
     const opponentCtx = createOpponentContext(mode, om, ctx.opponentClaimBias ?? 0);
     const pressureCache = new PressureCache();
+    let planCursor = ctx.selfPlanFollowing && ctx.selfPlan ? 1 : 0;
+    let following = ctx.selfPlanFollowing === true && Array.isArray(ctx.selfPlan);
     let transitions = 0;
     let opponentMeta = null;
     while (!sim.finished && transitions < ctx.horizon) {
@@ -4639,8 +4649,26 @@
           action = ctx.endgameDiscard && state.triggerPlayer !== null ? { type: "discard", colors: endgameDiscardColors(stock, count(stock) - 10) } : { type: "discard", colors: discardDecision(stock, state.golemMarket, CHAMPION_PARAMETERS) };
         } else {
           const ctxH = heuristicContext(state, ctx.params ?? CHAMPION_PARAMETERS, profileByName(ctx.profileName), pressureCache);
-          const ranked = myRankedActions(state, actor, ctxH).ranked;
-          action = ranked[0]?.action ?? { type: "rest" };
+          const ranked = myRankedActions(
+            state,
+            actor,
+            ctxH,
+            ctx.selfGoalLock && ctx.selfPreferredGoal ? { preferred: ctx.selfPreferredGoal } : void 0
+          ).ranked;
+          if (following && planCursor < (ctx.selfPlan?.length ?? 0)) {
+            const planned = ctx.selfPlan[planCursor];
+            const legal = planned.type !== "rest" && ranked.some((x) => JSON.stringify(x.action) === JSON.stringify(planned));
+            if (legal) {
+              action = planned;
+              planCursor += 1;
+            } else {
+              following = false;
+              action = ranked[0]?.action ?? { type: "rest" };
+            }
+          } else {
+            following = false;
+            action = ranked[0]?.action ?? { type: "rest" };
+          }
         }
       } else {
         const sample = sampleOpponentAction(state, rng, opponentCtx, (ms) => {
@@ -5326,6 +5354,8 @@
       if (o.championAlternatives) planOptions.alternatives = o.championAlternatives;
       if (o.championDepth != null) planOptions.depth = o.championDepth;
       if (o.championWidth != null) planOptions.width = o.championWidth;
+      if (o.championTerminalBonus) planOptions.terminalBonus = o.championTerminalBonus;
+      if (o.championTerminalAware) planOptions.terminalAware = true;
       const plan = choosePlan(
         observation,
         championParameters,
@@ -5690,7 +5720,11 @@
         params: o.championParameters ?? CHAMPION_PARAMETERS,
         endgameDiscard: o.endgameDiscard === true,
         handWeight: o.evaluatorHandWeight ?? 1,
-        opponentClaimBias: o.opponentClaimBias ?? 0
+        opponentClaimBias: o.opponentClaimBias ?? 0,
+        selfPlanFollowing: o.selfPlanFollowing === true,
+        selfPlan: plan?.path,
+        selfGoalLock: o.selfGoalLock === true,
+        selfPreferredGoal: plan?.preferred ?? null
       };
       const aggregates = candidates.map((action) => ({
         action,
@@ -6034,6 +6068,13 @@
     if (!Number.isFinite(opponentClaimBias) || opponentClaimBias < 0 || opponentClaimBias > 1) {
       fail5(`opponentClaimBias 必须在 [0,1]，实际：${String(opponentClaimBias)}`);
     }
+    const championTerminalBonus = base.championTerminalBonus ?? 0;
+    if (!Number.isFinite(championTerminalBonus) || championTerminalBonus < 0 || championTerminalBonus > 30) {
+      fail5(`championTerminalBonus 必须在 [0,30]，实际：${String(championTerminalBonus)}`);
+    }
+    const championTerminalAware = base.championTerminalAware === true;
+    const selfPlanFollowing = base.selfPlanFollowing === true;
+    const selfGoalLock = base.selfGoalLock === true;
     return {
       ...base,
       championStructure: base.championStructure ?? "beam-rollout",
@@ -6049,6 +6090,10 @@
       evaluatorHandWeight,
       championDepth,
       championWidth,
+      championTerminalBonus,
+      championTerminalAware,
+      selfPlanFollowing,
+      selfGoalLock,
       lateClaimCandidate,
       lateClaimThreshold,
       lateClaimMinDelta,
@@ -6167,6 +6212,10 @@
     evaluatorHandWeight: 1,
     championDepth: null,
     championWidth: null,
+    championTerminalBonus: 0,
+    championTerminalAware: false,
+    selfPlanFollowing: false,
+    selfGoalLock: false,
     lateClaimCandidate: "off",
     lateClaimThreshold: 2,
     lateClaimMinDelta: 1,
@@ -6200,6 +6249,10 @@
     "evaluatorHandWeight",
     "championDepth",
     "championWidth",
+    "championTerminalBonus",
+    "championTerminalAware",
+    "selfPlanFollowing",
+    "selfGoalLock",
     "lateClaimCandidate",
     "lateClaimThreshold",
     "lateClaimMinDelta",
@@ -6286,6 +6339,10 @@
       evaluatorHandWeight: Number(merged.evaluatorHandWeight),
       championDepth: merged.championDepth == null ? null : Number(merged.championDepth),
       championWidth: merged.championWidth == null ? null : Number(merged.championWidth),
+      championTerminalBonus: Number(merged.championTerminalBonus),
+      championTerminalAware: Boolean(merged.championTerminalAware),
+      selfPlanFollowing: Boolean(merged.selfPlanFollowing),
+      selfGoalLock: Boolean(merged.selfGoalLock),
       lateClaimCandidate: String(merged.lateClaimCandidate),
       lateClaimThreshold: Number(merged.lateClaimThreshold),
       lateClaimMinDelta: Number(merged.lateClaimMinDelta),
@@ -7851,10 +7908,13 @@
     const paymentCost = params.engineModel === "v2" && lastAction?.type === "acquire" ? lastAction.payment.reduce((sum, c) => sum + (c === 0 ? 0.5 : 1), 0) : 0;
     return -gap * 2.6 + weighted(state.stock) * 0.13 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.22 * profile.engine * params.engineWeight + futureSupport * stage * 0.45 * profile.engine * params.engineWeight + state.newCards.reduce((sum, id) => sum + acquisitionValue(state, id, preferred, profile, pressure, params, model), 0) * stage * 0.35 - state.steps * 0.35 * profile.tempo * params.tempoWeight * restFactor - state.acquired * 0.15 - paymentCost * 0.55;
   }
-  function routeGrade(state, preferred, stage, profile, params, model) {
+  function routeGrade(state, preferred, stage, profile, params, model, optionTerminalBonus = 0, optionTerminalAware = false) {
     const rawTerminalBonus = state.terminal ? endgameBonus(state, params) : 0;
     const terminalBonus = Number.isFinite(rawTerminalBonus) ? Math.min(20, Math.max(-20, rawTerminalBonus)) : 0;
-    return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + 0.65, 0.9) + weighted(state.stock) * 0.055 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.085 * profile.engine * params.engineWeight + terminalBonus;
+    const myProjected = state.baseScore + state.gained;
+    const bestOpp = Math.max(0, ...state.standings.filter((s) => s.seat !== state.seat).map((s) => s.score));
+    const bonus = state.terminal && optionTerminalBonus > 0 && (!optionTerminalAware || myProjected >= bestOpp) ? optionTerminalBonus : 0;
+    return state.gained * profile.tempo * params.tempoWeight / Math.pow(state.steps + 0.65, 0.9) + weighted(state.stock) * 0.055 * params.capacityWeight + engineValueFor(state, preferred, params, model) * stage * 0.085 * profile.engine * params.engineWeight + terminalBonus + bonus;
   }
   function completedFirstGoal(state, preferred) {
     return !state.golemMarket.includes(preferred);
@@ -7866,6 +7926,8 @@
     const structure = structureInput ?? "beam-lineage";
     const profile = profileOverride ?? profileFor(view);
     const wantAlternatives = Math.max(0, Math.min(3, Math.floor(Number(options.alternatives ?? 0))));
+    const terminalBonus = Number.isFinite(options.terminalBonus) ? Math.max(0, Math.min(30, Number(options.terminalBonus))) : 0;
+    const terminalAware = options.terminalAware === true;
     const solvedAlternatives = [];
     const prospectiveAlternatives = [];
     const model = params.engineModel === "v2" ? modelInput ?? engineModelContext(view, params) : null;
@@ -7906,7 +7968,7 @@
             if (!next) continue;
             if (next.terminal && !completedFirstGoal(next, preferred)) continue;
             if (completedFirstGoal(next, preferred)) {
-              const quality2 = routeGrade(next, preferred, stage, profile, params, model) * survivalOf(preferred) * goalFactor;
+              const quality2 = routeGrade(next, preferred, stage, profile, params, model, terminalBonus, terminalAware) * survivalOf(preferred) * goalFactor;
               if (wantAlternatives && next.first) {
                 solvedAlternatives.push({ action: next.first, preferred, quality: quality2 });
               }
@@ -10101,7 +10163,7 @@
     }
     return base;
   }
-  function myRankedActions(state, mySeat, ctx) {
+  function myRankedActions(state, mySeat, ctx, options) {
     const view = simViewToObservation(state, mySeat);
     const search = initialState(view);
     let preferred = null;
@@ -10114,6 +10176,9 @@
         bestGoal = score2;
         preferred = id;
       }
+    }
+    if (options?.preferred && search.golemMarket.includes(options.preferred)) {
+      preferred = options.preferred;
     }
     const variants = actions(search, preferred, ctx.allowAcquire, ctx.params);
     const ranked = variants.map((action2) => ({ action: action2, value: actionValue(search, action2, preferred, ctx) })).filter((x) => Number.isFinite(x.value)).sort((a, b) => b.value - a.value);
@@ -10642,6 +10707,8 @@
     const om = ctx.om;
     const opponentCtx = createOpponentContext(mode, om, ctx.opponentClaimBias ?? 0);
     const pressureCache = new PressureCache();
+    let planCursor = ctx.selfPlanFollowing && ctx.selfPlan ? 1 : 0;
+    let following = ctx.selfPlanFollowing === true && Array.isArray(ctx.selfPlan);
     let transitions = 0;
     let opponentMeta = null;
     while (!sim.finished && transitions < ctx.horizon) {
@@ -10655,8 +10722,26 @@
           action2 = ctx.endgameDiscard && state.triggerPlayer !== null ? { type: "discard", colors: endgameDiscardColors(stock, count(stock) - 10) } : { type: "discard", colors: discardDecision(stock, state.golemMarket, CHAMPION_PARAMETERS) };
         } else {
           const ctxH = heuristicContext(state, ctx.params ?? CHAMPION_PARAMETERS, profileByName(ctx.profileName), pressureCache);
-          const ranked = myRankedActions(state, actor, ctxH).ranked;
-          action2 = ranked[0]?.action ?? { type: "rest" };
+          const ranked = myRankedActions(
+            state,
+            actor,
+            ctxH,
+            ctx.selfGoalLock && ctx.selfPreferredGoal ? { preferred: ctx.selfPreferredGoal } : void 0
+          ).ranked;
+          if (following && planCursor < (ctx.selfPlan?.length ?? 0)) {
+            const planned = ctx.selfPlan[planCursor];
+            const legal = planned.type !== "rest" && ranked.some((x) => JSON.stringify(x.action) === JSON.stringify(planned));
+            if (legal) {
+              action2 = planned;
+              planCursor += 1;
+            } else {
+              following = false;
+              action2 = ranked[0]?.action ?? { type: "rest" };
+            }
+          } else {
+            following = false;
+            action2 = ranked[0]?.action ?? { type: "rest" };
+          }
         }
       } else {
         const sample = sampleOpponentAction(state, rng, opponentCtx, (ms) => {
@@ -11432,6 +11517,8 @@
       if (o.championAlternatives) planOptions.alternatives = o.championAlternatives;
       if (o.championDepth != null) planOptions.depth = o.championDepth;
       if (o.championWidth != null) planOptions.width = o.championWidth;
+      if (o.championTerminalBonus) planOptions.terminalBonus = o.championTerminalBonus;
+      if (o.championTerminalAware) planOptions.terminalAware = true;
       const plan = choosePlan(
         observation,
         championParameters,
@@ -11796,7 +11883,11 @@
         params: o.championParameters ?? CHAMPION_PARAMETERS,
         endgameDiscard: o.endgameDiscard === true,
         handWeight: o.evaluatorHandWeight ?? 1,
-        opponentClaimBias: o.opponentClaimBias ?? 0
+        opponentClaimBias: o.opponentClaimBias ?? 0,
+        selfPlanFollowing: o.selfPlanFollowing === true,
+        selfPlan: plan?.path,
+        selfGoalLock: o.selfGoalLock === true,
+        selfPreferredGoal: plan?.preferred ?? null
       };
       const aggregates = candidates.map((action2) => ({
         action: action2,
@@ -12140,6 +12231,13 @@
     if (!Number.isFinite(opponentClaimBias) || opponentClaimBias < 0 || opponentClaimBias > 1) {
       fail6(`opponentClaimBias 必须在 [0,1]，实际：${String(opponentClaimBias)}`);
     }
+    const championTerminalBonus = base.championTerminalBonus ?? 0;
+    if (!Number.isFinite(championTerminalBonus) || championTerminalBonus < 0 || championTerminalBonus > 30) {
+      fail6(`championTerminalBonus 必须在 [0,30]，实际：${String(championTerminalBonus)}`);
+    }
+    const championTerminalAware = base.championTerminalAware === true;
+    const selfPlanFollowing = base.selfPlanFollowing === true;
+    const selfGoalLock = base.selfGoalLock === true;
     return {
       ...base,
       championStructure: base.championStructure ?? "beam-rollout",
@@ -12155,6 +12253,10 @@
       evaluatorHandWeight,
       championDepth,
       championWidth,
+      championTerminalBonus,
+      championTerminalAware,
+      selfPlanFollowing,
+      selfGoalLock,
       lateClaimCandidate,
       lateClaimThreshold,
       lateClaimMinDelta,
@@ -12201,6 +12303,10 @@
     evaluatorHandWeight: 1,
     championDepth: null,
     championWidth: null,
+    championTerminalBonus: 0,
+    championTerminalAware: false,
+    selfPlanFollowing: false,
+    selfGoalLock: false,
     lateClaimCandidate: "off",
     lateClaimThreshold: 2,
     lateClaimMinDelta: 1,
@@ -12234,6 +12340,10 @@
     "evaluatorHandWeight",
     "championDepth",
     "championWidth",
+    "championTerminalBonus",
+    "championTerminalAware",
+    "selfPlanFollowing",
+    "selfGoalLock",
     "lateClaimCandidate",
     "lateClaimThreshold",
     "lateClaimMinDelta",
@@ -12320,6 +12430,10 @@
       evaluatorHandWeight: Number(merged.evaluatorHandWeight),
       championDepth: merged.championDepth == null ? null : Number(merged.championDepth),
       championWidth: merged.championWidth == null ? null : Number(merged.championWidth),
+      championTerminalBonus: Number(merged.championTerminalBonus),
+      championTerminalAware: Boolean(merged.championTerminalAware),
+      selfPlanFollowing: Boolean(merged.selfPlanFollowing),
+      selfGoalLock: Boolean(merged.selfGoalLock),
       lateClaimCandidate: String(merged.lateClaimCandidate),
       lateClaimThreshold: Number(merged.lateClaimThreshold),
       lateClaimMinDelta: Number(merged.lateClaimMinDelta),
@@ -12373,6 +12487,10 @@
     evaluatorHandWeight: { kind: "number", min: 0, max: 1 },
     championDepth: { kind: "int", min: 2, max: 12 },
     championWidth: { kind: "int", min: 4, max: 24 },
+    championTerminalBonus: { kind: "number", min: 0, max: 30 },
+    championTerminalAware: { kind: "bool" },
+    selfPlanFollowing: { kind: "bool" },
+    selfGoalLock: { kind: "bool" },
     lateClaimCandidate: { kind: "enum", values: ["off", "add", "replace"] },
     lateClaimThreshold: { kind: "int", min: 1, max: 3 },
     lateClaimMinDelta: { kind: "number", min: 0, max: 30 },
