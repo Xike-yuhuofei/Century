@@ -11,3 +11,7 @@
 在本目录运行 `tar -xzf raw-evidence.tar.gz` 可恢复原始相对路径，随后可查阅报告引用的日志、候选、检查点及实验源码快照。归档不含 Python 缓存或系统元数据；原始证据内容未改写。
 
 本次提交前重新核对 18 个源码哈希与最终测试版本一致，既有 PPO 资产、冠军和原种子登记记录不变。
+
+## CI 平台适配修复
+
+首轮 PR CI 发现新增四个真实编译测试直接在 Ubuntu 上调用 Seatbelt。已将这四个测试原有断言移入既有 `lineage.test.mjs`，沿用现有平台条件；该文件由 macOS `research-seatbelt` 作业实际执行。运行时代码和工作流未改动。两个受影响文件在本地 macOS 重跑：20 项通过、0 跳过。详见 `PR-CI-FOLLOWUP.json` 与 `PR-CI-PLATFORM-TESTS.log`。研究原始清单及归档保留原版本，这两个测试文件的后续哈希记录在补充 JSON 中。

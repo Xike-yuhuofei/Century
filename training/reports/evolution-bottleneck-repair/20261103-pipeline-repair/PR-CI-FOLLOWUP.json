@@ -1,0 +1,20 @@
+{
+  "initialCommit": "b4a803cb6ca8734083555bf250d2b0f26be54474",
+  "failedRun": 41827338061,
+  "failedJob": 126565613734,
+  "cause": "Four real Seatbelt compilation tests ran on Ubuntu without platform gating.",
+  "change": "Move the four tests unchanged into lineage.test.mjs, already executed by research-seatbelt on macOS, using its existing seatbeltSkip.",
+  "runtimeCodeUnchanged": true,
+  "sourceHashes": {
+    "training/evolution/tests/bottleneck-repair.test.mjs": "f9ff3d1f819735cc320e707c34e3adde1bf835caf4e7db801214ccf436388220",
+    "training/evolution/tests/lineage.test.mjs": "da389d93a03cfc181bec4776e9baa76c266f32e2c266cdb1ae096044f6332da4"
+  },
+  "validation": {
+    "command": "node --test --test-concurrency=1 training/evolution/tests/bottleneck-repair.test.mjs training/evolution/tests/lineage.test.mjs",
+    "platform": "darwin",
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0,
+    "log": "PR-CI-PLATFORM-TESTS.log"
+  }
+}
