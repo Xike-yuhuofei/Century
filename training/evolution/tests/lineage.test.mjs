@@ -35,7 +35,7 @@ function baseConfig(overrides = {}) {
     deepConfirmations: 1,
     generation: {
       count: 2, seed: 424242, mode: 'multi-module', strategies: ['single'],
-      includeControl: false, allowDeterministicFallback: true, openevolveIterations: 1,
+      includeControl: false, allowDeterministicFallback: true, openevolveIterations: 1, researchContext: 'off',
     },
     budget: { maxCandidates: 20, maxGames: 400, maxWallMs: 3_600_000, maxConcurrent: 1, maxDeepConfirmations: 3 },
     diagnosticsPath: null,

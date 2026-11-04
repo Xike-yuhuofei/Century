@@ -12,11 +12,14 @@
  * - token 用量从 OpenEvolve 自身日志聚合（无法获取时显式记 null，不猜）。
  */
 
+import { inheritanceDiff } from './module-inheritance.mjs';
 import { spawnSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve, join } from 'node:path';
 import { REPO_ROOT } from '../lib/paths.mjs';
-import { sha256Hex } from './core.mjs';
+import { AI9_DEV_BLOCKS, sha256Hex } from './core.mjs';
+import { createLiveGovernanceProvider } from './governance-provider-v2.mjs';
+import { sequentialSeeds } from '../../ai5/lib/seed_policy.mjs';
 import {
   moduleRegistry, composeProgram, composeProgramFromTexts, extractEvolveBlocks, stripLiterals,
   extractFunction, moduleByFunctionName,
@@ -186,9 +189,30 @@ export function aggregateTokenUsage(outputDir) {
  * @param {string|null} [options.configPath] 每轮生成的配置（研究简报注入）
  * @param {string[]} [options.feedback] 研究提示（advisory only）
  */
+export function prepareOpenEvolveSeeds({ outputDir, env = process.env, governance = null }) {
+  const seedEnv = {}, seedRefs = [];
+  for (const [stage, purpose, fallback] of [[2, 'screen', 16], [3, 'deep', 48]]) {
+    const key = `CENTURY_OPENEVOLVE_STAGE${stage}_SEED_FILE`;
+    if (env[key]) { seedEnv[key] = resolve(env[key]); continue; }
+    const count = Number(env[`CENTURY_OPENEVOLVE_STAGE${stage}_SEEDS`] ?? fallback);
+    if (!Number.isSafeInteger(count) || count < 8 || count % 4 || count > 1000) {
+      throw new Error(`stage${stage} 种子数必须覆盖每层至少两对、整除4且不超过1000`);
+    }
+    governance ??= createLiveGovernanceProvider({ blocks: AI9_DEV_BLOCKS, windowPrefix: 'ai9', experimentPrefix: 'ai9' });
+    const ref = governance.allocateDevSeedWindow({ campaignId: `oe-${sha256Hex(resolve(outputDir)).slice(0, 16)}`, round: 1, purpose, count });
+    const seeds = sequentialSeeds(AI9_DEV_BLOCKS[purpose], ref.base, count);
+    mkdirSync(join(outputDir, 'input'), { recursive: true });
+    seedEnv[key] = join(resolve(outputDir), 'input', `stage${stage}-seeds.json`);
+    writeFileSync(seedEnv[key], JSON.stringify(seeds));
+    seedRefs.push({ ...ref, stage, usedCount: count, path: seedEnv[key] });
+  }
+  return { seedEnv, seedRefs };
+}
+
 export function runMultiModuleOpenEvolve({
   moduleIds, iterations = 3, outputDir = null, timeoutMs = 7_200_000,
   moduleTexts = null, checkpoint = null, configPath = null, briefFile = null, feedback = [],
+  editableModuleIds = moduleIds, parameters = null,
 }) {
   if (!Array.isArray(moduleIds) || moduleIds.length === 0) throw new Error('moduleIds 不能为空');
   const registry = moduleRegistry();
@@ -202,9 +226,14 @@ export function runMultiModuleOpenEvolve({
     return { available: true, ok: false, reason: `checkpoint 不存在：${checkpoint}`, checkpointMissing: true };
   }
   const outDir = outputDir ? resolve(outputDir) : resolve(OPENEVOLVE_ROOT, 'results', `ai9-openevolve-${Date.now()}`);
-  const program = materializeMultiModuleProgram(moduleIds, { outputDir: join(outDir, 'input'), moduleTexts, feedback });
+  const program = materializeMultiModuleProgram(moduleIds, { outputDir: join(outDir, 'input'), moduleTexts, feedback: [...feedback, `Editable modules: ${editableModuleIds.join(',')}. Preserve every other block byte-for-byte; all blocks are evaluated together.`] });
+  const lockedModuleHashes = Object.fromEntries(moduleIds.filter(id => !editableModuleIds.includes(id)).map(id => [id, sha256Hex(moduleTexts[id].trim())]));
+  const contextPath = join(outDir, 'input', 'evaluation-context.json');
+  writeFileSync(contextPath, JSON.stringify({ moduleIds, lockedModuleHashes, parameters }));
   const config = configPath ? resolve(configPath) : CONFIG;
   if (!existsSync(config)) return { available: true, ok: false, reason: `配置不存在：${config}` };
+  const { seedEnv, seedRefs } = prepareOpenEvolveSeeds({ outputDir: outDir });
+  writeFileSync(join(outDir, 'input', 'seed-refs.json'), JSON.stringify({ seedRefs, seedEnv }, null, 2));
   const started = Date.now();
   const args = [
     RUNNER, program.path, EVALUATOR,
@@ -220,7 +249,10 @@ export function runMultiModuleOpenEvolve({
     maxBuffer: 64 * 1024 * 1024,
     env: {
       ...process.env,
+      ...seedEnv,
       PYTHONUNBUFFERED: '1',
+      CENTURY_OPENEVOLVE_CONTEXT: contextPath,
+      CENTURY_OPENEVOLVE_EVIDENCE_DIR: join(outDir, 'evaluations'),
       ...(briefFile ? { CENTURY_RESEARCH_BRIEF: resolve(briefFile) } : {}),
     },
   });
@@ -237,7 +269,9 @@ export function runMultiModuleOpenEvolve({
     outputDir: outDir,
     programPath: program.path,
     inputProgramHash: program.hash,
+    seedRefs,
     inheritedModules: program.inherited,
+    lockedModuleHashes,
     fallbackToOfficial: program.fallbackToOfficial,
     configPath: config,
     checkpointResumedFrom: checkpoint,
@@ -303,6 +337,22 @@ export function createCandidateFromOpenEvolveMulti({
 }) {
   const loaded = loadMultiModuleBestProgram({ outputDir, expectedModuleIds });
   if (!loaded.available) throw new Error(`OpenEvolve 产物不可用：${loaded.reason}`);
+  const finalTexts = Object.fromEntries(loaded.modules.map(m => [m.id, m.text]));
+  const diff = inheritanceDiff(parentModuleTexts ?? {}, finalTexts);
+  if (run?.programPath) {
+    const input = extractEvolveBlocks(readFileSync(run.programPath, 'utf8'));
+    const inputFunctions = input.blocks.map(block => {
+      const stripped = stripLiterals(block.text);
+      const name = [...stripped.matchAll(/export\s+function\s+([A-Za-z_$][\w$]*)\s*\(/g)][0]?.[1];
+      return extractFunction(stripped, block.text, name).text?.trim();
+    }).sort();
+    if (JSON.stringify(inputFunctions) === JSON.stringify(Object.values(finalTexts).map(text => text.trim()).sort())) {
+      throw new Error('LLM 未产生真实源码变化（identical-to-input）');
+    }
+  }
+  for (const [id, hash] of Object.entries(run?.lockedModuleHashes ?? {})) {
+    if (sha256Hex(finalTexts[id]?.trim() ?? '') !== hash) throw new Error(`LLM 修改锁定模块：${id}`);
+  }
   const parentId = parentArtifact?.candidateId ?? null;
   const parentModuleHashes = parentModuleTexts
     ? Object.fromEntries(Object.entries(parentModuleTexts).map(([id, text]) => [id, sha256Hex(text)]))
@@ -316,12 +366,14 @@ export function createCandidateFromOpenEvolveMulti({
     throw new Error(`LLM 未产生真实源码变化（identical-to-parent）：${outputDir}`);
   }
   const created = createCompiledModuleCandidate({
+    candidateId: `cand-ai9-multi-r${round}c${index}-${loaded.combinedSha256.slice(0, 6)}`,
     modules: loaded.modules,
     moduleIds: loaded.moduleIds,
     experiment,
     round,
     index,
     parentId,
+    parameters: parentArtifact?.parameters?.values ? { ...parentArtifact.parameters.values, id: `cand-ai9-multi-r${round}c${index}-${loaded.combinedSha256.slice(0, 6)}` } : null,
     sourceOrigin: 'openevolve-llm',
     mutationLabel: 'openevolve-best-program',
     lineage: {
@@ -341,6 +393,9 @@ export function createCandidateFromOpenEvolveMulti({
       llm: run?.tokenUsage ?? null,
       outputDir,
       bestProgramPath: loaded.bestProgramPath,
+      ...diff,
+      evaluatedInputProgramHash: run?.inputProgramHash ?? null,
+      evaluationParametersHash: sha256Hex(JSON.stringify(parentArtifact?.parameters?.values ?? null)),
     },
   });
   return {

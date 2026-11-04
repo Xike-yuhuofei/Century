@@ -15,8 +15,9 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { sha256Canonical, assertCondition } from './core.mjs';
+import { moduleRegistry } from '../../ai5/openevolve/node/module_registry.mjs';
 
-const PROMPT_VERSION = 'ai11-research-brief-v1';
+const PROMPT_VERSION = 'research-brief-intervention-v2';
 
 /**
  * 构建 ResearchBrief（确定性；LLM 解释只作为假设）。
@@ -67,53 +68,31 @@ export function buildResearchBrief({
     recentFailures: (memory?.recentFailures ?? []).slice(-5),
   };
 
-  const seatLabel = observation.weakestSeat?.seatCount ?? null;
-  const hypotheses = [
-    {
-      id: `H${round}A`,
-      statement: seatLabel
-        ? `候选在 ${seatLabel} 人层的配对第一名率增量为 ${observation.weakestSeat.delta}，可能源于资源获取/认领节奏失衡`
-        : '候选的配对第一名率增量可能源于资源获取/认领节奏失衡',
-      status: 'unverified',
-      mechanisms: [
-        {
-          id: 'mechanism-acquisition-tempo',
-          claim: '获取（acquire）节奏偏离最优：过早/过晚认领导致目标竞争失败',
-          prediction: '调整 M02/M04/M10 中的获取-认领权衡后，该层 championWinFlips 下降 ≥2',
-          falsification: '若动作分布 L1 改变但配对 delta 不变或下降，则该机制被否定',
-          modules: ['M02', 'M04', 'M10'],
-        },
-        {
-          id: 'mechanism-endgame-contest',
-          claim: '终局目标竞争估值不足：对手关键目标被抢或自身终局路线选错',
-          prediction: '调整 M06/M07/M08 的终局/竞争项后，该层终局分差缩小且配对 delta 上升',
-          falsification: '若终局分差不变，则该机制被否定',
-          modules: ['M06', 'M07', 'M08'],
-        },
-      ],
-    },
-    {
-      id: `H${round}B`,
-      statement: '候选改动可能只改变了行为分布而未触及胜负机制（无效探索）',
-      status: 'unverified',
-      mechanisms: [
-        {
-          id: 'mechanism-behavior-only',
-          claim: '改动只改变动作分布，不改变关键决策点',
-          prediction: '动作分布 L1 显著变化但同种子胜负不翻转',
-          falsification: '若出现 ≥2 个 candidate-win-flip 且无对应 champion-win-flip，则否定该机制',
-          modules: [...moduleIds].slice(0, 4),
-        },
-        {
-          id: 'mechanism-variance',
-          claim: '观测到的差异来自小样本随机波动而非算法差异',
-          prediction: '在新研究种子上独立复验时 delta 收缩到 0 附近',
-          falsification: '若独立种子复验仍显著为正，则否定该机制',
-          modules: [...moduleIds].slice(0, 4),
-        },
-      ],
-    },
-  ];
+  // 按允许干预的真实模块生成待测机制；没有预测量就不作因果裁决。
+  const mechanisms = moduleRegistry().modules.filter(m => moduleIds.includes(m.id)).map(m => ({
+    id: `intervention-${m.id}-${m.functionName}`,
+    claim: `${m.label}的局部策略可能改变候选决策；当前未验证`,
+    intervention: `仅修改 ${m.functionName}，保持其他模块与参数固定`,
+    prediction: `在相同公开状态与相同模拟流下，${m.functionName} 的输出和最终动作选择发生可测变化；独立种子配对第一名率再检验方向`,
+    falsification: '先记录干预输出和同局面动作；若无变化则未触达行为，若竞技区间跨零则证据不足；单次胜负不能裁决机制',
+    modules: [m.id],
+  }));
+  const hypotheses = mechanisms.map(mechanism => ({
+    id: `H-${sha256Canonical({ id: mechanism.id, intervention: mechanism.intervention, modules: mechanism.modules }).slice(0, 16)}`,
+    statement: mechanism.claim, status: 'unverified', mechanisms: [mechanism],
+  }));
+  const alternative = {
+    id: `H-${sha256Canonical({ mechanism: 'sampling-variation', modules: [...moduleIds].sort() }).slice(0, 16)}`,
+    statement: '综合胜负读数可能来自样本波动或多个模块交互，尚不能归因单个机制',
+    status: 'unverified', mechanisms: [{
+      id: 'sampling-variation', claim: '小样本变化可能不在新种子上复现',
+      prediction: '冻结完整候选，在独立开发种子上复验并逐人数披露区间',
+      falsification: '需要足够功效和独立复验；区间跨零时保持 inconclusive', modules: [...moduleIds].sort(),
+    }],
+  };
+  for (const hypothesis of hypotheses) {
+    hypothesis.mechanisms.push({ ...alternative.mechanisms[0], modules: [...hypothesis.mechanisms[0].modules] });
+  }
 
   const brief = {
     schema: 'century-research-brief-v2',
@@ -171,11 +150,11 @@ export function renderBriefPrompt(brief) {
     for (const f of brief.failures) lines.push(`- [${f.status}] ${f.detail}`);
   }
   if (brief.history.testedHypotheses.length) {
-    lines.push('Previously tested hypotheses (do not repeat without new evidence):');
+    lines.push('Previously recorded hypotheses (historical status is not proof of causality or replication):');
     for (const h of brief.history.testedHypotheses) lines.push(`- ${h.hypothesisId} ${h.status}: ${h.statement}`);
   }
   if (brief.history.recentFailures?.length) {
-    lines.push('Prior failure evidence (research memory; only supported is reproduced):');
+    lines.push('Prior failure evidence (research memory; observational records; supported alone does not establish replication):');
     for (const f of brief.history.recentFailures.slice(-5)) {
       const detail = String(f.detail ?? '').replace(/\s+/g, ' ').slice(0, 240);
       lines.push(`- [${f.status}] ${f.category ?? 'failure'} (${f.seatCount ?? '?'}p): ${detail}`);

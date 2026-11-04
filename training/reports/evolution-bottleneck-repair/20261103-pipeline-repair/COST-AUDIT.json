@@ -1,0 +1,64 @@
+{
+  "rows": [
+    {
+      "run": "baseline",
+      "elapsedSeconds": 267.135,
+      "savedGames": 48
+    },
+    {
+      "run": "repaired",
+      "elapsedSeconds": 662.368,
+      "savedGames": 112
+    },
+    {
+      "run": "confirmation",
+      "elapsedSeconds": 603.4949245839999,
+      "savedGames": 104
+    },
+    {
+      "run": "confirmation-final",
+      "elapsedSeconds": 173.477294959,
+      "savedGames": 40
+    },
+    {
+      "run": "final-comparison/baseline",
+      "elapsedSeconds": 212.93820058300003,
+      "savedGames": 40
+    },
+    {
+      "run": "final-comparison/repaired",
+      "elapsedSeconds": 257.554989084,
+      "savedGames": 40
+    },
+    {
+      "run": "probe-score-check",
+      "elapsedSeconds": 66.591323041,
+      "savedGames": 16
+    },
+    {
+      "run": "validation",
+      "elapsedSeconds": 556.821489583,
+      "savedGames": 96
+    },
+    {
+      "run": "accidental-test-conservative",
+      "elapsedSeconds": 120,
+      "savedGames": null
+    }
+  ],
+  "totalRealSecondsConservative": 2920.3812218340004,
+  "totalRealMinutesConservative": 48.67302036390001,
+  "authorizedLimitSeconds": 7200,
+  "withinAuthorizedLimit": true,
+  "savedGames": 496,
+  "accidentalGamesUnknownUpperBound": 32,
+  "loggedLLMIterationAttempts": 7,
+  "loggedLLMSuccessfulCalls": 6,
+  "loggedTokens": 3456430,
+  "failedLLMIterations": [
+    "2026-11-03 15:12:26,138 - openevolve.process_parallel - WARNING - Iteration 1 error: LLM generation failed: codex exec turn failed: You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at 7:55 PM."
+  ],
+  "billing": "仅日志token；订阅现金成本未知，未购买额度或服务",
+  "timeBasis": "runner实际墙钟，事故保守120秒；测试/构建/离线分析和无人运行间隔不计真实实验预算",
+  "concurrency": "各真实runner顺序完成后才启动下一个；无并行真实训练"
+}

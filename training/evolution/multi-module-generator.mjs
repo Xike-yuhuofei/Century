@@ -13,8 +13,9 @@
  * 所有候选必须通过静态检查/组装/编译/探针后才会进入 artifact 仓库。
  */
 
+import { inheritanceDiff } from './module-inheritance.mjs';
 import { readFileSync } from 'node:fs';
-import { moduleRegistry, getModule, sha256 } from '../../ai5/openevolve/node/module_registry.mjs';
+import { moduleRegistry, getModule, officialFunctionText, sha256 } from '../../ai5/openevolve/node/module_registry.mjs';
 import { mutateModuleText, mutateModuleFunction } from './module-mutations.mjs';
 import { createCompiledModuleCandidate, candidateParametersFor } from './multi-module-candidate.mjs';
 import {
@@ -176,6 +177,7 @@ function createCandidate({
     operator: operator ?? strategy,
     hypothesisId,
     ...(extraLineage ?? {}),
+    ...inheritanceDiff(parentTexts ?? {}, moduleTexts, { allowRemoval: strategy === 'ablation' }),
   };
   const created = createCompiledModuleCandidate({
     modules,
@@ -185,7 +187,7 @@ function createCandidate({
     index,
     candidateId: finalId,
     parentId: parentArtifact?.candidateId ?? null,
-    parameters: parameters ? { ...parameters, id: finalId } : null,
+    parameters: { ...(parameters ?? parentArtifact?.parameters?.values ?? candidateParametersFor(finalId)), id: finalId },
     sourceOrigin,
     mutationLabel: label,
     lineage,
@@ -214,7 +216,9 @@ export function generateMultiModuleBatch({
 }) {
   const registry = moduleRegistry();
   const allIds = registry.modules.map(m => m.id);
-  const ids = (targetIds ?? allIds).filter(id => allIds.includes(id));
+  const ids = (targetIds ?? allIds).filter(id => allIds.includes(id) && id !== 'M12');
+  // 当前 campaign 的评测路径固定 workUnits；M12 仍完整继承，但不作为新干预。
+  // 时间预算实验必须显式走独立协议，不能混入本路径。
   assertCondition(ids.length > 0, '没有可用模块');
   const strategies = moduleConfig.strategies ?? DEFAULT_STRATEGIES;
   const random = rng(seed + round * 101);
@@ -280,7 +284,7 @@ export function generateMultiModuleBatch({
             index: candidates.length, parentArtifact,
             label: 'deterministic-fallback (OpenEvolve batch budget reached)', sourceOrigin: 'deterministic-template',
             parentTexts, operator: operators.join(','),
-            fallbackToOfficial: ids.filter(id => !parentTexts[id]),
+            fallbackToOfficial: selected.filter(id => !parentTexts[id]),
           }));
           continue;
         }
@@ -302,7 +306,7 @@ export function generateMultiModuleBatch({
             index: candidates.length, parentArtifact,
             label: 'deterministic-fallback (OpenEvolve unavailable)', sourceOrigin: 'deterministic-template',
             parentTexts, operator: operators.join(','),
-            fallbackToOfficial: ids.filter(id => !parentTexts[id]),
+            fallbackToOfficial: selected.filter(id => !parentTexts[id]),
           }));
           continue;
         }
@@ -317,9 +321,11 @@ export function generateMultiModuleBatch({
           if (typeof text === 'string' && text.trim().length > 0) inheritanceTexts[id] = text;
         }
         const run = runMultiModuleOpenEvolve({
-          moduleIds: selected,
+          moduleIds: [...new Set([...Object.keys(parentTexts), ...selected])].sort(),
+          editableModuleIds: selected,
+          parameters: parentArtifact?.parameters?.values ?? null,
           iterations: moduleConfig.openevolveIterations ?? 2,
-          moduleTexts: Object.keys(inheritanceTexts).length ? inheritanceTexts : null,
+          moduleTexts: Object.keys(parentTexts).length ? parentTexts : null,
           checkpoint: moduleConfig.openevolveCheckpoint ?? null,
           configPath: moduleConfig.openevolveConfigPath ?? null,
           briefFile: moduleConfig.openevolveBriefPath ?? null,
@@ -334,8 +340,8 @@ export function generateMultiModuleBatch({
         }
         const created = createCandidateFromOpenEvolveMulti({
           outputDir: run.outputDir, experiment, round, index: candidates.length,
-          parentArtifact, parentModuleTexts: inheritanceTexts,
-          expectedModuleIds: selected, run,
+          parentArtifact, parentModuleTexts: parentTexts,
+          expectedModuleIds: [...new Set([...Object.keys(parentTexts), ...selected])].sort(), run,
           hypothesisId: hints?.hypothesisId ?? null,
         });
         created.strategy = strategy;
@@ -422,19 +428,21 @@ export function generateMultiModuleBatch({
         const aTexts = moduleTextsFromArtifact(a);
         const bTexts = moduleTextsFromArtifact(b);
         const donorA = Object.keys(aTexts);
-        const donorB = Object.keys(bTexts).filter(id => !donorA.includes(id));
+        const donorB = Object.keys(bTexts).filter(id => aTexts[id] !== bTexts[id]);
         assertCondition(donorA.length && donorB.length, '两个精英候选没有可组合的模块');
-        const fromA = pickMany(donorA, Math.max(1, Math.ceil(donorA.length / 2)), random);
         const fromB = pickMany(donorB, Math.max(1, Math.ceil(donorB.length / 2)), random);
-        const texts = {};
-        for (const id of fromA) texts[id] = aTexts[id];
-        for (const id of fromB) texts[id] = bTexts[id];
-        const expanded = expandDependencies(texts, { ...aTexts, ...bTexts }, registry);
+        const texts = { ...aTexts };
+        // 从 B 替换完整函数；依赖也取同一捐赠者，其他 A 模块保留。
+        const donorSources = Object.fromEntries(registry.modules.map(m => [m.id, bTexts[m.id] ?? officialFunctionText(m)]));
+        const donated = expandDependencies(Object.fromEntries(fromB.map(id => [id, bTexts[id]])), donorSources, registry);
+        const expanded = { ...texts, ...donated };
         accept(createCandidate({
           strategy, moduleTexts: expanded, experiment, round, index: candidates.length,
           parentArtifact: a, parentTexts: aTexts,
           label: `crossover:${a.candidateId}+${b.candidateId}`,
           sourceOrigin: 'crossover', operator: `crossover:${a.candidateId}+${b.candidateId}`,
+          fallbackToOfficial: Object.keys(donated).filter(id => !(id in bTexts)),
+          extraLineage: { donors: [a.candidateId, b.candidateId], moduleDonors: Object.fromEntries(Object.keys(expanded).map(id => [id, id in donated ? (id in bTexts ? b.candidateId : 'official') : a.candidateId])) },
         }));
         continue;
       }
@@ -445,7 +453,7 @@ export function generateMultiModuleBatch({
         }
         const donor = pick(elites, random);
         const textMap = moduleTextsFromArtifact(donor);
-        const removable = Object.keys(textMap).filter(id => (getModule(id, registry).dependsOn ?? []).length === 0);
+        const removable = Object.keys(textMap).filter(id => !Object.keys(textMap).some(other => (getModule(other, registry).dependsOn ?? []).includes(id)));
         if (!removable.length) {
           rejectedAtGeneration.push({ strategy, reason: '精英候选没有可独立移除的模块（依赖闭包保护）' });
           continue;
@@ -461,7 +469,7 @@ export function generateMultiModuleBatch({
           strategy, moduleTexts: texts, experiment, round, index: candidates.length,
           parentArtifact: donor, parentTexts: textMap,
           label: `ablation:${removed}<-${donor.candidateId}`,
-          sourceOrigin: 'ablation', operator: `ablation:remove-${removed}`,
+          sourceOrigin: 'ablation', operator: `ablation:remove-${removed}`, fallbackToOfficial: [removed],
         }));
         continue;
       }
@@ -500,6 +508,7 @@ export function recordCoEvolutionElite({ state, artifact, evidence, item, strate
     deep,
     modules: artifact.source.modules.map(m => m.id).sort(),
     evidencePath: item?.deep?.evidencePath ?? item?.quick?.evidencePath ?? null,
+    evidenceClass: 'research-elite-unverified',
     recordedAt: new Date().toISOString(),
   };
   for (const id of entry.modules) {

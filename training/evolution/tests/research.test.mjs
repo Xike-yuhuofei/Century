@@ -113,7 +113,7 @@ test('ResearchBrief 写入真实 OpenEvolve 配置：system_message 被替换且
   const text = readFileSync(written.path, 'utf8');
   assert.ok(text.includes(brief.contextHash), 'LLM 配置必须包含简报上下文哈希');
   assert.ok(text.includes('Research brief'), 'LLM 配置必须包含研究简报');
-  assert.ok(text.includes('mechanism-acquisition-tempo'), '必须包含可区分机制');
+  assert.ok(text.includes('intervention-M02-acquisitionValue'), '必须包含可区分机制');
   assert.ok(existsSync(written.briefPath), '必须落盘简报 JSON（供 artifacts 通道）');
   // 原配置不得被改写
   assert.ok(readFileSync(AI9_CONFIG, 'utf8').includes('OpenEvolve 多模块联合进化配置'));
@@ -155,7 +155,7 @@ test('研究记忆：实验结论携带 moduleScope 时正模块可检索', () =
   });
   memory.recordExperiment({
     hypothesisId: 'H7A', candidateId: 'cand-7', stage: 'deep',
-    metrics: { firstPlaceDelta: 0.25, pairs: 8 }, verdict: 'supported',
+    metrics: { firstPlaceDelta: 0.25, firstPlaceLower: 0.05, pairs: 80 }, verdict: 'supported', independentlyReplicated: true,
     seeds: [1, 2], moduleScope: ['M06'],
   });
   memory.updateHypothesis({ hypothesisId: 'H7A', status: 'supported', evidenceRef: 'deep-r007.json' });
@@ -176,19 +176,20 @@ test('失败归因：按人数分层给出 supported/weakened/inconclusive，不
   }
 });
 
-test('失败归因：8 对/层足量时区分 supported 与 weakened（不做结果后调整）', () => {
+test('失败归因：8 对的少量翻转且区间跨零必须 inconclusive', () => {
   const supported = diagnosePairedEvidence({
     evidence: pairedEvidence({ seatCounts: [2], seeds: [1, 2, 3, 4, 5, 6, 7, 8], championWins: 3 }),
     minSamplesPerStratum: 8,
   });
   assert.equal(supported.summary.strata['2'].pairs, 8);
-  assert.equal(supported.summary.strata['2'].verdict, 'supported');
+  assert.equal(supported.summary.strata['2'].verdict, 'inconclusive');
+  assert.ok(supported.summary.strata['2'].ci.lower < 0 && supported.summary.strata['2'].ci.upper > 0);
 
   const weakened = diagnosePairedEvidence({
     evidence: pairedEvidence({ seatCounts: [2], seeds: [1, 2, 3, 4, 5, 6, 7, 8], championWins: 2 }),
     minSamplesPerStratum: 8,
   });
-  assert.equal(weakened.summary.strata['2'].verdict, 'weakened');
+  assert.equal(weakened.summary.strata['2'].verdict, 'inconclusive');
 });
 
 test('Orchestrator：无证据→bootstrap；连续负增益→exploit-weakness；停滞→replicate', () => {

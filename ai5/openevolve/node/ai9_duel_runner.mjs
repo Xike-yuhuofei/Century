@@ -20,7 +20,7 @@ import {
   clusterFirstPlacePairs, clusterMeanCI,
 } from '../../../training/evaluator/first-place.mjs';
 import { wilsonCI } from '../../../training/evaluator/stats.mjs';
-import { AI9_OPENEVOLVE_STAGE2_BLOCK, AI9_OPENEVOLVE_STAGE3_BLOCK, parseSeedList } from '../../lib/seed_policy.mjs';
+import { AI9_OPENEVOLVE_STAGE2_BLOCK, AI9_OPENEVOLVE_STAGE3_BLOCK, AI9_DEV_SCREEN_BLOCK, AI9_DEV_DEEP_BLOCK, parseSeedList } from '../../lib/seed_policy.mjs';
 
 const args = process.argv.slice(2);
 const arg = (name, dflt = null) => {
@@ -54,7 +54,9 @@ const ROTATION = [
 function readShard(purpose) {
   const text = readFileSync(seedListPath, 'utf8');
   return parseSeedList(text, {
-    block: purpose === 'deep' ? AI9_OPENEVOLVE_STAGE3_BLOCK : AI9_OPENEVOLVE_STAGE2_BLOCK,
+    block: args.includes('--dev-seeds')
+      ? (purpose === 'deep' ? AI9_DEV_DEEP_BLOCK : AI9_DEV_SCREEN_BLOCK)
+      : (purpose === 'deep' ? AI9_OPENEVOLVE_STAGE3_BLOCK : AI9_OPENEVOLVE_STAGE2_BLOCK),
     requireUnique: true,
   });
 }
@@ -105,7 +107,7 @@ async function main() {
 
   const games = [];
   const pairs = [];
-  const candidateParams = JSON.parse(readFileSync(join(REPO_ROOT, 'training/champions/champion.json'), 'utf8')).parameters;
+  const candidateParams = arg('parameters') ? JSON.parse(readFileSync(arg('parameters'), 'utf8')) : JSON.parse(readFileSync(join(REPO_ROOT, 'training/champions/champion.json'), 'utf8')).parameters;
   let seedIndex = 0;
   for (const seatCount of playerCounts) {
     for (const seed of seedsByCount.get(seatCount)) {

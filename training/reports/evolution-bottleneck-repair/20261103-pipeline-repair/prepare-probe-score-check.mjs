@@ -1,0 +1,16 @@
+import {readFileSync,readdirSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
+import {createLiveGovernanceProvider} from '../../../evolution/governance-provider-v2.mjs';
+import {AI9_DEV_BLOCKS} from '../../../evolution/core.mjs';
+import {sequentialSeeds} from '../../../../ai5/lib/seed_policy.mjs';
+const dir=import.meta.dirname,output=`${dir}/probe-score-check`;
+if(existsSync(`${output}/seed-manifest.json`))throw Error('已登记');
+const cp=`${dir}/final-comparison/baseline/llm-r1/checkpoints/checkpoint_1/programs`;
+const proposal=readdirSync(cp).map(f=>JSON.parse(readFileSync(`${cp}/${f}`))).find(x=>x.iteration_found===1);
+if(proposal.id!=='cb913a63-0e54-4cdc-bcbd-aee4d9397c74')throw Error('固定提案身份不符');
+mkdirSync(output,{recursive:true});writeFileSync(`${output}/program.ts`,proposal.code);
+const provider=createLiveGovernanceProvider({blocks:AI9_DEV_BLOCKS,windowPrefix:'ai9',experimentPrefix:'repair'});
+const ref=provider.allocateDevSeedWindow({campaignId:'probe-score-check',round:1,purpose:'screen',count:8});
+const seeds=sequentialSeeds(AI9_DEV_BLOCKS.screen,ref.base,8);
+writeFileSync(`${output}/stage2-seeds.json`,JSON.stringify(seeds));
+writeFileSync(`${output}/context.json`,JSON.stringify({moduleIds:['M02','M05'],parameters:null}));
+writeFileSync(`${output}/seed-manifest.json`,JSON.stringify({recordedAt:new Date().toISOString(),proposalId:proposal.id,ref,seeds,limitSeconds:180,llmCalls:0},null,2));

@@ -23,15 +23,15 @@ export const DECISIONS = Object.freeze([
  */
 export function summarizeTrend(history) {
   const usable = (history ?? []).filter(h => Number.isFinite(h.delta));
-  if (!usable.length) return { rounds: 0, meanDelta: null, bestDelta: null, stagnantRounds: 0, decliningRounds: 0 };
+  if (!usable.length) return { rounds: (history ?? []).length, meanDelta: null, bestDelta: null, stagnantRounds: (history ?? []).length, decliningRounds: 0 };
   const meanDelta = usable.reduce((s, h) => s + h.delta, 0) / usable.length;
   const bestDelta = Math.max(...usable.map(h => h.delta));
   let stagnant = 0;
-  for (const h of [...usable].reverse()) {
-    if (h.delta <= 0) stagnant += 1; else break;
+  for (const h of [...(history ?? [])].reverse()) {
+    if (!Number.isFinite(h.delta) || h.delta <= 0 || (Number.isFinite(h.lower) && h.lower <= 0)) stagnant += 1; else break;
   }
   return {
-    rounds: usable.length,
+    rounds: (history ?? []).length,
     meanDelta: Number(meanDelta.toFixed(4)),
     bestDelta: Number(bestDelta.toFixed(4)),
     stagnantRounds: stagnant,
@@ -51,16 +51,16 @@ export function summarizeTrend(history) {
  * @param {boolean} [options.hasElites]
  */
 export function decideNextResearch({
-  trend, diagnosis = null, memory = null, modules, budget = null, hasElites = false,
+  trend, diagnosis = null, memory = null, modules, budget = null, hasElites = false, researchRound = null,
 }) {
   assertCondition(Array.isArray(modules) && modules.length > 0, '需要模块列表');
 
-  const tested = (memory?.testedHypotheses ?? []).filter(h => h.status === 'rejected');
+  // 用实际轮次保证深验配额耗尽、趋势不更新时仍能退出诊断。
+  const cycle = researchRound ?? trend?.stagnantRounds ?? 0;
   const stagnating = (trend?.stagnantRounds ?? 0) >= 2;
   const supportedStrata = (diagnosis?.failureCases ?? []).filter(f => f.status === 'supported');
-  const weakestModules = supportedStrata.length
-    ? [...new Set(supportedStrata.flatMap(() => ['M02', 'M04', 'M06', 'M08']))]
-    : null;
+  // 人数层弱点不是模块因果证据；只在允许模块内提出待验证干预。
+  const weakestModules = modules;
 
   if ((budget?.remainingCandidates ?? 1) <= 0) {
     return {
@@ -82,7 +82,7 @@ export function decideNextResearch({
     };
   }
 
-  if (trend.meanDelta < 0 && supportedStrata.length > 0) {
+  if (trend.meanDelta < 0 && supportedStrata.length > 0 && (!stagnating || cycle % 3 === 2)) {
     return {
       decision: 'exploit-weakness',
       reason: `平均配对增量 ${trend.meanDelta} 为负，且失败归因支持 ${supportedStrata.map(s => `${s.seatCount}p`).join('/')} 弱点`,
@@ -94,7 +94,7 @@ export function decideNextResearch({
 
   if (stagnating) {
     const positive = (memory?.positiveModules ?? []);
-    if (positive.length) {
+    if (positive.length && cycle % 3 === 2) {
       return {
         decision: 'replicate',
         reason: `连续 ${trend.stagnantRounds} 轮无正增益：对已有正向证据模块做独立新种子复验`,
@@ -103,7 +103,7 @@ export function decideNextResearch({
         hypothesisBudget: 1,
       };
     }
-    if (hasElites) {
+    if (hasElites && cycle % 3 === 2) {
       return {
         decision: 'ablate',
         reason: `连续 ${trend.stagnantRounds} 轮无正增益：用消融判定哪些模块改动实际有效`,
@@ -114,9 +114,9 @@ export function decideNextResearch({
     }
     return {
       decision: 'switch-direction',
-      reason: `连续 ${trend.stagnantRounds} 轮无正增益且缺少可复验方向：切换模块方向，避开已否决组合`,
-      targetIds: modules.filter(id => !tested.some(h => (h.moduleScope ?? []).includes(id))),
-      strategies: ['pair', 'multi', 'openevolve'],
+      reason: `连续 ${trend.stagnantRounds} 轮没有可确认的新进展：诊断轮之后恢复允许模块内的新探索`,
+      targetIds: modules,
+      strategies: ['openevolve', 'single', 'pair'],
       hypothesisBudget: 2,
     };
   }

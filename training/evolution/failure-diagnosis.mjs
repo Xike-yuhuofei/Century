@@ -15,6 +15,7 @@
  */
 
 import { assertCondition, sha256Canonical } from './core.mjs';
+import { analyzeSeatStratum } from '../evaluator/first-place.mjs';
 
 const ACTION_KEYS = ['acquire', 'claim', 'rest', 'play', 'discard'];
 
@@ -99,18 +100,20 @@ export function diagnosePairedEvidence({ evidence, candidateId = null, minSample
   }
   for (const s of Object.values(strata)) {
     s.meanActionDistance = Number((s.meanActionDistance / Math.max(1, s.pairs)).toFixed(6));
-    // 结论规则（预注册式，固定阈值，不随结果调整）：
-    // - 样本不足 → inconclusive；
-    // - 冠军赢翻转显著多于候选赢翻转 → supported（候选在该层存在系统性弱点）；
-    // - 候选赢翻转显著多于冠军 → rejected（该层不是弱点）；
-    // - 其余 → weakened。
     const candidateWinFlips = s.candidateWins - s.bothFirst;
     const championWinFlips = s.championWins - s.bothFirst;
+    const sample = divergences.filter(d => d.seatCount === s.seatCount).map(d => ({
+      seed: d.seed, focusSeat: d.focusSeat,
+      candidateFirst: d.outcomeFlip.candidateFirst, championFirst: d.outcomeFlip.championFirst,
+    }));
+    const analysis = analyzeSeatStratum({ pairs: sample, seatCount: s.seatCount, minSeeds: Math.max(2, minSamplesPerStratum) });
+    s.independentSeeds = analysis.uniqueSeeds;
+    s.ci = analysis.ci;
     let status = 'inconclusive';
-    if (s.pairs >= minSamplesPerStratum) {
-      if (championWinFlips >= candidateWinFlips + 2 && championWinFlips >= s.pairs * 0.25) status = 'supported';
-      else if (candidateWinFlips >= championWinFlips + 2) status = 'rejected';
-      else status = 'weakened';
+    // 仅为该层的配对观测，不是机制或独立复现。零样本方差也不支持小样本强结论。
+    if (analysis.ci?.variance > 0) {
+      if (analysis.ci.upper < 0) status = 'supported';
+      else if (analysis.ci.lower > 0) status = 'rejected';
     }
     s.verdict = status;
     s.candidateWinFlips = candidateWinFlips;
@@ -129,7 +132,7 @@ export function diagnosePairedEvidence({ evidence, candidateId = null, minSample
     }));
 
   const summary = {
-    schema: 'century-failure-diagnosis-v1',
+    schema: 'century-failure-diagnosis-v2',
     candidateId: candidateId ?? evidence.candidateId ?? null,
     evidenceHash: sha256Canonical(evidence),
     pairs: divergences.length,

@@ -193,8 +193,9 @@ function pidAliveDefault(pid) {
   try { process.kill(pid, 0); return true; } catch { return false; }
 }
 
-function expectedGames({ evidenceMode, seeds, playerCounts, pairedArms = 1 }) {
-  return evidenceMode === 'game' ? seeds.length * playerCounts.length * pairedArms : 0;
+export function expectedGames({ evidenceMode, seeds, playerCounts, pairedArms = 1 }) {
+  // 编译候选在 dev-evaluator 中已把总种子列表按人数切片。
+  return evidenceMode === 'game' ? seeds.length * (pairedArms === 2 ? 1 : playerCounts.length) * pairedArms : 0;
 }
 
 /** 仓库内路径存相对路径（产物可移植）；仓库外（测试临时目录）保留绝对路径。 */
@@ -531,10 +532,23 @@ export class CampaignController {
       }
       // 消融（移除模块）同样是真实变化：不能只看"被修改的模块"，
       // 还要看"相对父代被移除的模块"。否则 ablation 候选会被全部误杀。
+      assertCondition(Object.keys(parentHashes).every(id => lineage.parentModuleHashes?.[id] === parentHashes[id]), '父代模块哈希记录不完整');
       const candidateModuleIds = new Set(artifact.source.modules.map(m => m.id));
       const removedModules = Object.keys(lineage.parentModuleHashes ?? {})
         .filter(id => !candidateModuleIds.has(id));
-      assertCondition(lineage.modulesChanged.length > 0 || removedModules.length > 0,
+      assertCondition(!removedModules.length || String(lineage.operator).startsWith('ablation:'), `非法丢失父代模块：${removedModules.join(',')}`);
+      const actualChanged = artifact.source.modules.filter(m => parentHashes[m.id] !== m.functionSha256).map(m => m.id).sort();
+      assertCondition(JSON.stringify([...lineage.modulesChanged].sort()) === JSON.stringify(actualChanged), 'modulesChanged 与实际源码差分不符');
+      if (lineage.modulesRemoved) assertCondition(JSON.stringify([...lineage.modulesRemoved].sort()) === JSON.stringify(removedModules.sort()), 'modulesRemoved 与实际源码差分不符');
+      const actualSets = {
+        modulesRetained: artifact.source.modules.filter(m => parentHashes[m.id] === m.functionSha256).map(m => m.id),
+        modulesModified: artifact.source.modules.filter(m => parentHashes[m.id] && parentHashes[m.id] !== m.functionSha256).map(m => m.id),
+        modulesAdded: artifact.source.modules.filter(m => !parentHashes[m.id]).map(m => m.id),
+      };
+      for (const [key, ids] of Object.entries(actualSets)) {
+        if (lineage[key]) assertCondition(JSON.stringify([...lineage[key]].sort()) === JSON.stringify(ids.sort()), `${key} 与实际源码差分不符`);
+      }
+      assertCondition(actualChanged.length > 0 || removedModules.length > 0,
         `候选 ${artifact.candidateId} 与父代源码完全相同（既无修改也无移除模块）——拒绝无变化的"伪代"`);
     } else {
       assertCondition(artifact.parentId === null,
@@ -557,7 +571,7 @@ export class CampaignController {
         .filter(c => c.deep?.status === 'done' && Number.isFinite(c.deep?.metrics?.firstPlaceDelta))
         .sort((a, b) => (b.deep.metrics.firstPlaceLower ?? -9) - (a.deep.metrics.firstPlaceLower ?? -9));
       const best = confirmed[0];
-      if (!best) continue;
+      if (!best) { history.push({ round: round.round, delta: null, lower: null, pairs: 0 }); continue; }
       history.push({
         round: round.round,
         delta: best.deep.metrics.firstPlaceDelta,
@@ -575,15 +589,15 @@ export class CampaignController {
     const positiveModules = this.memory.positiveModules();
     const recentFailures = this.memory.readAll().filter(e => e.kind === 'failure').slice(-10);
     const memorySummary = { testedHypotheses, positiveModules, recentFailures };
-    const modules = this.config.generation.targetIds?.length
+    const modules = (this.config.generation.targetIds?.length
       ? this.config.generation.targetIds
-      : moduleRegistry().modules.map(m => m.id);
+      : moduleRegistry().modules.map(m => m.id)).filter(id => id !== 'M12');
     const budget = {
       remainingCandidates: this.config.budget.maxCandidates - state.budgetUsed.candidates,
       remainingGames: this.config.budget.maxGames - state.budgetUsed.games,
     };
     const decision = decideNextResearch({
-      trend, diagnosis, memory: memorySummary, modules, budget,
+      trend, diagnosis, memory: memorySummary, modules, budget, researchRound: roundData.round,
       hasElites: (state.moduleElites ?? []).length > 0,
     });
     const brief = buildResearchBrief({
@@ -856,8 +870,8 @@ export class CampaignController {
   /** 竞技证据摘要：配对第一名率增量是唯一主指标，其余仅诊断。 */
   _competitiveMetrics(evidence) {
     const metrics = evidence?.metrics ?? {};
-    const lower = metrics.firstPlaceDeltaCi?.oneSidedLower
-      ?? metrics.firstPlaceDeltaPooledCi?.oneSidedLower
+    const lower = metrics.firstPlaceDeltaPooledCi?.oneSidedLower
+      ?? metrics.firstPlaceDeltaCi?.oneSidedLower
       ?? metrics.firstPlaceDeltaLower ?? null;
     return {
       firstPlaceDelta: Number.isFinite(metrics.firstPlaceDelta) ? Number(metrics.firstPlaceDelta) : null,
@@ -975,6 +989,9 @@ export class CampaignController {
   }
 
   _select(state, roundData) {
+    const controls = roundData.candidates.filter(c => c.stage === 'quick-done' && c.strategy === 'control');
+    roundData.controlBudget = { candidates: controls.length, games: controls.reduce((sum, c) => sum + (c.quick?.games ?? 0), 0) };
+    for (const control of controls) control.stage = 'control-checked';
     const finished = roundData.candidates.filter(c => c.stage === 'quick-done');
     if (finished.length === 0) {
       roundData.selected = true;
@@ -1028,16 +1045,7 @@ export class CampaignController {
       this._event(state, 'deep-confirm-completed', { confirmed: confirmedSoFar, note: 'no pending game candidate' });
       return true;
     }
-    const item = pending.sort((a, b) => (b.quick?.score?.composite ?? 0) - (a.quick?.score?.composite ?? 0))[0];
-    const pairedArms = this.config.generation.mode === 'multi-module' ? 2 : 1;
-    const games = expectedGames({ evidenceMode: 'game', seeds: roundData.deepSeeds, playerCounts: this.config.playerCounts, pairedArms });
-    if (state.budgetUsed.games + games > this.config.budget.maxGames) {
-      item.stage = 'deep-skipped';
-      item.failure = { stage: 'deep-confirm', reason: 'game budget exhausted' };
-      state.status = 'budget-exhausted';
-      this._event(state, 'candidate-deep-budget-skipped', item.failure, item.candidateId);
-      return true;
-    }
+    const item = pending.sort((a, b) => (b.quick?.score?.rankKey ?? -9) - (a.quick?.score?.rankKey ?? -9) || (b.quick?.score?.composite ?? 0) - (a.quick?.score?.composite ?? 0))[0];
     if (state.budgetUsed.deepConfirmations >= this.config.budget.maxDeepConfirmations) {
       // 深验配额是「本 campaign 不再做深验」的资源上限，不是全局终止条件：
       // 继续下一轮生成/快筛/筛选，但不再消耗深验预算，避免长 campaign 在第 4 次
@@ -1046,6 +1054,15 @@ export class CampaignController {
       item.failure = { stage: 'deep-confirm', reason: 'deep confirmation quota reached' };
       this._event(state, 'candidate-deep-quota-skipped', item.failure, item.candidateId);
       roundData.deepDone = true;
+      return true;
+    }
+    const pairedArms = this.config.generation.mode === 'multi-module' ? 2 : 1;
+    const games = expectedGames({ evidenceMode: 'game', seeds: roundData.deepSeeds, playerCounts: this.config.playerCounts, pairedArms });
+    if (state.budgetUsed.games + games > this.config.budget.maxGames) {
+      item.stage = 'deep-skipped';
+      item.failure = { stage: 'deep-confirm', reason: 'game budget exhausted' };
+      state.status = 'budget-exhausted';
+      this._event(state, 'candidate-deep-budget-skipped', item.failure, item.candidateId);
       return true;
     }
     try {
@@ -1316,8 +1333,7 @@ export class CampaignController {
           failureCases: diagnosis.failureCases.length,
         }, item.candidateId);
         // P1.4：把本轮假设与深验证据对齐，记录实验结论并更新假设状态。
-        // 预注册规则（pair-verdict-rule-v1）：pairs<8 或 delta=0 → inconclusive；
-        // delta>0 支持"A（机制改善）"、否定"B（仅行为改变）"；delta<0 反之。
+        // v2：综合胜负仅记候选趋势；没有对应干预预测的直接测量就保持 inconclusive。
         const hypothesisIds = roundData.researchBrief?.hypotheses ?? [];
         const hypothesisScope = new Map(
           this.memory.readAll()
@@ -1329,12 +1345,11 @@ export class CampaignController {
         const verdicts = {};
         for (const hypothesisId of hypothesisIds) {
           let verdict = 'inconclusive';
-          if (pairs >= 8 && delta !== null && delta !== 0) {
-            const isMechanism = /A$/.test(hypothesisId);
-            verdict = (delta > 0) === isMechanism ? 'supported' : 'rejected';
-          }
+          // 综合胜负只提供候选层趋势；缺少机制干预/预测测量时不能裁决因果假设。
           verdicts[hypothesisId] = verdict;
-          const moduleScope = hypothesisScope.get(hypothesisId) ?? [];
+          const actual = this.store.get(item.candidateId).lineage;
+          const actualScope = [...new Set([...(actual?.modulesChanged ?? []), ...(actual?.modulesRemoved ?? [])])];
+          const moduleScope = actualScope.filter(id => (hypothesisScope.get(hypothesisId) ?? []).includes(id));
           this.memory.recordExperiment({
             hypothesisId,
             candidateId: item.candidateId,
@@ -1342,7 +1357,7 @@ export class CampaignController {
             metrics: item.deep.metrics,
             verdict,
             seeds: roundData.deepSeeds ?? null,
-            notes: `pair-verdict-rule-v1 pairs=${pairs} delta=${delta}`,
+            notes: `mechanism-evidence-v2: inconclusive; candidate trend only; pairs=${pairs} delta=${delta}; lower=${item.deep.metrics?.firstPlaceLower}`,
             moduleScope,
           });
           this.memory.updateHypothesis({

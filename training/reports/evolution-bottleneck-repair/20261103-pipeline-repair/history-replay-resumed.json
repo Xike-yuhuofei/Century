@@ -1,0 +1,1225 @@
+{
+  "historicalCodeVersion": {
+    "schema": "century-code-version-v1",
+    "generatedAt": "2026-10-29T15:05:35.830Z",
+    "headCommit": "cd86eddc4831d904354f80b6f2a6a533d4588335",
+    "headDirty": false,
+    "dirtyFiles": [],
+    "webBuild": {
+      "gitCommit": "52b1601a3d9834162baae62851e55f6741250265",
+      "gitDirty": false,
+      "sourceSha256": "c247bcead130994abb1b591ac1ddb727bf1c44ef8636381f56d4f020b119e63a",
+      "artifactSha256": "b105a2e56d246bb624ea5e4ac1004ebe98ee147f3eb76116fc8a58ac762e69dc",
+      "fileCounts": {
+        "source": 82,
+        "artifact": 49
+      }
+    },
+    "versionLockSha256": "7332b4f713e13e64375a3effafaf794c2bfaecd6a1042c4d968169a44089c19f",
+    "evolutionSources": {
+      "training/evolution/autonomous-run.mjs": "0930016cb8a0c9d336031b3a303f858fa1c603bde510dfa7516ebab1aa10f331",
+      "training/evolution/campaign-controller.mjs": "8cf417d5d174e966e67f440696ff5eb526ff7eb31c4f93ed314a49688e8bd7ac",
+      "training/evolution/candidate-artifact.mjs": "dea8c99621c5e82e255b47c9e7706c7af2f7b305761f37d6eafab02d65824139",
+      "training/evolution/candidate-generator.mjs": "ed8a8aa6c98699db36b5b34396dfe3f40ec4be66b09f83aa00e50f3db2bf0a97",
+      "training/evolution/compiled-game-evaluator.mjs": "e152dc64a379f6f31084f44b3c3ed81a4859c844aae5560d90eec081704eca85",
+      "training/evolution/dev-evaluator.mjs": "eb4a86dccd6ab662fadea0764d1a8cd4c98c9c0d83d34eae7495bb03c9c9e4b6",
+      "training/evolution/governance-provider-v2.mjs": "4b85063a8cbaebbe2cab8b154a721c49113754be3f70141f540a7004430fda1e",
+      "training/evolution/module-mutations.mjs": "d9da2a924698f2953624a44d7cc65c194f03714aed6a1466a8a75568684708d1",
+      "training/evolution/multi-module-candidate.mjs": "30b8e2b700a78174d70e1c78469583e9f08cf64c234c832873524dd6317faea3",
+      "training/evolution/multi-module-generator.mjs": "91429b84303bb593f8bc835bb6d2b1f8aa6a1290cd617329d0e77335f2a21a22",
+      "training/evolution/openevolve-campaign.mjs": "58e5a7c53e43c758ec4845533a965061e1a712be0c4289791d557a41a97042ec",
+      "training/evolution/promotion-handler.mjs": "8462645d18173f3414bd1c2ce524a6c4cb84b0b40cb4ed2b6f1e0f2650c2722c",
+      "training/evolution/safety-check.mjs": "d45bc4c86e22d75aab7f91848fcd8d3cec38b392298e7a07a97870e2c48cce82",
+      "training/evolution/selection.mjs": "e6ab7660cb370bcba5166bbbada95365dda5af17db8ca57c3d74eff7e548fb93",
+      "training/lib/code-version.mjs": "cf2b9ae0cc2caeb317a7769eeaa62273f53a566fba252fdbd362529a848607d1",
+      "training/lib/seed-governance.mjs": "45027d71edaf56ce88ef5b33881ddb48b58de77afceb323fa0c6ea73194b57e7",
+      "training/lib/seeds.mjs": "1c8c2da315b5b6c034b76675319f67d40f6ea8afbac901d0d4c8151979f53c75",
+      "training/lib/version-lock.mjs": "84ded220f0bbe6c23901a9ea70557a2e1e982e227734c385adbd44db8aee0b64"
+    },
+    "codeDigest": "df36d72e613422735141d59836c4c41d41061bc1a1a50385b94133b5a0883040"
+  },
+  "disclaimer": "静态重排，不推断未执行候选的胜负；新策略输入固定无正向已验证模块、精英从第二轮存在。",
+  "rounds": 58,
+  "llmCandidates": 14,
+  "lost": [
+    {
+      "round": 2,
+      "id": "cand-ai9-multi-r2c3-05e7d3",
+      "parent": "cand-ai9-pair-r1c2-cc83ce",
+      "missing": [
+        "M08",
+        "M10"
+      ]
+    },
+    {
+      "round": 23,
+      "id": "cand-ai9-multi-r23c5-482770",
+      "parent": "cand-ai9-ablation-r20c5-359f21",
+      "missing": [
+        "M08"
+      ]
+    },
+    {
+      "round": 27,
+      "id": "cand-ai9-multi-r27c5-2b7ba7",
+      "parent": "cand-ai9-ablation-r20c5-359f21",
+      "missing": [
+        "M08"
+      ]
+    },
+    {
+      "round": 28,
+      "id": "cand-ai9-multi-r28c4-fdd52f",
+      "parent": "cand-ai9-ablation-r20c5-359f21",
+      "missing": [
+        "M08"
+      ]
+    },
+    {
+      "round": 29,
+      "id": "cand-ai9-multi-r29c5-f65cd5",
+      "parent": "cand-ai9-ablation-r20c5-359f21",
+      "missing": [
+        "M08"
+      ]
+    },
+    {
+      "round": 30,
+      "id": "cand-ai9-multi-r30c5-e59dbe",
+      "parent": "cand-ai9-ablation-r20c5-359f21",
+      "missing": [
+        "M08"
+      ]
+    },
+    {
+      "round": 45,
+      "id": "cand-ai9-multi-r45c5-989322",
+      "parent": "cand-ai9-ablation-r20c5-359f21",
+      "missing": [
+        "M08"
+      ]
+    },
+    {
+      "round": 46,
+      "id": "cand-ai9-multi-r46c5-8f05ab",
+      "parent": "cand-ai9-ablation-r20c5-359f21",
+      "missing": [
+        "M08"
+      ]
+    },
+    {
+      "round": 56,
+      "id": "cand-ai9-multi-r56c5-517908",
+      "parent": "cand-ai9-ablation-r20c5-359f21",
+      "missing": [
+        "M08"
+      ]
+    }
+  ],
+  "oldAblateRounds": 44,
+  "changedDeep": 41,
+  "controlFirst": 14,
+  "rows": [
+    {
+      "round": 1,
+      "oldDecision": "bootstrap",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "ablation",
+        "openevolve"
+      ],
+      "newDecision": "bootstrap",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "ablation",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-pair-r1c2-cc83ce",
+      "newDeep": "cand-ai9-single-r1c1-345820",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 2,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-control-r2-0e5ad0",
+      "newDeep": "cand-ai9-multi-r2c3-05e7d3",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 3,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-control-r3-4c910b",
+      "newDeep": "cand-ai9-ablation-r3c2-ce8232",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 4,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r4c4-ce8232",
+      "newDeep": "cand-ai9-ablation-r4c4-ce8232",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 5,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-control-r5-de1a84",
+      "newDeep": "cand-ai9-crossover-r5c1-5368bf",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 6,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-control-r6-bc36b6",
+      "newDeep": "cand-ai9-crossover-r6c1-5368bf",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 7,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-control-r7-e1b0f6",
+      "newDeep": "cand-ai9-crossover-r7c1-5368bf",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 8,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-crossover-r8c5-cc83ce",
+      "newDeep": "cand-ai9-crossover-r8c2-5368bf",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 9,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-control-r9-b51f0a",
+      "newDeep": "cand-ai9-crossover-r9c1-5368bf",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 10,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-crossover-r10c3-5368bf",
+      "newDeep": "cand-ai9-ablation-r10c1-ce8232",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 11,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-ablation-r11c3-359f21",
+      "newDeep": "cand-ai9-ablation-r11c1-ce8232",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 12,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-control-r12-734057",
+      "newDeep": "cand-ai9-ablation-r12c1-ce8232",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 13,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-crossover-r13c3-b00529",
+      "newDeep": "cand-ai9-ablation-r13c2-359f21",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 14,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-ablation-r14c2-ce8232",
+      "newDeep": "cand-ai9-ablation-r14c2-ce8232",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 15,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r15c1-ce8232",
+      "newDeep": "cand-ai9-ablation-r15c1-ce8232",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 16,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-crossover-r16c4-5368bf",
+      "newDeep": "cand-ai9-ablation-r16c3-ce8232",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 17,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-crossover-r17c1-5368bf",
+      "newDeep": "cand-ai9-crossover-r17c1-5368bf",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 18,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-crossover-r18c1-b00529",
+      "newDeep": "cand-ai9-crossover-r18c1-b00529",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 19,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-crossover-r19c2-b00529",
+      "newDeep": "cand-ai9-crossover-r19c1-5368bf",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 20,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-ablation-r20c5-359f21",
+      "newDeep": "cand-ai9-crossover-r20c1-5368bf",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 21,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-pair-r21c2-b83526",
+      "newDeep": "cand-ai9-pair-r21c2-b83526",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 22,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-multi-r22c2-19bd97",
+      "newDeep": "cand-ai9-multi-r22c2-19bd97",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 23,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-multi-r23c5-482770",
+      "newDeep": "cand-ai9-pair-r23c2-512d45",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 24,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-multi-r24c3-b30d44",
+      "newDeep": "cand-ai9-pair-r24c1-95b0ee",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 25,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r25c3-130c73",
+      "newDeep": "cand-ai9-ablation-r25c3-130c73",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 26,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-ablation-r26c1-430f14",
+      "newDeep": "cand-ai9-ablation-r26c1-430f14",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 27,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-control-r27-cf0e06",
+      "newDeep": "cand-ai9-crossover-r27c4-5368bf",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 28,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-single-r28c5-7e260d",
+      "newDeep": "cand-ai9-multi-r28c4-fdd52f",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 29,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-multi-r29c5-f65cd5",
+      "newDeep": "cand-ai9-crossover-r29c4-08851a",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 30,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-crossover-r30c4-031feb",
+      "newDeep": "cand-ai9-multi-r30c5-e59dbe",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 31,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r31c5-ce8232",
+      "newDeep": "cand-ai9-ablation-r31c1-92f4c4",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 32,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-crossover-r32c1-cc83ce",
+      "newDeep": "cand-ai9-crossover-r32c3-887c90",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 33,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r33c3-3b7f52",
+      "newDeep": "cand-ai9-crossover-r33c2-840d49",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 34,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-control-r34-00b071",
+      "newDeep": "cand-ai9-ablation-r34c5-087967",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 35,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-crossover-r35c5-7ab6b9",
+      "newDeep": "cand-ai9-ablation-r35c1-e52cb2",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 36,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-control-r36-fd8f3e",
+      "newDeep": "cand-ai9-crossover-r36c3-424483",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 37,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r37c4-087967",
+      "newDeep": "cand-ai9-ablation-r37c1-92f4c4",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 38,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-control-r38-e465ed",
+      "newDeep": "cand-ai9-crossover-r38c2-977569",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 39,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r39c1-66d778",
+      "newDeep": "cand-ai9-ablation-r39c1-66d778",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 40,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-crossover-r40c4-381ce0",
+      "newDeep": "cand-ai9-ablation-r40c5-345820",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 41,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-crossover-r41c4-aaa30d",
+      "newDeep": "cand-ai9-ablation-r41c5-37d1b8",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 42,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-crossover-r42c2-b00529",
+      "newDeep": "cand-ai9-ablation-r42c1-dec099",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 43,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r43c3-66d778",
+      "newDeep": "cand-ai9-ablation-r43c5-ce8232",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 44,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-ablation-r44c5-37d1b8",
+      "newDeep": "cand-ai9-ablation-r44c1-a26df0",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 45,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-control-r45-a23373",
+      "newDeep": "cand-ai9-multi-r45c5-989322",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 46,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-pair-r46c2-54a1f1",
+      "newDeep": "cand-ai9-pair-r46c2-54a1f1",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 47,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-ablation-r47c5-a26df0",
+      "newDeep": "cand-ai9-ablation-r47c1-ce8232",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 48,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r48c1-ce8232",
+      "newDeep": "cand-ai9-ablation-r48c1-ce8232",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 49,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-crossover-r49c1-9a71f7",
+      "newDeep": "cand-ai9-ablation-r49c2-66d778",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 50,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-control-r50-3ff89c",
+      "newDeep": "cand-ai9-ablation-r50c1-9ebee2",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 51,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-control-r51-289254",
+      "newDeep": "cand-ai9-ablation-r51c1-087967",
+      "controlWasFirst": true,
+      "orderChanged": true
+    },
+    {
+      "round": 52,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r52c1-92f4c4",
+      "newDeep": "cand-ai9-ablation-r52c1-92f4c4",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 53,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "ablate",
+      "newStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "oldDeep": "cand-ai9-crossover-r53c4-6454c3",
+      "newDeep": "cand-ai9-ablation-r53c3-a26df0",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 54,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r54c3-ce8232",
+      "newDeep": "cand-ai9-ablation-r54c3-ce8232",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 55,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r55c5-3a5bd4",
+      "newDeep": "cand-ai9-ablation-r55c3-d6a9b8",
+      "controlWasFirst": false,
+      "orderChanged": true
+    },
+    {
+      "round": 56,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-crossover-r56c4-b7fc48",
+      "newDeep": "cand-ai9-crossover-r56c4-b7fc48",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 57,
+      "oldDecision": "explore",
+      "oldStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "newDecision": "explore",
+      "newStrategies": [
+        "single",
+        "pair",
+        "multi",
+        "crossover",
+        "openevolve"
+      ],
+      "oldDeep": "cand-ai9-multi-r57c3-c97598",
+      "newDeep": "cand-ai9-multi-r57c3-c97598",
+      "controlWasFirst": false,
+      "orderChanged": false
+    },
+    {
+      "round": 58,
+      "oldDecision": "ablate",
+      "oldStrategies": [
+        "ablation",
+        "crossover"
+      ],
+      "newDecision": "switch-direction",
+      "newStrategies": [
+        "openevolve",
+        "single",
+        "pair"
+      ],
+      "oldDeep": "cand-ai9-ablation-r58c1-66d778",
+      "newDeep": "cand-ai9-ablation-r58c1-66d778",
+      "controlWasFirst": false,
+      "orderChanged": false
+    }
+  ]
+}

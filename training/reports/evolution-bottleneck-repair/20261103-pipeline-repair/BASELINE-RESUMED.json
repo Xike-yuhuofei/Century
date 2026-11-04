@@ -1,0 +1,23 @@
+{
+  "recordedAt": "2026-11-03T07:06:34.816021+00:00",
+  "head": "d0a6f8715df3b1a6d812d90436129d6a9927c70e",
+  "branch": "fix/evolution-bottleneck-20261103",
+  "championUnchanged": true,
+  "championSha256": "0dd409e57afd62546e5ce8cd2b599306a14defdfa34628ea7753d13e39cd3321",
+  "preexistingAssetHashes": {
+    "ai5/ppo/reports/ai13e-b-90m/arena-dev/arena-report.md": "bd2739f97b70379c99d1e07ba57349003f0d60a32e558da2300a1b4b36418fa4",
+    "ai5/ppo/reports/ai13e-b-90m/arena-dev/arena-results.json": "2399473294cb9e5da6943ccdc0431250a31723f4884ac750c94f859c19d641f5",
+    "ai5/ppo/reports/ai13e-b-90m/arena-dev/arena-summary.json": "15a0dab7155da57f6834e9a2ca5ba76742170406237ed48de23cd7a9a79e7424",
+    "ai5/ppo/reports/ai13e-b-90m/init.pt": "db5ac9cf9219631ff27d1efcdb99b8fd9bf53fb22cf1c0652553e41533f09138",
+    "ai5/ppo/reports/ai13e-b-90m/last.pt": "7b581b1c2a81ba48da1cdaf73a63b4ecfa7c4f5f8f3a39c2edfdc6e560e764c8",
+    "ai5/ppo/reports/smoke-ai13e/config.json": "b4081054060df5ec803dd5a107814702a499601b4e91206a4225a508a42512a8",
+    "ai5/ppo/reports/smoke-ai13e/init.pt": "15d5d7d69b03995fa5f52bd7726f9ae09fcf709b062bde42c8f914f152abe4e4",
+    "ai5/ppo/reports/smoke-ai13e/last.pt": "baa39bde0c77f33e242df29a65125bf350a9f856e53bf5fb885c1bcf8dc3084e"
+  },
+  "trackedDiffStat": " ai5/openevolve/century_evaluator_ai9.py            |  43 ++++-\n ai5/openevolve/node/ai9_duel_runner.mjs            |   8 +-\n training/evolution/campaign-controller.mjs         |  36 +++--\n training/evolution/candidate-artifact.mjs          |   7 +\n training/evolution/compiled-game-evaluator.mjs     |  37 ++++-\n training/evolution/failure-diagnosis.mjs           |  23 +--\n training/evolution/multi-module-generator.mjs      |  35 ++--\n training/evolution/openevolve-multi-bridge.mjs     |  31 +++-\n training/evolution/research-context.mjs            |  77 ++++-----\n training/evolution/research-memory.mjs             |  18 ++-\n training/evolution/research-orchestrator.mjs       |   8 +-\n training/evolution/selection.mjs                   |  20 ++-\n training/evolution/tests/research.test.mjs         |  11 +-\n training/governance/seed-consumption-registry.json | 178 ++++++++++++++++++++-\n training/lib/code-version.mjs                      |   8 +\n 15 files changed, 411 insertions(+), 129 deletions(-)\n",
+  "activeArm": "repaired",
+  "baselineElapsedMs": 267135,
+  "baselineRounds": 1,
+  "baselineStop": "错误的对局数预算估计造成提前停止",
+  "taskGoal": "原生 Goal active，复用附件目标；尚未完成"
+}
