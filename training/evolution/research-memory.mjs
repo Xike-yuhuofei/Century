@@ -72,11 +72,13 @@ export function openResearchMemory({ path }) {
     /** 记录实验结论（带统计证据，不含 LLM 断言）。 */
     recordExperiment({
       hypothesisId, candidateId, stage, metrics, verdict, seeds = null, notes = null, moduleScope = [],
+      evidenceVersion = 2, independentlyReplicated = false,
     }) {
       assertCondition(['supported', 'weakened', 'rejected', 'inconclusive'].includes(verdict),
         `实验结论非法：${String(verdict)}`);
       return append({
         kind: 'experiment', hypothesisId, candidateId, stage, metrics, verdict, seeds, notes,
+        evidenceVersion, independentlyReplicated,
         moduleScope: Array.isArray(moduleScope) ? moduleScope : [],
       });
     },
@@ -118,14 +120,18 @@ export function openResearchMemory({ path }) {
 
     /** 有正向证据的模块改动（verdict=supported 的实验）。 */
     positiveModules() {
-      const modules = new Map();
+      // v1 的正负号裁决保留原记录，但不再作为可复现模块证据。
+      const latest = new Map();
       for (const entry of readAll()) {
-        if (entry.kind !== 'experiment' || entry.verdict !== 'supported') continue;
-        for (const id of entry.moduleScope ?? []) {
-          modules.set(id, (modules.get(id) ?? 0) + 1);
-        }
+        if (entry.kind === 'experiment') latest.set(entry.hypothesisId, entry);
+        if (entry.kind === 'hypothesis-update' && entry.status !== 'supported') latest.delete(entry.hypothesisId);
       }
-      return [...modules.entries()].map(([moduleId, positives]) => ({ moduleId, positives }));
+      const modules = new Map();
+      for (const entry of latest.values()) {
+        if (entry.verdict !== 'supported' || entry.evidenceVersion !== 2 || !entry.independentlyReplicated || !(entry.metrics?.firstPlaceLower > 0)) continue;
+        for (const id of entry.moduleScope ?? []) modules.set(id, (modules.get(id) ?? 0) + 1);
+      }
+      return [...modules].map(([moduleId, positives]) => ({ moduleId, positives }));
     },
   };
 }

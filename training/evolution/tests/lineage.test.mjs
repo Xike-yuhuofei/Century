@@ -9,7 +9,7 @@
  */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { CampaignController } from '../campaign-controller.mjs';
@@ -17,6 +17,12 @@ import { createTestDoubleGovernance, createGovernanceAdapter } from '../governan
 import { AI9_DEV_BLOCKS, sha256Canonical } from '../core.mjs';
 import { ArtifactStore } from '../artifact-store.mjs';
 import { SEATBELT_AVAILABLE } from '../sandbox/seatbelt.mjs';
+
+import {generateMultiModuleBatch,moduleTextsFromArtifact} from '../multi-module-generator.mjs';
+import {createCandidateFromOpenEvolveMulti} from '../openevolve-multi-bridge.mjs';
+import {mutateModuleFunction} from '../module-mutations.mjs';
+import {createCompiledModuleCandidate,candidateParametersFor} from '../multi-module-candidate.mjs';
+import {composeProgramFromTexts} from '../../../ai5/openevolve/node/module_registry.mjs';
 
 // 编译型候选依赖 macOS Seatbelt；在无沙箱环境（如 ubuntu CI）必须显式跳过，
 // 不能把"没有沙箱"当成通过证据。
@@ -35,7 +41,7 @@ function baseConfig(overrides = {}) {
     deepConfirmations: 1,
     generation: {
       count: 2, seed: 424242, mode: 'multi-module', strategies: ['single'],
-      includeControl: false, allowDeterministicFallback: true, openevolveIterations: 1,
+      includeControl: false, allowDeterministicFallback: true, openevolveIterations: 1, researchContext: 'off',
     },
     budget: { maxCandidates: 20, maxGames: 400, maxWallMs: 3_600_000, maxConcurrent: 1, maxDeepConfirmations: 3 },
     diagnosticsPath: null,
@@ -202,4 +208,48 @@ test('消融候选（移除模块）是真实变化，不得被判为"无变化�
   };
   assert.throws(() => controller._verifyLineage({ artifact: noChange, parentArtifact: parent, round: 2 }),
     /既无修改也无移除模块/, '真正无变化的候选必须被拒绝');
+});
+
+// 真实编译回归集中于此，确保现有 macOS CI 执行全部继承断言。
+const experiment={configRef:'ai9://repair/regression',configHash:'a'.repeat(64),seedRefs:[]};
+test('真实编译：普通变异和完整 LLM 产物累积父模块与参数；局部产物拒绝', { skip: seatbeltSkip }, ()=>{
+ const parameters=candidateParametersFor('cand-test-parent');parameters.engineWeight=1.03;
+ const parent=createCompiledModuleCandidate({candidateId:'cand-test-parent',parameters,experiment,modules:['M01','M03'].map(id=>({id,text:mutateModuleFunction(id,0).text}))}).artifact;
+ const child=generateMultiModuleBatch({count:1,seed:1,experiment,parentArtifact:parent,targetIds:['M05'],moduleConfig:{strategies:['single'],includeControl:false}}).candidates[0].artifact;
+ assert.equal(child.parameters.values.engineWeight,1.03);assert.deepEqual(child.source.modules.map(m=>m.id),['M01','M03','M05']);
+ const dir=mkdtempSync(join(tmpdir(),'repair-best-'));mkdirSync(join(dir,'best'));
+ const texts=moduleTextsFromArtifact(parent);const changed=mutateModuleFunction('M05',0).text;
+ writeFileSync(join(dir,'best/best_program.ts'),composeProgramFromTexts(['M05'],{M05:changed}));
+ assert.throws(()=>createCandidateFromOpenEvolveMulti({outputDir:dir,experiment,parentArtifact:parent,parentModuleTexts:texts}),/非法丢失/);
+ writeFileSync(join(dir,'best/best_program.ts'),composeProgramFromTexts(['M01','M03','M05'],{...texts,M05:changed}));
+ const llm=createCandidateFromOpenEvolveMulti({outputDir:dir,experiment,parentArtifact:parent,parentModuleTexts:texts}).artifact;
+ assert.equal(llm.parameters.values.engineWeight,1.03);assert.deepEqual(llm.lineage.modulesRetained,['M01','M03']);
+});
+
+test('同模块交叉保留另一父代模块，记录捐赠者；消融不删除被依赖模块', { skip: seatbeltSkip }, ()=>{
+ const make=(id,variant)=>createCompiledModuleCandidate({candidateId:id,experiment,modules:['M01','M03','M02'].map(mid=>({id:mid,text:mutateModuleFunction(mid,0).text.replace('goal.points / 8',variant ? 'goal.points / 9' : 'goal.points / 8')}))}).artifact;
+ const a=make('cand-cross-a',0),b=make('cand-cross-b',1);
+ const batch=generateMultiModuleBatch({count:1,seed:19,experiment,eliteArtifacts:[a,b],targetIds:['M01'],moduleConfig:{strategies:['crossover'],includeControl:false}});
+ assert.equal(batch.candidates.length,1,JSON.stringify(batch.rejectedAtGeneration));
+ const c=batch.candidates[0].artifact;
+ assert.deepEqual(c.source.modules.map(m=>m.id),['M01','M02','M03']);assert.equal(c.lineage.donors.length,2);
+ assert.ok(c.lineage.modulesChanged.length);assert.equal(Object.keys(c.lineage.moduleDonors).length,3);
+ const ablation=generateMultiModuleBatch({count:1,seed:19,experiment,eliteArtifacts:[a],targetIds:['M01'],moduleConfig:{strategies:['ablation'],includeControl:false}}).candidates[0].artifact;
+ assert.ok(!ablation.lineage.modulesRemoved.includes('M03'));assert.deepEqual(ablation.lineage.modulesRemoved,ablation.lineage.fallbackToOfficial);
+});
+
+test('LLM 锁定模块修改与初始程序原样返回都拒绝', { skip: seatbeltSkip }, ()=>{
+ const parent=createCompiledModuleCandidate({candidateId:'cand-lock-parent',experiment,modules:[{id:'M01',text:mutateModuleFunction('M01',0).text}]}).artifact;
+ const texts=moduleTextsFromArtifact(parent),dir=mkdtempSync(join(tmpdir(),'repair-locked-'));mkdirSync(join(dir,'best'));
+ const program=composeProgramFromTexts(['M01'],texts);writeFileSync(join(dir,'input.ts'),program);writeFileSync(join(dir,'best/best_program.ts'),program);
+ assert.throws(()=>createCandidateFromOpenEvolveMulti({outputDir:dir,experiment,parentArtifact:parent,parentModuleTexts:texts,run:{programPath:join(dir,'input.ts')}}),/identical-to-input/);
+ writeFileSync(join(dir,'best/best_program.ts'),composeProgramFromTexts(['M01'],{M01:mutateModuleFunction('M01',0).text.replace('goal.points / 8','goal.points / 9')}));
+ assert.throws(()=>createCandidateFromOpenEvolveMulti({outputDir:dir,experiment,parentArtifact:parent,parentModuleTexts:texts,run:{lockedModuleHashes:{M01:parent.source.modules[0].functionSha256}}}),/锁定模块/);
+});
+
+test('M12 固定工作量下不接受新探索，仍保留父代该模块', { skip: seatbeltSkip }, ()=>{
+ assert.throws(()=>generateMultiModuleBatch({count:1,seed:1,experiment,targetIds:['M12']}),/没有可用模块/);
+ const p=createCompiledModuleCandidate({candidateId:'cand-time-parent',experiment,moduleIds:['M12']}).artifact;
+ const c=generateMultiModuleBatch({count:1,seed:1,experiment,parentArtifact:p,targetIds:['M01','M12'],moduleConfig:{strategies:['single'],includeControl:false}}).candidates[0].artifact;
+ assert.ok(c.lineage.modulesRetained.includes('M12'));assert.ok(!c.lineage.modulesChanged.includes('M12'));
 });

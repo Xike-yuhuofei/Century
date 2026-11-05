@@ -12,7 +12,9 @@
 
 import { buildRegistry, toSeatVersion } from '../adversarial/registry.mjs';
 import { simulateGame } from '../simulator/simulate.mjs';
-import { analyzeSeatStratum } from '../evaluator/first-place.mjs';
+import { buildObservation } from '../../web-v1/dist/js/ai/observation.js';
+import { chooseJointAction } from '../../web-v1/dist/js/js/adapter.js';
+import { analyzeSeatStratum, studentTQuantile } from '../evaluator/first-place.mjs';
 import { wilsonCI } from '../evaluator/stats.mjs';
 import {
   SCHEMAS, AI7_DEV_BLOCKS, AI9_DEV_BLOCKS, assertCondition, assertDevSeedInBlock,
@@ -123,6 +125,19 @@ export async function evaluateCompiledCandidateGames({
   const loaded = await loadCompiledCandidateModules(artifact);
   const rows = [];
   const pairs = [];
+  const decisions = { A: {}, B: {} };
+  const traceVersion = (version, arm) => ({
+    ...version, jointModule: {
+      ...version.jointModule,
+      chooseJointAction(game, options) {
+        // 仅公开 observation；既不记录牌库，也不额外调用决策器。
+        const key = sha256Canonical({ observation: buildObservation(game, game.current), simSeed: options.simSeed, workUnits });
+        const response = (version.jointModule?.chooseJointAction ?? chooseJointAction)(game, options);
+        decisions[arm][key] = sha256Canonical(response.action);
+        return response;
+      },
+    },
+  });
   let seedIndex = 0;
   try {
     for (const seatCount of counts) {
@@ -145,7 +160,7 @@ export async function evaluateCompiledCandidateGames({
         ];
         const results = {};
         for (const { arm, version } of arms) {
-          const seatVersions = baseSeats.map(v => (v === null ? version : v));
+          const seatVersions = baseSeats.map(v => (v === null ? traceVersion(version, arm) : v));
           const result = simulateGame({ seed, versions: seatVersions, seatCount, maxMoves, deadlineMs });
           results[arm] = result;
           const finished = result.status === 'finished';
@@ -193,7 +208,12 @@ export async function evaluateCompiledCandidateGames({
     const bRows = stratumRows.filter(r => r.arm === 'B');
     const aWins = aRows.filter(r => r.firstPlace).length;
     const bWins = bRows.filter(r => r.firstPlace).length;
+    const analysis = stratumPairs.length ? analyzeSeatStratum({ pairs: stratumPairs, seatCount, minSeeds: 2 }) : null;
+    const n = new Set(stratumPairs.map(p => p.seed)).size;
     byPlayerCount[String(seatCount)] = {
+      independentSeeds: n, ci: analysis?.ci ?? null,
+      detectableEffect80Conservative: n >= 2 ? (studentTQuantile(0.95, n - 1) + 0.841621) / Math.sqrt(n) : null,
+      precisionNote: '开发诊断区间；可检测效应使用配对 delta 标准差上界 1 的近似80%功效，不代表正式检验；小样本零方差不能证明无差异',
       seatCount,
       pairs: stratumPairs.length,
       candidateGames: aRows.length,
@@ -242,12 +262,10 @@ export async function evaluateCompiledCandidateGames({
   }
   const totalGames = rows.length;
   const anomalies = totalGames - finishedRows.length;
-  const signature = {
-    kind: 'compiled-module-behavior-v1',
-    modules: artifact.source.modules.map(m => m.id).sort(),
-    actions: aggregateActions(rows.filter(r => r.arm === 'A')),
-    byPlayerCount,
-  };
+  const signature = { kind: 'compiled-public-action-v2', decisions: decisions.A, mode: workUnits === null ? 'time' : 'workUnits', workUnits };
+  const shared = Object.keys(decisions.A).filter(key => key in decisions.B);
+  const changed = shared.filter(key => decisions.A[key] !== decisions.B[key]);
+
   return deepFreeze({
     schema: SCHEMAS.evaluationEvidence,
     candidateId: artifact.candidateId,
@@ -302,6 +320,9 @@ export async function evaluateCompiledCandidateGames({
         return values.length ? Number(Math.min(...values).toFixed(4)) : null;
       })(),
       byPlayerCount,
+      samePublicStateActions: { compared: shared.length, changed: changed.length, coverage: '自然轨迹交集；无交集不能推断相同或不同' },
+      actionDistribution: aggregateActions(rows.filter(r => r.arm === 'A')),
+      inactiveModules: workUnits === null ? [] : artifact.source.modules.filter(m => m.id === 'M12').map(m => m.id),
       meanDecisionMs: meanOf(rows.filter(r => r.arm === 'A').map(r => r.meanDecisionMs).filter(Number.isFinite)),
       p95WallMs: percentile(rows.filter(r => r.arm === 'A').map(r => r.wallMs)),
     },

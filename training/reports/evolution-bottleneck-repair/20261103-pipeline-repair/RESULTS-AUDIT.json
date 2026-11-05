@@ -1,0 +1,461 @@
+[
+  {
+    "arm": "baseline",
+    "status": "budget-exhausted",
+    "budgetUsed": {
+      "candidates": 2,
+      "games": 16,
+      "wallMs": 267021,
+      "deepConfirmations": 0
+    },
+    "loggedSuccessfulLLMCalls": 1,
+    "loggedTokens": 857386,
+    "llmErrors": [],
+    "generatedPrograms": [
+      {
+        "id": "69c65a3f-10a3-4124-a81e-f4510a452a00",
+        "parent_id": "6e82381e-59aa-4153-a42f-377d34869419",
+        "generation": 1,
+        "iteration_found": 1,
+        "metrics": {
+          "combined_score": 0.4,
+          "stage_passed": 1.0,
+          "static_ok": 1.0,
+          "compile_ok": 1.0,
+          "probe_ok": 1.0,
+          "module_count": 2.0,
+          "changed_module_count": 1.0,
+          "identical_to_official": 0.0,
+          "module_mismatches": 84.0,
+          "code_complexity": 2972.0,
+          "combined_module_hash_head": 0.9839108004197271,
+          "first_place_delta": 0.0,
+          "first_place_ci_lower": -0.358041702026434,
+          "candidate_first_rate": 0.5,
+          "champion_first_rate": 0.5,
+          "games": 16.0,
+          "anomaly_rate": 0.0,
+          "p95_wall_ms": 6927.3,
+          "mean_decision_ms": 33.198,
+          "pooled_module_hash_head": 0.9839108004197271,
+          "seed_block": 1650.0,
+          "worst_player_count": 5.0,
+          "worst_player_count_delta": -0.5,
+          "stratified_penalty": 0.1
+        },
+        "changes_description": null
+      }
+    ],
+    "controllerNoncontrols": 1,
+    "screenedNoncontrols": 1,
+    "deepNoncontrols": 0,
+    "controlGames": 8,
+    "internalGames": 32,
+    "internalEvidenceFiles": [
+      "baseline/external-evaluations/987d6800c25d/stage2.json",
+      "baseline/external-evaluations/fbe194053687/stage2.json"
+    ],
+    "generationRejections": [
+      {
+        "round": 1,
+        "rejections": []
+      }
+    ],
+    "elapsedMs": 267135,
+    "savedGameCount": 48
+  },
+  {
+    "arm": "repaired",
+    "status": "completed",
+    "budgetUsed": {
+      "candidates": 2,
+      "games": 16,
+      "wallMs": 662248,
+      "deepConfirmations": 0
+    },
+    "loggedSuccessfulLLMCalls": 1,
+    "loggedTokens": 416478,
+    "llmErrors": [
+      "2026-11-03 15:12:26,138 - openevolve.process_parallel - WARNING - Iteration 1 error: LLM generation failed: codex exec turn failed: You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at 7:55 PM."
+    ],
+    "generatedPrograms": [
+      {
+        "id": "366267d8-b8c2-4cdd-a345-19490923cbfb",
+        "parent_id": "67d8680b-1ed7-48f7-9a71-687fe10e143d",
+        "generation": 1,
+        "iteration_found": 1,
+        "metrics": {
+          "combined_score": 0.175,
+          "stage_passed": 1.0,
+          "static_ok": 1.0,
+          "compile_ok": 1.0,
+          "probe_ok": 1.0,
+          "module_count": 5.0,
+          "changed_module_count": 4.0,
+          "identical_to_official": 0.0,
+          "module_mismatches": 111.0,
+          "code_complexity": 4457.0,
+          "combined_module_hash_head": 0.6910373139407107,
+          "first_place_delta": -0.25,
+          "first_place_ci_lower": -0.7236446512761177,
+          "candidate_first_rate": 0.25,
+          "champion_first_rate": 0.5,
+          "games": 16.0,
+          "anomaly_rate": 0.0,
+          "p95_wall_ms": 8491.9,
+          "mean_decision_ms": 41.015,
+          "pooled_module_hash_head": 0.6910373139407107,
+          "seed_block": 1650.0,
+          "worst_player_count": 2.0,
+          "worst_player_count_delta": -1.0,
+          "stratified_penalty": 0.2
+        },
+        "changes_description": null
+      }
+    ],
+    "controllerNoncontrols": 0,
+    "screenedNoncontrols": 0,
+    "deepNoncontrols": 0,
+    "controlGames": 16,
+    "internalGames": 96,
+    "internalEvidenceFiles": [
+      "repaired/llm-r1/evaluations/3f9e02c265dd/1793689473709948000/stage3.json",
+      "repaired/llm-r1/evaluations/3f9e02c265dd/1793689381542335000/stage2.json",
+      "repaired/llm-r1/evaluations/b0e7d247c840/1793689596687574000/stage2.json",
+      "repaired/llm-r1/evaluations/b0e7d247c840/1793689686675461000/stage3.json",
+      "repaired/llm-r2/evaluations/3f9e02c265dd/1793689785204383000/stage2.json",
+      "repaired/llm-r2/evaluations/3f9e02c265dd/1793689878886012000/stage3.json"
+    ],
+    "generationRejections": [
+      {
+        "round": 1,
+        "rejections": [
+          {
+            "strategy": "openevolve",
+            "reason": "LLM 未产生真实源码变化（identical-to-input）"
+          }
+        ]
+      },
+      {
+        "round": 2,
+        "rejections": [
+          {
+            "strategy": "openevolve",
+            "reason": "LLM 未产生真实源码变化（identical-to-input）"
+          }
+        ]
+      }
+    ],
+    "elapsedMs": 662368,
+    "savedGameCount": 112
+  },
+  {
+    "arm": "confirmation",
+    "status": "budget-exhausted",
+    "budgetUsed": {
+      "candidates": 3,
+      "games": 40,
+      "wallMs": 603300,
+      "deepConfirmations": 1
+    },
+    "loggedSuccessfulLLMCalls": 2,
+    "loggedTokens": 857336,
+    "llmErrors": [],
+    "generatedPrograms": [
+      {
+        "id": "8c67f5ba-35a8-420b-8ad7-8c2cfd10e10c",
+        "parent_id": "dde5aa98-0a6c-453e-8879-9f863ea8a7fd",
+        "generation": 1,
+        "iteration_found": 1,
+        "metrics": {
+          "combined_score": 0.275,
+          "stage_passed": 1.0,
+          "static_ok": 1.0,
+          "compile_ok": 1.0,
+          "probe_ok": 1.0,
+          "module_count": 5.0,
+          "changed_module_count": 4.0,
+          "identical_to_official": 0.0,
+          "module_mismatches": 111.0,
+          "code_complexity": 4386.0,
+          "combined_module_hash_head": 0.16004057930783383,
+          "first_place_delta": -0.25,
+          "first_place_ci_lower": -0.5600732095691101,
+          "candidate_first_rate": 0.125,
+          "champion_first_rate": 0.375,
+          "games": 16.0,
+          "anomaly_rate": 0.0,
+          "p95_wall_ms": 6202.1,
+          "mean_decision_ms": 33.947,
+          "pooled_module_hash_head": 0.16004057930783383,
+          "seed_block": 1650.0,
+          "worst_player_count": 2.0,
+          "worst_player_count_delta": -0.5,
+          "stratified_penalty": 0.1
+        },
+        "changes_description": null
+      },
+      {
+        "id": "034794ca-a135-48d1-a292-1395a2781967",
+        "parent_id": "cf9381c3-b29f-4227-a0f8-67ab23ec51f1",
+        "generation": 1,
+        "iteration_found": 1,
+        "metrics": {
+          "combined_score": 0.4,
+          "stage_passed": 1.0,
+          "static_ok": 1.0,
+          "compile_ok": 1.0,
+          "probe_ok": 1.0,
+          "module_count": 5.0,
+          "changed_module_count": 4.0,
+          "identical_to_official": 0.0,
+          "module_mismatches": 189.0,
+          "code_complexity": 4351.0,
+          "combined_module_hash_head": 0.2928845650267053,
+          "first_place_delta": 0.0,
+          "first_place_ci_lower": -0.358041702026434,
+          "candidate_first_rate": 0.375,
+          "champion_first_rate": 0.375,
+          "games": 16.0,
+          "anomaly_rate": 0.0,
+          "p95_wall_ms": 6236.3,
+          "mean_decision_ms": 36.359,
+          "pooled_module_hash_head": 0.2928845650267053,
+          "seed_block": 1650.0,
+          "worst_player_count": 5.0,
+          "worst_player_count_delta": -0.5,
+          "stratified_penalty": 0.1
+        },
+        "changes_description": null
+      }
+    ],
+    "controllerNoncontrols": 3,
+    "screenedNoncontrols": 3,
+    "deepNoncontrols": 1,
+    "controlGames": 0,
+    "internalGames": 64,
+    "internalEvidenceFiles": [
+      "confirmation/llm/r2c0/evaluations/28f86b5e1b1e/1793710153847020000/stage2.json",
+      "confirmation/llm/r2c0/evaluations/b0e7d247c840/1793710018833601000/stage2.json",
+      "confirmation/llm/r3c0/evaluations/4afa7b9caa5d/1793710397125136000/stage2.json",
+      "confirmation/llm/r3c0/evaluations/b043b5cd2f42/1793710252968206000/stage2.json"
+    ],
+    "generationRejections": [
+      {
+        "round": 1,
+        "rejections": []
+      },
+      {
+        "round": 2,
+        "rejections": [
+          {
+            "strategy": "single",
+            "error": "M05 没有可用的跨代变异算子（父代既无数字字面量也无比较运算符）"
+          },
+          {
+            "strategy": "pair",
+            "error": "M05 没有可用的跨代变异算子（父代既无数字字面量也无比较运算符）"
+          },
+          {
+            "strategy": "multi",
+            "error": "M05 没有可用的跨代变异算子（父代既无数字字面量也无比较运算符）"
+          },
+          {
+            "strategy": "crossover",
+            "reason": "crossover 需要至少 2 个精英候选"
+          },
+          {
+            "strategy": "openevolve",
+            "error": "LLM 未产生真实源码变化（identical-to-input）"
+          }
+        ]
+      },
+      {
+        "round": 3,
+        "rejections": [
+          {
+            "strategy": "openevolve",
+            "error": "LLM 未产生真实源码变化（identical-to-input）"
+          }
+        ]
+      }
+    ],
+    "savedGameCount": 104
+  },
+  {
+    "arm": "confirmation-final",
+    "status": "completed",
+    "budgetUsed": {
+      "candidates": 3,
+      "games": 40,
+      "wallMs": 173269,
+      "deepConfirmations": 1
+    },
+    "loggedSuccessfulLLMCalls": 0,
+    "loggedTokens": 0,
+    "llmErrors": [],
+    "generatedPrograms": [],
+    "controllerNoncontrols": 3,
+    "screenedNoncontrols": 3,
+    "deepNoncontrols": 1,
+    "controlGames": 0,
+    "internalGames": 0,
+    "internalEvidenceFiles": [],
+    "generationRejections": [
+      {
+        "round": 1,
+        "rejections": []
+      },
+      {
+        "round": 2,
+        "rejections": []
+      },
+      {
+        "round": 3,
+        "rejections": [
+          {
+            "strategy": "openevolve",
+            "reason": "本批最多 0 次真实 LLM 运行；剩余名额用确定性 pair 候选补齐（不冒充 LLM 来源）",
+            "fallback": "pair"
+          }
+        ]
+      }
+    ],
+    "savedGameCount": 40
+  },
+  {
+    "arm": "final-comparison/baseline",
+    "status": "budget-exhausted",
+    "budgetUsed": {
+      "candidates": 2,
+      "games": 8,
+      "wallMs": 212735,
+      "deepConfirmations": 0
+    },
+    "loggedSuccessfulLLMCalls": 1,
+    "loggedTokens": 475521,
+    "llmErrors": [],
+    "generatedPrograms": [
+      {
+        "id": "cb913a63-0e54-4cdc-bcbd-aee4d9397c74",
+        "parent_id": "81758869-2153-49d0-ae70-00c446e75f4f",
+        "generation": 1,
+        "iteration_found": 1,
+        "metrics": {
+          "combined_score": 0.0,
+          "stage_passed": 1.0,
+          "static_ok": 1.0,
+          "compile_ok": 1.0,
+          "probe_ok": 1.0,
+          "module_count": 2.0,
+          "changed_module_count": 0.0,
+          "identical_to_official": 1.0,
+          "module_mismatches": 0.0,
+          "code_complexity": 2687.0,
+          "combined_module_hash_head": 0.3820477520073875,
+          "first_place_delta": -0.125,
+          "first_place_ci_lower": -0.36182232563805883,
+          "candidate_first_rate": 0.25,
+          "champion_first_rate": 0.375,
+          "games": 16.0,
+          "anomaly_rate": 0.0,
+          "p95_wall_ms": 7967.8,
+          "mean_decision_ms": 31.343,
+          "pooled_module_hash_head": 0.3820477520073875,
+          "seed_block": 1650.0,
+          "worst_player_count": 2.0,
+          "worst_player_count_delta": -0.5,
+          "stratified_penalty": 0.1
+        },
+        "changes_description": null
+      }
+    ],
+    "controllerNoncontrols": 1,
+    "screenedNoncontrols": 0,
+    "deepNoncontrols": 0,
+    "controlGames": 8,
+    "internalGames": 32,
+    "internalEvidenceFiles": [
+      "final-comparison/baseline/external-evaluations/987d6800c25d/1793752005871622000/stage2.json",
+      "final-comparison/baseline/external-evaluations/61cde1a84775/1793752129812177000/stage2.json"
+    ],
+    "generationRejections": [
+      {
+        "round": 1,
+        "rejections": []
+      }
+    ],
+    "elapsedMs": 212827,
+    "savedGameCount": 40
+  },
+  {
+    "arm": "final-comparison/repaired",
+    "status": "completed",
+    "budgetUsed": {
+      "candidates": 1,
+      "games": 8,
+      "wallMs": 257384,
+      "deepConfirmations": 0
+    },
+    "loggedSuccessfulLLMCalls": 1,
+    "loggedTokens": 849709,
+    "llmErrors": [],
+    "generatedPrograms": [
+      {
+        "id": "31e350e9-e153-4a12-8908-49452dd0b34c",
+        "parent_id": "fce98c82-dc73-43ef-be9e-0cfe3321ad7e",
+        "generation": 1,
+        "iteration_found": 1,
+        "metrics": {
+          "combined_score": 0.2125,
+          "stage_passed": 1.0,
+          "static_ok": 1.0,
+          "compile_ok": 1.0,
+          "probe_ok": 1.0,
+          "module_count": 5.0,
+          "changed_module_count": 4.0,
+          "identical_to_official": 0.0,
+          "module_mismatches": 111.0,
+          "code_complexity": 4457.0,
+          "combined_module_hash_head": 0.6910373139407107,
+          "first_place_delta": -0.375,
+          "first_place_ci_lower": -0.7216723872990343,
+          "candidate_first_rate": 0.125,
+          "champion_first_rate": 0.5,
+          "games": 16.0,
+          "anomaly_rate": 0.0,
+          "p95_wall_ms": 6417.7,
+          "mean_decision_ms": 31.012,
+          "pooled_module_hash_head": 0.6910373139407107,
+          "seed_block": 1650.0,
+          "worst_player_count": 2.0,
+          "worst_player_count_delta": -0.5,
+          "stratified_penalty": 0.1
+        },
+        "changes_description": null
+      }
+    ],
+    "controllerNoncontrols": 0,
+    "screenedNoncontrols": 0,
+    "deepNoncontrols": 0,
+    "controlGames": 8,
+    "internalGames": 32,
+    "internalEvidenceFiles": [
+      "final-comparison/repaired/llm-r1/evaluations/3f9e02c265dd/1793752226543229000/stage2.json",
+      "final-comparison/repaired/llm-r1/evaluations/b0e7d247c840/1793752384685961000/stage2.json"
+    ],
+    "generationRejections": [
+      {
+        "round": 1,
+        "rejections": [
+          {
+            "strategy": "openevolve",
+            "reason": "LLM 未产生真实源码变化（identical-to-input）"
+          }
+        ]
+      }
+    ],
+    "elapsedMs": 257481,
+    "savedGameCount": 40
+  }
+]

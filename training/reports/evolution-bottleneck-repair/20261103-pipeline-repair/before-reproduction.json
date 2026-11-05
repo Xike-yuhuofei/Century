@@ -1,0 +1,29 @@
+{
+  "parameterReset": {
+    "parent": 1.03,
+    "child": 1
+  },
+  "llmModules": {
+    "parent": [
+      "M01",
+      "M03",
+      "M06"
+    ],
+    "child": [
+      "M05"
+    ]
+  },
+  "stagnant": {
+    "decision": "ablate",
+    "reason": "连续 3 轮无正增益：用消融判定哪些模块改动实际有效",
+    "targetIds": [
+      "M01",
+      "M03"
+    ],
+    "strategies": [
+      "ablation",
+      "crossover"
+    ],
+    "hypothesisBudget": 1
+  }
+}

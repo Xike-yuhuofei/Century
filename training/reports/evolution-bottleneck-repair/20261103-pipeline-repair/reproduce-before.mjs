@@ -1,0 +1,18 @@
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { createCompiledModuleCandidate, candidateParametersFor } from '../../../evolution/multi-module-candidate.mjs';
+import { generateMultiModuleBatch, moduleTextsFromArtifact } from '../../../evolution/multi-module-generator.mjs';
+import { mutateModuleFunction } from '../../../evolution/module-mutations.mjs';
+import { composeProgramFromTexts } from '../../../../ai5/openevolve/node/module_registry.mjs';
+import { createCandidateFromOpenEvolveMulti } from '../../../evolution/openevolve-multi-bridge.mjs';
+import { decideNextResearch } from '../../../evolution/research-orchestrator.mjs';
+const dir=import.meta.dirname;
+const experiment={configRef:'ai9://repair/regression',configHash:'a'.repeat(64),seedRefs:[]};
+const params=candidateParametersFor('cand-repair-parent'); params.engineWeight*=1.03;
+const parent=createCompiledModuleCandidate({candidateId:'cand-repair-parent',modules:['M01','M03','M06'].map(id=>({id,text:mutateModuleFunction(id,0).text})),parameters:params,experiment}).artifact;
+writeFileSync(`${dir}/initial-parent.json`,JSON.stringify(parent));
+const child=generateMultiModuleBatch({count:1,seed:1,experiment,parentArtifact:parent,targetIds:['M05'],moduleConfig:{strategies:['single'],includeControl:false}}).candidates[0].artifact;
+const bestDir=`${dir}/regression-best`; mkdirSync(`${bestDir}/best`,{recursive:true});
+writeFileSync(`${bestDir}/best/best_program.ts`,composeProgramFromTexts(['M05'],{M05:mutateModuleFunction('M05',0).text}));
+const llm=createCandidateFromOpenEvolveMulti({outputDir:bestDir,experiment,parentArtifact:parent,parentModuleTexts:moduleTextsFromArtifact(parent),expectedModuleIds:['M05']}).artifact;
+const out={parameterReset:{parent:params.engineWeight,child:child.parameters.values.engineWeight},llmModules:{parent:parent.source.modules.map(m=>m.id),child:llm.source.modules.map(m=>m.id)},stagnant:decideNextResearch({trend:{rounds:3,meanDelta:0,stagnantRounds:3},memory:{positiveModules:[]},modules:['M01','M03'],hasElites:true})};
+writeFileSync(`${dir}/before-reproduction.json`,JSON.stringify(out,null,2));console.log(out);

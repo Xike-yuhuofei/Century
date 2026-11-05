@@ -13,7 +13,7 @@
 #   - 评估器不采信候选自报结果，成绩只由真实对局/探针计算。
 #
 # 种子纪律：
-#   - 研究评估只使用 AI9 专用研究块 [1.650e9, 1.651e9) 的子块；
+#   - 真实研究评估使用治理入口预登记的 AI9 screen/deep 开发窗口；
 #   - stage2 16 种子（每人 4）、stage3 48 种子（每人 12），互不重叠；
 #   - 正式验证池 [900M, 1.06e9) 与本评估器零接触。
 
@@ -23,6 +23,7 @@ import shutil
 import subprocess
 import sys
 import hashlib
+import time
 from pathlib import Path
 
 AI9_ROOT = Path(__file__).resolve().parent
@@ -47,8 +48,26 @@ def _stage_seed_count(env_name: str, default: int) -> int:
 
 STAGE2_COUNT = _stage_seed_count("CENTURY_OPENEVOLVE_STAGE2_SEEDS", 16)
 STAGE3_COUNT = _stage_seed_count("CENTURY_OPENEVOLVE_STAGE3_SEEDS", 48)
-STAGE2_SEEDS = list(range(1_650_000_000, 1_650_000_000 + STAGE2_COUNT))
-STAGE3_SEEDS = list(range(1_650_000_100, 1_650_000_100 + STAGE3_COUNT))
+sys.path.insert(0, str(REPO_ROOT / "ai5" / "lib"))
+from seed_policy import (generate_unique_seeds, assert_in_block, AI9_OPENEVOLVE_STAGE2_BLOCK,
+                         AI9_OPENEVOLVE_STAGE3_BLOCK, AI9_DEV_SCREEN_BLOCK, AI9_DEV_DEEP_BLOCK)
+
+
+def _stage_seeds(stage, count):
+    path = os.environ.get(f"CENTURY_OPENEVOLVE_STAGE{stage}_SEED_FILE")
+    if path:
+        values = json.loads(Path(path).read_text())
+        block = AI9_DEV_SCREEN_BLOCK if stage == 2 else AI9_DEV_DEEP_BLOCK
+        if not isinstance(values, list) or len(values) < 8 or len(values) % 4 or len(set(values)) != len(values):
+            raise ValueError("阶段种子必须独立、覆盖 2–5 人且每层至少两对")
+        for seed in values:
+            assert_in_block(seed, block)
+        return values
+    block = AI9_OPENEVOLVE_STAGE2_BLOCK if stage == 2 else AI9_OPENEVOLVE_STAGE3_BLOCK
+    return generate_unique_seeds(count, block, block[0])
+
+STAGE2_SEEDS = _stage_seeds(2, STAGE2_COUNT)
+STAGE3_SEEDS = _stage_seeds(3, STAGE3_COUNT)
 PLAYER_COUNTS = [2, 3, 4, 5]
 FORMAL_WORK_UNITS = 32
 
@@ -161,6 +180,14 @@ def _stage_impl(program_path: str, stage: int) -> dict:
     static_result = json.loads(static_json.read_text())
     modules = static_result["modules"]
     module_ids = [m["id"] for m in modules]
+    context_file = os.environ.get("CENTURY_OPENEVOLVE_CONTEXT")
+    context = json.loads(Path(context_file).read_text()) if context_file else {}
+    if context.get("moduleIds") and sorted(module_ids) != sorted(context["moduleIds"]):
+        return _fail("inheritance", "完整模块集合改变")
+    for module in modules:
+        expected = context.get("lockedModuleHashes", {}).get(module["id"])
+        if expected and module["functionSha256"] != expected:
+            return _fail("inheritance", "锁定父模块被修改: " + module["id"])
     combined_hash = static_result["combinedSha256"]
 
     workdir = CACHE_ROOT / combined_hash[:24]
@@ -220,10 +247,17 @@ def _stage_impl(program_path: str, stage: int) -> dict:
         return stage1_metrics
 
     # ---------- stage 2/3：沙箱内真实 2–5 人对局 ----------
+    if not os.environ.get(f"CENTURY_OPENEVOLVE_STAGE{stage}_SEED_FILE"):
+        return _fail("seed-policy", "真实对局必须通过治理入口提供已登记的开发种子文件")
     seeds = STAGE2_SEEDS if stage == 2 else STAGE3_SEEDS
     seed_list = WORK_ROOT / f"seeds-ai9-stage{stage}.txt"
     seed_list.write_text("\n".join(map(str, seeds)))
     result_json = WORK_ROOT / f"duel-ai9-stage{stage}.json"
+    parameter_args = []
+    if context.get("parameters"):
+        parameter_file = WORK_ROOT / "candidate-parameters.json"
+        parameter_file.write_text(json.dumps(context["parameters"]))
+        parameter_args = ["--parameters", str(parameter_file)]
     duel = _run([
         "/usr/bin/sandbox-exec", "-f", str(profile), "node",
         str(NODE_DIR / "ai9_duel_runner.mjs"),
@@ -233,15 +267,20 @@ def _stage_impl(program_path: str, stage: int) -> dict:
         "--work-units", str(FORMAL_WORK_UNITS),
         "--mode", "screen" if stage == 2 else "deep",
         "--out", str(result_json),
+        *parameter_args,
+        *(["--dev-seeds"] if os.environ.get(f"CENTURY_OPENEVOLVE_STAGE{stage}_SEED_FILE") else []),
     ], _STAGE_TIMEOUT[stage], f"duel-ai9-stage{stage}")
     if duel.returncode != 0:
         return _fail("duel", duel.stderr[-800:] or f"duel stage{stage} failed")
     duel_result = json.loads(result_json.read_text())
     stats = duel_result["stats"]
 
-    eval_dir = RESULTS_ROOT / combined_hash[:12]
+    # 追加保存每次评估，种子/参数不同的相同源码不得覆盖历史证据。
+    evidence_root = Path(os.environ.get("CENTURY_OPENEVOLVE_EVIDENCE_DIR", str(RESULTS_ROOT)))
+    eval_dir = evidence_root / combined_hash[:12] / str(time.time_ns())
     eval_dir.mkdir(parents=True, exist_ok=True)
     (eval_dir / f"stage{stage}.json").write_text(json.dumps(duel_result, ensure_ascii=False, indent=2))
+    (eval_dir / "context.json").write_text(json.dumps({"context": context, "seeds": seeds, "stage": stage, "workUnits": FORMAL_WORK_UNITS}, ensure_ascii=False, indent=2))
     (eval_dir / "modules.json").write_text(json.dumps(static_result, ensure_ascii=False, indent=2))
     (eval_dir / "probe.json").write_text(json.dumps(probe_result, ensure_ascii=False, indent=2))
 
@@ -259,9 +298,8 @@ def _stage_impl(program_path: str, stage: int) -> dict:
     combined = compute_combined_score(
         delta_mean, anomaly_rate, latency_excess, complexity_excess, by_player_count,
     )
-    # 行为与官方完全一致 = 没有进化增量：只做诊断，不消耗 stage3 的 96 局深评。
-    if probe_result.get("identicalToOfficial"):
-        combined = 0.0
+    # 有限探针相等不能证明真实对局行为相等，更不能覆盖已取得的竞技读数。
+    # 探针仍承担执行安全检查；源码原样返回由桥接层单独拒绝。
 
     return {
         "combined_score": round(combined, 4),
@@ -279,7 +317,7 @@ def _stage_impl(program_path: str, stage: int) -> dict:
         "mean_decision_ms": float(mean_decision),
         "code_complexity": float(total_source),
         "pooled_module_hash_head": float(int(combined_hash[:8], 16) / 0xFFFFFFFF),
-        "seed_block": 1650.0,
+        "seed_block": float((AI9_DEV_SCREEN_BLOCK if stage == 2 else AI9_DEV_DEEP_BLOCK)[0] // 1_000_000),
         "worst_player_count": float(worst_count) if worst_count is not None else 0.0,
         "worst_player_count_delta": float(worst_delta) if worst_delta is not None else 0.0,
         "stratified_penalty": float(round(stratum_penalty, 4)),

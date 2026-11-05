@@ -18,8 +18,14 @@ function normalizedInverse(value, scale) {
 
 /** 行为距离：同类型签名比较；跨类型视为最大差异（不可比较）。 */
 export function behaviorDistance(a, b) {
+  if ((a?.kind === 'compiled-public-action-v2' || b?.kind === 'compiled-public-action-v2') && a?.kind !== b?.kind) return 0;
   if (!a || !b) return 1;
   if (a.kind !== b.kind) return 1;
+  if (a.kind === 'compiled-public-action-v2') {
+    if (a.mode !== b.mode || a.workUnits !== b.workUnits) return 0; // 不可比较，不能充当多样性证据
+    const shared = Object.keys(a.decisions ?? {}).filter(key => key in (b.decisions ?? {}));
+    return shared.length ? shared.filter(key => a.decisions[key] !== b.decisions[key]).length / shared.length : 0;
+  }
   if (a.kind === 'game-behavior-v1') {
     const keys = ['acquire', 'claim', 'rest', 'play', 'discard'];
     const actionL1 = keys.reduce((s, k) => s + Math.abs((a.actions?.[k] ?? 0) - (b.actions?.[k] ?? 0)), 0);
@@ -36,15 +42,8 @@ export function behaviorDistance(a, b) {
     // 编译型多模块候选：动作分布是唯一稳定的行为维度（其余字段随人数分层）。
     const keys = ['acquire', 'claim', 'rest', 'play'];
     const actionL1 = keys.reduce((s, k) => s + Math.abs((a.actions?.[k] ?? 0) - (b.actions?.[k] ?? 0)), 0);
-    const moduleJaccard = (() => {
-      const setA = new Set(a.modules ?? []);
-      const setB = new Set(b.modules ?? []);
-      const union = new Set([...setA, ...setB]);
-      if (!union.size) return 0;
-      const intersection = [...setA].filter(id => setB.has(id)).length;
-      return 1 - intersection / union.size;
-    })();
-    return Number(clamp(0.7 * clamp(actionL1 / 2, 0, 1) + 0.3 * moduleJaccard, 0, 1).toFixed(6));
+    // 旧签名只可作分布诊断；模块集合差异不再冒充行为差异。
+    return Number(clamp(actionL1 / 2, 0, 1).toFixed(6));
   }
   if (a.kind === 'proxy-coefficients-v1') {
     if (a.targetId !== b.targetId) return 1;
@@ -79,8 +78,8 @@ export function scoreCandidate({ artifact, evidence }) {
     stability = clamp(1 - (metrics.anomalyRate ?? 1), 0, 1);
     cost = normalizedInverse(metrics.p95WallMs ?? metrics.meanWallMs ?? 60000, 30_000);
     if (Number.isFinite(metrics.firstPlaceDelta)) firstPlaceDelta = Number(metrics.firstPlaceDelta);
-    const lower = metrics.firstPlaceDeltaCi?.oneSidedLower
-      ?? metrics.firstPlaceDeltaPooledCi?.oneSidedLower
+    const lower = metrics.firstPlaceDeltaPooledCi?.oneSidedLower
+      ?? metrics.firstPlaceDeltaCi?.oneSidedLower
       ?? metrics.firstPlaceDeltaLower;
     if (Number.isFinite(lower)) firstPlaceLower = Number(lower);
   } else {

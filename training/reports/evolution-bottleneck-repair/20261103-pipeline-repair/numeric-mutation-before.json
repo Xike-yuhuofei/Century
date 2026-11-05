@@ -1,0 +1,26 @@
+{
+  "candidateId": "cand-ai9-multi-r1c0-b0e7d2",
+  "text": "export function restMultiplier(state: EvolveStateView, preferred: string | null, params: AIParameters): number {\n  const total = state.hand.length + state.played.length;\n  return total ? 1.15 - .45 * state.played.length / total : 1;\n}",
+  "results": [
+    {
+      "seed": 0,
+      "ok": true,
+      "changed": true
+    },
+    {
+      "seed": 1,
+      "ok": false,
+      "error": "M05 没有可用的跨代变异算子（父代既无数字字面量也无比较运算符）"
+    },
+    {
+      "seed": 2,
+      "ok": true,
+      "changed": true
+    },
+    {
+      "seed": 3,
+      "ok": false,
+      "error": "M05 没有可用的跨代变异算子（父代既无数字字面量也无比较运算符）"
+    }
+  ]
+}

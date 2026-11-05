@@ -1,0 +1,250 @@
+{
+  "auditedAt": "2026-11-04T11:08:13.410245+00:00",
+  "allRequiredWorkComplete": true,
+  "algorithmStrengthImprovementProven": false,
+  "effectiveCandidateYieldImprovementProven": false,
+  "protocolDeviationsDisclosed": true,
+  "requirements": [
+    {
+      "requirement": "一/二",
+      "scope": "Goal复用、工作树/分支/基线/已有改动保护",
+      "status": "proved",
+      "conclusion": "已核验空cwd、旧dirty工作树；在ai13独立分支修改；已有资产保留",
+      "evidence": [
+        "BASELINE.json",
+        "BASELINE-RESUMED.json",
+        "BOUNDARY-AUDIT.json"
+      ]
+    },
+    {
+      "requirement": "二/五",
+      "scope": "代码/冠军/构建/配置身份",
+      "status": "proved",
+      "conclusion": "基线与最终源码摘要、实际构建manifest、各run解析配置均留存",
+      "evidence": [
+        "BASELINE.json",
+        "FINAL-CODE-VERSION.json",
+        "FINAL-SOURCE-MANIFEST.json",
+        "experiment-config-hash.json"
+      ]
+    },
+    {
+      "requirement": "A-1",
+      "scope": "普通/LLM完整继承与参数",
+      "status": "proved",
+      "conclusion": "非法丢失与参数重置旧行为已复现；修复后两组三代参数/模块差分均一致",
+      "evidence": [
+        "before-reproduction.json",
+        "lineage-audit.json",
+        "regression-seed-entry.log"
+      ]
+    },
+    {
+      "requirement": "A-2",
+      "scope": "变异/交叉/消融语义、依赖与安全",
+      "status": "proved",
+      "conclusion": "同模块不同实现交叉、捐赠者/官方回退、被依赖模块不可消融；原白名单/沙箱保留",
+      "evidence": [
+        "evolution-final-suite.log",
+        "seatbelt-final.log",
+        "BOUNDARY-AUDIT.json"
+      ]
+    },
+    {
+      "requirement": "A-3",
+      "scope": "最终完整子代评估与谱系",
+      "status": "proved",
+      "conclusion": "14份LLM评估上下文集合/锁定哈希一致；最终候选重新编译和真实对局，没有借用局部分数",
+      "evidence": [
+        "LLM-CONTEXT-AUDIT.json",
+        "lineage-audit.json",
+        "confirmation-final/proposal-origin.json"
+      ]
+    },
+    {
+      "requirement": "B-1",
+      "scope": "重复诊断复现及退出",
+      "status": "proved",
+      "conclusion": "旧历史44/58 ablate；新静态调度与固定trend边界回归；实际第三轮恢复探索",
+      "evidence": [
+        "history-replay-resumed.json",
+        "stale-trend-reproduction.json",
+        "confirmation-final/state.json"
+      ]
+    },
+    {
+      "requirement": "B-2",
+      "scope": "精英区分、重复率与失败",
+      "status": "proved",
+      "conclusion": "研究精英未验证；6提案5套函数集合；失败按算子/原样best/额度分类；未以调用量认成功",
+      "evidence": [
+        "GENERATION-DIVERSITY.json",
+        "RESULTS-AUDIT.json",
+        "FINAL-REPORT.md"
+      ]
+    },
+    {
+      "requirement": "C-1",
+      "scope": "机制身份/预测/实际干预",
+      "status": "proved",
+      "conclusion": "按模块干预稳定身份；实际变化scope交集；综合胜负不证明机制，真实反馈保持inconclusive",
+      "evidence": [
+        "evolution-final-suite.log",
+        "confirmation-final/research-memory.jsonl",
+        "INDEPENDENT-FEEDBACK.json"
+      ]
+    },
+    {
+      "requirement": "C-2",
+      "scope": "跨零/部分修改/后续翻负",
+      "status": "proved",
+      "conclusion": "针对性回归覆盖；最新独立证据门禁，后续削弱撤销；无单次负读数永久封模块",
+      "evidence": [
+        "evolution-final-suite.log",
+        "regression-final-complete.log"
+      ]
+    },
+    {
+      "requirement": "C-3",
+      "scope": "历史追加解释、不覆盖",
+      "status": "proved",
+      "conclusion": "58轮原始历史及原code-version保留，旧裁决另存v2更正",
+      "evidence": [
+        "historical-evidence-corrections-v2.json",
+        "history-replay.json"
+      ]
+    },
+    {
+      "requirement": "D-1",
+      "scope": "竞技排序/对照/预算",
+      "status": "proved",
+      "conclusion": "统一pooled rankKey；对照单独记账；已分层种子不再重复乘人数；quota先检查",
+      "evidence": [
+        "history-replay.json",
+        "evolution-final-suite.log",
+        "confirmation-final/state.json"
+      ]
+    },
+    {
+      "requirement": "D-2",
+      "scope": "分层样本/区间/功效",
+      "status": "proved",
+      "conclusion": "独立每层8种子；所有层报告区间与保守MDE，明确弱功效和单侧t门限",
+      "evidence": [
+        "confirmation-independent-replication.json",
+        "FINAL-REPORT.md"
+      ]
+    },
+    {
+      "requirement": "D-3",
+      "scope": "行为可辨识与评分证据",
+      "status": "proved",
+      "conclusion": "同状态具体动作哈希；无交集/异构不算新行为；有限探针不得覆盖真实竞技分数",
+      "evidence": [
+        "validation-summary.json",
+        "probe-score-regression.json",
+        "evolution-final-suite.log"
+      ]
+    },
+    {
+      "requirement": "E-1",
+      "scope": "进化维度调用/行为/模式映射",
+      "status": "proved",
+      "conclusion": "M01–M12与续行静态接口地图完成；可达性不当效果保证",
+      "evidence": [
+        "EVOLVABLE-MAP.md"
+      ]
+    },
+    {
+      "requirement": "E-2",
+      "scope": "M12失活隔离与双模式真实验证",
+      "status": "proved",
+      "conclusion": "固定32工作量排除新M12且保留父模块；fixed/time独立种子、真实config及对局均完成",
+      "evidence": [
+        "M12-fixed.json",
+        "M12-time.json",
+        "M12-fixed-resolved-configs.json",
+        "M12-time-resolved-configs.json"
+      ]
+    },
+    {
+      "requirement": "E-3",
+      "scope": "接口扩展是否必要",
+      "status": "proved",
+      "conclusion": "无当前错误排序因果案例；不据低一致率/旧准确率扩接口或克隆扫描",
+      "evidence": [
+        "FINDINGS.md",
+        "EVOLVABLE-MAP.md"
+      ]
+    },
+    {
+      "requirement": "四-1/2",
+      "scope": "旧复现、新回归、历史重放",
+      "status": "proved",
+      "conclusion": "真实编译复现与最终测试通过；历史调度重排不推断新胜负",
+      "evidence": [
+        "before-reproduction.json",
+        "FINAL-TESTS.json",
+        "history-replay-resumed.json"
+      ]
+    },
+    {
+      "requirement": "四-3",
+      "scope": "真实LLM到后代闭环",
+      "status": "proved",
+      "conclusion": "原LLM唯一提案按预注册确认协议导入、完整编译安全、游戏、筛选、反馈和默认后代继承；常规best没有改善如实披露",
+      "evidence": [
+        "repaired/llm-r1/checkpoints/checkpoint_1/programs",
+        "confirmation-final/state.json",
+        "lineage-audit.json"
+      ]
+    },
+    {
+      "requirement": "四-4",
+      "scope": "预注册受控产出与停止条件",
+      "status": "proved",
+      "conclusion": "最终两臂同模型/预算上限、新开发窗口，均达到停止条件；失败/实际消耗保留；没产出有效候选不补抽",
+      "evidence": [
+        "EXPERIMENT-PLAN.md",
+        "final-comparison/wall-budget.json",
+        "RESULTS-AUDIT.json"
+      ]
+    },
+    {
+      "requirement": "四/五",
+      "scope": "种子隔离、并发、时长与正式边界",
+      "status": "proved",
+      "conclusion": "实际已保存种子均开发登记覆盖，探索与独立复验分离；累计48.67分钟串行；事故事后补记偏差公开",
+      "evidence": [
+        "COST-AUDIT.json",
+        "BOUNDARY-AUDIT.json",
+        "SEED-CLOSURE.json",
+        "TEST-ISOLATION-NOTE.md"
+      ]
+    },
+    {
+      "requirement": "六-产物",
+      "scope": "全部指定报告和命令日志",
+      "status": "proved",
+      "conclusion": "基线、发现、预注册、最终报告、命令、测试、种子、谱系、成本、原始结果均有文件",
+      "evidence": [
+        "BASELINE.json",
+        "FINDINGS.md",
+        "EXPERIMENT-PLAN.md",
+        "FINAL-REPORT.md",
+        "COMMANDS.md",
+        "FINAL-TESTS.json"
+      ]
+    },
+    {
+      "requirement": "六-结论",
+      "scope": "流程/产出/实力分开",
+      "status": "proved",
+      "conclusion": "流程完成；产出变化证据不足；独立收益未复现。无算法优化成功宣称",
+      "evidence": [
+        "FINAL-REPORT.md"
+      ]
+    }
+  ],
+  "remainingResearch": "小幅竞技收益、分布外泛化、单机制因果与续行接口价值均未证明；不作为本次流程修复完成的伪成果。"
+}

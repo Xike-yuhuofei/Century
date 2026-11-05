@@ -82,7 +82,13 @@ function normalizeLineage(lineage) {
     inputProgramHash: lineage.inputProgramHash ?? null,
     outputProgramHash: lineage.outputProgramHash ?? null,
     bestProgramHash: lineage.bestProgramHash ?? null,
+    ...Object.fromEntries(['evaluatedInputProgramHash', 'evaluationParametersHash'].filter(key => lineage[key] !== undefined).map(key => [key, lineage[key]])),
     modulesChanged: [...lineage.modulesChanged].sort(),
+    ...(lineage.donors ? { donors: [...lineage.donors], moduleDonors: { ...lineage.moduleDonors } } : {}),
+    ...Object.fromEntries(['modulesRetained', 'modulesModified', 'modulesAdded', 'modulesRemoved'].filter(key => lineage[key] !== undefined).map(key => {
+      assertCondition(Array.isArray(lineage[key]) && lineage[key].every(id => LINEAGE_MODULES_RE.test(id)), `lineage.${key} 非法`);
+      return [key, [...lineage[key]].sort()];
+    })),
     modulesInherited: Array.isArray(lineage.modulesInherited) ? [...lineage.modulesInherited].sort() : null,
     fallbackToOfficial: Array.isArray(lineage.fallbackToOfficial) ? [...lineage.fallbackToOfficial].sort() : null,
     operator: typeof lineage.operator === 'string' ? lineage.operator : 'unknown',

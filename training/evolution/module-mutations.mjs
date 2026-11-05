@@ -315,7 +315,7 @@ export function mutateModuleText(moduleId, parentText, variant = 0, seed = 0) {
   if (numeric) return { id: moduleId, label: numeric.label, text: numeric.text, operator: 'generic-numeric' };
   const compare = comparisonTweak(parentText, stripped, seed);
   if (compare) return { id: moduleId, label: compare.label, text: compare.text, operator: 'generic-comparison' };
-  throw new Error(`${moduleId} 没有可用的跨代变异算子（父代既无数字字面量也无比较运算符）`);
+  throw new Error(`${moduleId} 没有可用的跨代变异算子（没有可产生实际变化的数字字面量或比较运算符）`);
 }
 
 const NUMERIC_RE = /(?<![\w.$])(\d+(?:\.\d+)?)(?![\w.])/g;
@@ -326,22 +326,28 @@ const SCALE_FACTORS = [1.06, 0.94, 1.12, 0.88, 1.2, 0.8];
 function numericTweak(original, stripped, seed) {
   const matches = [...stripped.matchAll(NUMERIC_RE)];
   if (!matches.length) return null;
-  const index = ((seed % matches.length) + matches.length) % matches.length;
-  const match = matches[index];
-  const raw = Number(match[1]);
-  if (!Number.isFinite(raw) || raw === 0) return null;
-  const factor = SCALE_FACTORS[((seed * 7 + index) % SCALE_FACTORS.length + SCALE_FACTORS.length) % SCALE_FACTORS.length];
-  const next = raw * factor;
-  const rendered = Number.isInteger(raw)
-    ? String(Math.max(1, Math.round(next)))
-    : String(Number(next.toFixed(4)));
-  if (rendered === match[1]) return null;
-  const start = match.index;
-  const end = start + match[0].length;
-  return {
-    label: `numeric@${start}:${match[1]}->${rendered}`,
-    text: `${original.slice(0, start)}${rendered}${original.slice(end)}`,
-  };
+  const first = ((seed % matches.length) + matches.length) % matches.length;
+  // 某个整数舍入后不变，不等于整个函数不可变异。按种子指定的循环顺序
+  // 找到第一个实际变化，仍只修改一个字面量，且不接触注释/字符串。
+  for (let offset = 0; offset < matches.length; offset++) {
+    const index = (first + offset) % matches.length;
+    const match = matches[index];
+    const raw = Number(match[1]);
+    if (!Number.isFinite(raw) || raw === 0) continue;
+    const factor = SCALE_FACTORS[((seed * 7 + index) % SCALE_FACTORS.length + SCALE_FACTORS.length) % SCALE_FACTORS.length];
+    const next = raw * factor;
+    const rendered = Number.isInteger(raw)
+      ? String(Math.max(1, Math.round(next)))
+      : String(Number(next.toFixed(4)));
+    if (rendered === match[1]) continue;
+    const start = match.index;
+    const end = start + match[0].length;
+    return {
+      label: `numeric@${start}:${match[1]}->${rendered}`,
+      text: `${original.slice(0, start)}${rendered}${original.slice(end)}`,
+    };
+  }
+  return null;
 }
 
 /** 父代文本内的确定性比较运算符扰动。 */
